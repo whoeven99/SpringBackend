@@ -1,4 +1,4 @@
-package com.example.springbackend;
+package com.bogdatech;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,8 +15,9 @@ public class Application {
         SpringApplication.run(Application.class, args);
     }
 
+    // TODO Need to move this to Mybatis
     @Bean
-    public Connection getConnection() {
+    public Connection getSqlJdbcConnection() {
         try {
             Properties properties = new Properties();
             properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
