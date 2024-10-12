@@ -1,6 +1,9 @@
 package com.bogdatech.integration;
 
-import com.azure.ai.openai.models.*;
+import com.azure.ai.openai.models.ChatCompletions;
+import com.azure.ai.openai.models.ChatCompletionsOptions;
+import com.azure.ai.openai.models.ChatMessage;
+import com.azure.ai.openai.models.ChatRole;
 import org.springframework.stereotype.Component;
 
 import com.azure.ai.openai.OpenAIClient;
