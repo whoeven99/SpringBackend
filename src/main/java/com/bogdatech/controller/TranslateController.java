@@ -1,10 +1,10 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.logic.TranslateService;
+import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class TranslateController {
@@ -12,9 +12,8 @@ public class TranslateController {
     @Autowired
     private TranslateService translateService;
 
-    // TODO should be Post
-    @GetMapping("/translate")
-    public String translate(@RequestParam(value = "text") String text) {
-        return translateService.translate(text);
+    @PostMapping("/translate")
+    public BaseResponse translate(@RequestBody TranslateRequest request) {
+        return translateService.translate(request);
     }
 }
