@@ -1,7 +1,6 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.integration.ChatGptIntegration;
-import com.bogdatech.integration.ShopifyIntegration;
 import com.bogdatech.model.JdbcTestModel;
 import com.bogdatech.repository.JdbcTestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +17,6 @@ public class TestController {
 	private JdbcTestRepository jdbcTestRepository;
 	@Autowired
 	private ChatGptIntegration chatGptIntegration;
-	@Autowired
-	private ShopifyIntegration shopifyIntegration;
 
 	@GetMapping("/test")
 	public List<JdbcTestModel> test() {
@@ -35,11 +32,4 @@ public class TestController {
 	public String chat(@RequestParam String prompt) {
 		return chatGptIntegration.chatWithGpt(prompt);
 	}
-
-	@GetMapping("/shopify")
-	public String shopify() {
-		shopifyIntegration.getShop();
-		return "";
-	}
-
 }
