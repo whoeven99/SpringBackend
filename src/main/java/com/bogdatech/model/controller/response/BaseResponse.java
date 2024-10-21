@@ -1,12 +1,29 @@
 package com.bogdatech.model.controller.response;
 
-public class BaseResponse {
-    private String status;
-    private String errMessage;
+import lombok.*;
 
-    public BaseResponse CreateSuccessResponse() {
-        this.status = "success";
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class BaseResponse {
+
+    private String success;
+    private String errMessage;
+    private Object response;
+
+    public BaseResponse(String success, String errMessage) {
+    }
+
+    public BaseResponse CreateSuccessResponse(Object response) {
+        this.success = "success";
         this.errMessage = "";
+        this.response = response;
+        return this;
+    }
+    public BaseResponse CreateErrorResponse(String errorMessage, Object response) {
+        this.success = "error";
+        this.errMessage = errorMessage;
+        this.response = response;
         return this;
     }
 }

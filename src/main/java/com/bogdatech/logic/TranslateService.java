@@ -13,6 +13,6 @@ public class TranslateService {
     private TranslateApiIntegration translateApiIntegration;
 
     public BaseResponse translate(TranslateRequest request) {
-        return new BaseResponse().CreateSuccessResponse();
+        return new BaseResponse().CreateSuccessResponse(null);
     }
 }
