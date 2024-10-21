@@ -1,7 +1,6 @@
 package com.bogdatech.repository;
 
 import com.bogdatech.model.JdbcTestModel;
-import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,18 +35,5 @@ public class JdbcTestRepository {
             e.printStackTrace();
         }
         return null;
-    }
-
-    //插入数据
-    public BaseResponse insertData(String sql) {
-        try {
-            PreparedStatement insertStatement = connection.prepareStatement(sql);
-            insertStatement.executeUpdate();
-            insertStatement.close();
-            return new BaseResponse().CreateSuccessResponse(null);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new BaseResponse().CreateErrorResponse(e.getMessage(),null);
-        }
     }
 }

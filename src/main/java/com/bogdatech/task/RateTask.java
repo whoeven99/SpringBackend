@@ -1,10 +1,8 @@
 package com.bogdatech.task;
 
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.logic.BasicRateService;
-import com.bogdatech.logic.DataService;
-import com.bogdatech.model.controller.request.BasicRateRequest;
-import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.integration.RateHttpIntegration;
+import com.bogdatech.logic.RateDataService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -16,45 +14,32 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 
-import static com.bogdatech.common.enums.BasicEnum.GET_RATE_ERROR;
-
 @Component
 @EnableScheduling
 @EnableAsync
 public class RateTask {
     @Autowired
-    private BasicRateService basicRateService;
+    private RateHttpIntegration rateHttpIntegration;
 
-//    private BasicRateRequest request = new BasicRateRequest();
     private static String scur = "USD";
     private static String tcur = "CNY";
 
     // 使用线程安全的ConcurrentHashMap
-   @Autowired
-   private DataService dataService;
+    @Autowired
+    private RateDataService rateDataService;
+
+    // TODO 印象里直接加到这里就可以启动时运行一次，记得check一下
     @PostConstruct
-    public void onStartup()  {
-        // 项目启动时调用的方法
-        getRateEveryHour();
-    }
     @Scheduled(cron = "0 0 0/1 * * ?")
     @Async
     public void getRateEveryHour()  {
         System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
-        BasicRateRequest request = new BasicRateRequest();
-        request.setScur(scur);
-        request.setTcur(tcur);
-        BaseResponse basicRate = null;
         try {
-            basicRate = basicRateService.getBasicRate(request);
-            if (basicRate.getSuccess().equals("success")) {
-                dataService.updateValue("data", (LinkedHashMap<String, Object>) basicRate.getResponse());
-                System.out.println("Get rate success: " + basicRate.getResponse());
-            }
-        } catch (Exception e) {
-            throw new ClientException(GET_RATE_ERROR.getSuccess(), GET_RATE_ERROR.getErrorMessage());
+            LinkedHashMap<String, Object> rates = rateHttpIntegration.getBasicRate(scur, tcur);
+            System.out.println("Get rate success: " + rates);
+            rateDataService.updateValue("data", rates);
+        } catch (Exception e) { // TODO 这里的exception要去掉的，在integration里面做exception管理就好
+            throw new ClientException("获取汇率失败");
         }
-
-
     }
 }
