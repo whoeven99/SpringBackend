@@ -34,15 +34,6 @@ public class BasicRateService {
 
             //获取dates的result数据信息
             LinkedHashMap<String, Object> result = (LinkedHashMap<String, Object>) dates.get("result");
-//            String data = result.toString();
-            //获取result的rate数据信息
-//            String scur = (String) result.get("scur");
-//            String tcur = (String) result.get("tcur");
-//            String rate = (String) result.get("rate");
-//            String update = (String) result.get("update");
-            //编写sql语句
-//            String sql = "insert into Currency(scur,tcur,rate,update_time) values('" + scur + "','" + tcur + "','" + rate + "','" + update + "')";
-//            BaseResponse response = jdbcTestRepository.insertData(sql);
             return new BaseResponse().CreateSuccessResponse(result);
         }
     }
