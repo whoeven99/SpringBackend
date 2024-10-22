@@ -1,6 +1,6 @@
 package com.bogdatech.model.controller.response;
 
-import com.bogdatech.common.enums.ErrorEnum;
+import com.bogdatech.enums.ErrorEnum;
 import lombok.*;
 
 @Data

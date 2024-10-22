@@ -8,10 +8,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+
 @Component
 public class BaseHttpIntegration {
 
-    public String sendHttpGet(String url) throws Exception {
+    public String sendHttpGet(String url) throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(url);
         httpGet.addHeader("Content-Type", "application/json");
