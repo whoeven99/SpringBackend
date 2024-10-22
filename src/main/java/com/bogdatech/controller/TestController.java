@@ -1,10 +1,13 @@
 package com.bogdatech.controller;
 
+
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.model.JdbcTestModel;
 import com.bogdatech.repository.JdbcTestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
