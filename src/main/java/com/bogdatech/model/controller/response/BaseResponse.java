@@ -1,28 +1,33 @@
 package com.bogdatech.model.controller.response;
 
+import com.bogdatech.common.enums.ErrorEnum;
 import lombok.*;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class BaseResponse {
+public class BaseResponse<T> {
 
-    private String success;
-    private String errMessage;
-    private Object response;
+    private Boolean success;
+    private int errorCode = 0;
+    private String errorMsg = "";
+    private T response = null;
 
-
-
-    public BaseResponse CreateSuccessResponse(Object response) {
-        this.success = "success";
-        this.errMessage = "";
+    public BaseResponse<T> CreateSuccessResponse(T response) {
+        this.success = true;
         this.response = response;
         return this;
     }
-    public BaseResponse CreateErrorResponse(String errorMessage, Object response) {
-        this.success = "error";
-        this.errMessage = errorMessage;
-        this.response = response;
+
+    public BaseResponse CreateErrorResponse(String errorMsg) {
+        this.success = false;
+        this.errorCode = 10001;
+        this.errorMsg = errorMsg;
+        return this;
+    }
+
+    public BaseResponse CreateErrorResponse(ErrorEnum errorEnum) {
+        this.success = false;
+        this.errorMsg = errorEnum.getErrMsg();
+        this.errorCode = errorEnum.getErrCode();
         return this;
     }
 }
