@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public class DataService {
+public class RateDataService {
     private final Map<String, LinkedHashMap<String, Object>> value = new ConcurrentHashMap<>();
 
     public void updateValue(String key, LinkedHashMap<String, Object> data) {
