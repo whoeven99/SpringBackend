@@ -16,4 +16,6 @@ public class ShopifyController {
     public String getIdByShopifyRequest(@RequestBody ShopifyRequest shopifyRequest) {
         return shopifyApiIntegration.sendShopifyPost(shopifyRequest);
     }
+
+
 }

@@ -9,6 +9,18 @@ public enum ErrorEnum {
     * josn解析错误
     */
     JSON_PARSE_ERROR(10002, "json解析错误"),
+    /*
+     * sql插入错误
+     */
+    SQL_INSERT_ERROR(10003, "sql插入错误"),
+    /*
+     * sql更新错误
+     */
+    SQL_UPDATE_ERROR(10004, "sql更新错误"),
+    /*
+     * sql删除错误
+     */
+    SQL_DELETE_ERROR(10005, "sql删除错误"),
     ;
 
     public int errCode;

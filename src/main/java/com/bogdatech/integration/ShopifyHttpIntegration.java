@@ -28,7 +28,7 @@ public class ShopifyHttpIntegration {
         // 创建查询体
         JSONObject query = new JSONObject();
         query.put("query",
-                "query { products(first: 3) { edges { node { id title } } } }"
+                "products(first: 3) { edges { node { id title } } } "
         );
 
 
@@ -50,5 +50,10 @@ public class ShopifyHttpIntegration {
 
         return responseContent;
 
+    }
+
+    public String sendShopifyPost(ShopifyRequest request, String query) {
+
+        return null;
     }
 }
