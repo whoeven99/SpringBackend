@@ -16,19 +16,19 @@ import java.io.IOException;
 @Component
 public class ShopifyHttpIntegration {
 
-    public String sendShopifyPost(ShopifyRequest request) {
-        String url = "https://" + request.getShopName() + ".myshopify.com/api/" + request.getApiVersion() + "/graphql.json";
+    public String sendShopifyPost(ShopifyRequest request,String StringQuery) {
+        String url = "https://" + request.getShopName() + "/admin/api/" + request.getApiVersion() + "/graphql.json";
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
 
         // 设置头部信息
-        httpPost.addHeader("Content-Type", "application/json");
         httpPost.addHeader("X-Shopify-Access-Token", request.getAccessToken());
+        httpPost.addHeader("Content-Type", "application/json");
 
         // 创建查询体
         JSONObject query = new JSONObject();
         query.put("query",
-                "products(first: 3) { edges { node { id title } } } "
+                StringQuery
         );
 
 
@@ -52,8 +52,4 @@ public class ShopifyHttpIntegration {
 
     }
 
-    public String sendShopifyPost(ShopifyRequest request, String query) {
-
-        return null;
-    }
 }

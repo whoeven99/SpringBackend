@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.query.TestQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,7 +15,7 @@ public class ShopifyController {
 
     @PostMapping("/shopify/getIdByShopifyRequest")
     public String getIdByShopifyRequest(@RequestBody ShopifyRequest shopifyRequest) {
-        return shopifyApiIntegration.sendShopifyPost(shopifyRequest);
+        return shopifyApiIntegration.sendShopifyPost(shopifyRequest, TestQuery.TEST_QUERY);
     }
 
 

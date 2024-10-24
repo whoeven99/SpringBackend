@@ -15,4 +15,5 @@ public class ShopifyRequest {
 
     private String apiVersion = "2024-10";
 
+
 }

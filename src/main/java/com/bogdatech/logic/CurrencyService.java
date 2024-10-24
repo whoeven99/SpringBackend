@@ -33,7 +33,7 @@ public class CurrencyService {
             int rowsAffected = insertStatement.executeUpdate();
 
             if (rowsAffected > 0) {
-                return new BaseResponse<>().CreateSuccessResponse(null);
+                return new BaseResponse<>().CreateSuccessResponse("success"); //TODO success后面需要修改
             } else {
                 return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
             }
