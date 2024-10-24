@@ -28,4 +28,9 @@ public class CurrencyController {
     public BaseResponse deleteCurrency(@RequestBody CurrencyRequest request) {
         return currencyService.deleteCurrency(request);
     }
+
+    @PostMapping("/currency/getCurrencyByShopName")
+    public BaseResponse getCurrencyByShopName(@RequestBody CurrencyRequest request) {
+        return currencyService.getCurrencyByShopName(request);
+    }
 }

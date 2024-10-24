@@ -36,7 +36,7 @@ public class RateTask {
         System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
         try {
             LinkedHashMap<String, Object> rates = rateHttpIntegration.getBasicRate(scur, tcur);
-            System.out.println("Get rate success: " + rates);
+//            System.out.println("Get rate success: " + rates);
             rateDataService.updateValue("data", rates);
         } catch (Exception e) { // TODO 这里的exception要去掉的，在integration里面做exception管理就好
             throw new ClientException("获取汇率失败");
