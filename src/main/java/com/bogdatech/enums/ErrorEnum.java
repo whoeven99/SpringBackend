@@ -21,6 +21,10 @@ public enum ErrorEnum {
      * sql删除错误
      */
     SQL_DELETE_ERROR(10005, "sql删除错误"),
+    /*
+     * sql查询错误
+     */
+    SQL_SELECT_ERROR(10006, "sql查询错误"),
     ;
 
     public int errCode;
