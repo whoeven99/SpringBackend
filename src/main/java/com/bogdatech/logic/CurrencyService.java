@@ -67,11 +67,12 @@ public class CurrencyService {
     }
 
     public BaseResponse deleteCurrency(CurrencyRequest request) {
-        String sql = "DELETE FROM Currencies  WHERE shop_name = ?";
+        String sql = "DELETE FROM Currencies  WHERE shop_name = ? and currency_code = ?";
         try(PreparedStatement deleteStatement = connection.prepareStatement(sql);
                 ){
             // 设置参数
             deleteStatement.setString(1, request.getShopName());
+            deleteStatement.setString(2, request.getCurrencyCode());
 
             // 执行删除
             int rowsAffected = deleteStatement.executeUpdate();

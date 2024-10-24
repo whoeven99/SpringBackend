@@ -18,9 +18,12 @@ public class ShopifyHttpIntegration {
 
     public String sendShopifyPost(ShopifyRequest request,String StringQuery) {
         String url = "https://" + request.getShopName() + "/admin/api/" + request.getApiVersion() + "/graphql.json";
+        // 创建连接管理器并启用HTTP/2
+//        PoolingHttpClientConnectionManagerBuilder connectionManagerBuilder =
+//                PoolingHttpClientConnectionManagerBuilder.create()
+//                        .setH2(true); // 启用HTTP/2
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
-
         // 设置头部信息
         httpPost.addHeader("X-Shopify-Access-Token", request.getAccessToken());
         httpPost.addHeader("Content-Type", "application/json");
