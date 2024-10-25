@@ -16,4 +16,9 @@ public class TranslateController {
     public BaseResponse translate(@RequestBody TranslateRequest request) {
         return translateService.translate(request);
     }
+
+    @PostMapping("/translate/insertShopTranslateInfo")
+    public BaseResponse insertShopTranslateInfo(@RequestBody TranslateRequest request) {
+        return translateService.insertShopTranslateInfo(request);
+    }
 }
