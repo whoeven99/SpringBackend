@@ -32,9 +32,6 @@ public class TranslateService {
     private String apiKey;
 
     // 构建URL
-    String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
-            "&q=" + "hello" +
-            "&source=zh-CN&target=en";
     public BaseResponse translate(TranslateRequest request) {
         return new BaseResponse().CreateSuccessResponse(null);
     }
@@ -63,6 +60,9 @@ public class TranslateService {
     }
 
     public BaseResponse translateTest() {
+        String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
+                "&q=" + "hello" +
+                "&source=en&target=zh-CN";
         String result = null;
         String text1 = null;
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
@@ -81,6 +81,7 @@ public class TranslateService {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            return new BaseResponse<>().CreateErrorResponse("Failed to translate text.");
         }
         return new BaseResponse<>().CreateSuccessResponse(text1);
     }
