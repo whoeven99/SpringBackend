@@ -3,12 +3,10 @@ package com.bogdatech.task;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.RateDataService;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -29,8 +27,8 @@ public class RateTask {
     private RateDataService rateDataService;
 
     // TODO 印象里直接加到这里就可以启动时运行一次，记得check一下
-    @PostConstruct
-    @Scheduled(cron = "0 0 0/1 * * ?")
+//    @PostConstruct
+//    @Scheduled(cron = "0 0 0/1 * * ?")
     @Async
     public void getRateEveryHour()  {
         System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
