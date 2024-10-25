@@ -37,14 +37,14 @@ public class TranslateService {
     }
 
     public BaseResponse insertShopTranslateInfo(TranslateRequest request) {
-        String sql = "INSERT INTO Translates (shop_name, access_token, language) VALUES (?, ?, ?)";
-        try(PreparedStatement insertStatement = connection.prepareStatement(sql);) {
+        String sql = "INSERT INTO Translates (shop_name, access_token, source, target) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement insertStatement = connection.prepareStatement(sql);) {
 
             // 设置参数
             insertStatement.setString(1, request.getShopName());
             insertStatement.setString(2, request.getAccessToken());
-            insertStatement.setString(3, request.getLanguage());
-
+            insertStatement.setString(3, request.getSource());
+            insertStatement.setString(4, request.getTarget());
 
             // 执行插入
             int rowsAffected = insertStatement.executeUpdate();
@@ -59,31 +59,25 @@ public class TranslateService {
         }
     }
 
-    public BaseResponse translateTest() {
+    public BaseResponse translateContent(TranslateRequest request) {
         String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
-                "&q=" + "hello" +
-                "&source=en&target=zh-CN";
+                "&q=" + request.getContent() +
+                "&source=" + request.getSource() +
+                "&target=" + request.getTarget();
         String result = null;
-        String text1 = null;
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            // 创建HttpGet请求
-            HttpPost httpPost = new HttpPost(url);
-            // 执行请求
-            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                if (response.getStatusLine().getStatusCode() == 200) {
-                    // 获取响应实体并转换为字符串
-                    result = EntityUtils.toString(response.getEntity());
-                    System.out.println("Translation Result: " + result);
-                    text1 = "Translation Result: " + result;
-                } else {
-                    System.out.println("Failed to translate text.");
-                }
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        // 创建HttpGet请求
+        HttpPost httpPost = new HttpPost(url);
+        // 执行请求
+        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+            if (response.getStatusLine().getStatusCode() == 200) {
+                // 获取响应实体并转换为字符串
+                result = EntityUtils.toString(response.getEntity());
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            return new BaseResponse<>().CreateErrorResponse("Failed to translate text.");
+            return new BaseResponse<>().CreateErrorResponse(e.toString());
         }
-        return new BaseResponse<>().CreateSuccessResponse(text1);
+        return new BaseResponse<>().CreateSuccessResponse(result);
     }
-    }
+}
 

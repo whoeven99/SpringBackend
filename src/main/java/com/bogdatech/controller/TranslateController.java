@@ -24,9 +24,9 @@ public class TranslateController {
         return translateService.insertShopTranslateInfo(request);
     }
 
-    @PostMapping("/translate/tanslateTest")
-    public BaseResponse tanslateTest() {
-        return translateService.translateTest();
+    @PostMapping("/translate/translateContent")
+    public BaseResponse translateContent(@RequestBody TranslateRequest request) {
+        return translateService.translateContent(request);
     }
 
 }
