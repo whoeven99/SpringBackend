@@ -1,12 +1,12 @@
 package com.bogdatech.query;
 
 public class TestQuery {
-    public static final String TEST_QUERY = "{\n" +
-            "    shopLocales {\n" +
-            "        name\n" +
-            "        locale\n" +
-            "        primary\n" +
-            "        published\n" +
-            "    }\n" +
+    public static final String TEST_QUERY = "{" +
+            "    shopLocales {" +
+            "        name" +
+            "        locale" +
+            "        primary" +
+            "        published" +
+            "    }" +
             "}";
 }

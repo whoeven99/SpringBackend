@@ -1,83 +1,102 @@
 package com.bogdatech.logic;
 
 
+import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.integration.AzureSQLIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.util.List;
 
-import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
+import static com.bogdatech.enums.ErrorEnum.*;
 
 @Component
+@EnableAsync
 public class TranslateService {
 
     @Autowired
     private TranslateApiIntegration translateApiIntegration;
 
     @Autowired
-    private Connection connection;
+    private AzureSQLIntegration azureSQLIntegration;
 
-    @Value("${google.api.key}")
-    private String apiKey;
+
+
+
 
     // 构建URL
-    public BaseResponse translate(TranslateRequest request) {
+
+    public BaseResponse translate(TranslatesDO request) {
         return new BaseResponse().CreateSuccessResponse(null);
+    }
+
+    public BaseResponse baiDuTranslate(TranslateRequest request) {
+        String result = translateApiIntegration.baiDuTranslate(request);
+        if (result != null) {
+            return new BaseResponse().CreateSuccessResponse(result);
+        }
+        return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
+    }
+
+    public BaseResponse googleTranslate(TranslateRequest request) {
+        String result = translateApiIntegration.googleTranslate(request);
+        if (result != null) {
+            return new BaseResponse().CreateSuccessResponse(result);
+        }
+        return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
     }
 
     public BaseResponse insertShopTranslateInfo(TranslateRequest request) {
         String sql = "INSERT INTO Translates (shop_name, access_token, source, target) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement insertStatement = connection.prepareStatement(sql);) {
-
-            // 设置参数
-            insertStatement.setString(1, request.getShopName());
-            insertStatement.setString(2, request.getAccessToken());
-            insertStatement.setString(3, request.getSource());
-            insertStatement.setString(4, request.getTarget());
-
-            // 执行插入
-            int rowsAffected = insertStatement.executeUpdate();
-
-            if (rowsAffected > 0) {
-                return new BaseResponse<>().CreateSuccessResponse("success");
-            } else {
-                return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget()};
+        int result = azureSQLIntegration.CUDInfo(info, sql);
+        if (result > 0) {
+            return new BaseResponse().CreateSuccessResponse(result);
         }
+        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 
-    public BaseResponse translateContent(TranslateRequest request) {
-        String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
-                "&q=" + request.getContent() +
-                "&source=" + request.getSource() +
-                "&target=" + request.getTarget();
-        String result = null;
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        // 创建HttpGet请求
-        HttpPost httpPost = new HttpPost(url);
-        // 执行请求
-        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            if (response.getStatusLine().getStatusCode() == 200) {
-                // 获取响应实体并转换为字符串
-                result = EntityUtils.toString(response.getEntity());
-            }
-        } catch (IOException e) {
-            return new BaseResponse<>().CreateErrorResponse(e.toString());
+    public List<TranslatesDO> readTranslateInfo(int status){
+        String sql = "SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE status = ?";
+        Object[] info = {status};
+        List<TranslatesDO> list =  azureSQLIntegration.readInfo(info, sql, TranslatesDO.class);
+        return list;
+    }
+
+    public int updateTranslateStatus(int id, int status){
+        String sql = "UPDATE Translates SET status = ? WHERE id = ?";
+        Object[] info = {status, id};
+        int result = azureSQLIntegration.CUDInfo(info, sql);
+        return result;
+    }
+
+    @Async
+    public void test(TranslatesDO request){
+        System.out.println("我要翻译了" + Thread.currentThread().getName());
+        //睡眠1分钟
+        try {
+            Thread.sleep(1000 * 60 * 1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        return new BaseResponse<>().CreateSuccessResponse(result);
+        System.out.println("翻译完成" + Thread.currentThread().getName());
+        //更新状态
+        updateTranslateStatus(request.getId(), 0);
+    }
+
+    public BaseResponse readInfoByShopName(TranslateRequest request) {
+        String sql = "SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE shop_name = ?";
+        Object[] info = {request.getShopName()};
+        List<TranslatesDO> translatesDOS = azureSQLIntegration.readInfo(info, sql, TranslatesDO.class);
+        if (translatesDOS.size() > 0){
+            return new BaseResponse().CreateSuccessResponse(translatesDOS);
+        }
+           return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 }
 
