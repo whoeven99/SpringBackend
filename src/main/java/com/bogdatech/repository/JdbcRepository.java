@@ -1,4 +1,4 @@
-package com.bogdatech.integration;
+package com.bogdatech.repository;
 
 import com.bogdatech.utils.CamelToUnderscore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class AzureSQLIntegration {
+public class JdbcRepository {
 
     @Autowired
     private Connection connection;

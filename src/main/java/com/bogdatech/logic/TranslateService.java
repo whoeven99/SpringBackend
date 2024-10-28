@@ -2,7 +2,7 @@ package com.bogdatech.logic;
 
 
 import com.bogdatech.entity.TranslatesDO;
-import com.bogdatech.integration.AzureSQLIntegration;
+import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -23,11 +23,7 @@ public class TranslateService {
     private TranslateApiIntegration translateApiIntegration;
 
     @Autowired
-    private AzureSQLIntegration azureSQLIntegration;
-
-
-
-
+    private JdbcRepository jdbcRepository;
 
     // 构建URL
 
@@ -54,7 +50,7 @@ public class TranslateService {
     public BaseResponse insertShopTranslateInfo(TranslateRequest request) {
         String sql = "INSERT INTO Translates (shop_name, access_token, source, target) VALUES (?, ?, ?, ?)";
         Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget()};
-        int result = azureSQLIntegration.CUDInfo(info, sql);
+        int result = jdbcRepository.CUDInfo(info, sql);
         if (result > 0) {
             return new BaseResponse().CreateSuccessResponse(result);
         }
@@ -64,14 +60,14 @@ public class TranslateService {
     public List<TranslatesDO> readTranslateInfo(int status){
         String sql = "SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE status = ?";
         Object[] info = {status};
-        List<TranslatesDO> list =  azureSQLIntegration.readInfo(info, sql, TranslatesDO.class);
+        List<TranslatesDO> list =  jdbcRepository.readInfo(info, sql, TranslatesDO.class);
         return list;
     }
 
     public int updateTranslateStatus(int id, int status){
         String sql = "UPDATE Translates SET status = ? WHERE id = ?";
         Object[] info = {status, id};
-        int result = azureSQLIntegration.CUDInfo(info, sql);
+        int result = jdbcRepository.CUDInfo(info, sql);
         return result;
     }
 
@@ -92,7 +88,7 @@ public class TranslateService {
     public BaseResponse readInfoByShopName(TranslateRequest request) {
         String sql = "SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE shop_name = ?";
         Object[] info = {request.getShopName()};
-        List<TranslatesDO> translatesDOS = azureSQLIntegration.readInfo(info, sql, TranslatesDO.class);
+        List<TranslatesDO> translatesDOS = jdbcRepository.readInfo(info, sql, TranslatesDO.class);
         if (translatesDOS.size() > 0){
             return new BaseResponse().CreateSuccessResponse(translatesDOS);
         }
