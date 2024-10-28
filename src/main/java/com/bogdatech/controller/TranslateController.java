@@ -1,9 +1,13 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
+import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.query.ShopifyQuery;
+import com.bogdatech.repository.JdbcRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +24,11 @@ public class TranslateController {
     @Autowired
     private TranslateService translateService;
 
+    @Autowired
+    private JdbcRepository jdbcRepository;
+    @Autowired
+    private ShopifyHttpIntegration shopifyApiIntegration;
+
     @PostMapping("/translate")
     public BaseResponse translate(@RequestBody TranslatesDO request) {
         return translateService.translate(request);
@@ -27,7 +36,7 @@ public class TranslateController {
 
     @PostMapping("/translate/insertShopTranslateInfo")
     public BaseResponse insertShopTranslateInfo(@RequestBody TranslateRequest request) {
-        return translateService.insertShopTranslateInfo(request);
+        return jdbcRepository.insertShopTranslateInfo(request);
     }
 
     @PostMapping("/translate/googleTranslate")
@@ -45,7 +54,7 @@ public class TranslateController {
     */
     @PostMapping("/translate/readTranslateInfo")
     public BaseResponse readTranslateInfo(@RequestBody TranslatesDO request) {
-        List<TranslatesDO> list = translateService.readTranslateInfo(request.getStatus());
+        List<TranslatesDO> list = jdbcRepository.readTranslateInfo(request.getStatus());
         if (list != null && list.size() > 0) {
             return new BaseResponse().CreateSuccessResponse(list);
         }
@@ -57,6 +66,11 @@ public class TranslateController {
      */
     @PostMapping("/translate/updateTranslateInfo")
     public BaseResponse readInfoByShopName(@RequestBody TranslateRequest request) {
-        return translateService.readInfoByShopName(request);
+        return jdbcRepository.readInfoByShopName(request);
+    }
+
+    @PostMapping("/translate/updateTranslateStatus")
+    public BaseResponse userBDTranslateProduct(@RequestBody ShopifyRequest request) {
+        return translateService.userBDTranslateProduct(shopifyApiIntegration.getInfoByShopify(request, ShopifyQuery.PRODUCT_QUERY));
     }
 }
