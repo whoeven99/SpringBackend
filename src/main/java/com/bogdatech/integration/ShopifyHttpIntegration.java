@@ -1,9 +1,11 @@
 package com.bogdatech.integration;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -14,23 +16,43 @@ import java.io.IOException;
 @Component
 public class ShopifyHttpIntegration {
 
-    public String sendShopifyGet(ShopifyRequest request) {
+    public String sendShopifyPost(ShopifyRequest request,String StringQuery) {
+        String url = "https://" + request.getShopName() + "/admin/api/" + request.getApiVersion() + "/graphql.json";
+        // 创建连接管理器并启用HTTP/2
+//        PoolingHttpClientConnectionManagerBuilder connectionManagerBuilder =
+//                PoolingHttpClientConnectionManagerBuilder.create()
+//                        .setH2(true); // 启用HTTP/2
         CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(request.getUrl());
-        httpGet.addHeader("Content-Type", "application/json");
-        httpGet.addHeader("X-Shopify-Access-Token", request.getAccessToken());
+        HttpPost httpPost = new HttpPost(url);
+        // 设置头部信息
+        httpPost.addHeader("X-Shopify-Access-Token", request.getAccessToken());
+        httpPost.addHeader("Content-Type", "application/json");
+
+        // 创建查询体
+        JSONObject query = new JSONObject();
+        query.put("query",
+                StringQuery
+        );
+
+
         String responseContent = null;
         try {
-            CloseableHttpResponse response = httpClient.execute(httpGet);
+            // 将查询体设置到实体中
+            StringEntity input = new StringEntity(query.toString());
+            httpPost.setEntity(input);
+
+            CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
-            responseContent = EntityUtils.toString(entity, "UTF-8");
+            responseContent = EntityUtils.toString(entity,"UTF-8");
 
             response.close();
             httpClient.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
         return responseContent;
 
     }
+
 }
