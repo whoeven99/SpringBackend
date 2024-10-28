@@ -1,7 +1,9 @@
 package com.bogdatech.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.query.TestQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,5 +20,9 @@ public class ShopifyController {
         return shopifyApiIntegration.sendShopifyPost(shopifyRequest, TestQuery.TEST_QUERY);
     }
 
+    @PostMapping("/shopify/getInfoByShopify")
+    public JSONObject getInfoByShopify(@RequestBody ShopifyRequest shopifyRequest) {
+        return shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT_QUERY);
+    }
 
 }
