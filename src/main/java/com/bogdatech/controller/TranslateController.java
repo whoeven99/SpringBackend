@@ -1,9 +1,12 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
+import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +26,8 @@ public class TranslateController {
 
     @Autowired
     private JdbcRepository jdbcRepository;
+    @Autowired
+    private ShopifyHttpIntegration shopifyApiIntegration;
 
     @PostMapping("/translate")
     public BaseResponse translate(@RequestBody TranslatesDO request) {
@@ -62,5 +67,10 @@ public class TranslateController {
     @PostMapping("/translate/updateTranslateInfo")
     public BaseResponse readInfoByShopName(@RequestBody TranslateRequest request) {
         return jdbcRepository.readInfoByShopName(request);
+    }
+
+    @PostMapping("/translate/updateTranslateStatus")
+    public BaseResponse userBDTranslateProduct(@RequestBody ShopifyRequest request) {
+        return translateService.userBDTranslateProduct(shopifyApiIntegration.getInfoByShopify(request, ShopifyQuery.PRODUCT_QUERY));
     }
 }
