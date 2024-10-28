@@ -14,9 +14,9 @@ public class CurrencyController {
     @Autowired
     private CurrencyService currencyService;
 
-    @PostMapping("/currency/addCurrency")
+    @PostMapping("/currency/insertCurrency")
     public BaseResponse addCurrency(@RequestBody CurrencyRequest request) {
-        return currencyService.addCurrency(request);
+        return currencyService.insertCurrency(request);
     }
 
     @PostMapping("/currency/updateCurrency")
@@ -32,5 +32,10 @@ public class CurrencyController {
     @PostMapping("/currency/getCurrencyByShopName")
     public BaseResponse getCurrencyByShopName(@RequestBody CurrencyRequest request) {
         return currencyService.getCurrencyByShopName(request);
+    }
+
+    @PostMapping("/currency/test")
+    public BaseResponse test(@RequestBody CurrencyRequest request) {
+        return currencyService.test(request);
     }
 }

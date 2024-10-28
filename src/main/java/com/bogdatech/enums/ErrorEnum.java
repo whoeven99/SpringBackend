@@ -25,6 +25,10 @@ public enum ErrorEnum {
      * sql查询错误
      */
     SQL_SELECT_ERROR(10006, "sql查询错误"),
+    /*
+     * 翻译错误
+     */
+    TRANSLATE_ERROR(10007, "翻译错误"),
     ;
 
     public int errCode;
