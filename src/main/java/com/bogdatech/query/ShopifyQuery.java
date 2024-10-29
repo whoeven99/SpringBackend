@@ -31,4 +31,24 @@ public class ShopifyQuery {
             "    }\n" +
             "  }\n" +
             "}";
+
+    public static final String PRODUCT2_QUERY = "translatableResources(resourceType: PRODUCT, first: 10) {\n" +
+            "    nodes {\n" +
+            "      translations(locale: \"zh\") {\n" +
+            "        locale\n" +
+            "        value\n" +
+            "      }\n" +
+            "      translatableContent {\n" +
+            "        digest\n" +
+            "        key\n" +
+            "        type\n" +
+            "        locale\n" +
+            "        value\n" +
+            "      }\n" +
+            "    }\n" +
+            "    pageInfo {\n" +
+            "      endCursor\n" +
+            "      hasNextPage\n" +
+            "    }\n" +
+            "  }";
 }

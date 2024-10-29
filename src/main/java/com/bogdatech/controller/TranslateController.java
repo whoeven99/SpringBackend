@@ -69,11 +69,6 @@ public class TranslateController {
         return jdbcRepository.readInfoByShopName(request);
     }
 
-    @PostMapping("/translate/updateTranslateStatus")
-    public BaseResponse userBDTranslateProduct(@RequestBody ShopifyRequest request) {
-        return translateService.userBDTranslateProduct(shopifyApiIntegration.getInfoByShopify(request, ShopifyQuery.PRODUCT_QUERY));
-    }
-
     @PostMapping("/translate/userBDTranslateJson")
     public BaseResponse userBDTranslateJsonObject() {
         return translateService.userBDTranslateJsonObject();
@@ -82,5 +77,10 @@ public class TranslateController {
     @PostMapping("/translate/readJsonFile")
     public BaseResponse userBDTranslateJson() {
         return new BaseResponse<>().CreateSuccessResponse( translateService.readJsonFile());
+    }
+
+    @PostMapping("/translate/translateJson")
+    public BaseResponse translateJson(@RequestBody ShopifyRequest shopifyRequest) {
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY)));
     }
 }

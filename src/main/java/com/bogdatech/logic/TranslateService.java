@@ -9,6 +9,7 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.StringUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -71,22 +72,6 @@ public class TranslateService {
         jdbcRepository.updateTranslateStatus(request.getId(), 0);
     }
 
-    public BaseResponse userBDTranslateProduct(JSONObject object) {
-        //用循环将object中名字为title的翻译
-        for (String key : object.keySet()) {
-            if ("title".equals(key)) {
-                String title = object.getString(key);
-                System.out.println("title: " + title);
-                String result = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, "en", "zh", title));
-                if (result != null) {
-                    object.put(key, result);
-                } else {
-                    return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
-                }
-            }
-        }
-        return new BaseResponse<>().CreateSuccessResponse(object);
-    }
 
     //写死的json
     public BaseResponse userBDTranslateJsonObject() {
@@ -164,6 +149,24 @@ public class TranslateService {
         return translatedRootNode;
     }
 
+    //根据返回的json片段，将符合条件的value翻译,并返回json片段
+    public JsonNode translateJson(String object){
+        if (object == null || object.trim().isEmpty()) {
+            throw new IllegalArgumentException("Argument 'content' cannot be null or empty.xxxxxxxxx");
+        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode translatedRootNode = null;
+        try {
+            JsonNode rootNode = objectMapper.readTree(object);
+            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode);
+            String translatedJsonString = translatedRootNode.toString();
+            System.out.println("Translated JSON:\n" + translatedJsonString);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return translatedRootNode;
+    }
+    //根据key找value
     private JsonNode translateSingleLineTextFieldsRecursively(JsonNode node) {
         if (node.isObject()) {
             ObjectNode objectNode = (ObjectNode) node;
@@ -186,6 +189,7 @@ public class TranslateService {
         return node;
     }
 
+    //找到符合条件的value翻译
     private ArrayNode translateSingleLineTextFields(ArrayNode contentNode) {
         ArrayNode translatedContent = new ObjectMapper().createArrayNode();
         contentNode.forEach(contentItem -> {
@@ -193,7 +197,10 @@ public class TranslateService {
             if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())
                     || "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
                 String value = contentItemNode.get("value").asText();
-                value = StringUtil.replaceSpaces(value, "-");
+                //如果value为空，则不翻译
+                if (value == null || value.isEmpty()) {
+                    return;
+                }
                 try {
                     String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, "en", "zh", value));
                     contentItemNode.put("value", translatedValue);
