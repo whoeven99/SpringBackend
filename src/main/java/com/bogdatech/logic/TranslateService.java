@@ -172,7 +172,7 @@ public class TranslateService {
             ObjectNode objectNode = (ObjectNode) node;
             node.fieldNames().forEachRemaining(fieldName -> {
                 JsonNode fieldValue = node.get(fieldName);
-                if ("translatableResources".equals(fieldName)) {
+                if ("translatableContent".equals(fieldName)) {
                     ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue);
                     objectNode.set(fieldName, translatedContent);
                 } else {
