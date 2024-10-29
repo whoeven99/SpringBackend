@@ -32,7 +32,8 @@ public class ShopifyQuery {
             "  }\n" +
             "}";
 
-    public static final String PRODUCT2_QUERY = "translatableResources(resourceType: PRODUCT, first: 10) {\n" +
+    public static final String PRODUCT2_QUERY = "{\n" +
+            "  translatableResources(resourceType: PRODUCT, first: 2) {\n" +
             "    nodes {\n" +
             "      translations(locale: \"zh\") {\n" +
             "        locale\n" +
@@ -50,5 +51,6 @@ public class ShopifyQuery {
             "      endCursor\n" +
             "      hasNextPage\n" +
             "    }\n" +
-            "  }";
+            "  }\n" +
+            "}";
 }
