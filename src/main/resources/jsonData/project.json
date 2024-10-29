@@ -1,0 +1,106 @@
+{
+  "products": {
+    "nodes": [
+      {
+        "metafields": {
+          "nodes": [
+            {
+              "definition": {
+                "type": {
+                  "category": "TEXT"
+                }
+              },
+              "id": "gid://shopify/Metafield/34054518243578",
+              "value": "product"
+            }
+          ]
+        },
+        "options": [
+          {
+            "values": [
+              "Default Title"
+            ],
+            "name": "Title"
+          }
+        ],
+        "handle": "the-minimal-snowboard",
+        "descriptionHtml": "",
+        "id": "gid://shopify/Product/8583334527226",
+        "seo": {
+          "description": null,
+          "title": null
+        },
+        "title": "The Minimal Snowboard",
+        "productType": ""
+      },
+      {
+        "metafields": {
+          "nodes": []
+        },
+        "options": [
+          {
+            "values": [
+              "Default Title"
+            ],
+            "name": "Title"
+          }
+        ],
+        "handle": "the-videographer-snowboard",
+        "descriptionHtml": "",
+        "id": "gid://shopify/Product/8583334592762",
+        "seo": {
+          "description": null,
+          "title": null
+        },
+        "title": "The Videographer Snowboard",
+        "productType": "snowboard"
+      },
+      {
+        "metafields": {
+          "nodes": [
+            {
+              "definition": null,
+              "id": "gid://shopify/Metafield/33606966444282",
+              "value": "Complete Snowboard"
+            },
+            {
+              "definition": null,
+              "id": "gid://shopify/Metafield/33606966477050",
+              "value": "snowboard winter sport snowboarding"
+            },
+            {
+              "definition": {
+                "type": {
+                  "category": "MEASUREMENT"
+                }
+              },
+              "id": "gid://shopify/Metafield/33606966673658",
+              "value": "{\"value\":159.0,\"unit\":\"CENTIMETERS\"}"
+            }
+          ]
+        },
+        "options": [
+          {
+            "values": [
+              "Ice",
+              "Dawn",
+              "Powder",
+              "Electric",
+              "Sunset"
+            ],
+            "name": "Color"
+          }
+        ],
+        "handle": "the-complete-snowboard",
+        "descriptionHtml": "This <b>PREMIUM</b> <i>snowboard</i> is so <b>SUPER</b><i>DUPER</i> awesome!",
+        "id": "gid://shopify/Product/8583334625530",
+        "seo": {
+          "description": "snowboard winter sport snowboarding",
+          "title": "Complete Snowboard"
+        },
+        "title": "The Complete Snowboard",
+        "productType": "snowboard"
+      }
+    ]
+  }
+}

@@ -73,4 +73,14 @@ public class TranslateController {
     public BaseResponse userBDTranslateProduct(@RequestBody ShopifyRequest request) {
         return translateService.userBDTranslateProduct(shopifyApiIntegration.getInfoByShopify(request, ShopifyQuery.PRODUCT_QUERY));
     }
+
+    @PostMapping("/translate/userBDTranslateJson")
+    public BaseResponse userBDTranslateJsonObject() {
+        return translateService.userBDTranslateJsonObject();
+    }
+
+    @PostMapping("/translate/readJsonFile")
+    public BaseResponse userBDTranslateJson() {
+        return new BaseResponse<>().CreateSuccessResponse( translateService.readJsonFile());
+    }
 }

@@ -76,11 +76,12 @@ public class TranslateApiIntegration {
         // 创建HttpGet请求
         HttpPost httpPost = new HttpPost(url);
         // 执行请求
+        JSONObject jsonObject;
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            if (response.getStatusLine().getStatusCode() == 200) {
-                // 获取响应实体并转换为字符串
-                result = EntityUtils.toString(response.getEntity());
-            }
+            // 获取响应实体并转换为JSON格式
+            jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
+            // 获取翻译结果
+            result = jsonObject.getJSONArray("translations").getJSONObject(0).getString("translatedText");
         } catch (IOException e) {
             return e.toString();
         }
