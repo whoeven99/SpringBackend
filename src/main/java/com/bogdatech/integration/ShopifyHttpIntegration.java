@@ -16,7 +16,7 @@ import java.io.IOException;
 @Component
 public class ShopifyHttpIntegration {
 
-    public String sendShopifyPost(ShopifyRequest request, String StringQuery) {
+    public String sendShopifyPost(ShopifyRequest request, String stringQuery) {
         String url = "https://" + request.getShopName() + "/admin/api/" + request.getApiVersion() + "/graphql.json";
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
@@ -27,7 +27,7 @@ public class ShopifyHttpIntegration {
         // 创建查询体
         JSONObject query = new JSONObject();
         query.put("query",
-                StringQuery
+                stringQuery
         );
         String responseContent = null;
         try {
