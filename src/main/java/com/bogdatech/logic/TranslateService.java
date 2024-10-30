@@ -157,7 +157,7 @@ public class TranslateService {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode translatedRootNode = null;
         try {
-            JsonNode rootNode = objectMapper.readTree(String.valueOf(objectData));
+            JsonNode rootNode = objectMapper.readTree(objectData.toJSONString());
             translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode);
             String translatedJsonString = translatedRootNode.toString();
             System.out.println("Translated JSON:\n" + translatedJsonString);
