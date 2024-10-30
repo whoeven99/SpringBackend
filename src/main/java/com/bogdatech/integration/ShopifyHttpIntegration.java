@@ -51,7 +51,7 @@ public class ShopifyHttpIntegration {
     public JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {
         String string = sendShopifyPost(shopifyRequest, query);
         JSONObject jsonObject = JSONObject.parseObject(string);
-        return jsonObject.getJSONObject("data");
+        return jsonObject;
     }
 }
 
