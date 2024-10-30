@@ -17,7 +17,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO("ARTICLE", "2", "zh"),
             new TranslateResourceDTO("BLOG", "2", "zh"),
             new TranslateResourceDTO("COLLECTION", "2", "zh")
-
+            //TODO 还有其他类型需要添加
     ));
 
     private String resourceType;

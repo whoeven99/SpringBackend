@@ -8,6 +8,7 @@ import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.JdbcRepository;
+import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.StringUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,6 +36,9 @@ public class TranslateService {
 
     @Autowired
     private JdbcRepository jdbcRepository;
+
+    @Autowired
+    private CharacterCountUtils counter;
 
     // 构建URL
     public BaseResponse translate(TranslatesDO request) {
@@ -163,6 +167,9 @@ public class TranslateService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+        System.out.println("counter: " + counter.getTotalChars());
+        counter.reset();
+        System.out.println("counter: " + counter.getTotalChars());
         return translatedRootNode;
     }
     //根据key找value
@@ -202,6 +209,7 @@ public class TranslateService {
                     return;
                 }
                 try {
+                    counter.addChars(value.length());
                     String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, target, value));
                     contentItemNode.put("value", translatedValue);
                 } catch (Exception e) {
