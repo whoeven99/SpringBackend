@@ -150,14 +150,14 @@ public class TranslateService {
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    public JsonNode translateJson(String object){
-        if (object == null || object.trim().isEmpty()) {
+    public JsonNode translateJson(JSONObject objectData){
+        if (objectData == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty.xxxxxxxxx");
         }
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode translatedRootNode = null;
         try {
-            JsonNode rootNode = objectMapper.readTree(object);
+            JsonNode rootNode = objectMapper.readTree(String.valueOf(objectData));
             translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode);
             String translatedJsonString = translatedRootNode.toString();
             System.out.println("Translated JSON:\n" + translatedJsonString);
