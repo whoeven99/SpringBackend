@@ -12,7 +12,10 @@ public class CharacterCountUtils {
     public void addChars(int chars) {
         totalChars.addAndGet(chars); // 原子性地增加字符数
     }
-
+    //原子性地减少字符数
+    public void subtractChars(int chars) {
+        totalChars.addAndGet(-chars); // 原子性地减少字符数
+    }
     public int getTotalChars() {
         return totalChars.get(); // 获取当前总的字符数
     }

@@ -19,27 +19,6 @@
             "value": "This <b>PREMIUM</b> <i>snowboard</i> is so <b>SUPER</b><i>DUPER</i> awesome!"
           },
           {
-            "digest": "b9e415b8244299d0c078316350ae15a457c9294a1f4434757ceb9776b4e9ce6b",
-            "key": "handle",
-            "type": "URI",
-            "locale": "en",
-            "value": "the-complete-snowboard"
-          },
-          {
-            "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
-            "key": "product_type",
-            "type": "SINGLE_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "snowboard"
-          },
-          {
-            "digest": "08f5131204e2698449311e485f4a751517174762f2017a06ee94541aa6ea974b",
-            "key": "meta_title",
-            "type": "MULTI_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "Complete Snowboard"
-          },
-          {
             "digest": "9140fc1ec20a34a474a569bfaeb6a2fa29d96dcdf7a7bf21becaa31269042b67",
             "key": "meta_description",
             "type": "MULTI_LINE_TEXT_FIELD",
@@ -59,27 +38,6 @@
             "value": "The Hidden Snowboard"
           },
           {
-            "digest": "7ab8f2a2ec02ad6998e53c5981ad2499157f1def46bff467cf338bc2b76adaab",
-            "key": "handle",
-            "type": "URI",
-            "locale": "en",
-            "value": "the-hidden-snowboard"
-          },
-          {
-            "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
-            "key": "product_type",
-            "type": "SINGLE_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "snowboard"
-          },
-          {
-            "digest": "b500ab3ba30fd21293dc6b80fe3a84f943054691d3ab43b0a1bcb4c7847605ed",
-            "key": "meta_title",
-            "type": "MULTI_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "Hidden Snowboard"
-          },
-          {
             "digest": "2ba6f5bb0e41792acbbeb0b952cad18137f771244584499ec9b0fad2430e5c08",
             "key": "meta_description",
             "type": "MULTI_LINE_TEXT_FIELD",
@@ -92,19 +50,17 @@
         "translations": [],
         "translatableContent": [
           {
-            "digest": "870a40ec2b30518bc436cc36a45838ba081a602993d30e1d75d3d8588846b1f8",
-            "key": "title",
+            "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
+            "key": "product_type",
             "type": "SINGLE_LINE_TEXT_FIELD",
             "locale": "en",
-            "value": "The Collection Snowboard: Hydrogen"
-          },
-          {
-            "digest": "1652b26285e60977d1cfaf03e4d146def52e9ec04af858cb23c25aecd49b356e",
-            "key": "handle",
-            "type": "URI",
-            "locale": "en",
-            "value": "the-collection-snowboard-hydrogen"
-          },
+            "value": "snowboard"
+          }
+        ]
+      },
+      {
+        "translations": [],
+        "translatableContent": [
           {
             "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
             "key": "product_type",
@@ -118,19 +74,17 @@
         "translations": [],
         "translatableContent": [
           {
-            "digest": "855bf33409ad62670b43173d4f6d5a18918f435f87b373fb05d3b69140d0d784",
-            "key": "title",
+            "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
+            "key": "product_type",
             "type": "SINGLE_LINE_TEXT_FIELD",
             "locale": "en",
-            "value": "The Archived Snowboard"
-          },
-          {
-            "digest": "4c0ff3aa7a327c173d5fff8d754492905d01442d41a3af7ece97016c83c249f9",
-            "key": "handle",
-            "type": "URI",
-            "locale": "en",
-            "value": "the-archived-snowboard"
-          },
+            "value": "snowboard"
+          }
+        ]
+      },
+      {
+        "translations": [],
+        "translatableContent": [
           {
             "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
             "key": "product_type",
@@ -144,20 +98,6 @@
         "translations": [],
         "translatableContent": [
           {
-            "digest": "135ec0a97967fb985fa5e13e99400d358f0cf77f74fb87f734bed8912e193843",
-            "key": "title",
-            "type": "SINGLE_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "The Draft Snowboard"
-          },
-          {
-            "digest": "4ab70b5da9e620adc8081003d6b9fa4c44a0859f206905568e435b254a0afb17",
-            "key": "handle",
-            "type": "URI",
-            "locale": "en",
-            "value": "the-draft-snowboard"
-          },
-          {
             "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
             "key": "product_type",
             "type": "SINGLE_LINE_TEXT_FIELD",
@@ -169,72 +109,6 @@
       {
         "translations": [],
         "translatableContent": [
-          {
-            "digest": "c949ef4b96ec2befa3217caeb06937cf7d934c6e1c656a6a85e2060a26d7c34e",
-            "key": "title",
-            "type": "SINGLE_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "The Compare at Price Snowboard"
-          },
-          {
-            "digest": "ec5d750f1a5e17ae7a98901a95eacf80b8a30b748c9704af2b0aaa036234dfe8",
-            "key": "handle",
-            "type": "URI",
-            "locale": "en",
-            "value": "the-compare-at-price-snowboard"
-          },
-          {
-            "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
-            "key": "product_type",
-            "type": "SINGLE_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "snowboard"
-          }
-        ]
-      },
-      {
-        "translations": [],
-        "translatableContent": [
-          {
-            "digest": "19f82e972c436a509558fe522ed64edffed5e0e8bc17dd87f822914d88ad07e6",
-            "key": "title",
-            "type": "SINGLE_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "The Out of Stock Snowboard"
-          },
-          {
-            "digest": "6e464762c3ee84a6a6e79483d31534169fc060760e9341cc76565a3df395d150",
-            "key": "handle",
-            "type": "URI",
-            "locale": "en",
-            "value": "the-out-of-stock-snowboard"
-          },
-          {
-            "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
-            "key": "product_type",
-            "type": "SINGLE_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "snowboard"
-          }
-        ]
-      },
-      {
-        "translations": [],
-        "translatableContent": [
-          {
-            "digest": "43a0ee61d168b8330a4e71f9f034be6513b1729f9190950ae11f30b2d048c142",
-            "key": "title",
-            "type": "SINGLE_LINE_TEXT_FIELD",
-            "locale": "en",
-            "value": "The Inventory Not Tracked Snowboard"
-          },
-          {
-            "digest": "3f55cf19fa37be24cf8030bebc35e9483c6ff462e4164f6f1fa5a565fab81319",
-            "key": "handle",
-            "type": "URI",
-            "locale": "en",
-            "value": "the-inventory-not-tracked-snowboard"
-          },
           {
             "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
             "key": "product_type",

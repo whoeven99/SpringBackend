@@ -1,7 +1,9 @@
 package com.bogdatech.repository;
 
 import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CamelToUnderscore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +16,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
-import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
+import static com.bogdatech.enums.ErrorEnum.*;
 
 @Component
 public class JdbcRepository {
@@ -98,4 +99,82 @@ public class JdbcRepository {
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
+
+    public BaseResponse readCharsByShopName(TranslationCounterRequest request) {
+        String sql = "SELECT id, shop_name, chars FROM TranslationCounter WHERE shop_name = ?";
+        Object[] info = {request.getShopName()};
+        List<TranslationCounterRequest> translatesDOS = readInfo(info, sql, TranslationCounterRequest.class);
+        if (translatesDOS.size() > 0){
+            return new BaseResponse().CreateSuccessResponse(translatesDOS);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+    }
+
+    public BaseResponse insertCharsByShopName(TranslationCounterRequest translationCounterRequest) {
+        String sql = "INSERT INTO TranslationCounter (shop_name, chars) VALUES (?, ?)";
+        Object[] info = {translationCounterRequest.getShopName(), translationCounterRequest.getChars()};
+        int result = CUDInfo(info, sql);
+        if (result > 0) {
+            return new BaseResponse().CreateSuccessResponse(result);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+    }
+
+    public BaseResponse updateCharsByShopName(TranslationCounterRequest translationCounterRequest) {
+        String sql = "UPDATE TranslationCounter SET chars = ? WHERE shop_name = ?";
+        Object[] info = {translationCounterRequest.getChars(), translationCounterRequest.getShopName()};
+        int result = CUDInfo(info, sql);
+        if (result > 0) {
+            return new BaseResponse().CreateSuccessResponse(result);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+    }
+
+    public BaseResponse insertCurrency(CurrencyRequest request)  {
+        // 准备SQL插入语句
+        String sql = "INSERT INTO Currencies (shop_name, country_name, currency_code, rounding, exchange_rate) VALUES (?, ?, ?, ?, ?)";
+        Object[] info = {request.getShopName(), request.getCountryName(), request.getCurrencyCode(), request.getRounding(), request.getExchangeRate()};
+        int result = CUDInfo(info, sql);
+        if (result > 0) {
+            return new BaseResponse().CreateSuccessResponse(result);
+        }
+        return new BaseResponse().CreateErrorResponse(SQL_INSERT_ERROR);
+    }
+
+    public BaseResponse updateCurrency(CurrencyRequest request) {
+        String sql = "UPDATE Currencies SET rounding = ?, exchange_rate = ? WHERE id = ?";
+        Object[] info = {request.getRounding(), request.getExchangeRate(), request.getId()};
+        int result = CUDInfo(info, sql);
+        if (result > 0) {
+            return new BaseResponse().CreateSuccessResponse(result);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
+
+    }
+
+    public BaseResponse deleteCurrency(CurrencyRequest request) {
+        String sql = "DELETE FROM Currencies  WHERE id = ?";
+        Object[] info = {request.getId()};
+        int result = CUDInfo(info, sql);
+        if (result > 0) {
+            return new BaseResponse().CreateSuccessResponse(result);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
+
+    }
+
+    public BaseResponse getCurrencyByShopName(CurrencyRequest request) {
+        String sql = "SELECT id, shop_name, country_name, currency_code, rounding, exchange_rate FROM Currencies  WHERE shop_name = ?";
+        Object[] info = {request.getShopName()};
+        List<CurrencyRequest> list = readInfo(info, sql, CurrencyRequest.class);
+        return new BaseResponse<>().CreateSuccessResponse(list);
+    }
+
+    public BaseResponse test(CurrencyRequest request) {
+        String sql = "SELECT id, shop_name, country_name, currency_code, rounding, exchange_rate FROM Currencies  WHERE shop_name = ?";
+        Object[] info = {request.getShopName()};
+        List<CurrencyRequest> list = readInfo(info, sql, CurrencyRequest.class);
+        return new BaseResponse<>().CreateSuccessResponse(list);
+    }
+
 }

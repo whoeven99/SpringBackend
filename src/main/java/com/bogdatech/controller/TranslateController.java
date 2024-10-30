@@ -11,6 +11,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.query.TestQuery;
 import com.bogdatech.repository.JdbcRepository;
+import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +35,7 @@ public class TranslateController {
     private JdbcRepository jdbcRepository;
     @Autowired
     private ShopifyHttpIntegration shopifyApiIntegration;
+
 
     @PostMapping("/translate")
     public BaseResponse translate(@RequestBody TranslatesDO request) {
@@ -105,7 +107,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/translateString")
     public BaseResponse translate(@RequestBody JSONObject request) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(request, "zh"));
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(request, new ShopifyRequest()));
     }
 
     /*
@@ -113,7 +115,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/translateJson")
     public BaseResponse translateJson(@RequestBody ShopifyRequest shopifyRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY), shopifyRequest.getTarget()));
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY), shopifyRequest));
     }
 
     /*
@@ -130,9 +132,28 @@ public class TranslateController {
             System.out.println(query);
             JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
             objectData.put(translateResource.getResourceType(), infoByShopify);
-            jsonNode = translateService.translateJson(infoByShopify, shopifyRequest.getTarget());
+            jsonNode = translateService.translateJson(infoByShopify, shopifyRequest);
         }
         System.out.println("objectData: " + objectData);
         System.out.println("jsonNode: " + jsonNode);
+    }
+
+    //测试计数器会不会因为同时调用接口而产生不同的数据
+    @GetMapping("testCount")
+    public void testCount() {
+        CharacterCountUtils counter = new CharacterCountUtils();
+        for (int i = 0; i < 50; i++) {
+            counter.addChars(1);
+            //睡眠1秒
+            try {
+                Thread.sleep(100);
+                System.out.println(Thread.currentThread().getName() + " Count: " + counter.getTotalChars() + " Thread ID: " + Thread.currentThread().getId() + " Time: " + System.currentTimeMillis());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Count1: " + counter.getTotalChars());
+        counter.reset();
+        System.out.println("Count2: " + counter.getTotalChars());
     }
 }
