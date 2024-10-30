@@ -68,6 +68,7 @@ public class TranslateApiIntegration {
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             // 获取响应实体并转换为JSON格式
             jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
+            System.out.println("翻译结果：" + jsonObject);
             // 获取翻译结果
             result = jsonObject.getJSONArray("trans_result").getJSONObject(0).getString("dst");
         } catch (IOException e) {
