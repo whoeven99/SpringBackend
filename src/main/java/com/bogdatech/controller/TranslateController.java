@@ -105,7 +105,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/translateString")
     public BaseResponse translate(@RequestBody JSONObject request) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(request));
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(request, "zh"));
     }
 
     /*
@@ -113,20 +113,24 @@ public class TranslateController {
      */
     @PostMapping("/translate/translateJson")
     public BaseResponse translateJson(@RequestBody ShopifyRequest shopifyRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY)));
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY), shopifyRequest.getTarget()));
     }
 
+    /*
+     *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
+     */
     @GetMapping("testFor")
     public void test(@RequestBody ShopifyRequest shopifyRequest) {
         JSONObject objectData = new JSONObject();
         JsonNode jsonNode = null;
         for (TranslateResourceDTO translateResource : translationResources) {
             TestQuery testQuery = new TestQuery();
+            translateResource.setTarget(shopifyRequest.getTarget());
             String query = testQuery.getTestQuery(translateResource);
             System.out.println(query);
             JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
             objectData.put(translateResource.getResourceType(), infoByShopify);
-            jsonNode = translateService.translateJson(infoByShopify);
+            jsonNode = translateService.translateJson(infoByShopify, shopifyRequest.getTarget());
         }
         System.out.println("objectData: " + objectData);
         System.out.println("jsonNode: " + jsonNode);
