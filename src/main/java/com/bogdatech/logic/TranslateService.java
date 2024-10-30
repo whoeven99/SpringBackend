@@ -139,7 +139,7 @@ public class TranslateService {
             InputStream inputStream = resource.getInputStream();
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(inputStream);
-            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode);
+            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode, "zh");
             String translatedJsonString = translatedRootNode.toString();
             System.out.println("Translated JSON:\n" + translatedJsonString);
         } catch (IOException e) {
@@ -149,7 +149,7 @@ public class TranslateService {
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    public JsonNode translateJson(JSONObject objectData){
+    public JsonNode translateJson(JSONObject objectData, String target){
         if (objectData == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty.xxxxxxxxx");
         }
@@ -157,7 +157,7 @@ public class TranslateService {
         JsonNode translatedRootNode = null;
         try {
             JsonNode rootNode = objectMapper.readTree(objectData.toJSONString());
-            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode);
+            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode, target);
             String translatedJsonString = translatedRootNode.toString();
             System.out.println("Translated JSON:\n" + translatedJsonString);
         } catch (JsonProcessingException e) {
@@ -166,42 +166,43 @@ public class TranslateService {
         return translatedRootNode;
     }
     //根据key找value
-    private JsonNode translateSingleLineTextFieldsRecursively(JsonNode node) {
+    private JsonNode translateSingleLineTextFieldsRecursively(JsonNode node, String target) {
         if (node.isObject()) {
             ObjectNode objectNode = (ObjectNode) node;
             node.fieldNames().forEachRemaining(fieldName -> {
                 JsonNode fieldValue = node.get(fieldName);
                 if ("translatableContent".equals(fieldName)) {
-                    ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue);
+                    ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue, target);
                     objectNode.set(fieldName, translatedContent);
                 } else {
-                    objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue));
+                    objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue, target));
                 }
             });
         } else if (node.isArray()) {
             ArrayNode arrayNode = (ArrayNode) node;
             for (int i = 0; i < node.size(); i++) {
                 JsonNode element = node.get(i);
-                arrayNode.set(i, translateSingleLineTextFieldsRecursively(element));
+                arrayNode.set(i, translateSingleLineTextFieldsRecursively(element, target));
             }
         }
         return node;
     }
 
     //找到符合条件的value翻译
-    private ArrayNode translateSingleLineTextFields(ArrayNode contentNode) {
+    private ArrayNode translateSingleLineTextFields(ArrayNode contentNode, String target) {
         ArrayNode translatedContent = new ObjectMapper().createArrayNode();
         contentNode.forEach(contentItem -> {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())
                     || "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
                 String value = contentItemNode.get("value").asText();
+                String source = contentItemNode.get("locale").asText();
                 //如果value为空，则不翻译
                 if (value == null || value.isEmpty()) {
                     return;
                 }
                 try {
-                    String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, "en", "zh", value));
+                    String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, target, value));
                     contentItemNode.put("value", translatedValue);
                 } catch (Exception e) {
                     e.printStackTrace();
