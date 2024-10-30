@@ -23,7 +23,7 @@ public class JdbcRepository {
     @Autowired
     private Connection connection;
 
-
+    //对sql增删改的操作
     public int CUDInfo(Object[] info, String sql){
         try (PreparedStatement cudStatement = connection.prepareStatement(sql);) {
             for (int i = 0; i < info.length; i++) {
@@ -37,6 +37,7 @@ public class JdbcRepository {
         }
     }
 
+    //对sql查询的操作
     public <T> List<T> readInfo(Object[] info,String sql,Class<T> clazz){
 
         try (PreparedStatement selectStatement = connection.prepareStatement(sql);) {
@@ -65,7 +66,7 @@ public class JdbcRepository {
     }
 
     public BaseResponse insertShopTranslateInfo(TranslateRequest request) {
-        String sql = "INSERT INTO Translates (shop_name, access_token, source, target) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO Translates (shop_name, access_token, source, target) VALUES (?, ?, ?, ?)";//TODO token应该加密存入sql
         Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget()};
         int result = CUDInfo(info, sql);
         if (result > 0) {
