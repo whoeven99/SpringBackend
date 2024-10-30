@@ -1,5 +1,6 @@
 package com.bogdatech.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.query.ShopifyQuery;
@@ -20,7 +21,7 @@ public class ShopifyController {
     }
 
     @PostMapping("/shopify/getInfoByShopify")
-    public String getInfoByShopify(@RequestBody ShopifyRequest shopifyRequest) {
+    public JSONObject getInfoByShopify(@RequestBody ShopifyRequest shopifyRequest) {
         return shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY);
     }
 

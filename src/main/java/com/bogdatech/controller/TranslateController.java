@@ -1,5 +1,6 @@
 package com.bogdatech.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
@@ -81,6 +82,12 @@ public class TranslateController {
 
     @PostMapping("/translate/translateJson")
     public BaseResponse translateJson(@RequestBody ShopifyRequest shopifyRequest) {
+//        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY)));
         return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY)));
+    }
+
+    @PostMapping("/translate/translateString")
+    public BaseResponse translate(@RequestBody JSONObject request) {
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(request));
     }
 }
