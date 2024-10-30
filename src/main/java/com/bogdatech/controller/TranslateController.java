@@ -11,6 +11,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.query.TestQuery;
 import com.bogdatech.repository.JdbcRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -116,15 +117,18 @@ public class TranslateController {
     }
 
     @GetMapping("testFor")
-    public void test() {
+    public void test(@RequestBody ShopifyRequest shopifyRequest) {
         JSONObject objectData = new JSONObject();
+        JsonNode jsonNode = null;
         for (TranslateResourceDTO translateResource : translationResources) {
             TestQuery testQuery = new TestQuery();
             String query = testQuery.getTestQuery(translateResource);
             System.out.println(query);
-            JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(new ShopifyRequest(), query);
+            JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
             objectData.put(translateResource.getResourceType(), infoByShopify);
+            jsonNode = translateService.translateJson(infoByShopify);
         }
-        System.out.println(objectData);
+        System.out.println("objectData: " + objectData);
+        System.out.println("jsonNode: " + jsonNode);
     }
 }
