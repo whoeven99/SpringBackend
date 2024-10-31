@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 import static com.bogdatech.entity.TranslateResourceDTO.translationResources;
+import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 
 @RestController
@@ -47,7 +48,11 @@ public class TranslateController {
      */
     @PostMapping("/translate/insertShopTranslateInfo")
     public BaseResponse insertShopTranslateInfo(@RequestBody TranslateRequest request) {
-        return jdbcRepository.insertShopTranslateInfo(request);
+        int result = jdbcRepository.insertShopTranslateInfo(request);
+        if (result > 0) {
+            return new BaseResponse().CreateSuccessResponse(result);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 
     /*
@@ -83,7 +88,11 @@ public class TranslateController {
      */
     @PostMapping("/translate/updateTranslateInfo")
     public BaseResponse readInfoByShopName(@RequestBody TranslateRequest request) {
-        return jdbcRepository.readInfoByShopName(request);
+         List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
+        if (translatesDOS.size() > 0){
+            return new BaseResponse().CreateSuccessResponse(translatesDOS);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
     /*
@@ -107,7 +116,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/translateString")
     public BaseResponse translate(@RequestBody JSONObject request) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(request, new ShopifyRequest()));
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(request, new ShopifyRequest(), new TranslateResourceDTO()));
     }
 
     /*
@@ -115,7 +124,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/translateJson")
     public BaseResponse translateJson(@RequestBody ShopifyRequest shopifyRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY), shopifyRequest));
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(shopifyApiIntegration.getInfoByShopify(shopifyRequest, ShopifyQuery.PRODUCT2_QUERY), shopifyRequest, new TranslateResourceDTO()));
     }
 
     /*
@@ -132,7 +141,7 @@ public class TranslateController {
             System.out.println(query);
             JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
             objectData.put(translateResource.getResourceType(), infoByShopify);
-            jsonNode = translateService.translateJson(infoByShopify, shopifyRequest);
+            jsonNode = translateService.translateJson(infoByShopify, shopifyRequest, translateResource);
         }
         System.out.println("objectData: " + objectData);
         System.out.println("jsonNode: " + jsonNode);

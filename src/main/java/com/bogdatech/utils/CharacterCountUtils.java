@@ -23,4 +23,6 @@ public class CharacterCountUtils {
     public void reset() {
         totalChars.set(0); // 重置计数器
     }
+
+
 }

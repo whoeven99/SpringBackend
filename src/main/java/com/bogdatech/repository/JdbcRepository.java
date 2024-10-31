@@ -25,7 +25,7 @@ public class JdbcRepository {
     private Connection connection;
 
     //对sql增删改的操作
-    public int CUDInfo(Object[] info, String sql){
+    public int CUDInfo(Object[] info, String sql) {
         try (PreparedStatement cudStatement = connection.prepareStatement(sql);) {
             for (int i = 0; i < info.length; i++) {
                 cudStatement.setObject(i + 1, info[i]);
@@ -39,7 +39,7 @@ public class JdbcRepository {
     }
 
     //对sql查询的操作
-    public <T> List<T> readInfo(Object[] info,String sql,Class<T> clazz){
+    public <T> List<T> readInfo(Object[] info, String sql, Class<T> clazz) {
 
         try (PreparedStatement selectStatement = connection.prepareStatement(sql);) {
             for (int i = 0; i < info.length; i++) {
@@ -48,7 +48,7 @@ public class JdbcRepository {
             // 执行查询
             ResultSet resultSet = selectStatement.executeQuery();
             // 处理结果集
-           List<T> list = new ArrayList<T>();
+            List<T> list = new ArrayList<T>();
             while (resultSet.next()) {
                 T t = clazz.newInstance();
                 for (Field field : clazz.getDeclaredFields()) {
@@ -66,71 +66,56 @@ public class JdbcRepository {
 
     }
 
-    public BaseResponse insertShopTranslateInfo(TranslateRequest request) {
+    public int insertShopTranslateInfo(TranslateRequest request) {
         String sql = "INSERT INTO Translates (shop_name, access_token, source, target) VALUES (?, ?, ?, ?)";//TODO token应该加密存入sql
         Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget()};
         int result = CUDInfo(info, sql);
-        if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+        return result;
     }
 
-    public List<TranslatesDO> readTranslateInfo(int status){
+    public List<TranslatesDO> readTranslateInfo(int status) {
         String sql = "SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE status = ?";
         Object[] info = {status};
-        List<TranslatesDO> list =  readInfo(info, sql, TranslatesDO.class);
+        List<TranslatesDO> list = readInfo(info, sql, TranslatesDO.class);
         return list;
     }
 
-    public int updateTranslateStatus(int id, int status){
+    public int updateTranslateStatus(int id, int status) {
         String sql = "UPDATE Translates SET status = ? WHERE id = ?";
         Object[] info = {status, id};
         int result = CUDInfo(info, sql);
         return result;
     }
 
-    public BaseResponse readInfoByShopName(TranslateRequest request) {
+    public List<TranslatesDO> readInfoByShopName(TranslateRequest request) {
         String sql = "SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE shop_name = ?";
         Object[] info = {request.getShopName()};
         List<TranslatesDO> translatesDOS = readInfo(info, sql, TranslatesDO.class);
-        if (translatesDOS.size() > 0){
-            return new BaseResponse().CreateSuccessResponse(translatesDOS);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+        return translatesDOS;
     }
 
-    public BaseResponse readCharsByShopName(TranslationCounterRequest request) {
+    public List<TranslationCounterRequest> readCharsByShopName(TranslationCounterRequest request) {
         String sql = "SELECT id, shop_name, chars FROM TranslationCounter WHERE shop_name = ?";
         Object[] info = {request.getShopName()};
         List<TranslationCounterRequest> translatesDOS = readInfo(info, sql, TranslationCounterRequest.class);
-        if (translatesDOS.size() > 0){
-            return new BaseResponse().CreateSuccessResponse(translatesDOS);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+        return translatesDOS;
     }
 
-    public BaseResponse insertCharsByShopName(TranslationCounterRequest translationCounterRequest) {
+    public int insertCharsByShopName(TranslationCounterRequest translationCounterRequest) {
         String sql = "INSERT INTO TranslationCounter (shop_name, chars) VALUES (?, ?)";
         Object[] info = {translationCounterRequest.getShopName(), translationCounterRequest.getChars()};
         int result = CUDInfo(info, sql);
-        if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+        return result;
     }
 
-    public BaseResponse updateCharsByShopName(TranslationCounterRequest translationCounterRequest) {
+    public int updateCharsByShopName(TranslationCounterRequest translationCounterRequest) {
         String sql = "UPDATE TranslationCounter SET chars = ? WHERE shop_name = ?";
         Object[] info = {translationCounterRequest.getChars(), translationCounterRequest.getShopName()};
         int result = CUDInfo(info, sql);
-        if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+        return result;
     }
 
-    public BaseResponse insertCurrency(CurrencyRequest request)  {
+    public BaseResponse insertCurrency(CurrencyRequest request) {
         // 准备SQL插入语句
         String sql = "INSERT INTO Currencies (shop_name, country_name, currency_code, rounding, exchange_rate) VALUES (?, ?, ?, ?, ?)";
         Object[] info = {request.getShopName(), request.getCountryName(), request.getCurrencyCode(), request.getRounding(), request.getExchangeRate()};

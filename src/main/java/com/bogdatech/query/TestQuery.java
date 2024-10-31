@@ -6,7 +6,7 @@ public class TestQuery {
 
     public String getTestQuery(TranslateResourceDTO translateResourceDTO){
         String testQuery = "{\n" +
-                "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ") {\n" +
+                "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ", after: " + translateResourceDTO.getAfter() + ") {\n" +
                 "    nodes {\n" +
                 "      translations(locale: \""+ translateResourceDTO.getTarget() +"\") {\n" +
                 "        locale\n" +
