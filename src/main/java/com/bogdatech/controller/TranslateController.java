@@ -1,5 +1,6 @@
 package com.bogdatech.controller;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
@@ -164,5 +165,17 @@ public class TranslateController {
         System.out.println("Count1: " + counter.getTotalChars());
         counter.reset();
         System.out.println("Count2: " + counter.getTotalChars());
+    }
+
+    @GetMapping("testTranslate")
+    public void testTranslate() {
+        String text = "{\"data\":{\"translations\":[{\"translatedText\":\"你好汤姆\"}]}}";
+        JSONObject jsonObject = JSONObject.parseObject(text);
+        System.out.println("翻译结果：" + jsonObject);
+        // 获取翻译结果
+        JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
+        JSONObject translation = translationsArray.getJSONObject(0);
+        String result = translation.getString("translatedText");
+        System.out.println("翻译结果：" + result);
     }
 }
