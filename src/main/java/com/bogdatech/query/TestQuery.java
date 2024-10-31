@@ -31,7 +31,7 @@ public class TestQuery {
 
     public String getAfterQuery(TranslateResourceDTO translateResourceDTO){
         String testQuery = "{\n" +
-                "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ", after: " + translateResourceDTO.getAfter() + ") {\n" +
+                "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ", after: " + "'" + translateResourceDTO.getAfter() + "'"+") {\n" +
                 "    nodes {\n" +
                 "      translations(locale: \""+ translateResourceDTO.getTarget() +"\") {\n" +
                 "        locale\n" +

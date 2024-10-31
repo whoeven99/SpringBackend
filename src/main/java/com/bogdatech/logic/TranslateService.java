@@ -215,13 +215,14 @@ public class TranslateService {
         System.out.println("counter: " + counter.getTotalChars());
 
         // 递归处理下一页数据
-        System.out.println("我开始递归处理下一页数据");
+
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
         // 获取pageInfo节点
         JsonNode pageInfoNode = translatableResourcesNode.path("pageInfo");
         if (translatableResourcesNode.hasNonNull("pageInfo")) {
-            System.out.println("pageInfo: " + pageInfoNode.asText());
+            System.out.println("我开始递归处理下一页数据");
+            System.out.println("pageInfo: " + pageInfoNode);
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.get("endCursor");
                 System.out.println("endCursor: " + endCursor.asText());
