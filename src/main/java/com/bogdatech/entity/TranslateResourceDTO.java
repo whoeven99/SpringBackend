@@ -16,7 +16,8 @@ public class TranslateResourceDTO {
     public static final List<TranslateResourceDTO> translationResources = new ArrayList<>(Arrays.asList(
             new TranslateResourceDTO("ARTICLE", "2", "",""),
             new TranslateResourceDTO("BLOG", "2", "",""),
-            new TranslateResourceDTO("COLLECTION", "2", "", "")
+            new TranslateResourceDTO("COLLECTION", "2", "", ""),
+            new TranslateResourceDTO("DELIVERY_METHOD_DEFINITION", "2", "", "")
             //TODO 还有其他类型需要添加
     ));
 
