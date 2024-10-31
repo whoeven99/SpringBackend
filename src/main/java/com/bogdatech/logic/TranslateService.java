@@ -146,6 +146,9 @@ public class TranslateService {
 
     //模拟测试环境读取json数据，需要翻墙的数据都为死数据
     public JsonNode readJsonFile() {
+        String js = "111";
+        String myString = "\""+ js +"\"";
+        System.out.println(myString);
         //模拟传入shopifyRequest
         ShopifyRequest request = new ShopifyRequest();
         request.setTarget("jp");
@@ -189,6 +192,7 @@ public class TranslateService {
                 System.out.println("endCursor: " + endCursor.asText());
             }
         }
+
         return translatedRootNode;
     }
 
@@ -226,6 +230,8 @@ public class TranslateService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.get("endCursor");
                 System.out.println("endCursor: " + endCursor.asText());
+                String after = "'" + endCursor.asText() + "'";
+                System.out.println(after);
                 translateResourceDTO.setAfter(endCursor.asText());
                 translatedRootNode = translateNextPage(request, counter, translateResourceDTO);
             }
