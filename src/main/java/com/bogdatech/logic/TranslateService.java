@@ -230,8 +230,6 @@ public class TranslateService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.get("endCursor");
                 System.out.println("endCursor: " + endCursor.asText());
-                String after = "'" + endCursor.asText() + "'";
-                System.out.println(after);
                 translateResourceDTO.setAfter(endCursor.asText());
                 translatedRootNode = translateNextPage(request, counter, translateResourceDTO);
             }
@@ -339,14 +337,15 @@ public class TranslateService {
     //递归处理下一页数据
     private JsonNode translateNextPage(ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResource) {
         JsonNode nextPageData = fetchNextPage(translateResource,request);
-        System.out.println("我来到翻页查询界面了");
+        System.out.println("重新开始翻译流程");
         // 重新开始翻译流程
         JsonNode translatedNextPage = translateSingleLineTextFieldsRecursively(nextPageData, request, counter);
         // 递归处理下一页数据
-        if (nextPageData.hasNonNull("pageInfo")) {
-            JsonNode pageInfo = nextPageData.get("pageInfo");
-            if (pageInfo.hasNonNull("hasNextPage") && pageInfo.get("hasNextPage").asBoolean()) {
-                JsonNode newEndCursor = pageInfo.get("endCursor");
+        JsonNode translatableResourcesNode = translatedNextPage.path("translatableResources");
+        if (translatableResourcesNode.hasNonNull("pageInfo")) {
+            JsonNode pageInfo = translatableResourcesNode.path("pageInfo");
+            if (pageInfo.hasNonNull("hasNextPage") && pageInfo.path("hasNextPage").asBoolean()) {
+                JsonNode newEndCursor = pageInfo.path("endCursor");
                 translateResource.setAfter(newEndCursor.asText());
                 return translateNextPage(request, counter, translateResource);
             }

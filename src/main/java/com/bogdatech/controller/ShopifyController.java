@@ -17,7 +17,7 @@ public class ShopifyController {
 
     @PostMapping("/shopify/getIdByShopifyRequest")
     public String getIdByShopifyRequest(@RequestBody ShopifyRequest shopifyRequest) {
-        return shopifyApiIntegration.sendShopifyPost(shopifyRequest, TestQuery.TEST_QUERY);
+        return shopifyApiIntegration.sendShopifyPost(shopifyRequest, TestQuery.TEST_QUERY,null);
     }
 
     @PostMapping("/shopify/getInfoByShopify")

@@ -12,12 +12,13 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class ShopifyHttpIntegration {
-
+    // 设置头部信息
     //查询数据
-    public String sendShopifyPost(ShopifyRequest request, String stringQuery) {
+    public String sendShopifyPost(ShopifyRequest request, String stringQuery, Map<String, Object> variables) {
         String url = "https://" + request.getShopName() + "/admin/api/" + request.getApiVersion() + "/graphql.json";
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
@@ -30,6 +31,9 @@ public class ShopifyHttpIntegration {
         query.put("query",
                 stringQuery
         );
+        if (variables != null && !variables.isEmpty()) {
+            query.put("variables", new JSONObject(variables));
+        }
         String responseContent = null;
         try {
             // 将查询体设置到实体中
@@ -50,17 +54,11 @@ public class ShopifyHttpIntegration {
     }
 
     public JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {
-        String string = sendShopifyPost(shopifyRequest, query);
+        String string = sendShopifyPost(shopifyRequest, query, null);
         JSONObject jsonObject = JSONObject.parseObject(string);
         return jsonObject.getJSONObject("data");
     }
 
-    //将数据存入shopify中
-    public String writeToShopify(ShopifyRequest shopifyRequest, String query) {
-
-
-        return null;
-    }
 }
 
 
