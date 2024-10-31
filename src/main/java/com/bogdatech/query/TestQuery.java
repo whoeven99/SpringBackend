@@ -53,6 +53,22 @@ public class TestQuery {
                 "}";
         return testQuery;
     }
+
+    public String registerTransactionQuery(){
+        String registerTransactionQuery = "mutation translationsRegister($resourceId: ID!, $translations: [TranslationInput!]!) {\n" +
+                "  translationsRegister(resourceId: $resourceId, translations: $translations) {\n" +
+                "    userErrors {\n" +
+                "      message\n" +
+                "      field\n" +
+                "    }\n" +
+                "    translations {\n" +
+                "      key\n" +
+                "      value\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        return registerTransactionQuery;
+    }
     public static final String TEST_QUERY = "{" +
             "    shopLocales {" +
             "        name" +

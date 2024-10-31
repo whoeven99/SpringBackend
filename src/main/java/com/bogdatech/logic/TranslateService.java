@@ -202,7 +202,7 @@ public class TranslateService {
         CharacterCountUtils counter = createCounter(request);
 
         if (objectData == null) {
-            throw new IllegalArgumentException("Argument 'content' cannot be null or empty.xxxxxxxxx");
+            throw new IllegalArgumentException("Argument 'content' cannot be null or empty.");
         }
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode translatedRootNode = null;
