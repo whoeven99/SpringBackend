@@ -169,6 +169,26 @@ public class TranslateService {
         System.out.println("counter: " + counter.getTotalChars());
         jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
         System.out.println("counter: " + counter.getTotalChars());
+        System.out.println("translatedRootNode: " + translatedRootNode);
+
+        //获取translatableResources的节点
+        JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
+        System.out.println("translatableResourcesNode: " + translatableResourcesNode);
+        // 获取pageInfo节点
+        JsonNode pageInfoNode = translatableResourcesNode.path("pageInfo");
+        System.out.println("pageInfo2: " + pageInfoNode);
+       //获取hasNextPage
+        JsonNode hasNextPage = pageInfoNode.path("hasNextPage");
+        System.out.println("hasNextPage: " + hasNextPage.toString());
+        System.out.println("12312321: " + translatedRootNode.hasNonNull("pageInfo"));
+        if (translatableResourcesNode.hasNonNull("pageInfo")) {
+            JsonNode pageInfo = translatableResourcesNode.get("pageInfo");
+            System.out.println("pageInfo: " + pageInfo);
+            if (pageInfo.hasNonNull("hasNextPage") && pageInfo.get("hasNextPage").asBoolean()) {
+                JsonNode endCursor = pageInfo.get("endCursor");
+                System.out.println("endCursor: " + endCursor.asText());
+            }
+        }
         return translatedRootNode;
     }
 
@@ -196,11 +216,14 @@ public class TranslateService {
 
         // 递归处理下一页数据
         System.out.println("我开始递归处理下一页数据");
-        if (translatedRootNode.hasNonNull("pageInfo")) {
-            JsonNode pageInfo = translatedRootNode.get("pageInfo");
-            System.out.println("pageInfo: " + pageInfo.asText());
-            if (pageInfo.hasNonNull("hasNextPage") && pageInfo.get("hasNextPage").asBoolean()) {
-                JsonNode endCursor = pageInfo.get("endCursor");
+        // 获取translatableResources节点
+        JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
+        // 获取pageInfo节点
+        JsonNode pageInfoNode = translatableResourcesNode.path("pageInfo");
+        if (translatableResourcesNode.hasNonNull("pageInfo")) {
+            System.out.println("pageInfo: " + pageInfoNode.asText());
+            if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
+                JsonNode endCursor = pageInfoNode.get("endCursor");
                 System.out.println("endCursor: " + endCursor.asText());
                 translateResourceDTO.setAfter(endCursor.asText());
                 translatedRootNode = translateNextPage(request, counter, translateResourceDTO);
@@ -292,7 +315,7 @@ public class TranslateService {
         String query = testQuery.getAfterQuery(translateResource);
         System.out.println(query);
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, query);
-
+        System.out.println("infoByShopify = " + infoByShopify);
         if (infoByShopify == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty.xxxxxxxxx");
         }
