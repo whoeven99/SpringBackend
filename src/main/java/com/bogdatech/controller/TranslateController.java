@@ -176,7 +176,7 @@ public class TranslateController {
         variables.put("resourceId", "gid://shopify/DeliveryMethodDefinition/634794770682");
         variables.put("translations", new Object[]{
                 new HashMap<String, Object>() {{
-                    put("locale", "zh");
+                    put("locale", "ja");
                     put("key", "name");
                     put("value", "经济1");
                     put("translatableContentDigest", "c1d078d516dd7c8b81f32827069816db43529642eb82f071a8b2ffa261567dda");
