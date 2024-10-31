@@ -1,5 +1,6 @@
 package com.bogdatech.integration;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -101,7 +102,9 @@ public class TranslateApiIntegration {
                 jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
                 System.out.println("翻译结果：" + jsonObject);
                 // 获取翻译结果
-                result = jsonObject.getJSONObject("translations").getJSONObject("translatedText").toString();
+                JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
+                JSONObject translation = translationsArray.getJSONObject(0);
+                result = translation.getString("translatedText");
             }
         } catch (IOException e) {
             return e.toString();
