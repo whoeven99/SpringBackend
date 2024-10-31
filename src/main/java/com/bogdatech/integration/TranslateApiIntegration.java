@@ -101,7 +101,7 @@ public class TranslateApiIntegration {
                 jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
                 System.out.println("翻译结果：" + jsonObject);
                 // 获取翻译结果
-                result = jsonObject.getJSONArray("translations").getJSONObject(0).getString("translatedText");
+                result = jsonObject.getJSONObject("translations").getJSONObject("translatedText").toString();
             }
         } catch (IOException e) {
             return e.toString();
