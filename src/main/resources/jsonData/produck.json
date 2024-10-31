@@ -39,6 +39,10 @@
           }
         ]
       }
-    ]
+    ],
+    "pageInfo": {
+      "hasNextPage": true,
+      "endCursor": "eyJsYXN0X2lkIjo0MzExMDQxMzEzMjIsImxhc3RfdmFsdWUiOiI0MzExMDQxMzEzMjIifQ=="
+    }
   }
 }
