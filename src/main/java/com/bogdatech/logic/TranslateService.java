@@ -195,8 +195,10 @@ public class TranslateService {
         System.out.println("counter: " + counter.getTotalChars());
 
         // 递归处理下一页数据
+        System.out.println("我开始递归处理下一页数据");
         if (translatedRootNode.hasNonNull("pageInfo")) {
             JsonNode pageInfo = translatedRootNode.get("pageInfo");
+            System.out.println("pageInfo: " + pageInfo.asText());
             if (pageInfo.hasNonNull("hasNextPage") && pageInfo.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfo.get("endCursor");
                 System.out.println("endCursor: " + endCursor.asText());
@@ -307,6 +309,7 @@ public class TranslateService {
     //递归处理下一页数据
     private JsonNode translateNextPage(ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResource) {
         JsonNode nextPageData = fetchNextPage(translateResource,request);
+        System.out.println("我来到翻页查询界面了");
         // 重新开始翻译流程
         JsonNode translatedNextPage = translateSingleLineTextFieldsRecursively(nextPageData, request, counter);
         // 递归处理下一页数据
