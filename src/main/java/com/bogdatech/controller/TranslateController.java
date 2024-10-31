@@ -182,7 +182,7 @@ public class TranslateController {
                     put("translatableContentDigest", "c1d078d516dd7c8b81f32827069816db43529642eb82f071a8b2ffa261567dda");
                 }}
         });
-        System.out.println("value1: " + variables.get("value"));
+        System.out.println("value1: " + variables.get("translations"));
         String string = shopifyApiIntegration.registerTransaction(shopifyRequest, testQuery.registerTransactionQuery(), variables);
         System.out.println("string: " + string);
     }
