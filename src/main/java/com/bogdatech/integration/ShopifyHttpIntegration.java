@@ -59,7 +59,11 @@ public class ShopifyHttpIntegration {
         return jsonObject.getJSONObject("data");
     }
 
-
+    public String registerTransaction(ShopifyRequest request, String stringQuery, Map<String, Object> variables){
+        String string = sendShopifyPost(request, stringQuery, variables);
+        JSONObject jsonObject = JSONObject.parseObject(string);
+        return jsonObject.getString("data");
+    }
 }
 
 

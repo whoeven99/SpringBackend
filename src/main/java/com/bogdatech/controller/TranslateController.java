@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
@@ -20,7 +19,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.entity.TranslateResourceDTO.translationResources;
 import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
@@ -73,8 +74,8 @@ public class TranslateController {
     }
 
     /*
-    * 读取所有的翻译状态信息
-    */
+     * 读取所有的翻译状态信息
+     */
     @PostMapping("/translate/readTranslateInfo")
     public BaseResponse readTranslateInfo(@RequestBody TranslatesDO request) {
         List<TranslatesDO> list = jdbcRepository.readTranslateInfo(request.getStatus());
@@ -89,8 +90,8 @@ public class TranslateController {
      */
     @PostMapping("/translate/updateTranslateInfo")
     public BaseResponse readInfoByShopName(@RequestBody TranslateRequest request) {
-         List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
-        if (translatesDOS.size() > 0){
+        List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
+        if (translatesDOS.size() > 0) {
             return new BaseResponse().CreateSuccessResponse(translatesDOS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
@@ -109,7 +110,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/readJsonFile")
     public BaseResponse userBDTranslateJson() {
-        return new BaseResponse<>().CreateSuccessResponse( translateService.readJsonFile());
+        return new BaseResponse<>().CreateSuccessResponse(translateService.readJsonFile());
     }
 
     /*
@@ -167,15 +168,21 @@ public class TranslateController {
         System.out.println("Count2: " + counter.getTotalChars());
     }
 
-    @GetMapping("testTranslate")
-    public void testTranslate() {
-        String text = "{\"data\":{\"translations\":[{\"translatedText\":\"你好汤姆\"}]}}";
-        JSONObject jsonObject = JSONObject.parseObject(text);
-        System.out.println("翻译结果：" + jsonObject);
-        // 获取翻译结果
-        JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
-        JSONObject translation = translationsArray.getJSONObject(0);
-        String result = translation.getString("translatedText");
-        System.out.println("翻译结果：" + result);
+    @PostMapping("testUpdate")
+    public void testUpdate(@RequestBody ShopifyRequest shopifyRequest) {
+        TestQuery testQuery = new TestQuery();
+        // 构建GraphQL请求体
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("resourceId", "gid://shopify/DeliveryMethodDefinition/634794770682");
+        variables.put("translations", new Object[]{
+                new HashMap<String, Object>() {{
+                    put("locale", "zh");
+                    put("key", "name");
+                    put("value", "经济1");
+                    put("translatableContentDigest", "c1d078d516dd7c8b81f32827069816db43529642eb82f071a8b2ffa261567dda");
+                }}
+        });
+        String string = shopifyApiIntegration.registerTransaction(shopifyRequest, testQuery.registerTransactionQuery(), variables);
+        System.out.println("string: " + string);
     }
 }
