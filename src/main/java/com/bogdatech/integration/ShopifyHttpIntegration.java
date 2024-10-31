@@ -31,10 +31,11 @@ public class ShopifyHttpIntegration {
         query.put("query",
                 stringQuery
         );
+        System.out.println("variables: " + variables);
         if (variables != null && !variables.isEmpty()) {
             query.put("variables", new JSONObject(variables));
         }
-        System.out.println("value2: " + variables.get("value"));
+        System.out.println("value2: " + variables.get("translations"));
         String responseContent = null;
         try {
             // 将查询体设置到实体中
