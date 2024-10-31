@@ -34,6 +34,7 @@ public class ShopifyHttpIntegration {
         if (variables != null && !variables.isEmpty()) {
             query.put("variables", new JSONObject(variables));
         }
+        System.out.println("value2: " + variables.get("value"));
         String responseContent = null;
         try {
             // 将查询体设置到实体中
@@ -42,7 +43,8 @@ public class ShopifyHttpIntegration {
 
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
-            responseContent = EntityUtils.toString(entity, "UTF-8");
+            responseContent = EntityUtils.toString(entity);
+            System.out.println("responseContent: " + responseContent);
             response.close();
             httpClient.close();
         } catch (IOException e) {
