@@ -212,6 +212,13 @@ public class TranslateService {
             ObjectNode objectNode = (ObjectNode) node;
             node.fieldNames().forEachRemaining(fieldName -> {
                 JsonNode fieldValue = node.get(fieldName);
+                if ("translations".equals(fieldName)) {
+                    //如果不为空，就不翻译
+                    if (!fieldValue.isNull()) {
+                        // translations 字段不为空，不进行翻译
+                        return;
+                    }
+                }
                 if ("translatableContent".equals(fieldName)) {
                     //达到字符限制，更新用户剩余字符数，终止循环
                     updateCharsWhenExceedLimit(counter,request.getShopName());
@@ -280,7 +287,7 @@ public class TranslateService {
     //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource,ShopifyRequest request) {
         TestQuery testQuery = new TestQuery();
-        String query = testQuery.getTestQuery(translateResource);
+        String query = testQuery.getAfterQuery(translateResource);
         System.out.println(query);
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, query);
 
