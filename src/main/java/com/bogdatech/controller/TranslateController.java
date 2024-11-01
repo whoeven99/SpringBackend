@@ -40,7 +40,7 @@ public class TranslateController {
     @Autowired
     private ShopifyHttpIntegration shopifyApiIntegration;
 
-    private TelemetryClient appInsights;
+    private TelemetryClient appInsights = new TelemetryClient();
 
     @PostMapping("/translate")
     public BaseResponse translate(@RequestBody TranslatesDO request) {

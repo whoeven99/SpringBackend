@@ -18,7 +18,7 @@ import java.util.Map;
 
 @Component
 public class ShopifyHttpIntegration {
-    private TelemetryClient appInsights;
+    private TelemetryClient appInsights = new TelemetryClient();
     // 设置头部信息
     //查询数据
     public String sendShopifyPost(ShopifyRequest request, String stringQuery, Map<String, Object> variables) {
@@ -45,6 +45,7 @@ public class ShopifyHttpIntegration {
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity);
+            appInsights.trackTrace("发送shopifyAPI请求");
             appInsights.trackTrace("responseContent: " + responseContent);
             response.close();
             httpClient.close();
