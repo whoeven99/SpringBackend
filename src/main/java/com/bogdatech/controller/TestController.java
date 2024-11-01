@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 
 import com.bogdatech.integration.ChatGptIntegration;
+import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.JdbcTestModel;
 import com.bogdatech.repository.JdbcTestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,9 @@ public class TestController {
 	@Autowired
 	private ChatGptIntegration chatGptIntegration;
 
+	@Autowired
+	private EmailIntegration emailIntegration;
+
 	@GetMapping("/test")
 	public List<JdbcTestModel> test() {
 		return jdbcTestRepository.sqlTest();
@@ -34,4 +38,11 @@ public class TestController {
 	public String chat(@RequestParam String prompt) {
 		return chatGptIntegration.chatWithGpt(prompt);
 	}
+
+	@GetMapping("/emailTest")
+	public String emailTest() {
+		emailIntegration.sendEmail();
+		return "OK";
+	}
+
 }
