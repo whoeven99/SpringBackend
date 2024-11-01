@@ -30,7 +30,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
 
@@ -242,6 +244,13 @@ public class TranslateService {
             ObjectNode objectNode = (ObjectNode) node;
             node.fieldNames().forEachRemaining(fieldName -> {
                 JsonNode fieldValue = node.get(fieldName);
+                //获取resourceId的值
+                String resourceId = null;
+                if ("resourceId".equals(fieldName)) {
+                    resourceId = fieldValue.asText();
+                    // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
+                    System.out.println("Resource ID: " + resourceId);
+                }
                 if ("translations".equals(fieldName)) {
                     //如果不为空，就不翻译
                     if (!fieldValue.isNull()) {
@@ -252,7 +261,7 @@ public class TranslateService {
                 if ("translatableContent".equals(fieldName)) {
                     //达到字符限制，更新用户剩余字符数，终止循环
                     updateCharsWhenExceedLimit(counter,request.getShopName());
-                    ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue, request, counter);
+                    ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, resourceId);
                     objectNode.set(fieldName, translatedContent);
                 } else {
                     objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue, request, counter));
@@ -269,12 +278,20 @@ public class TranslateService {
     }
 
     //对符合条件的 SINGLE_LINE_TEXT_FIELD和MULTI_LINE_TEXT_FIELD  类型的 value 进行翻译
-    private ArrayNode translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter) {
+    private ArrayNode translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId) {
         ArrayNode translatedContent = new ObjectMapper().createArrayNode();
+        //初始化存储到shopify本地的数据
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("resourceId", resourceId);
+        Map<String, Object> translations = new HashMap<>();
         contentNode.forEach(contentItem -> {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())
                     || "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
+                translations.put("locale", contentItemNode.get("locale").asText());
+                translations.put("key", contentItemNode.get("key").asText());
+                translations.put("translatableContentDigest", contentItemNode.get("digest").asText());
+
                 String value = contentItemNode.get("value").asText();
                 String source = contentItemNode.get("locale").asText();
                 //如果value为空，则不翻译
@@ -284,8 +301,13 @@ public class TranslateService {
                 try {
                     counter.subtractChars(value.length());
                     System.out.println("target: " + request.getTarget());
-//                    String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
-//                    contentItemNode.put("value", translatedValue);
+                    String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
+                    contentItemNode.put("value", translatedValue);
+                    translations.put("value", translatedValue);
+                    variables.put("translations", translations);
+                    System.out.println("translations: " + translations.toString());
+                    //将翻译后的内容通过ShopifyAPI记录到shopify本地
+                    shopifyApiIntegration.registerTransaction(request, variables);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -322,7 +344,7 @@ public class TranslateService {
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, query);
         System.out.println("infoByShopify = " + infoByShopify);
         if (infoByShopify == null) {
-            throw new IllegalArgumentException("Argument 'content' cannot be null or empty.xxxxxxxxx");
+            throw new IllegalArgumentException("Argument 'content' cannot be null or empty");
         }
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;

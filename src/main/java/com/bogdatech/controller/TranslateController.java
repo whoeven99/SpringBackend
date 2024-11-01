@@ -170,7 +170,6 @@ public class TranslateController {
 
     @PostMapping("testUpdate")
     public void testUpdate(@RequestBody ShopifyRequest shopifyRequest) {
-        TestQuery testQuery = new TestQuery();
         // 构建GraphQL请求体
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", "gid://shopify/DeliveryMethodDefinition/634794770682");
@@ -183,7 +182,7 @@ public class TranslateController {
                 }}
         });
 
-        String string = shopifyApiIntegration.registerTransaction(shopifyRequest, testQuery.registerTransactionQuery(), variables);
+        String string = shopifyApiIntegration.registerTransaction(shopifyRequest,  variables);
         System.out.println("string: " + string);
     }
 }
