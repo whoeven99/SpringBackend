@@ -31,17 +31,14 @@ public class ShopifyHttpIntegration {
         query.put("query",
                 stringQuery
         );
-        System.out.println("variables: " + variables);
         if (variables != null && !variables.isEmpty()) {
             query.put("variables", new JSONObject(variables));
         }
-        System.out.println("value2: " + variables.get("translations"));
         String responseContent = null;
         try {
             // 将查询体设置到实体中
-            StringEntity input = new StringEntity(query.toString());
+            StringEntity input = new StringEntity(query.toString(),"UTF-8");
             httpPost.setEntity(input);
-
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity);
@@ -65,7 +62,8 @@ public class ShopifyHttpIntegration {
     public String registerTransaction(ShopifyRequest request, String stringQuery, Map<String, Object> variables){
         String string = sendShopifyPost(request, stringQuery, variables);
         JSONObject jsonObject = JSONObject.parseObject(string);
-        return jsonObject.getString("data");
+//        return jsonObject.getString("data");
+        return null;
     }
 }
 
