@@ -299,7 +299,7 @@ public class TranslateService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())
                     || "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
-                translation.put("locale", contentItemNode.get("locale").asText());
+                translation.put("locale", request.getTarget());
                 translation.put("key", contentItemNode.get("key").asText());
                 translation.put("translatableContentDigest", contentItemNode.get("digest").asText());
 
