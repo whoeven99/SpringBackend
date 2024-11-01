@@ -4,6 +4,7 @@ package com.bogdatech.controller;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.model.JdbcTestModel;
 import com.bogdatech.repository.JdbcTestRepository;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +28,8 @@ public class TestController {
 
 	@GetMapping("/ping")
 	public String ping() {
+		TelemetryClient appInsights = new TelemetryClient();
+		appInsights.trackTrace("SpringBackend Ping Successful");
 		return "Ping Successful!";
 	}
 
