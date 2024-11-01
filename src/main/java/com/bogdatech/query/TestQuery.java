@@ -34,6 +34,7 @@ public class TestQuery {
         String testQuery = "{\n" +
                 "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ", after: " + "\"" + translateResourceDTO.getAfter() + "\"" + ") {\n" +
                 "    nodes {\n" +
+                "      resourceId" +
                 "      translations(locale: \"" + translateResourceDTO.getTarget() + "\") {\n" +
                 "        locale\n" +
                 "        value\n" +

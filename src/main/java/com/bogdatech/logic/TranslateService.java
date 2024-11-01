@@ -162,15 +162,45 @@ public class TranslateService {
             InputStream inputStream = resource.getInputStream();
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(inputStream);
-            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode, request, counter);
-            String translatedJsonString = translatedRootNode.toString();
-            System.out.println("Translated JSON:\n" + translatedJsonString);
+            //递归查询
+            if (true) {
+                String[] resourceId = new String[1]; // 使用单元素数组来存储 resourceId
+                rootNode.fieldNames().forEachRemaining(fieldName -> {
+                    JsonNode fieldValue = rootNode.get(fieldName);
+                    System.out.println("fieldName: " + fieldName + ", fieldValue: " + fieldValue);
+                    System.out.println("fieldValue: " + fieldValue);
+                    //获取resourceId的值
+                    if ("resourceId".equals(fieldName)) {
+                        resourceId[0] = fieldValue.asText();
+                        // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
+                        appInsights.trackTrace("Resource ID: " + resourceId[0]);
+                        System.out.println("Resource ID: " + resourceId[0]);
+                    }
+                    if ("translations".equals(fieldName)) {
+                        //如果不为空，就不翻译
+                        if (!fieldValue.isNull()) {
+                            // translations 字段不为空，不进行翻译
+                            return;
+                        }
+                    }
+                    if ("translatableContent".equals(fieldName)) {
+                        //达到字符限制，更新用户剩余字符数，终止循
+
+
+                    }
+                    System.out.println("翻译前：" + resourceId[0]);
+                });
+            }
+
+//            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode, request, counter);
+//            String translatedJsonString = translatedRootNode.toString();
+//            System.out.println("Translated JSON:\n" + translatedJsonString);
             System.out.println("NodeTree: \n" + rootNode);
         } catch (IOException e) {
             e.printStackTrace();
         }
         System.out.println("counter: " + counter.getTotalChars());
-        jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
+//        jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
         System.out.println("counter: " + counter.getTotalChars());
         System.out.println("translatedRootNode: " + translatedRootNode);
 
@@ -229,7 +259,7 @@ public class TranslateService {
                 if ("resourceId".equals(fieldName)) {
                     resourceId[0] = fieldValue.asText();
                     // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
-                    appInsights.trackTrace("Resource ID: " + resourceId[0]);
+                    appInsights.trackTrace("resourceId[0]: " + resourceId[0]);
                 }
                 if ("translations".equals(fieldName)) {
                     //如果不为空，就不翻译
