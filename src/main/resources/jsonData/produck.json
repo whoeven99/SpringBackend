@@ -2,47 +2,43 @@
   "translatableResources": {
     "nodes": [
       {
+        "resourceId": "gid://shopify/Article/590786724090",
         "translations": [],
         "translatableContent": [
           {
-            "digest": "cf50feb5c877d74ff8deff42d7447cbcd5229691e374b713b2a41f81efdf328b",
+            "type": "SINGLE_LINE_TEXT_FIELD",
+            "digest": "be477a4d5ad3d8faa1a569bd13df13d18d193d701593adcbe50e619f6e17357f",
             "key": "title",
-            "type": "SINGLE_LINE_TEXT_FIELD",
             "locale": "en",
-            "value": "The Complete Snowboard"
+            "value": "Blog about your latest products or deals"
           },
           {
-            "digest": "9c1f5299f9c4610a2bf475a82f7a08216253ea7e026e04da08771999ee96212c",
-            "key": "body_html",
             "type": "HTML",
+            "digest": "d4782806d073a5487e2c3083f8202904c8ba4fc9a4e48f79f8000f90ca4c987e",
+            "key": "body_html",
             "locale": "en",
-            "value": "This <b>PREMIUM</b> <i>snowboard</i> is so <b>SUPER</b><i>DUPER</i> awesome!"
+            "value": "Blog about your latest products or deals222<img src=\"https://cdn.shopify.com/s/files/1/0714/6959/6922/files/Main_b13ad453-477c-4ed1-9b43-81f3345adfd6_480x480.jpg?v=1722495813\" alt=\"Top and bottom view of a snowboard. The top view shows a stylized scene of water, trees, mountains,\n        sky and a moon in blue colours. The bottom view has a blue liquid, drippy background with the text “liquid” in\n        a stylized script typeface.\" data-mce-fragment=\"1\" data-mce-src=\"https://cdn.shopify.com/s/files/1/0714/6959/6922/files/Main_b13ad453-477c-4ed1-9b43-81f3345adfd6_480x480.jpg?v=1722495813\">"
           },
           {
-            "digest": "9140fc1ec20a34a474a569bfaeb6a2fa29d96dcdf7a7bf21becaa31269042b67",
-            "key": "meta_description",
-            "type": "MULTI_LINE_TEXT_FIELD",
+            "type": "HTML",
+            "digest": "6db6e2c82afbe10183119bf0d7705e1e8cf4d630bbee0602ab5352f70cd9962a",
+            "key": "summary_html",
             "locale": "en",
-            "value": "snowboard winter sport snowboarding"
-          }
-        ]
-      },
-      {
-        "translations": [],
-        "translatableContent": [
+            "value": "Blog about your latest products or deals333<img src=\"https://cdn.shopify.com/s/files/1/0714/6959/6922/files/wax-special_480x480.png?v=1722495813\" alt=\"A bar of purple wax\" data-mce-fragment=\"1\" data-mce-src=\"https://cdn.shopify.com/s/files/1/0714/6959/6922/files/wax-special_480x480.png?v=1722495813\">"
+          },
           {
-            "digest": "5bcb80d0681d6b5e42674b1b224318829266df06c58a0447d51ac6311fafae70",
-            "key": "product_type",
-            "type": "SINGLE_LINE_TEXT_FIELD",
+            "type": "URI",
+            "digest": "4138880b6caa89ab2ab42fee2743f40174915ca022eda5100e83d0f6073b32d4",
+            "key": "handle",
             "locale": "en",
-            "value": "snowboard"
+            "value": "blog-about-your-latest-products-or-deals"
           }
         ]
       }
     ],
     "pageInfo": {
-      "hasNextPage": true,
-      "endCursor": "eyJsYXN0X2lkIjo0MzExMDQxMzEzMjIsImxhc3RfdmFsdWUiOiI0MzExMDQxMzEzMjIifQ=="
+      "hasNextPage": false,
+      "endCursor": "eyJsYXN0X2lkIjo1OTA3ODY3MjQwOTAsImxhc3RfdmFsdWUiOiI1OTA3ODY3MjQwOTAifQ=="
     }
   }
 }
