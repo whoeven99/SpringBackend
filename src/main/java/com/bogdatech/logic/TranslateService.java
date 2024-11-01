@@ -224,12 +224,9 @@ public class TranslateService {
             node.fieldNames().forEachRemaining(fieldName -> {
                 JsonNode fieldValue = node.get(fieldName);
                 //获取resourceId的值
-                String resourceId = null;
-                if ("resourceId".equals(fieldName)) {
-                    resourceId = fieldValue.asText();
-                    // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
-                    appInsights.trackTrace("Resource ID: " + resourceId);
-                }
+                String resourceId = fieldValue.asText();
+                // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
+                appInsights.trackTrace("Resource ID: " + resourceId);
                 if ("translations".equals(fieldName)) {
                     //如果不为空，就不翻译
                     if (!fieldValue.isNull()) {
