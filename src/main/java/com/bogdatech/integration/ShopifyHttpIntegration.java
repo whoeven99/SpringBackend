@@ -3,6 +3,7 @@ package com.bogdatech.integration;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.query.TestQuery;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 @Component
 public class ShopifyHttpIntegration {
+    private TelemetryClient appInsights;
     // 设置头部信息
     //查询数据
     public String sendShopifyPost(ShopifyRequest request, String stringQuery, Map<String, Object> variables) {
@@ -43,7 +45,7 @@ public class ShopifyHttpIntegration {
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity);
-            System.out.println("responseContent: " + responseContent);
+            appInsights.trackTrace("responseContent: " + responseContent);
             response.close();
             httpClient.close();
         } catch (IOException e) {

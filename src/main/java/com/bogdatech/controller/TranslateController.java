@@ -13,6 +13,7 @@ import com.bogdatech.query.TestQuery;
 import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +40,7 @@ public class TranslateController {
     @Autowired
     private ShopifyHttpIntegration shopifyApiIntegration;
 
+    private TelemetryClient appInsights;
 
     @PostMapping("/translate")
     public BaseResponse translate(@RequestBody TranslatesDO request) {
@@ -140,13 +142,13 @@ public class TranslateController {
             TestQuery testQuery = new TestQuery();
             translateResource.setTarget(shopifyRequest.getTarget());
             String query = testQuery.getTestQuery(translateResource);
-            System.out.println(query);
+            appInsights.trackTrace(query);
             JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
             objectData.put(translateResource.getResourceType(), infoByShopify);
             jsonNode = translateService.translateJson(infoByShopify, shopifyRequest, translateResource);
         }
-        System.out.println("objectData: " + objectData);
-        System.out.println("jsonNode: " + jsonNode);
+        appInsights.trackTrace("objectData: " + objectData);
+        appInsights.trackTrace("jsonNode: " + jsonNode);
     }
 
     //测试计数器会不会因为同时调用接口而产生不同的数据
