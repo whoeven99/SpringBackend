@@ -308,6 +308,7 @@ public class TranslateService {
                     variables.put("translations", translations);
                     appInsights.trackTrace("translations: " + translations.toString());
                     //将翻译后的内容通过ShopifyAPI记录到shopify本地
+                    appInsights.trackTrace("开始记录到shopify本地");
                     String string = shopifyApiIntegration.registerTransaction(request, variables);
                     appInsights.trackTrace("registerTransaction string:  " + string);
                 } catch (Exception e) {

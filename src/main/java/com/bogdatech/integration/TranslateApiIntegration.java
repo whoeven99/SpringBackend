@@ -26,7 +26,7 @@ public class TranslateApiIntegration {
     @Autowired
     private BaseHttpIntegration baseHttpIntegration;
 
-    private TelemetryClient appInsights;
+    private TelemetryClient appInsights = new TelemetryClient();
 
     @Value("${baidu.api.key}")
     private String apiUrl;
