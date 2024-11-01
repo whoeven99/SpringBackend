@@ -288,6 +288,7 @@ public class TranslateService {
     }
 
     //对符合条件的 SINGLE_LINE_TEXT_FIELD和MULTI_LINE_TEXT_FIELD  类型的 value 进行翻译
+    //测试push
     private ArrayNode translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId) {
         ArrayNode translatedContent = new ObjectMapper().createArrayNode();
         //初始化存储到shopify本地的数据
