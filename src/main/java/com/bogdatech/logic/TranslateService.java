@@ -178,7 +178,7 @@ public class TranslateService {
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    public JsonNode translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO){
+    public JsonNode translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         //从数据库获取已使用的字符数据，放入计数器中
         CharacterCountUtils counter = createCounter(request);
 
@@ -217,16 +217,20 @@ public class TranslateService {
         }
         return translatedRootNode;
     }
+
     //递归遍历JSON树：使用 translateSingleLineTextFieldsRecursively 方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
     private JsonNode translateSingleLineTextFieldsRecursively(JsonNode node, ShopifyRequest request, CharacterCountUtils counter) {
         if (node.isObject()) {
             ObjectNode objectNode = (ObjectNode) node;
+            final String[] resourceId = new String[1]; // 使用单元素数组来存储 resourceId
             node.fieldNames().forEachRemaining(fieldName -> {
                 JsonNode fieldValue = node.get(fieldName);
                 //获取resourceId的值
-                String resourceId = fieldValue.asText();
-                // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
-                appInsights.trackTrace("Resource ID: " + resourceId);
+                if ("resourceId".equals(fieldName)) {
+                    resourceId[0] = fieldValue.asText();
+                    // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
+                    appInsights.trackTrace("Resource ID: " + resourceId[0]);
+                }
                 if ("translations".equals(fieldName)) {
                     //如果不为空，就不翻译
                     if (!fieldValue.isNull()) {
@@ -236,8 +240,8 @@ public class TranslateService {
                 }
                 if ("translatableContent".equals(fieldName)) {
                     //达到字符限制，更新用户剩余字符数，终止循环
-                    updateCharsWhenExceedLimit(counter,request.getShopName());
-                    ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, resourceId);
+                    updateCharsWhenExceedLimit(counter, request.getShopName());
+                    ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, resourceId[0]);
                     objectNode.set(fieldName, translatedContent);
                 } else {
                     objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue, request, counter));
@@ -282,7 +286,7 @@ public class TranslateService {
                     contentItemNode.put("value", translatedValue);
 
                     translation.put("value", translatedValue);
-                    Object[] translations = new Object[] {
+                    Object[] translations = new Object[]{
                             translation // 将HashMap添加到数组中
                     };
                     variables.put("translations", translations);
@@ -304,7 +308,7 @@ public class TranslateService {
     public CharacterCountUtils createCounter(ShopifyRequest request) {
         CharacterCountUtils counter = new CharacterCountUtils();
         List<TranslationCounterRequest> translatesDOS = jdbcRepository.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0));
-        int chars =  translatesDOS.get(0).getChars();
+        int chars = translatesDOS.get(0).getChars();
         appInsights.trackTrace("response1 = " + chars);
         counter.addChars(chars);
         return counter;
@@ -312,7 +316,7 @@ public class TranslateService {
 
     //达到字符限制，更新用户剩余字符数，终止循环
     public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName) {
-        if (counter.getTotalChars() <= 0){
+        if (counter.getTotalChars() <= 0) {
             jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, shopName, counter.getTotalChars()));
             appInsights.trackTrace("达到字符限制，终止循环.");
             throw new ClientException("翻译字符数超过限制.");
@@ -320,7 +324,7 @@ public class TranslateService {
     }
 
     //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
-    public JsonNode fetchNextPage(TranslateResourceDTO translateResource,ShopifyRequest request) {
+    public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
         TestQuery testQuery = new TestQuery();
         String query = testQuery.getAfterQuery(translateResource);
         appInsights.trackTrace(query);
@@ -341,7 +345,7 @@ public class TranslateService {
 
     //递归处理下一页数据
     private JsonNode translateNextPage(ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResource) {
-        JsonNode nextPageData = fetchNextPage(translateResource,request);
+        JsonNode nextPageData = fetchNextPage(translateResource, request);
         // 重新开始翻译流程
         JsonNode translatedNextPage = translateSingleLineTextFieldsRecursively(nextPageData, request, counter);
         // 递归处理下一页数据
