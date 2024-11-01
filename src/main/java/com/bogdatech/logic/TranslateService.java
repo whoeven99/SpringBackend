@@ -149,9 +149,6 @@ public class TranslateService {
 
     //模拟测试环境读取json数据，需要翻墙的数据都为死数据
     public JsonNode readJsonFile() {
-        String js = "111";
-        String myString = "\""+ js +"\"";
-        System.out.println(myString);
         //模拟传入shopifyRequest
         ShopifyRequest request = new ShopifyRequest();
         request.setTarget("jp");
@@ -176,25 +173,6 @@ public class TranslateService {
         jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
         System.out.println("counter: " + counter.getTotalChars());
         System.out.println("translatedRootNode: " + translatedRootNode);
-
-        //获取translatableResources的节点
-        JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
-        System.out.println("translatableResourcesNode: " + translatableResourcesNode);
-        // 获取pageInfo节点
-        JsonNode pageInfoNode = translatableResourcesNode.path("pageInfo");
-        System.out.println("pageInfo2: " + pageInfoNode);
-       //获取hasNextPage
-        JsonNode hasNextPage = pageInfoNode.path("hasNextPage");
-        System.out.println("hasNextPage: " + hasNextPage.toString());
-        System.out.println("12312321: " + translatedRootNode.hasNonNull("pageInfo"));
-        if (translatableResourcesNode.hasNonNull("pageInfo")) {
-            JsonNode pageInfo = translatableResourcesNode.get("pageInfo");
-            System.out.println("pageInfo: " + pageInfo);
-            if (pageInfo.hasNonNull("hasNextPage") && pageInfo.get("hasNextPage").asBoolean()) {
-                JsonNode endCursor = pageInfo.get("endCursor");
-                System.out.println("endCursor: " + endCursor.asText());
-            }
-        }
 
         return translatedRootNode;
     }
@@ -284,14 +262,15 @@ public class TranslateService {
         //初始化存储到shopify本地的数据
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", resourceId);
-        Map<String, Object> translations = new HashMap<>();
+        appInsights.trackTrace("variables: " + variables.toString());
+        Map<String, Object> translation = new HashMap<>();
         contentNode.forEach(contentItem -> {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())
                     || "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
-                translations.put("locale", contentItemNode.get("locale").asText());
-                translations.put("key", contentItemNode.get("key").asText());
-                translations.put("translatableContentDigest", contentItemNode.get("digest").asText());
+                translation.put("locale", contentItemNode.get("locale").asText());
+                translation.put("key", contentItemNode.get("key").asText());
+                translation.put("translatableContentDigest", contentItemNode.get("digest").asText());
 
                 String value = contentItemNode.get("value").asText();
                 String source = contentItemNode.get("locale").asText();
@@ -304,9 +283,13 @@ public class TranslateService {
                     appInsights.trackTrace("target: " + request.getTarget());
                     String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
                     contentItemNode.put("value", translatedValue);
-                    translations.put("value", translatedValue);
+
+                    translation.put("value", translatedValue);
+                    Object[] translations = new Object[] {
+                            translation // 将HashMap添加到数组中
+                    };
                     variables.put("translations", translations);
-                    appInsights.trackTrace("translations: " + translations.toString());
+                    appInsights.trackTrace("translation: " + translation.toString());
                     //将翻译后的内容通过ShopifyAPI记录到shopify本地
                     appInsights.trackTrace("开始记录到shopify本地");
                     String string = shopifyApiIntegration.registerTransaction(request, variables);

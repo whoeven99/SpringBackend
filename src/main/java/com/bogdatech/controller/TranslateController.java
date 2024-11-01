@@ -172,19 +172,56 @@ public class TranslateController {
 
     @PostMapping("testUpdate")
     public void testUpdate(@RequestBody ShopifyRequest shopifyRequest) {
-        // 构建GraphQL请求体
+//        // 构建GraphQL请求体
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", "gid://shopify/DeliveryMethodDefinition/634794770682");
-        variables.put("translations", new Object[]{
-                new HashMap<String, Object>() {{
-                    put("locale", "ja");
-                    put("key", "name");
-                    put("value", "経済");
-                    put("translatableContentDigest", "c1d078d516dd7c8b81f32827069816db43529642eb82f071a8b2ffa261567dda");
-                }}
-        });
+//        variables.put("translations", new Object[]{
+//                new HashMap<String, Object>() {{
+//                    put("locale", "ja");
+//                    put("key", "name");
+//                    put("value", "経済");
+//                    put("translatableContentDigest", "c1d078d516dd7c8b81f32827069816db43529642eb82f071a8b2ffa261567dda");
+//                }}
+//        });
+        // 步骤1: 定义HashMap
+        Map<String, Object> translation = new HashMap<>();
+        translation.put("locale", "ja"); // 语言环境
+        translation.put("key", "name");   // 翻译的键
+        translation.put("value", "経済"); // 翻译的值
+        translation.put("translatableContentDigest", "c1d078d516dd7c8b81f32827069816db43529642eb82f071a8b2ffa261567dda"); // 内容摘要
 
-        String string = shopifyApiIntegration.registerTransaction(shopifyRequest,  variables);
-        System.out.println("string: " + string);
+        // 步骤2: 创建数组
+        Object[] translations = new Object[]{
+                translation // 将HashMap添加到数组中
+        };
+
+        // 步骤3: 存储到变量
+        variables.put("translations", translations);
+        System.out.println("variables: " +  new JSONObject(variables));
+        // 输出variables的所有信息
+        for (Map.Entry<String, Object> entry : variables.entrySet()) {
+            System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+
+            // 如果Value是一个数组，我们可以进一步遍历这个数组
+            if (entry.getValue() instanceof Object[]) {
+                Object[] array = (Object[]) entry.getValue();
+                for (int i = 0; i < array.length; i++) {
+                    Object item = array[i];
+                    if (item instanceof Map) {
+                        // 如果数组中的元素是一个Map，我们也可以遍历这个Map
+                        Map<?, ?> mapItem = (Map<?, ?>) item;
+                        System.out.println("  Item " + i + ":");
+                        for (Map.Entry<?, ?> subEntry : mapItem.entrySet()) {
+                            System.out.println("    Key: " + subEntry.getKey() + ", Value: " + subEntry.getValue());
+                        }
+                    } else {
+                        System.out.println("  Item " + i + ": " + item);
+                    }
+                }
+            }
+        }
+
+//        String string = shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
+//        System.out.println("string: " + string);
     }
 }
