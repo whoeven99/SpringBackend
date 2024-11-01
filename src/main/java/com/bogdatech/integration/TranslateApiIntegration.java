@@ -3,6 +3,7 @@ package com.bogdatech.integration;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -24,6 +25,8 @@ public class TranslateApiIntegration {
 
     @Autowired
     private BaseHttpIntegration baseHttpIntegration;
+
+    private TelemetryClient appInsights;
 
     @Value("${baidu.api.key}")
     private String apiUrl;
@@ -69,7 +72,7 @@ public class TranslateApiIntegration {
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             // 获取响应实体并转换为JSON格式
             jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
-            System.out.println("翻译结果：" + jsonObject);
+            appInsights.trackTrace("翻译结果：" + jsonObject);
             // 获取翻译结果
             result = jsonObject.getJSONArray("trans_result").getJSONObject(0).getString("dst");
         } catch (IOException e) {
@@ -100,7 +103,7 @@ public class TranslateApiIntegration {
             if (response.getStatusLine().getStatusCode() == 200) {
                 // 获取响应实体并转换为字符串
                 jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
-                System.out.println("翻译结果：" + jsonObject);
+                appInsights.trackTrace("翻译结果：" + jsonObject);
                 // 获取翻译结果
                 JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
                 JSONObject translation = translationsArray.getJSONObject(0);
