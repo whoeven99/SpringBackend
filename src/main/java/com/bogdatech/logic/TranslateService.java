@@ -12,7 +12,7 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.query.TestQuery;
+import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.StringUtil;
@@ -31,6 +31,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,13 +52,11 @@ public class TranslateService {
     @Autowired
     private ShopifyHttpIntegration shopifyApiIntegration;
 
-    private TelemetryClient appInsights = new TelemetryClient();
-//    @Autowired
-//    private CharacterCountUtils counter;
+    private final TelemetryClient appInsights = new TelemetryClient();
 
     // 构建URL
     public BaseResponse translate(TranslatesDO request) {
-        return new BaseResponse().CreateSuccessResponse(null);
+        return new BaseResponse().CreateSuccessResponse(request);
     }
 
     public BaseResponse baiDuTranslate(TranslateRequest request) {
@@ -191,10 +191,6 @@ public class TranslateService {
                     System.out.println("翻译前：" + resourceId[0]);
                 });
             }
-
-//            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode, request, counter);
-//            String translatedJsonString = translatedRootNode.toString();
-//            System.out.println("Translated JSON:\n" + translatedJsonString);
             System.out.println("NodeTree: \n" + rootNode);
         } catch (IOException e) {
             e.printStackTrace();
@@ -261,12 +257,9 @@ public class TranslateService {
                     // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
                     appInsights.trackTrace("resourceId[0]: " + resourceId[0]);
                 }
-                if ("translations".equals(fieldName)) {
-                    //如果不为空，就不翻译
-                    if (!fieldValue.isNull()) {
-                        // translations 字段不为空，不进行翻译
-                        return;
-                    }
+                //根据translations的情况判断是否翻译
+                if (!judgeByTranslations(fieldName, fieldValue)){
+                    return;
                 }
                 if ("translatableContent".equals(fieldName)) {
                     //达到字符限制，更新用户剩余字符数，终止循环
@@ -288,13 +281,12 @@ public class TranslateService {
     }
 
     //对符合条件的 SINGLE_LINE_TEXT_FIELD和MULTI_LINE_TEXT_FIELD  类型的 value 进行翻译
-    //测试push
     private ArrayNode translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId) {
         ArrayNode translatedContent = new ObjectMapper().createArrayNode();
         //初始化存储到shopify本地的数据
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", resourceId);
-        appInsights.trackTrace("variables: " + variables.toString());
+        appInsights.trackTrace("variables: " + variables);
         Map<String, Object> translation = new HashMap<>();
         contentNode.forEach(contentItem -> {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
@@ -311,8 +303,10 @@ public class TranslateService {
                     return;
                 }
                 try {
-                    counter.subtractChars(value.length());
-                    appInsights.trackTrace("target: " + request.getTarget());
+                    appInsights.trackTrace("不编码的value长度： " + value.length());
+                    String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+                    counter.subtractChars(encodedQuery.length());
+                    appInsights.trackTrace("编码后的value长度： " + encodedQuery.length());
                     String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
                     contentItemNode.put("value", translatedValue);
 
@@ -321,11 +315,8 @@ public class TranslateService {
                             translation // 将HashMap添加到数组中
                     };
                     variables.put("translations", translations);
-                    appInsights.trackTrace("translation: " + translation.toString());
                     //将翻译后的内容通过ShopifyAPI记录到shopify本地
-                    appInsights.trackTrace("开始记录到shopify本地");
                     String string = shopifyApiIntegration.registerTransaction(request, variables);
-                    appInsights.trackTrace("registerTransaction string:  " + string);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -356,8 +347,8 @@ public class TranslateService {
 
     //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
-        TestQuery testQuery = new TestQuery();
-        String query = testQuery.getAfterQuery(translateResource);
+        ShopifyQuery shopifyQuery = new ShopifyQuery();
+        String query = shopifyQuery.getAfterQuery(translateResource);
         appInsights.trackTrace(query);
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, query);
         appInsights.trackTrace("infoByShopify = " + infoByShopify);
@@ -391,5 +382,24 @@ public class TranslateService {
             }
         }
         return translatedNextPage;
+    }
+
+    //根据translations的情况判断是否翻译
+    private Boolean judgeByTranslations(String fieldName, JsonNode fieldValue) {
+        boolean shouldTranslate = false;
+        if ("translations".equals(fieldName) && !fieldValue.isNull()) {
+            shouldTranslate = true;
+            if (fieldValue.isArray()) {
+                for (JsonNode translation : fieldValue) {
+                    JsonNode outdatedNode = translation.get("outdated");
+                    if (outdatedNode != null && !outdatedNode.asBoolean()) {
+                        shouldTranslate = false;
+                        break;
+                    }
+                }
+            }
+
+        }
+        return shouldTranslate;
     }
 }
