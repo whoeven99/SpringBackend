@@ -3,6 +3,7 @@ package com.bogdatech.repository;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.request.TranslateTextRequest;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CamelToUnderscore;
@@ -16,7 +17,8 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bogdatech.enums.ErrorEnum.*;
+import static com.bogdatech.enums.ErrorEnum.SQL_DELETE_ERROR;
+import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
 
 @Component
 public class JdbcRepository {
@@ -162,10 +164,13 @@ public class JdbcRepository {
         return new BaseResponse<>().CreateSuccessResponse(list);
     }
 
-    public void insertTranslateText(){
+    public int insertTranslateText(TranslateTextRequest request){
         String sql = "INSERT INTO TranslateText (shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, " +
                 "target_code) VALUES (?,?,?,?,?,?,?,?,?)";
-
+        Object[] info = {request.getShopName(), request.getResourceId(), request.getTextType(), request.getDigest(), request.getTextKey()
+                , request.getSourceText(), request.getTargetText(), request.getSourceCode(), request.getTargetCode()};
+        int result = CUDInfo(info, sql);
+        return result;
     }
 
 }

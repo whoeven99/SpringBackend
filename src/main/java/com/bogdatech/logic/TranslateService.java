@@ -222,7 +222,6 @@ public class TranslateService {
             throw new RuntimeException(e);
         }
         appInsights.trackTrace("counter: " + counter.getTotalChars());
-        jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
         appInsights.trackTrace("counter: " + counter.getTotalChars());
 
         // 递归处理下一页数据
@@ -241,6 +240,8 @@ public class TranslateService {
                 translatedRootNode = translateNextPage(request, counter, translateResourceDTO);
             }
         }
+        appInsights.trackTrace("最终counter的值： " + counter.getTotalChars());
+        jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
         return translatedRootNode;
     }
 
@@ -304,7 +305,7 @@ public class TranslateService {
                 }
                 try {
                     appInsights.trackTrace("不编码的value长度： " + value.length());
-                    String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+                    String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
                     counter.subtractChars(encodedQuery.length());
                     appInsights.trackTrace("编码后的value长度： " + encodedQuery.length());
                     String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
