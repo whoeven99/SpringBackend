@@ -162,4 +162,10 @@ public class JdbcRepository {
         return new BaseResponse<>().CreateSuccessResponse(list);
     }
 
+    public void insertTranslateText(){
+        String sql = "INSERT INTO TranslateText (shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, " +
+                "target_code) VALUES (?,?,?,?,?,?,?,?,?)";
+
+    }
+
 }
