@@ -11,13 +11,18 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import static com.bogdatech.entity.TranslateResourceDTO.translationResources;
@@ -151,4 +156,26 @@ public class TranslateController {
         }
     }
 
+    //测试String格式数据获取是否正常
+    @GetMapping("testString")
+    public void testString() {
+        //读取json格式文件转化为String类型数据
+        PathMatchingResourcePatternResolver resourceLoader = new PathMatchingResourcePatternResolver();
+        JSONObject data = null;
+        String string;
+        try {
+            Resource resource = resourceLoader.getResource("classpath:jsonData/project.json");
+            InputStream inputStream = resource.getInputStream();
+            ObjectMapper objectMapper = new ObjectMapper();
+            data = objectMapper.readValue(inputStream, JSONObject.class);
+            string = data.toJSONString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        string = data.toJSONString();
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName("123");
+        System.out.println(string);
+        translateService.saveTranslatedData(string, request, null);
+    }
 }
