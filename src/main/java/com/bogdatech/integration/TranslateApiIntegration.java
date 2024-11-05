@@ -15,9 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 @Component
@@ -51,14 +48,7 @@ public class TranslateApiIntegration {
         Random random = new Random();
         String salt = String.valueOf(random.nextInt(10000));
         String sign = DigestUtils.md5DigestAsHex((apiUrl + request.getContent() + salt + secret).getBytes());
-        // 对查询字符串进行URL编码
-        String encodedQuery;
-        try {
-            encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-        String url = "https://fanyi-api.baidu.com/api/trans/vip/translate?q=" + encodedQuery
+        String url = "https://fanyi-api.baidu.com/api/trans/vip/translate?q=" + request.getContent()
                 + "&from=" + request.getSource() + "&to=" + request.getTarget() + "&appid=" + apiUrl + "&salt=" + salt + "&sign=" + sign;
 
         // 创建Httpclient对象
@@ -82,15 +72,8 @@ public class TranslateApiIntegration {
     }
 
     public String googleTranslate(TranslateRequest request) {
-        // 对查询字符串进行URL编码
-        String encodedQuery;
-        try {
-            encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
         String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
-                "&q=" + encodedQuery +
+                "&q=" + request.getContent() +
                 "&source=" + request.getSource() +
                 "&target=" + request.getTarget();
         String result = null;

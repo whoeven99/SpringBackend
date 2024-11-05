@@ -173,4 +173,17 @@ public class JdbcRepository {
         return result;
     }
 
+    public List<TranslateTextRequest> getTranslateText(String request){
+        String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code FROM TranslateText WHERE digest = ?";
+        Object[] info = {request};
+        List<TranslateTextRequest> list = readInfo(info, sql, TranslateTextRequest.class);
+        return list;
+    }
+
+    public int updateTranslateText(TranslateTextRequest request){
+        String sql = "UPDATE TranslateText SET target_text = ? WHERE digest = ?";
+        Object[] info = {request.getTargetText(), request.getDigest()};
+        int result = CUDInfo(info, sql);
+        return result;
+    }
 }
