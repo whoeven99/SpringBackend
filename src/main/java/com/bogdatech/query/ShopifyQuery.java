@@ -12,6 +12,7 @@ public class ShopifyQuery {
                 "      translations(locale: \"" + translateResourceDTO.getTarget() + "\") {\n" +
                 "        locale\n" +
                 "        value\n" +
+                "        key\n" +
                 "        outdated\n" +
                 "      }\n" +
                 "      translatableContent {\n" +
@@ -38,6 +39,7 @@ public class ShopifyQuery {
                 "      translations(locale: \"" + translateResourceDTO.getTarget() + "\") {\n" +
                 "        locale\n" +
                 "        value\n" +
+                "        key\n" +
                 "        outdated\n" +
                 "      }\n" +
                 "      translatableContent {\n" +
