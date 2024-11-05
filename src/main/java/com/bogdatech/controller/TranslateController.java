@@ -139,4 +139,16 @@ public class TranslateController {
         appInsights.trackTrace("objectData: " + objectData);
         appInsights.trackTrace("jsonNode: " + jsonNode);
     }
+
+    @GetMapping("testSQL")
+    public void testSQL(@RequestBody ShopifyRequest shopifyRequest) {
+        for (TranslateResourceDTO translateResource : translationResources) {
+            ShopifyQuery shopifyQuery = new ShopifyQuery();
+            translateResource.setTarget(shopifyRequest.getTarget());
+            String query = shopifyQuery.getFirstQuery(translateResource);
+            String string = shopifyApiIntegration.sendShopifyPost(shopifyRequest, query, null);
+            translateService.saveTranslatedData(string, shopifyRequest, translateResource);
+        }
+    }
+
 }
