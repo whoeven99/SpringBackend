@@ -437,6 +437,7 @@ public class TranslateService {
                     ((Map<String, Object>) value).put("resourceId", resourceId);
                     ((Map<String, Object>) value).put("shopName", request.getShopName());
                     // 将合并后的Map存入SQL中
+                    appInsights.trackTrace("进入更新或插入数据");
                     updateOrInsertTranslateTextData(((Map<String, Object>) value));
                 }
             });
@@ -500,6 +501,8 @@ public class TranslateService {
     }
 
     private void updateOrInsertTranslateTextData(Map<String, Object> data) {
+        appInsights.trackTrace("已经进入到updateOrInsertTranslateTextData方法内部了");
+        appInsights.trackTrace("digest不为null： " + data.toString());
         if (data.get("digest") != null) {
             appInsights.trackTrace("digest不为null");
             TranslateTextRequest request = new TranslateTextRequest();
