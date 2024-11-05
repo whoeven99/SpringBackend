@@ -485,15 +485,19 @@ public class TranslateService {
         return contents;
     }
 
-    private static Map<String, Object> mergeMaps(Map<String, Object> map1, Map<String, Object> map2) {
+    private Map<String, Object> mergeMaps(Map<String, Object> map1, Map<String, Object> map2) {
         Map<String, Object> result = new HashMap<>(map1);
         map2.forEach((key, value) -> {
             if (result.containsKey(key)) {
                 // 如果键冲突，合并两个Map
                 Map<String, Object> existingValue = (Map<String, Object>) result.get(key);
+                appInsights.trackTrace("translations中的元素有： " + result.get(key));
                 Map<String, Object> newValue = (Map<String, Object>) value;
+                appInsights.trackTrace("newValue中的元素有： " + newValue.get(key));
                 Map<String, Object> mergedValue = new HashMap<>(existingValue);
+                appInsights.trackTrace("mergedValue1中的元素有： " + mergedValue.get(key));
                 mergedValue.putAll(newValue);
+                appInsights.trackTrace("mergedValue2中的元素有： " + mergedValue.get(key));
                 result.put(key, mergedValue);
             }
         });
