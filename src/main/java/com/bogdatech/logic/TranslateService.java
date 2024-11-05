@@ -489,16 +489,24 @@ public class TranslateService {
         appInsights.trackTrace("进入合并的方法里面");
         Map<String, Object> result = new HashMap<>(map1);
         map2.forEach((key, value) -> {
+            appInsights.trackTrace("当前的key为: " + key.toString());
+            System.out.println("当前的key为:  " + key.toString());
             if (result.containsKey(key)) {
+                System.out.println("键冲突，合并两个Map:  " + key.toString());
+                appInsights.trackTrace("键冲突，合并两个Map:  " + key.toString());
                 // 如果键冲突，合并两个Map
                 Map<String, Object> existingValue = (Map<String, Object>) result.get(key);
                 appInsights.trackTrace("translations中的元素有： " + result.get(key));
+                System.out.println("existingValue中的元素有： " + existingValue);
                 Map<String, Object> newValue = (Map<String, Object>) value;
                 appInsights.trackTrace("newValue中的元素有： " + newValue.get(key));
+                System.out.println("newValue中的元素有： " + newValue);
                 Map<String, Object> mergedValue = new HashMap<>(existingValue);
                 appInsights.trackTrace("mergedValue1中的元素有： " + mergedValue.get(key));
+                System.out.println("mergedValue1中的元素有： " + mergedValue.get(key));
                 mergedValue.putAll(newValue);
-                appInsights.trackTrace("mergedValue2中的元素有： " + mergedValue.get(key));
+                appInsights.trackTrace("mergedValue2中的元素有： " + mergedValue);
+                System.out.println("mergedValue2中的元素有： " + mergedValue);
                 result.put((String) mergedValue.get("digest"), mergedValue);
             }
         });
