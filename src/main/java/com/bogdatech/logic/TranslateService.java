@@ -427,10 +427,10 @@ public class TranslateService {
             String resourceId = node.path("resourceId").asText();
             Map<String, Object> translationsMap = extractTranslations(node);
             Map<String, Object> translatableContentMap = extractTranslatableContent(node);
-
+            appInsights.trackTrace("还没有合并两个map");
             // 合并两个Map
             Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
-
+            appInsights.trackTrace("已经合并两个map");
             // 将resourceId添加到每个合并后的Map中
             mergedMap.values().forEach(value -> {
                 if (value instanceof Map) {
@@ -486,6 +486,7 @@ public class TranslateService {
     }
 
     private Map<String, Object> mergeMaps(Map<String, Object> map1, Map<String, Object> map2) {
+        appInsights.trackTrace("进入合并的方法里面");
         Map<String, Object> result = new HashMap<>(map1);
         map2.forEach((key, value) -> {
             if (result.containsKey(key)) {
@@ -498,7 +499,7 @@ public class TranslateService {
                 appInsights.trackTrace("mergedValue1中的元素有： " + mergedValue.get(key));
                 mergedValue.putAll(newValue);
                 appInsights.trackTrace("mergedValue2中的元素有： " + mergedValue.get(key));
-                result.put(key, mergedValue);
+                result.put((String) mergedValue.get("digest"), mergedValue);
             }
         });
         return result;
