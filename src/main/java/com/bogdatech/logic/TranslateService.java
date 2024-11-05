@@ -501,6 +501,7 @@ public class TranslateService {
 
     private void updateOrInsertTranslateTextData(Map<String, Object> data) {
         if (data.get("digest") != null) {
+            appInsights.trackTrace("digest不为null");
             TranslateTextRequest request = new TranslateTextRequest();
             request.setTargetText(data.get("targetText").toString());
             request.setResourceId(data.get("resourceId").toString());
@@ -514,13 +515,15 @@ public class TranslateService {
 
             // 检查是否存在有digest的数据
             List<TranslateTextRequest> translateText = jdbcRepository.getTranslateText(request.getDigest());
-
+            appInsights.trackTrace("检查translateText是否存在数据：" + translateText.isEmpty());
             if (translateText.isEmpty()) {
                 // 插入数据
-                jdbcRepository.insertTranslateText(request);
+                int i = jdbcRepository.insertTranslateText(request);
+                appInsights.trackTrace("看是否插入数据成功： " + i);
             } else {
                 // 更新数据
-                jdbcRepository.updateTranslateText(request);
+                int i = jdbcRepository.updateTranslateText(request);
+                appInsights.trackTrace("看是否更新数据成功： " + i);
             }
         }
     }
