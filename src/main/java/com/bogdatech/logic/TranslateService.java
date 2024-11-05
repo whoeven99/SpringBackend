@@ -353,6 +353,7 @@ public class TranslateService {
 
     //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
+        appInsights.trackTrace("我进入到递归了");
         ShopifyQuery shopifyQuery = new ShopifyQuery();
         String query = shopifyQuery.getAfterQuery(translateResource);
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, query);
@@ -499,26 +500,28 @@ public class TranslateService {
     }
 
     private void updateOrInsertTranslateTextData(Map<String, Object> data) {
-        TranslateTextRequest request = new TranslateTextRequest();
-        request.setTargetText(data.get("targetText").toString());
-        request.setResourceId(data.get("resourceId").toString());
-        request.setDigest(data.get("digest").toString());
-        request.setSourceCode(data.get("sourceCode").toString());
-        request.setTargetCode(data.get("targetCode").toString());
-        request.setShopName(data.get("shopName").toString());
-        request.setTextKey(data.get("textKey").toString());
-        request.setSourceText(data.get("sourceText").toString());
-        request.setTextType(data.get("textType").toString());
+        if (data.get("digest") != null) {
+            TranslateTextRequest request = new TranslateTextRequest();
+            request.setTargetText(data.get("targetText").toString());
+            request.setResourceId(data.get("resourceId").toString());
+            request.setDigest(data.get("digest").toString());
+            request.setSourceCode(data.get("sourceCode").toString());
+            request.setTargetCode(data.get("targetCode").toString());
+            request.setShopName(data.get("shopName").toString());
+            request.setTextKey(data.get("textKey").toString());
+            request.setSourceText(data.get("sourceText").toString());
+            request.setTextType(data.get("textType").toString());
 
-        // 检查是否存在有digest的数据
-        List<TranslateTextRequest> translateText = jdbcRepository.getTranslateText(request.getDigest());
+            // 检查是否存在有digest的数据
+            List<TranslateTextRequest> translateText = jdbcRepository.getTranslateText(request.getDigest());
 
-        if (translateText.isEmpty()) {
-            // 插入数据
-            jdbcRepository.insertTranslateText(request);
-        } else {
-            // 更新数据
-            jdbcRepository.updateTranslateText(request);
+            if (translateText.isEmpty()) {
+                // 插入数据
+                jdbcRepository.insertTranslateText(request);
+            } else {
+                // 更新数据
+                jdbcRepository.updateTranslateText(request);
+            }
         }
     }
 }
