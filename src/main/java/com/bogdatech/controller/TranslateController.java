@@ -124,10 +124,13 @@ public class TranslateController {
     public void clickTranslation(@RequestBody TranslateRequest request) {
         //翻译
         translateService.translating(request);
-        //存数据库
-        translateService.saveTranslateText(request);
+//        //存数据库
+//        translateService.saveTranslateText(request);
     }
 
+    /*
+     *  测试一键存储数据库流程
+     */
     @GetMapping("/translate/saveTranslateText")
     public void saveTranslateText(@RequestBody TranslateRequest request) {
         translateService.saveTranslateText(request);
