@@ -48,8 +48,6 @@ public class ShopifyHttpIntegration {
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity);
-            appInsights.trackTrace("发送shopifyAPI请求");
-            appInsights.trackTrace("responseContent: " + responseContent);
             response.close();
             httpClient.close();
         } catch (IOException e) {
