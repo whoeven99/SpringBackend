@@ -291,9 +291,9 @@ public class TranslateService {
                     appInsights.trackTrace("resourceId[0]: " + resourceId[0]);
                 }
 //                根据translations的情况判断是否翻译
-                if (!judgeByTranslations(fieldName, fieldValue)) {
-                    return;
-                }
+//                if (!judgeByTranslations(fieldName, fieldValue)) {
+//                    return;
+//                }
                 if ("translatableContent".equals(fieldName)) {
                     //达到字符限制，更新用户剩余字符数，终止循环
                     updateCharsWhenExceedLimit(counter, request.getShopName());
@@ -363,7 +363,6 @@ public class TranslateService {
         CharacterCountUtils counter = new CharacterCountUtils();
         List<TranslationCounterRequest> translatesDOS = jdbcRepository.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0));
         int chars = translatesDOS.get(0).getChars();
-        appInsights.trackTrace("response1 = " + chars);
         counter.addChars(chars);
         return counter;
     }
