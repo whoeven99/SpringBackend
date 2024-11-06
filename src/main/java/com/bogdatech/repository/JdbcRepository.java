@@ -69,8 +69,8 @@ public class JdbcRepository {
     }
 
     public int insertShopTranslateInfo(TranslateRequest request) {
-        String sql = "INSERT INTO Translates (shop_name, access_token, source, target) VALUES (?, ?, ?, ?)";//TODO token应该加密存入sql
-        Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget()};
+        String sql = "INSERT INTO Translates (shop_name, access_token, source, target, status) VALUES (?, ?, ?, ?, ?)";//TODO token应该加密存入sql
+        Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget(), 2};
         int result = CUDInfo(info, sql);
         return result;
     }
@@ -183,6 +183,13 @@ public class JdbcRepository {
     public int updateTranslateText(TranslateTextRequest request){
         String sql = "UPDATE TranslateText SET target_text = ? WHERE digest = ?";
         Object[] info = {request.getTargetText(), request.getDigest()};
+        int result = CUDInfo(info, sql);
+        return result;
+    }
+
+    public int updateTranslateStatusByTranslateRequest(TranslateRequest request) {
+        String sql = "UPDATE Translates SET status = 2 WHERE shop_name = ? and source = ? and target = ?";
+        Object[] info = {request.getShopName(), request.getSource(), request.getTarget()};
         int result = CUDInfo(info, sql);
         return result;
     }

@@ -8,24 +8,16 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
-import static com.bogdatech.entity.TranslateResourceDTO.translationResources;
 import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 
@@ -91,7 +83,7 @@ public class TranslateController {
     /*
      * 读取shopName的所有翻译状态信息
      */
-    @PostMapping("/translate/updateTranslateInfo")
+    @PostMapping("/translate/readInfoByShopName")
     public BaseResponse readInfoByShopName(@RequestBody TranslateRequest request) {
         List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
         if (translatesDOS.size() > 0) {
@@ -128,54 +120,18 @@ public class TranslateController {
     /*
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
-    @GetMapping("testFor")
-    public void test(@RequestBody ShopifyRequest shopifyRequest) {
-        JSONObject objectData = new JSONObject();
-        JsonNode jsonNode = null;
-        for (TranslateResourceDTO translateResource : translationResources) {
-            ShopifyQuery shopifyQuery = new ShopifyQuery();
-            translateResource.setTarget(shopifyRequest.getTarget());
-            String query = shopifyQuery.getFirstQuery(translateResource);
-            appInsights.trackTrace(query);
-            JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
-            objectData.put(translateResource.getResourceType(), infoByShopify);
-            jsonNode = translateService.translateJson(infoByShopify, shopifyRequest, translateResource);
-        }
-        appInsights.trackTrace("objectData: " + objectData);
-        appInsights.trackTrace("jsonNode: " + jsonNode);
+    @GetMapping("/translate/clickTranslation")
+    public void clickTranslation(@RequestBody TranslateRequest request) {
+        //翻译
+        translateService.translating(request);
+        //存数据库
+        translateService.saveTranslateText(request);
     }
 
-    @GetMapping("testSQL")
-    public void testSQL(@RequestBody ShopifyRequest shopifyRequest) {
-        for (TranslateResourceDTO translateResource : translationResources) {
-            ShopifyQuery shopifyQuery = new ShopifyQuery();
-            translateResource.setTarget(shopifyRequest.getTarget());
-            String query = shopifyQuery.getFirstQuery(translateResource);
-            String string = shopifyApiIntegration.sendShopifyPost(shopifyRequest, query, null);
-            translateService.saveTranslatedData(string, shopifyRequest, translateResource);
-        }
+    @GetMapping("/translate/saveTranslateText")
+    public void saveTranslateText(@RequestBody TranslateRequest request) {
+        translateService.saveTranslateText(request);
     }
 
     //测试String格式数据获取是否正常
-    @GetMapping("testString")
-    public void testString() {
-        //读取json格式文件转化为String类型数据
-        PathMatchingResourcePatternResolver resourceLoader = new PathMatchingResourcePatternResolver();
-        JSONObject data = null;
-        String string;
-        try {
-            Resource resource = resourceLoader.getResource("classpath:jsonData/project.json");
-            InputStream inputStream = resource.getInputStream();
-            ObjectMapper objectMapper = new ObjectMapper();
-            data = objectMapper.readValue(inputStream, JSONObject.class);
-            string = data.toJSONString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        string = data.toJSONString();
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName("123");
-        System.out.println(string);
-        translateService.saveTranslatedData(string, request, null);
-    }
 }
