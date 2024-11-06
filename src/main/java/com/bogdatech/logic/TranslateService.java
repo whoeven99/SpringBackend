@@ -343,7 +343,7 @@ public class TranslateService {
                     String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
                     counter.subtractChars(encodedQuery.length());
                     appInsights.trackTrace("编码后的value长度： " + encodedQuery.length());
-                    String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), encodedQuery));
+                    String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
                     contentItemNode.put("value", translatedValue);
 
                     translation.put("value", translatedValue);

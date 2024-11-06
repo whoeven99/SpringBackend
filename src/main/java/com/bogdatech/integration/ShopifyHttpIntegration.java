@@ -70,6 +70,7 @@ public class ShopifyHttpIntegration {
         JSONObject jsonObject = JSONObject.parseObject(string);
         return jsonObject.getString("data");
     }
+
 }
 
 
