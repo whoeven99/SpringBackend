@@ -17,8 +17,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO("ARTICLE", "2", "",""),
             new TranslateResourceDTO("BLOG", "2", "",""),
             new TranslateResourceDTO("COLLECTION", "10", "", ""),
-            new TranslateResourceDTO("DELIVERY_METHOD_DEFINITION", "2", "", "")
-            ,
+            new TranslateResourceDTO("DELIVERY_METHOD_DEFINITION", "2", "", ""),
             new TranslateResourceDTO("EMAIL_TEMPLATE", "2", "", ""),
             new TranslateResourceDTO("FILTER", "10", "", ""),
             new TranslateResourceDTO("LINK", "2", "", ""),
