@@ -444,6 +444,7 @@ public class TranslateService {
         }
     }
 
+    //分析node数据进行合并数据，检查是否有下一页
     private void processNodes(JsonNode rootNode, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         JsonNode translatableResourcesNode = rootNode.path("data").path("translatableResources").path("nodes");
 
@@ -477,6 +478,7 @@ public class TranslateService {
         }
     }
 
+    //获取一个页面所有Translations集合数据
     private static Map<String, Object> extractTranslations(JsonNode node) {
         Map<String, Object> translations = new HashMap<>();
         JsonNode translationsNode = node.path("translations");
@@ -492,6 +494,7 @@ public class TranslateService {
         return translations;
     }
 
+    //获取一个页面所有TranslatableContent集合数据
     private static Map<String, Object> extractTranslatableContent(JsonNode node) {
         Map<String, Object> contents = new HashMap<>();
         JsonNode contentNode = node.path("translatableContent");
@@ -506,6 +509,7 @@ public class TranslateService {
         return contents;
     }
 
+    //合并两个map集合数据
     private Map<String, Object> mergeMaps(Map<String, Object> map1, Map<String, Object> map2) {
         appInsights.trackTrace("进入合并的方法里面");
         Map<String, Object> result = new HashMap<>(map1);
@@ -524,6 +528,7 @@ public class TranslateService {
         return result;
     }
 
+    //根据数据库中digest进行判断，有更新，无插入
     private void updateOrInsertTranslateTextData(Map<String, Object> data) {
         if (data.get("digest") != null) {
             TranslateTextRequest request = new TranslateTextRequest();
