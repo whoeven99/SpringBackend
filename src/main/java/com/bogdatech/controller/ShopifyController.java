@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.query.ShopifyQuery;
@@ -22,6 +23,9 @@ public class ShopifyController {
     @Autowired
     private ShopifyService shopifyService;
 
+    @Autowired
+    private TestingEnvironmentIntegration testingEnvironmentIntegration;
+
     @GetMapping("/test123")
     public String test() {
         ShopifyRequest shopifyRequest = new ShopifyRequest();
@@ -36,9 +40,8 @@ public class ShopifyController {
 
     @GetMapping("/shopifyApi")
     public String shopifyApi(@RequestBody ShopifyRequest shopifyRequest) {
-        ShopifyQuery query = new ShopifyQuery();
-        String string1 = shopifyService.shopifyApi(shopifyRequest, query.test(), null);
-        return string1;
+        String string = testingEnvironmentIntegration.sendShopifyGet(shopifyRequest, "test123");
+        return string;
     }
 
     //查询需要翻译的总字数
