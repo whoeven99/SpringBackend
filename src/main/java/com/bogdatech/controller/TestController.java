@@ -1,10 +1,6 @@
 package com.bogdatech.controller;
 
 
-import com.azure.core.credential.AzureKeyCredential;
-import com.azure.data.appconfiguration.ConfigurationClient;
-import com.azure.data.appconfiguration.ConfigurationClientBuilder;
-import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.model.JdbcTestModel;
 import com.bogdatech.repository.JdbcTestRepository;
@@ -32,21 +28,10 @@ public class TestController {
 
 	@GetMapping("/ping")
 	public String ping() {
-		String connectionString = "Endpoint=<your-endpoint>;Id=<your-id>;Secret=<your-secret>";
-		String keyName = "<your-key-name>";
-		String keyValue = "<your-key-value>";
-
-		ConfigurationClient configurationClient = new ConfigurationClientBuilder()
-				.credential(new AzureKeyCredential(keyValue))
-				.endpoint(connectionString)
-				.buildClient();
-		String key = "<your-configuration-key>";
-
-		ConfigurationSetting setting = configurationClient.getConfigurationSetting(key);
-		String value = setting.getValue();
-
 		TelemetryClient appInsights = new TelemetryClient();
-		appInsights.trackTrace("SpringBackend Ping Successful");
+		var env = System.getenv();
+
+		appInsights.trackTrace("SpringBackend Ping Successful" + env.toString());
 		return "Ping Successful!";
 	}
 
