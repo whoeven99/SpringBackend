@@ -339,10 +339,10 @@ public class TranslateService {
                     String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
                     counter.subtractChars(encodedQuery.length());
                     appInsights.trackTrace("编码后的value长度： " + encodedQuery.length());
-                    String translatedValue = translateApiIntegration.googleTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), encodedQuery));
-                    contentItemNode.put("value", translatedValue);
+//                    String translatedValue = translateApiIntegration.googleTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), encodedQuery));
+//                    contentItemNode.put("value", translatedValue);
 
-                    translation.put("value", translatedValue);
+//                    translation.put("value", translatedValue);
                     Object[] translations = new Object[]{
                             translation // 将HashMap添加到数组中
                     };
