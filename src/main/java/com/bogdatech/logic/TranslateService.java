@@ -251,6 +251,7 @@ public class TranslateService {
 
         appInsights.trackTrace("最终counter的值： " + counter.getTotalChars());
         jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
+
         return translatedRootNode;
     }
 
@@ -321,8 +322,7 @@ public class TranslateService {
         Map<String, Object> translation = new HashMap<>();
         contentNode.forEach(contentItem -> {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
-            if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())
-                    || "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
+            if (!"handle".equals(contentItemNode.get("key").asText())) {
                 translation.put("locale", request.getTarget());
                 translation.put("key", contentItemNode.get("key").asText());
                 translation.put("translatableContentDigest", contentItemNode.get("digest").asText());
