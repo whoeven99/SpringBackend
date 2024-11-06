@@ -28,7 +28,7 @@ public class TestController {
 	@GetMapping("/ping")
 	public String ping() {
 		var env = System.getenv();
-		return "Ping Successful!" + env.toString();
+		return "Ping Successful!!" + env.toString();
 	}
 
 	@GetMapping("/gpt")
