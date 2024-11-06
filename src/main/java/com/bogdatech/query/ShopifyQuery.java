@@ -72,4 +72,12 @@ public class ShopifyQuery {
                 "  }\n" +
                 "}";
     }
+
+    public String test(){
+        return "{\n" +
+                "\tshop {\n" +
+                "\t\tname\n" +
+                "\t}\n" +
+                "}";
+    }
 }
