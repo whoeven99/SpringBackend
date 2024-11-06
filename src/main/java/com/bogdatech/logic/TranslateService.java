@@ -29,6 +29,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.bogdatech.entity.TranslateResourceDTO.translationResources;
 import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
 
 @Component
@@ -204,6 +206,30 @@ public class TranslateService {
         return translatedRootNode;
     }
 
+    //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
+    public void translating(TranslateRequest request) {
+        List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
+        if (translatesDOS.isEmpty()) {
+            jdbcRepository.insertShopTranslateInfo(request);
+        } else {
+            jdbcRepository.updateTranslateStatusByTranslateRequest(request);
+        }
+
+        JSONObject objectData = new JSONObject();
+        ShopifyRequest shopifyRequest = new ShopifyRequest();
+        shopifyRequest.setShopName(request.getShopName());
+        shopifyRequest.setAccessToken(request.getAccessToken());
+        shopifyRequest.setTarget(request.getTarget());
+        for (TranslateResourceDTO translateResource : translationResources) {
+            ShopifyQuery shopifyQuery = new ShopifyQuery();
+            translateResource.setTarget(request.getTarget());
+            String query = shopifyQuery.getFirstQuery(translateResource);
+            JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
+            objectData.put(translateResource.getResourceType(), infoByShopify);
+            translateJson(infoByShopify, shopifyRequest, translateResource);
+        }
+    }
+
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
     public JsonNode translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         //从数据库获取已使用的字符数据，放入计数器中
@@ -227,7 +253,6 @@ public class TranslateService {
         jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
         return translatedRootNode;
     }
-
 
     // 递归处理下一页数据
     private JsonNode handlePagination(JsonNode translatedRootNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResourceDTO) {
@@ -353,7 +378,6 @@ public class TranslateService {
 
     //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
-        appInsights.trackTrace("我进入到递归了");
         ShopifyQuery shopifyQuery = new ShopifyQuery();
         String query = shopifyQuery.getAfterQuery(translateResource);
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, query);
@@ -427,17 +451,14 @@ public class TranslateService {
             String resourceId = node.path("resourceId").asText();
             Map<String, Object> translationsMap = extractTranslations(node);
             Map<String, Object> translatableContentMap = extractTranslatableContent(node);
-            appInsights.trackTrace("还没有合并两个map");
             // 合并两个Map
             Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
-            appInsights.trackTrace("已经合并两个map");
             // 将resourceId添加到每个合并后的Map中
             mergedMap.values().forEach(value -> {
                 if (value instanceof Map) {
                     ((Map<String, Object>) value).put("resourceId", resourceId);
                     ((Map<String, Object>) value).put("shopName", request.getShopName());
                     // 将合并后的Map存入SQL中
-                    appInsights.trackTrace("进入更新或插入数据");
                     updateOrInsertTranslateTextData(((Map<String, Object>) value));
                 }
             });
@@ -492,21 +513,11 @@ public class TranslateService {
             appInsights.trackTrace("当前的key为: " + key.toString());
             System.out.println("当前的key为:  " + key.toString());
             if (result.containsKey(key)) {
-                System.out.println("键冲突，合并两个Map:  " + key.toString());
-                appInsights.trackTrace("键冲突，合并两个Map:  " + key.toString());
                 // 如果键冲突，合并两个Map
                 Map<String, Object> existingValue = (Map<String, Object>) result.get(key);
-                appInsights.trackTrace("translations中的元素有： " + result.get(key));
-                System.out.println("existingValue中的元素有： " + existingValue);
                 Map<String, Object> newValue = (Map<String, Object>) value;
-                appInsights.trackTrace("newValue中的元素有： " + newValue.get(key));
-                System.out.println("newValue中的元素有： " + newValue);
                 Map<String, Object> mergedValue = new HashMap<>(existingValue);
-                appInsights.trackTrace("mergedValue1中的元素有： " + mergedValue.get(key));
-                System.out.println("mergedValue1中的元素有： " + mergedValue.get(key));
                 mergedValue.putAll(newValue);
-                appInsights.trackTrace("mergedValue2中的元素有： " + mergedValue);
-                System.out.println("mergedValue2中的元素有： " + mergedValue);
                 result.put((String) mergedValue.get("digest"), mergedValue);
             }
         });
@@ -514,10 +525,7 @@ public class TranslateService {
     }
 
     private void updateOrInsertTranslateTextData(Map<String, Object> data) {
-        appInsights.trackTrace("已经进入到updateOrInsertTranslateTextData方法内部了");
-        appInsights.trackTrace("digest不为null： " + data.toString());
         if (data.get("digest") != null) {
-            appInsights.trackTrace("digest不为null");
             TranslateTextRequest request = new TranslateTextRequest();
             request.setTargetText(data.get("targetText").toString());
             request.setResourceId(data.get("resourceId").toString());
@@ -531,16 +539,28 @@ public class TranslateService {
 
             // 检查是否存在有digest的数据
             List<TranslateTextRequest> translateText = jdbcRepository.getTranslateText(request.getDigest());
-            appInsights.trackTrace("检查translateText是否存在数据：" + translateText.isEmpty());
             if (translateText.isEmpty()) {
                 // 插入数据
-                int i = jdbcRepository.insertTranslateText(request);
-                appInsights.trackTrace("看是否插入数据成功： " + i);
+                jdbcRepository.insertTranslateText(request);
             } else {
                 // 更新数据
-                int i = jdbcRepository.updateTranslateText(request);
-                appInsights.trackTrace("看是否更新数据成功： " + i);
+                jdbcRepository.updateTranslateText(request);
             }
+        }
+    }
+
+    //循环存数据库
+    public void saveTranslateText(@RequestBody TranslateRequest request) {
+        ShopifyRequest shopifyRequest = new ShopifyRequest();
+        shopifyRequest.setTarget(request.getTarget());
+        shopifyRequest.setShopName(request.getShopName());
+        shopifyRequest.setAccessToken(request.getAccessToken());
+        for (TranslateResourceDTO translateResource : translationResources) {
+            ShopifyQuery shopifyQuery = new ShopifyQuery();
+            translateResource.setTarget(shopifyRequest.getTarget());
+            String query = shopifyQuery.getFirstQuery(translateResource);
+            String string = shopifyApiIntegration.sendShopifyPost(shopifyRequest, query, null);
+            saveTranslatedData(string, shopifyRequest, translateResource);
         }
     }
 }
