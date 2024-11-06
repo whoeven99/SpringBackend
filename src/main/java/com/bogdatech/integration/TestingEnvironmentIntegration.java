@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
-public class TestingEnvironment {
+public class TestingEnvironmentIntegration {
 
     public String sendShopifyPost(ShopifyRequest request) {
         String url = "http://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/test123";

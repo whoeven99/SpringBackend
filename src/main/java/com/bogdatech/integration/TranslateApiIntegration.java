@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 @Component
@@ -45,10 +47,11 @@ public class TranslateApiIntegration {
 
     public String baiDuTranslate(TranslateRequest request) {
         //创建URL
+        String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
         Random random = new Random();
         String salt = String.valueOf(random.nextInt(10000));
         String sign = DigestUtils.md5DigestAsHex((apiUrl + request.getContent() + salt + secret).getBytes());
-        String url = "https://fanyi-api.baidu.com/api/trans/vip/translate?q=" + request.getContent()
+        String url = "https://fanyi-api.baidu.com/api/trans/vip/translate?q=" + encodedQuery
                 + "&from=" + request.getSource() + "&to=" + request.getTarget() + "&appid=" + apiUrl + "&salt=" + salt + "&sign=" + sign;
 
         // 创建Httpclient对象
