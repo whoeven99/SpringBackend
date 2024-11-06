@@ -207,6 +207,7 @@ public class TranslateService {
     }
 
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
+    @Async
     public void translating(TranslateRequest request) {
         List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
         if (translatesDOS.isEmpty()) {
