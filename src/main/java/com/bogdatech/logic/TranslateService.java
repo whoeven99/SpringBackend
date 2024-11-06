@@ -221,6 +221,7 @@ public class TranslateService {
         shopifyRequest.setAccessToken(request.getAccessToken());
         shopifyRequest.setTarget(request.getTarget());
         for (TranslateResourceDTO translateResource : translationResources) {
+            appInsights.trackTrace("现在到： " + translateResource.getResourceType().toString());
             ShopifyQuery shopifyQuery = new ShopifyQuery();
             translateResource.setTarget(request.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);
