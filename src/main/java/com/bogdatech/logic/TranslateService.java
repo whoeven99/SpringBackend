@@ -580,6 +580,8 @@ public class TranslateService {
         jdbcRepository.insertTranslateText(request);
     }
     //循环存数据库
+
+    @Async
     public void saveTranslateText(@RequestBody TranslateRequest request) {
         ShopifyRequest shopifyRequest = new ShopifyRequest();
         shopifyRequest.setTarget(request.getTarget());

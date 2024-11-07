@@ -11,6 +11,7 @@ import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,13 +31,16 @@ public class ShopifyController {
     @Autowired
     private TestingEnvironmentIntegration testingEnvironmentIntegration;
 
+    private final TelemetryClient appInsights = new TelemetryClient();
+
     @PostMapping("/test123")
     public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
         ShopifyRequest request = new ShopifyRequest();
         request.setShopName(cloudServiceRequest.getShopName());
-        request.setTarget(cloudServiceRequest.getTarget());
+        request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
+        appInsights.trackTrace("body: " + body);
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
         return infoByShopify.toString();
     }
