@@ -5,12 +5,11 @@ import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.TranslateTextRequest;
 import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class ShopifyController {
@@ -30,7 +29,7 @@ public class ShopifyController {
     public String test() {
         ShopifyRequest shopifyRequest = new ShopifyRequest();
         shopifyRequest.setShopName("quickstart-0f992326.myshopify.com");
-        shopifyRequest.setAccessToken("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");
+        shopifyRequest.setAccessToken("");
         shopifyRequest.setTarget("it");
         ShopifyQuery query = new ShopifyQuery();
         String query2 = query.test();
@@ -45,5 +44,17 @@ public class ShopifyController {
     }
 
     //查询需要翻译的总字数
+    @PostMapping("/shopify/getTotalWords")
+    public String getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String[] strings) {
+        System.out.println(shopifyRequest + " " + strings.length);
+        return "1000";
+    }
 
+    //根据前端的传值,更新shopify后台和数据库
+    @PostMapping("/shopify/updateShopifyDataByTranslateTextRequest")
+    public String updateShopifyDataByTranslateTextRequest(@RequestBody TranslateTextRequest translateTextRequest) {
+
+
+        return "success";
+    }
 }
