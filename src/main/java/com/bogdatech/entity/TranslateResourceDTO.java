@@ -24,13 +24,14 @@ public class TranslateResourceDTO {
 //            new TranslateResourceDTO("MENU", "2", "", ""),
 //            new TranslateResourceDTO("METAFIELD", "2", "", ""),
 //            new TranslateResourceDTO("METAOBJECT", "2", "", ""),
-//            new TranslateResourceDTO("ONLINE_STORE_THEME", "10", "", ""),
-//            new TranslateResourceDTO("ONLINE_STORE_THEME_APP_EMBED", "10", "", ""),
-//            new TranslateResourceDTO("ONLINE_STORE_THEME_JSON_TEMPLATE", "10", "", ""),
-//            new TranslateResourceDTO("ONLINE_STORE_THEME_LOCALE_CONTENT", "10", "", ""),
-//            new TranslateResourceDTO("ONLINE_STORE_THEME_SECTION_GROUP", "10", "", ""),
-//            new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_CATEGORY", "10", "", ""),
-//            new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS", "10", "", ""),
+            new TranslateResourceDTO("ONLINE_STORE_THEME", "10", "", ""),
+            new TranslateResourceDTO("ONLINE_STORE_THEME_APP_EMBED", "10", "", ""),
+            new TranslateResourceDTO("ONLINE_STORE_THEME_JSON_TEMPLATE", "10", "", ""),
+            new TranslateResourceDTO("ONLINE_STORE_THEME_LOCALE_CONTENT", "10", "", ""),
+            new TranslateResourceDTO("ONLINE_STORE_THEME_SECTION_GROUP", "10", "", ""),
+            new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_CATEGORY", "10", "", ""),
+            new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS", "10", "", "")
+//            ,
 //            new TranslateResourceDTO("PAGE", "10", "", ""),
 //            new TranslateResourceDTO("PACKING_SLIP_TEMPLATE", "10", "", ""),
 //            new TranslateResourceDTO("PAYMENT_GATEWAY", "10", "", ""),
@@ -38,9 +39,9 @@ public class TranslateResourceDTO {
 //            new TranslateResourceDTO("PRODUCT_OPTION", "10", "", ""),
 //            new TranslateResourceDTO("PRODUCT_OPTION_VALUE", "10", "", ""),
 //            new TranslateResourceDTO("SHOP", "2", "", ""),
-            new TranslateResourceDTO("SELLING_PLAN", "2", "", ""),
-            new TranslateResourceDTO("SELLING_PLAN_GROUP", "2", "", ""),
-            new TranslateResourceDTO("SHOP_POLICY", "2", "", "")
+//            new TranslateResourceDTO("SELLING_PLAN", "2", "", ""),
+//            new TranslateResourceDTO("SELLING_PLAN_GROUP", "2", "", ""),
+//            new TranslateResourceDTO("SHOP_POLICY", "2", "", "")
     ));
 
     private String resourceType;

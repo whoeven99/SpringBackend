@@ -288,16 +288,12 @@ public class TranslateService {
                 //获取resourceId的值
                 if ("resourceId".equals(fieldName)) {
                     resourceId[0] = fieldValue.asText();
-                    // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
-                    appInsights.trackTrace("resourceId[0]: " + resourceId[0]);
                 }
 //                根据translations的情况判断是否翻译
                 if (!judgeByTranslations(fieldName, fieldValue)) {
                     return;
                 }
                 if ("translatableContent".equals(fieldName)) {
-                    //达到字符限制，更新用户剩余字符数，终止循环
-                    updateCharsWhenExceedLimit(counter, request.getShopName());
                     ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, resourceId[0]);
                     objectNode.set(fieldName, translatedContent);
                 } else {
@@ -343,6 +339,8 @@ public class TranslateService {
                     String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
                     counter.subtractChars(encodedQuery.length());
                     appInsights.trackTrace("编码后的value长度： " + encodedQuery.length());
+                    //达到字符限制，更新用户剩余字符数，终止循环
+                    updateCharsWhenExceedLimit(counter, request.getShopName());
                     String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
                     contentItemNode.put("value", translatedValue);
 
@@ -437,6 +435,7 @@ public class TranslateService {
     }
 
     // 将翻译后的数据存储到数据库中
+    @Async
     public void saveTranslatedData(String objectData, ShopifyRequest request, TranslateResourceDTO
             translateResourceDTO) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -459,15 +458,25 @@ public class TranslateService {
             Map<String, Object> translatableContentMap = extractTranslatableContent(node);
             // 合并两个Map
             Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
-            // 将resourceId添加到每个合并后的Map中
-            mergedMap.values().forEach(value -> {
+            translatableContentMap.values().forEach(value -> {
                 if (value instanceof Map) {
                     ((Map<String, Object>) value).put("resourceId", resourceId);
                     ((Map<String, Object>) value).put("shopName", request.getShopName());
                     // 将合并后的Map存入SQL中
-                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
+//                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
+                    //直接存数据库
+                    InsertTranslateTextData(((Map<String, Object>) value));
                 }
             });
+            // 将resourceId添加到每个合并后的Map中
+//            mergedMap.values().forEach(value -> {
+//                if (value instanceof Map) {
+//                    ((Map<String, Object>) value).put("resourceId", resourceId);
+//                    ((Map<String, Object>) value).put("shopName", request.getShopName());
+//                    // 将合并后的Map存入SQL中
+//                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
+//                }
+//            });
         }
 
         // 检查是否有下一页
@@ -559,6 +568,19 @@ public class TranslateService {
         }
     }
 
+    private void InsertTranslateTextData(Map<String, Object> data){
+        TranslateTextRequest request = new TranslateTextRequest();
+        request.setTargetText("1");
+        request.setResourceId(data.get("resourceId").toString());
+        request.setDigest(data.get("digest").toString());
+        request.setSourceCode(data.get("sourceCode").toString());
+        request.setTargetCode("1");
+        request.setShopName(data.get("shopName").toString());
+        request.setTextKey(data.get("textKey").toString());
+        request.setSourceText("1");
+        request.setTextType(data.get("textType").toString());
+        jdbcRepository.insertTranslateText(request);
+    }
     //循环存数据库
     public void saveTranslateText(@RequestBody TranslateRequest request) {
         ShopifyRequest shopifyRequest = new ShopifyRequest();
