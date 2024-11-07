@@ -327,8 +327,7 @@ public class TranslateService {
 //            if (!"handle".equals(contentItemNode.get("key").asText())) {
             if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText()) ||
                     "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText()) ||
-                    "INLINE_RICH_TEXT".equals(contentItemNode.get("type").asText()) ||
-                    "INLINE_RICH_TEXT".equals(contentItemNode.get("type").asText())) {
+                    "INLINE_RICH_TEXT".equals(contentItemNode.get("type").asText()) ) {
                 translation.put("locale", request.getTarget());
                 translation.put("key", contentItemNode.get("key").asText());
                 translation.put("translatableContentDigest", contentItemNode.get("digest").asText());

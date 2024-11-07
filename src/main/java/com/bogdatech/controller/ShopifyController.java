@@ -4,12 +4,16 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.logic.ShopifyService;
+import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateTextRequest;
-import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class ShopifyController {
@@ -25,21 +29,29 @@ public class ShopifyController {
     @Autowired
     private TestingEnvironmentIntegration testingEnvironmentIntegration;
 
-    @GetMapping("/test123")
-    public String test() {
-        ShopifyRequest shopifyRequest = new ShopifyRequest();
-        shopifyRequest.setShopName("quickstart-0f992326.myshopify.com");
-        shopifyRequest.setAccessToken("");
-        shopifyRequest.setTarget("it");
-        ShopifyQuery query = new ShopifyQuery();
-        String query2 = query.test();
-        JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query2);
+    @PostMapping("/test123")
+    public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(cloudServiceRequest.getShopName());
+        request.setTarget(cloudServiceRequest.getTarget());
+        request.setTarget(cloudServiceRequest.getTarget());
+        String body = cloudServiceRequest.getBody();
+        JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
         return infoByShopify.toString();
     }
 
-    @GetMapping("/shopifyApi")
-    public String shopifyApi(@RequestBody ShopifyRequest shopifyRequest) {
-        String string = testingEnvironmentIntegration.sendShopifyGet(shopifyRequest, "test123");
+    @PostMapping("/shopifyApi")
+    public String shopifyApi(@RequestBody CloudServiceRequest cloudServiceRequest) {
+        // 使用 ObjectMapper 将对象转换为 JSON 字符串
+        ObjectMapper objectMapper = new ObjectMapper();
+        String string;
+        try {
+            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            string = testingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
         return string;
     }
 
