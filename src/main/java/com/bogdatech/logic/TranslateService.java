@@ -184,7 +184,7 @@ public class TranslateService {
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
     public void translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO, CharacterCountUtils counter) {
-
+        appInsights.trackTrace("现在翻译到： " + translateResourceDTO.getResourceType());
         if (objectData == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty.");
         }
