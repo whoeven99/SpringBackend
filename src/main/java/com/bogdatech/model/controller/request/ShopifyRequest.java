@@ -18,4 +18,5 @@ public class ShopifyRequest {
     private String target;
 
 
+
 }
