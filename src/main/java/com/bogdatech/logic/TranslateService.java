@@ -233,7 +233,8 @@ public class TranslateService {
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    public JsonNode translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
+    @Async
+    public void translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         //从数据库获取已使用的字符数据，放入计数器中
         CharacterCountUtils counter = createCounter(request);
 
@@ -249,12 +250,11 @@ public class TranslateService {
             throw new RuntimeException(e);
         }
         // 递归处理下一页数据
-        translatedRootNode = handlePagination(translatedRootNode, request, counter, translateResourceDTO);
+        handlePagination(translatedRootNode, request, counter, translateResourceDTO);
 
         appInsights.trackTrace("最终counter的值： " + counter.getTotalChars());
         jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
 
-        return translatedRootNode;
     }
 
     // 递归处理下一页数据
@@ -454,10 +454,10 @@ public class TranslateService {
 
         for (JsonNode node : translatableResourcesNode) {
             String resourceId = node.path("resourceId").asText();
-            Map<String, Object> translationsMap = extractTranslations(node);
+//            Map<String, Object> translationsMap = extractTranslations(node);
             Map<String, Object> translatableContentMap = extractTranslatableContent(node);
             // 合并两个Map
-            Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
+//            Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
             translatableContentMap.values().forEach(value -> {
                 if (value instanceof Map) {
                     ((Map<String, Object>) value).put("resourceId", resourceId);
