@@ -153,7 +153,7 @@ public class TranslateService {
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
     public void translating(TranslateRequest request) {
         //将翻译状态改为2
-        jdbcRepository.updateTranslateStatus(request.getShopName(),2);
+        jdbcRepository.updateTranslateStatus(request.getShopName(), 2);
         List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
         if (translatesDOS.isEmpty()) {
             jdbcRepository.insertShopTranslateInfo(request);
@@ -166,23 +166,24 @@ public class TranslateService {
         shopifyRequest.setShopName(request.getShopName());
         shopifyRequest.setAccessToken(request.getAccessToken());
         shopifyRequest.setTarget(request.getTarget());
+        //从数据库获取已使用的字符数据，放入计数器中
+        CharacterCountUtils counter = createCounter(shopifyRequest);
+        if (counter.getTotalChars() <= 0) {
+            throw new ClientException("翻译字符数超过限制.");
+        }
         for (TranslateResourceDTO translateResource : translationResources) {
             ShopifyQuery shopifyQuery = new ShopifyQuery();
             translateResource.setTarget(request.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);
             JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
             objectData.put(translateResource.getResourceType(), infoByShopify);
-            translateJson(infoByShopify, shopifyRequest, translateResource);
+            translateJson(infoByShopify, shopifyRequest, translateResource, counter);
         }
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    public void translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
-        //从数据库获取已使用的字符数据，放入计数器中
-        CharacterCountUtils counter = createCounter(request);
-        if (counter.getTotalChars() <= 0){
-            throw new ClientException("翻译字符数超过限制.");
-        }
+    public void translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO, CharacterCountUtils counter) {
+
         if (objectData == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty.");
         }
@@ -491,7 +492,7 @@ public class TranslateService {
         }
     }
 
-    private void InsertTranslateTextData(Map<String, Object> data){
+    private void InsertTranslateTextData(Map<String, Object> data) {
         TranslateTextRequest request = new TranslateTextRequest();
         request.setTargetText("1");
         request.setTargetCode("1");
