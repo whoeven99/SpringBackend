@@ -436,8 +436,7 @@ public class TranslateService {
 
     // 将翻译后的数据存储到数据库中
     @Async
-    public void saveTranslatedData(String objectData, ShopifyRequest request, TranslateResourceDTO
-            translateResourceDTO) {
+    public void saveTranslatedData(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = null;
         try {
@@ -529,7 +528,6 @@ public class TranslateService {
         Map<String, Object> result = new HashMap<>(map1);
         map2.forEach((key, value) -> {
             appInsights.trackTrace("当前的key为: " + key.toString());
-            System.out.println("当前的key为:  " + key.toString());
             if (result.containsKey(key)) {
                 // 如果键冲突，合并两个Map
                 Map<String, Object> existingValue = (Map<String, Object>) result.get(key);
@@ -571,13 +569,13 @@ public class TranslateService {
     private void InsertTranslateTextData(Map<String, Object> data){
         TranslateTextRequest request = new TranslateTextRequest();
         request.setTargetText("1");
+        request.setTargetCode("1");
         request.setResourceId(data.get("resourceId").toString());
         request.setDigest(data.get("digest").toString());
         request.setSourceCode(data.get("sourceCode").toString());
-        request.setTargetCode("1");
         request.setShopName(data.get("shopName").toString());
         request.setTextKey(data.get("textKey").toString());
-        request.setSourceText("1");
+        request.setSourceText(data.get("sourceText").toString());
         request.setTextType(data.get("textType").toString());
         jdbcRepository.insertTranslateText(request);
     }

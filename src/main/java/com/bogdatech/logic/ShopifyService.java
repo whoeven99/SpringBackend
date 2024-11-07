@@ -14,4 +14,7 @@ public class ShopifyService {
     @Autowired
     private JdbcRepository jdbcRepository;
 
+    public void getTotalWords(){
+
+    }
 }

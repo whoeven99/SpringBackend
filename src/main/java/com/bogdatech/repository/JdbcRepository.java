@@ -165,7 +165,7 @@ public class JdbcRepository {
     }
 
     public int insertTranslateText(TranslateTextRequest request){
-        String sql = "INSERT INTO TranslateText (shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, " +
+        String sql = "INSERT INTO TranslateTextTable (shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, " +
                 "target_code) VALUES (?,?,?,?,?,?,?,?,?)";
         Object[] info = {request.getShopName(), request.getResourceId(), request.getTextType(), request.getDigest(), request.getTextKey()
                 , request.getSourceText(), request.getTargetText(), request.getSourceCode(), request.getTargetCode()};
