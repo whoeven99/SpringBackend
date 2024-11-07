@@ -7,6 +7,7 @@ import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateTextRequest;
+import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +43,8 @@ public class ShopifyController {
 
     @PostMapping("/shopifyApi")
     public String shopifyApi(@RequestBody CloudServiceRequest cloudServiceRequest) {
+        ShopifyQuery query = new ShopifyQuery();
+        cloudServiceRequest.setBody(query.test());
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
         String string;
