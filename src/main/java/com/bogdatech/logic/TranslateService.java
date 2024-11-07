@@ -574,7 +574,7 @@ public class TranslateService {
         request.setDigest(data.get("digest").toString());
         request.setSourceCode(data.get("sourceCode").toString());
         request.setShopName(data.get("shopName").toString());
-        request.setTextKey(data.get("textKey").toString());
+        request.setTextKey("1");
         request.setSourceText(data.get("sourceText").toString());
         request.setTextType(data.get("textType").toString());
         jdbcRepository.insertTranslateText(request);
