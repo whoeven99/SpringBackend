@@ -111,7 +111,7 @@ public class TranslateController {
     @GetMapping("/translate/clickTranslation")
     public int clickTranslation(@RequestBody TranslateRequest request) {
         //翻译
-//        translateService.translating(request);
+        translateService.translating(request);
         //返回一个status值
 //        //存数据库
 //        translateService.saveTranslateText(request);
