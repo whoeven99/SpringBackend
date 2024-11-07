@@ -69,6 +69,13 @@ public class ShopifyController {
         return 10;
     }
 
+    //获取用户的状态
+    @PostMapping("/shopify/getUserStatus")
+    public String getUserStatus(@RequestBody ShopifyRequest shopifyRequest) {
+
+        return "2";
+    }
+
     //查询需要翻译的总字数
     @PostMapping("/shopify/getTotalWords")
     public String getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String[] strings) {
