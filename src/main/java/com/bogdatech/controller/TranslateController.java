@@ -98,14 +98,6 @@ public class TranslateController {
     }
 
     /*
-     *  读取produck的json文件，用百度翻译API翻译json格式的数据
-     */
-    @PostMapping("/translate/readJsonFile")
-    public BaseResponse userBDTranslateJson() {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.readJsonFile());
-    }
-
-    /*
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @GetMapping("/translate/clickTranslation")

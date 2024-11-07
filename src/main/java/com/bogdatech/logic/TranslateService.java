@@ -90,7 +90,7 @@ public class TranslateService {
         }
         appInsights.trackTrace("翻译完成" + Thread.currentThread().getName());
         //更新状态
-        jdbcRepository.updateTranslateStatus(request.getId(), 0);
+        jdbcRepository.updateTranslateStatus(request.getShopName(), 0);
     }
 
 
@@ -150,63 +150,10 @@ public class TranslateService {
         }
     }
 
-    //模拟测试环境读取json数据，需要翻墙的数据都为死数据
-    public JsonNode readJsonFile() {
-        //模拟传入shopifyRequest
-        ShopifyRequest request = new ShopifyRequest();
-        request.setTarget("jp");
-        request.setShopName("quickstart-0f992326.myshopify.com");
-        //模拟传入了计数器
-        CharacterCountUtils counter = createCounter(request);
-        PathMatchingResourcePatternResolver resourceLoader = new PathMatchingResourcePatternResolver();
-        JsonNode translatedRootNode = null;
-        try {
-            Resource resource = resourceLoader.getResource("classpath:jsonData/produck.json");
-            InputStream inputStream = resource.getInputStream();
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(inputStream);
-            //递归查询
-            if (true) {
-                String[] resourceId = new String[1]; // 使用单元素数组来存储 resourceId
-                rootNode.fieldNames().forEachRemaining(fieldName -> {
-                    JsonNode fieldValue = rootNode.get(fieldName);
-                    System.out.println("fieldName: " + fieldName + ", fieldValue: " + fieldValue);
-                    System.out.println("fieldValue: " + fieldValue);
-                    //获取resourceId的值
-                    if ("resourceId".equals(fieldName)) {
-                        resourceId[0] = fieldValue.asText();
-                        // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
-                    }
-                    if ("translations".equals(fieldName)) {
-                        //如果不为空，就不翻译
-                        if (!fieldValue.isNull()) {
-                            // translations 字段不为空，不进行翻译
-                            return;
-                        }
-                    }
-                    if ("translatableContent".equals(fieldName)) {
-                        //达到字符限制，更新用户剩余字符数，终止循
-
-
-                    }
-                    System.out.println("翻译前：" + resourceId[0]);
-                });
-            }
-            System.out.println("NodeTree: \n" + rootNode);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("counter: " + counter.getTotalChars());
-//        jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
-        System.out.println("counter: " + counter.getTotalChars());
-        System.out.println("translatedRootNode: " + translatedRootNode);
-
-        return translatedRootNode;
-    }
-
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
-    @Async
     public void translating(TranslateRequest request) {
+        //将翻译状态改为2
+        jdbcRepository.updateTranslateStatus(request.getShopName(),2);
         List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
         if (translatesDOS.isEmpty()) {
             jdbcRepository.insertShopTranslateInfo(request);
@@ -230,7 +177,6 @@ public class TranslateService {
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    @Async
     public void translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         //从数据库获取已使用的字符数据，放入计数器中
         CharacterCountUtils counter = createCounter(request);
