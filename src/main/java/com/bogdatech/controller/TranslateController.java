@@ -1,11 +1,8 @@
 package com.bogdatech.controller;
 
-import com.alibaba.fastjson.JSONObject;
-import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.JdbcRepository;
@@ -107,15 +104,6 @@ public class TranslateController {
     public BaseResponse userBDTranslateJson() {
         return new BaseResponse<>().CreateSuccessResponse(translateService.readJsonFile());
     }
-
-    /*
-     *  传入json格式的数据，用百度翻译API翻译json格式的数据
-     */
-    @PostMapping("/translate/translateString")
-    public BaseResponse translate(@RequestBody JSONObject request) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateJson(request, new ShopifyRequest(), new TranslateResourceDTO()));
-    }
-
 
     /*
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
