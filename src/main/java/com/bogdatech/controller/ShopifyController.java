@@ -62,6 +62,13 @@ public class ShopifyController {
         return string;
     }
 
+    // 用户消耗的字符数
+    @PostMapping("/shopify/getConsumedWords")
+    public int getConsumedWords(@RequestBody ShopifyRequest shopifyRequest) {
+
+        return 0;
+    }
+
     //查询需要翻译的总字数
     @PostMapping("/shopify/getTotalWords")
     public String getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String[] strings) {

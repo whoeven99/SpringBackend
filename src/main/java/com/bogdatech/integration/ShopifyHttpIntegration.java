@@ -36,9 +36,6 @@ public class ShopifyHttpIntegration {
         );
         if (variables != null && !variables.isEmpty()) {
             query.put("variables", new JSONObject(variables));
-            appInsights.trackTrace("看是否是variables是出错了");
-            appInsights.trackTrace("variables: " + new JSONObject(variables));
-            appInsights.trackTrace("Final Query: " + query.toString());
         }
         String responseContent = null;
         try {

@@ -176,8 +176,6 @@ public class TranslateService {
                     if ("resourceId".equals(fieldName)) {
                         resourceId[0] = fieldValue.asText();
                         // 在这里你可以对 resourceId 做进一步处理，比如存储或打印
-                        appInsights.trackTrace("Resource ID: " + resourceId[0]);
-                        System.out.println("Resource ID: " + resourceId[0]);
                     }
                     if ("translations".equals(fieldName)) {
                         //如果不为空，就不翻译
@@ -222,7 +220,6 @@ public class TranslateService {
         shopifyRequest.setAccessToken(request.getAccessToken());
         shopifyRequest.setTarget(request.getTarget());
         for (TranslateResourceDTO translateResource : translationResources) {
-            appInsights.trackTrace("现在到： " + translateResource.getResourceType().toString());
             ShopifyQuery shopifyQuery = new ShopifyQuery();
             translateResource.setTarget(request.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);
@@ -237,7 +234,9 @@ public class TranslateService {
     public void translateJson(JSONObject objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         //从数据库获取已使用的字符数据，放入计数器中
         CharacterCountUtils counter = createCounter(request);
-
+        if (counter.getTotalChars() <= 0){
+            throw new ClientException("翻译字符数超过限制.");
+        }
         if (objectData == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty.");
         }
@@ -251,8 +250,6 @@ public class TranslateService {
         }
         // 递归处理下一页数据
         handlePagination(translatedRootNode, request, counter, translateResourceDTO);
-
-        appInsights.trackTrace("最终counter的值： " + counter.getTotalChars());
         jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars()));
 
     }
@@ -265,12 +262,8 @@ public class TranslateService {
         JsonNode pageInfoNode = translatableResourcesNode.path("pageInfo");
 
         if (translatableResourcesNode.hasNonNull("pageInfo")) {
-            appInsights.trackTrace("我开始递归处理下一页数据");
-            appInsights.trackTrace("pageInfo: " + pageInfoNode);
-
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.get("endCursor");
-                appInsights.trackTrace("endCursor: " + endCursor.asText());
                 translateResourceDTO.setAfter(endCursor.asText());
                 translatedRootNode = translateNextPage(request, counter, translateResourceDTO);
             }
@@ -316,14 +309,13 @@ public class TranslateService {
         //初始化存储到shopify本地的数据
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", resourceId);
-        appInsights.trackTrace("variables: " + variables);
         Map<String, Object> translation = new HashMap<>();
         contentNode.forEach(contentItem -> {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
-//            if (!"handle".equals(contentItemNode.get("key").asText())) {
-            if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText()) ||
-                    "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText()) ||
-                    "INLINE_RICH_TEXT".equals(contentItemNode.get("type").asText()) ) {
+            if (!"handle".equals(contentItemNode.get("key").asText())) {
+//            if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText()) ||
+//                    "MULTI_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText()) ||
+//                    "INLINE_RICH_TEXT".equals(contentItemNode.get("type").asText()) ) {
                 translation.put("locale", request.getTarget());
                 translation.put("key", contentItemNode.get("key").asText());
                 translation.put("translatableContentDigest", contentItemNode.get("digest").asText());
@@ -335,13 +327,11 @@ public class TranslateService {
                     return;
                 }
                 try {
-                    appInsights.trackTrace("不编码的value长度： " + value.length());
                     String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
                     counter.subtractChars(encodedQuery.length());
-                    appInsights.trackTrace("编码后的value长度： " + encodedQuery.length());
                     //达到字符限制，更新用户剩余字符数，终止循环
                     updateCharsWhenExceedLimit(counter, request.getShopName());
-                    String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
+                    String translatedValue = translateApiIntegration.googleTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
                     contentItemNode.put("value", translatedValue);
 
                     translation.put("value", translatedValue);
@@ -350,7 +340,7 @@ public class TranslateService {
                     };
                     variables.put("translations", translations);
                     //将翻译后的内容通过ShopifyAPI记录到shopify本地
-                    String string = shopifyApiIntegration.registerTransaction(request, variables);
+                    shopifyApiIntegration.registerTransaction(request, variables);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -407,7 +397,6 @@ public class TranslateService {
         if (translatableResourcesNode.hasNonNull("pageInfo")) {
             JsonNode pageInfo = translatableResourcesNode.path("pageInfo");
             if (pageInfo.hasNonNull("hasNextPage") && pageInfo.path("hasNextPage").asBoolean()) {
-                appInsights.trackTrace("递归处理下一页数据");
                 JsonNode newEndCursor = pageInfo.path("endCursor");
                 translateResource.setAfter(newEndCursor.asText());
                 return translateNextPage(request, counter, translateResource);
@@ -453,29 +442,19 @@ public class TranslateService {
 
         for (JsonNode node : translatableResourcesNode) {
             String resourceId = node.path("resourceId").asText();
-//            Map<String, Object> translationsMap = extractTranslations(node);
+            Map<String, Object> translationsMap = extractTranslations(node);
             Map<String, Object> translatableContentMap = extractTranslatableContent(node);
             // 合并两个Map
-//            Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
-            translatableContentMap.values().forEach(value -> {
+            Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
+//             将resourceId添加到每个合并后的Map中
+            mergedMap.values().forEach(value -> {
                 if (value instanceof Map) {
                     ((Map<String, Object>) value).put("resourceId", resourceId);
                     ((Map<String, Object>) value).put("shopName", request.getShopName());
                     // 将合并后的Map存入SQL中
-//                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
-                    //直接存数据库
-                    InsertTranslateTextData(((Map<String, Object>) value));
+                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
                 }
             });
-            // 将resourceId添加到每个合并后的Map中
-//            mergedMap.values().forEach(value -> {
-//                if (value instanceof Map) {
-//                    ((Map<String, Object>) value).put("resourceId", resourceId);
-//                    ((Map<String, Object>) value).put("shopName", request.getShopName());
-//                    // 将合并后的Map存入SQL中
-//                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
-//                }
-//            });
         }
 
         // 检查是否有下一页
