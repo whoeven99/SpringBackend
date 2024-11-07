@@ -34,15 +34,16 @@ public class TestingEnvironmentIntegration {
         return responseContent;
     }
 
-    public String sendShopifyPost(ShopifyRequest request, String api, String body) {
+    public String sendShopifyPost(String api, String body) {
         String url = "http://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/"+ api;
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
 
         String responseContent = null;
         try {
-            StringEntity input = new StringEntity(body.toString(),"UTF-8");
+            StringEntity input = new StringEntity(body,"UTF-8");
             httpPost.setEntity(input);
+            httpPost.setHeader("Content-Type", "application/json"); // 设置请求头为 JSON
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity);
