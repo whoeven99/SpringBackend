@@ -436,8 +436,7 @@ public class TranslateService {
 
     // 将翻译后的数据存储到数据库中
     @Async
-    public void saveTranslatedData(String objectData, ShopifyRequest request, TranslateResourceDTO
-            translateResourceDTO) {
+    public void saveTranslatedData(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = null;
         try {
