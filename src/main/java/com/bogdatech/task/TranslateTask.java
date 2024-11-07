@@ -36,7 +36,7 @@ public class TranslateTask {
             System.out.println("正在进行翻译");
             translateService.test(request);
             //修改status状态
-            int i = jdbcRepository.updateTranslateStatus(request.getId(), 2);
+            int i = jdbcRepository.updateTranslateStatus(request.getShopName(), 2);
             //判断是否修改成功
             if (i > 0) {
                 System.out.println("修改成功");

@@ -82,9 +82,9 @@ public class JdbcRepository {
         return list;
     }
 
-    public int updateTranslateStatus(int id, int status) {
-        String sql = "UPDATE Translates SET status = ? WHERE id = ?";
-        Object[] info = {status, id};
+    public int updateTranslateStatus(String shopName, int status) {
+        String sql = "UPDATE Translates SET status = ? WHERE shop_name = ?";
+        Object[] info = {status, shopName};
         int result = CUDInfo(info, sql);
         return result;
     }
