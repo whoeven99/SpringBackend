@@ -442,29 +442,19 @@ public class TranslateService {
 
         for (JsonNode node : translatableResourcesNode) {
             String resourceId = node.path("resourceId").asText();
-//            Map<String, Object> translationsMap = extractTranslations(node);
+            Map<String, Object> translationsMap = extractTranslations(node);
             Map<String, Object> translatableContentMap = extractTranslatableContent(node);
             // 合并两个Map
-//            Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
-            translatableContentMap.values().forEach(value -> {
+            Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
+//             将resourceId添加到每个合并后的Map中
+            mergedMap.values().forEach(value -> {
                 if (value instanceof Map) {
                     ((Map<String, Object>) value).put("resourceId", resourceId);
                     ((Map<String, Object>) value).put("shopName", request.getShopName());
                     // 将合并后的Map存入SQL中
-//                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
-                    //直接存数据库
-                    InsertTranslateTextData(((Map<String, Object>) value));
+                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
                 }
             });
-            // 将resourceId添加到每个合并后的Map中
-//            mergedMap.values().forEach(value -> {
-//                if (value instanceof Map) {
-//                    ((Map<String, Object>) value).put("resourceId", resourceId);
-//                    ((Map<String, Object>) value).put("shopName", request.getShopName());
-//                    // 将合并后的Map存入SQL中
-//                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
-//                }
-//            });
         }
 
         // 检查是否有下一页
