@@ -110,9 +110,9 @@ public class JdbcRepository {
         return result;
     }
 
-    public int updateCharsByShopName(TranslationCounterRequest translationCounterRequest) {
+    public int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest) {
         String sql = "UPDATE TranslationCounter SET used_chars = ? WHERE shop_name = ?";
-        Object[] info = {translationCounterRequest.getChars(), translationCounterRequest.getShopName()};
+        Object[] info = {translationCounterRequest.getUsedChars(), translationCounterRequest.getShopName()};
         int result = CUDInfo(info, sql);
         return result;
     }

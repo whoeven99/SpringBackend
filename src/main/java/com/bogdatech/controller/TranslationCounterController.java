@@ -38,7 +38,7 @@ public class TranslationCounterController {
 
     @PostMapping("/translationCounter/updateCharsByShopName")
     public BaseResponse updateCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        int result = jdbcRepository.updateCharsByShopName(request);
+        int result = jdbcRepository.updateUsedCharsByShopName(request);
         if (result > 0) {
             return new BaseResponse().CreateSuccessResponse(result);
         }

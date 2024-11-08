@@ -28,8 +28,6 @@ public class ShopifyService {
 
     //封装调用云服务器实现获取shopify数据的方法
         public String getShopifyData(CloudServiceRequest cloudServiceRequest){
-        ShopifyQuery query = new ShopifyQuery();
-//        cloudServiceRequest.setBody(query.test());
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
         String string;
