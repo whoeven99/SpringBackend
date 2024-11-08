@@ -12,4 +12,8 @@ public class TranslationCounterRequest {
     private int id;
     private String shopName;
     private int chars;
+    private int googleChars;
+    private int openAiChars;
+    private int totalChars;
+
 }
