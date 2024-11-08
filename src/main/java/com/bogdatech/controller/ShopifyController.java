@@ -5,10 +5,7 @@ import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.logic.ShopifyService;
-import com.bogdatech.model.controller.request.CloudServiceRequest;
-import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.model.controller.request.TranslateTextRequest;
+import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.JdbcRepository;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -76,9 +73,16 @@ public class ShopifyController {
         return totalWords;
     }
 
-    //根据前端的传值,更新shopify后台和数据库
+    //根据前端的传值,更新shopify后台和数据库 TODO :需要修改
     @PostMapping("/shopify/updateShopifyDataByTranslateTextRequest")
-    public String updateShopifyDataByTranslateTextRequest(@RequestBody TranslateTextRequest translateTextRequest) {
-        return "success";
+    public String updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
+        String string = shopifyService.updateShopifySingleData(registerTransactionRequest);
+        TranslateTextRequest request = new TranslateTextRequest();
+        request.setShopName(registerTransactionRequest.getShopName());
+        request.setTargetText(registerTransactionRequest.getValue());
+        request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
+        request.setTargetCode(registerTransactionRequest.getLocale());
+        jdbcRepository.updateTranslateText(request);
+        return string;
     }
 }

@@ -27,8 +27,8 @@ public class TranslateTask {
     @Scheduled(cron = "0 5 * * * ?")
     public void translate() {
         System.out.println("translate");
-        //查询Translates表status为1的数据
-        List<TranslatesDO> list = jdbcRepository.readTranslateInfo(1);
+        //查询Translates表status为0的数据
+        List<TranslatesDO> list = jdbcRepository.readTranslateInfo(0);
         //遍历list，调用translateService.translate()方法
         for (TranslatesDO request : list) {
             System.out.println("request: " + request);
