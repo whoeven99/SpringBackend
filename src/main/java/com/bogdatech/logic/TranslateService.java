@@ -154,6 +154,10 @@ public class TranslateService {
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
     @Async
     public void translating(TranslateRequest request) {
+        //判断用户翻译状态，如果是2，就不翻译了
+       if (jdbcRepository.readInfoByShopName(request).get(0).getStatus() == 2) {
+           throw new ClientException("Translation is in progress");
+       }
         //将翻译状态改为翻译中： 2
         jdbcRepository.updateTranslateStatus(request.getShopName(), 2);
         List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
@@ -197,8 +201,10 @@ public class TranslateService {
         }
         // 递归处理下一页数据
         handlePagination(translatedRootNode, request, counter, translateResourceDTO);
-        jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), counter.getTotalChars(), 0, 0,0));
+        jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0,0,0));
 
+        //打印最后使用的值
+        appInsights.trackTrace(request + "最后使用的值： " +  counter.getTotalChars());
     }
 
     // 递归处理下一页数据
@@ -255,7 +261,8 @@ public class TranslateService {
         Map<String, Object> translation = new HashMap<>();
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
-
+            //打印当前遍历的值 为什么部分不翻译
+            appInsights.trackTrace("当前遍历的值： " + contentItemNode.toString());
             // 跳过 key 为 "handle" 的项
             if ("handle".equals(contentItemNode.get("key").asText())) {
                 continue;  // 跳过当前项
@@ -280,16 +287,16 @@ public class TranslateService {
                 counter.addChars(encodedQuery.length());
                 //达到字符限制，更新用户剩余字符数，终止循环
                 updateCharsWhenExceedLimit(counter, request.getShopName());
-                String translatedValue = translateApiIntegration.googleTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
-                contentItemNode.put("value", translatedValue);
+//                String translatedValue = translateApiIntegration.googleTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
+//                contentItemNode.put("value", translatedValue);
 
-                translation.put("value", translatedValue);
+//                translation.put("value", translatedValue);
                 Object[] translations = new Object[]{
                         translation // 将HashMap添加到数组中
                 };
                 variables.put("translations", translations);
                 //将翻译后的内容通过ShopifyAPI记录到shopify本地
-                shopifyApiIntegration.registerTransaction(request, variables);
+//                shopifyApiIntegration.registerTransaction(request, variables);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -300,11 +307,6 @@ public class TranslateService {
         return translatedContent;
     }
 
-    //创建计数器，设计初始值为0，并返回计数器
-    public CharacterCountUtils createCounter(ShopifyRequest request) {
-        CharacterCountUtils counter = new CharacterCountUtils();
-        return counter;
-    }
 
     //达到字符限制，更新用户剩余字符数，终止循环
     public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName) {
@@ -312,7 +314,7 @@ public class TranslateService {
         request.setShopName(shopName);
         int remainingChars = jdbcRepository.readCharsByShopName(request).get(0).getChars();
         if (counter.getTotalChars() >= remainingChars) {
-            jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, shopName, counter.getTotalChars(), 0, 0, 0));
+            jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0,0));
             appInsights.trackTrace("达到字符限制，终止循环.");
             throw new ClientException("翻译字符数超过限制.");
         }

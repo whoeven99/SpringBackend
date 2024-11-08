@@ -14,17 +14,17 @@ import java.util.List;
 public class TranslateResourceDTO {
     // 创建一个静态的 ArrayList 来存储 TranslateResourceDTO 对象
     public static final List<TranslateResourceDTO> translationResources = new ArrayList<>(Arrays.asList(
-            new TranslateResourceDTO("PRODUCT", "250", "", ""),
-            new TranslateResourceDTO("PRODUCT_OPTION", "250", "", ""),
-            new TranslateResourceDTO("PRODUCT_OPTION_VALUE", "250", "", ""),
-            new TranslateResourceDTO("COLLECTION", "250", "", ""),
-            new TranslateResourceDTO("ONLINE_STORE_THEME", "250", "", ""),
-            new TranslateResourceDTO("ONLINE_STORE_THEME_APP_EMBED", "250", "", ""),
-            new TranslateResourceDTO("ONLINE_STORE_THEME_JSON_TEMPLATE", "250", "", ""),
-            new TranslateResourceDTO("ONLINE_STORE_THEME_LOCALE_CONTENT", "250", "", ""),
-            new TranslateResourceDTO("ONLINE_STORE_THEME_SECTION_GROUP", "250", "", ""),
-            new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_CATEGORY", "250", "", ""),
-            new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS", "250", "", "")
+//            new TranslateResourceDTO("PRODUCT", "250", "", ""),
+//            new TranslateResourceDTO("PRODUCT_OPTION", "250", "", ""),
+//            new TranslateResourceDTO("PRODUCT_OPTION_VALUE", "250", "", ""),
+//            new TranslateResourceDTO("COLLECTION", "250", "", ""),
+//            new TranslateResourceDTO("ONLINE_STORE_THEME", "250", "", ""),
+//            new TranslateResourceDTO("ONLINE_STORE_THEME_APP_EMBED", "250", "", ""),
+//            new TranslateResourceDTO("ONLINE_STORE_THEME_JSON_TEMPLATE", "250", "", ""),
+//            new TranslateResourceDTO("ONLINE_STORE_THEME_LOCALE_CONTENT", "250", "", ""),
+//            new TranslateResourceDTO("ONLINE_STORE_THEME_SECTION_GROUP", "250", "", ""),
+//            new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_CATEGORY", "250", "", ""),
+//            new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS", "250", "", "")
 //            ,
 //            new TranslateResourceDTO("MENU", "250", "", ""),
 //            new TranslateResourceDTO("LINK", "250", "", ""),
@@ -39,8 +39,9 @@ public class TranslateResourceDTO {
 //            new TranslateResourceDTO("SHOP", "250", "", ""),
 //            new TranslateResourceDTO("SHOP_POLICY", "250", "", ""),
 //            new TranslateResourceDTO("EMAIL_TEMPLATE", "250", "", ""),
-//            new TranslateResourceDTO("ARTICLE", "250", "",""),
-//            new TranslateResourceDTO("BLOG", "250", "",""),
+            new TranslateResourceDTO("ARTICLE", "250", "",""),
+            new TranslateResourceDTO("BLOG", "250", "","")
+//            ,
 //            new TranslateResourceDTO("PAGE", "250", "", "")
 
 

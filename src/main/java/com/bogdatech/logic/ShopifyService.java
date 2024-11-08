@@ -1,6 +1,5 @@
 package com.bogdatech.logic;
 
-import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
@@ -30,7 +29,7 @@ public class ShopifyService {
     //封装调用云服务器实现获取shopify数据的方法
         public String getShopifyData(CloudServiceRequest cloudServiceRequest){
         ShopifyQuery query = new ShopifyQuery();
-        cloudServiceRequest.setBody(query.test());
+//        cloudServiceRequest.setBody(query.test());
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
         String string;
@@ -46,11 +45,16 @@ public class ShopifyService {
     //获得翻译前一共需要消耗的字符数
     public void getTotalWords(ShopifyRequest request){
         CharacterCountUtils counter = new CharacterCountUtils();
+        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
+        cloudServiceRequest.setShopName(request.getShopName());
+        cloudServiceRequest.setTarget(request.getTarget());
         for (TranslateResourceDTO translateResource : translationResources) {
             translateResource.setTarget(request.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);
             //调用逻辑 本地-》 云服务器 -》 云服务器 -》shopify -》本地
-            JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, query);
+            cloudServiceRequest.setBody(query);
+            String infoByShopify = getShopifyData(cloudServiceRequest);
+            System.out.println(infoByShopify);
 //            countBeforeTranslateChars(infoByShopify, request, translateResource, counter);
         }
     }
