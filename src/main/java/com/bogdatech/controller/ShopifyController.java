@@ -10,10 +10,7 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.request.TranslateTextRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,19 +49,8 @@ public class ShopifyController {
 
     @PostMapping("/shopifyApi")
     public String shopifyApi(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        ShopifyQuery query = new ShopifyQuery();
-        cloudServiceRequest.setBody(query.test());
-        // 使用 ObjectMapper 将对象转换为 JSON 字符串
-        ObjectMapper objectMapper = new ObjectMapper();
-        String string;
-        try {
-            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
-            string = testingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return string;
+        String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
+        return shopifyData;
     }
 
     // 用户消耗的字符数

@@ -165,11 +165,9 @@ public class TranslateService {
 
         JSONObject objectData = new JSONObject();
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
-        //从数据库获取已使用的字符数据，放入计数器中
-        CharacterCountUtils counter = createCounter(shopifyRequest);
-        if (counter.getTotalChars() <= 0) {
-            throw new ClientException("翻译字符数超过限制.");
-        }
+        //初始化计数器
+        CharacterCountUtils counter = new CharacterCountUtils();
+
         for (TranslateResourceDTO translateResource : translationResources) {
             ShopifyQuery shopifyQuery = new ShopifyQuery();
             translateResource.setTarget(request.getTarget());
@@ -231,10 +229,6 @@ public class TranslateService {
                 if ("resourceId".equals(fieldName)) {
                     resourceId[0] = fieldValue.asText();
                 }
-//                根据translations的情况判断是否翻译(翻译策略先不添加)
-//                if (!judgeByTranslations(fieldName, fieldValue)) {
-//                    return;
-//                }
                 if ("translatableContent".equals(fieldName)) {
                     ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, resourceId[0]);
                     objectNode.set(fieldName, translatedContent);
@@ -283,7 +277,7 @@ public class TranslateService {
 
             try {
                 String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
-                counter.subtractChars(encodedQuery.length());
+                counter.addChars(encodedQuery.length());
                 //达到字符限制，更新用户剩余字符数，终止循环
                 updateCharsWhenExceedLimit(counter, request.getShopName());
                 String translatedValue = translateApiIntegration.googleTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), value));
@@ -306,18 +300,18 @@ public class TranslateService {
         return translatedContent;
     }
 
-    //创建计数器，获取用户剩余字符数，并返回计数器
+    //创建计数器，设计初始值为0，并返回计数器
     public CharacterCountUtils createCounter(ShopifyRequest request) {
         CharacterCountUtils counter = new CharacterCountUtils();
-        List<TranslationCounterRequest> translatesDOS = jdbcRepository.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0,0,0,0));
-        int chars = translatesDOS.get(0).getChars();
-        counter.addChars(chars);
         return counter;
     }
 
     //达到字符限制，更新用户剩余字符数，终止循环
     public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName) {
-        if (counter.getTotalChars() <= 0) {
+        TranslationCounterRequest request = new TranslationCounterRequest();
+        request.setShopName(shopName);
+        int remainingChars = jdbcRepository.readCharsByShopName(request).get(0).getChars();
+        if (counter.getTotalChars() >= remainingChars) {
             jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, shopName, counter.getTotalChars(), 0, 0, 0));
             appInsights.trackTrace("达到字符限制，终止循环.");
             throw new ClientException("翻译字符数超过限制.");

@@ -3,10 +3,13 @@ package com.bogdatech.logic;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.integration.TestingEnvironmentIntegration;
+import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.query.ShopifyQuery;
-import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,9 +22,26 @@ public class ShopifyService {
     private ShopifyHttpIntegration shopifyApiIntegration;
 
     @Autowired
-    private JdbcRepository jdbcRepository;
+    private TestingEnvironmentIntegration testingEnvironmentIntegration;
+
 
     ShopifyQuery shopifyQuery = new ShopifyQuery();
+
+    //封装调用云服务器实现获取shopify数据的方法
+        public String getShopifyData(CloudServiceRequest cloudServiceRequest){
+        ShopifyQuery query = new ShopifyQuery();
+        cloudServiceRequest.setBody(query.test());
+        // 使用 ObjectMapper 将对象转换为 JSON 字符串
+        ObjectMapper objectMapper = new ObjectMapper();
+        String string;
+        try {
+            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            string = testingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return string;
+    }
 
     //获得翻译前一共需要消耗的字符数
     public void getTotalWords(ShopifyRequest request){
