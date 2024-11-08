@@ -100,7 +100,7 @@ public class TranslateController {
     /*
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
-    @GetMapping("/translate/clickTranslation")
+    @PostMapping("/translate/clickTranslation")
     public int clickTranslation(@RequestBody TranslateRequest request) {
         //翻译
         translateService.translating(request);

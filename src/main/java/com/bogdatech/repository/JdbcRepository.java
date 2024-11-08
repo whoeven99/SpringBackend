@@ -181,8 +181,8 @@ public class JdbcRepository {
     }
 
     public int updateTranslateText(TranslateTextRequest request){
-        String sql = "UPDATE TranslateText SET target_text = ? WHERE digest = ?";
-        Object[] info = {request.getTargetText(), request.getDigest()};
+        String sql = "UPDATE TranslateText SET target_text = ? WHERE digest = ? and shop_name = ?  and target_code = ?";
+        Object[] info = {request.getTargetText(), request.getDigest(), request.getShopName(), request.getTargetCode()};
         int result = CUDInfo(info, sql);
         return result;
     }
