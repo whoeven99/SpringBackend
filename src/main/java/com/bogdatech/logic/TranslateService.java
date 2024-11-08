@@ -167,7 +167,7 @@ public class TranslateService {
             jdbcRepository.updateTranslateStatusByTranslateRequest(request);
         }
 
-        JSONObject objectData = new JSONObject();
+
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
@@ -177,7 +177,6 @@ public class TranslateService {
             translateResource.setTarget(request.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);
             JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(shopifyRequest, query);
-            objectData.put(translateResource.getResourceType(), infoByShopify);
             translateJson(infoByShopify, shopifyRequest, translateResource, counter);
         }
 
@@ -262,12 +261,12 @@ public class TranslateService {
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
-            appInsights.trackTrace("当前遍历的值： " + contentItemNode.toString());
+
             // 跳过 key 为 "handle" 的项
             if ("handle".equals(contentItemNode.get("key").asText())) {
                 continue;  // 跳过当前项
             }
-
+            appInsights.trackTrace("当前遍历的值： " + contentItemNode.toString());
             // 准备翻译信息
             translation.put("locale", request.getTarget());
             translation.put("key", contentItemNode.get("key").asText());
@@ -526,5 +525,7 @@ public class TranslateService {
             saveTranslatedData(string, shopifyRequest, translateResource);
         }
     }
+
+
 }
 

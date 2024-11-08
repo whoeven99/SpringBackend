@@ -70,10 +70,10 @@ public class ShopifyController {
 
     //查询需要翻译的总字数
     @PostMapping("/shopify/getTotalWords")
-    public String getTotalWords(@RequestBody ShopifyRequest shopifyRequest) {
-        shopifyService.getTotalWords(shopifyRequest);
+    public int getTotalWords(@RequestBody ShopifyRequest shopifyRequest) {
+        int totalWords = shopifyService.getTotalWords(shopifyRequest);
 
-        return "1000";
+        return totalWords;
     }
 
     //根据前端的传值,更新shopify后台和数据库

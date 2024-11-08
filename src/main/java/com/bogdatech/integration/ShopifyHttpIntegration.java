@@ -28,7 +28,6 @@ public class ShopifyHttpIntegration {
         // 设置头部信息
         httpPost.addHeader("X-Shopify-Access-Token", request.getAccessToken());
         httpPost.addHeader("Content-Type", "application/json");
-
         // 创建查询体
         JSONObject query = new JSONObject();
         query.put("query",

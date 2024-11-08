@@ -8,7 +8,7 @@ public class ShopifyQuery {
         return "{\n" +
                 "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ") {\n" +
                 "    nodes {\n" +
-                "      resourceId " +
+                "      resourceId\n" +
                 "      translations(locale: \"" + translateResourceDTO.getTarget() + "\") {\n" +
                 "        locale\n" +
                 "        value\n" +
