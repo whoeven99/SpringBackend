@@ -97,7 +97,7 @@ public class JdbcRepository {
     }
 
     public List<TranslationCounterRequest> readCharsByShopName(TranslationCounterRequest request) {
-        String sql = "SELECT id, shop_name, chars, google_chars, open_ai_chars, total_chars FROM TranslationCounter WHERE shop_name = ?";
+        String sql = "SELECT id, shop_name, chars, used_chars, google_chars, open_ai_chars, total_chars FROM TranslationCounter WHERE shop_name = ?";
         Object[] info = {request.getShopName()};
         List<TranslationCounterRequest> translatesDOS = readInfo(info, sql, TranslationCounterRequest.class);
         return translatesDOS;
@@ -111,7 +111,7 @@ public class JdbcRepository {
     }
 
     public int updateCharsByShopName(TranslationCounterRequest translationCounterRequest) {
-        String sql = "UPDATE TranslationCounter SET chars = ? WHERE shop_name = ?";
+        String sql = "UPDATE TranslationCounter SET used_chars = ? WHERE shop_name = ?";
         Object[] info = {translationCounterRequest.getChars(), translationCounterRequest.getShopName()};
         int result = CUDInfo(info, sql);
         return result;
