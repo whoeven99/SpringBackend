@@ -201,7 +201,7 @@ public class TranslateService {
         }
         // 递归处理下一页数据
         handlePagination(translatedRootNode, request, counter, translateResourceDTO);
-        jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0,0,0));
+        jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0,0,0));
 
         //打印最后使用的值
         appInsights.trackTrace(request + "最后使用的值： " +  counter.getTotalChars());
@@ -314,7 +314,7 @@ public class TranslateService {
         request.setShopName(shopName);
         int remainingChars = jdbcRepository.readCharsByShopName(request).get(0).getChars();
         if (counter.getTotalChars() >= remainingChars) {
-            jdbcRepository.updateCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0,0));
+            jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0,0));
             appInsights.trackTrace("达到字符限制，终止循环.");
             throw new ClientException("翻译字符数超过限制.");
         }

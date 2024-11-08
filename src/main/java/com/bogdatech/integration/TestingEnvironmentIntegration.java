@@ -1,6 +1,7 @@
 package com.bogdatech.integration;
 
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -15,6 +16,8 @@ import java.io.IOException;
 
 @Component
 public class TestingEnvironmentIntegration {
+
+    private TelemetryClient appInsights = new TelemetryClient();
 
     public String sendShopifyGet(ShopifyRequest request, String api) {
         String url = "http://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/"+ api;
@@ -47,6 +50,7 @@ public class TestingEnvironmentIntegration {
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity);
+            appInsights.trackTrace("封装APi : " + responseContent);
             response.close();
             httpClient.close();
         } catch (IOException e) {
