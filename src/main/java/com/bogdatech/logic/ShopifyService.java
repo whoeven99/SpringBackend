@@ -216,7 +216,7 @@ public class ShopifyService {
         translation.put("key", registerTransactionRequest.getKey());
         translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
         Object[] translations = new Object[]{
-                translation // 将HashMap添加到数组中
+                translation
         };
         variables.put("translations", translations);
         String string = shopifyApiIntegration.registerTransaction(shopifyRequest, variables);

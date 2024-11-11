@@ -1,10 +1,7 @@
 package com.bogdatech.repository;
 
 import com.bogdatech.entity.TranslatesDO;
-import com.bogdatech.model.controller.request.CurrencyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.model.controller.request.TranslateTextRequest;
-import com.bogdatech.model.controller.request.TranslationCounterRequest;
+import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CamelToUnderscore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,15 +103,13 @@ public class JdbcRepository {
     public int insertCharsByShopName(TranslationCounterRequest translationCounterRequest) {
         String sql = "INSERT INTO TranslationCounter (shop_name, chars) VALUES (?, ?)";
         Object[] info = {translationCounterRequest.getShopName(), translationCounterRequest.getChars()};
-        int result = CUDInfo(info, sql);
-        return result;
+        return CUDInfo(info, sql);
     }
 
     public int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest) {
         String sql = "UPDATE TranslationCounter SET used_chars = ? WHERE shop_name = ?";
         Object[] info = {translationCounterRequest.getUsedChars(), translationCounterRequest.getShopName()};
-        int result = CUDInfo(info, sql);
-        return result;
+        return CUDInfo(info, sql);
     }
 
     public BaseResponse insertCurrency(CurrencyRequest request) {
@@ -169,29 +164,30 @@ public class JdbcRepository {
                 "target_code) VALUES (?,?,?,?,?,?,?,?,?)";
         Object[] info = {request.getShopName(), request.getResourceId(), request.getTextType(), request.getDigest(), request.getTextKey()
                 , request.getSourceText(), request.getTargetText(), request.getSourceCode(), request.getTargetCode()};
-        int result = CUDInfo(info, sql);
-        return result;
+        return CUDInfo(info, sql);
     }
 
     public List<TranslateTextRequest> getTranslateText(String request){
         String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code FROM TranslateText WHERE digest = ?";
         Object[] info = {request};
-        List<TranslateTextRequest> list = readInfo(info, sql, TranslateTextRequest.class);
-        return list;
+        return readInfo(info, sql, TranslateTextRequest.class);
     }
 
     public int updateTranslateText(TranslateTextRequest request){
-        String sql = "UPDATE TranslateText SET target_text = ? WHERE digest = ? and shop_name = ?  and target_code = ?";
+        String sql = "UPDATE TranslateTextTable SET target_text = ? WHERE digest = ? and shop_name = ?  and target_code = ?";
         Object[] info = {request.getTargetText(), request.getDigest(), request.getShopName(), request.getTargetCode()};
-        int result = CUDInfo(info, sql);
-        return result;
+        return CUDInfo(info, sql);
     }
 
     public int updateTranslateStatusByTranslateRequest(TranslateRequest request) {
         String sql = "UPDATE Translates SET status = 2 WHERE shop_name = ? and source = ? and target = ?";
         Object[] info = {request.getShopName(), request.getSource(), request.getTarget()};
-        int result = CUDInfo(info, sql);
-        return result;
+        return CUDInfo(info, sql);
     }
 
+    public int addUser(UserRequest request) {
+        String sql = "INSERT INTO Users(shop_name, access_token, email, phone, real_address, ip_address, user_tag) VALUES(?,?,?,?,?,?,?)";
+        Object[] info = {request.getShopName(), request.getAccessToken(), request.getEmail(), request.getPhone(), request.getRealAddress(), request.getIpAddress(), request.getUserTag()};
+        return CUDInfo(info, sql);
+    }
 }
