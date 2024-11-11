@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -74,14 +73,7 @@ public class ShopifyController {
     //根据前端的传值,更新shopify后台和数据库 TODO :需要优化一下
     @PostMapping("/shopify/updateShopifyDataByTranslateTextRequest")
     public String updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
-        String string = shopifyService.updateShopifySingleData(registerTransactionRequest);
-        TranslateTextRequest request = new TranslateTextRequest();
-        request.setShopName(registerTransactionRequest.getShopName());
-        request.setTargetText(registerTransactionRequest.getValue());
-        request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
-        request.setTargetCode(registerTransactionRequest.getLocale());
-        jdbcRepository.updateTranslateText(request);
-        return string;
+        return shopifyService.updateShopifyDataByTranslateTextRequest(registerTransactionRequest);
     }
 
     //获取用户的额度字符数
@@ -94,10 +86,11 @@ public class ShopifyController {
     //当用户第一次订阅时，在用户订阅表里面添加用户及其付费计划
     @PostMapping("/shopify/addUserSubscription")
     public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request) {
-        request.setStatus(1);
-        LocalDate localDate = LocalDate.now();
-        request.setStartDate(localDate);
-//        jdbcRepository.addUserSubscription(request);
-        return null;
+       return shopifyService.registerTransaction(request);
+    }
+
+    @PostMapping("/shopify/sendPicture")
+    public BaseResponse<Object> sendPicture() {
+        return new BaseResponse<>().CreateSuccessResponse("https://drive.google.com/file/d/123l7I_H1xvfu3rzM43ktbeVtQV9CO8RZ/view?usp=sharing");
     }
 }

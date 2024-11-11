@@ -1,12 +1,11 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.entity.TranslateResourceDTO;
+import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
-import com.bogdatech.model.controller.request.CloudServiceRequest;
-import com.bogdatech.model.controller.request.RegisterTransactionRequest;
-import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslationCounterRequest;
+import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -21,6 +20,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -223,4 +223,27 @@ public class ShopifyService {
         return string;
     }
 
+    public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request){
+        request.setStatus(1);
+        LocalDate localDate = LocalDate.now();
+        request.setStartDate(localDate);
+        request.setEndDate(localDate.plusMonths(1));
+        int i = jdbcRepository.addUserSubscription(request);
+        if (i > 0) {
+            return new BaseResponse<>().CreateSuccessResponse("success");
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
+        }
+    }
+
+    public String updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest){
+        String string = updateShopifySingleData(registerTransactionRequest);
+        TranslateTextRequest request = new TranslateTextRequest();
+        request.setShopName(registerTransactionRequest.getShopName());
+        request.setTargetText(registerTransactionRequest.getValue());
+        request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
+        request.setTargetCode(registerTransactionRequest.getLocale());
+        jdbcRepository.updateTranslateText(request);
+        return string;
+    }
 }
