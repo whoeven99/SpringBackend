@@ -58,23 +58,18 @@ public class TranslateService {
 
     private final TelemetryClient appInsights = new TelemetryClient();
 
-    // 构建URL
-    public BaseResponse translate(TranslatesDO request) {
-        return new BaseResponse().CreateSuccessResponse(request);
-    }
-
-    public BaseResponse baiDuTranslate(TranslateRequest request) {
+    public BaseResponse<Object> baiDuTranslate(TranslateRequest request) {
         String result = translateApiIntegration.baiDuTranslate(request);
         if (result != null) {
-            return new BaseResponse().CreateSuccessResponse(result);
+            return new BaseResponse<>().CreateSuccessResponse(result);
         }
         return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
     }
 
-    public BaseResponse googleTranslate(TranslateRequest request) {
+    public BaseResponse<Object> googleTranslate(TranslateRequest request) {
         String result = translateApiIntegration.googleTranslate(request);
         if (result != null) {
-            return new BaseResponse().CreateSuccessResponse(result);
+            return new BaseResponse<>().CreateSuccessResponse(result);
         }
         return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
     }
@@ -96,7 +91,7 @@ public class TranslateService {
 
 
     //写死的json
-    public BaseResponse userBDTranslateJsonObject() {
+    public BaseResponse<Object> userBDTranslateJsonObject() {
         PathMatchingResourcePatternResolver resourceLoader = new PathMatchingResourcePatternResolver();
         JSONObject data = null;
         try {
@@ -109,7 +104,7 @@ public class TranslateService {
         }
 
         // 对options节点进行递归翻译处理
-        translateOptions(data.getJSONObject("products"));
+        translateOptions(data != null ? data.getJSONObject("products") : null);
         // 返回成功响应
         return new BaseResponse<>().CreateSuccessResponse(data);
     }
@@ -207,7 +202,7 @@ public class TranslateService {
     }
 
     // 递归处理下一页数据
-    private JsonNode handlePagination(JsonNode translatedRootNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResourceDTO) {
+    private void handlePagination(JsonNode translatedRootNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResourceDTO) {
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
         // 获取pageInfo节点
@@ -220,7 +215,6 @@ public class TranslateService {
                 translatedRootNode = translateNextPage(request, counter, translateResourceDTO);
             }
         }
-        return translatedRootNode;
     }
 
     //递归遍历JSON树：使用 translateSingleLineTextFieldsRecursively 方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
@@ -457,7 +451,7 @@ public class TranslateService {
         appInsights.trackTrace("进入合并的方法里面");
         Map<String, Object> result = new HashMap<>(map1);
         map2.forEach((key, value) -> {
-            appInsights.trackTrace("当前的key为: " + key.toString());
+            appInsights.trackTrace("当前的key为: " + key);
             if (result.containsKey(key)) {
                 // 如果键冲突，合并两个Map
                 Map<String, Object> existingValue = (Map<String, Object>) result.get(key);
@@ -496,6 +490,7 @@ public class TranslateService {
         }
     }
 
+    //测试用拉取部分数据（待删）
     private void InsertTranslateTextData(Map<String, Object> data) {
         TranslateTextRequest request = new TranslateTextRequest();
         request.setTargetText("1");
@@ -509,8 +504,8 @@ public class TranslateService {
         request.setTextType(data.get("textType").toString());
         jdbcRepository.insertTranslateText(request);
     }
-    //循环存数据库
 
+    //循环存数据库
     @Async
     public void saveTranslateText(@RequestBody TranslateRequest request) {
         ShopifyRequest shopifyRequest = new ShopifyRequest();
@@ -526,6 +521,6 @@ public class TranslateService {
         }
     }
 
-
+    //翻译单个文本数据
 }
 

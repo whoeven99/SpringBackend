@@ -1,7 +1,6 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.entity.TranslatesDO;
-import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -27,15 +26,9 @@ public class TranslateController {
 
     @Autowired
     private JdbcRepository jdbcRepository;
-    @Autowired
-    private ShopifyHttpIntegration shopifyApiIntegration;
 
     private TelemetryClient appInsights = new TelemetryClient();
 
-    @PostMapping("/translate")
-    public BaseResponse translate(@RequestBody TranslatesDO request) {
-        return translateService.translate(request);
-    }
 
     /*
      * 插入shop信息
@@ -69,9 +62,9 @@ public class TranslateController {
      * 读取所有的翻译状态信息
      */
     @PostMapping("/translate/readTranslateInfo")
-    public BaseResponse readTranslateInfo(@RequestBody TranslatesDO request) {
+    public BaseResponse<Object> readTranslateInfo(@RequestBody TranslatesDO request) {
         List<TranslatesDO> list = jdbcRepository.readTranslateInfo(request.getStatus());
-        if (list != null && list.size() > 0) {
+        if (list != null && !list.isEmpty()) {
             return new BaseResponse().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
@@ -81,10 +74,10 @@ public class TranslateController {
      * 读取shopName的所有翻译状态信息
      */
     @PostMapping("/translate/readInfoByShopName")
-    public BaseResponse readInfoByShopName(@RequestBody TranslateRequest request) {
-        List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
-        if (translatesDOS.size() > 0) {
-            return new BaseResponse().CreateSuccessResponse(translatesDOS);
+    public BaseResponse<Object> readInfoByShopName(@RequestBody TranslateRequest request) {
+        List<TranslatesDO> translatesDos = jdbcRepository.readInfoByShopName(request);
+        if (!translatesDos.isEmpty()) {
+            return new BaseResponse().CreateSuccessResponse(translatesDos);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }

@@ -25,13 +25,12 @@ public class JdbcRepository {
 
     //对sql增删改的操作
     public int CUDInfo(Object[] info, String sql) {
-        try (PreparedStatement cudStatement = connection.prepareStatement(sql);) {
+        try (PreparedStatement cudStatement = connection.prepareStatement(sql)) {
             for (int i = 0; i < info.length; i++) {
                 cudStatement.setObject(i + 1, info[i]);
             }
             // 执行插入
-            int rowsAffected = cudStatement.executeUpdate();
-            return rowsAffected;
+            return cudStatement.executeUpdate();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -40,7 +39,7 @@ public class JdbcRepository {
     //对sql查询的操作
     public <T> List<T> readInfo(Object[] info, String sql, Class<T> clazz) {
 
-        try (PreparedStatement selectStatement = connection.prepareStatement(sql);) {
+        try (PreparedStatement selectStatement = connection.prepareStatement(sql)) {
             for (int i = 0; i < info.length; i++) {
                 selectStatement.setObject(i + 1, info[i]);
             }
@@ -49,20 +48,25 @@ public class JdbcRepository {
             // 处理结果集
             List<T> list = new ArrayList<T>();
             while (resultSet.next()) {
-                T t = clazz.newInstance();
-                for (Field field : clazz.getDeclaredFields()) {
-                    field.setAccessible(true);
-                    Object name = CamelToUnderscore.camelToUnderscore(field.getName());
-                    Object value = resultSet.getObject((String) name);
-                    field.set(t, value);
+                if (clazz.equals(String.class)) {
+                    // 直接从 ResultSet 中获取字符串值
+                    String value = resultSet.getString(1);
+                    list.add((T) value);
+                } else {
+                    T t = clazz.getDeclaredConstructor().newInstance();
+                    for (Field field : clazz.getDeclaredFields()) {
+                        field.setAccessible(true);
+                        String columnName = (String) CamelToUnderscore.camelToUnderscore(field.getName());
+                        Object value = resultSet.getObject(columnName);
+                        field.set(t, value);
+                    }
+                    list.add(t);
                 }
-                list.add(t);
             }
             return list;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public int insertShopTranslateInfo(TranslateRequest request) {
@@ -195,5 +199,16 @@ public class JdbcRepository {
         String sql = "INSERT INTO UserSubscriptions(shop_name, plan_id, status, start_date, end_date) VALUES(?,?,?,?,?)";
         Object[] info = {request.getShopName(), request.getPlanId(), request.getStatus(), request.getStartDate(), request.getEndDate()};
         return CUDInfo(info, sql);
+    }
+
+    public String getUserSubscriptionPlan(ShopifyRequest request) {
+        String sql = """
+                SELECT sp.plan_name
+                FROM UserSubscriptions us
+                JOIN SubscriptionPlans sp ON us.plan_id = sp.plan_id
+                WHERE us.shop_name = ?""";
+        Object[] info = {request.getShopName()};
+        List<String> strings = readInfo(info, sql, String.class);
+        return strings.get(0);
     }
 }
