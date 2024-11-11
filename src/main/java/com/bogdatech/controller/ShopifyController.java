@@ -2,8 +2,8 @@ package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ShopifyHttpIntegration;
-import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class ShopifyController {
@@ -27,11 +29,9 @@ public class ShopifyController {
     @Autowired
     private ShopifyService shopifyService;
 
-    @Autowired
-    private TestingEnvironmentIntegration testingEnvironmentIntegration;
-
     private final TelemetryClient appInsights = new TelemetryClient();
 
+    //通过测试环境调shopify的API
     @PostMapping("/test123")
     public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
         ShopifyRequest request = new ShopifyRequest();
@@ -45,6 +45,7 @@ public class ShopifyController {
         return infoByShopify.toString();
     }
 
+    //通过测试环境调shopify的API
     @PostMapping("/shopifyApi")
     public BaseResponse<Object> shopifyApi(@RequestBody CloudServiceRequest cloudServiceRequest) {
         return new BaseResponse<>().CreateSuccessResponse(shopifyService.getShopifyData(cloudServiceRequest));
@@ -70,27 +71,37 @@ public class ShopifyController {
         return new BaseResponse<>().CreateSuccessResponse(shopifyService.getTotalWords(shopifyRequest));
     }
 
-    //根据前端的传值,更新shopify后台和数据库 TODO :需要优化一下
+    //根据前端的传值,更新shopify后台和数据库
     @PostMapping("/shopify/updateShopifyDataByTranslateTextRequest")
     public String updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
         return shopifyService.updateShopifyDataByTranslateTextRequest(registerTransactionRequest);
     }
 
-    //获取用户的额度字符数
+    //获取用户的额度字符数 和 已使用的字符
     @PostMapping("/shopify/getUserLimitChars")
     public BaseResponse<Object> getUserLimitChars(@RequestBody TranslationCounterRequest request) {
         List<TranslationCounterRequest> translationCounterRequests = jdbcRepository.readCharsByShopName(request);
-        return new BaseResponse<>().CreateSuccessResponse(translationCounterRequests.get(0).getChars());
+        Map<String, Object> map = new HashMap<>();
+        map.put("chars", translationCounterRequests.get(0).getChars());
+        map.put("totalChars", translationCounterRequests.get(0).getTotalChars());
+        return new BaseResponse<>().CreateSuccessResponse(map);
     }
 
     //当用户第一次订阅时，在用户订阅表里面添加用户及其付费计划
-    @PostMapping("/shopify/addUserSubscription")
+    @PostMapping("/shopify/addUserFreeSubscription")
     public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request) {
-       return shopifyService.registerTransaction(request);
+       return shopifyService.addUserFreeSubscription(request);
     }
 
-    @PostMapping("/shopify/sendPicture")
-    public BaseResponse<Object> sendPicture() {
-        return new BaseResponse<>().CreateSuccessResponse("https://drive.google.com/file/d/123l7I_H1xvfu3rzM43ktbeVtQV9CO8RZ/view?usp=sharing");
+    //获取用户订阅计划
+    @PostMapping("/shopify/getUserSubscriptionPlan")
+    public BaseResponse<Object> getUserSubscriptionPlan(@RequestBody ShopifyRequest request) {
+        String userSubscriptionPlan = jdbcRepository.getUserSubscriptionPlan(request);
+        if (userSubscriptionPlan == null) {
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_SELECT_ERROR);
+        }else {
+            return new BaseResponse<>().CreateSuccessResponse(userSubscriptionPlan);
+        }
     }
+
 }

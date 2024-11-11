@@ -20,7 +20,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,16 +66,15 @@ public class ShopifyService {
         for (TranslateResourceDTO translateResource : translationResources) {
             translateResource.setTarget(request.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);
-            //调用逻辑 本地-》 云服务器 -》 云服务器 -》shopify -》本地
             cloudServiceRequest.setBody(query);
             String infoByShopify = getShopifyData(cloudServiceRequest);
-//            System.out.println(infoByShopify);
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter);
         }
         appInsights.trackTrace(request + "最终使用的值： " + counter.getTotalChars());
         return counter.getTotalChars();
     }
 
+    //计数翻译前所需要的总共的字符数
     @Async
     public void countBeforeTranslateChars(String infoByShopify, ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils counter) {
         appInsights.trackTrace("现在翻译到： " + translateResource.getResourceType());
@@ -104,8 +104,7 @@ public class ShopifyService {
                     counter.addChars(1);
                 }
                 if ("translatableContent".equals(fieldName)) {
-
-//                    translateSingleLineTextFields((ArrayNode) fieldValue, request, counter);
+                    translateSingleLineTextFields((ArrayNode) fieldValue, request, counter);
                 } else {
                     objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue, request, counter));
                 }
@@ -127,6 +126,7 @@ public class ShopifyService {
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
             if ("handle".equals(contentItemNode.get("key").asText())) {
+                appInsights.trackTrace("当前handle为： " + contentItemNode.get("key").asText());
                 continue;  // 跳过当前项
             }
             // 获取 value
@@ -145,7 +145,7 @@ public class ShopifyService {
     }
 
     // 递归处理下一页数据
-    private JsonNode handlePagination(JsonNode translatedRootNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResourceDTO) {
+    private void handlePagination(JsonNode translatedRootNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResourceDTO) {
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
         // 获取pageInfo节点
@@ -155,10 +155,9 @@ public class ShopifyService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.get("endCursor");
                 translateResourceDTO.setAfter(endCursor.asText());
-                translatedRootNode = translateNextPage(request, counter, translateResourceDTO);
+                translateNextPage(request, counter, translateResourceDTO);
             }
         }
-        return translatedRootNode;
     }
 
     //递归处理下一页数据
@@ -210,6 +209,13 @@ public class ShopifyService {
         shopifyRequest.setShopName(registerTransactionRequest.getShopName());
         shopifyRequest.setAccessToken(registerTransactionRequest.getAccessToken());
         shopifyRequest.setTarget(registerTransactionRequest.getTarget());
+        Map<String, Object> variables = getVariables(registerTransactionRequest);
+        String string = shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
+        return string;
+    }
+
+    //将修改所需要的数据封装成Map格式
+    private static Map<String, Object> getVariables(RegisterTransactionRequest registerTransactionRequest) {
         Map<String, Object> variables = new HashMap<>();
         Map<String, Object> translation = new HashMap<>();
         translation.put("locale", registerTransactionRequest.getTarget());
@@ -219,15 +225,17 @@ public class ShopifyService {
                 translation
         };
         variables.put("translations", translations);
-        String string = shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
-        return string;
+        return variables;
     }
 
-    public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request){
+    //在UserSubscription表里面添加一个购买了免费订阅计划的用户（商家）
+    public BaseResponse<Object> addUserFreeSubscription(@RequestBody UserSubscriptionsRequest request){
         request.setStatus(1);
-        LocalDate localDate = LocalDate.now();
-        request.setStartDate(localDate);
-        request.setEndDate(localDate.plusMonths(1));
+        LocalDateTime localDate = LocalDateTime.now();
+        String localDateFormat = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        LocalDateTime startDate = LocalDateTime.parse(localDateFormat, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        request.setStartDate(startDate);
+        request.setEndDate(null);
         int i = jdbcRepository.addUserSubscription(request);
         if (i > 0) {
             return new BaseResponse<>().CreateSuccessResponse("success");
@@ -236,6 +244,7 @@ public class ShopifyService {
         }
     }
 
+    //修改shopify本地单条数据 和 更新本地数据库相应数据
     public String updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest){
         String string = updateShopifySingleData(registerTransactionRequest);
         TranslateTextRequest request = new TranslateTextRequest();
