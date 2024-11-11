@@ -190,4 +190,10 @@ public class JdbcRepository {
         Object[] info = {request.getShopName(), request.getAccessToken(), request.getEmail(), request.getPhone(), request.getRealAddress(), request.getIpAddress(), request.getUserTag()};
         return CUDInfo(info, sql);
     }
+
+    public int addUserSubscription(UserSubscriptionsRequest request) {
+        String sql = "INSERT INTO UserSubscriptions(shop_name, plan_id, status, start_date, end_date) VALUES(?,?,?,?,?)";
+        Object[] info = {request.getShopName(), request.getPlanId(), request.getStatus(), request.getStartDate(), request.getEndDate()};
+        return CUDInfo(info, sql);
+    }
 }
