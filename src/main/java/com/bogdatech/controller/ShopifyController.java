@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -92,7 +93,11 @@ public class ShopifyController {
 
     //当用户第一次订阅时，在用户订阅表里面添加用户及其付费计划
     @PostMapping("/shopify/addUserSubscription")
-    public BaseResponse<Object> registerTransaction() {
+    public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request) {
+        request.setStatus(1);
+        LocalDate localDate = LocalDate.now();
+        request.setStartDate(localDate);
+//        jdbcRepository.addUserSubscription(request);
         return null;
     }
 }
