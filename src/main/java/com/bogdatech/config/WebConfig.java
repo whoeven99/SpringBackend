@@ -8,14 +8,7 @@ import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 public class WebConfig {
-    //    @Override
-//    public void addCorsMappings(CorsRegistry registry) {
-//        registry.addMapping("/**")
-//                .allowedOrigins("https://quickstart-0f992326.myshopify.com")
-//                .allowedMethods("GET", "POST", "PUT", "DELETE")
-//                .allowedHeaders("*")
-//                .allowCredentials(true);
-//    }
+
     @Bean
     public CorsFilter corsFilter() {
         // 初始化cors配置对象

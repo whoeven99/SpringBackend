@@ -22,10 +22,9 @@ public class UserHandleException {
     public BaseResponse resolveException(Exception ex){
         //判断拦截的异常是我们自定义的异常
         if (ex instanceof ClientException){
-            ClientException clientException = (ClientException) ex;
-            System.out.println("-----------AppException异常错误信息---------");
-            log.error("AppException failed by  {}",clientException.getMessage());
-            return new BaseResponse().CreateErrorResponse(clientException.getMessage());
+            System.out.println("-----------ClientException异常错误信息---------");
+            log.error("AppException failed by  {}",((ClientException) ex).getErrorMessage());
+            return new BaseResponse().CreateErrorResponse(((ClientException) ex).getErrorMessage());
         }
 
         //如果拦截的异常不是我们自定义的异常

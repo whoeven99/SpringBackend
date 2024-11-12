@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShopifyRequest {
+public class CloudServiceRequest {
 
     private String shopName;
 
@@ -17,6 +17,5 @@ public class ShopifyRequest {
 
     private String target;
 
-
-
+    private String body;
 }

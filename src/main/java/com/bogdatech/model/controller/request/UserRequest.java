@@ -7,16 +7,14 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShopifyRequest {
+public class UserRequest {
 
     private String shopName;
-
     private String accessToken;
-
-    private String apiVersion = "2024-10";
-
-    private String target;
-
-
+    private String email;
+    private String phone;
+    private String realAddress;
+    private String ipAddress;
+    private String userTag;
 
 }

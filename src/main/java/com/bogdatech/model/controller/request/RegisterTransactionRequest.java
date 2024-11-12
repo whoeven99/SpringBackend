@@ -7,16 +7,13 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShopifyRequest {
-
+public class RegisterTransactionRequest {
     private String shopName;
-
     private String accessToken;
-
-    private String apiVersion = "2024-10";
-
+    private String locale;
+    private String key;
+    private String value;
+    private String translatableContentDigest;
+    private String resourceId;
     private String target;
-
-
-
 }

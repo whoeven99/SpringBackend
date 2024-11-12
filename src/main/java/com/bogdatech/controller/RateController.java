@@ -20,7 +20,7 @@ public class RateController {
     @PostMapping("/getRate")
     public BaseResponse getRate(@RequestBody BasicRateRequest basicRateRequest) throws Exception {
         return new BaseResponse().CreateSuccessResponse(
-                rateHttpIntegration.getBasicRate(basicRateRequest.getScur(), basicRateRequest.getTcur()));
+                rateHttpIntegration.getBasicRate(basicRateRequest.getSource(), basicRateRequest.getTarget()));
     }
 
     @PostMapping("/getRateValue")
