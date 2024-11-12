@@ -172,7 +172,7 @@ public class JdbcRepository {
     }
 
     public List<TranslateTextRequest> getTranslateText(String request){
-        String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code FROM TranslateText WHERE digest = ?";
+        String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code FROM TranslateTextTable WHERE digest = ?";
         Object[] info = {request};
         return readInfo(info, sql, TranslateTextRequest.class);
     }
