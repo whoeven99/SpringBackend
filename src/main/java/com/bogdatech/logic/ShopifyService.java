@@ -227,6 +227,7 @@ public class ShopifyService {
         Object[] translations = new Object[]{
                 translation
         };
+        variables.put("resourceId", registerTransactionRequest.getResourceId());
         variables.put("translations", translations);
         return variables;
     }
