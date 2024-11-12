@@ -14,7 +14,7 @@ import java.util.List;
 public class TranslateResourceDTO {
     // 创建一个静态的 ArrayList 来存储 TranslateResourceDTO 对象
     public static final List<TranslateResourceDTO> translationResources = new ArrayList<>(Arrays.asList(
-            new TranslateResourceDTO("PRODUCT", "250", "", "")
+//            new TranslateResourceDTO("PRODUCT", "250", "", "")
 //            ,
 //            new TranslateResourceDTO("PRODUCT_OPTION", "250", "", ""),
 //            new TranslateResourceDTO("PRODUCT_OPTION_VALUE", "250", "", ""),
@@ -40,8 +40,8 @@ public class TranslateResourceDTO {
 //            new TranslateResourceDTO("SHOP", "250", "", ""),
 //            new TranslateResourceDTO("SHOP_POLICY", "250", "", ""),
 //            new TranslateResourceDTO("EMAIL_TEMPLATE", "250", "", ""),
-//            new TranslateResourceDTO("ARTICLE", "250", "",""),
-//            new TranslateResourceDTO("BLOG", "250", "","")
+            new TranslateResourceDTO("ARTICLE", "250", "",""),
+            new TranslateResourceDTO("BLOG", "250", "","")
 //            ,
 //            new TranslateResourceDTO("PAGE", "250", "", "")
 
