@@ -8,7 +8,6 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.JdbcRepository;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -107,7 +106,7 @@ public class TranslateController {
     /*
      *  一键存储数据库流程
      */
-    @GetMapping("/translate/saveTranslateText")
+    @PostMapping("/translate/saveTranslateText")
     public void saveTranslateText(@RequestBody TranslateRequest request) {
         translateService.saveTranslateText(request);
     }

@@ -221,6 +221,7 @@ public class ShopifyService {
         translation.put("locale", registerTransactionRequest.getTarget());
         translation.put("key", registerTransactionRequest.getKey());
         translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
+        translation.put("value", registerTransactionRequest.getValue());
         Object[] translations = new Object[]{
                 translation
         };
