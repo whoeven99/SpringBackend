@@ -1,5 +1,6 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.model.controller.request.RegisterTransactionRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
@@ -18,5 +19,15 @@ public class TypeConversionUtils {
         TranslationCounterRequest translationCounterRequest = new TranslationCounterRequest();
         translationCounterRequest.setShopName(request.getShopName());
         return translationCounterRequest;
+    }
+
+    public static TranslateRequest registerTransactionRequestToTranslateRequest(RegisterTransactionRequest request) {
+        TranslateRequest translateRequest = new TranslateRequest();
+        translateRequest.setAccessToken(request.getAccessToken());
+        translateRequest.setShopName(request.getShopName());
+        translateRequest.setTarget(request.getTarget());
+        translateRequest.setContent(request.getValue());
+        translateRequest.setSource(request.getLocale());
+        return translateRequest;
     }
 }

@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.logic.TranslateService;
+import com.bogdatech.model.controller.request.RegisterTransactionRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.JdbcRepository;
@@ -34,10 +35,10 @@ public class TranslateController {
      * 插入shop信息
      */
     @PostMapping("/translate/insertShopTranslateInfo")
-    public BaseResponse insertShopTranslateInfo(@RequestBody TranslateRequest request) {
+    public BaseResponse<Object> insertShopTranslateInfo(@RequestBody TranslateRequest request) {
         int result = jdbcRepository.insertShopTranslateInfo(request);
         if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
+            return new BaseResponse<>().CreateSuccessResponse(result);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
@@ -46,7 +47,7 @@ public class TranslateController {
      * 调用谷歌翻译的API接口
      */
     @PostMapping("/translate/googleTranslate")
-    public BaseResponse googleTranslate(@RequestBody TranslateRequest request) {
+    public BaseResponse<Object> googleTranslate(@RequestBody TranslateRequest request) {
         return translateService.googleTranslate(request);
     }
 
@@ -54,7 +55,7 @@ public class TranslateController {
      * 调用百度翻译的API接口
      */
     @PostMapping("/translate/baiDuTranslate")
-    public BaseResponse baiDuTranslate(@RequestBody TranslateRequest request) {
+    public BaseResponse<Object> baiDuTranslate(@RequestBody TranslateRequest request) {
         return translateService.baiDuTranslate(request);
     }
 
@@ -65,7 +66,7 @@ public class TranslateController {
     public BaseResponse<Object> readTranslateInfo(@RequestBody TranslatesDO request) {
         List<TranslatesDO> list = jdbcRepository.readTranslateInfo(request.getStatus());
         if (list != null && !list.isEmpty()) {
-            return new BaseResponse().CreateSuccessResponse(list);
+            return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
@@ -77,7 +78,7 @@ public class TranslateController {
     public BaseResponse<Object> readInfoByShopName(@RequestBody TranslateRequest request) {
         List<TranslatesDO> translatesDos = jdbcRepository.readInfoByShopName(request);
         if (!translatesDos.isEmpty()) {
-            return new BaseResponse().CreateSuccessResponse(translatesDos);
+            return new BaseResponse<>().CreateSuccessResponse(translatesDos);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
@@ -86,7 +87,7 @@ public class TranslateController {
      * 用百度翻译API翻译json格式的数据
      */
     @PostMapping("/translate/userBDTranslateJson")
-    public BaseResponse userBDTranslateJsonObject() {
+    public BaseResponse<Object> userBDTranslateJsonObject() {
         return translateService.userBDTranslateJsonObject();
     }
 
@@ -104,12 +105,16 @@ public class TranslateController {
     }
 
     /*
-     *  测试一键存储数据库流程
+     *  一键存储数据库流程
      */
     @GetMapping("/translate/saveTranslateText")
     public void saveTranslateText(@RequestBody TranslateRequest request) {
         translateService.saveTranslateText(request);
     }
 
-    //测试String格式数据获取是否正常
+    //翻译单个文本数据
+    @PostMapping("/translate/translateSingleText")
+    public BaseResponse<Object> translateSingleText(@RequestBody RegisterTransactionRequest request) {
+        return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
+    }
 }
