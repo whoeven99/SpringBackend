@@ -8,10 +8,7 @@ import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
-import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.model.controller.request.TranslateTextRequest;
-import com.bogdatech.model.controller.request.TranslationCounterRequest;
+import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
@@ -30,7 +27,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +38,7 @@ import java.util.Map;
 
 import static com.bogdatech.entity.TranslateResourceDTO.translationResources;
 import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
+import static com.bogdatech.logic.ShopifyService.getVariables;
 
 @Component
 @EnableAsync
@@ -58,6 +55,7 @@ public class TranslateService {
 
     private final TelemetryClient appInsights = new TelemetryClient();
 
+    //百度翻译接口
     public BaseResponse<Object> baiDuTranslate(TranslateRequest request) {
         String result = translateApiIntegration.baiDuTranslate(request);
         if (result != null) {
@@ -66,6 +64,7 @@ public class TranslateService {
         return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
     }
 
+    //google翻译接口
     public BaseResponse<Object> googleTranslate(TranslateRequest request) {
         String result = translateApiIntegration.googleTranslate(request);
         if (result != null) {
@@ -73,7 +72,6 @@ public class TranslateService {
         }
         return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
     }
-
 
     @Async
     public void test(TranslatesDO request) {
@@ -88,7 +86,6 @@ public class TranslateService {
         //更新状态
         jdbcRepository.updateTranslateStatus(request.getShopName(), 0);
     }
-
 
     //写死的json
     public BaseResponse<Object> userBDTranslateJsonObject() {
@@ -507,7 +504,7 @@ public class TranslateService {
 
     //循环存数据库
     @Async
-    public void saveTranslateText(@RequestBody TranslateRequest request) {
+    public void saveTranslateText(TranslateRequest request) {
         ShopifyRequest shopifyRequest = new ShopifyRequest();
         shopifyRequest.setTarget(request.getTarget());
         shopifyRequest.setShopName(request.getShopName());
@@ -522,5 +519,13 @@ public class TranslateService {
     }
 
     //翻译单个文本数据
+    public String translateSingleText(RegisterTransactionRequest request) {
+        TranslateRequest translateRequest = TypeConversionUtils.registerTransactionRequestToTranslateRequest(request);
+        request.setValue(translateApiIntegration.googleTranslate(translateRequest));
+        //保存翻译后的数据到shopify本地
+        Map<String, Object> variables = getVariables(request);
+        ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(translateRequest);
+        return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
+    }
 }
 

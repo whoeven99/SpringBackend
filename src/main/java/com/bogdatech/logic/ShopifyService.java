@@ -215,7 +215,7 @@ public class ShopifyService {
     }
 
     //将修改所需要的数据封装成Map格式
-    private static Map<String, Object> getVariables(RegisterTransactionRequest registerTransactionRequest) {
+    static Map<String, Object> getVariables(RegisterTransactionRequest registerTransactionRequest) {
         Map<String, Object> variables = new HashMap<>();
         Map<String, Object> translation = new HashMap<>();
         translation.put("locale", registerTransactionRequest.getTarget());
