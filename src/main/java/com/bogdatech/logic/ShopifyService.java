@@ -10,6 +10,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,6 +25,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.entity.TranslateResourceDTO.translationResources;
@@ -233,7 +235,7 @@ public class ShopifyService {
     }
 
     //在UserSubscription表里面添加一个购买了免费订阅计划的用户（商家）
-    public BaseResponse<Object> addUserFreeSubscription( UserSubscriptionsRequest request) {
+    public BaseResponse<Object> addUserFreeSubscription(UserSubscriptionsRequest request) {
         request.setStatus(1);
         LocalDateTime localDate = LocalDateTime.now();
         String localDateFormat = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
@@ -251,12 +253,14 @@ public class ShopifyService {
     //修改shopify本地单条数据 和 更新本地数据库相应数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
         String string = updateShopifySingleData(registerTransactionRequest);
-        TranslateTextRequest request = new TranslateTextRequest();
-        request.setShopName(registerTransactionRequest.getShopName());
-        request.setTargetText(registerTransactionRequest.getValue());
-        request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
-        request.setTargetCode(registerTransactionRequest.getTarget());
-        int i = jdbcRepository.updateTranslateText(request);
+        TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
+        List<TranslateTextRequest> translateTextRequests = jdbcRepository.readTranslateTextInfo(request);
+        int i;
+        if (translateTextRequests.isEmpty()) {
+            i = jdbcRepository.insertTranslateText(request);
+        } else {
+            i = jdbcRepository.updateTranslateText(request);
+        }
         if (i > 0 && string.contains(registerTransactionRequest.getValue())) {
             return new BaseResponse<>().CreateSuccessResponse("success");
         } else {
@@ -264,7 +268,7 @@ public class ShopifyService {
         }
     }
 
-    public Map<String, String[]> getImageInfo(String[] strings)  {
+    public Map<String, String[]> getImageInfo(String[] strings) {
         Map<String, String[]> imageInfo = new HashMap<>();
         for (String string : strings) {
             try {

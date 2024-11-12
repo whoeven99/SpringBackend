@@ -1,9 +1,6 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.model.controller.request.RegisterTransactionRequest;
-import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.model.controller.request.TranslationCounterRequest;
+import com.bogdatech.model.controller.request.*;
 
 public class TypeConversionUtils {
 
@@ -29,5 +26,17 @@ public class TypeConversionUtils {
         translateRequest.setContent(request.getValue());
         translateRequest.setSource(request.getLocale());
         return translateRequest;
+    }
+
+    public static TranslateTextRequest registerTransactionRequestToTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
+        TranslateTextRequest request = new TranslateTextRequest();
+        request.setShopName(registerTransactionRequest.getShopName());
+        request.setTargetText(registerTransactionRequest.getValue());
+        request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
+        request.setTargetCode(registerTransactionRequest.getTarget());
+        request.setResourceId(registerTransactionRequest.getResourceId());
+        request.setSourceCode(registerTransactionRequest.getLocale());
+        request.setTextKey(registerTransactionRequest.getKey());
+        return request;
     }
 }
