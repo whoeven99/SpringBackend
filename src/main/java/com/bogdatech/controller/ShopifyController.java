@@ -110,4 +110,11 @@ public class ShopifyController {
         Map<String, String[]> imageInfo = shopifyService.getImageInfo(strings);
         return new BaseResponse<>().CreateSuccessResponse(imageInfo);
     }
+
+    //计算被翻译项的总数和已翻译的个数
+    @PostMapping("/shopify/getTranslationItemsInfo")
+    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody String[] strings) {
+
+        return null;
+    }
 }

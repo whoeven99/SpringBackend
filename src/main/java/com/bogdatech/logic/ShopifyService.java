@@ -214,8 +214,7 @@ public class ShopifyService {
         shopifyRequest.setTarget(registerTransactionRequest.getTarget());
         appInsights.trackTrace("value: " + registerTransactionRequest.getValue());
         Map<String, Object> variables = getVariables(registerTransactionRequest);
-        String string = shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
-        return string;
+        return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
     }
 
     //将修改所需要的数据封装成Map格式
@@ -264,24 +263,25 @@ public class ShopifyService {
         if (i > 0 && string.contains(registerTransactionRequest.getValue())) {
             return new BaseResponse<>().CreateSuccessResponse("success");
         } else {
-            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_UPDATE_ERROR);
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SERVER_ERROR);
         }
     }
 
+    //根据前端传来的值，返回对应的图片信息
     public Map<String, String[]> getImageInfo(String[] strings) {
         Map<String, String[]> imageInfo = new HashMap<>();
         for (String string : strings) {
             try {
                 Field field = LanguageFlagConfig.class.getField(string.toUpperCase());
-                System.out.println("field: " + field.get(null));
                 imageInfo.put(string, (String[]) field.get(null));
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
+            } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }
-        System.out.println("imageInfo: " + imageInfo.toString());
         return imageInfo;
     }
+
+    //计算被翻译项的总数和已翻译的个数
+
+
 }
