@@ -72,7 +72,7 @@ public class ShopifyController {
     }
 
     //根据前端的传值,更新shopify后台和数据库
-    @PostMapping("/shopify/updateShopifyDataByTranslateTextRequest")
+        @PostMapping("/shopify/updateShopifyDataByTranslateTextRequest")
     public String updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
         return shopifyService.updateShopifyDataByTranslateTextRequest(registerTransactionRequest);
     }
