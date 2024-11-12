@@ -4,70 +4,73 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class LanguageFlagConfig {
-    public static final String[] AFRIKAANS =
+    public static final String[] AF =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ZA.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NA.png"};
 
-    public static final String[] AKAN =
+    public static final String[] AK =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GH.png"};
 
-    public static final String[] ALBANIAN =
+    public static final String[] SQ =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AL.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/XK.png"};
 
-    public static final String[] AMHARIC =
+    public static final String[] AM =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ET.png"};
 
-    public static final String[] ARABIC =
+    public static final String[] AR =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SA.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/EG.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AE.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/JO.png"};
 
-    public static final String[] ARMENIAN =
+    public static final String[] HY =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AM.png"};
 
-    public static final String[] ASSAMESE =
+    public static final String[] AS =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"};
 
-    public static final String[] AZERBAIJANI =
+    public static final String[] AZ =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AZ.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IR.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RU.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TR.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GE.PNG"};
 
-    public static final String[] BAMBARA =
+    public static final String[] BM =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ML.png"};
 
-    public static final String[] BASQUE =
+    public static final String[] BN =
+            new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BN.png"};
+
+    public static final String[] EU =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ES.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FR.png"};
 
-    public static final String[] BELARUSIAN =
+    public static final String[] BE =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BY.png"};
 
-    public static final String[] BOSNIAN =
+    public static final String[] VS =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BA.png"};
 
-    public static final String[] BRETON =
+    public static final String[] BR =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FR.png"};
 
-    public static final String[] BULGARIAN =
+    public static final String[] BG =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BG.png"};
 
-    public static final String[] BURMESE =
+    public static final String[] MY =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MM.png"};
 
-    public static final String[] CATALAN =
+    public static final String[] CA =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ES.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AD.png"};
 
-    public static final String[] CENTRAL_KURDISH =
+    public static final String[] CKB =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IQ.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IR.png"};
 
-    public static final String[] CHECHEN =
+    public static final String[] CE =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RU.png"};
 
     public static final String[] CHINESE_SIMPLIFIED =

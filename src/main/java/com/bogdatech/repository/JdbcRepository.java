@@ -211,4 +211,12 @@ public class JdbcRepository {
         List<String> strings = readInfo(info, sql, String.class);
         return strings.get(0);
     }
+
+    public List<TranslateTextRequest> readTranslateTextInfo(TranslateTextRequest request) {
+        String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code " +
+                "FROM TranslateTextTable WHERE digest = ? and shop_name = ?  and target_code = ? ";
+        Object[] info = {request.getDigest(), request.getShopName(), request.getTargetCode()};
+        List<TranslateTextRequest> list = readInfo(info, sql, TranslateTextRequest.class);
+        return list;
+    }
 }
