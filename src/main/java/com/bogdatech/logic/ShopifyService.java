@@ -249,15 +249,19 @@ public class ShopifyService {
     }
 
     //修改shopify本地单条数据 和 更新本地数据库相应数据
-    public String updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
+    public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
         String string = updateShopifySingleData(registerTransactionRequest);
         TranslateTextRequest request = new TranslateTextRequest();
         request.setShopName(registerTransactionRequest.getShopName());
         request.setTargetText(registerTransactionRequest.getValue());
         request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
-        request.setTargetCode(registerTransactionRequest.getLocale());
+        request.setTargetCode(registerTransactionRequest.getTarget());
         int i = jdbcRepository.updateTranslateText(request);
-        return "data: " + string + i;
+        if (i > 0 && string.contains(registerTransactionRequest.getValue())) {
+            return new BaseResponse<>().CreateSuccessResponse("success");
+        } else {
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_UPDATE_ERROR);
+        }
     }
 
     public Map<String, String[]> getImageInfo(String[] strings)  {
