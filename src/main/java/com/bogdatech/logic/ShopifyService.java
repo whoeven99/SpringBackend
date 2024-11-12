@@ -1,5 +1,6 @@
 package com.bogdatech.logic;
 
+import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -20,6 +21,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -230,7 +232,7 @@ public class ShopifyService {
     }
 
     //在UserSubscription表里面添加一个购买了免费订阅计划的用户（商家）
-    public BaseResponse<Object> addUserFreeSubscription(@RequestBody UserSubscriptionsRequest request){
+    public BaseResponse<Object> addUserFreeSubscription(@RequestBody UserSubscriptionsRequest request) {
         request.setStatus(1);
         LocalDateTime localDate = LocalDateTime.now();
         String localDateFormat = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
@@ -240,13 +242,13 @@ public class ShopifyService {
         int i = jdbcRepository.addUserSubscription(request);
         if (i > 0) {
             return new BaseResponse<>().CreateSuccessResponse("success");
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
         }
     }
 
     //修改shopify本地单条数据 和 更新本地数据库相应数据
-    public String updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest){
+    public String updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
         String string = updateShopifySingleData(registerTransactionRequest);
         TranslateTextRequest request = new TranslateTextRequest();
         request.setShopName(registerTransactionRequest.getShopName());
@@ -255,5 +257,22 @@ public class ShopifyService {
         request.setTargetCode(registerTransactionRequest.getLocale());
         int i = jdbcRepository.updateTranslateText(request);
         return "data: " + string + i;
+    }
+
+    public Map<String, String[]> getImageInfo(String[] strings)  {
+        Map<String, String[]> imageInfo = new HashMap<>();
+        for (String string : strings) {
+            try {
+                Field field = LanguageFlagConfig.class.getField(string.toUpperCase());
+                System.out.println("field: " + field.get(null));
+                imageInfo.put(string, (String[]) field.get(null));
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        System.out.println("imageInfo: " + imageInfo.toString());
+        return imageInfo;
     }
 }
