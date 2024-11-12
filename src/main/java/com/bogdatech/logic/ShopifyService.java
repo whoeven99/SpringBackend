@@ -252,7 +252,7 @@ public class ShopifyService {
         request.setTargetText(registerTransactionRequest.getValue());
         request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
         request.setTargetCode(registerTransactionRequest.getLocale());
-        jdbcRepository.updateTranslateText(request);
-        return string;
+        int i = jdbcRepository.updateTranslateText(request);
+        return "success : " + i + "  " + string;
     }
 }
