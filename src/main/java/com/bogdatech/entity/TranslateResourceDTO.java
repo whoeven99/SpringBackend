@@ -38,32 +38,29 @@ public class TranslateResourceDTO {
 //            new TranslateResourceDTO("SHOP", "250", "", ""),
 //            new TranslateResourceDTO("SHOP_POLICY", "250", "", ""),
 //            new TranslateResourceDTO("EMAIL_TEMPLATE", "250", "", ""),
-            new TranslateResourceDTO("ARTICLE", "250", "",""),
-            new TranslateResourceDTO("BLOG", "250", "","")
+            new TranslateResourceDTO("ARTICLE", "250", "", ""),
+            new TranslateResourceDTO("BLOG", "250", "", "")
 //            ,
 //            new TranslateResourceDTO("PAGE", "250", "", "")
     ));
 
     public static final Map<String, List<TranslateResourceDTO>> RESOURCE_MAP = new HashMap<>();
+
     static {
         RESOURCE_MAP.put("Collection", List.of(new TranslateResourceDTO("COLLECTION", "250", "", "")));
-        RESOURCE_MAP.put("App embeds", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_APP_EMBED", "250", "", "")));
-        RESOURCE_MAP.put("Default theme content", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME", "250", "", "")));
-        RESOURCE_MAP.put("Section groups", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SECTION_GROUP", "250", "", "")));
-        RESOURCE_MAP.put("Static sections", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS", "250", "", "")));
-        RESOURCE_MAP.put("Templates", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_JSON_TEMPLATE", "250", "", "")));
-        RESOURCE_MAP.put("Theme settings", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_CATEGORY", "250", "", "")));
         RESOURCE_MAP.put("Notifications", List.of(new TranslateResourceDTO("EMAIL_TEMPLATE", "250", "", "")));
-        RESOURCE_MAP.put("Blog posts", List.of(new TranslateResourceDTO("ARTICLE", "250", "", "")));
+        RESOURCE_MAP.put("Theme", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME", "250", "", "")));
+        RESOURCE_MAP.put("Article", List.of(new TranslateResourceDTO("ARTICLE", "250", "", "")));
         RESOURCE_MAP.put("Blog titles", List.of(new TranslateResourceDTO("BLOG", "250", "250", "")));
         RESOURCE_MAP.put("Filters", List.of(new TranslateResourceDTO("FILTER", "250", "", "")));
         RESOURCE_MAP.put("Metaobjects", List.of(new TranslateResourceDTO("METAOBJECT", "250", "", "")));
         RESOURCE_MAP.put("Pages", List.of(new TranslateResourceDTO("PAGE", "250", "", "")));
         RESOURCE_MAP.put("Policies", List.of(new TranslateResourceDTO("SHOP_POLICY", "250", "", "")));
-        RESOURCE_MAP.put("Products", Arrays.asList(
-                new TranslateResourceDTO("PRODUCT", "250", "", ""),
+        RESOURCE_MAP.put("Products", List.of(
+                new TranslateResourceDTO("PRODUCT", "250", "", "")
+//                ,
 //                new TranslateResourceDTO("PRODUCT_OPTION", "250", "", "")
-                new TranslateResourceDTO("PRODUCT_OPTION_VALUE", "250", "", "")
+//                new TranslateResourceDTO("PRODUCT_OPTION_VALUE", "250", "", "")
         ));
         RESOURCE_MAP.put("Navigation", Arrays.asList(
                 new TranslateResourceDTO("MENU", "250", "", ""),
@@ -73,10 +70,19 @@ public class TranslateResourceDTO {
                 new TranslateResourceDTO("METAFIELD", "250", "", ""),
                 new TranslateResourceDTO("SHOP", "250", "", "")
         ));
-        RESOURCE_MAP.put("Shipping and delivery", Arrays.asList(
-                new TranslateResourceDTO("PACKING_SLIP_TEMPLATE", "250", "", ""),
+        RESOURCE_MAP.put("Shipping", List.of(
+                new TranslateResourceDTO("PACKING_SLIP_TEMPLATE", "250", "", "")
+        ));
+        RESOURCE_MAP.put("delivery", List.of(
                 new TranslateResourceDTO("DELIVERY_METHOD_DEFINITION", "250", "", "")
         ));
+
+        //        RESOURCE_MAP.put("App embeds", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_APP_EMBED", "250", "", "")));
+        //        RESOURCE_MAP.put("Section groups", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SECTION_GROUP", "250", "", "")));
+//        RESOURCE_MAP.put("Static sections", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS", "250", "", "")));
+//        RESOURCE_MAP.put("Templates", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_JSON_TEMPLATE", "250", "", "")));
+//        RESOURCE_MAP.put("Theme settings", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_CATEGORY", "250", "", "")));
+
     }
 
     private String resourceType;
