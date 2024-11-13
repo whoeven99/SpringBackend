@@ -117,4 +117,10 @@ public class ShopifyController {
         Map<String,Map<String,Integer>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
         return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
     }
+
+    //先从数据库中获取在调用getItemsByShopName
+    @PostMapping("/shopify/getItemsInSqlByShopName")
+    public BaseResponse<Object> getItemsInSqlByShopName(@RequestBody ShopifyRequest request) {
+        return shopifyService.getItemsByShopName(request);
+    }
 }

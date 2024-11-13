@@ -219,4 +219,18 @@ public class JdbcRepository {
         List<TranslateTextRequest> list = readInfo(info, sql, TranslateTextRequest.class);
         return list;
     }
+
+    public ItemsRequest readItemsInfo(ShopifyRequest request) {
+        String sql = "SELECT item_name, target, shop_name, translated_number, total_number FROM Items WHERE shop_name = ? and target = ?";
+        Object[] info = {request.getShopName(), request.getTarget()};
+        List<ItemsRequest> list = readInfo(info, sql, ItemsRequest.class);
+        return list.get(0);
+    }
+
+    public int insertItems(ShopifyRequest request, String key, int totalChars, int totalChars1) {
+        String sql = "INSERT INTO Items (item_name, target, shop_name, translated_number, total_number) VALUES (?,?,?,?,?)";
+        Object[] info = {key, request.getTarget(), request.getShopName(), totalChars, totalChars1};
+        int i = CUDInfo(info, sql);
+        return i;
+    }
 }

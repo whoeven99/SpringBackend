@@ -343,6 +343,7 @@ public class ShopifyService {
                 countAllItemsAndTranslatedItems(infoByShopify, request, resource, allCounter, translatedCounter);
 
             }
+            jdbcRepository.insertItems(request,key, allCounter.getTotalChars(), translatedCounter.getTotalChars());
             allMap.put(key + "_all", allCounter.getTotalChars());
             translatedMap.put(key + "_translated", translatedCounter.getTotalChars());
         }
@@ -479,5 +480,15 @@ public class ShopifyService {
         }
 
         return countNextPage;
+    }
+
+    public BaseResponse<Object> getItemsByShopName(ShopifyRequest request){
+        ItemsRequest itemsRequest = jdbcRepository.readItemsInfo(request);
+        if (itemsRequest != null) {
+            return new BaseResponse<>().CreateSuccessResponse(itemsRequest);
+        }else {
+            return new BaseResponse<>().CreateSuccessResponse(getTranslationItemsInfo(request).toString());
+        }
+
     }
 }
