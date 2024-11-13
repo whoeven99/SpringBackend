@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.entity.TranslateResourceDTO.translationResources;
+import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 
@@ -164,7 +164,7 @@ public class TranslateService {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
 
-        for (TranslateResourceDTO translateResource : translationResources) {
+        for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
             ShopifyQuery shopifyQuery = new ShopifyQuery();
             translateResource.setTarget(request.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);
@@ -509,7 +509,7 @@ public class TranslateService {
         shopifyRequest.setTarget(request.getTarget());
         shopifyRequest.setShopName(request.getShopName());
         shopifyRequest.setAccessToken(request.getAccessToken());
-        for (TranslateResourceDTO translateResource : translationResources) {
+        for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
             ShopifyQuery shopifyQuery = new ShopifyQuery();
             translateResource.setTarget(shopifyRequest.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);

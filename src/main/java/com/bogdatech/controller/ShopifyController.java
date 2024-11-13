@@ -82,8 +82,8 @@ public class ShopifyController {
     public BaseResponse<Object> getUserLimitChars(@RequestBody TranslationCounterRequest request) {
         List<TranslationCounterRequest> translationCounterRequests = jdbcRepository.readCharsByShopName(request);
         Map<String, Object> map = new HashMap<>();
-        map.put("chars", translationCounterRequests.get(0).getChars());
-        map.put("totalChars", translationCounterRequests.get(0).getTotalChars());
+        map.put("chars", translationCounterRequests.get(0).getUsedChars());
+        map.put("totalChars", translationCounterRequests.get(0).getChars());
         return new BaseResponse<>().CreateSuccessResponse(map);
     }
 
@@ -113,8 +113,8 @@ public class ShopifyController {
 
     //计算被翻译项的总数和已翻译的个数
     @PostMapping("/shopify/getTranslationItemsInfo")
-    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody String[] strings) {
-
-        return null;
+    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ShopifyRequest request) {
+        int translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
+        return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
     }
 }

@@ -35,7 +35,7 @@ public class LanguageFlagConfig {
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IR.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RU.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TR.png",
-                    "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GE.PNG"};
+                    "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GE.png"};
 
     public static final String[] BM =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ML.png"};
@@ -50,7 +50,7 @@ public class LanguageFlagConfig {
     public static final String[] BE =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BY.png"};
 
-    public static final String[] VS =
+    public static final String[] BS =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BA.png"};
 
     public static final String[] BR =
@@ -269,7 +269,7 @@ public class LanguageFlagConfig {
     public static final String[] MT =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MT.png"};
 
-    public static final String[] MI =
+    public static final String[] GV =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NZ.png"};
 
     public static final String[] MR =
