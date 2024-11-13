@@ -445,7 +445,7 @@ public class LanguageFlagConfig {
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TR.png",
                     "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CY.png"};
 
-    public static final String[] TKO =
+    public static final String[] TK =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TM.png"};
 
     public static final String[] UK =

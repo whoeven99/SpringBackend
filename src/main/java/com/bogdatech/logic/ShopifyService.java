@@ -120,7 +120,7 @@ public class ShopifyService {
     private JsonNode translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter) {
         objectNode.fieldNames().forEachRemaining(fieldName -> {
             JsonNode fieldValue = objectNode.get(fieldName);
-//            System.out.println("fieldValue1: " + fieldValue);
+            System.out.println("fieldValue1: " + fieldValue);
 
             if ("nodes".equals(fieldName)) {
                 System.out.println("fieldValue2: " + fieldValue);
