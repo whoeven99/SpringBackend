@@ -270,8 +270,10 @@ public class LanguageFlagConfig {
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MT.png"};
 
     public static final String[] GV =
-            new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NZ.png"};
+            new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IM.png"};
 
+    public static final String[] MI =
+            new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NZ.png"};
     public static final String[] MR =
             new String[]{"https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"};
 
