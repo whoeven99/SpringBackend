@@ -39,4 +39,20 @@ public class TypeConversionUtils {
         request.setTextKey(registerTransactionRequest.getKey());
         return request;
     }
+
+    public static CloudServiceRequest shopifyToCloudServiceRequest(ShopifyRequest request) {
+        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
+        cloudServiceRequest.setShopName(request.getShopName());
+        cloudServiceRequest.setAccessToken(request.getAccessToken());
+        cloudServiceRequest.setTarget(request.getTarget());
+        return cloudServiceRequest;
+    }
+
+    public static ShopifyRequest resourceTypeRequestToShopifyRequest(ResourceTypeRequest request) {
+        ShopifyRequest shopifyRequest = new ShopifyRequest();
+        shopifyRequest.setShopName(request.getShopName());
+        shopifyRequest.setAccessToken(request.getAccessToken());
+        shopifyRequest.setTarget(request.getTarget());
+        return shopifyRequest;
+    }
 }
