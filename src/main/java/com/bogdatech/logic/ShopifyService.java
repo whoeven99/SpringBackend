@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
@@ -343,7 +344,15 @@ public class ShopifyService {
                 countAllItemsAndTranslatedItems(infoByShopify, request, resource, allCounter, translatedCounter);
 
             }
-            jdbcRepository.insertItems(request,key, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+
+            //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
+            if(!jdbcRepository.readSingleItemInfo(request, key).isEmpty()){
+                int i = jdbcRepository.updateItemsByShopName(request, key, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+                System.out.println("update : "+ i);
+            }else {
+                int i = jdbcRepository.insertItems(request, key, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+                System.out.println("insert : "+ i);
+            }
             allMap.put(key + "_all", allCounter.getTotalChars());
             translatedMap.put(key + "_translated", translatedCounter.getTotalChars());
         }
@@ -443,12 +452,10 @@ public class ShopifyService {
 
      //计数非 ONLINE_STORE_THEME 类型的资源数据。
     private void countNonThemeData(JsonNode translationsNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter) {
+        counter.addChars(1);
         if (translationsNode != null && !translationsNode.isEmpty()) {
             // 如果翻译内容节点不为空，则增加已翻译的字符数
             translatedCounter.addChars(1);
-        } else {
-            // 否则增加未翻译的字符数
-            counter.addChars(1);
         }
     }
 
@@ -482,10 +489,15 @@ public class ShopifyService {
         return countNextPage;
     }
 
+    //从数据库中获取items数据
     public BaseResponse<Object> getItemsByShopName(ShopifyRequest request){
-        ItemsRequest itemsRequest = jdbcRepository.readItemsInfo(request);
-        if (itemsRequest != null) {
-            return new BaseResponse<>().CreateSuccessResponse(itemsRequest);
+        List<ItemsRequest> itemsRequests = jdbcRepository.readItemsInfo(request);
+//        System.out.println("itemsRequests: " + itemsRequests.size());
+        Map<String, ItemsRequest> itemMap = itemsRequests.stream()
+                .collect(Collectors.toMap(ItemsRequest::getItemName, item -> new ItemsRequest(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber()) ));
+        System.out.println("itemMap: " + itemMap);
+        if (!itemsRequests.isEmpty()) {
+            return new BaseResponse<>().CreateSuccessResponse(itemMap);
         }else {
             return new BaseResponse<>().CreateSuccessResponse(getTranslationItemsInfo(request).toString());
         }

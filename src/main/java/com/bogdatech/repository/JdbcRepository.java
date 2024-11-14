@@ -163,7 +163,7 @@ public class JdbcRepository {
         return new BaseResponse<>().CreateSuccessResponse(list);
     }
 
-    public int insertTranslateText(TranslateTextRequest request){
+    public int insertTranslateText(TranslateTextRequest request) {
         String sql = "INSERT INTO TranslateTextTable (shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, " +
                 "target_code) VALUES (?,?,?,?,?,?,?,?,?)";
         Object[] info = {request.getShopName(), request.getResourceId(), request.getTextType(), request.getDigest(), request.getTextKey()
@@ -171,13 +171,13 @@ public class JdbcRepository {
         return CUDInfo(info, sql);
     }
 
-    public List<TranslateTextRequest> getTranslateText(String request){
+    public List<TranslateTextRequest> getTranslateText(String request) {
         String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code FROM TranslateTextTable WHERE digest = ?";
         Object[] info = {request};
         return readInfo(info, sql, TranslateTextRequest.class);
     }
 
-    public int updateTranslateText(TranslateTextRequest request){
+    public int updateTranslateText(TranslateTextRequest request) {
         String sql = "UPDATE TranslateTextTable SET target_text = ? WHERE digest = ? and shop_name = ?  and target_code = ?";
         Object[] info = {request.getTargetText(), request.getDigest(), request.getShopName(), request.getTargetCode()};
         return CUDInfo(info, sql);
@@ -220,17 +220,30 @@ public class JdbcRepository {
         return list;
     }
 
-    public ItemsRequest readItemsInfo(ShopifyRequest request) {
+    public List<ItemsRequest> readItemsInfo(ShopifyRequest request) {
         String sql = "SELECT item_name, target, shop_name, translated_number, total_number FROM Items WHERE shop_name = ? and target = ?";
         Object[] info = {request.getShopName(), request.getTarget()};
         List<ItemsRequest> list = readInfo(info, sql, ItemsRequest.class);
-        return list.get(0);
+        return list;
     }
 
-    public int insertItems(ShopifyRequest request, String key, int totalChars, int totalChars1) {
+    public int insertItems(ShopifyRequest request, String key, int totalChars, int translatedCounter) {
         String sql = "INSERT INTO Items (item_name, target, shop_name, translated_number, total_number) VALUES (?,?,?,?,?)";
-        Object[] info = {key, request.getTarget(), request.getShopName(), totalChars, totalChars1};
+        Object[] info = {key, request.getTarget(), request.getShopName(),  translatedCounter, totalChars};
         int i = CUDInfo(info, sql);
         return i;
+    }
+
+    public int updateItemsByShopName(ShopifyRequest request, String key, int totalChars, int totalChars1) {
+        String sql = "UPDATE Items SET translated_number = ?, total_number = ? WHERE shop_name = ? and target = ? and item_name = ?";
+        Object[] info = {totalChars, totalChars1, request.getShopName(), request.getTarget(), key};
+        int i = CUDInfo(info, sql);
+        return i;
+    }
+
+    public List<ItemsRequest> readSingleItemInfo(ShopifyRequest request, String key) {
+        String sql = "SELECT item_name, target, shop_name, translated_number, total_number FROM Items WHERE shop_name = ? and target = ? and item_name = ?";
+        Object[] info = {request.getShopName(), request.getTarget(), key};
+        return readInfo(info, sql, ItemsRequest.class);
     }
 }

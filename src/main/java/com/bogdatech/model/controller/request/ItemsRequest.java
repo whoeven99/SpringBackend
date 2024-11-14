@@ -13,4 +13,10 @@ public class ItemsRequest {
     private String shopName;
     private int translatedNumber;
     private int totalNumber;
+
+    public ItemsRequest(String itemName, int totalNumber, int translatedNumber) {
+        this.itemName = itemName;
+        this.totalNumber = totalNumber;
+        this.translatedNumber = translatedNumber;
+    }
 }
