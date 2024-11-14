@@ -50,7 +50,7 @@ public class TestingEnvironmentIntegration {
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity);
-            appInsights.trackTrace("封装APi : " + responseContent);
+//            appInsights.trackTrace("封装APi : " + responseContent);
             response.close();
             httpClient.close();
         } catch (IOException e) {
