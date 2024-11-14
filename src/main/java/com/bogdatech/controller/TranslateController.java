@@ -98,9 +98,10 @@ public class TranslateController {
         //翻译
         translateService.translating(request);
         //返回一个status值
+        int i = Integer.parseInt(jdbcRepository.readStatus(request));
 //        //存数据库
 //        translateService.saveTranslateText(request);
-        return 2;
+        return 1;
     }
 
     /*

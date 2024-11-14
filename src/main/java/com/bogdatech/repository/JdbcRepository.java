@@ -72,36 +72,31 @@ public class JdbcRepository {
     public int insertShopTranslateInfo(TranslateRequest request) {
         String sql = "INSERT INTO Translates (shop_name, access_token, source, target, status) VALUES (?, ?, ?, ?, ?)";//TODO token应该加密存入sql
         Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget(), 2};
-        int result = CUDInfo(info, sql);
-        return result;
+        return CUDInfo(info, sql);
     }
 
     public List<TranslatesDO> readTranslateInfo(int status) {
         String sql = "SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE status = ?";
         Object[] info = {status};
-        List<TranslatesDO> list = readInfo(info, sql, TranslatesDO.class);
-        return list;
+        return readInfo(info, sql, TranslatesDO.class);
     }
 
     public int updateTranslateStatus(String shopName, int status) {
         String sql = "UPDATE Translates SET status = ? WHERE shop_name = ?";
         Object[] info = {status, shopName};
-        int result = CUDInfo(info, sql);
-        return result;
+        return CUDInfo(info, sql);
     }
 
     public List<TranslatesDO> readInfoByShopName(TranslateRequest request) {
         String sql = "SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE shop_name = ?";
         Object[] info = {request.getShopName()};
-        List<TranslatesDO> translatesDOS = readInfo(info, sql, TranslatesDO.class);
-        return translatesDOS;
+        return readInfo(info, sql, TranslatesDO.class);
     }
 
     public List<TranslationCounterRequest> readCharsByShopName(TranslationCounterRequest request) {
         String sql = "SELECT id, shop_name, chars, used_chars, google_chars, open_ai_chars, total_chars FROM TranslationCounter WHERE shop_name = ?";
         Object[] info = {request.getShopName()};
-        List<TranslationCounterRequest> translatesDOS = readInfo(info, sql, TranslationCounterRequest.class);
-        return translatesDOS;
+        return readInfo(info, sql, TranslationCounterRequest.class);
     }
 
     public int insertCharsByShopName(TranslationCounterRequest translationCounterRequest) {
@@ -111,52 +106,54 @@ public class JdbcRepository {
     }
 
     public int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest) {
-        String sql = "UPDATE TranslationCounter SET used_chars = ? WHERE shop_name = ?";
+        String sql = "UPDATE TranslationCounter " +
+                "SET used_chars = used_chars + ?" +
+                "WHERE shop_name = ?";
         Object[] info = {translationCounterRequest.getUsedChars(), translationCounterRequest.getShopName()};
         return CUDInfo(info, sql);
     }
 
-    public BaseResponse insertCurrency(CurrencyRequest request) {
+    public BaseResponse<Object> insertCurrency(CurrencyRequest request) {
         // 准备SQL插入语句
         String sql = "INSERT INTO Currencies (shop_name, country_name, currency_code, rounding, exchange_rate) VALUES (?, ?, ?, ?, ?)";
         Object[] info = {request.getShopName(), request.getCountryName(), request.getCurrencyCode(), request.getRounding(), request.getExchangeRate()};
         int result = CUDInfo(info, sql);
         if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
+            return new BaseResponse<>().CreateSuccessResponse(result);
         }
-        return new BaseResponse().CreateErrorResponse(SQL_INSERT_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 
-    public BaseResponse updateCurrency(CurrencyRequest request) {
+    public BaseResponse<Object> updateCurrency(CurrencyRequest request) {
         String sql = "UPDATE Currencies SET rounding = ?, exchange_rate = ? WHERE id = ?";
         Object[] info = {request.getRounding(), request.getExchangeRate(), request.getId()};
         int result = CUDInfo(info, sql);
         if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
+            return new BaseResponse<>().CreateSuccessResponse(result);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
 
     }
 
-    public BaseResponse deleteCurrency(CurrencyRequest request) {
+    public BaseResponse<Object> deleteCurrency(CurrencyRequest request) {
         String sql = "DELETE FROM Currencies  WHERE id = ?";
         Object[] info = {request.getId()};
         int result = CUDInfo(info, sql);
         if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
+            return new BaseResponse<>().CreateSuccessResponse(result);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
 
     }
 
-    public BaseResponse getCurrencyByShopName(CurrencyRequest request) {
+    public BaseResponse<Object> getCurrencyByShopName(CurrencyRequest request) {
         String sql = "SELECT id, shop_name, country_name, currency_code, rounding, exchange_rate FROM Currencies  WHERE shop_name = ?";
         Object[] info = {request.getShopName()};
         List<CurrencyRequest> list = readInfo(info, sql, CurrencyRequest.class);
         return new BaseResponse<>().CreateSuccessResponse(list);
     }
 
-    public BaseResponse test(CurrencyRequest request) {
+    public BaseResponse<Object> test(CurrencyRequest request) {
         String sql = "SELECT id, shop_name, country_name, currency_code, rounding, exchange_rate FROM Currencies  WHERE shop_name = ?";
         Object[] info = {request.getShopName()};
         List<CurrencyRequest> list = readInfo(info, sql, CurrencyRequest.class);
@@ -171,9 +168,10 @@ public class JdbcRepository {
         return CUDInfo(info, sql);
     }
 
-    public List<TranslateTextRequest> getTranslateText(String request) {
-        String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code FROM TranslateTextTable WHERE digest = ?";
-        Object[] info = {request};
+    public List<TranslateTextRequest> getTranslateText(TranslateTextRequest request) {
+        String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code FROM TranslateTextTable " +
+                "WHERE shop_name = ? AND resource_id = ? AND text_key = ? AND source_code = ? AND target_code = ? ";
+        Object[] info = {request.getShopName(), request.getResourceId(), request.getTextKey(), request.getSourceCode(), request.getTargetCode()};
         return readInfo(info, sql, TranslateTextRequest.class);
     }
 
@@ -216,34 +214,36 @@ public class JdbcRepository {
         String sql = "SELECT shop_name, resource_id, text_Type, digest, text_key, source_text, target_text, source_code, target_code " +
                 "FROM TranslateTextTable WHERE digest = ? and shop_name = ?  and target_code = ? ";
         Object[] info = {request.getDigest(), request.getShopName(), request.getTargetCode()};
-        List<TranslateTextRequest> list = readInfo(info, sql, TranslateTextRequest.class);
-        return list;
+        return readInfo(info, sql, TranslateTextRequest.class);
     }
 
     public List<ItemsRequest> readItemsInfo(ShopifyRequest request) {
         String sql = "SELECT item_name, target, shop_name, translated_number, total_number FROM Items WHERE shop_name = ? and target = ?";
         Object[] info = {request.getShopName(), request.getTarget()};
-        List<ItemsRequest> list = readInfo(info, sql, ItemsRequest.class);
-        return list;
+        return readInfo(info, sql, ItemsRequest.class);
     }
 
     public int insertItems(ShopifyRequest request, String key, int totalChars, int translatedCounter) {
         String sql = "INSERT INTO Items (item_name, target, shop_name, translated_number, total_number) VALUES (?,?,?,?,?)";
         Object[] info = {key, request.getTarget(), request.getShopName(),  translatedCounter, totalChars};
-        int i = CUDInfo(info, sql);
-        return i;
+        return CUDInfo(info, sql);
     }
 
     public int updateItemsByShopName(ShopifyRequest request, String key, int totalChars, int totalChars1) {
         String sql = "UPDATE Items SET translated_number = ?, total_number = ? WHERE shop_name = ? and target = ? and item_name = ?";
-        Object[] info = {totalChars, totalChars1, request.getShopName(), request.getTarget(), key};
-        int i = CUDInfo(info, sql);
-        return i;
+        Object[] info = {totalChars1, totalChars, request.getShopName(), request.getTarget(), key};
+        return CUDInfo(info, sql);
     }
 
     public List<ItemsRequest> readSingleItemInfo(ShopifyRequest request, String key) {
         String sql = "SELECT item_name, target, shop_name, translated_number, total_number FROM Items WHERE shop_name = ? and target = ? and item_name = ?";
         Object[] info = {request.getShopName(), request.getTarget(), key};
         return readInfo(info, sql, ItemsRequest.class);
+    }
+
+    public String readStatus(TranslateRequest request) {
+        String sql = "SELECT status FROM Translates WHERE shop_name = ? and target = ?";
+        Object[] info = {request.getShopName(), request.getTarget()};
+        return readInfo(info, sql, String.class).get(0);
     }
 }

@@ -3,11 +3,9 @@ package com.bogdatech.task;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.repository.JdbcRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,8 +21,8 @@ public class TranslateTask {
     @Autowired
     private TranslateService translateService;
 
-    @PostConstruct
-    @Scheduled(cron = "0 5 * * * ?")
+//    @PostConstruct
+//    @Scheduled(cron = "0 5 * * * ?")
     public void translate() {
         System.out.println("translate");
         //查询Translates表status为0的数据

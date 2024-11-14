@@ -113,14 +113,14 @@ public class ShopifyController {
 
     //计算被翻译项的总数和已翻译的个数
     @PostMapping("/shopify/getTranslationItemsInfo")
-    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ShopifyRequest request) {
+    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
         Map<String,Map<String,Integer>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
         return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
     }
 
     //先从数据库中获取在调用getItemsByShopName
     @PostMapping("/shopify/getItemsInSqlByShopName")
-    public BaseResponse<Object> getItemsInSqlByShopName(@RequestBody ShopifyRequest request) {
+    public BaseResponse<Object> getItemsInSqlByShopName(@RequestBody ResourceTypeRequest request) {
         return shopifyService.getItemsByShopName(request);
     }
 }
