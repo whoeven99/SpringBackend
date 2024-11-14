@@ -180,6 +180,7 @@ public class TranslateService {
         //将翻译状态改为已翻译： 1
         jdbcRepository.updateTranslateStatus(request.getShopName(), 1);
         jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0,0,0));
+        appInsights.trackTrace("翻译完成，字符数是：" + counter.getTotalChars());
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
