@@ -38,7 +38,7 @@ public class TranslateResourceDTO {
 //            new TranslateResourceDTO("SHOP", "250", "", ""),
 //            new TranslateResourceDTO("SHOP_POLICY", "250", "", ""),
 //            new TranslateResourceDTO("EMAIL_TEMPLATE", "250", "", ""),
-            new TranslateResourceDTO("ARTICLE", "250", "", ""),
+//            new TranslateResourceDTO("ARTICLE", "250", "", ""),
             new TranslateResourceDTO("BLOG", "250", "", "")
 //            ,
 //            new TranslateResourceDTO("PAGE", "250", "", "")
