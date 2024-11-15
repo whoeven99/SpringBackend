@@ -96,6 +96,7 @@ public class TranslateService {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            System.out.println("requestBody: " + requestBody);
             testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -206,12 +207,12 @@ public class TranslateService {
         //将翻译状态改为已翻译： 1
         jdbcRepository.updateTranslateStatus(request.getShopName(), 1);
         jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0,0,0));
-        appInsights.trackTrace("翻译完成，字符数是：" + counter.getTotalChars());
+        System.out.println("翻译完成，字符数是：" + counter.getTotalChars());
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
     public void translateJson(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO, CharacterCountUtils counter) {
-        appInsights.trackTrace("现在翻译到： " + translateResourceDTO.getResourceType());
+        System.out.println("现在翻译到： " + translateResourceDTO.getResourceType());
 
         if (objectData == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty.");
@@ -319,6 +320,7 @@ public class TranslateService {
                 //将翻译后的内容通过ShopifyAPI记录到shopify本地
 //                shopifyApiIntegration.registerTransaction(request, variables);
                 saveToShopify(new CloudInsertRequest(request.getShopName(),request.getAccessToken(),request.getApiVersion(),request.getTarget(),variables));
+                System.out.println("翻译后的内容: " + translatedValue);
             } catch (Exception e) {
                 e.printStackTrace();
             }
