@@ -202,6 +202,7 @@ public class TranslateService {
             cloudServiceRequest.setBody(query);
             String infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
             translateJson(infoByShopify, shopifyRequest, translateResource, counter);
+            appInsights.trackTrace("当前已使用了： " + counter.getTotalChars() + "个字符");
             jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0,0,0));
         }
 
