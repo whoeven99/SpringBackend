@@ -68,12 +68,9 @@ public class TranslateService {
     }
 
     //google翻译接口
-    public BaseResponse<Object> googleTranslate(TranslateRequest request) {
+    public String googleTranslate(TranslateRequest request) {
         String result = translateApiIntegration.googleTranslate(request);
-        if (result != null) {
-            return new BaseResponse<>().CreateSuccessResponse(result);
-        }
-        return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
+        return result;
     }
 
     @Async

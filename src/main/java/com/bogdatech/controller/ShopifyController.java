@@ -39,7 +39,7 @@ public class ShopifyController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
-        appInsights.trackTrace("body: " + body);
+//        appInsights.trackTrace("body: " + body);
         appInsights.trackTrace("request: " + request);
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
         return infoByShopify.toString();
