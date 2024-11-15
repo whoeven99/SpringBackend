@@ -62,6 +62,8 @@ public class TranslateService {
 
     private final TelemetryClient appInsights = new TelemetryClient();
 
+    private Thread taskThread;
+
     //百度翻译接口
     public BaseResponse<Object> baiDuTranslate(TranslateRequest request) {
         String result = translateApiIntegration.baiDuTranslate(request);
@@ -73,8 +75,7 @@ public class TranslateService {
 
     //google翻译接口
     public String googleTranslate(TranslateRequest request) {
-        String result = translateApiIntegration.googleTranslate(request);
-        return result;
+        return translateApiIntegration.googleTranslate(request);
     }
 
     //封装调用云服务器实现获取谷歌翻译数据的方法
@@ -174,66 +175,69 @@ public class TranslateService {
     }
 
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
-    @Async
+
     public void translating(TranslateRequest request) {
-        //判断用户翻译状态，如果是2，就不翻译了
-       if (jdbcRepository.readInfoByShopName(request).get(0).getStatus() == 2) {
-           throw new ClientException("Translation is in progress");
-       }
-        //将翻译状态改为翻译中： 2
-        jdbcRepository.updateTranslateStatus(request.getShopName(), 2);
-        List<TranslatesDO> translatesDOS = jdbcRepository.readInfoByShopName(request);
-        if (translatesDOS.isEmpty()) {
+        // 检查并获取用户翻译状态
+        List<TranslatesDO> userStatus = jdbcRepository.readInfoByShopName(request);
+
+        if (!userStatus.isEmpty() && userStatus.get(0).getStatus() == 2) {
+            throw new ClientException("Translation is in progress");
+        }
+
+        // 如果没有用户信息，则插入新用户信息；否则更新翻译状态为“翻译中”
+        if (userStatus.isEmpty()) {
             jdbcRepository.insertShopTranslateInfo(request);
         } else {
-            jdbcRepository.updateTranslateStatusByTranslateRequest(request);
+            jdbcRepository.updateTranslateStatus(request.getShopName(), 2);
         }
 
-        ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
+
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
-
-
+        // 转换请求对象
+        ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
+        int remainingChars = jdbcRepository.readCharsByShopName(new TranslationCounterRequest(0,request.getShopName(),0,0,0,0,0)).get(0).getChars();
         for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
-            ShopifyQuery shopifyQuery = new ShopifyQuery();
             translateResource.setTarget(request.getTarget());
-            String query = shopifyQuery.getFirstQuery(translateResource);
+            String query = new ShopifyQuery().getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
-            String infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
-            translateJson(infoByShopify, shopifyRequest, translateResource, counter);
-            appInsights.trackTrace("当前已使用了： " + counter.getTotalChars() + "个字符");
-            jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0,0,0));
+            String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
+            translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
         }
 
-        //将翻译状态改为已翻译： 1
+        System.out.println("当前已使用了： " + counter.getTotalChars() + "个字符");
+        // 更新数据库中的已使用字符数
+        jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+
+        // 将翻译状态改为“已翻译”
         jdbcRepository.updateTranslateStatus(request.getShopName(), 1);
 
-//        System.out.println("翻译完成，字符数是：" + counter.getTotalChars());
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    public void translateJson(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO, CharacterCountUtils counter) {
-        appInsights.trackTrace("现在翻译到： " + translateResourceDTO.getResourceType());
-
+    @Async
+    public void translateJson(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO, CharacterCountUtils counter, int remainingChars) {
+//        appInsights.trackTrace("现在翻译到： " + translateResourceDTO.getResourceType());
+        System.out.println("现在翻译到： " + translateResourceDTO.getResourceType());
         if (objectData == null) {
             // 返回默认值或空结果
             return;
         }
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode translatedRootNode = null;
+        JsonNode rootNode;
         try {
-            JsonNode rootNode = objectMapper.readTree(objectData);
-            translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode, request, counter);
+            rootNode = objectMapper.readTree(objectData);
+            translateSingleLineTextFieldsRecursively(rootNode, request, counter, remainingChars);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
         // 递归处理下一页数据
-        handlePagination(translatedRootNode, request, counter, translateResourceDTO);
+        handlePagination(rootNode, request, counter, translateResourceDTO, remainingChars);
     }
 
     // 递归处理下一页数据
-    private void handlePagination(JsonNode translatedRootNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResourceDTO) {
+    private void handlePagination(JsonNode translatedRootNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResourceDTO, int remainingChars) {
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
         // 获取pageInfo节点
@@ -243,42 +247,50 @@ public class TranslateService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.get("endCursor");
                 translateResourceDTO.setAfter(endCursor.asText());
-                translatedRootNode = translateNextPage(request, counter, translateResourceDTO);
+                translateNextPage(request, counter, translateResourceDTO, remainingChars);
             }
         }
     }
 
     //递归遍历JSON树：使用 translateSingleLineTextFieldsRecursively 方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
-    private JsonNode translateSingleLineTextFieldsRecursively(JsonNode node, ShopifyRequest request, CharacterCountUtils counter) {
-        if (node.isObject()) {
-            ObjectNode objectNode = (ObjectNode) node;
+    private void translateSingleLineTextFieldsRecursively(JsonNode node, ShopifyRequest request, CharacterCountUtils counter, int remainingChars) {
+//        System.out.println("当前node的类型： " + node.getNodeType());
+//        System.out.println("当前node的数据： " + node);
+// 遍历 translatableResources 节点
+        JsonNode translatableResourcesNode = node.path("translatableResources");
+        if (translatableResourcesNode.isObject()) {
             final String[] resourceId = new String[1]; // 使用单元素数组来存储 resourceId
-            node.fieldNames().forEachRemaining(fieldName -> {
-                JsonNode fieldValue = node.get(fieldName);
-                //获取resourceId的值
-                if ("resourceId".equals(fieldName)) {
 
-                    resourceId[0] = fieldValue.asText();
+            // 处理 nodes
+            JsonNode nodesNode = translatableResourcesNode.path("nodes");
+            if (nodesNode.isArray()) {
+                ArrayNode nodesArray = (ArrayNode) nodesNode;
+                for (int i = 0; i < nodesArray.size(); i++) {
+                    JsonNode nodeElement = nodesArray.get(i);
+                    if (nodeElement.isObject()) {
+                        nodeElement.fieldNames().forEachRemaining(fieldName -> {
+                            JsonNode fieldValue = nodeElement.get(fieldName);
+//                            System.out.println("nodes遍历的数据name: " + fieldName);
+//                            System.out.println("nodes遍历的数据value: " + fieldValue);
+
+                            // 获取 resourceId 的值
+                            if ("resourceId".equals(fieldName)) {
+                                resourceId[0] = fieldValue.asText();
+                            }
+
+                            // 处理 translatableContent 字段
+                            if ("translatableContent".equals(fieldName) && fieldValue.isArray()) {
+                                translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, resourceId[0], remainingChars);
+                            }
+                        });
+                    }
                 }
-                if ("translatableContent".equals(fieldName)) {
-                    ArrayNode translatedContent = translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, resourceId[0]);
-                    objectNode.set(fieldName, translatedContent);
-                } else {
-                    objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue, request, counter));
-                }
-            });
-        } else if (node.isArray()) {
-            ArrayNode arrayNode = (ArrayNode) node;
-            for (int i = 0; i < node.size(); i++) {
-                JsonNode element = node.get(i);
-                arrayNode.set(i, translateSingleLineTextFieldsRecursively(element, request, counter));
             }
         }
-        return node;
     }
 
     //对符合条件的 SINGLE_LINE_TEXT_FIELD和MULTI_LINE_TEXT_FIELD  类型的 value 进行翻译
-    private ArrayNode translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId) {
+    private void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId, int remainingChars) {
         ArrayNode translatedContent = new ObjectMapper().createArrayNode();
         //初始化存储到shopify本地的数据
         Map<String, Object> variables = new HashMap<>();
@@ -309,18 +321,20 @@ public class TranslateService {
 
             try {
                 String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
-                counter.addChars(encodedQuery.length());
+                counter.addChars(value.length());
+//                System.out.println("当前遍历的值： " + value);
+//                System.out.println("当前遍历的值： " + value.length());
                 //达到字符限制，更新用户剩余字符数，终止循环
-                updateCharsWhenExceedLimit(counter, request.getShopName());
-                String translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), encodedQuery));
-                contentItemNode.put("value", translatedValue);
-                translation.put("value", translatedValue);
-                Object[] translations = new Object[]{
-                        translation // 将HashMap添加到数组中
-                };
-                variables.put("translations", translations);
-                //将翻译后的内容通过ShopifyAPI记录到shopify本地
-                saveToShopify(new CloudInsertRequest(request.getShopName(),request.getAccessToken(),request.getApiVersion(),request.getTarget(),variables));
+                updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
+//                String translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), encodedQuery));
+//                contentItemNode.put("value", translatedValue);
+//                translation.put("value", translatedValue);
+//                Object[] translations = new Object[]{
+//                        translation // 将HashMap添加到数组中
+//                };
+//                variables.put("translations", translations);
+//                //将翻译后的内容通过ShopifyAPI记录到shopify本地
+//                saveToShopify(new CloudInsertRequest(request.getShopName(),request.getAccessToken(),request.getApiVersion(),request.getTarget(),variables));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -328,59 +342,49 @@ public class TranslateService {
             // 添加翻译后的内容到结果列表
             translatedContent.add(contentItem);
         }
-        return translatedContent;
     }
 
 
     //达到字符限制，更新用户剩余字符数，终止循环
-    public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName) {
+    public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName, int remainingChars) {
         TranslationCounterRequest request = new TranslationCounterRequest();
         request.setShopName(shopName);
-        int remainingChars = jdbcRepository.readCharsByShopName(request).get(0).getChars();
+        //TODO: 修改为从数据库中读取 可以在最开头读取一次 减少很多次请求
+
         if (counter.getTotalChars() >= remainingChars) {
             jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0,0));
-            appInsights.trackTrace("达到字符限制，终止循环.");
             throw new ClientException("翻译字符数超过限制.");
+
         }
     }
 
     //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
-        ShopifyQuery shopifyQuery = new ShopifyQuery();
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-        String query = shopifyQuery.getAfterQuery(translateResource);
+        String query = new ShopifyQuery().getAfterQuery(translateResource);
         cloudServiceRequest.setBody(query);
+
         String infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
         if (infoByShopify == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty");
         }
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode rootNode;
+
         try {
-            rootNode = objectMapper.readTree(infoByShopify);
+            return objectMapper.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to parse JSON response", e);
         }
-        return rootNode;
     }
 
     //递归处理下一页数据
-    private JsonNode translateNextPage(ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO
-            translateResource) {
+    private void translateNextPage(ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO
+            translateResource, int remainingChars) {
         JsonNode nextPageData = fetchNextPage(translateResource, request);
         // 重新开始翻译流程
-        JsonNode translatedNextPage = translateSingleLineTextFieldsRecursively(nextPageData, request, counter);
+        translateSingleLineTextFieldsRecursively(nextPageData, request, counter, remainingChars);
         // 递归处理下一页数据
-        JsonNode translatableResourcesNode = translatedNextPage.path("translatableResources");
-        if (translatableResourcesNode.hasNonNull("pageInfo")) {
-            JsonNode pageInfo = translatableResourcesNode.path("pageInfo");
-            if (pageInfo.hasNonNull("hasNextPage") && pageInfo.path("hasNextPage").asBoolean()) {
-                JsonNode newEndCursor = pageInfo.path("endCursor");
-                translateResource.setAfter(newEndCursor.asText());
-                return translateNextPage(request, counter, translateResource);
-            }
-        }
-        return translatedNextPage;
+        handlePagination(nextPageData, request, counter, translateResource, remainingChars);
     }
 
     //根据translations的情况判断是否翻译
