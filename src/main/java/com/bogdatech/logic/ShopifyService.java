@@ -86,15 +86,15 @@ public class ShopifyService {
         // 递归处理下一页数据
         handlePagination(translatedRootNode, request, counter, translateResource, translateCounter);
         //打印最后使用的值
-        System.out.println("最后使用的值： " + counter.getTotalChars());
+//        System.out.println("最后使用的值： " + counter.getTotalChars());
         appInsights.trackTrace(request + "最后使用的值： " + counter.getTotalChars());
         jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
     }
 
     //将String数据转化为JsonNode数据
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
-        appInsights.trackTrace("现在翻译到： " + translateResource.getResourceType());
-        System.out.println("现在翻译到： " + translateResource.getResourceType());
+//        appInsights.trackTrace("现在翻译到： " + translateResource.getResourceType());
+//        System.out.println("现在翻译到： " + translateResource.getResourceType());
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
         try {
@@ -138,7 +138,6 @@ public class ShopifyService {
     private void counterTranslatedContent(ArrayNode node, CharacterCountUtils counter) {
         List<String> translatedContent =  new ArrayList<>();
         for (JsonNode contentItem : node) {
-            System.out.println(2);
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             System.out.println("contentItemNode: " + contentItemNode.asText());
             // 跳过 key 为 "handle" 的项
@@ -339,7 +338,6 @@ public class ShopifyService {
         Map<String, Integer> allMap = new HashMap<>();
         Map<String, Integer> translatedMap = new HashMap<>();
 
-            System.out.println("Key: " + request.getResourceType());
             CharacterCountUtils allCounter = new CharacterCountUtils();
             CharacterCountUtils translatedCounter = new CharacterCountUtils();
             // 遍历List中的每个TranslateResourceDTO对象
@@ -354,10 +352,10 @@ public class ShopifyService {
             //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
             if (!jdbcRepository.readSingleItemInfo(shopifyRequest, request.getResourceType()).isEmpty()) {
                 int i = jdbcRepository.updateItemsByShopName(shopifyRequest, request.getResourceType(), allCounter.getTotalChars(), translatedCounter.getTotalChars());
-                System.out.println("update : " + i);
+
             } else {
                 int i = jdbcRepository.insertItems(shopifyRequest, request.getResourceType(), allCounter.getTotalChars(), translatedCounter.getTotalChars());
-                System.out.println("insert : " + i);
+
             }
             allMap.put(request.getResourceType() + "_all", allCounter.getTotalChars());
             translatedMap.put(request.getResourceType() + "_translated", translatedCounter.getTotalChars());
@@ -375,8 +373,8 @@ public class ShopifyService {
         // 递归处理下一页数据
         countHandlePagination(translatedRootNode, request, allCounter, translateResource, translatedCounter);
         //打印最后使用的值
-        System.out.println(translateResource.getResourceType() + "最后使用的值： " + allCounter.getTotalChars());
-        appInsights.trackTrace(request + "最后使用的值： " + allCounter.getTotalChars());
+//        System.out.println(translateResource.getResourceType() + "最后使用的值： " + allCounter.getTotalChars());
+//        appInsights.trackTrace(request + "最后使用的值： " + allCounter.getTotalChars());
     }
 
     //对node判断如果是对象类型就进入下一个方法，如果是数组类型就转为对象类型
@@ -499,7 +497,6 @@ public class ShopifyService {
         List<ItemsRequest> itemsRequests = jdbcRepository.readItemsInfo(shopifyRequest);
         Map<String, ItemsRequest> itemMap = itemsRequests.stream()
                 .collect(Collectors.toMap(ItemsRequest::getItemName, item -> new ItemsRequest(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
-        System.out.println("itemMap: " + itemMap);
         if (!itemsRequests.isEmpty()) {
             return new BaseResponse<>().CreateSuccessResponse(itemMap);
         } else {
