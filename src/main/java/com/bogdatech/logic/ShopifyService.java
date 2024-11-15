@@ -22,12 +22,15 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
@@ -74,7 +77,9 @@ public class ShopifyService {
             String infoByShopify = getShopifyData(cloudServiceRequest);
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter);
         }
-        appInsights.trackTrace(request + "最终使用的值： " + counter.getTotalChars());
+
+//        counter.addChars(-translateCounter.getTotalChars());
+        System.out.println("最后剩余的值： " + counter.getTotalChars());
         return counter.getTotalChars();
     }
 
@@ -86,15 +91,16 @@ public class ShopifyService {
         // 递归处理下一页数据
         handlePagination(translatedRootNode, request, counter, translateResource, translateCounter);
         //打印最后使用的值
-//        System.out.println("最后使用的值： " + counter.getTotalChars());
-        appInsights.trackTrace(request + "最后使用的值： " + counter.getTotalChars());
+
+        System.out.println("翻译后的值： " + translateCounter.getTotalChars());
+//        appInsights.trackTrace(request + "最后使用的值： " + counter.getTotalChars());
         jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
     }
 
     //将String数据转化为JsonNode数据
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
-//        appInsights.trackTrace("现在翻译到： " + translateResource.getResourceType());
-//        System.out.println("现在翻译到： " + translateResource.getResourceType());
+//        appInsights.trackTrace("现在统计到： " + translateResource.getResourceType());
+        System.out.println("现在统计到： " + translateResource.getResourceType());
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
         try {
@@ -118,16 +124,16 @@ public class ShopifyService {
 
     //对node节点进行判断，是否调用方法
     private JsonNode translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
+        AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
         objectNode.fieldNames().forEachRemaining(fieldName -> {
             JsonNode fieldValue = objectNode.get(fieldName);
 //            System.out.println("fieldName: " + fieldName);
+
             //当translates里面有数据时
             if ("translations".equals(fieldName)) {
-//                System.out.println(1);
-                counterTranslatedContent((ArrayNode)fieldValue, translateCounter);
-            }
-            if ("translatableContent".equals(fieldName)) {
-                translateSingleLineTextFields((ArrayNode) fieldValue, request, counter);
+                strings.set(counterTranslatedContent((ArrayNode) fieldValue, translateCounter));
+            }else if ("translatableContent".equals(fieldName)) {
+                translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, translateCounter, strings.get());
             } else {
                 objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue, request, counter, translateCounter));
             }
@@ -135,21 +141,17 @@ public class ShopifyService {
         return objectNode;
     }
 
-    private void counterTranslatedContent(ArrayNode node, CharacterCountUtils counter) {
-        List<String> translatedContent =  new ArrayList<>();
+    //将已翻译value的key放到list集合中
+    private List<String> counterTranslatedContent(ArrayNode node, CharacterCountUtils counter) {
+        List<String> translatedContent = new ArrayList<>();
         for (JsonNode contentItem : node) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
-            System.out.println("contentItemNode: " + contentItemNode.asText());
-            // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText())) {
-                System.out.println(("当前handle为： " + contentItemNode.get("key").asText()));
-                //TODO 剩余字符数流程需要优化一下，现在只有总数，需要判断一下，去掉已翻译的个数
-            } else {
-                translatedContent.add(contentItemNode.get("key").asText());
-            }
+            translatedContent.add(contentItemNode.get("key").asText());
         }
-        System.out.println(translatedContent);
+//        System.out.println("List内的数据为： " + translatedContent);
+        return translatedContent;
     }
+
     //如果node不为ArrayNode将其转为JsonNode
     private JsonNode translateArrayNode(ArrayNode arrayNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
         for (int i = 0; i < arrayNode.size(); i++) {
@@ -161,25 +163,28 @@ public class ShopifyService {
 
 
     //对符合条件的 value 进行计数
-    private void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter) {
+    private void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translatedCounter, List<String> translatedContent) {
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
 //            if ("handle".equals(contentItemNode.get("key").asText()) || "HTML".equals(contentItemNode.get("type").asText())) {
             if ("handle".equals(contentItemNode.get("key").asText())) {
-                appInsights.trackTrace("当前handle为： " + contentItemNode.get("key").asText());
+//                appInsights.trackTrace("当前handle为： " + contentItemNode.get("key").asText());
                 continue;  // 跳过当前项
             }
             // 获取 value
+            String encodedQuery = "";
             String value = contentItemNode.get("value").asText();
             try {
-//                String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
+                encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
                 counter.addChars(value.length());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
+            if (translatedContent.contains(contentItemNode.get("key").asText())) {
+                translatedCounter.addChars(value.length());
+            }
         }
     }
 
@@ -261,7 +266,7 @@ public class ShopifyService {
         shopifyRequest.setShopName(registerTransactionRequest.getShopName());
         shopifyRequest.setAccessToken(registerTransactionRequest.getAccessToken());
         shopifyRequest.setTarget(registerTransactionRequest.getTarget());
-        appInsights.trackTrace("value: " + registerTransactionRequest.getValue());
+//        appInsights.trackTrace("value: " + registerTransactionRequest.getValue());
         Map<String, Object> variables = getVariables(registerTransactionRequest);
         return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
     }
@@ -338,27 +343,27 @@ public class ShopifyService {
         Map<String, Integer> allMap = new HashMap<>();
         Map<String, Integer> translatedMap = new HashMap<>();
 
-            CharacterCountUtils allCounter = new CharacterCountUtils();
-            CharacterCountUtils translatedCounter = new CharacterCountUtils();
-            // 遍历List中的每个TranslateResourceDTO对象
-            for (TranslateResourceDTO resource : RESOURCE_MAP.get(request.getResourceType())) {
-                resource.setTarget(request.getTarget());
-                String query = shopifyQuery.getFirstQuery(resource);
-                cloudServiceRequest.setBody(query);
-                String infoByShopify = getShopifyData(cloudServiceRequest);
-                countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
-            }
+        CharacterCountUtils allCounter = new CharacterCountUtils();
+        CharacterCountUtils translatedCounter = new CharacterCountUtils();
+        // 遍历List中的每个TranslateResourceDTO对象
+        for (TranslateResourceDTO resource : RESOURCE_MAP.get(request.getResourceType())) {
+            resource.setTarget(request.getTarget());
+            String query = shopifyQuery.getFirstQuery(resource);
+            cloudServiceRequest.setBody(query);
+            String infoByShopify = getShopifyData(cloudServiceRequest);
+            countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
+        }
 
-            //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
-            if (!jdbcRepository.readSingleItemInfo(shopifyRequest, request.getResourceType()).isEmpty()) {
-                int i = jdbcRepository.updateItemsByShopName(shopifyRequest, request.getResourceType(), allCounter.getTotalChars(), translatedCounter.getTotalChars());
+        //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
+        if (!jdbcRepository.readSingleItemInfo(shopifyRequest, request.getResourceType()).isEmpty()) {
+            int i = jdbcRepository.updateItemsByShopName(shopifyRequest, request.getResourceType(), allCounter.getTotalChars(), translatedCounter.getTotalChars());
 
-            } else {
-                int i = jdbcRepository.insertItems(shopifyRequest, request.getResourceType(), allCounter.getTotalChars(), translatedCounter.getTotalChars());
+        } else {
+            int i = jdbcRepository.insertItems(shopifyRequest, request.getResourceType(), allCounter.getTotalChars(), translatedCounter.getTotalChars());
 
-            }
-            allMap.put(request.getResourceType() + "_all", allCounter.getTotalChars());
-            translatedMap.put(request.getResourceType() + "_translated", translatedCounter.getTotalChars());
+        }
+        allMap.put(request.getResourceType() + "_all", allCounter.getTotalChars());
+        translatedMap.put(request.getResourceType() + "_translated", translatedCounter.getTotalChars());
 
         map.put("all", allMap);
         map.put("translated", translatedMap);
