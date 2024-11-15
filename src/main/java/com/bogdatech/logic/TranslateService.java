@@ -180,12 +180,12 @@ public class TranslateService {
         //将翻译状态改为已翻译： 1
         jdbcRepository.updateTranslateStatus(request.getShopName(), 1);
         jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0,0,0));
-        System.out.println("翻译完成，字符数是：" + counter.getTotalChars());
+        appInsights.trackTrace("翻译完成，字符数是：" + counter.getTotalChars());
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
     public void translateJson(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO, CharacterCountUtils counter) {
-        System.out.println("现在翻译到： " + translateResourceDTO.getResourceType());
+        appInsights.trackTrace("现在翻译到： " + translateResourceDTO.getResourceType());
 
         if (objectData == null) {
             throw new IllegalArgumentException("Argument 'content' cannot be null or empty.");
