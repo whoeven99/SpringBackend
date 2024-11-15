@@ -7,6 +7,7 @@ import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -56,6 +57,9 @@ public class TranslateService {
     @Autowired
     private ShopifyService shopifyService;
 
+    @Autowired
+    private TestingEnvironmentIntegration testingEnvironmentIntegration;
+
     private final TelemetryClient appInsights = new TelemetryClient();
 
     //百度翻译接口
@@ -72,6 +76,21 @@ public class TranslateService {
         String result = translateApiIntegration.googleTranslate(request);
         return result;
     }
+
+    //封装调用云服务器实现获取谷歌翻译数据的方法
+    public String getGoogleTranslateData(TranslateRequest request) {
+        // 使用 ObjectMapper 将对象转换为 JSON 字符串
+        ObjectMapper objectMapper = new ObjectMapper();
+        String string;
+        try {
+            String requestBody = objectMapper.writeValueAsString(request);
+            string = testingEnvironmentIntegration.sendShopifyPost("translate/googleTranslate", requestBody);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return string;
+    }
+
 
     @Async
     public void test(TranslatesDO request) {

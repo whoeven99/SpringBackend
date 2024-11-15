@@ -117,4 +117,9 @@ public class TranslateController {
     public BaseResponse<Object> translateSingleText(@RequestBody RegisterTransactionRequest request) {
         return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
     }
+
+    @PostMapping("/test")
+    public String test(@RequestBody TranslateRequest request) {
+        return translateService.getGoogleTranslateData(request);
+    }
 }
