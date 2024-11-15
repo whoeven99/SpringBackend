@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +121,7 @@ public class ShopifyService {
         objectNode.fieldNames().forEachRemaining(fieldName -> {
             JsonNode fieldValue = objectNode.get(fieldName);
             //当translates里面有数据时
-            if ("translatableContent".equals(fieldName)) {
+            if ("translations".equals(fieldName)) {
                 counterTranslatedContent((ArrayNode)fieldValue, translateCounter);
             }
             if ("translatableContent".equals(fieldName)) {
@@ -133,6 +134,7 @@ public class ShopifyService {
     }
 
     private void counterTranslatedContent(ArrayNode node, CharacterCountUtils counter) {
+        List<String> translatedContent =  new ArrayList<>();
         for (JsonNode contentItem : node) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             System.out.println("contentItemNode: " + contentItemNode);
@@ -140,8 +142,11 @@ public class ShopifyService {
             if ("handle".equals(contentItemNode.get("key").asText())) {
                 System.out.println(("当前handle为： " + contentItemNode.get("key").asText()));
                 //TODO 剩余字符数流程需要优化一下，现在只有总数，需要判断一下，去掉已翻译的个数
+            } else {
+                translatedContent.add(contentItemNode.get("key").asText());
             }
         }
+        System.out.println(translatedContent);
     }
     //如果node不为ArrayNode将其转为JsonNode
     private JsonNode translateArrayNode(ArrayNode arrayNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
