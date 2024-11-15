@@ -46,7 +46,7 @@ public class TranslateController {
      * 调用谷歌翻译的API接口
      */
     @PostMapping("/translate/googleTranslate")
-    public BaseResponse<Object> googleTranslate(@RequestBody TranslateRequest request) {
+    public String googleTranslate(@RequestBody TranslateRequest request) {
         return translateService.googleTranslate(request);
     }
 

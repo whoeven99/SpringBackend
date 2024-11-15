@@ -120,8 +120,10 @@ public class ShopifyService {
     private JsonNode translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
         objectNode.fieldNames().forEachRemaining(fieldName -> {
             JsonNode fieldValue = objectNode.get(fieldName);
+//            System.out.println("fieldName: " + fieldName);
             //当translates里面有数据时
             if ("translations".equals(fieldName)) {
+//                System.out.println(1);
                 counterTranslatedContent((ArrayNode)fieldValue, translateCounter);
             }
             if ("translatableContent".equals(fieldName)) {
@@ -136,8 +138,9 @@ public class ShopifyService {
     private void counterTranslatedContent(ArrayNode node, CharacterCountUtils counter) {
         List<String> translatedContent =  new ArrayList<>();
         for (JsonNode contentItem : node) {
+            System.out.println(2);
             ObjectNode contentItemNode = (ObjectNode) contentItem;
-            System.out.println("contentItemNode: " + contentItemNode);
+            System.out.println("contentItemNode: " + contentItemNode.asText());
             // 跳过 key 为 "handle" 的项
             if ("handle".equals(contentItemNode.get("key").asText())) {
                 System.out.println(("当前handle为： " + contentItemNode.get("key").asText()));
