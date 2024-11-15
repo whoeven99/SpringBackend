@@ -91,6 +91,16 @@ public class TranslateService {
         return string;
     }
 
+    //封装调用云服务器实现将数据存入shopify本地的方法
+    public void saveToShopify(CloudInsertRequest cloudServiceRequest) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Async
     public void test(TranslatesDO request) {
@@ -298,7 +308,7 @@ public class TranslateService {
                 counter.addChars(encodedQuery.length());
                 //达到字符限制，更新用户剩余字符数，终止循环
                 updateCharsWhenExceedLimit(counter, request.getShopName());
-                String translatedValue = translateApiIntegration.googleTranslate(new TranslateRequest(0, null, null, source, request.getTarget(), encodedQuery));
+                String translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), encodedQuery));
                 contentItemNode.put("value", translatedValue);
 
                 translation.put("value", translatedValue);
@@ -307,7 +317,8 @@ public class TranslateService {
                 };
                 variables.put("translations", translations);
                 //将翻译后的内容通过ShopifyAPI记录到shopify本地
-                shopifyApiIntegration.registerTransaction(request, variables);
+//                shopifyApiIntegration.registerTransaction(request, variables);
+                saveToShopify(new CloudInsertRequest(request.getShopName(),request.getAccessToken(),request.getApiVersion(),request.getTarget(),variables));
             } catch (Exception e) {
                 e.printStackTrace();
             }
