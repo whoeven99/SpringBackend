@@ -1,8 +1,11 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
+import com.bogdatech.model.controller.request.CloudInsertRequest;
 import com.bogdatech.model.controller.request.RegisterTransactionRequest;
+import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.JdbcRepository;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
@@ -26,6 +30,9 @@ public class TranslateController {
 
     @Autowired
     private JdbcRepository jdbcRepository;
+
+    @Autowired
+    private ShopifyHttpIntegration shopifyApiIntegration;
 
     private TelemetryClient appInsights = new TelemetryClient();
 
@@ -117,6 +124,19 @@ public class TranslateController {
     public BaseResponse<Object> translateSingleText(@RequestBody RegisterTransactionRequest request) {
         return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
     }
+
+
+    @PostMapping("/translate/insertTranslatedText")
+    public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(cloudServiceRequest.getShopName());
+        request.setAccessToken(cloudServiceRequest.getAccessToken());
+        request.setTarget(cloudServiceRequest.getTarget());
+        Map<String, Object> body = cloudServiceRequest.getBody();
+        shopifyApiIntegration.registerTransaction(request, body);
+
+    }
+
 
     @PostMapping("/test")
     public String test(@RequestBody TranslateRequest request) {
