@@ -80,7 +80,7 @@ public class ShopifyService {
 
 //        counter.addChars(-translateCounter.getTotalChars());
         System.out.println("最后剩余的值： " + counter.getTotalChars());
-        jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+//        jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         return counter.getTotalChars();
     }
 

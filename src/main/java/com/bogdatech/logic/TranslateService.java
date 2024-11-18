@@ -351,7 +351,6 @@ public class TranslateService {
     public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName, int remainingChars) {
         TranslationCounterRequest request = new TranslationCounterRequest();
         request.setShopName(shopName);
-        //TODO: 修改为从数据库中读取 可以在最开头读取一次 减少很多次请求
 
         if (counter.getTotalChars() >= remainingChars) {
             jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0,0));
