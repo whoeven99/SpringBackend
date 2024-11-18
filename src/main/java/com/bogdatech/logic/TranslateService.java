@@ -329,7 +329,7 @@ public class TranslateService {
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
             String translatedValue = null;
             if (jsoupUtils.isHtml(value)) {
-                jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, request.getTarget(), value));
+//                jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, request.getTarget(), value));
             } else {
 //                translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), value));
                 counter.addChars(value.length());
