@@ -155,7 +155,7 @@ public class JsoupUtils {
                         if (TEMPLATE_PATTERN.matcher(part).find()) {
                             translatedBuilder.append(part);
                         } else {
-                            int partIndex = originalTexts.indexOf(part, startIndex);
+                            int partIndex = originalTexts.indexOf(part);
                             translatedBuilder.append(translatedTexts.get(partIndex - startIndex));
                         }
                     }
