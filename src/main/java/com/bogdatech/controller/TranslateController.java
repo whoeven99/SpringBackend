@@ -62,7 +62,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/baiDuTranslate")
     public BaseResponse<Object> baiDuTranslate(@RequestBody TranslateRequest request) {
-        return translateService.baiDuTranslate(request);
+        return new BaseResponse<>().CreateSuccessResponse(translateService.baiDuTranslate(request));
     }
 
     /*
@@ -140,6 +140,7 @@ public class TranslateController {
 
     @PostMapping("/test")
     public String test(@RequestBody TranslateRequest request) {
-        return translateService.getGoogleTranslateData(request);
+        return translateService.translateHtmlText(request);
     }
+
 }

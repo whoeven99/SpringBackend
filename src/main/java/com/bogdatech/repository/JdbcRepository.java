@@ -3,7 +3,7 @@ package com.bogdatech.repository;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.CamelToUnderscore;
+import com.bogdatech.utils.CamelToUnderscoreUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -56,7 +56,7 @@ public class JdbcRepository {
                     T t = clazz.getDeclaredConstructor().newInstance();
                     for (Field field : clazz.getDeclaredFields()) {
                         field.setAccessible(true);
-                        String columnName = (String) CamelToUnderscore.camelToUnderscore(field.getName());
+                        String columnName = (String) CamelToUnderscoreUtils.camelToUnderscore(field.getName());
                         Object value = resultSet.getObject(columnName);
                         field.set(t, value);
                     }
