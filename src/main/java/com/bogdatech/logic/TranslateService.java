@@ -32,9 +32,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -199,7 +198,7 @@ public class TranslateService {
         // 转换请求对象
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
-        int remainingChars = jdbcRepository.readCharsByShopName(new TranslationCounterRequest(0,request.getShopName(),0,0,0,0,0)).get(0).getChars();
+        int remainingChars = jdbcRepository.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0)).get(0).getChars();
         for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = new ShopifyQuery().getFirstQuery(translateResource);
@@ -256,44 +255,48 @@ public class TranslateService {
 
     //递归遍历JSON树：使用 translateSingleLineTextFieldsRecursively 方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
     private void translateSingleLineTextFieldsRecursively(JsonNode node, ShopifyRequest request, CharacterCountUtils counter, int remainingChars) {
-//        System.out.println("当前node的类型： " + node.getNodeType());
-//        System.out.println("当前node的数据： " + node);
-// 遍历 translatableResources 节点
+        // 获取 translatableResources 节点
         JsonNode translatableResourcesNode = node.path("translatableResources");
-        if (translatableResourcesNode.isObject()) {
-            final String[] resourceId = new String[1]; // 使用单元素数组来存储 resourceId
+        if (!translatableResourcesNode.isObject()) {
+            return;
+        }
 
-            // 处理 nodes
-            JsonNode nodesNode = translatableResourcesNode.path("nodes");
-            if (nodesNode.isArray()) {
-                ArrayNode nodesArray = (ArrayNode) nodesNode;
-                for (int i = 0; i < nodesArray.size(); i++) {
-                    JsonNode nodeElement = nodesArray.get(i);
-                    if (nodeElement.isObject()) {
-                        nodeElement.fieldNames().forEachRemaining(fieldName -> {
-                            JsonNode fieldValue = nodeElement.get(fieldName);
-//                            System.out.println("nodes遍历的数据name: " + fieldName);
-//                            System.out.println("nodes遍历的数据value: " + fieldValue);
+        // 处理 nodes 数组
+        JsonNode nodesNode = translatableResourcesNode.path("nodes");
+        if (!nodesNode.isArray()) {
+            return;
+        }
 
-                            // 获取 resourceId 的值
-                            if ("resourceId".equals(fieldName)) {
-                                resourceId[0] = fieldValue.asText();
-                            }
+        ArrayNode nodesArray = (ArrayNode) nodesNode;
+        for (JsonNode nodeElement : nodesArray) {
+            if (!nodeElement.isObject()) {
+                continue;
+            }
 
-                            // 处理 translatableContent 字段
-                            if ("translatableContent".equals(fieldName) && fieldValue.isArray()) {
-                                translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, resourceId[0], remainingChars);
-                            }
-                        });
-                    }
+            String resourceId = null;
+            ArrayNode translatableContent = null;
+
+            Iterator<Map.Entry<String, JsonNode>> fields = nodeElement.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                String fieldName = field.getKey();
+                JsonNode fieldValue = field.getValue();
+
+                if ("resourceId".equals(fieldName)) {
+                    resourceId = fieldValue.asText();
+                } else if ("translatableContent".equals(fieldName) && fieldValue.isArray()) {
+                    translatableContent = (ArrayNode) fieldValue;
                 }
+            }
+
+            if (resourceId != null && translatableContent != null) {
+                translateSingleLineTextFields(translatableContent, request, counter, resourceId, remainingChars);
             }
         }
     }
 
     //对符合条件的 SINGLE_LINE_TEXT_FIELD和MULTI_LINE_TEXT_FIELD  类型的 value 进行翻译
     private void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId, int remainingChars) {
-        ArrayNode translatedContent = new ObjectMapper().createArrayNode();
         //初始化存储到shopify本地的数据
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", resourceId);
@@ -321,28 +324,26 @@ public class TranslateService {
                 continue;  // 跳过当前项
             }
 
-            try {
-                String encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
+
+            //达到字符限制，更新用户剩余字符数，终止循环
+            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
+            String translatedValue = null;
+            if (jsoupUtils.isHtml(value)) {
+                jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, request.getTarget(), value));
+            } else {
+//                translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), value));
                 counter.addChars(value.length());
-//                System.out.println("当前遍历的值： " + value);
-//                System.out.println("当前遍历的值： " + value.length());
-                //达到字符限制，更新用户剩余字符数，终止循环
-                updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
-//                String translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), encodedQuery));
+            }
+
 //                contentItemNode.put("value", translatedValue);
-//                translation.put("value", translatedValue);
+//            translation.put("value", translatedValue);
 //                Object[] translations = new Object[]{
 //                        translation // 将HashMap添加到数组中
 //                };
 //                variables.put("translations", translations);
 //                //将翻译后的内容通过ShopifyAPI记录到shopify本地
 //                saveToShopify(new CloudInsertRequest(request.getShopName(),request.getAccessToken(),request.getApiVersion(),request.getTarget(),variables));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
-            // 添加翻译后的内容到结果列表
-            translatedContent.add(contentItem);
         }
     }
 
@@ -353,7 +354,7 @@ public class TranslateService {
         request.setShopName(shopName);
 
         if (counter.getTotalChars() >= remainingChars) {
-            jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0,0));
+            jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             throw new ClientException("翻译字符数超过限制.");
 
         }
@@ -576,8 +577,8 @@ public class TranslateService {
     //测试翻译html文本
     public String translateHtmlText(TranslateRequest request) {
         String html = "<html><body>" +
-//                "<h1>Hello, World!</h1><p>This is a test.</p>" +
-//                "<img alt=\\\"儿童化妆玩具\\\" src=\\\"https://zinnbuy2407-1327177217.cos.na-ashburn.myqcloud.com/images3_spmp/2024/01/06/eb/17045336072733e45098feb673430f91e1bbc1eebc_square.jpg\\\">" +
+                "<h1>Hello, World!</h1><p>This is a test.</p>" +
+                "<img alt=\\\"儿童化妆玩具\\\" src=\\\"https://zinnbuy2407-1327177217.cos.na-ashburn.myqcloud.com/images3_spmp/2024/01/06/eb/17045336072733e45098feb673430f91e1bbc1eebc_square.jpg\\\">" +
                 "<p>Last updated: {{ last_updated }}</p></body></html>";
         return jsoupUtils.translateHtml(html, request);
     }

@@ -22,8 +22,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -129,11 +127,12 @@ public class ShopifyService {
         objectNode.fieldNames().forEachRemaining(fieldName -> {
             JsonNode fieldValue = objectNode.get(fieldName);
 //            System.out.println("fieldName: " + fieldName);
-
+            System.out.println("进来了");
             //当translates里面有数据时
             if ("translations".equals(fieldName)) {
                 strings.set(counterTranslatedContent((ArrayNode) fieldValue, translateCounter));
-            }else if ("translatableContent".equals(fieldName)) {
+            }
+            if ("translatableContent".equals(fieldName)) {
                 translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, translateCounter, strings.get());
             } else {
                 objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue, request, counter, translateCounter));
@@ -175,14 +174,10 @@ public class ShopifyService {
                 continue;  // 跳过当前项
             }
             // 获取 value
-            String encodedQuery = "";
+
             String value = contentItemNode.get("value").asText();
-            try {
-                encodedQuery = URLEncoder.encode(value, StandardCharsets.UTF_8);
-                counter.addChars(value.length());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            counter.addChars(value.length());
+
             if (translatedContent.contains(contentItemNode.get("key").asText())) {
                 translatedCounter.addChars(value.length());
             }

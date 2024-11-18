@@ -20,6 +20,7 @@ public class UserController {
         userService.getUser();
     }
 
+    // 添加用户
     @PostMapping("/user/add")
     public BaseResponse<Object> addUser(@RequestBody UserRequest userRequest) {
         return userService.addUser(userRequest);
