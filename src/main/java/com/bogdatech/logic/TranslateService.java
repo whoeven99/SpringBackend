@@ -14,7 +14,8 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.query.ShopifyQuery;
 import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.StringUtil;
+import com.bogdatech.utils.JsoupUtils;
+import com.bogdatech.utils.StringUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -62,15 +63,16 @@ public class TranslateService {
 
     private final TelemetryClient appInsights = new TelemetryClient();
 
-    private Thread taskThread;
+    @Autowired
+    private JsoupUtils jsoupUtils;
 
     //百度翻译接口
-    public BaseResponse<Object> baiDuTranslate(TranslateRequest request) {
+    public String baiDuTranslate(TranslateRequest request) {
         String result = translateApiIntegration.baiDuTranslate(request);
         if (result != null) {
-            return new BaseResponse<>().CreateSuccessResponse(result);
+            return result;
         }
-        return new BaseResponse<>().CreateErrorResponse(TRANSLATE_ERROR);
+        return TRANSLATE_ERROR.getErrMsg();
     }
 
     //google翻译接口
@@ -144,7 +146,7 @@ public class TranslateService {
 
             for (Object valueObj : values) {
                 String value = (String) valueObj;
-                value = StringUtil.replaceSpaces(value, "-");
+                value = StringUtils.replaceSpaces(value, "-");
                 try {
                     // 调用翻译接口
                     String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, "en", "zh", value));
@@ -519,12 +521,12 @@ public class TranslateService {
             List<TranslateTextRequest> translateText = jdbcRepository.getTranslateText(request);
             if (translateText.isEmpty()) {
                 // 插入数据
-//                jdbcRepository.insertTranslateText(request);
-                System.out.println("插入数据 ： " + translateText);
+                jdbcRepository.insertTranslateText(request);
+//                System.out.println("插入数据 ： " + translateText);
             } else {
                 // 更新数据
-//                jdbcRepository.updateTranslateText(request);
-                System.out.println("更新数据 ： " + translateText);
+                jdbcRepository.updateTranslateText(request);
+//                System.out.println("更新数据 ： " + translateText);
             }
         }
     }
@@ -571,5 +573,14 @@ public class TranslateService {
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(translateRequest);
         return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
     }
+
+    //测试翻译html文本
+    public String translateHtmlText(TranslateRequest request) {
+        String html = "<html><body><h1>Hello, World!</h1><p>This is a test.</p>" +
+                "<img alt=\\\"儿童化妆玩具\\\" src=\\\"https://zinnbuy2407-1327177217.cos.na-ashburn.myqcloud.com/images3_spmp/2024/01/06/eb/17045336072733e45098feb673430f91e1bbc1eebc_square.jpg\\\">" +
+                "<p>Last updated: {{ last_updated }}</p></body></html>";
+        return jsoupUtils.translateHtml(html, request);
+    }
+
 }
 

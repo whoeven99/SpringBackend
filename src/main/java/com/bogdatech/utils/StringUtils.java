@@ -1,6 +1,6 @@
 package com.bogdatech.utils;
 
-public class StringUtil {
+public class StringUtils {
     /**
      * 将字符串中的空格替换为指定字符。
      *
