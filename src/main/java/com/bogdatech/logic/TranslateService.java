@@ -575,8 +575,9 @@ public class TranslateService {
 
     //测试翻译html文本
     public String translateHtmlText(TranslateRequest request) {
-        String html = "<html><body><h1>Hello, World!</h1><p>This is a test.</p>" +
-                "<img alt=\\\"儿童化妆玩具\\\" src=\\\"https://zinnbuy2407-1327177217.cos.na-ashburn.myqcloud.com/images3_spmp/2024/01/06/eb/17045336072733e45098feb673430f91e1bbc1eebc_square.jpg\\\">" +
+        String html = "<html><body>" +
+//                "<h1>Hello, World!</h1><p>This is a test.</p>" +
+//                "<img alt=\\\"儿童化妆玩具\\\" src=\\\"https://zinnbuy2407-1327177217.cos.na-ashburn.myqcloud.com/images3_spmp/2024/01/06/eb/17045336072733e45098feb673430f91e1bbc1eebc_square.jpg\\\">" +
                 "<p>Last updated: {{ last_updated }}</p></body></html>";
         return jsoupUtils.translateHtml(html, request);
     }
