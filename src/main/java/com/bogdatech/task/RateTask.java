@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 
 @Component
 @EnableScheduling
@@ -18,9 +17,6 @@ import java.util.LinkedHashMap;
 public class RateTask {
     @Autowired
     private RateHttpIntegration rateHttpIntegration;
-
-    private static String scur = "USD";
-    private static String tcur = "CNY";
 
     // 使用线程安全的ConcurrentHashMap
     @Autowired
@@ -33,9 +29,10 @@ public class RateTask {
     public void getRateEveryHour()  {
         System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
         try {
-            LinkedHashMap<String, Object> rates = rateHttpIntegration.getBasicRate(scur, tcur);
+            //TODO 重新实现一下自动汇率查询
+//            LinkedHashMap<String, Object> rates = rateHttpIntegration.getFixerRate();
 //            System.out.println("Get rate success: " + rates);
-            rateDataService.updateValue("data", rates);
+//            rateDataService.updateValue("data", rates);
         } catch (Exception e) { // TODO 这里的exception要去掉的，在integration里面做exception管理就好
             throw new ClientException("获取汇率失败");
         }

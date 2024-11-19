@@ -62,6 +62,7 @@ public class TranslateService {
 
     private final TelemetryClient appInsights = new TelemetryClient();
 
+    private static Map<String, String> SINGLE_LINE_TEXT = new HashMap<String, String>();
     @Autowired
     private JsoupUtils jsoupUtils;
 
@@ -305,11 +306,14 @@ public class TranslateService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
 
-            // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText())) {
+//             跳过 key 为 "handle" 的项
+            if ("handle".equals(contentItemNode.get("key").asText())
+            || "JSON".equals(contentItemNode.get("type").asText())
+            || "JSON_STRING".equals(contentItemNode.get("type").asText())
+            ) {
                 continue;  // 跳过当前项
             }
-//            System.out.println(("当前遍历的值： " + contentItemNode));
+
             // 准备翻译信息
             translation.put("locale", request.getTarget());
             translation.put("key", contentItemNode.get("key").asText());
@@ -324,16 +328,42 @@ public class TranslateService {
                 continue;  // 跳过当前项
             }
 
+            //处理SINGLE_LINE_TEXT_FIELD的情况
+            if("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
+                String string = translateSingleLine(value);
+                if (string != null) {
+                    translation.put("value", string);
+                }else {
+                    counter.addChars(value.length());
+                    System.out.println("要翻译的数据:" + value);
+                    SINGLE_LINE_TEXT.put(value,"1");
+//                    String target = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), value));
+//                    translation.put("value", target);
+                }
+            }
+            //处理type为HTML的情况
+//            if ("HTML".equals(contentItemNode.get("type").asText())) {
+//                //达到字符限制，更新用户剩余字符数，终止循环
+//                updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
+//                String translatedValue = null;
+//                if (jsoupUtils.isHtml(value)) {
+//                    jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, request.getTarget(), value),counter);
+//                } else {
+////                translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), value));
+//                    counter.addChars(value.length());
+//                }
+//            }
+
 
             //达到字符限制，更新用户剩余字符数，终止循环
-            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
-            String translatedValue = null;
-            if (jsoupUtils.isHtml(value)) {
-//                jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, request.getTarget(), value));
-            } else {
-//                translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), value));
-                counter.addChars(value.length());
-            }
+//            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
+//            String translatedValue = null;
+//            if (jsoupUtils.isHtml(value)) {
+//                jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, request.getTarget(), value),counter);
+//            } else {
+////                translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), value));
+//                counter.addChars(value.length());
+//            }
 
 //                contentItemNode.put("value", translatedValue);
 //            translation.put("value", translatedValue);
@@ -519,7 +549,17 @@ public class TranslateService {
             request.setTextType(data.get("textType").toString());
             // 检查是否存在有digest的数据
             List<TranslateTextRequest> translateText = jdbcRepository.getTranslateText(request);
+
+//            //将获取的数据存入SINGLE_LINE_TEXT map中
+//            if (!SINGLE_LINE_TEXT.containsKey(request.getSourceText())){
+////                System.out.println("sourceText: " + request.getSourceText());
+//                SINGLE_LINE_TEXT.put(request.getSourceText(), request.getTargetText());
+//            }
+
+            //TODO 可以考虑一下，一次插入多条数据
+            //将获取的数据存入数据库中
             if (translateText.isEmpty()) {
+                System.out.println("text: " + request.getTargetText());
                 // 插入数据
                 jdbcRepository.insertTranslateText(request);
 //                System.out.println("插入数据 ： " + translateText);
@@ -562,6 +602,7 @@ public class TranslateService {
             String string = shopifyService.getShopifyData(cloudServiceRequest);
             saveTranslatedData(string, shopifyRequest, translateResource);
         }
+        System.out.println("内存存储成功");
     }
 
     //翻译单个文本数据
@@ -574,14 +615,25 @@ public class TranslateService {
         return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
     }
 
-    //测试翻译html文本
+    //测试翻译html文本(待删)
     public String translateHtmlText(TranslateRequest request) {
         String html = "<html><body>" +
                 "<h1>Hello, World!</h1><p>This is a test.</p>" +
                 "<img alt=\\\"儿童化妆玩具\\\" src=\\\"https://zinnbuy2407-1327177217.cos.na-ashburn.myqcloud.com/images3_spmp/2024/01/06/eb/17045336072733e45098feb673430f91e1bbc1eebc_square.jpg\\\">" +
                 "<p>Last updated: {{ last_updated }}</p></body></html>";
-        return jsoupUtils.translateHtml(html, request);
+        return jsoupUtils.translateHtml(html, request, null);
     }
+
+
+    //将数据存入本地Map中
+    //优化策略1： 利用翻译后的数据，对singleLine的数据全局匹配并翻译
+    public String translateSingleLine(String sourceText) {
+        if (SINGLE_LINE_TEXT.containsKey(sourceText)) {
+            return SINGLE_LINE_TEXT.get(sourceText);
+        }
+        return null;
+    }
+
 
 }
 

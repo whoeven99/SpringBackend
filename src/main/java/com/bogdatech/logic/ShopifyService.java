@@ -74,6 +74,7 @@ public class ShopifyService {
             cloudServiceRequest.setBody(query);
             String infoByShopify = getShopifyData(cloudServiceRequest);
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter);
+            System.out.println("目前total的总数是： " + counter.getTotalChars());
         }
 
         counter.addChars(-translateCounter.getTotalChars());
@@ -90,9 +91,6 @@ public class ShopifyService {
         // 递归处理下一页数据
         handlePagination(translatedRootNode, request, counter, translateResource, translateCounter);
         //打印最后使用的值
-
-        System.out.println("翻译后的值： " + translateCounter.getTotalChars());
-//        appInsights.trackTrace(request + "最后使用的值： " + counter.getTotalChars());
 
     }
 
@@ -127,7 +125,7 @@ public class ShopifyService {
         objectNode.fieldNames().forEachRemaining(fieldName -> {
             JsonNode fieldValue = objectNode.get(fieldName);
 //            System.out.println("fieldName: " + fieldName);
-            System.out.println("进来了");
+//            System.out.println("进来了");
             //当translates里面有数据时
             if ("translations".equals(fieldName)) {
                 strings.set(counterTranslatedContent((ArrayNode) fieldValue, translateCounter));
@@ -169,18 +167,25 @@ public class ShopifyService {
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
 //            if ("handle".equals(contentItemNode.get("key").asText()) || "HTML".equals(contentItemNode.get("type").asText())) {
-            if ("handle".equals(contentItemNode.get("key").asText())) {
-//                appInsights.trackTrace("当前handle为： " + contentItemNode.get("key").asText());
-                continue;  // 跳过当前项
-            }
+//            if ("handle".equals(contentItemNode.get("key").asText())
+//                    || "JSON".equals(contentItemNode.get("type").asText())
+//                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
+//            ) {
+//                continue;  // 跳过当前项
+//            }
             // 获取 value
-
+//            String value = contentItemNode.get("value").asText();
+//            counter.addChars(value.length());
+//
+//            if (translatedContent.contains(contentItemNode.get("key").asText())) {
+//                translatedCounter.addChars(value.length());
+//            }
+//            //测试各种类型数据字符
+            if ("handle".equals(contentItemNode.get("key").asText())) {
+               continue;
+            }
             String value = contentItemNode.get("value").asText();
             counter.addChars(value.length());
-
-            if (translatedContent.contains(contentItemNode.get("key").asText())) {
-                translatedCounter.addChars(value.length());
-            }
         }
     }
 

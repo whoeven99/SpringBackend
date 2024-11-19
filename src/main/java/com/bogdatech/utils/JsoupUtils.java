@@ -20,7 +20,7 @@ public class JsoupUtils {
 
 //    private static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{\\{.*?\\}\\}");
 
-    public String translateHtml(String html, TranslateRequest request) {
+    public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter) {
         Document doc = Jsoup.parse(html);
         List<String> textsToTranslate = new ArrayList<>();
 
@@ -29,7 +29,7 @@ public class JsoupUtils {
         for (Element element : elements) {
             if (!element.is("script, style")) { // Ignore script and style tags
                 String text = element.ownText();
-                System.out.println("text1: " + text);
+//                System.out.println("text1: " + text);
                 if (!text.trim().isEmpty()) {
                     textsToTranslate.add(text);
                 }
@@ -42,26 +42,26 @@ public class JsoupUtils {
         // Translate texts
         List<String> translatedTexts = new ArrayList<>();
         for (String text : textsToTranslate) {
-            System.out.println("text2: " + text);
             request.setContent(text);
+            counter.addChars(text.length());
             //google翻译的接口
 //            String translatedValue = translateApiIntegration.googleTranslate(request);
-            String translatedValue = translateApiIntegration.baiDuTranslate(request);
-            translatedTexts.add(translatedValue);
+//            String translatedValue = translateApiIntegration.baiDuTranslate(request);
+//            translatedTexts.add(translatedValue);
         }
 
         // Replace original texts with translated ones
         int index = 0;
-        for (Element element : elements) {
-            if (!element.is("script, style")) {
-                if (!element.ownText().trim().isEmpty()) {
-                    element.text(translatedTexts.get(index++));
-                }
-                if (element.hasAttr("alt")) {
-                    element.attr("alt", translatedTexts.get(index++));
-                }
-            }
-        }
+//        for (Element element : elements) {
+//            if (!element.is("script, style")) {
+//                if (!element.ownText().trim().isEmpty()) {
+//                    element.text(translatedTexts.get(index++));
+//                }
+//                if (element.hasAttr("alt")) {
+//                    element.attr("alt", translatedTexts.get(index++));
+//                }
+//            }
+//        }
 
         return doc.html();
     }
