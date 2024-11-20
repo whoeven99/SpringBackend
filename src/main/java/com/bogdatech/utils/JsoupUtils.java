@@ -29,7 +29,6 @@ public class JsoupUtils {
         for (Element element : elements) {
             if (!element.is("script, style")) { // Ignore script and style tags
                 String text = element.ownText();
-//                System.out.println("text1: " + text);
                 if (!text.trim().isEmpty()) {
                     textsToTranslate.add(text);
                 }
@@ -52,16 +51,16 @@ public class JsoupUtils {
 
         // Replace original texts with translated ones
         int index = 0;
-//        for (Element element : elements) {
-//            if (!element.is("script, style")) {
-//                if (!element.ownText().trim().isEmpty()) {
-//                    element.text(translatedTexts.get(index++));
-//                }
-//                if (element.hasAttr("alt")) {
-//                    element.attr("alt", translatedTexts.get(index++));
-//                }
-//            }
-//        }
+        for (Element element : elements) {
+            if (!element.is("script, style")) {
+                if (!element.ownText().trim().isEmpty()) {
+                    element.text(translatedTexts.get(index++));
+                }
+                if (element.hasAttr("alt")) {
+                    element.attr("alt", translatedTexts.get(index++));
+                }
+            }
+        }
 
         return doc.html();
     }

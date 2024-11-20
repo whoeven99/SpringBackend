@@ -31,7 +31,12 @@ public class RateController {
     }
 
     @PostMapping("/getRateValue")
-    public BaseResponse<Object> getRateValue(){
+    public BaseResponse<Object> getRateValue() {
         return new BaseResponse<>().CreateSuccessResponse(rateDataService.getData());
+    }
+
+    @GetMapping("/rate/getRateRule")
+    public BaseResponse<Object> getRateRule() {
+        return new BaseResponse<>().CreateSuccessResponse(rateDataService.getRateRule());
     }
 }

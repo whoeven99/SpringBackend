@@ -13,6 +13,18 @@ public class RateDataService {
 
     private final Map<String, LinkedHashMap<String, Object>> value = new ConcurrentHashMap<>();
 
+    private static final Map<String, Object> rateRule = new ConcurrentHashMap<>();
+
+    static {
+        rateRule.put("No decimal", "直接将小数点抹去，例如13.76变为13");
+        rateRule.put("1.00", "四舍五入，例如12.34变为12.00；13.76变为14.00");
+        rateRule.put("0.99", "小数部分直接变为0.99，例如12.34变为12.99；13.76变为13.99");
+        rateRule.put("0.95", "小数部分直接变为0.95，例如12.34变为12.95；13.76变为13.95");
+        rateRule.put("0.75", "小数部分直接变为0.75，例如12.34变为12.75；13.76变为13.75");
+        rateRule.put("0.50", "小数部分直接变为0.50，例如12.34变为12.50；13.76变为13.50");
+        rateRule.put("0.25", "小数部分直接变为0.25，例如12.34变为12.25；13.76变为13.25");
+    }
+
     public void updateValue(String key, LinkedHashMap<String, Object> data) {
         synchronized (value) {
             value.clear(); // 清空旧数据
@@ -29,7 +41,10 @@ public class RateDataService {
     public double getRateByRateMap(String from, String to) {
         Double fromRate = RateHttpIntegration.rateMap.get(from);
         Double toRate = RateHttpIntegration.rateMap.get(to);
-        Double result = toRate / fromRate;
-        return result;
+        return toRate / fromRate;
+    }
+
+    public Object getRateRule() {
+        return rateRule;
     }
 }
