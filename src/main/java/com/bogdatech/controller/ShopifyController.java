@@ -105,7 +105,7 @@ public class ShopifyController {
     //根据前端传来的值，返回对应的图片信息
     @PostMapping("/shopify/getImageInfo")
     public BaseResponse<Object> getImageInfo(@RequestBody String[] strings) {
-        Map<String, String[]> imageInfo = shopifyService.getImageInfo(strings);
+        Map<String, Object> imageInfo = shopifyService.getImageInfo(strings);
         return new BaseResponse<>().CreateSuccessResponse(imageInfo);
     }
 
