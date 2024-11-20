@@ -167,25 +167,25 @@ public class ShopifyService {
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
 //            if ("handle".equals(contentItemNode.get("key").asText()) || "HTML".equals(contentItemNode.get("type").asText())) {
-//            if ("handle".equals(contentItemNode.get("key").asText())
-//                    || "JSON".equals(contentItemNode.get("type").asText())
-//                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
-//            ) {
-//                continue;  // 跳过当前项
-//            }
-            // 获取 value
-//            String value = contentItemNode.get("value").asText();
-//            counter.addChars(value.length());
-//
-//            if (translatedContent.contains(contentItemNode.get("key").asText())) {
-//                translatedCounter.addChars(value.length());
-//            }
-//            //测试各种类型数据字符
-            if ("handle".equals(contentItemNode.get("key").asText())) {
-               continue;
+            if ("handle".equals(contentItemNode.get("key").asText())
+                    || "JSON".equals(contentItemNode.get("type").asText())
+                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
+            ) {
+                continue;  // 跳过当前项
             }
+//             获取 value
             String value = contentItemNode.get("value").asText();
             counter.addChars(value.length());
+
+            if (translatedContent.contains(contentItemNode.get("key").asText())) {
+                translatedCounter.addChars(value.length());
+            }
+////            //测试各种类型数据字符
+//            if ("handle".equals(contentItemNode.get("key").asText())) {
+//               continue;
+//            }
+//            String value = contentItemNode.get("value").asText();
+//            counter.addChars(value.length());
         }
     }
 
