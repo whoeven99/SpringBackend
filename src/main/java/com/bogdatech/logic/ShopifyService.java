@@ -323,12 +323,12 @@ public class ShopifyService {
     }
 
     //根据前端传来的值，返回对应的图片信息
-    public Map<String, String[]> getImageInfo(String[] strings) {
-        Map<String, String[]> imageInfo = new HashMap<>();
+    public Map<String, Object> getImageInfo(String[] strings) {
+        Map<String, Object> imageInfo = new HashMap<>();
         for (String string : strings) {
             try {
                 Field field = LanguageFlagConfig.class.getField(string.toUpperCase());
-                imageInfo.put(string, (String[]) field.get(null));
+                imageInfo.put(string,  field.get(null));
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
