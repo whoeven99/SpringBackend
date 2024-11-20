@@ -15,7 +15,8 @@ public class TranslateResourceDTO {
 //            new TranslateResourceDTO("PRODUCT", "250", "", "")
 //            ,
 //            new TranslateResourceDTO("PRODUCT_OPTION", "250", "", ""),
-//            new TranslateResourceDTO("PRODUCT_OPTION_VALUE", "250", "", ""),
+//            new TranslateResourceDTO("PRODUCT_OPTION_VALUE", "250", "", "")
+//            ,
 //            new TranslateResourceDTO("COLLECTION", "250", "", ""),
             new TranslateResourceDTO("ONLINE_STORE_THEME", "250", "", "")
 //            ,

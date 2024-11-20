@@ -48,7 +48,7 @@ public class TranslateApiIntegration {
     public String baiDuTranslate(TranslateRequest request) {
         //创建URL
         String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
-        System.out.println("encodedQuery: " + encodedQuery);
+//        System.out.println("encodedQuery: " + encodedQuery);
         Random random = new Random();
         String salt = String.valueOf(random.nextInt(10000));
         String sign = DigestUtils.md5DigestAsHex((apiUrl + request.getContent() + salt + secret).getBytes());
@@ -76,8 +76,9 @@ public class TranslateApiIntegration {
     }
 
     public String googleTranslate(TranslateRequest request) {
+        String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
         String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
-                "&q=" + request.getContent() +
+                "&q=" + encodedQuery +
                 "&source=" + request.getSource() +
                 "&target=" + request.getTarget();
         String result = null;

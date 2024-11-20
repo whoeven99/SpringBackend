@@ -9,6 +9,7 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.JdbcRepository;
+import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +37,8 @@ public class TranslateController {
 
     private TelemetryClient appInsights = new TelemetryClient();
 
-
+    @Autowired
+    private JsoupUtils jsoupUtils;
     /*
      * 插入shop信息
      */
@@ -139,8 +141,9 @@ public class TranslateController {
 
 
     @PostMapping("/test")
-    public String test(@RequestBody TranslateRequest request) {
-        return translateService.translateHtmlText(request);
+    public boolean test(@RequestBody TranslateRequest request) {
+       return jsoupUtils.isHtml(request.getContent());
+//        return translateService.translateHtmlText(request);
     }
 
 }

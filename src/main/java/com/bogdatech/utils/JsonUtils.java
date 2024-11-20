@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.bogdatech.enums.ErrorEnum.JSON_PARSE_ERROR;
 
-public class JsonUtil {
+public class JsonUtils {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // 将对象转换为JSON字符串
