@@ -29,9 +29,9 @@ public class TranslateTask {
         List<TranslatesDO> list = jdbcRepository.readTranslateInfo(0);
         //遍历list，调用translateService.translate()方法
         for (TranslatesDO request : list) {
-            System.out.println("request: " + request);
             //调用翻译
             System.out.println("正在进行翻译");
+            //翻译功能目前注释中
             translateService.test(request);
             //修改status状态
             int i = jdbcRepository.updateTranslateStatus(request.getShopName(), 2);

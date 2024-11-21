@@ -246,4 +246,9 @@ public class JdbcRepository {
         Object[] info = {request.getShopName(), request.getTarget()};
         return readInfo(info, sql, String.class).get(0);
     }
+
+    public List<String> readShopNameInUser() {
+        String sql = "SELECT shop_name FROM Users";
+        return readInfo(null, sql, String.class);
+    }
 }
