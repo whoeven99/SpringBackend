@@ -341,7 +341,6 @@ public class ShopifyService {
         ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
 
-
         // 遍历List中的每个TranslateResourceDTO对象
         for (Map.Entry<String, List<TranslateResourceDTO>> resourceList : RESOURCE_MAP.entrySet()) {
             CharacterCountUtils allCounter = new CharacterCountUtils();
@@ -357,23 +356,15 @@ public class ShopifyService {
             }
             //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
             if (!jdbcRepository.readSingleItemInfo(shopifyRequest, resourceType).isEmpty()) {
-                int i = jdbcRepository.updateItemsByShopName(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+                jdbcRepository.updateItemsByShopName(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
 
             } else {
-                int i = jdbcRepository.insertItems(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+                jdbcRepository.insertItems(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
 
             }
-
         }
-
-
     }
 
-    //从数据库中直接获取项数
-    public List<ItemsRequest> getItemsFromDatabase(ResourceTypeRequest request) {
-        ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
-        return jdbcRepository.readSingleItemInfo(shopifyRequest, request.getResourceType());
-    }
 
     //计数当前项所总共的项数和已翻译的项数
     @Async
@@ -382,9 +373,6 @@ public class ShopifyService {
         JsonNode translatedRootNode = convertArrayNodeToJsonNode(rootNode, request, allCounter, translatedCounter, translateResource);
         // 递归处理下一页数据
         countHandlePagination(translatedRootNode, request, allCounter, translateResource, translatedCounter);
-        //打印最后使用的值
-//        System.out.println(translateResource.getResourceType() + "最后使用的值： " + allCounter.getTotalChars());
-//        appInsights.trackTrace(request + "最后使用的值： " + allCounter.getTotalChars());
     }
 
     //对node判断如果是对象类型就进入下一个方法，如果是数组类型就转为对象类型

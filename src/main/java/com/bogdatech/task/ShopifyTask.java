@@ -17,14 +17,5 @@ public class ShopifyTask {
     @Autowired
     private JdbcRepository jdbcRepository;
 
-    //定时获取item项数
-//    @PostConstruct
-//    @Scheduled(cron = "0 5 * * * ?")
-    public void getItemCount() {
-//        List<String> strings = jdbcRepository.readShopNameInUser();
-//        for (String shopName : strings) {
-////            getTranslationItemsInfo
-//        }
-//        getTranslationItemsInfo
-    }
+
 }

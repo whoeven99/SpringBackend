@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.logic.TranslateService.addData;
+
 @Component
 public class JsoupUtils {
 
@@ -20,7 +23,7 @@ public class JsoupUtils {
 
 //    private static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{\\{.*?\\}\\}");
 
-    public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter) {
+    public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String target) {
         Document doc = Jsoup.parse(html);
         List<String> textsToTranslate = new ArrayList<>();
 
@@ -41,26 +44,34 @@ public class JsoupUtils {
         // Translate texts
         List<String> translatedTexts = new ArrayList<>();
         for (String text : textsToTranslate) {
-            request.setContent(text);
-            counter.addChars(text.length());
-            //google翻译的接口
+            String translated = translateSingleLine(text, request.getTarget());
+            if (translated != null) {
+                System.out.println("用了缓存的数据html： " + translated);
+                //                translatedTexts.add(translated);
+            } else {
+                request.setContent(text);
+                counter.addChars(text.length());
+
+                //google翻译的接口
 //            String translatedValue = translateApiIntegration.googleTranslate(request);
 //            String translatedValue = translateApiIntegration.baiDuTranslate(request);
+                addData(target, text, text);
 //            translatedTexts.add(translatedValue);
+            }
         }
 
         // Replace original texts with translated ones
-        int index = 0;
-        for (Element element : elements) {
-            if (!element.is("script, style")) {
-                if (!element.ownText().trim().isEmpty()) {
-                    element.text(translatedTexts.get(index++));
-                }
-                if (element.hasAttr("alt")) {
-                    element.attr("alt", translatedTexts.get(index++));
-                }
-            }
-        }
+//        int index = 0;
+//        for (Element element : elements) {
+//            if (!element.is("script, style")) {
+//                if (!element.ownText().trim().isEmpty()) {
+//                    element.text(translatedTexts.get(index++));
+//                }
+//                if (element.hasAttr("alt")) {
+//                    element.attr("alt", translatedTexts.get(index++));
+//                }
+//            }
+//        }
 
         return doc.html();
     }
@@ -69,5 +80,12 @@ public class JsoupUtils {
     public boolean isHtml(String content) {
         Document doc = Jsoup.parse(content);
         return !doc.body().text().equals(content);
+    }
+
+    public String translateSingleLine(String sourceText, String target) {
+        if (SINGLE_LINE_TEXT.get(target) != null) {
+            return SINGLE_LINE_TEXT.get(target).get(sourceText);
+        }
+        return null;
     }
 }

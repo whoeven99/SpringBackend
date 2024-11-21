@@ -47,11 +47,16 @@ public class TranslateController {
      */
     @PostMapping("/translate/insertShopTranslateInfo")
     public BaseResponse<Object> insertShopTranslateInfo(@RequestBody TranslateRequest request) {
-        int result = jdbcRepository.insertShopTranslateInfo(request);
-        if (result > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(result);
+        List<String> status = (jdbcRepository.readStatus(request));
+        if (!status.isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse("Language is exist");
+        } else {
+            int result = jdbcRepository.insertShopTranslateInfo(request, 0);
+            if (result > 0) {
+                return new BaseResponse<>().CreateSuccessResponse("Created language");
+            }
+            return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 
     /*
@@ -110,7 +115,7 @@ public class TranslateController {
         //翻译
         translateService.translating(request);
         //返回一个status值
-        int i = Integer.parseInt(jdbcRepository.readStatus(request));
+        int i = Integer.parseInt(jdbcRepository.readStatus(request).get(0));
 //        //存数据库
 //        translateService.saveTranslateText(request);
         return 1;
