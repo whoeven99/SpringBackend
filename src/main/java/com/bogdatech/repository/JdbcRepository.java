@@ -69,9 +69,9 @@ public class JdbcRepository {
         }
     }
 
-    public int insertShopTranslateInfo(TranslateRequest request) {
+    public int insertShopTranslateInfo(TranslateRequest request, int status) {
         String sql = "INSERT INTO Translates (shop_name, access_token, source, target, status) VALUES (?, ?, ?, ?, ?)";//TODO token应该加密存入sql
-        Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget(), 2};
+        Object[] info = {request.getShopName(), request.getAccessToken(), request.getSource(), request.getTarget(), status};
         return CUDInfo(info, sql);
     }
 
@@ -81,9 +81,9 @@ public class JdbcRepository {
         return readInfo(info, sql, TranslatesDO.class);
     }
 
-    public int updateTranslateStatus(String shopName, int status) {
-        String sql = "UPDATE Translates SET status = ? WHERE shop_name = ?";
-        Object[] info = {status, shopName};
+    public int updateTranslateStatus(String shopName, int status, String target) {
+        String sql = "UPDATE Translates SET status = ? WHERE shop_name = ? and target = ?";
+        Object[] info = {status, shopName, target};
         return CUDInfo(info, sql);
     }
 
@@ -107,7 +107,7 @@ public class JdbcRepository {
 
     public int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest) {
         String sql = "UPDATE TranslationCounter " +
-                "SET used_chars = used_chars + ?" +
+                "SET used_chars =  ?" +
                 "WHERE shop_name = ?";
         Object[] info = {translationCounterRequest.getUsedChars(), translationCounterRequest.getShopName()};
         return CUDInfo(info, sql);
@@ -241,14 +241,17 @@ public class JdbcRepository {
         return readInfo(info, sql, ItemsRequest.class);
     }
 
-    public String readStatus(TranslateRequest request) {
+    public List<String> readStatus(TranslateRequest request) {
         String sql = "SELECT status FROM Translates WHERE shop_name = ? and target = ?";
         Object[] info = {request.getShopName(), request.getTarget()};
+        return readInfo(info, sql, String.class);
+    }
+
+    public String readTargetTextByDigest(String digest) {
+        String sql = "SELECT target_text FROM TranslateTextTable WHERE digest = ?";
+        Object[] info = {digest};
         return readInfo(info, sql, String.class).get(0);
     }
 
-    public List<String> readShopNameInUser() {
-        String sql = "SELECT shop_name FROM Users";
-        return readInfo(null, sql, String.class);
-    }
+
 }

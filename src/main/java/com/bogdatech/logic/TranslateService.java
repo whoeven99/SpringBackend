@@ -62,7 +62,7 @@ public class TranslateService {
 
     private final TelemetryClient appInsights = new TelemetryClient();
 
-    private static Map<String, String> SINGLE_LINE_TEXT = new HashMap<String, String>();
+    public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
     @Autowired
     private JsoupUtils jsoupUtils;
 
@@ -117,7 +117,7 @@ public class TranslateService {
         }
         appInsights.trackTrace("翻译完成" + Thread.currentThread().getName());
         //更新状态
-        jdbcRepository.updateTranslateStatus(request.getShopName(), 0);
+        jdbcRepository.updateTranslateStatus(request.getShopName(), 1, request.getTarget());
     }
 
     //写死的json
@@ -181,39 +181,41 @@ public class TranslateService {
     public void translating(TranslateRequest request) {
         // 检查并获取用户翻译状态
         List<TranslatesDO> userStatus = jdbcRepository.readInfoByShopName(request);
-
-        if (!userStatus.isEmpty() && userStatus.get(0).getStatus() == 2) {
-            throw new ClientException("Translation is in progress");
+        // 如果用户状态状态为2，则抛出异常
+        for (TranslatesDO translate : userStatus) {
+            if (translate.getStatus() == 2) {
+                throw new ClientException("Translation is in progress, please wait, only one translation at a time");
+            }
         }
-
-        // 如果没有用户信息，则插入新用户信息；否则更新翻译状态为“翻译中”
-        if (userStatus.isEmpty()) {
-            jdbcRepository.insertShopTranslateInfo(request);
-        } else {
-            jdbcRepository.updateTranslateStatus(request.getShopName(), 2);
-        }
-
+        jdbcRepository.updateTranslateStatus(request.getShopName(), 2, request.getTarget());
 
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         // 转换请求对象
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
-        int remainingChars = jdbcRepository.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0)).get(0).getChars();
+        TranslationCounterRequest request1 = jdbcRepository.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0)).get(0);
+        int remainingChars = request1.getChars();
+        int usedChars = request1.getUsedChars();
+        counter.addChars(usedChars);
         for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = new ShopifyQuery().getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
             String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
             translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
+
         }
 
         System.out.println("当前已使用了： " + counter.getTotalChars() + "个字符");
+        Map<String, String> map = new HashMap<String, String>();
+        map = SINGLE_LINE_TEXT.get(request.getTarget());
+        System.out.println("map里面的数据： " + map);
         // 更新数据库中的已使用字符数
         jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
 
         // 将翻译状态改为“已翻译”
-        jdbcRepository.updateTranslateStatus(request.getShopName(), 1);
+        jdbcRepository.updateTranslateStatus(request.getShopName(), 1, request.getTarget());
 
     }
 
@@ -300,6 +302,7 @@ public class TranslateService {
     private void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId, int remainingChars) {
         //初始化存储到shopify本地的数据
         Map<String, Object> translation = new HashMap<>();
+        String target = request.getTarget();
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
@@ -330,39 +333,90 @@ public class TranslateService {
             if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
                 //达到字符限制，更新用户剩余字符数，终止循环
                 updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
-                String string = translateSingleLine(value);
-                if (string != null) {
+                String targetCache = translateSingleLine(value, request.getTarget());
+                if (targetCache != null) {
+                    System.out.println("用了缓存的数据SINGLE_LINE_TEXT_FIELD： " + targetCache);
 //                    saveToShopify(string, translation,resourceId, request);
+                    continue;
                 } else {
                     counter.addChars(value.length());
-//                    String target = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), value));
-                    SINGLE_LINE_TEXT.put(value, "target");
+//                    String target = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+                    addData(target, value, value);
 //                    saveToShopify(target, translation,resourceId, request);
                 }
                 continue;
             }
+
             //处理type为HTML的情况
-            if ("HTML".equals(contentItemNode.get("type").asText())) {
+             if ("HTML".equals(contentItemNode.get("type").asText())) {
                 //达到字符限制，更新用户剩余字符数，终止循环
                 updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
                 if (jsoupUtils.isHtml(value)) {
-                    String target = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, request.getTarget(), value), counter);
-                    //                    saveToShopify(target, translation,resourceId, request);
+                    String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, request.getTarget());
+//                    saveToShopify(targetText, translation, resourceId, request);
                     continue;
                 }
             }
 
-            //处理type为OnlineTheme的情况
+            //处理type为ONLINE_STORE_THEME的情况
+             if ("ONLINE_STORE_THEME".equals(contentItemNode.get("type").asText()) ||
+                    "ONLINE_STORE_THEME_LOCALE_CONTENT".equals(contentItemNode.get("type").asText())) {
+                updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
+                //从数据库中获取数据，如果不为空，存入shopify本地；如果为空翻译
+                String targetText = jdbcRepository.readTargetTextByDigest(contentItemNode.get("digest").asText());
+                String targetCache = translateSingleLine(value, request.getTarget());
+                if (targetCache != null) {
+                    System.out.println("用了缓存的数据ONLINE_STORE_THEME： " + targetCache);
+//                    saveToShopify(targetCache, translation, resourceId, request);
+                    continue;
+                } else if (targetText != null) {
+                    addData(target, value, value);
+//                    saveToShopify(targetText, translation, resourceId, request);
+                    continue;
+                } else {
+                    counter.addChars(value.length());
+//                    String target = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+                    addData(target, value, value);
+//                    saveToShopify(target, translation,resourceId, request);
+                    continue;
+                }
+            }
 
 
-            //达到字符限制，更新用户剩余字符数，终止循环
-//            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
-//            String translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, request.getTarget(), value));;
-//            counter.addChars(value.length());
+                //达到字符限制，更新用户剩余字符数，终止循环
+                updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
+                //做一个缓存判断
+            String targetCache = translateSingleLine(value, request.getTarget());
+            if (targetCache != null) {
+                System.out.println("用了缓存的数据SINGLE_LINE_TEXT_FIELD： " + targetCache);
+//                    saveToShopify(string, translation,resourceId, request);
+                continue;
+            }else {
+//            String translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));;
+                addData(target, value, value);
+                counter.addChars(value.length());
 //            saveToShopify(translatedValue, translation, resourceId, request);
+
+            }
 
 
         }
+
+    }
+
+    //
+    public static void addData(String outerKey, String innerKey, String value) {
+        // 获取外层键对应的内层 Map
+        Map<String, String> innerMap = SINGLE_LINE_TEXT.get(outerKey);
+
+        // 如果外层键不存在，则创建一个新的内层 Map
+        if (innerMap == null) {
+            innerMap = new HashMap<>();
+            SINGLE_LINE_TEXT.put(outerKey, innerMap);
+        }
+
+        // 将新的键值对添加到内层 Map 中
+        innerMap.put(innerKey, value);
     }
 
     //将翻译后的数据存shopify本地中
@@ -382,7 +436,7 @@ public class TranslateService {
     public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName, int remainingChars) {
         TranslationCounterRequest request = new TranslationCounterRequest();
         request.setShopName(shopName);
-
+//        System.out.println("counter " + counter.getTotalChars() );
         if (counter.getTotalChars() >= remainingChars) {
             jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             throw new ClientException("翻译字符数超过限制.");
@@ -628,15 +682,17 @@ public class TranslateService {
                 "<h1>Hello, World!</h1><p>This is a test.</p>" +
                 "<img alt=\\\"儿童化妆玩具\\\" src=\\\"https://zinnbuy2407-1327177217.cos.na-ashburn.myqcloud.com/images3_spmp/2024/01/06/eb/17045336072733e45098feb673430f91e1bbc1eebc_square.jpg\\\">" +
                 "<p>Last updated: {{ last_updated }}</p></body></html>";
-        return jsoupUtils.translateHtml(html, request, null);
+        return jsoupUtils.translateHtml(html, request, null, request.getTarget());
     }
 
 
     //将数据存入本地Map中
     //优化策略1： 利用翻译后的数据，对singleLine的数据全局匹配并翻译
-    public String translateSingleLine(String sourceText) {
-        if (SINGLE_LINE_TEXT.containsKey(sourceText)) {
-            return SINGLE_LINE_TEXT.get(sourceText);
+    public String translateSingleLine(String sourceText, String target) {
+        if (SINGLE_LINE_TEXT.get(target) != null) {
+//            System.out.println("translateSingleLine2: " + SINGLE_LINE_TEXT.get(target).get(sourceText));
+            return SINGLE_LINE_TEXT.get(target).get(sourceText);
+
         }
         return null;
     }
