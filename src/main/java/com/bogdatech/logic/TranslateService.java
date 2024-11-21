@@ -299,8 +299,6 @@ public class TranslateService {
     //对符合条件的 SINGLE_LINE_TEXT_FIELD和MULTI_LINE_TEXT_FIELD  类型的 value 进行翻译
     private void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId, int remainingChars) {
         //初始化存储到shopify本地的数据
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("resourceId", resourceId);
         Map<String, Object> translation = new HashMap<>();
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
@@ -347,7 +345,6 @@ public class TranslateService {
             if ("HTML".equals(contentItemNode.get("type").asText())) {
                 //达到字符限制，更新用户剩余字符数，终止循环
                 updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars);
-                String translatedValue = null;
                 if (jsoupUtils.isHtml(value)) {
                     String target = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, request.getTarget(), value), counter);
                     //                    saveToShopify(target, translation,resourceId, request);
@@ -460,19 +457,20 @@ public class TranslateService {
         JsonNode translatableResourcesNode = rootNode.path("translatableResources").path("nodes");
         for (JsonNode node : translatableResourcesNode) {
             String resourceId = node.path("resourceId").asText();
-            Map<String, Object> translationsMap = extractTranslations(node);
-            Map<String, Object> translatableContentMap = extractTranslatableContent(node);
-            // 合并两个Map
-            Map<String, Object> mergedMap = mergeMaps(translationsMap, translatableContentMap);
-//             将resourceId添加到每个合并后的Map中
-            mergedMap.values().forEach(value -> {
-                if (value instanceof Map) {
-                    ((Map<String, Object>) value).put("resourceId", resourceId);
-                    ((Map<String, Object>) value).put("shopName", request.getShopName());
-                    // 将合并后的Map存入SQL中
-                    updateOrInsertTranslateTextData(((Map<String, Object>) value));
-                }
-            });
+            Map<String, Map<String, String>> translationsMap = extractTranslations(node, resourceId, request);
+            Map<String, Map<String, String>> translatableContentMap = extractTranslatableContent(node, translationsMap);
+//            // 合并两个Map
+//            Map<String, Map<String, String>> mergedMap = mergeMaps(translationsMap, translatableContentMap);
+////             将resourceId添加到每个合并后的Map中
+//            mergedMap.values().forEach(value -> {
+//                if (value instanceof Map) {
+//                    ((Map<String, Map<String, String>>) value).put("resourceId", resourceId);
+//                    ((Map<String, Map<String, String>>) value).put("shopName", request.getShopName());
+//                    // 将合并后的Map存入SQL中
+//                    updateOrInsertTranslateTextData(((Map<String, Map<String, String>>) value), request);
+//                }
+//            });
+
         }
 
         // 检查是否有下一页
@@ -489,63 +487,69 @@ public class TranslateService {
     }
 
     //获取一个页面所有Translations集合数据
-    private static Map<String, Object> extractTranslations(JsonNode node) {
-        Map<String, Object> translations = new HashMap<>();
+    private static Map<String, Map<String, String>> extractTranslations(JsonNode node, String resourceId, ShopifyRequest shopifyRequest) {
+        Map<String, Map<String, String>> translations = new HashMap<>();
         JsonNode translationsNode = node.path("translations");
         if (translationsNode.isArray() && !translationsNode.isEmpty()) {
             translationsNode.forEach(translation -> {
                 Map<String, String> keys = new HashMap<>();
-                keys.put("targetCode", translation.path("locale").asText());
                 keys.put("textKey", translation.path("key").asText());
                 keys.put("targetText", translation.path("value").asText());
+                keys.put("resourceId", resourceId);
+                keys.put("shopName", shopifyRequest.getShopName());
                 translations.put(translation.path("key").asText(), keys);
+
             });
         }
         return translations;
     }
 
     //获取一个页面所有TranslatableContent集合数据
-    private static Map<String, Object> extractTranslatableContent(JsonNode node) {
-        Map<String, Object> contents = new HashMap<>();
+    private static Map<String, Map<String, String>> extractTranslatableContent(JsonNode node, Map<String, Map<String, String>> translations) {
         JsonNode contentNode = node.path("translatableContent");
-        contentNode.forEach(content -> {
-            Map<String, String> keys = new HashMap<>();
-            keys.put("sourceCode", content.path("locale").asText());
-            keys.put("textType", content.path("type").asText());
-            keys.put("digest", content.path("digest").asText());
-            keys.put("sourceText", content.path("value").asText());
-            contents.put(content.path("key").asText(), keys);
-        });
-        return contents;
+        if (contentNode.isArray() && !contentNode.isEmpty()) {
+            contentNode.forEach(content -> {
+                Map<String, String> keys = translations.get(content.path("key").asText());
+                if (translations.get(content.path("key").asText()) != null) {
+                    keys.put("sourceCode", content.path("locale").asText());
+                    keys.put("textType", content.path("type").asText());
+                    keys.put("digest", content.path("digest").asText());
+                    keys.put("sourceText", content.path("value").asText());
+                    System.out.println("合并后的数据： " + translations);
+                }
+            });
+        }
+        //存入数据库
+        return translations;
     }
 
     //合并两个map集合数据
-    private Map<String, Object> mergeMaps(Map<String, Object> map1, Map<String, Object> map2) {
-//        appInsights.trackTrace("进入合并的方法里面");
-        Map<String, Object> result = new HashMap<>(map1);
-        map2.forEach((key, value) -> {
-//            appInsights.trackTrace("当前的key为: " + key);
-            if (result.containsKey(key)) {
-                // 如果键冲突，合并两个Map
-                Map<String, Object> existingValue = (Map<String, Object>) result.get(key);
-                Map<String, Object> newValue = (Map<String, Object>) value;
-                Map<String, Object> mergedValue = new HashMap<>(existingValue);
-                mergedValue.putAll(newValue);
-                result.put((String) mergedValue.get("digest"), mergedValue);
-            }
-        });
-        return result;
-    }
+//    private Map<String, Object> mergeMaps(Map<String, Object> map1, Map<String, Object> map2) {
+////        appInsights.trackTrace("进入合并的方法里面");
+//        Map<String, Object> result = new HashMap<>(map1);
+//        map2.forEach((key, value) -> {
+////            appInsights.trackTrace("当前的key为: " + key);
+//            if (result.containsKey(key)) {
+//                // 如果键冲突，合并两个Map
+//                Map<String, Object> existingValue = (Map<String, Object>) result.get(key);
+//                Map<String, Object> newValue = (Map<String, Object>) value;
+//                Map<String, Object> mergedValue = new HashMap<>(existingValue);
+//                mergedValue.putAll(newValue);
+//                result.put((String) mergedValue.get("digest"), mergedValue);
+//            }
+//        });
+//        return result;
+//    }
 
     //根据数据库中digest进行判断，有更新，无插入
-    private void updateOrInsertTranslateTextData(Map<String, Object> data) {
+    private void updateOrInsertTranslateTextData(Map<String, Object> data, ShopifyRequest shopifyRequest) {
         if (data.get("digest") != null) {
             TranslateTextRequest request = new TranslateTextRequest();
             request.setTargetText(data.get("targetText").toString());
             request.setResourceId(data.get("resourceId").toString());
             request.setDigest(data.get("digest").toString());
             request.setSourceCode(data.get("sourceCode").toString());
-            request.setTargetCode(data.get("targetCode").toString());
+            request.setTargetCode(shopifyRequest.getTarget());
             request.setShopName(data.get("shopName").toString());
             request.setTextKey(data.get("textKey").toString());
             request.setSourceText(data.get("sourceText").toString());
