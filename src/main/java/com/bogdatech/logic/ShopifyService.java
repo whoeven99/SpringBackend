@@ -337,38 +337,36 @@ public class ShopifyService {
     }
 
     //计算被翻译项的总数和已翻译的个数
-    public Map<String, Map<String, Integer>> getTranslationItemsInfo(ResourceTypeRequest request) {
+    public void getTranslationItemsInfo(ResourceTypeRequest request) {
         ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
-        Map<String, Map<String, Integer>> map = new HashMap<>();
-        Map<String, Integer> allMap = new HashMap<>();
-        Map<String, Integer> translatedMap = new HashMap<>();
 
-        CharacterCountUtils allCounter = new CharacterCountUtils();
-        CharacterCountUtils translatedCounter = new CharacterCountUtils();
+
         // 遍历List中的每个TranslateResourceDTO对象
-        for (TranslateResourceDTO resource : RESOURCE_MAP.get(request.getResourceType())) {
-            resource.setTarget(request.getTarget());
-            String query = shopifyQuery.getFirstQuery(resource);
-            cloudServiceRequest.setBody(query);
-            String infoByShopify = getShopifyData(cloudServiceRequest);
-            countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
+        for (Map.Entry<String, List<TranslateResourceDTO>> resourceList : RESOURCE_MAP.entrySet()) {
+            CharacterCountUtils allCounter = new CharacterCountUtils();
+            CharacterCountUtils translatedCounter = new CharacterCountUtils();
+            String resourceType = resourceList.getKey();
+            System.out.println("resourceType: " + resourceType);
+            for (TranslateResourceDTO resource : resourceList.getValue()) {
+                resource.setTarget(request.getTarget());
+                String query = shopifyQuery.getFirstQuery(resource);
+                cloudServiceRequest.setBody(query);
+                String infoByShopify = getShopifyData(cloudServiceRequest);
+                countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
+            }
+            //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
+            if (!jdbcRepository.readSingleItemInfo(shopifyRequest, resourceType).isEmpty()) {
+                int i = jdbcRepository.updateItemsByShopName(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+
+            } else {
+                int i = jdbcRepository.insertItems(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+
+            }
+
         }
 
-        //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
-        if (!jdbcRepository.readSingleItemInfo(shopifyRequest, request.getResourceType()).isEmpty()) {
-            int i = jdbcRepository.updateItemsByShopName(shopifyRequest, request.getResourceType(), allCounter.getTotalChars(), translatedCounter.getTotalChars());
 
-        } else {
-            int i = jdbcRepository.insertItems(shopifyRequest, request.getResourceType(), allCounter.getTotalChars(), translatedCounter.getTotalChars());
-
-        }
-        allMap.put(request.getResourceType() + "_all", allCounter.getTotalChars());
-        translatedMap.put(request.getResourceType() + "_translated", translatedCounter.getTotalChars());
-
-        map.put("all", allMap);
-        map.put("translated", translatedMap);
-        return map;
     }
 
     //从数据库中直接获取项数
@@ -431,7 +429,6 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             JsonNode translationsNode = contentItemNode.get("translations");
             JsonNode translatableContentNode = contentItemNode.get("translatableContent");
-
             if ("ONLINE_STORE_THEME".equals(translateResource.getResourceType())) {
                 // 当资源类型为 ONLINE_STORE_THEME 时，调用专门的计数方法
                 countThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
@@ -509,11 +506,14 @@ public class ShopifyService {
         List<ItemsRequest> itemsRequests = jdbcRepository.readItemsInfo(shopifyRequest);
         Map<String, ItemsRequest> itemMap = itemsRequests.stream()
                 .collect(Collectors.toMap(ItemsRequest::getItemName, item -> new ItemsRequest(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
-        if (!itemsRequests.isEmpty()) {
-            return new BaseResponse<>().CreateSuccessResponse(itemMap);
-        } else {
-            return new BaseResponse<>().CreateSuccessResponse(getTranslationItemsInfo(request).toString());
+        if (itemsRequests.isEmpty()) {
+            getTranslationItemsInfo(request);
+            shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
+            itemsRequests = jdbcRepository.readItemsInfo(shopifyRequest);
+            itemMap = itemsRequests.stream()
+                    .collect(Collectors.toMap(ItemsRequest::getItemName, item -> new ItemsRequest(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
         }
+        return new BaseResponse<>().CreateSuccessResponse(itemMap);
 
     }
 }

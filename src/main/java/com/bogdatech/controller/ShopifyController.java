@@ -112,8 +112,8 @@ public class ShopifyController {
     //计算被翻译项的总数和已翻译的个数
     @PostMapping("/shopify/getTranslationItemsInfo")
     public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
-        List<ItemsRequest> translationItemsInfo = shopifyService.getItemsFromDatabase(request);
-        return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
+         shopifyService.getTranslationItemsInfo(request);
+        return new BaseResponse<>().CreateSuccessResponse(null);
     }
 
     //先从数据库中获取在调用getItemsByShopName
