@@ -15,27 +15,27 @@ public class CurrencyController {
     private JdbcRepository jdbcRepository;
 
     @PostMapping("/currency/insertCurrency")
-    public BaseResponse addCurrency(@RequestBody CurrencyRequest request) {
+    public BaseResponse<Object> addCurrency(@RequestBody CurrencyRequest request) {
         return jdbcRepository.insertCurrency(request);
     }
 
     @PostMapping("/currency/updateCurrency")
-    public BaseResponse updateCurrency(@RequestBody CurrencyRequest request) {
+    public BaseResponse<Object> updateCurrency(@RequestBody CurrencyRequest request) {
         return jdbcRepository.updateCurrency(request);
     }
 
     @PostMapping("/currency/deleteCurrency")
-    public BaseResponse deleteCurrency(@RequestBody CurrencyRequest request) {
+    public BaseResponse<Object> deleteCurrency(@RequestBody CurrencyRequest request) {
         return jdbcRepository.deleteCurrency(request);
     }
 
     @PostMapping("/currency/getCurrencyByShopName")
-    public BaseResponse getCurrencyByShopName(@RequestBody CurrencyRequest request) {
+    public BaseResponse<Object> getCurrencyByShopName(@RequestBody CurrencyRequest request) {
         return jdbcRepository.getCurrencyByShopName(request);
     }
 
     @PostMapping("/currency/test")
-    public BaseResponse test(@RequestBody CurrencyRequest request) {
+    public BaseResponse<Object> test(@RequestBody CurrencyRequest request) {
         return jdbcRepository.test(request);
     }
 }

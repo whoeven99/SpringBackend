@@ -88,7 +88,7 @@ public class ShopifyController {
     //当用户第一次订阅时，在用户订阅表里面添加用户及其付费计划
     @PostMapping("/shopify/addUserFreeSubscription")
     public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request) {
-       return shopifyService.addUserFreeSubscription(request);
+        return shopifyService.addUserFreeSubscription(request);
     }
 
     //获取用户订阅计划
@@ -97,7 +97,7 @@ public class ShopifyController {
         String userSubscriptionPlan = jdbcRepository.getUserSubscriptionPlan(request);
         if (userSubscriptionPlan == null) {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_SELECT_ERROR);
-        }else {
+        } else {
             return new BaseResponse<>().CreateSuccessResponse(userSubscriptionPlan);
         }
     }
@@ -112,7 +112,7 @@ public class ShopifyController {
     //计算被翻译项的总数和已翻译的个数
     @PostMapping("/shopify/getTranslationItemsInfo")
     public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
-        Map<String,Map<String,Integer>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
+        List<ItemsRequest> translationItemsInfo = shopifyService.getItemsFromDatabase(request);
         return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
     }
 

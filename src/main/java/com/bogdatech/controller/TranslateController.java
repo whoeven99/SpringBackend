@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudInsertRequest;
 import com.bogdatech.model.controller.request.RegisterTransactionRequest;
@@ -35,6 +36,8 @@ public class TranslateController {
     @Autowired
     private ShopifyHttpIntegration shopifyApiIntegration;
 
+    @Autowired
+    TranslateApiIntegration translateApiIntegration;
     private TelemetryClient appInsights = new TelemetryClient();
 
     @Autowired
@@ -146,4 +149,9 @@ public class TranslateController {
 //        return translateService.translateHtmlText(request);
     }
 
+    //测试微软翻译API
+    @PostMapping("/testAzure")
+    public String testAzure(@RequestBody TranslateRequest request) {
+        return translateApiIntegration.microsoftTranslate(request);
+    }
 }

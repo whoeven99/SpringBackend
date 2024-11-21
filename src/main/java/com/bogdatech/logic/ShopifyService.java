@@ -328,7 +328,7 @@ public class ShopifyService {
         for (String string : strings) {
             try {
                 Field field = LanguageFlagConfig.class.getField(string.toUpperCase());
-                imageInfo.put(string,  field.get(null));
+                imageInfo.put(string, field.get(null));
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
@@ -369,6 +369,12 @@ public class ShopifyService {
         map.put("all", allMap);
         map.put("translated", translatedMap);
         return map;
+    }
+
+    //从数据库中直接获取项数
+    public List<ItemsRequest> getItemsFromDatabase(ResourceTypeRequest request) {
+        ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
+        return jdbcRepository.readSingleItemInfo(shopifyRequest, request.getResourceType());
     }
 
     //计数当前项所总共的项数和已翻译的项数
