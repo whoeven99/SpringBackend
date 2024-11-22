@@ -46,32 +46,32 @@ public class JsoupUtils {
         for (String text : textsToTranslate) {
             String translated = translateSingleLine(text, request.getTarget());
             if (translated != null) {
-                System.out.println("用了缓存的数据html： " + translated);
-                //                translatedTexts.add(translated);
+//                System.out.println("用了缓存的数据html： " + translated);
+                translatedTexts.add(translated);
             } else {
                 request.setContent(text);
-                counter.addChars(text.length());
 
                 //google翻译的接口
 //            String translatedValue = translateApiIntegration.googleTranslate(request);
 //            String translatedValue = translateApiIntegration.baiDuTranslate(request);
-                addData(target, text, text);
-//            translatedTexts.add(translatedValue);
+                String targetContent = translateApiIntegration.microsoftTranslate(request);
+                addData(target, targetContent, targetContent);
+                translatedTexts.add(targetContent);
             }
         }
 
-        // Replace original texts with translated ones
-//        int index = 0;
-//        for (Element element : elements) {
-//            if (!element.is("script, style")) {
-//                if (!element.ownText().trim().isEmpty()) {
-//                    element.text(translatedTexts.get(index++));
-//                }
-//                if (element.hasAttr("alt")) {
-//                    element.attr("alt", translatedTexts.get(index++));
-//                }
-//            }
-//        }
+//         Replace original texts with translated ones
+        int index = 0;
+        for (Element element : elements) {
+            if (!element.is("script, style")) {
+                if (!element.ownText().trim().isEmpty()) {
+                    element.text(translatedTexts.get(index++));
+                }
+                if (element.hasAttr("alt")) {
+                    element.attr("alt", translatedTexts.get(index++));
+                }
+            }
+        }
 
         return doc.html();
     }
