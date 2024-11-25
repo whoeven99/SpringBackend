@@ -38,6 +38,6 @@ public class TestController {
 
 	@PostMapping("/test/test1")
 	public int test1(@RequestBody TranslatesDO name) {
-		return translatesServiceImpl.updateTranslateStatus(name.getShopName(),name.getStatus(),name.getTarget());
+		return translatesServiceImpl.updateTranslateStatus(name.getShopName(),name.getStatus(),name.getTarget(), name.getSource());
 	}
 }
