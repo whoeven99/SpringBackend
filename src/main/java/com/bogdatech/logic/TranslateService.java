@@ -33,6 +33,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,11 +43,13 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
+import static com.bogdatech.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 
 @Component
 @EnableAsync
+@Transactional
 public class TranslateService {
 
     @Autowired
@@ -458,7 +461,7 @@ public class TranslateService {
 
         String infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
         if (infoByShopify == null) {
-            throw new IllegalArgumentException("Argument 'content' cannot be null or empty");
+            throw new IllegalArgumentException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -559,6 +562,7 @@ public class TranslateService {
                 TranslateTextDO translateTextDO = new TranslateTextDO();
                 translateTextDO.setTextKey(translation.path("key").asText());
                 translateTextDO.setTargetText(translation.path("value").asText());
+                translateTextDO.setTargetCode(translation.path("locale").asText());
                 translateTextDO.setResourceId(resourceId);
                 translateTextDO.setShopName(shopifyRequest.getShopName());
                 translations.put(translation.path("key").asText(), translateTextDO);
@@ -576,7 +580,7 @@ public class TranslateService {
                 TranslateTextDO keys = translations.get(content.path("key").asText());
                 if (translations.get(content.path("key").asText()) != null) {
                     keys.setSourceCode(content.path("locale").asText());
-                    keys.setTextKey(content.path("type").asText());
+                    keys.setTextType(content.path("type").asText());
                     keys.setDigest(content.path("digest").asText());
                     keys.setSourceText(content.path("value").asText());
                 }
