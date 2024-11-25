@@ -167,7 +167,7 @@ public class TranslateApiIntegration {
             throw new RuntimeException(e);
         }
 
-        System.out.println("responseContent: " + result);
+//        System.out.println("responseContent: " + result);
         return result;
     }
 }
