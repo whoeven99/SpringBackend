@@ -2,13 +2,12 @@ package com.bogdatech.repository;
 
 import com.bogdatech.model.JdbcTestModel;
 
-import java.sql.Connection;
 import java.util.List;
 
 //@Component
 public class JdbcTestRepository {
 //    @Autowired
-    private Connection connection;
+//    private Connection connection;
 
     public List<JdbcTestModel> sqlTest() {
         try {
