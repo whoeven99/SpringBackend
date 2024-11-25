@@ -22,14 +22,20 @@ public class UserController {
     private ITranslateTextService translateService;
 
     @GetMapping("/user/get")
-    public void getUser() {
-        userService.getUser();
+    public UsersDO getUser(@RequestBody UsersDO userRequest) {
+        return userService.getUser(userRequest);
     }
 
     // 添加用户
     @PostMapping("/user/add")
     public BaseResponse<Object> addUser(@RequestBody UsersDO userRequest) {
-        return userService.addUser(userRequest);
+
+        if (userService.getUser(userRequest) == null) {
+            return userService.addUser(userRequest);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("User already exists");
+        }
+
     }
 
     @GetMapping("/user/test")
