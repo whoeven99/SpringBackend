@@ -116,8 +116,6 @@ public class TranslateController {
         translateService.translating(request);
         //返回一个status值
         int i = translatesService.getStatusInTranslatesByShopName(request);
-//        //存数据库
-//        translateService.saveTranslateText(request);
         return 1;
     }
 
