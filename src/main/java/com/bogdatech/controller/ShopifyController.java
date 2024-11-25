@@ -89,9 +89,10 @@ public class ShopifyController {
     @PostMapping("/shopify/getUserLimitChars")
     public BaseResponse<Object> getUserLimitChars(@RequestBody TranslationCounterRequest request) {
         TranslationCounterDO translationCounterRequests = translationCounterService.readCharsByShopName(request);
+        int maxCharsByShopName = translationCounterService.getMaxCharsByShopName(request.getShopName());
         Map<String, Object> map = new HashMap<>();
         map.put("chars", translationCounterRequests.getUsedChars());
-        map.put("totalChars", translationCounterRequests.getChars());
+        map.put("totalChars", maxCharsByShopName);
         return new BaseResponse<>().CreateSuccessResponse(map);
     }
 

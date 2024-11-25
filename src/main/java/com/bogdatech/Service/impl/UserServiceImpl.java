@@ -13,4 +13,9 @@ public class UserServiceImpl extends ServiceImpl<UsersMapper, UsersDO> implement
     public int addUser(UsersDO request) {
         return baseMapper.insert(request);
     }
+
+    @Override
+    public UsersDO getUserByName(String shopName) {
+        return baseMapper.getUserByName(shopName);
+    }
 }

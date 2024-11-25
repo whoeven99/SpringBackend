@@ -23,7 +23,8 @@ public class UserService {
 
     }
 
-    public void getUser() {
-
+    public UsersDO getUser(UsersDO request) {
+        UsersDO userByName = usersService.getUserByName(request.getShopName());
+        return userByName;
     }
 }
