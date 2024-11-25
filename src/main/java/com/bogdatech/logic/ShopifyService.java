@@ -81,17 +81,19 @@ public class ShopifyService {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
         String string;
-        JSONArray translationsArray;
+        JSONObject translationsArray;
+        JSONArray translationsObject;
         try {
             String requestBody = objectMapper.writeValueAsString(registerTransactionRequest);
             string = testingEnvironmentIntegration.sendShopifyPost("shopify/updateItem", requestBody);
             JSONObject jsonObject = JSON.parseObject(string);
-            translationsArray = jsonObject.getJSONArray("translations");
-//            System.out.println("Translations: " + translationsArray.toJSONString());
+//            System.out.println("jsonObject: " + jsonObject);
+            translationsArray =  jsonObject.getJSONObject("translationsRegister");
+            translationsObject = translationsArray.getJSONArray("translations");
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
         }
-        return translationsArray.toJSONString();
+        return (String) translationsObject.getJSONObject(0).get("value");
     }
 
     //获得翻译前一共需要消耗的字符数
@@ -340,19 +342,19 @@ public class ShopifyService {
         if (string == null) {
             throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
-//        System.out.println("string = " + string);
+        System.out.println("string = " + string);
         TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
         TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
-//        System.out.println("translateTextDO = " + translateTextDO);
+        System.out.println("translateTextDO = " + translateTextDO);
         TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
-//        System.out.println("translateTextRequests = " + translateTextRequests);
+        System.out.println("translateTextRequests = " + translateTextRequests);
         int i;
         if (translateTextRequests == null) {
             i = translateTextService.insertTranslateText(translateTextDO);
         } else {
             i = translateTextService.updateTranslateText(request);
         }
-        if (i > 0  && string.contains(registerTransactionRequest.getValue()) ) {
+        if (i > 0  && string.equals(registerTransactionRequest.getValue()) ) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
             return new BaseResponse<>().CreateErrorResponse(SERVER_ERROR);

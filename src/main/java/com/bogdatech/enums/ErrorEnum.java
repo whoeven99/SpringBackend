@@ -44,6 +44,10 @@ public enum ErrorEnum {
      * shopify连接错误
      */
     SHOPIFY_CONNECT_ERROR(10010, "SHOPIFY_CONNECT_ERROR"),
+    /*
+     * shopify返回错误
+     */
+    SHOPIFY_RETURN_ERROR(10011, "SHOPIFY_RETURN_ERROR"),
     ;
 
     public int errCode;
