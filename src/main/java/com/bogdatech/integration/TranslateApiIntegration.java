@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.utils.MicrosoftCodeUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -121,9 +122,10 @@ public class TranslateApiIntegration {
     //微软翻译API
     public String microsoftTranslate(TranslateRequest request) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(microsoftEndpoint + request.getTarget());
+        String micTarget = MicrosoftCodeUtils.transformCode(request.getTarget());
+        HttpPost httpPost = new HttpPost(microsoftEndpoint + micTarget);
 
-        // 设置请求头
+        // 随机生成一个 32 位的 Guid设置请求头
         httpPost.setHeader("Ocp-Apim-Subscription-Key", microsoftKey);
         httpPost.setHeader("Content-Type", "application/json");
         httpPost.setHeader("Ocp-Apim-Subscription-Region", "eastus");
