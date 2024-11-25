@@ -13,7 +13,10 @@ public class ShopifyRequest {
 
     private String accessToken;
 
-    private static String API_VERSION = "2024-10";
+    private String apiVersion = "2024-10";
 
-    private String url;
+    private String target;
+
+
+
 }
