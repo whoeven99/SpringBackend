@@ -131,4 +131,10 @@ public class ShopifyController {
     public BaseResponse<Object> getItemsInSqlByShopName(@RequestBody ResourceTypeRequest request) {
         return shopifyService.getItemsByShopName(request);
     }
+
+    //修改单行文本
+    @PostMapping("/shopify/updateItem")
+    public String updateItem(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
+        return shopifyService.updateShopifySingleData(registerTransactionRequest);
+    }
 }

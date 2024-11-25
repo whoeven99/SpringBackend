@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.NETWORK_ERROR;
+import static com.bogdatech.enums.ErrorEnum.SERVER_ERROR;
 
 @Component
 public class ShopifyService {
@@ -67,6 +68,19 @@ public class ShopifyService {
         try {
             String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
             string = testingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return string;
+    }
+    //封装调用云服务器实现更新shopify数据的方法
+    public String updateShopifyData(RegisterTransactionRequest registerTransactionRequest) {
+        // 使用 ObjectMapper 将对象转换为 JSON 字符串
+        ObjectMapper objectMapper = new ObjectMapper();
+        String string;
+        try {
+            String requestBody = objectMapper.writeValueAsString(registerTransactionRequest);
+            string = testingEnvironmentIntegration.sendShopifyPost("shopify/updateItem", requestBody);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -277,7 +291,6 @@ public class ShopifyService {
         shopifyRequest.setShopName(registerTransactionRequest.getShopName());
         shopifyRequest.setAccessToken(registerTransactionRequest.getAccessToken());
         shopifyRequest.setTarget(registerTransactionRequest.getTarget());
-//        appInsights.trackTrace("value: " + registerTransactionRequest.getValue());
         Map<String, Object> variables = getVariables(registerTransactionRequest);
         return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
     }
@@ -316,20 +329,21 @@ public class ShopifyService {
 
     //修改shopify本地单条数据 和 更新本地数据库相应数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        String string = updateShopifySingleData(registerTransactionRequest);
+        String string = updateShopifyData(registerTransactionRequest);
+//        System.out.println("string = " + string);
         TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
         TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
         TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
         int i;
-        if (translateTextRequests != null) {
+        if (translateTextRequests == null) {
             i = translateTextService.insertTranslateText(translateTextDO);
         } else {
             i = translateTextService.updateTranslateText(request);
         }
-        if (i > 0 && string.contains(registerTransactionRequest.getValue())) {
+        if (i > 0 ) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
-            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SERVER_ERROR);
+            return new BaseResponse<>().CreateErrorResponse(SERVER_ERROR);
         }
     }
 

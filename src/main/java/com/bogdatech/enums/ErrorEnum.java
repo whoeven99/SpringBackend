@@ -36,13 +36,14 @@ public enum ErrorEnum {
      * 翻译错误
      */
     TRANSLATE_ERROR(10008, "TRANSLATE_ERROR"),
-
-
     /*
      * 网络错误
      */
     NETWORK_ERROR(10009, "NETWORK_ERROR"),
-
+    /*
+     * shopify连接错误
+     */
+    SHOPIFY_CONNECT_ERROR(10010, "SHOPIFY_CONNECT_ERROR"),
     ;
 
     public int errCode;
