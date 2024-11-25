@@ -330,7 +330,7 @@ public class ShopifyService {
     //修改shopify本地单条数据 和 更新本地数据库相应数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
         String string = updateShopifyData(registerTransactionRequest);
-//        System.out.println("string = " + string);
+        System.out.println("string = " + string);
         TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
         TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
         TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
@@ -340,7 +340,7 @@ public class ShopifyService {
         } else {
             i = translateTextService.updateTranslateText(request);
         }
-        if (i > 0 ) {
+        if (i > 0  && string.contains(registerTransactionRequest.getValue()) ) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
             return new BaseResponse<>().CreateErrorResponse(SERVER_ERROR);
