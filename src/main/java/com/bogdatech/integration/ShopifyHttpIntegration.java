@@ -1,7 +1,6 @@
 package com.bogdatech.integration;
 
 import com.alibaba.fastjson.JSONObject;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.query.ShopifyQuery;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -16,8 +15,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Map;
-
-import static com.bogdatech.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
 
 @Component
 public class ShopifyHttpIntegration {
@@ -62,24 +59,14 @@ public class ShopifyHttpIntegration {
         String string = sendShopifyPost(shopifyRequest, query, null);
         JSONObject jsonObject = JSONObject.parseObject(string);
         JSONObject data = jsonObject.getJSONObject("data");
-        if (data != null){
-            return data;
-        }else {
-            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
-        }
+        return data;
     }
 
     public String registerTransaction(ShopifyRequest request, Map<String, Object> variables) {
         ShopifyQuery shopifyQuery = new ShopifyQuery();
         String string = sendShopifyPost(request, shopifyQuery.registerTransactionQuery(), variables);
         JSONObject jsonObject = JSONObject.parseObject(string);
-        String data = jsonObject.getString("data");
-        if (data != null){
-            return data;
-        }else {
-            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
-        }
-
+        return jsonObject.getString("data");
     }
 
 }
