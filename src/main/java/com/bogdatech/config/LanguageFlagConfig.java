@@ -674,8 +674,9 @@ public class LanguageFlagConfig {
         KO.put("Local", "한국어");
         KO.put("isoCode", "ko");
         KO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KP.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KR.png"
+//                ,
+//                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KP.png"
         });
 
         // Kurdish

@@ -7,7 +7,9 @@ import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.logic.TranslateService;
-import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.controller.request.RegisterTransactionRequest;
+import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.*;
 
@@ -123,8 +124,7 @@ public class TranslateController {
         }
         //翻译
         translateService.translating(request, usedChars, remainingChars);
-        //返回一个status值
-//        int i = translatesService.getStatusInTranslatesByShopName(request);
+
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
 
@@ -145,16 +145,15 @@ public class TranslateController {
     /*
      *  测试存shopify本地
      */
-    @PostMapping("/translate/insertTranslatedText")
-    public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
-        Map<String, Object> body = cloudServiceRequest.getBody();
-        shopifyApiIntegration.registerTransaction(request, body);
-
-    }
+//    @PostMapping("/translate/insertTranslatedText")
+//    public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
+//        ShopifyRequest request = new ShopifyRequest();
+//        request.setShopName(cloudServiceRequest.getShopName());
+//        request.setAccessToken(cloudServiceRequest.getAccessToken());
+//        request.setTarget(cloudServiceRequest.getTarget());
+//        Map<String, Object> body = cloudServiceRequest.getBody();
+//        shopifyApiIntegration.registerTransaction(request, body);
+//    }
 
 
     @PostMapping("/test")
