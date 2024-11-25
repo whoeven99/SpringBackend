@@ -6,7 +6,6 @@ import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
-import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
@@ -20,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 
 @RestController
 public class ShopifyController {
@@ -105,7 +106,7 @@ public class ShopifyController {
     public BaseResponse<Object> getUserSubscriptionPlan(@RequestBody ShopifyRequest request) {
         String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request);
         if (userSubscriptionPlan == null) {
-            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_SELECT_ERROR);
+            return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
         } else {
             return new BaseResponse<>().CreateSuccessResponse(userSubscriptionPlan);
         }
@@ -122,7 +123,7 @@ public class ShopifyController {
     @PostMapping("/shopify/getTranslationItemsInfo")
     public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
          shopifyService.getTranslationItemsInfo(request);
-        return new BaseResponse<>().CreateSuccessResponse(null);
+        return new BaseResponse<>().CreateSuccessResponse(200);
     }
 
     //先从数据库中获取在调用getItemsByShopName

@@ -1,10 +1,13 @@
 package com.bogdatech.enums;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public enum ErrorEnum {
     SERVER_ERROR(10001, "SERVER_ERROR"),
+    SERVER_SUCCESS(200, "SERVER_SUCCESS"),
     /*
     * josn解析错误
     */
@@ -49,4 +52,5 @@ public enum ErrorEnum {
         this.errCode = errCode;
         this.errMsg = errMsg;
     }
+
 }

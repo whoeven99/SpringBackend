@@ -84,7 +84,7 @@ public class ShopifyService {
             cloudServiceRequest.setBody(query);
             String infoByShopify = getShopifyData(cloudServiceRequest);
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter);
-            System.out.println("目前total的总数是： " + counter.getTotalChars());
+            System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
 
         counter.addChars(-translateCounter.getTotalChars());
@@ -357,7 +357,7 @@ public class ShopifyService {
             CharacterCountUtils allCounter = new CharacterCountUtils();
             CharacterCountUtils translatedCounter = new CharacterCountUtils();
             String resourceType = resourceList.getKey();
-            System.out.println("resourceType: " + resourceType);
+//            System.out.println("resourceType: " + resourceType);
             for (TranslateResourceDTO resource : resourceList.getValue()) {
                 resource.setTarget(request.getTarget());
                 String query = shopifyQuery.getFirstQuery(resource);

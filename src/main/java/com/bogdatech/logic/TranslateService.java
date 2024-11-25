@@ -206,7 +206,7 @@ public class TranslateService {
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0));
-        int remainingChars = request1.getChars();
+        int remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
         int usedChars = request1.getUsedChars();
         counter.addChars(usedChars);
         for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
