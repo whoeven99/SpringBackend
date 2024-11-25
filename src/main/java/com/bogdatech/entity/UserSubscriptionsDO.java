@@ -7,18 +7,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("Translates")
-public class TranslatesDO {
+@TableName("UserSubscriptions")
+public class UserSubscriptionsDO {
     @TableId(type = IdType.AUTO)
-    private Integer id;
-    private String source;
-    private String accessToken;
-    private String target;
+    private Integer subscriptionId;
     private String shopName;
+    private Integer planId;
     private Integer status;
-//    private Timestamp createAt;
-//    private Timestamp updateAt;
+    private LocalDateTime startDate; // 订阅开始日期
+    private LocalDateTime endDate; // 订阅结束日期
 }

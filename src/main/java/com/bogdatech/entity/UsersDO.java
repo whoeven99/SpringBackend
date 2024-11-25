@@ -10,15 +10,15 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("Translates")
-public class TranslatesDO {
+@TableName("Users")
+public class UsersDO {
     @TableId(type = IdType.AUTO)
     private Integer id;
-    private String source;
-    private String accessToken;
-    private String target;
     private String shopName;
-    private Integer status;
-//    private Timestamp createAt;
-//    private Timestamp updateAt;
+    private String accessToken;
+    private String email;
+    private String phone;
+    private String realAddress;
+    private String ipAddress;
+    private String userTag;
 }

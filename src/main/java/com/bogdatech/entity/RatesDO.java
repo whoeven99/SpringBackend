@@ -10,15 +10,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("Translates")
-public class TranslatesDO {
+@TableName("Rates")
+public class RatesDO {
     @TableId(type = IdType.AUTO)
     private Integer id;
-    private String source;
-    private String accessToken;
-    private String target;
-    private String shopName;
-    private Integer status;
-//    private Timestamp createAt;
-//    private Timestamp updateAt;
+    private String sourceCurrency;
+    private String targetCurrency;
+    private byte rate;
 }

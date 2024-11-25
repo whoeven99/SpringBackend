@@ -1,14 +1,18 @@
 package com.bogdatech.logic;
 
+import com.bogdatech.Service.IItemsService;
+import com.bogdatech.Service.ITranslateTextService;
+import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.config.LanguageFlagConfig;
+import com.bogdatech.entity.ItemsDO;
 import com.bogdatech.entity.TranslateResourceDTO;
+import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.query.ShopifyQuery;
-import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,6 +37,7 @@ import java.util.stream.Collectors;
 
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
+import static com.bogdatech.enums.ErrorEnum.NETWORK_ERROR;
 
 @Component
 public class ShopifyService {
@@ -41,11 +46,16 @@ public class ShopifyService {
     private ShopifyHttpIntegration shopifyApiIntegration;
 
     @Autowired
-    private JdbcRepository jdbcRepository;
-
-    @Autowired
     private TestingEnvironmentIntegration testingEnvironmentIntegration;
 
+    @Autowired
+    private ITranslateTextService translateTextService;
+
+    @Autowired
+    private IUserSubscriptionsService userSubscriptionsService;
+
+    @Autowired
+    private IItemsService itemsService;
     private final TelemetryClient appInsights = new TelemetryClient();
     ShopifyQuery shopifyQuery = new ShopifyQuery();
 
@@ -74,7 +84,7 @@ public class ShopifyService {
             cloudServiceRequest.setBody(query);
             String infoByShopify = getShopifyData(cloudServiceRequest);
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter);
-            System.out.println("目前total的总数是： " + counter.getTotalChars());
+            System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
 
         counter.addChars(-translateCounter.getTotalChars());
@@ -249,7 +259,7 @@ public class ShopifyService {
         cloudServiceRequest.setBody(query);
         String infoByShopify = getShopifyData(cloudServiceRequest);
         if (infoByShopify == null) {
-            throw new IllegalArgumentException("Argument 'content' cannot be null or empty");
+            throw new IllegalArgumentException(String.valueOf(NETWORK_ERROR));
         }
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
@@ -296,7 +306,7 @@ public class ShopifyService {
         LocalDateTime startDate = LocalDateTime.parse(localDateFormat, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         request.setStartDate(startDate);
         request.setEndDate(null);
-        int i = jdbcRepository.addUserSubscription(request);
+        int i = userSubscriptionsService.addUserSubscription(request);
         if (i > 0) {
             return new BaseResponse<>().CreateSuccessResponse("success");
         } else {
@@ -308,15 +318,16 @@ public class ShopifyService {
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
         String string = updateShopifySingleData(registerTransactionRequest);
         TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
-        List<TranslateTextRequest> translateTextRequests = jdbcRepository.readTranslateTextInfo(request);
+        TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
+        TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
         int i;
-        if (translateTextRequests.isEmpty()) {
-            i = jdbcRepository.insertTranslateText(request);
+        if (translateTextRequests != null) {
+            i = translateTextService.insertTranslateText(translateTextDO);
         } else {
-            i = jdbcRepository.updateTranslateText(request);
+            i = translateTextService.updateTranslateText(request);
         }
         if (i > 0 && string.contains(registerTransactionRequest.getValue())) {
-            return new BaseResponse<>().CreateSuccessResponse("success");
+            return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SERVER_ERROR);
         }
@@ -346,7 +357,7 @@ public class ShopifyService {
             CharacterCountUtils allCounter = new CharacterCountUtils();
             CharacterCountUtils translatedCounter = new CharacterCountUtils();
             String resourceType = resourceList.getKey();
-            System.out.println("resourceType: " + resourceType);
+//            System.out.println("resourceType: " + resourceType);
             for (TranslateResourceDTO resource : resourceList.getValue()) {
                 resource.setTarget(request.getTarget());
                 String query = shopifyQuery.getFirstQuery(resource);
@@ -355,11 +366,11 @@ public class ShopifyService {
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
             }
             //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
-            if (!jdbcRepository.readSingleItemInfo(shopifyRequest, resourceType).isEmpty()) {
-                jdbcRepository.updateItemsByShopName(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+            if (!itemsService.readSingleItemInfo(shopifyRequest, resourceType).isEmpty()) {
+                itemsService.updateItemsByShopName(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
 
             } else {
-                jdbcRepository.insertItems(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
+                itemsService.insertItems(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
 
             }
         }
@@ -491,17 +502,16 @@ public class ShopifyService {
     //从数据库中获取items数据
     public BaseResponse<Object> getItemsByShopName(ResourceTypeRequest request) {
         ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
-        List<ItemsRequest> itemsRequests = jdbcRepository.readItemsInfo(shopifyRequest);
-        Map<String, ItemsRequest> itemMap = itemsRequests.stream()
-                .collect(Collectors.toMap(ItemsRequest::getItemName, item -> new ItemsRequest(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
+        List<ItemsDO> itemsRequests = itemsService.readItemsInfo(shopifyRequest);
+        Map<String, ItemsDO> itemMap = itemsRequests.stream()
+                .collect(Collectors.toMap(ItemsDO::getItemName, item -> new ItemsDO(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
         if (itemsRequests.isEmpty()) {
             getTranslationItemsInfo(request);
             shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
-            itemsRequests = jdbcRepository.readItemsInfo(shopifyRequest);
+            itemsRequests = itemsService.readItemsInfo(shopifyRequest);
             itemMap = itemsRequests.stream()
-                    .collect(Collectors.toMap(ItemsRequest::getItemName, item -> new ItemsRequest(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
+                    .collect(Collectors.toMap(ItemsDO::getItemName, item -> new ItemsDO(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
         }
         return new BaseResponse<>().CreateSuccessResponse(itemMap);
-
     }
 }

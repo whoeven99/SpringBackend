@@ -1,5 +1,6 @@
 package com.bogdatech.controller;
 
+import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
@@ -9,7 +10,6 @@ import com.bogdatech.model.controller.request.RegisterTransactionRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.repository.JdbcRepository;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
-import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
+import static com.bogdatech.enums.ErrorEnum.*;
 
 @RestController
 
@@ -31,7 +30,7 @@ public class TranslateController {
     private TranslateService translateService;
 
     @Autowired
-    private JdbcRepository jdbcRepository;
+    private ITranslatesService translatesService;
 
     @Autowired
     private ShopifyHttpIntegration shopifyApiIntegration;
@@ -47,16 +46,17 @@ public class TranslateController {
      */
     @PostMapping("/translate/insertShopTranslateInfo")
     public BaseResponse<Object> insertShopTranslateInfo(@RequestBody TranslateRequest request) {
-        List<String> status = (jdbcRepository.readStatus(request));
-        if (!status.isEmpty()) {
-            return new BaseResponse<>().CreateErrorResponse("Language is exist");
+        Integer status = (translatesService.readStatus(request));
+        if (status != null ) {
+            return new BaseResponse<>().CreateErrorResponse(DATA_EXIST);
         } else {
-            int result = jdbcRepository.insertShopTranslateInfo(request, 0);
+            Integer result = translatesService.insertShopTranslateInfo(request, 0);
             if (result > 0) {
                 return new BaseResponse<>().CreateSuccessResponse("Created language");
             }
             return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
         }
+//        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 
     /*
@@ -80,7 +80,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/readTranslateInfo")
     public BaseResponse<Object> readTranslateInfo(@RequestBody TranslatesDO request) {
-        List<TranslatesDO> list = jdbcRepository.readTranslateInfo(request.getStatus());
+        List<TranslatesDO> list = translatesService.readTranslateInfo(request.getStatus());
         if (list != null && !list.isEmpty()) {
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
@@ -92,7 +92,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/readInfoByShopName")
     public BaseResponse<Object> readInfoByShopName(@RequestBody TranslateRequest request) {
-        List<TranslatesDO> translatesDos = jdbcRepository.readInfoByShopName(request);
+        List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(request);
         if (!translatesDos.isEmpty()) {
             return new BaseResponse<>().CreateSuccessResponse(translatesDos);
         }
@@ -111,14 +111,12 @@ public class TranslateController {
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @PostMapping("/translate/clickTranslation")
-    public int clickTranslation(@RequestBody TranslateRequest request) {
+    public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
         //翻译
         translateService.translating(request);
         //返回一个status值
-        int i = Integer.parseInt(jdbcRepository.readStatus(request).get(0));
-//        //存数据库
-//        translateService.saveTranslateText(request);
-        return 1;
+//        int i = translatesService.getStatusInTranslatesByShopName(request);
+        return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
 
     /*
@@ -135,7 +133,9 @@ public class TranslateController {
         return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
     }
 
-
+    /*
+     *  测试存shopify本地
+     */
     @PostMapping("/translate/insertTranslatedText")
     public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
         ShopifyRequest request = new ShopifyRequest();

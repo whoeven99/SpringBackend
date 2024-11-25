@@ -1,25 +1,25 @@
 package com.bogdatech.controller;
 
+import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.repository.JdbcRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 import static com.bogdatech.enums.ErrorEnum.*;
 
 @RestController
 public class TranslationCounterController {
+
     @Autowired
-    private JdbcRepository jdbcRepository;
+    private ITranslationCounterService translationCounterService;
 
     @PostMapping("/translationCounter/insertCharsByShopName")
-    public BaseResponse insertCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        int result = jdbcRepository.insertCharsByShopName(request);
+    public BaseResponse<Object> insertCharsByShopName(@RequestBody TranslationCounterRequest request) {
+        Integer result = translationCounterService.insertCharsByShopName(request);
         //int result = 1;
         if (result > 0) {
             return new BaseResponse().CreateSuccessResponse(result);
@@ -28,17 +28,17 @@ public class TranslationCounterController {
     }
 
     @PostMapping("/translationCounter/getCharsByShopName")
-    public BaseResponse getCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        List<TranslationCounterRequest> translatesDOS = jdbcRepository.readCharsByShopName(request);
-        if (translatesDOS.size() > 0){
+    public BaseResponse<Object> getCharsByShopName(@RequestBody TranslationCounterRequest request) {
+       TranslationCounterDO translatesDOS = translationCounterService.readCharsByShopName(request);
+        if (translatesDOS != null){
             return new BaseResponse().CreateSuccessResponse(translatesDOS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
     @PostMapping("/translationCounter/updateCharsByShopName")
-    public BaseResponse updateCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        int result = jdbcRepository.updateUsedCharsByShopName(request);
+    public BaseResponse<Object> updateCharsByShopName(@RequestBody TranslationCounterRequest request) {
+        int result = translationCounterService.updateUsedCharsByShopName(request);
         if (result > 0) {
             return new BaseResponse().CreateSuccessResponse(result);
         }

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class UserSubscriptionsRequest {
     private String shopName;
-    private String planId;
+    private int planId;
     private int status;
     private LocalDateTime startDate;
     private LocalDateTime endDate;

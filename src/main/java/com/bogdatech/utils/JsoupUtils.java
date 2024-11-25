@@ -45,18 +45,19 @@ public class JsoupUtils {
         List<String> translatedTexts = new ArrayList<>();
         for (String text : textsToTranslate) {
             String translated = translateSingleLine(text, request.getTarget());
+            counter.addChars(text.length());
             if (translated != null) {
 //                System.out.println("用了缓存的数据html： " + translated);
+
                 translatedTexts.add(translated);
             } else {
                 request.setContent(text);
-
                 //google翻译的接口
 //            String translatedValue = translateApiIntegration.googleTranslate(request);
 //            String translatedValue = translateApiIntegration.baiDuTranslate(request);
-                String targetContent = translateApiIntegration.microsoftTranslate(request);
-                addData(target, targetContent, targetContent);
-                translatedTexts.add(targetContent);
+                String targetString = translateApiIntegration.microsoftTranslate(request);
+                addData(target, text, targetString);
+                translatedTexts.add(targetString);
             }
         }
 

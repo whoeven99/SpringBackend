@@ -1,5 +1,4 @@
 package com.bogdatech.entity;
-
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -10,15 +9,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("Translates")
-public class TranslatesDO {
+@TableName("SubscriptionPlans")
+public class SubscriptionPlansDO {
     @TableId(type = IdType.AUTO)
-    private Integer id;
-    private String source;
-    private String accessToken;
-    private String target;
-    private String shopName;
-    private Integer status;
-//    private Timestamp createAt;
-//    private Timestamp updateAt;
+    private Integer planId;
+    private String planName;
+    private String description;
+    private Integer price;
+    private Integer maxTranslationsMonth;
 }
