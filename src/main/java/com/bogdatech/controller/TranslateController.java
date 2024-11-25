@@ -1,14 +1,13 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslatesService;
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.logic.TranslateService;
-import com.bogdatech.model.controller.request.CloudInsertRequest;
-import com.bogdatech.model.controller.request.RegisterTransactionRequest;
-import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -23,7 +22,6 @@ import java.util.Map;
 import static com.bogdatech.enums.ErrorEnum.*;
 
 @RestController
-
 public class TranslateController {
 
     @Autowired
@@ -37,6 +35,9 @@ public class TranslateController {
 
     @Autowired
     TranslateApiIntegration translateApiIntegration;
+
+    @Autowired
+    ITranslationCounterService translationCounterService;
     private TelemetryClient appInsights = new TelemetryClient();
 
     @Autowired
@@ -112,8 +113,16 @@ public class TranslateController {
      */
     @PostMapping("/translate/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
+        //判断字符是否超限
+        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0));
+        int remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
+        int usedChars = request1.getUsedChars();
+        // 如果字符超限，则直接返回字符超限
+        if ( usedChars >= remainingChars){
+            return new BaseResponse<>().CreateErrorResponse("Character Limit Reached");
+        }
         //翻译
-        translateService.translating(request);
+        translateService.translating(request, usedChars, remainingChars);
         //返回一个status值
 //        int i = translatesService.getStatusInTranslatesByShopName(request);
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);

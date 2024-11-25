@@ -32,8 +32,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public int updateTranslateStatus(String shopName, int status, String target) {
-       return baseMapper.updateTranslateStatus(status, shopName, target);
+    public int updateTranslateStatus(String shopName, int status, String target, String source) {
+       return baseMapper.updateTranslateStatus(status, shopName, target, source);
     }
 
     @Override
