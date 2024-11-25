@@ -1,5 +1,8 @@
 package com.bogdatech.logic;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IItemsService;
 import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.Service.IUserSubscriptionsService;
@@ -8,6 +11,7 @@ import com.bogdatech.entity.ItemsDO;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.enums.ErrorEnum;
+import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.model.controller.request.*;
@@ -37,8 +41,7 @@ import java.util.stream.Collectors;
 
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
-import static com.bogdatech.enums.ErrorEnum.NETWORK_ERROR;
-import static com.bogdatech.enums.ErrorEnum.SERVER_ERROR;
+import static com.bogdatech.enums.ErrorEnum.*;
 
 @Component
 public class ShopifyService {
@@ -78,13 +81,17 @@ public class ShopifyService {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
         String string;
+        JSONArray translationsArray;
         try {
             String requestBody = objectMapper.writeValueAsString(registerTransactionRequest);
             string = testingEnvironmentIntegration.sendShopifyPost("shopify/updateItem", requestBody);
+            JSONObject jsonObject = JSON.parseObject(string);
+            translationsArray = jsonObject.getJSONArray("translations");
+//            System.out.println("Translations: " + translationsArray.toJSONString());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        return string;
+        return translationsArray.toJSONString();
     }
 
     //获得翻译前一共需要消耗的字符数
@@ -330,10 +337,15 @@ public class ShopifyService {
     //修改shopify本地单条数据 和 更新本地数据库相应数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
         String string = updateShopifyData(registerTransactionRequest);
-        System.out.println("string = " + string);
+        if (string == null) {
+            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
+        }
+//        System.out.println("string = " + string);
         TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
         TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
+//        System.out.println("translateTextDO = " + translateTextDO);
         TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
+//        System.out.println("translateTextRequests = " + translateTextRequests);
         int i;
         if (translateTextRequests == null) {
             i = translateTextService.insertTranslateText(translateTextDO);

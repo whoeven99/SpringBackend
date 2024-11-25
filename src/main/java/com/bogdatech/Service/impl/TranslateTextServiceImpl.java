@@ -26,7 +26,7 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
 
     @Override
     public Integer updateTranslateText(TranslateTextRequest request) {
-        return baseMapper.updateTranslateText(request.getTextKey(), request.getDigest(), request.getShopName(), request.getTargetCode());
+        return baseMapper.updateTranslateText(request.getTargetText(), request.getDigest(), request.getShopName(), request.getTargetCode());
     }
 
     @Override
