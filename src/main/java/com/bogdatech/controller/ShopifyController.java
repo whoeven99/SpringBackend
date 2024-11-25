@@ -1,13 +1,16 @@
 package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogdatech.Service.ITranslatesService;
+import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.repository.JdbcRepository;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,12 +26,18 @@ public class ShopifyController {
     @Autowired
     private ShopifyHttpIntegration shopifyApiIntegration;
 
-    @Autowired
-    private JdbcRepository jdbcRepository;
 
     @Autowired
     private ShopifyService shopifyService;
 
+    @Autowired
+    private ITranslatesService translatesService;
+
+    @Autowired
+    private ITranslationCounterService translationCounterService;
+
+    @Autowired
+    private IUserSubscriptionsService userSubscriptionsService;
     private final TelemetryClient appInsights = new TelemetryClient();
 
     //通过测试环境调shopify的API
@@ -52,15 +61,15 @@ public class ShopifyController {
     // 用户消耗的字符数
     @PostMapping("/shopify/getConsumedWords")
     public BaseResponse<Object> getConsumedWords(@RequestBody TranslationCounterRequest request) {
-        List<TranslationCounterRequest> translationCounterRequests = jdbcRepository.readCharsByShopName(request);
-        return new BaseResponse<>().CreateSuccessResponse(translationCounterRequests.get(0).getUsedChars());
+        TranslationCounterDO translationCounterRequests = translationCounterService.readCharsByShopName(request);
+        return new BaseResponse<>().CreateSuccessResponse(translationCounterRequests.getUsedChars());
     }
 
     //获取用户的状态
     @PostMapping("/shopify/getUserStatus")
     public BaseResponse<Object> getUserStatus(@RequestBody TranslateRequest request) {
-        List<TranslatesDO> translatesDos = jdbcRepository.readInfoByShopName(request);
-        return new BaseResponse<>().CreateSuccessResponse(translatesDos.get(0).getStatus());
+        List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(request);
+        return new BaseResponse<>().CreateSuccessResponse(translatesDos);
     }
 
     //查询需要翻译的总字数-已翻译字符数
@@ -78,10 +87,10 @@ public class ShopifyController {
     //获取用户的额度字符数 和 已使用的字符
     @PostMapping("/shopify/getUserLimitChars")
     public BaseResponse<Object> getUserLimitChars(@RequestBody TranslationCounterRequest request) {
-        List<TranslationCounterRequest> translationCounterRequests = jdbcRepository.readCharsByShopName(request);
+        TranslationCounterDO translationCounterRequests = translationCounterService.readCharsByShopName(request);
         Map<String, Object> map = new HashMap<>();
-        map.put("chars", translationCounterRequests.get(0).getUsedChars());
-        map.put("totalChars", translationCounterRequests.get(0).getChars());
+        map.put("chars", translationCounterRequests.getUsedChars());
+        map.put("totalChars", translationCounterRequests.getChars());
         return new BaseResponse<>().CreateSuccessResponse(map);
     }
 
@@ -94,7 +103,7 @@ public class ShopifyController {
     //获取用户订阅计划
     @PostMapping("/shopify/getUserSubscriptionPlan")
     public BaseResponse<Object> getUserSubscriptionPlan(@RequestBody ShopifyRequest request) {
-        String userSubscriptionPlan = jdbcRepository.getUserSubscriptionPlan(request);
+        String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request);
         if (userSubscriptionPlan == null) {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_SELECT_ERROR);
         } else {

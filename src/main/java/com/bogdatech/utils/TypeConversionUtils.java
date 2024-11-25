@@ -1,5 +1,7 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.entity.TranslateTextDO;
+import com.bogdatech.entity.UserSubscriptionsDO;
 import com.bogdatech.model.controller.request.*;
 
 public class TypeConversionUtils {
@@ -40,6 +42,18 @@ public class TypeConversionUtils {
         return request;
     }
 
+    public static TranslateTextDO registerTransactionRequestToTranslateTextDO(RegisterTransactionRequest registerTransactionRequest) {
+        TranslateTextDO request = new TranslateTextDO();
+        request.setShopName(registerTransactionRequest.getShopName());
+        request.setTargetText(registerTransactionRequest.getValue());
+        request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
+        request.setTargetCode(registerTransactionRequest.getTarget());
+        request.setResourceId(registerTransactionRequest.getResourceId());
+        request.setSourceCode(registerTransactionRequest.getLocale());
+        request.setTextKey(registerTransactionRequest.getKey());
+        return request;
+    }
+
     public static CloudServiceRequest shopifyToCloudServiceRequest(ShopifyRequest request) {
         CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
         cloudServiceRequest.setShopName(request.getShopName());
@@ -55,4 +69,15 @@ public class TypeConversionUtils {
         shopifyRequest.setTarget(request.getTarget());
         return shopifyRequest;
     }
+
+    public static UserSubscriptionsDO UserSubscriptionsRequestToUserSubscriptionsDO(UserSubscriptionsRequest request){
+        UserSubscriptionsDO userSubscriptionsDO = new UserSubscriptionsDO();
+        userSubscriptionsDO.setShopName(request.getShopName());
+        userSubscriptionsDO.setPlanId(request.getPlanId());
+        userSubscriptionsDO.setStartDate(request.getStartDate());
+        userSubscriptionsDO.setEndDate(request.getEndDate());
+        userSubscriptionsDO.setStatus(request.getStatus());
+        return userSubscriptionsDO;
+    }
+
 }

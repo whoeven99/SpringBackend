@@ -1,21 +1,22 @@
 package com.bogdatech.controller;
 
 
+import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ChatGptIntegration;
+import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.model.JdbcTestModel;
 import com.bogdatech.repository.JdbcTestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 public class TestController {
 
-	@Autowired
 	private JdbcTestRepository jdbcTestRepository;
+	@Autowired
+	private TranslatesServiceImpl translatesServiceImpl;
 
 	@Autowired
 	private ChatGptIntegration chatGptIntegration;
@@ -33,5 +34,10 @@ public class TestController {
 	@GetMapping("/gpt")
 	public String chat(@RequestParam String prompt) {
 		return chatGptIntegration.chatWithGpt(prompt);
+	}
+
+	@PostMapping("/test/test1")
+	public int test1(@RequestBody TranslatesDO name) {
+		return translatesServiceImpl.updateTranslateStatus(name.getShopName(),name.getStatus(),name.getTarget());
 	}
 }

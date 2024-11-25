@@ -1,9 +1,9 @@
 package com.bogdatech.logic;
 
+import com.bogdatech.Service.IUsersService;
+import com.bogdatech.entity.UsersDO;
 import com.bogdatech.enums.ErrorEnum;
-import com.bogdatech.model.controller.request.UserRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.repository.JdbcRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 public class UserService {
 
     @Autowired
-    private JdbcRepository jdbcRepository;
+    private IUsersService usersService;
 
-    public BaseResponse<Object> addUser(UserRequest request) {
-        int i = jdbcRepository.addUser(request);
+    public BaseResponse<Object> addUser(UsersDO request) {
+        int i = usersService.addUser(request);
         if (i > 0) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {

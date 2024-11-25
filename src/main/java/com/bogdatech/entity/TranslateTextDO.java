@@ -1,5 +1,8 @@
-package com.bogdatech.model.controller.request;
+package com.bogdatech.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,9 +10,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TranslateTextRequest {
-
-    private int id;
+@TableName("TranslateTextTable")
+public class TranslateTextDO {
+    @TableId(type = IdType.AUTO)
+    private Integer id;
     private String shopName;
     private String resourceId;
     private String textType;
@@ -19,4 +23,5 @@ public class TranslateTextRequest {
     private String targetText;
     private String sourceCode;
     private String targetCode;
+
 }
