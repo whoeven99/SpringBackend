@@ -189,9 +189,7 @@ public class TranslateService {
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
 
     public void translating(TranslateRequest request,int usedChars ,int remainingChars) {
-        //TODO 测试一边
-        // 检查并获取用户翻译状态
-        // 转换请求对象
+        //TODO 检查并获取用户翻译状态
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
 //        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0));
@@ -201,7 +199,7 @@ public class TranslateService {
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
 //        // 如果字符超限，则抛异常
-        updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, request);
+//        updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, request);
         // 如果没有超限，则开始翻译流程
         translatesService.updateTranslateStatus(request.getShopName(), 2 , request.getTarget(), request.getSource());
         for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
@@ -210,16 +208,14 @@ public class TranslateService {
             cloudServiceRequest.setBody(query);
             String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
             translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
-
         }
 
 //        System.out.println("当前已使用了： " + counter.getTotalChars() + "个字符");
 //        Map<String, String> map = new HashMap<String, String>();
 //        map = SINGLE_LINE_TEXT.get(request.getTarget());
 //        System.out.println("map里面的数据： " + map);
-        // 更新数据库中的已使用字符数
+//         更新数据库中的已使用字符数
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-
         // 将翻译状态改为“部分翻译”
         translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource());
 
