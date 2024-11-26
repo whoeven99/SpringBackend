@@ -48,7 +48,10 @@ public enum ErrorEnum {
      * shopify返回错误
      */
     SHOPIFY_RETURN_ERROR(10011, "SHOPIFY_RETURN_ERROR"),
-    ;
+    /*
+     * 数据为空
+     */
+    DATA_IS_EMPTY(10012, "DATA_IS_EMPTY");
 
     public int errCode;
     public String errMsg;

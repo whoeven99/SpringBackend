@@ -42,7 +42,12 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public Integer getStatusInTranslatesByShopName(TranslateRequest request) {
-       return baseMapper.getStatusInTranslatesByShopName(request.getShopName(), request.getTarget());
+    public List<Integer> readStatusInTranslatesByShopName(TranslateRequest request) {
+       return baseMapper.readStatusInTranslatesByShopName(request.getShopName());
+    }
+
+    @Override
+    public TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO) {
+        return baseMapper.readTranslatesDOByArray(translatesDO.getShopName(),translatesDO.getSource(), translatesDO.getTarget());
     }
 }
