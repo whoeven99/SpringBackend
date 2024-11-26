@@ -7,10 +7,9 @@ import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.logic.TranslateService;
-import com.bogdatech.model.controller.request.RegisterTransactionRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.model.controller.request.TranslationCounterRequest;
+import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.*;
 
@@ -90,6 +90,25 @@ public class TranslateController {
     }
 
     /*
+     * 根据传入的数组获取对应的数据
+     */
+    @PostMapping("/translate/readTranslateDOByArray")
+    public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO[] translatesDOS) {
+        if (translatesDOS != null && translatesDOS.length > 0) {
+            TranslatesDO[] translatesDOResult = new TranslatesDO[translatesDOS.length];
+            int i = 0;
+            for (TranslatesDO translatesDO : translatesDOS
+            ) {
+                translatesDOResult[i] = translatesService.readTranslateDOByArray(translatesDO);
+                i++;
+            }
+            return new BaseResponse<>().CreateSuccessResponse(translatesDOResult);
+        }else {
+            return new  BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
+        }
+    }
+
+    /*
      * 读取shopName的所有翻译状态信息
      */
     @PostMapping("/translate/readInfoByShopName")
@@ -114,6 +133,8 @@ public class TranslateController {
      */
     @PostMapping("/translate/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
+        //将状态改为初始化的状态
+        translatesService.updateTranslateStatus(request.getShopName(), 4 , request.getTarget(), request.getSource());
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0));
         int remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
@@ -122,8 +143,12 @@ public class TranslateController {
         if ( usedChars >= remainingChars){
             return new BaseResponse<>().CreateErrorResponse("Character Limit Reached");
         }
+        //初始化计数器
+        CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
+
         //翻译
-        translateService.translating(request, usedChars, remainingChars);
+        translateService.translating(request, remainingChars, counter);
 
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
@@ -143,17 +168,17 @@ public class TranslateController {
     }
 
     /*
-     *  测试存shopify本地
+     *  将一条数据存shopify本地
      */
-//    @PostMapping("/translate/insertTranslatedText")
-//    public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
-//        ShopifyRequest request = new ShopifyRequest();
-//        request.setShopName(cloudServiceRequest.getShopName());
-//        request.setAccessToken(cloudServiceRequest.getAccessToken());
-//        request.setTarget(cloudServiceRequest.getTarget());
-//        Map<String, Object> body = cloudServiceRequest.getBody();
-//        shopifyApiIntegration.registerTransaction(request, body);
-//    }
+    @PostMapping("/translate/insertTranslatedText")
+    public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(cloudServiceRequest.getShopName());
+        request.setAccessToken(cloudServiceRequest.getAccessToken());
+        request.setTarget(cloudServiceRequest.getTarget());
+        Map<String, Object> body = cloudServiceRequest.getBody();
+        shopifyApiIntegration.registerTransaction(request, body);
+    }
 
 
     @PostMapping("/test")

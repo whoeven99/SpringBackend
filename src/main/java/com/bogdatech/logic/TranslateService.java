@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
@@ -188,20 +189,22 @@ public class TranslateService {
 
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
 
-    public void translating(TranslateRequest request,int usedChars ,int remainingChars) {
-        //TODO 检查并获取用户翻译状态
+
+    public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter) {
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
-//        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0));
-//        int remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
-//        int usedChars = request1.getUsedChars();
-        //初始化计数器
-        CharacterCountUtils counter = new CharacterCountUtils();
-        counter.addChars(usedChars);
-//        // 如果字符超限，则抛异常
-//        updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, request);
+
+        //一个用户当前只能翻译一条语言，根据用户的status判断
+        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
+        for (Integer integer : integers) {
+            if (integer == 2) {
+                throw new ClientException("The translation task is in progress. Please try translating again later.");
+            }
+        }
+
         // 如果没有超限，则开始翻译流程
-        translatesService.updateTranslateStatus(request.getShopName(), 2 , request.getTarget(), request.getSource());
+        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource());
+
         for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = new ShopifyQuery().getFirstQuery(translateResource);
@@ -210,10 +213,6 @@ public class TranslateService {
             translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
         }
 
-//        System.out.println("当前已使用了： " + counter.getTotalChars() + "个字符");
-//        Map<String, String> map = new HashMap<String, String>();
-//        map = SINGLE_LINE_TEXT.get(request.getTarget());
-//        System.out.println("map里面的数据： " + map);
 //         更新数据库中的已使用字符数
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         // 将翻译状态改为“部分翻译”
@@ -329,6 +328,8 @@ public class TranslateService {
             if (value == null || value.isEmpty()) {
                 continue;  // 跳过当前项
             }
+//            System.out.println("翻译内容：" + value);
+//            System.out.println("翻译字符数：" + counter.getTotalChars());
 
             //处理SINGLE_LINE_TEXT_FIELD的情况
             if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
@@ -435,7 +436,7 @@ public class TranslateService {
         request.setShopName(shopName);
 //        System.out.println("counter " + counter.getTotalChars() );
         if (counter.getTotalChars() >= remainingChars) {
-            translatesService.updateTranslateStatus(shopName, 3 , translateRequest.getTarget(), translateRequest.getSource());
+            translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource());
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             throw new ClientException("Character Limit Reached");
 

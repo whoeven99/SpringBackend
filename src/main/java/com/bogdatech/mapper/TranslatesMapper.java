@@ -28,7 +28,9 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
     @Select("SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE shop_name = #{shopName}")
     List<TranslatesDO> readInfoByShopName(String shopName);
 
-    @Select("SELECT status FROM Translates WHERE shop_name = #{shopName} and target = #{target}")
-    Integer getStatusInTranslatesByShopName(String shopName, String target);
+    @Select("SELECT status FROM Translates WHERE shop_name = #{shopName}")
+    List<Integer> readStatusInTranslatesByShopName(String shopName);
 
+    @Select("SELECT source,target,shop_name,status FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
+    TranslatesDO readTranslatesDOByArray(String shopName, String source, String target);
 }
