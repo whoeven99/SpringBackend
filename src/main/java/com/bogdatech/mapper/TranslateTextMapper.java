@@ -20,6 +20,6 @@ public interface TranslateTextMapper extends BaseMapper<TranslateTextDO> {
             "FROM TranslateTextTable WHERE digest = #{digest} and shop_name = #{shopName}  and target_code = #{targetCode} ")
     TranslateTextDO getTranslateTextInfo(String digest, String shopName, String targetCode);
 
-    @Select("SELECT target_text FROM TranslateTextTable WHERE digest = #{digest}")
-    String getTargetTextByDigest(String digest);
+    @Select("SELECT target_text FROM TranslateTextTable WHERE digest = #{digest} and target_code = #{target}")
+    String getTargetTextByDigest(String digest, String target);
 }

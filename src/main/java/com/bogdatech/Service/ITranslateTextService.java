@@ -13,5 +13,5 @@ public interface ITranslateTextService extends IService<TranslateTextDO> {
 
     TranslateTextDO getTranslateTextInfo(TranslateTextRequest request);
 
-    String getTargetTextByDigest(String digest);
+    String getTargetTextByDigest(String digest, String target);
 }

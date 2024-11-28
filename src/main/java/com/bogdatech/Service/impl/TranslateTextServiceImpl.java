@@ -35,8 +35,8 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
     }
 
     @Override
-    public String getTargetTextByDigest(String digest) {
-        return baseMapper.getTargetTextByDigest(digest);
+    public String getTargetTextByDigest(String digest, String target) {
+        return baseMapper.getTargetTextByDigest(digest, target);
     }
 
 

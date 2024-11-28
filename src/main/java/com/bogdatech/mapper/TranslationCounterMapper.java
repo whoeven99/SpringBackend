@@ -19,9 +19,10 @@ public interface TranslationCounterMapper extends BaseMapper<TranslationCounterD
     @Update("UPDATE TranslationCounter SET used_chars =  #{usedChars} WHERE shop_name = #{shopName}")
     Integer updateUsedCharsByShopName(String shopName, Integer usedChars);
 
-    @Select("SELECT sp.max_translations_month\n" +
+    @Select("SELECT sp.max_translations_month + tc.chars AS total_chars\n" +
             "FROM UserSubscriptions us\n" +
             "JOIN SubscriptionPlans sp ON us.plan_id = sp.plan_id\n" +
-            "WHERE us.shop_name = #{shopName}")
+            "JOIN TranslationCounter tc ON us.shop_name = tc.shop_name\n" +
+            "WHERE us.shop_name = 'quickstart-0f992326.myshopify.com';")
     int getMaxCharsByShopName(String shopName);
 }

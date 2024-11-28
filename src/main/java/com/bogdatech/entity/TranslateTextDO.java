@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @TableName("TranslateTextTable")
 public class TranslateTextDO {
 //    @TableId(type = IdType.AUTO)
-//    private Integer id;
+    private Integer id;
     private String shopName;
     private String resourceId;
     private String textType;

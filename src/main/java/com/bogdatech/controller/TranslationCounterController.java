@@ -17,6 +17,7 @@ public class TranslationCounterController {
     @Autowired
     private ITranslationCounterService translationCounterService;
 
+    //
     @PostMapping("/translationCounter/insertCharsByShopName")
     public BaseResponse<Object> insertCharsByShopName(@RequestBody TranslationCounterRequest request) {
         Integer result = translationCounterService.insertCharsByShopName(request);
@@ -43,5 +44,12 @@ public class TranslationCounterController {
             return new BaseResponse().CreateSuccessResponse(result);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+    }
+
+    //添加字符额度
+    @PostMapping("/translateCounter/addCharsByShopName")
+    public BaseResponse<Object> addCharsByShopName(@RequestBody TranslationCounterRequest request) {
+        translationCounterService.insertCharsByShopName(request);
+        return null;
     }
 }
