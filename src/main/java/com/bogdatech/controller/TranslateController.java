@@ -4,6 +4,7 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.logic.TranslateService;
@@ -11,6 +12,7 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
+import com.bogdatech.utils.StringUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,17 +41,21 @@ public class TranslateController {
 
     @Autowired
     ITranslationCounterService translationCounterService;
+
+    @Autowired
+    ALiYunTranslateIntegration aliyunTranslateIntegration;
     private TelemetryClient appInsights = new TelemetryClient();
 
     @Autowired
     private JsoupUtils jsoupUtils;
+
     /*
      * 插入shop信息
      */
     @PostMapping("/translate/insertShopTranslateInfo")
     public BaseResponse<Object> insertShopTranslateInfo(@RequestBody TranslateRequest request) {
         Integer status = (translatesService.readStatus(request));
-        if (status != null ) {
+        if (status != null) {
             return new BaseResponse<>().CreateErrorResponse(DATA_EXIST);
         } else {
             Integer result = translatesService.insertShopTranslateInfo(request, 0);
@@ -103,8 +109,8 @@ public class TranslateController {
                 i++;
             }
             return new BaseResponse<>().CreateSuccessResponse(translatesDOResult);
-        }else {
-            return new  BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
+        } else {
+            return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
         }
     }
 
@@ -134,13 +140,13 @@ public class TranslateController {
     @PostMapping("/translate/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
         //将状态改为初始化的状态
-        translatesService.updateTranslateStatus(request.getShopName(), 4 , request.getTarget(), request.getSource());
+        translatesService.updateTranslateStatus(request.getShopName(), 4, request.getTarget(), request.getSource());
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0));
         int remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
-        if ( usedChars >= remainingChars){
+        if (usedChars >= remainingChars) {
             return new BaseResponse<>().CreateErrorResponse("Character Limit Reached");
         }
         //初始化计数器
@@ -183,13 +189,26 @@ public class TranslateController {
 
     @PostMapping("/test")
     public boolean test(@RequestBody TranslateRequest request) {
-       return jsoupUtils.isHtml(request.getContent());
+        return jsoupUtils.isHtml(request.getContent());
 //        return translateService.translateHtmlText(request);
     }
 
-    //测试微软翻译API
+    //微软翻译API
     @PostMapping("/testAzure")
     public String testAzure(@RequestBody TranslateRequest request) {
         return translateApiIntegration.microsoftTranslate(request);
+    }
+
+    //对文本进行处理分解为单个单词
+    @PostMapping("/split")
+    public void splitWords(@RequestBody String sentence) {
+        String string = StringUtils.judgeStringType(sentence);
+        System.out.println("打印的结果： " + string);
+    }
+
+    //阿里云翻译API
+    @PostMapping("/testAli")
+    public String testAli(@RequestBody TranslateRequest request) {
+        return aliyunTranslateIntegration.aliyunTranslate(request);
     }
 }

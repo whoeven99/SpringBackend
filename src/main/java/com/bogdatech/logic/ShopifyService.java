@@ -39,8 +39,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
-import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
+import static com.bogdatech.entity.TranslateResourceDTO.*;
 import static com.bogdatech.enums.ErrorEnum.*;
 
 @Component
@@ -101,7 +100,7 @@ public class ShopifyService {
         CharacterCountUtils counter = new CharacterCountUtils();
         CharacterCountUtils translateCounter = new CharacterCountUtils();
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-        for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
+        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = shopifyQuery.getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
@@ -110,7 +109,7 @@ public class ShopifyService {
             System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
 
-        counter.addChars(-translateCounter.getTotalChars());
+//        counter.addChars(-translateCounter.getTotalChars());
 //        System.out.println("最后剩余的值： " + counter.getTotalChars());
 //        jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         return counter.getTotalChars();
@@ -129,7 +128,6 @@ public class ShopifyService {
 
     //将String数据转化为JsonNode数据
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
-//        appInsights.trackTrace("现在统计到： " + translateResource.getResourceType());
         System.out.println("现在统计到： " + translateResource.getResourceType());
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
