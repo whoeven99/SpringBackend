@@ -26,6 +26,6 @@ public interface TranslationCounterMapper extends BaseMapper<TranslationCounterD
             "WHERE us.shop_name = 'quickstart-0f992326.myshopify.com';")
     int getMaxCharsByShopName(String shopName);
 
-    @Update("UPDATE TranslationCounter SET chars = #{chars} WHERE shop_name = #{shopName}")
+    @Update("UPDATE TranslationCounter SET chars = chars + #{chars} WHERE shop_name = #{shopName}")
     Boolean updateCharsByShopName(String shopName, int chars);
 }

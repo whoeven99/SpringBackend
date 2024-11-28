@@ -49,7 +49,9 @@ public class TranslationCounterController {
     //添加字符额度
     @PostMapping("/translateCounter/addCharsByShopName")
     public BaseResponse<Object> addCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        translationCounterService.updateCharsByShopName(request);
-        return null;
+        if (translationCounterService.updateCharsByShopName(request)){
+            return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
     }
 }
