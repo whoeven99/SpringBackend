@@ -3,15 +3,15 @@ package com.bogdatech.integration;
 import com.aliyun.alimt20181012.models.TranslateGeneralResponse;
 import com.aliyun.tea.TeaException;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ALiYunTranslateIntegration {
-    @Value("${ALIBABA_CLOUD_ACCESS_KEY_ID}")
+
+
     private String accessKeyId;
 
-    @Value("${ALIBABA_CLOUD_ACCESS_KEY_SECRET}")
+
     private String accessKeySecret;
     public  com.aliyun.alimt20181012.Client createClient()  {
         // 工程代码泄露可能会导致 AccessKey 泄露，并威胁账号下所有资源的安全性。以下代码示例仅供参考。

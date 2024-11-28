@@ -1,8 +1,12 @@
 package com.bogdatech;
 
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
+
+import java.util.Properties;
 
 @SpringBootApplication
 @EnableAsync
@@ -11,6 +15,7 @@ public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
+    private final TelemetryClient appInsights = new TelemetryClient();
 
     // TODO Need to move this to Mybatis
 //    @Bean
@@ -25,4 +30,16 @@ public class Application {
 //            throw new RuntimeException(e);
 //        }
 //    }
+    @Bean
+    public String getApiKey() {
+        try {
+            Properties properties = new Properties();
+            properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
+            appInsights.trackTrace("获得的值为： " + properties.getProperty("ALIBABA_CLOUD_ACCESS_KEY_ID"));
+            System.out.println("获得的值为： " + properties.getProperty("ALIBABA_CLOUD_ACCESS_KEY_ID"));
+            return properties.getProperty("url");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
