@@ -49,7 +49,7 @@ public class TranslationCounterController {
     //添加字符额度
     @PostMapping("/translateCounter/addCharsByShopName")
     public BaseResponse<Object> addCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        translationCounterService.insertCharsByShopName(request);
+        translationCounterService.updateCharsByShopName(request);
         return null;
     }
 }
