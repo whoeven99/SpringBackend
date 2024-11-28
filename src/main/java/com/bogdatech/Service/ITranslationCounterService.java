@@ -10,4 +10,6 @@ public interface ITranslationCounterService extends IService<TranslationCounterD
     public int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest);
 
     int getMaxCharsByShopName(String shopName);
+
+    Boolean updateCharsByShopName(TranslationCounterRequest request);
 }
