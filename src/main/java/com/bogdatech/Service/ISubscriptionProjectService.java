@@ -4,4 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.bogdatech.entity.SubscriptionProjectDO;
 
 public interface ISubscriptionProjectService extends IService<SubscriptionProjectDO> {
+    Boolean insertSubscriptionProjectDO(SubscriptionProjectDO subscriptionProjectDO);
+
+    SubscriptionProjectDO[] readSubscriptionProject();
 }

@@ -54,7 +54,7 @@ public class TranslateController {
      */
     @PostMapping("/translate/insertShopTranslateInfo")
     public BaseResponse<Object> insertShopTranslateInfo(@RequestBody TranslateRequest request) {
-        Integer status = (translatesService.readStatus(request));
+        Integer status = translatesService.readStatus(request);
         if (status != null) {
             return new BaseResponse<>().CreateErrorResponse(DATA_EXIST);
         } else {
