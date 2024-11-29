@@ -3,6 +3,7 @@ package com.bogdatech.integration;
 import com.aliyun.alimt20181012.models.TranslateGeneralResponse;
 import com.aliyun.tea.TeaException;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.utils.ApiCodeUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,11 +28,16 @@ public class ALiYunTranslateIntegration {
     }
 
     public String aliyunTranslate(TranslateRequest translateRequest)  {
+        //将传入的target转为阿里云要用的target
+        String aliTarget = ApiCodeUtils.microsoftTransformCode(translateRequest.getTarget());
+        if (aliTarget.equals("#N/A")){
+            return "Alibaba Cloud does not support this language";
+        }
         com.aliyun.alimt20181012.Client client = createClient();
         com.aliyun.alimt20181012.models.TranslateGeneralRequest translateGeneralRequest = new com.aliyun.alimt20181012.models.TranslateGeneralRequest()
                 .setFormatType("text")
                 .setSourceLanguage(translateRequest.getSource())
-                .setTargetLanguage(translateRequest.getTarget())
+                .setTargetLanguage(aliTarget)
                 .setSourceText(translateRequest.getContent())
                 .setScene("general")
 //                .setContext("")
