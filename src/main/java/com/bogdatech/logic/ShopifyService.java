@@ -363,7 +363,7 @@ public class ShopifyService {
         if (i > 0 && string.equals(registerTransactionRequest.getValue())) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
-            return new BaseResponse<>().CreateErrorResponse(SERVER_ERROR);
+            return new BaseResponse<>().CreateErrorResponse("");
         }
     }
 
