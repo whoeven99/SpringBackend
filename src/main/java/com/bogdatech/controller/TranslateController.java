@@ -139,8 +139,12 @@ public class TranslateController {
      */
     @PostMapping("/translate/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
+
         //将状态改为初始化的状态
-        translatesService.updateTranslateStatus(request.getShopName(), 4, request.getTarget(), request.getSource());
+        int i = translatesService.updateTranslateStatus(request.getShopName(), 4, request.getTarget(), request.getSource());
+        if (!(i > 0)) {
+            return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+        }
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0));
         int remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());

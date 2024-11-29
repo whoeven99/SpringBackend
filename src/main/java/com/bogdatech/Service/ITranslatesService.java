@@ -17,4 +17,5 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO);
 
 
+    String getShopName(String shopName, String target, String source);
 }

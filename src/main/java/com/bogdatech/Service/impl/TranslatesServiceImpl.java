@@ -51,5 +51,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.readTranslatesDOByArray(translatesDO.getShopName(),translatesDO.getSource(), translatesDO.getTarget());
     }
 
+    @Override
+    public String getShopName(String shopName, String target, String source) {
+        return baseMapper.getShopName(shopName, target, source);
+    }
+
 
 }
