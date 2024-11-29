@@ -408,8 +408,8 @@ public class TranslateService {
                 break;
             case 4:
                 //谷歌API
-                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
@@ -445,14 +445,7 @@ public class TranslateService {
             String translatableContentDigest = contentItemNode.get("digest").asText();
             String key = contentItemNode.get("key").asText();
 
-            //对value进行判断 plainText
-            if ("HTML".equals(contentItemNode.get("type").asText())) {
-                //存放在html的list集合里面
-                judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-                continue;
-            }
-
-//            //对从数据库中获取的数据单独处理
+            //            //对从数据库中获取的数据单独处理
 //            if ("ONLINE_STORE_THEME".equals(contentItemNode.get("type").asText()) ||
 //                    "ONLINE_STORE_THEME_LOCALE_CONTENT".equals(contentItemNode.get("type").asText())
 //                    || "SHOP_POLICY".equals(contentItemNode.get("type").asText())
@@ -460,6 +453,13 @@ public class TranslateService {
 //                    || "EMAIL_TEMPLATE".equals(contentItemNode.get("type").asText())) {
 //
 //            }
+            //对value进行判断 plainText
+            if ("HTML".equals(contentItemNode.get("type").asText())) {
+                //存放在html的list集合里面
+                judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                continue;
+            }
+
             //用switch语句判断类型
             switch (StringUtils.judgeStringType(value)) {
                 case CURLY_BRACKET_ARRAY:

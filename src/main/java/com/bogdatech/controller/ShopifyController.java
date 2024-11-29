@@ -105,7 +105,7 @@ public class ShopifyController {
     //获取用户订阅计划
     @PostMapping("/shopify/getUserSubscriptionPlan")
     public BaseResponse<Object> getUserSubscriptionPlan(@RequestBody ShopifyRequest request) {
-        String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request);
+        String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request.getShopName());
         if (userSubscriptionPlan == null) {
             return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
         } else {
