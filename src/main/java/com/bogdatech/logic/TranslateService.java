@@ -417,7 +417,13 @@ public class TranslateService {
                 saveToShopify(targetCache, translation, resourceId, request);
             } else {
                 //根据chooseData来判断用什么翻译API
-                chooseTranslateApi(translation, registerTransactionRequest, request, chooseData);
+                try {
+                    chooseTranslateApi(translation, registerTransactionRequest, request, chooseData);
+                } catch (Exception e) {
+                    translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+                    translatesService.updateTranslateStatus(request.getShopName(), counter.getTotalChars(),  target, source);
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
