@@ -79,7 +79,11 @@ public class TranslateApiIntegration {
             jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
 //            appInsights.trackTrace("翻译结果：" + jsonObject);
             // 获取翻译结果
-            result = jsonObject.getJSONArray("trans_result").getJSONObject(0).getString("dst");
+            System.out.println("jsonObject: " + jsonObject);
+            if (jsonObject.containsKey("trans_result")) {
+                result = jsonObject.getJSONArray("trans_result").getJSONObject(0).getString("dst");
+                System.out.println("result: " + result);
+            }
             response.close();
             httpClient.close();
         } catch (IOException e) {
@@ -121,6 +125,7 @@ public class TranslateApiIntegration {
 
     //微软翻译API
     public String microsoftTranslate(TranslateRequest request) {
+//        String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
         CloseableHttpClient httpClient = HttpClients.createDefault();
         String micTarget = MicrosoftCodeUtils.transformCode(request.getTarget());
         HttpPost httpPost = new HttpPost(microsoftEndpoint + micTarget);
@@ -132,9 +137,9 @@ public class TranslateApiIntegration {
 
         // 设置请求体
         String requestBody = "[{\n" +
-                "    \"Text\": \" " + request.getContent() + " \"\n" +
+                "    \"Text\": \"" + request.getContent() + "\"\n" +
                 "}]";
-
+        System.out.println("requestBody" + requestBody);
         // 发送请求
         String responseContent = null;
         String result = null;
@@ -145,22 +150,20 @@ public class TranslateApiIntegration {
             HttpEntity responseEntity = response.getEntity();
             responseContent = EntityUtils.toString(responseEntity);
             // 获取翻译结果
+//            appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
+//            System.out.println("翻译错误信息：" + responseContent);
             JSONArray jsonArray = JSON.parseArray(responseContent);
             for (int i = 0; i < jsonArray.size(); i++) {
                 // 获取当前的 JSONObject
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
-
                 // 获取 translations 数组
                 JSONArray translations = jsonObject.getJSONArray("translations");
-
                 // 遍历 translations 数组
                 for (int j = 0; j < translations.size(); j++) {
                     // 获取当前的翻译对象
                     JSONObject translation = translations.getJSONObject(j);
-
                     // 获取 text 的值
                     result = translation.getString("text");
-
                 }
             }
             response.close();
