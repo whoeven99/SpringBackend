@@ -267,6 +267,7 @@ public class TranslateService {
         judgeData.put(DOUBLE_CURLY_BRACKET_AND_HUNDRED, new ArrayList<>());
         judgeData.put(PLAIN_TEXT, new ArrayList<>());
         judgeData.put(HTML, new ArrayList<>());
+        judgeData.put(DATABASE, new ArrayList<>());
         // 获取 translatableResources 节点
         JsonNode translatableResourcesNode = node.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
@@ -307,7 +308,7 @@ public class TranslateService {
                 judgeAndStoreData(translatableContent, resourceId, judgeData);
             }
         }
-        //TODO 测试了字数相同，翻译与存储功能没测
+
         //对judgeData数据进行翻译和存入shopify,除了html
         translateAndSaveData(judgeData, request, counter, remainingChars);
     }
@@ -332,9 +333,41 @@ public class TranslateService {
                 case PLAIN_TEXT:
                     translateDataByAPI(entry.getValue(), request, counter, remainingChars, 5);
                     break;
-                default:
+                case HTML:
                     translateHtml(entry.getValue(), request, counter, remainingChars);
                     break;
+                default:
+                    //处理database数据
+                    translateDataByDatabase(entry.getValue(), request, counter, remainingChars);
+                    break;
+            }
+        }
+    }
+
+    private void translateDataByDatabase(List<RegisterTransactionRequest> registerTransactionRequests, ShopifyRequest request, CharacterCountUtils counter, int remainingChars) {
+        String target = request.getTarget();
+        Map<String, Object> translation = new HashMap<>();
+        for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
+            String value = registerTransactionRequest.getValue();
+            String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
+            String key = registerTransactionRequest.getKey();
+            String source = registerTransactionRequest.getLocale();
+            String resourceId = registerTransactionRequest.getResourceId();
+            translation.put("locale", target);
+            translation.put("key", key);
+            translation.put("translatableContentDigest", translatableContentDigest);
+            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, null, source, target, null));
+            //从数据库中获取数据，如果不为空，存入shopify本地；如果为空翻译
+            String targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target);
+            String targetCache = translateSingleLine(value, request.getTarget());
+            counter.addChars(value.length());
+            if (targetCache != null) {
+                saveToShopify(targetCache, translation, resourceId, request);
+                continue;
+            } else if (targetText != null) {
+                addData(target, value, targetText);
+                saveToShopify(targetText, translation, resourceId, request);
+                continue;
             }
         }
     }
@@ -446,13 +479,14 @@ public class TranslateService {
             String key = contentItemNode.get("key").asText();
 
             //            //对从数据库中获取的数据单独处理
-//            if ("ONLINE_STORE_THEME".equals(contentItemNode.get("type").asText()) ||
-//                    "ONLINE_STORE_THEME_LOCALE_CONTENT".equals(contentItemNode.get("type").asText())
-//                    || "SHOP_POLICY".equals(contentItemNode.get("type").asText())
-//                    || "PACKING_SLIP_TEMPLATE".equals(contentItemNode.get("type").asText())
-//                    || "EMAIL_TEMPLATE".equals(contentItemNode.get("type").asText())) {
-//
-//            }
+            if ("ONLINE_STORE_THEME".equals(contentItemNode.get("type").asText()) ||
+                    "ONLINE_STORE_THEME_LOCALE_CONTENT".equals(contentItemNode.get("type").asText())
+                    || "SHOP_POLICY".equals(contentItemNode.get("type").asText())
+                    || "PACKING_SLIP_TEMPLATE".equals(contentItemNode.get("type").asText())
+                    || "EMAIL_TEMPLATE".equals(contentItemNode.get("type").asText())) {
+                judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null) );
+                continue;
+            }
             //对value进行判断 plainText
             if ("HTML".equals(contentItemNode.get("type").asText())) {
                 //存放在html的list集合里面
