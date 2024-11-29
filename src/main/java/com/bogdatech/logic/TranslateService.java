@@ -412,6 +412,7 @@ public class TranslateService {
             //获取缓存数据
             String targetCache = translateSingleLine(value, request.getTarget());
             counter.addChars(value.length());
+//            System.out.println("是否超限： " + counter.getTotalChars());
             if (targetCache != null) {
                 saveToShopify(targetCache, translation, resourceId, request);
             } else {
@@ -430,13 +431,15 @@ public class TranslateService {
         String source = registerTransactionRequest.getLocale();
         switch (chooseData) {
             case 1, 2:
-                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
             case 3:
                 //阿里云API 待接入
-                targetString = aliYunTranslateIntegration.aliyunTranslate(new TranslateRequest(0, null, null, source, target, value));
+                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = aliYunTranslateIntegration.aliyunTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
@@ -449,8 +452,8 @@ public class TranslateService {
                 break;
             default:
                 //百度API，火山API等等
-                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = baiDuTranslate(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
@@ -471,6 +474,7 @@ public class TranslateService {
             }
 
             String value = contentItemNode.get("value").asText();
+//            System.out.println("当前正在翻译： " + value);
             // 跳过 value 为空的项
             if (value == null || value.isEmpty()) {
                 continue;  // 跳过当前项
@@ -665,7 +669,6 @@ public class TranslateService {
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource());
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             throw new ClientException("Character Limit Reached");
-
         }
     }
 
