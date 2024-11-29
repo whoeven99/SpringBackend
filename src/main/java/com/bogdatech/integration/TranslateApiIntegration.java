@@ -6,6 +6,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
+import com.volcengine.model.request.translate.LangDetectRequest;
+import com.volcengine.model.request.translate.TranslateTextRequest;
+import com.volcengine.model.response.translate.LangDetectResponse;
+import com.volcengine.model.response.translate.TranslateTextResponse;
+import com.volcengine.service.translate.ITranslateService;
+import com.volcengine.service.translate.impl.TranslateServiceImpl;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -21,6 +27,7 @@ import org.springframework.util.DigestUtils;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Random;
 
 @Component
@@ -174,5 +181,41 @@ public class TranslateApiIntegration {
 
 //        System.out.println("responseContent: " + result);
         return result;
+    }
+
+    //火山翻译API
+    public String huoShanTranslate(TranslateRequest request) {
+
+        ITranslateService translateService = TranslateServiceImpl.getInstance();
+        // call below method if you dont set ak and sk in ～/.volc/config
+
+        translateService.setAccessKey("ak");
+        translateService.setSecretKey("sk");
+
+        // lang detect
+        try {
+            LangDetectRequest langDetectRequest = new LangDetectRequest();
+            langDetectRequest.setTextList(Arrays.asList("hello world", "how are you"));
+
+            LangDetectResponse langDetectResponse = translateService.langDetect(langDetectRequest);
+            System.out.println(JSON.toJSONString(langDetectResponse));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // translate text
+        TranslateTextResponse translateText = null;
+        try {
+            TranslateTextRequest translateTextRequest = new TranslateTextRequest();
+            translateTextRequest.setSourceLanguage("en"); // 不设置表示自动检测
+            translateTextRequest.setTargetLanguage("zh");
+            translateTextRequest.setTextList(Arrays.asList("hello world", "how are you"));
+
+            translateText = translateService.translateText(translateTextRequest);
+            System.out.println(JSON.toJSONString(translateText));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return JSON.toJSONString(translateText);
     }
 }

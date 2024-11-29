@@ -1,5 +1,6 @@
 package com.bogdatech.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
@@ -11,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @TableName("SubscriptionProject")
 public class SubscriptionProjectDO {
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Integer projectId;
-    private String key;
+    private String projectKey;
     private String name;
     private Integer characters;
     private Float currentPrice;

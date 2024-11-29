@@ -218,7 +218,7 @@ public class TranslateService {
 //         更新数据库中的已使用字符数
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         // 将翻译状态改为“部分翻译”
-        translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource());
+        translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource());
 
     }
 
