@@ -75,6 +75,7 @@ public class ShopifyService {
         }
         return string;
     }
+
     //封装调用云服务器实现更新shopify数据的方法
     public String updateShopifyData(RegisterTransactionRequest registerTransactionRequest) {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
@@ -87,7 +88,7 @@ public class ShopifyService {
             string = testingEnvironmentIntegration.sendShopifyPost("shopify/updateItem", requestBody);
             JSONObject jsonObject = JSON.parseObject(string);
 //            System.out.println("jsonObject: " + jsonObject);
-            translationsArray =  jsonObject.getJSONObject("translationsRegister");
+            translationsArray = jsonObject.getJSONObject("translationsRegister");
             translationsObject = translationsArray.getJSONArray("translations");
         } catch (JsonProcessingException e) {
             throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
@@ -326,11 +327,17 @@ public class ShopifyService {
         LocalDateTime startDate = LocalDateTime.parse(localDateFormat, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         request.setStartDate(startDate);
         request.setEndDate(null);
-        int i = userSubscriptionsService.addUserSubscription(request);
-        if (i > 0) {
-            return new BaseResponse<>().CreateSuccessResponse("success");
+        //先判断是否有这个数据，没有插入，有了更新
+        String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request.getShopName());
+        if (userSubscriptionPlan == null) {
+            Integer i = userSubscriptionsService.addUserSubscription(request);
+            if (i > 0) {
+                return new BaseResponse<>().CreateSuccessResponse("success");
+            } else {
+                return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
+            }
         } else {
-            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
+            return new BaseResponse<>().CreateSuccessResponse("success");
         }
     }
 
@@ -352,7 +359,7 @@ public class ShopifyService {
         } else {
             i = translateTextService.updateTranslateText(request);
         }
-        if (i > 0  && string.equals(registerTransactionRequest.getValue()) ) {
+        if (i > 0 && string.equals(registerTransactionRequest.getValue())) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
             return new BaseResponse<>().CreateErrorResponse(SERVER_ERROR);
@@ -540,4 +547,5 @@ public class ShopifyService {
         }
         return new BaseResponse<>().CreateSuccessResponse(itemMap);
     }
+
 }

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.entity.UserSubscriptionsDO;
 import com.bogdatech.mapper.UserSubscriptionsMapper;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.UserSubscriptionsRequest;
 import com.bogdatech.utils.TypeConversionUtils;
 import org.springframework.stereotype.Service;
@@ -20,8 +19,15 @@ public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsM
     }
 
     @Override
-    public String getUserSubscriptionPlan(ShopifyRequest request) {
-        return baseMapper.getUserSubscriptionPlan(request.getShopName());
+    public String getUserSubscriptionPlan(String shopName) {
+        return baseMapper.getUserSubscriptionPlan(shopName);
     }
+
+    @Override
+    public Boolean updateUserSubscription(UserSubscriptionsRequest request) {
+        return null;
+    }
+
+
 }
 

@@ -20,12 +20,20 @@ public class TranslationCounterController {
     //
     @PostMapping("/translationCounter/insertCharsByShopName")
     public BaseResponse<Object> insertCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        Integer result = translationCounterService.insertCharsByShopName(request);
-        //int result = 1;
-        if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
+        TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(request);
+        if (translationCounterDO == null) {
+            Integer result = translationCounterService.insertCharsByShopName(request);
+            //int result = 1;
+            if (result > 0) {
+                return new BaseResponse().CreateSuccessResponse(result);
+            }else {
+                return new BaseResponse<>().CreateSuccessResponse(null);
+            }
+        }else {
+            return new BaseResponse<>().CreateSuccessResponse(null);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+
+
     }
 
     @PostMapping("/translationCounter/getCharsByShopName")
