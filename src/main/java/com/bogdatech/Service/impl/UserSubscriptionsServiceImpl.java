@@ -12,8 +12,7 @@ import org.springframework.stereotype.Service;
 public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsMapper, UserSubscriptionsDO> implements IUserSubscriptionsService {
 
     @Override
-    public Integer addUserSubscription(UserSubscriptionsRequest request) {
-        //TODO 对传入的数据进行限制
+    public Integer addUserSubscription(UserSubscriptionsRequest request) {//TODO 对传入的数据进行限制
         UserSubscriptionsDO userSubscriptionsDO = TypeConversionUtils.UserSubscriptionsRequestToUserSubscriptionsDO(request);
         return baseMapper.insert(userSubscriptionsDO);
     }

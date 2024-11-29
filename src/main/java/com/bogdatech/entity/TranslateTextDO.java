@@ -10,8 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @TableName("TranslateTextTable")
 public class TranslateTextDO {
-//    @TableId(type = IdType.AUTO)
-    private Integer id;
+
     private String shopName;
     private String resourceId;
     private String textType;
@@ -21,5 +20,4 @@ public class TranslateTextDO {
     private String targetText;
     private String sourceCode;
     private String targetCode;
-
 }

@@ -15,4 +15,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     public List<Integer> readStatusInTranslatesByShopName(TranslateRequest request);
 
     TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO);
+
+
 }
