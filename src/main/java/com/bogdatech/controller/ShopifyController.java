@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
+import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 
 @RestController
 public class ShopifyController {
@@ -127,6 +128,16 @@ public class ShopifyController {
         return new BaseResponse<>().CreateSuccessResponse(200);
     }
 
+    //修改翻译状态
+    @PostMapping("/shopify/updateTranslationStatus")
+    public BaseResponse<Object> updateTranslationStatus(@RequestBody TranslateRequest request) {
+        int i = shopifyService.updateTranslationStatus(request);
+        if(i > 0){
+            return new BaseResponse<>().CreateSuccessResponse(200);
+        }else{
+            return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+        }
+    }
     //先从数据库中获取在调用getItemsByShopName
     @PostMapping("/shopify/getItemsInSqlByShopName")
     public BaseResponse<Object> getItemsInSqlByShopName(@RequestBody ResourceTypeRequest request) {

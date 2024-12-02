@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IItemsService;
 import com.bogdatech.Service.ITranslateTextService;
+import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.ItemsDO;
@@ -32,10 +33,8 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -59,6 +58,9 @@ public class ShopifyService {
 
     @Autowired
     private IItemsService itemsService;
+    
+    @Autowired
+    private ITranslatesService translatesService;
     private final TelemetryClient appInsights = new TelemetryClient();
     ShopifyQuery shopifyQuery = new ShopifyQuery();
 
@@ -399,6 +401,12 @@ public class ShopifyService {
                 String infoByShopify = getShopifyData(cloudServiceRequest);
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
             }
+            if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
+                translatedCounter.reset();
+                translatedCounter.addChars(allCounter.getTotalChars());
+            }
+//            System.out.println("total: " + allCounter.getTotalChars());
+//            System.out.println("translated: " + translatedCounter.getTotalChars());
             //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
             if (!itemsService.readSingleItemInfo(shopifyRequest, resourceType).isEmpty()) {
                 itemsService.updateItemsByShopName(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
@@ -476,21 +484,26 @@ public class ShopifyService {
     //计数 ONLINE_STORE_THEME 类型的资源数据。
     private void countThemeData(JsonNode translationsNode, JsonNode translatableContentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter) {
         if (translatableContentNode != null) {
+
             // 遍历可翻译内容节点，增加未翻译的字符数
             for (JsonNode contentItem : translatableContentNode) {
+//                System.out.println("total: " + contentItem);
                 counter.addChars(1);
+
             }
         }
 
         if (translationsNode != null) {
             // 遍历翻译内容节点，增加已翻译的字符数
             for (JsonNode contentItem : translationsNode) {
+//                System.out.println("translated: " + contentItem);
                 ObjectNode contentItemNode = (ObjectNode) contentItem;
-                if (contentItemNode != null && !contentItemNode.isEmpty()) {
+                if (contentItemNode != null) {
                     translatedCounter.addChars(1);
                 }
             }
         }
+
     }
 
 
@@ -549,4 +562,24 @@ public class ShopifyService {
         return new BaseResponse<>().CreateSuccessResponse(itemMap);
     }
 
+    //根据项数修改翻译状态
+    public int updateTranslationStatus(TranslateRequest request) {
+        AtomicInteger i = new AtomicInteger();
+        int i1;
+        getTranslationItemsInfo(new ResourceTypeRequest(request.getShopName(), request.getAccessToken(), null, request.getTarget()));
+        //从数据库中获取数据并判断
+        List<ItemsDO> itemsRequests = itemsService.readItemsInfo(new ShopifyRequest(request.getShopName(), null, null, request.getTarget()));
+        itemsRequests.forEach(item -> {
+            if (Objects.equals(item.getTranslatedNumber(), item.getTotalNumber())) {
+                i.getAndIncrement();
+            }
+    });
+        if (i.get() == RESOURCE_MAP.size()) {
+             i1 = translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource());
+        }else {
+             i1 = translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource());
+        }
+        return i1;
+    }
 }
+

@@ -50,7 +50,7 @@ public class TranslateController {
     private JsoupUtils jsoupUtils;
 
     /*
-     * 插入shop信息
+     * 插入shop翻译项信息
      */
     @PostMapping("/translate/insertShopTranslateInfo")
     public BaseResponse<Object> insertShopTranslateInfo(@RequestBody TranslateRequest request) {
@@ -191,6 +191,7 @@ public class TranslateController {
     }
 
 
+    //测试将html语句拆解
     @PostMapping("/test")
     public boolean test(@RequestBody TranslateRequest request) {
         return jsoupUtils.isHtml(request.getContent());

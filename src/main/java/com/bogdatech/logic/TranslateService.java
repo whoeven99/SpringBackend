@@ -212,12 +212,12 @@ public class TranslateService {
             cloudServiceRequest.setBody(query);
             String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
             translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
-            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
+//            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
         }
 
 //         更新数据库中的已使用字符数
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-        // 将翻译状态改为“部分翻译”
+        // 将翻译状态改为“已翻译”// TODO: 正常来说是部分翻译，逻辑后面再改
         translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource());
 
     }
@@ -225,7 +225,7 @@ public class TranslateService {
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
     @Async
     public void translateJson(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO, CharacterCountUtils counter, int remainingChars) {
-        System.out.println("现在翻译到： " + translateResourceDTO.getResourceType());
+//        System.out.println("现在翻译到： " + translateResourceDTO.getResourceType());
         if (objectData == null) {
             // 返回默认值或空结果
             return;
