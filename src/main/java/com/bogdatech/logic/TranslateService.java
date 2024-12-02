@@ -444,8 +444,8 @@ public class TranslateService {
                 break;
             case 3:
                 //阿里云API 待接入
-//                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-                targetString = aliYunTranslateIntegration.aliyunTranslate(new TranslateRequest(0, null, null, source, target, value));
+                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = aliYunTranslateIntegration.aliyunTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
