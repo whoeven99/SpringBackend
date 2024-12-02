@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 public class ALiYunTranslateIntegration {
 
 
-    public  com.aliyun.alimt20181012.Client createClient()  {
+    public com.aliyun.alimt20181012.Client createClient() {
         // 工程代码泄露可能会导致 AccessKey 泄露，并威胁账号下所有资源的安全性。以下代码示例仅供参考。
         // 建议使用更安全的 STS 方式，更多鉴权访问方式请参见：https://help.aliyun.com/document_detail/378657.html。
         com.aliyun.teaopenapi.models.Config config = new com.aliyun.teaopenapi.models.Config()
@@ -27,10 +27,10 @@ public class ALiYunTranslateIntegration {
         }
     }
 
-    public String aliyunTranslate(TranslateRequest translateRequest)  {
+    public String aliyunTranslate(TranslateRequest translateRequest) {
         //将传入的target转为阿里云要用的target
         String aliTarget = ApiCodeUtils.microsoftTransformCode(translateRequest.getTarget());
-        if (aliTarget.equals("#N/A")){
+        if (aliTarget.equals("#N/A")) {
             return "Alibaba Cloud does not support this language";
         }
         com.aliyun.alimt20181012.Client client = createClient();

@@ -27,15 +27,4 @@ public class Application {
 //            throw new RuntimeException(e);
 //        }
 //    }
-//    @Bean
-//    public String getApiKey() {
-//        try {
-//            Properties properties = new Properties();
-//            properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
-//            appInsights.trackTrace("获得的值为： " +  System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"));
-//            return properties.getProperty("url");
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
 }
