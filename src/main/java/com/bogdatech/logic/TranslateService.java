@@ -393,7 +393,12 @@ public class TranslateService {
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, null, source, target, null));
             counter.addChars(value.length());
-            String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, request.getTarget());
+            String targetText = null;
+            try {
+                targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, request.getTarget());
+            } catch (Exception e) {
+                continue;
+            }
             saveToShopify(targetText, translation, resourceId, request);
         }
     }
