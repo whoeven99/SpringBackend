@@ -1,5 +1,6 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.jsoup.Jsoup;
@@ -62,15 +63,20 @@ public class JsoupUtils {
 
 //         Replace original texts with translated ones
         int index = 0;
-        for (Element element : elements) {
-            if (!element.is("script, style")) {
-                if (!element.ownText().trim().isEmpty()) {
-                    element.text(translatedTexts.get(index++));
-                }
-                if (element.hasAttr("alt")) {
-                    element.attr("alt", translatedTexts.get(index++));
+        try {
+            for (Element element : elements) {
+                if (!element.is("script, style")) {
+                    if (!element.ownText().trim().isEmpty()) {
+                        System.out.println("html_error: " + translatedTexts.get(index));
+                        element.text(translatedTexts.get(index++));
+                    }
+                    if (element.hasAttr("alt")) {
+                        element.attr("alt", translatedTexts.get(index++));
+                    }
                 }
             }
+        } catch (Exception e) {
+            throw new ClientException("This text is not a string");
         }
 
         return doc.html();

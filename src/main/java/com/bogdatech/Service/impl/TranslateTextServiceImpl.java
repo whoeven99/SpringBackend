@@ -59,7 +59,7 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
                                     translateText.getResourceId() + "|" +
                                     translateText.getTargetCode() + "|" +
                                     translateText.getSourceText() + "|" +
-                                    translateText.getTargetText())
+                                    translateText.getSourceCode())
                     .collect(Collectors.toSet());
 
             List<String> uniqueKeyList = new ArrayList<>(uniqueKeys);
@@ -68,7 +68,7 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
                     .in(TranslateTextDO::getResourceId, uniqueKeyList.stream().map(key -> key.split("\\|")[1]).collect(Collectors.toList()))
                     .in(TranslateTextDO::getTargetCode, uniqueKeyList.stream().map(key -> key.split("\\|")[2]).collect(Collectors.toList()))
                     .in(TranslateTextDO::getSourceText, uniqueKeyList.stream().map(key -> key.split("\\|")[3]).collect(Collectors.toList()))
-                    .in(TranslateTextDO::getTargetText, uniqueKeyList.stream().map(key -> key.split("\\|")[4]).collect(Collectors.toList()));
+                    .in(TranslateTextDO::getSourceCode, uniqueKeyList.stream().map(key -> key.split("\\|")[4]).collect(Collectors.toList()));
 
             List<TranslateTextDO> existingEntities = this.list(queryWrapper);
 
@@ -78,7 +78,7 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
                     .collect(Collectors.toList());
 
             if (!newEntitiesInBatch.isEmpty()) {
-                System.out.println("newEntitiesInBatch:" + newEntitiesInBatch.stream().toList());
+//                System.out.println("newEntitiesInBatch:" + newEntitiesInBatch.stream().toList());
                 this.saveBatch(newEntitiesInBatch);
             }
         }

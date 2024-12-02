@@ -158,13 +158,7 @@ public class TranslateController {
         counter.addChars(usedChars);
 
         //翻译
-        try {
-            translateService.translating(request, remainingChars, counter);
-        } catch (Exception e) {
-            //将状态改为部分翻译的状态
-            translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource());
-            throw new RuntimeException(e);
-        }
+        translateService.translating(request, remainingChars, counter);
 
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
@@ -229,7 +223,7 @@ public class TranslateController {
         Boolean b = translatesService.deleteFromTranslates(request);
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
         }
     }
