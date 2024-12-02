@@ -76,7 +76,7 @@ public class JsoupUtils {
                 }
             }
         } catch (Exception e) {
-            throw new ClientException("This text is not a string");
+            throw new ClientException("This text is not a html element");
         }
 
         return doc.html();
