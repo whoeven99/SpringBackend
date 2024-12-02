@@ -350,12 +350,12 @@ public class ShopifyService {
         if (string == null) {
             throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
-        System.out.println("string = " + string);
+//        System.out.println("string = " + string);
         TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
         TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
-        System.out.println("translateTextDO = " + translateTextDO);
+//        System.out.println("translateTextDO = " + translateTextDO);
         TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
-        System.out.println("translateTextRequests = " + translateTextRequests);
+//        System.out.println("translateTextRequests = " + translateTextRequests);
         int i;
         if (translateTextRequests == null) {
             i = translateTextService.insertTranslateText(translateTextDO);

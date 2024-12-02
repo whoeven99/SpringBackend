@@ -420,9 +420,10 @@ public class TranslateService {
                 try {
                     chooseTranslateApi(translation, registerTransactionRequest, request, chooseData);
                 } catch (Exception e) {
+                    System.out.println("翻译失败后的字符数： " + counter.getTotalChars());
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                     translatesService.updateTranslateStatus(request.getShopName(), 3, target, source);
-                    throw new RuntimeException(e);
+                    throw new ClientException("translated failed");
                 }
             }
         }
@@ -527,115 +528,6 @@ public class TranslateService {
 
         }
 
-    }
-
-    //将获得的DATABASE_RESOURCES数据进行判断 存储到不同集合， 对不同集合的数据进行特殊处理
-
-
-    //对符合条件的  value 进行翻译并存储到shopify本地
-    private void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, String resourceId, int remainingChars) {
-        //初始化存储到shopify本地的数据
-        Map<String, Object> translation = new HashMap<>();
-        String target = request.getTarget();
-        for (JsonNode contentItem : contentNode) {
-            ObjectNode contentItemNode = (ObjectNode) contentItem;
-            //打印当前遍历的值 为什么部分不翻译
-
-//             跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText())
-                    || "JSON".equals(contentItemNode.get("type").asText())
-                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
-            ) {
-                continue;  // 跳过当前项
-            }
-
-            // 准备翻译信息
-            translation.put("locale", request.getTarget());
-            translation.put("key", contentItemNode.get("key").asText());
-            translation.put("translatableContentDigest", contentItemNode.get("digest").asText());
-
-            // 获取 value 和 source
-            String value = contentItemNode.get("value").asText();
-            String source = contentItemNode.get("locale").asText();
-
-            // 跳过 value 为空的项
-            if (value == null || value.isEmpty()) {
-                continue;  // 跳过当前项
-            }
-//            System.out.println("翻译内容：" + value);
-//            System.out.println("翻译字符数：" + counter.getTotalChars());
-
-            //处理SINGLE_LINE_TEXT_FIELD的情况
-            if ("SINGLE_LINE_TEXT_FIELD".equals(contentItemNode.get("type").asText())) {
-                //达到字符限制，更新用户剩余字符数，终止循环
-                updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, null, source, target, null));
-                String targetCache = translateSingleLine(value, request.getTarget());
-                counter.addChars(value.length());
-                if (targetCache != null) {
-                    saveToShopify(targetCache, translation, resourceId, request);
-                    continue;
-                } else {
-//                    String target = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-                    String targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                    addData(target, value, targetString);
-                    saveToShopify(targetString, translation, resourceId, request);
-                }
-                continue;
-            }
-
-            //处理type为HTML的情况
-            if ("HTML".equals(contentItemNode.get("type").asText())) {
-                //达到字符限制，更新用户剩余字符数，终止循环
-                updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest());
-                if (jsoupUtils.isHtml(value)) {
-                    String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, request.getTarget());
-                    saveToShopify(targetText, translation, resourceId, request);
-                    continue;
-                }
-            }
-
-            //处理type为ONLINE_STORE_THEME的情况
-            if ("ONLINE_STORE_THEME".equals(contentItemNode.get("type").asText()) ||
-                    "ONLINE_STORE_THEME_LOCALE_CONTENT".equals(contentItemNode.get("type").asText())
-                    || "SHOP_POLICY".equals(contentItemNode.get("type").asText())
-                    || "PACKING_SLIP_TEMPLATE".equals(contentItemNode.get("type").asText())
-                    || "EMAIL_TEMPLATE".equals(contentItemNode.get("type").asText())) {
-                updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, null, source, target, null));
-                //从数据库中获取数据，如果不为空，存入shopify本地；如果为空翻译
-                String targetText = translateTextService.getTargetTextByDigest(contentItemNode.get("digest").asText(), target)[0];
-                String targetCache = translateSingleLine(value, request.getTarget());
-                counter.addChars(value.length());
-                if (targetCache != null) {
-                    saveToShopify(targetCache, translation, resourceId, request);
-                    continue;
-                } else if (targetText != null) {
-                    addData(target, value, targetText);
-                    saveToShopify(targetText, translation, resourceId, request);
-                    continue;
-                } else {
-//                    String target = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-                    String targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                    addData(target, value, targetString);
-                    saveToShopify(targetString, translation, resourceId, request);
-                    continue;
-                }
-            }
-
-            //达到字符限制，更新用户剩余字符数，终止循环
-            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, null, source, target, null));
-            counter.addChars(value.length());
-            //做一个缓存判断
-            String targetCache = translateSingleLine(value, request.getTarget());
-            if (targetCache != null) {
-                saveToShopify(targetCache, translation, resourceId, request);
-                continue;
-            } else {
-//            String translatedValue = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));;
-                String targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                addData(target, value, targetString);
-                saveToShopify(targetString, translation, resourceId, request);
-            }
-        }
     }
 
     //
