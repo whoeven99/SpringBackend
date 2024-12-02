@@ -421,7 +421,7 @@ public class TranslateService {
                     chooseTranslateApi(translation, registerTransactionRequest, request, chooseData);
                 } catch (Exception e) {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-                    translatesService.updateTranslateStatus(request.getShopName(), counter.getTotalChars(),  target, source);
+                    translatesService.updateTranslateStatus(request.getShopName(), 3, target, source);
                     throw new RuntimeException(e);
                 }
             }
@@ -437,15 +437,15 @@ public class TranslateService {
         String source = registerTransactionRequest.getLocale();
         switch (chooseData) {
             case 1, 2:
-                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
             case 3:
                 //阿里云API 待接入
-                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = aliYunTranslateIntegration.aliyunTranslate(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+                targetString = aliYunTranslateIntegration.aliyunTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
@@ -458,8 +458,9 @@ public class TranslateService {
                 break;
             default:
                 //百度API，火山API等等
-//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = baiDuTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
@@ -757,18 +758,6 @@ public class TranslateService {
             List<TranslateTextDO> translateTextDOList = new ArrayList<>(translatableContentMap.values());
             translateTextService.getExistTranslateTextList(translateTextDOList);
         }
-//        translatesService.readExistTranslateText(translatableContentMap.values());
-//        for (TranslateTextDO translateTextDO : translatableContentMap.values()) {
-//            // 查询数据库以获取所有已存在的实体
-////            System.out.println("当前遍历数据为： " + translateTextDO);
-//            if (translateTextService.getTranslateText(translateTextDO) == null) {
-//                System.out.println("新增数据为： " + translateTextDO);
-//                depositContents.add(translateTextDO);
-//            }
-//        }
-//        //将translatableContentMap里的数据存数据库里
-//        System.out.println("存入数据库的数据为： " + depositContents);
-//        translateTextService.saveBatch(depositContents);
 
         // 检查是否有下一页
         boolean hasNextPage = rootNode.path("data").path("translatableResources").path("pageInfo").path("hasNextPage").asBoolean();
@@ -823,24 +812,6 @@ public class TranslateService {
         return translations;
     }
 
-    //合并两个map集合数据
-//    private Map<String, Object> mergeMaps(Map<String, Object> map1, Map<String, Object> map2) {
-////        appInsights.trackTrace("进入合并的方法里面");
-//        Map<String, Object> result = new HashMap<>(map1);
-//        map2.forEach((key, value) -> {
-////            appInsights.trackTrace("当前的key为: " + key);
-//            if (result.containsKey(key)) {
-//                // 如果键冲突，合并两个Map
-//                Map<String, Object> existingValue = (Map<String, Object>) result.get(key);
-//                Map<String, Object> newValue = (Map<String, Object>) value;
-//                Map<String, Object> mergedValue = new HashMap<>(existingValue);
-//                mergedValue.putAll(newValue);
-//                result.put((String) mergedValue.get("digest"), mergedValue);
-//            }
-//        });
-//        return result;
-//    }
-
     //根据数据库中digest进行判断，有更新，无插入
     private void updateOrInsertTranslateTextData(Map<String, Object> data, ShopifyRequest shopifyRequest) {
         if (data.get("digest") != null) {
@@ -854,27 +825,6 @@ public class TranslateService {
             request.setTextKey(data.get("textKey").toString());
             request.setSourceText(data.get("sourceText").toString());
             request.setTextType(data.get("textType").toString());
-            // 检查是否存在有digest的数据
-//            TranslateTextDO translateText = translateTextService.getTranslateText(request);
-
-//            //将获取的数据存入SINGLE_LINE_TEXT map中
-//            if (!SINGLE_LINE_TEXT.containsKey(request.getSourceText())){
-////                System.out.println("sourceText: " + request.getSourceText());
-//                SINGLE_LINE_TEXT.put(request.getSourceText(), request.getTargetText());
-//            }
-
-            //TODO 可以考虑一下，一次插入多条数据
-            //将获取的数据存入数据库中
-            //            if (translateText.isEmpty()) {
-            //                System.out.println("text: " + request.getTargetText());
-            //                // 插入数据
-            //                jdbcRepository.insertTranslateText(request);
-            ////                System.out.println("插入数据 ： " + translateText);
-            //            } else {
-            //                // 更新数据
-            //                jdbcRepository.updateTranslateText(request);
-            ////                System.out.println("更新数据 ： " + translateText);
-            //            }
         }
     }
 

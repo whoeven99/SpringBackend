@@ -44,7 +44,7 @@ public class ShopifyHttpIntegration {
             httpPost.setEntity(input);
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
-            responseContent = EntityUtils.toString(entity);
+            responseContent = EntityUtils.toString(entity, "UTF-8");
 //            appInsights.trackTrace("Shopify response: " + responseContent);
             response.close();
             httpClient.close();

@@ -159,7 +159,7 @@ public class TranslateApiIntegration {
             responseContent = EntityUtils.toString(responseEntity);
             // 获取翻译结果
 //            appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
-//            System.out.println("翻译错误信息：" + responseContent);
+            System.out.println("翻译错误信息：" + responseContent);
             JSONArray jsonArray = JSON.parseArray(responseContent);
             for (int i = 0; i < jsonArray.size(); i++) {
                 // 获取当前的 JSONObject
