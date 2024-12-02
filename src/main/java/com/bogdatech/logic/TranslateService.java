@@ -335,7 +335,11 @@ public class TranslateService {
                     translateDataByAPI(entry.getValue(), request, counter, remainingChars, 5);
                     break;
                 case HTML:
-                    translateHtml(entry.getValue(), request, counter, remainingChars);
+                    try {
+                        translateHtml(entry.getValue(), request, counter, remainingChars);
+                    } catch (Exception e) {
+                        throw new ClientException("HTML translate error");
+                    }
                     break;
                 default:
                     //处理database数据
