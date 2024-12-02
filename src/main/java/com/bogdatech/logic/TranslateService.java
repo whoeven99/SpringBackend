@@ -458,8 +458,8 @@ public class TranslateService {
                 break;
             default:
                 //百度API，火山API等等
-                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
 //                targetString = baiDuTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);

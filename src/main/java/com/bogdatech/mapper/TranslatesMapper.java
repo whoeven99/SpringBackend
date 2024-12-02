@@ -2,10 +2,7 @@ package com.bogdatech.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.bogdatech.entity.TranslatesDO;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -36,4 +33,7 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
 
     @Select("SELECT shop_name FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
     String getShopName(String shopName, String target, String source);
+
+    @Delete("DELETE FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
+    Boolean deleteFromTranslates(String shopName, String source, String target);
 }

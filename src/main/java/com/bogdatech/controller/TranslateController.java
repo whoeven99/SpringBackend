@@ -222,4 +222,15 @@ public class TranslateController {
     public String testAli(@RequestBody TranslateRequest request) {
         return aliyunTranslateIntegration.aliyunTranslate(request);
     }
+
+    //删除翻译状态的语言
+    @PostMapping("/translate/deleteFromTranslates")
+    public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
+        Boolean b = translatesService.deleteFromTranslates(request);
+        if (b) {
+            return new BaseResponse<>().CreateSuccessResponse(200);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
+        }
+    }
 }

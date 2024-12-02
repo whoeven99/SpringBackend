@@ -56,5 +56,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.getShopName(shopName, target, source);
     }
 
+    @Override
+    public Boolean deleteFromTranslates(TranslateRequest request) {
+        return baseMapper.deleteFromTranslates(request.getShopName(), request.getSource(), request.getTarget());
+    }
+
 
 }
