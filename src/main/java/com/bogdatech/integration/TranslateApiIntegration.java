@@ -156,7 +156,7 @@ public class TranslateApiIntegration {
             httpPost.setEntity(entity);
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity responseEntity = response.getEntity();
-            responseContent = EntityUtils.toString(responseEntity);
+            responseContent = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             // 获取翻译结果
 //            appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
             System.out.println("翻译错误信息：" + responseContent);

@@ -437,8 +437,8 @@ public class TranslateService {
         String source = registerTransactionRequest.getLocale();
         switch (chooseData) {
             case 1, 2:
-//                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
@@ -451,8 +451,8 @@ public class TranslateService {
                 break;
             case 4:
                 //谷歌API
-//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
