@@ -29,7 +29,7 @@ public class ALiYunTranslateIntegration {
 
     public String aliyunTranslate(TranslateRequest translateRequest) {
         //将传入的target转为阿里云要用的target
-        String aliTarget = ApiCodeUtils.microsoftTransformCode(translateRequest.getTarget());
+        String aliTarget = ApiCodeUtils.aliyunTransformCode(translateRequest.getTarget());
         if (aliTarget.equals("#N/A")) {
             return "Alibaba Cloud does not support this language";
         }
