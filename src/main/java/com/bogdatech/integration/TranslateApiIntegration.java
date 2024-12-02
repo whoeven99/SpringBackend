@@ -105,7 +105,8 @@ public class TranslateApiIntegration {
         String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
                 "&q=" + encodedQuery +
                 "&source=" + request.getSource() +
-                "&target=" + request.getTarget();
+                "&target=" + request.getTarget() +
+                "&model=base";
         String result = null;
         CloseableHttpClient httpClient = HttpClients.createDefault();
         // 创建HttpGet请求

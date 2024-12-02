@@ -9,7 +9,9 @@ import com.bogdatech.model.controller.request.TranslateTextRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,32 +47,41 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
 
     @Override
     public void getExistTranslateTextList(List<TranslateTextDO> translateTexts) {
-        // 构建查询条件
-        LambdaQueryWrapper<TranslateTextDO> queryWrapper = new LambdaQueryWrapper<>();
+        int batchSize = 300; // 每批处理的数据量
+        for (int i = 0; i < translateTexts.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, translateTexts.size());
+            List<TranslateTextDO> batch = translateTexts.subList(i, end);
 
-        // 添加查询条件
-        for (TranslateTextDO translateText : translateTexts) {
-            queryWrapper.or(w -> w.eq(TranslateTextDO::getShopName, translateText.getShopName())
-                    .eq(TranslateTextDO::getResourceId, translateText.getResourceId())
-                    .eq(TranslateTextDO::getTargetCode, translateText.getTargetCode())
-                    .eq(TranslateTextDO::getSourceText, translateText.getSourceText())
-                    .eq(TranslateTextDO::getTargetText, translateText.getTargetText())
-                    .eq(TranslateTextDO::getShopName, translateText.getShopName()));
+            LambdaQueryWrapper<TranslateTextDO> queryWrapper = new LambdaQueryWrapper<>();
+            Set<String> uniqueKeys = batch.stream()
+                    .map(translateText ->
+                            translateText.getShopName() + "|" +
+                                    translateText.getResourceId() + "|" +
+                                    translateText.getTargetCode() + "|" +
+                                    translateText.getSourceText() + "|" +
+                                    translateText.getTargetText())
+                    .collect(Collectors.toSet());
+
+            List<String> uniqueKeyList = new ArrayList<>(uniqueKeys);
+
+            queryWrapper.in(TranslateTextDO::getShopName, uniqueKeyList.stream().map(key -> key.split("\\|")[0]).collect(Collectors.toList()))
+                    .in(TranslateTextDO::getResourceId, uniqueKeyList.stream().map(key -> key.split("\\|")[1]).collect(Collectors.toList()))
+                    .in(TranslateTextDO::getTargetCode, uniqueKeyList.stream().map(key -> key.split("\\|")[2]).collect(Collectors.toList()))
+                    .in(TranslateTextDO::getSourceText, uniqueKeyList.stream().map(key -> key.split("\\|")[3]).collect(Collectors.toList()))
+                    .in(TranslateTextDO::getTargetText, uniqueKeyList.stream().map(key -> key.split("\\|")[4]).collect(Collectors.toList()));
+
+            List<TranslateTextDO> existingEntities = this.list(queryWrapper);
+
+            // 过滤出当前批次中不存在的新记录
+            List<TranslateTextDO> newEntitiesInBatch = batch.stream()
+                    .filter(translateText -> !existingEntities.contains(translateText))
+                    .collect(Collectors.toList());
+
+            if (!newEntitiesInBatch.isEmpty()) {
+                System.out.println("newEntitiesInBatch:" + newEntitiesInBatch.stream().toList());
+                this.saveBatch(newEntitiesInBatch);
+            }
         }
-
-        // 查询数据库中已存在的记录
-        List<TranslateTextDO> existingEntities = this.list(queryWrapper);
-//        System.out.println("existingEntities: " + existingEntities);
-        // 过滤出数据库中不存在的新记录
-        List<TranslateTextDO> newEntities = translateTexts.stream()
-                .filter(translateText -> !existingEntities.contains(translateText))
-                .collect(Collectors.toList());
-        System.out.println("newEntities: " + newEntities);
-        // 批量插入新记录
-        if (!newEntities.isEmpty()) {
-            this.saveBatch(newEntities);
-        }
-
     }
 
 
