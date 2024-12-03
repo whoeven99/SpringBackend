@@ -314,7 +314,7 @@ public class LanguageFlagConfig {
 
         // Chinese (Simplified)
         ZH_CN.put("Name", "Chinese (Simplified)");
-        ZH_CN.put("Local", "中文");
+        ZH_CN.put("Local", "中文（简体）");
         ZH_CN.put("isoCode", "zh-CN");
         ZH_CN.put("countries", new String[]{
                 "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CN.png"
@@ -322,7 +322,7 @@ public class LanguageFlagConfig {
 
         // Chinese (Traditional)
         ZH_TW.put("Name", "Chinese (Traditional)");
-        ZH_TW.put("Local", "繁體中文");
+        ZH_TW.put("Local", "中文（繁体）");
         ZH_TW.put("isoCode", "zh-TW");
         ZH_TW.put("countries", new String[]{
                 "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TW.png",
@@ -1181,9 +1181,7 @@ public class LanguageFlagConfig {
         BO.put("Local", "བོད་ཡིག");
         BO.put("isoCode", "bo");
         BO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NP.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CN.png"
         });
 
         // Tigrinya

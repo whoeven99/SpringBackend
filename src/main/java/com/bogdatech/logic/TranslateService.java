@@ -16,7 +16,7 @@ import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.query.ShopifyQuery;
+import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.StringUtils;
@@ -208,7 +208,7 @@ public class TranslateService {
         //TRANSLATION_RESOURCES
         for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
             translateResource.setTarget(request.getTarget());
-            String query = new ShopifyQuery().getFirstQuery(translateResource);
+            String query = new ShopifyRequestBody().getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
             String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
             translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
@@ -236,7 +236,7 @@ public class TranslateService {
             rootNode = objectMapper.readTree(objectData);
             translateSingleLineTextFieldsRecursively(rootNode, request, counter, remainingChars);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new ClientException(e.getMessage());
         }
         // 递归处理下一页数据
         handlePagination(rootNode, request, counter, translateResourceDTO, remainingChars);
@@ -335,11 +335,9 @@ public class TranslateService {
                     translateDataByAPI(entry.getValue(), request, counter, remainingChars, 5);
                     break;
                 case HTML:
-                    try {
-                        translateHtml(entry.getValue(), request, counter, remainingChars);
-                    } catch (Exception e) {
-                        throw new ClientException("HTML translate error");
-                    }
+
+                    translateHtml(entry.getValue(), request, counter, remainingChars);
+
                     break;
                 default:
                     //处理database数据
@@ -583,7 +581,7 @@ public class TranslateService {
     //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-        String query = new ShopifyQuery().getAfterQuery(translateResource);
+        String query = new ShopifyRequestBody().getAfterQuery(translateResource);
         cloudServiceRequest.setBody(query);
 
         String infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
@@ -739,9 +737,9 @@ public class TranslateService {
         shopifyRequest.setAccessToken(request.getAccessToken());
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
         for (TranslateResourceDTO translateResource : DATABASE_RESOURCES) {
-            ShopifyQuery shopifyQuery = new ShopifyQuery();
+            ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
             translateResource.setTarget(shopifyRequest.getTarget());
-            String query = shopifyQuery.getFirstQuery(translateResource);
+            String query = shopifyRequestBody.getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
             String string = shopifyService.getShopifyData(cloudServiceRequest);
             saveTranslatedData(string, shopifyRequest, translateResource);

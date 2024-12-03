@@ -17,7 +17,7 @@ import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.query.ShopifyQuery;
+import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,7 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.bogdatech.entity.TranslateResourceDTO.*;
+import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
+import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 
 @Component
@@ -62,7 +63,7 @@ public class ShopifyService {
     @Autowired
     private ITranslatesService translatesService;
     private final TelemetryClient appInsights = new TelemetryClient();
-    ShopifyQuery shopifyQuery = new ShopifyQuery();
+    ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
     //封装调用云服务器实现获取shopify数据的方法
     public String getShopifyData(CloudServiceRequest cloudServiceRequest) {
@@ -105,16 +106,12 @@ public class ShopifyService {
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             translateResource.setTarget(request.getTarget());
-            String query = shopifyQuery.getFirstQuery(translateResource);
+            String query = shopifyRequestBody.getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
             String infoByShopify = getShopifyData(cloudServiceRequest);
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter);
             System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
-
-//        counter.addChars(-translateCounter.getTotalChars());
-//        System.out.println("最后剩余的值： " + counter.getTotalChars());
-//        jdbcRepository.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         return counter.getTotalChars();
     }
 
@@ -214,12 +211,6 @@ public class ShopifyService {
             if (translatedContent.contains(contentItemNode.get("key").asText())) {
                 translatedCounter.addChars(value.length());
             }
-////            //测试各种类型数据字符
-//            if ("handle".equals(contentItemNode.get("key").asText())) {
-//               continue;
-//            }
-//            String value = contentItemNode.get("value").asText();
-//            counter.addChars(value.length());
         }
     }
 
@@ -278,8 +269,8 @@ public class ShopifyService {
         cloudServiceRequest.setAccessToken(request.getAccessToken());
         cloudServiceRequest.setTarget(request.getTarget());
 
-        ShopifyQuery shopifyQuery = new ShopifyQuery();
-        String query = shopifyQuery.getAfterQuery(translateResource);
+        ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
+        String query = shopifyRequestBody.getAfterQuery(translateResource);
         cloudServiceRequest.setBody(query);
         String infoByShopify = getShopifyData(cloudServiceRequest);
         if (infoByShopify == null) {
@@ -396,7 +387,7 @@ public class ShopifyService {
 //            System.out.println("resourceType: " + resourceType);
             for (TranslateResourceDTO resource : resourceList.getValue()) {
                 resource.setTarget(request.getTarget());
-                String query = shopifyQuery.getFirstQuery(resource);
+                String query = shopifyRequestBody.getFirstQuery(resource);
                 cloudServiceRequest.setBody(query);
                 String infoByShopify = getShopifyData(cloudServiceRequest);
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);

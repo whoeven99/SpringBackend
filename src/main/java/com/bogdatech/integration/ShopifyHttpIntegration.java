@@ -2,7 +2,7 @@ package com.bogdatech.integration;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.query.ShopifyQuery;
+import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -63,8 +63,8 @@ public class ShopifyHttpIntegration {
     }
 
     public String registerTransaction(ShopifyRequest request, Map<String, Object> variables) {
-        ShopifyQuery shopifyQuery = new ShopifyQuery();
-        String string = sendShopifyPost(request, shopifyQuery.registerTransactionQuery(), variables);
+        ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
+        String string = sendShopifyPost(request, shopifyRequestBody.registerTransactionQuery(), variables);
         JSONObject jsonObject = JSONObject.parseObject(string);
         return jsonObject.getString("data");
     }

@@ -1,8 +1,8 @@
-package com.bogdatech.query;
+package com.bogdatech.requestBody;
 
 import com.bogdatech.entity.TranslateResourceDTO;
 
-public class ShopifyQuery {
+public class ShopifyRequestBody {
 
     public String getFirstQuery(TranslateResourceDTO translateResourceDTO) {
         return "{\n" +
