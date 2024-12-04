@@ -28,14 +28,14 @@ public class UserService {
         if (i > 0) {
             //创建Klaviyo用户并加入到初次安装的list中
             String profileId = klaviyoService.createProfile(usersDO);
-            Boolean b = klaviyoService.addProfileToDatabase(new KlaviyoDataDO(usersDO.getShopName(), usersDO.getShopName(), PROFILE, profileId));
+            klaviyoService.addProfileToDatabase(new KlaviyoDataDO(usersDO.getShopName(), usersDO.getShopName(), PROFILE, profileId));
             // 获取初次注册List的id
             String listId = klaviyoService.getListId(I_I_E);
-            if (profileId != null && listId != null){
+            if (profileId != null && listId != null) {
                 klaviyoService.addProfileToKlaviyoList(new ProfileToListRequest(profileId, listId));
             }
             return new BaseResponse<>().CreateSuccessResponse(true);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
         }
 

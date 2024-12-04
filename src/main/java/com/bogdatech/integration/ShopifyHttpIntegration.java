@@ -1,6 +1,7 @@
 package com.bogdatech.integration;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Map;
+
+import static com.bogdatech.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
 
 @Component
 public class ShopifyHttpIntegration {
@@ -49,7 +52,7 @@ public class ShopifyHttpIntegration {
             response.close();
             httpClient.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
 
         return responseContent;

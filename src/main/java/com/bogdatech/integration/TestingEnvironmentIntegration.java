@@ -1,5 +1,6 @@
 package com.bogdatech.integration;
 
+import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.HttpEntity;
@@ -13,6 +14,8 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+
+import static com.bogdatech.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
 
 @Component
 public class TestingEnvironmentIntegration {
@@ -32,7 +35,7 @@ public class TestingEnvironmentIntegration {
             response.close();
             httpClient.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
         return responseContent;
     }
@@ -54,7 +57,7 @@ public class TestingEnvironmentIntegration {
             response.close();
             httpClient.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
         return responseContent;
     }

@@ -74,7 +74,7 @@ public class ShopifyService {
             String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
             string = testingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
         return string;
     }
@@ -566,9 +566,9 @@ public class ShopifyService {
             }
     });
         if (i.get() == RESOURCE_MAP.size()) {
-             i1 = translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource());
+             i1 = translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
         }else {
-             i1 = translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource());
+             i1 = translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
         }
         return i1;
     }

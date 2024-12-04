@@ -44,19 +44,23 @@ public class JsoupUtils {
 
         // Translate texts
         List<String> translatedTexts = new ArrayList<>();
-        for (String text : textsToTranslate) {
-            String translated = translateSingleLine(text, request.getTarget());
-            counter.addChars(text.length());
-            if (translated != null) {
-                translatedTexts.add(translated);
-            } else {
-                request.setContent(text);
-                //google翻译的接口
-//                String targetString = translateApiIntegration.googleTranslate(request);
-                String targetString = translateApiIntegration.microsoftTranslate(request);
-                addData(target, text, targetString);
-                translatedTexts.add(targetString);
+        try {
+            for (String text : textsToTranslate) {
+                String translated = translateSingleLine(text, request.getTarget());
+                counter.addChars(text.length());
+                if (translated != null) {
+                    translatedTexts.add(translated);
+                } else {
+                    request.setContent(text);
+                    //google翻译的接口
+    //                String targetString = translateApiIntegration.googleTranslate(request);
+                    String targetString = translateApiIntegration.microsoftTranslate(request);
+                    addData(target, text, targetString);
+                    translatedTexts.add(targetString);
+                }
             }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
 
 //         Replace original texts with translated ones
@@ -65,7 +69,7 @@ public class JsoupUtils {
             for (Element element : elements) {
                 if (!element.is("script, style")) {
                     if (!element.ownText().trim().isEmpty()) {
-                        System.out.println("html_error: " + translatedTexts.get(index));
+//                        System.out.println("html_error: " + translatedTexts.get(index));
                         element.text(translatedTexts.get(index++));
                     }
                     if (element.hasAttr("alt")) {

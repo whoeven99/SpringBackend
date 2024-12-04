@@ -147,7 +147,7 @@ public class TranslateApiIntegration {
         String requestBody = "[{\n" +
                 "    \"Text\": \"" + request.getContent() + "\"\n" +
                 "}]";
-        System.out.println("requestBody" + requestBody);
+//        System.out.println("requestBody" + requestBody);
         // 发送请求
         String responseContent = null;
         String result = null;
@@ -159,7 +159,7 @@ public class TranslateApiIntegration {
             responseContent = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             // 获取翻译结果
 //            appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
-            System.out.println("翻译错误信息：" + responseContent);
+//            System.out.println("翻译错误信息：" + responseContent);
             JSONArray jsonArray = JSON.parseArray(responseContent);
             for (int i = 0; i < jsonArray.size(); i++) {
                 // 获取当前的 JSONObject
@@ -180,7 +180,6 @@ public class TranslateApiIntegration {
             throw new RuntimeException(e);
         }
 
-//        System.out.println("responseContent: " + result);
         return result;
     }
 

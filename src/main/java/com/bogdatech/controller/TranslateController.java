@@ -4,7 +4,6 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
@@ -141,11 +140,6 @@ public class TranslateController {
     @PostMapping("/translate/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
 
-//        //将状态改为初始化的状态
-//        int i = translatesService.updateTranslateStatus(request.getShopName(), 4, request.getTarget(), request.getSource());
-//        if (!(i > 0)) {
-//            return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
-//        }
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, 0, 0, 0, 0));
         int remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
@@ -162,9 +156,9 @@ public class TranslateController {
         try {
             translateService.translating(request, remainingChars, counter);
         } catch (Exception e) {
-            translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource());
+            translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-            throw new ClientException(e.getMessage());
+            throw e;
         }
 
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
