@@ -21,7 +21,7 @@ public class ItemsDO {
     private Integer translatedNumber;
     private Integer status;
 
-    public ItemsDO(String itemName, int totalNumber, int translatedNumber, String target, int status) {
+    public ItemsDO(String itemName, int totalNumber, int translatedNumber, String target, Integer status) {
         this.itemName = itemName;
         this.totalNumber = totalNumber;
         this.translatedNumber = translatedNumber;
