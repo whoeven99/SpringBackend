@@ -234,4 +234,13 @@ public class TranslateController {
     public String testVolcano(@RequestBody TranslateRequest request) {
         return translateApiIntegration.huoShanTranslate(request);
     }
+
+    //调用谷歌谷歌翻译接口
+    @PostMapping("/testGoogle")
+    public String testGoogle(@RequestBody TranslateRequest request) {
+//        getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value)
+        String googleTranslateData = translateService.getGoogleTranslateData(request);
+        System.out.println("调用谷歌谷歌翻译接口:" + googleTranslateData);
+        return googleTranslateData;
+    }
 }
