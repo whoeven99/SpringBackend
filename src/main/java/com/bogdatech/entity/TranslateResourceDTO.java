@@ -114,14 +114,16 @@ public class TranslateResourceDTO {
                 new TranslateResourceDTO("MENU", "250", "", ""),
                 new TranslateResourceDTO("LINK", "250", "", "")
         ));
-        RESOURCE_MAP.put("Store metadata", Arrays.asList(
-                new TranslateResourceDTO("METAFIELD", "250", "", ""),
+        RESOURCE_MAP.put("Store metadata", List.of(
+                new TranslateResourceDTO("METAFIELD", "250", "", "")
+        ));
+        RESOURCE_MAP.put("Shop", List.of(
                 new TranslateResourceDTO("SHOP", "250", "", "")
         ));
         RESOURCE_MAP.put("Shipping", List.of(
                 new TranslateResourceDTO("PACKING_SLIP_TEMPLATE", "250", "", "")
         ));
-        RESOURCE_MAP.put("delivery", List.of(
+        RESOURCE_MAP.put("Delivery", List.of(
                 new TranslateResourceDTO("DELIVERY_METHOD_DEFINITION", "250", "", "")
         ));
 
