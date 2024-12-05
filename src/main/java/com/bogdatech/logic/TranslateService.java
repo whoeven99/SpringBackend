@@ -388,6 +388,29 @@ public class TranslateService {
                 saveToShopify(targetText, translation, resourceId, request);
             } else {
                 //数据库为空的逻辑
+                //判断数据类型
+                if ("handle".equals(value)
+                ) {
+                    continue;  // 跳过当前项
+                }
+                //对于json和json_string的数据直接存原文
+                if ("JSON".equals(value)
+                        || "JSON_STRING".equals(value)) {
+                    //存放在json的集合里面
+                    saveToShopify(value, translation, resourceId, request);
+                    continue;
+                }
+                if ("HTML".equals(value)) {
+                    //存放在html的list集合里面
+                    try {
+                        targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, request.getTarget());
+                    } catch (Exception e) {
+                        continue;
+                    }
+                    saveToShopify(targetText, translation, resourceId, request);
+                    continue;
+                }
+
                 String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
 //                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
                 addData(target, value, targetString);
