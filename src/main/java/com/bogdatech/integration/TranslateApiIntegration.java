@@ -50,7 +50,7 @@ public class TranslateApiIntegration {
 
     @Value("${microsoft.translation.endpoint}")
     private String microsoftEndpoint;
-    
+
     public String translateText(String text) {
         try {
 //            var ans = baseHttpIntegration.sendHttpGet("/google/translate");
@@ -112,19 +112,19 @@ public class TranslateApiIntegration {
         // 执行请求
         JSONObject jsonObject;
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            if (response.getStatusLine().getStatusCode() == 200) {
-                // 获取响应实体并转换为字符串
-                jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
-//                appInsights.trackTrace("翻译结果：" + jsonObject);
-                // 获取翻译结果
-                JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
-                JSONObject translation = translationsArray.getJSONObject(0);
-                result = translation.getString("translatedText");
-            }
+            // 获取响应实体并转换为字符串
+            String responseBody = EntityUtils.toString(response.getEntity(), "UTF-8");
+            jsonObject = JSONObject.parseObject(responseBody);
+
+                appInsights.trackTrace("翻译结果：" + jsonObject);
+            // 获取翻译结果
+            JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
+            JSONObject translation = translationsArray.getJSONObject(0);
+            result = translation.getString("translatedText");
             response.close();
             httpClient.close();
         } catch (IOException e) {
-            return e.toString();
+            throw new RuntimeException(e);
         }
         return result;
     }

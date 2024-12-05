@@ -234,4 +234,11 @@ public class TranslateController {
     public String testVolcano(@RequestBody TranslateRequest request) {
         return translateApiIntegration.huoShanTranslate(request);
     }
+
+    //封装谷歌谷歌翻译
+    @PostMapping("/testGoogle")
+    public String testGoogle(@RequestBody TranslateRequest request) {
+        String googleTranslateData = translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
+        return googleTranslateData;
+    }
 }

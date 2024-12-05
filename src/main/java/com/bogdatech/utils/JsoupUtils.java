@@ -55,8 +55,8 @@ public class JsoupUtils {
                 } else {
                     request.setContent(text);
                     //google翻译的接口
-                    String targetString = translateApiIntegration.googleTranslate(request);
-//                    String targetString = translateApiIntegration.microsoftTranslate(request);
+//                    String targetString = translateApiIntegration.googleTranslate(request);
+                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     addData(target, text, targetString);
                     translatedTexts.add(targetString);
                 }
