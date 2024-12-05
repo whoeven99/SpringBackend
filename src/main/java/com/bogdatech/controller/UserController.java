@@ -2,7 +2,6 @@ package com.bogdatech.controller;
 
 
 import com.bogdatech.Service.ITranslateTextService;
-import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.logic.UserService;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -38,18 +37,5 @@ public class UserController {
 
     }
 
-    @GetMapping("/user/test")
-    public void test() {
-        TranslateTextDO request = new TranslateTextDO();
-        request.setTargetText("1");
-        request.setTargetCode("1");
-        request.setResourceId("1");
-        request.setDigest("1");
-        request.setSourceCode("1");
-        request.setShopName("1");
-        request.setTextKey("1");
-        request.setSourceText("1");
-        request.setTextType("1");
-        translateService.insertTranslateText(request);
-    }
+
 }

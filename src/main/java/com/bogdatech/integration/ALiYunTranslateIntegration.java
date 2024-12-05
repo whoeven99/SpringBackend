@@ -51,18 +51,18 @@ public class ALiYunTranslateIntegration {
         } catch (TeaException error) {
             // 此处仅做打印展示，请谨慎对待异常处理，在工程项目中切勿直接忽略异常。
             // 错误 message
-            System.out.println(error.getMessage());
-            // 诊断地址
-            System.out.println(error.getData().get("Recommend"));
+//            System.out.println(error.getMessage());
+//            // 诊断地址
+//            System.out.println(error.getData().get("Recommend"));
             com.aliyun.teautil.Common.assertAsString(error.message);
             throw new RuntimeException(error);
         } catch (Exception _error) {
             TeaException error = new TeaException(_error.getMessage(), _error);
             // 此处仅做打印展示，请谨慎对待异常处理，在工程项目中切勿直接忽略异常。
             // 错误 message
-            System.out.println(error.getMessage());
-            // 诊断地址
-            System.out.println(error.getData().get("Recommend"));
+//            System.out.println(error.getMessage());
+//            // 诊断地址
+//            System.out.println(error.getData().get("Recommend"));
             com.aliyun.teautil.Common.assertAsString(error.message);
             throw new RuntimeException(error);
         }

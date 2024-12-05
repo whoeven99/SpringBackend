@@ -1,30 +1,50 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.Service.IUsersService;
+import com.bogdatech.entity.KlaviyoDataDO;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.enums.ErrorEnum;
+import com.bogdatech.model.controller.request.ProfileToListRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import static com.bogdatech.constants.KlaviyoConstants.I_I_E;
+import static com.bogdatech.constants.KlaviyoConstants.PROFILE;
 
 @Component
+@Transactional
 public class UserService {
 
     @Autowired
     private IUsersService usersService;
 
-    public BaseResponse<Object> addUser(UsersDO request) {
-        int i = usersService.addUser(request);
+    @Autowired
+    private KlaviyoService klaviyoService;
+
+    public BaseResponse<Object> addUser(UsersDO usersDO) {
+        int i = usersService.addUser(usersDO);
         if (i > 0) {
+            //创建Klaviyo用户并加入到初次安装的list中
+            if (usersDO.getEmail() != null ){
+                String profileId = klaviyoService.createProfile(usersDO);
+                klaviyoService.addProfileToDatabase(new KlaviyoDataDO(usersDO.getShopName(), usersDO.getShopName(), PROFILE, profileId));
+                // 获取初次注册List的id
+                String listId = klaviyoService.getListId(I_I_E);
+                if (profileId != null && listId != null) {
+                    klaviyoService.addProfileToKlaviyoList(new ProfileToListRequest(profileId, listId));
+                }
+            }
+            //TODO：当email为空时，还需要判断，问下汪恭伟
             return new BaseResponse<>().CreateSuccessResponse(true);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
         }
 
     }
 
     public UsersDO getUser(UsersDO request) {
-        UsersDO userByName = usersService.getUserByName(request.getShopName());
-        return userByName;
+        return usersService.getUserByName(request.getShopName());
     }
 }

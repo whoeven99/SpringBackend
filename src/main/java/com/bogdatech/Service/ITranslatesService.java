@@ -10,7 +10,7 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     public Integer readStatus(TranslateRequest request);
     public Integer insertShopTranslateInfo(TranslateRequest request, int status);
     public List<TranslatesDO> readTranslateInfo(Integer status);
-    public int updateTranslateStatus(String shopName, int status, String target, String source);
+    public int updateTranslateStatus(String shopName, int status, String target, String source, String accessToken);
     public List<TranslatesDO> readInfoByShopName(TranslateRequest request);
     public List<Integer> readStatusInTranslatesByShopName(TranslateRequest request);
 
