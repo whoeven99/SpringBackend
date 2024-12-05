@@ -112,7 +112,6 @@ public class TranslateService {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
-//            System.out.println("requestBody: " + requestBody);
             testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
         } catch (JsonProcessingException e) {
             appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
@@ -269,6 +268,7 @@ public class TranslateService {
         judgeData.put(PLAIN_TEXT, new ArrayList<>());
         judgeData.put(HTML, new ArrayList<>());
         judgeData.put(DATABASE, new ArrayList<>());
+        judgeData.put(JSON_TEXT, new ArrayList<>());
         // 获取 translatableResources 节点
         JsonNode translatableResourcesNode = node.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
@@ -316,7 +316,6 @@ public class TranslateService {
     //对judgeData数据进行翻译和存入shopify,除了html
     private void translateAndSaveData(HashMap<String, List<RegisterTransactionRequest>> judgeData, ShopifyRequest request, CharacterCountUtils counter, int remainingChars) {
         for (Map.Entry<String, List<RegisterTransactionRequest>> entry : judgeData.entrySet()) {
-//            System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue().toString());
             switch (entry.getKey()) {
                 case CURLY_BRACKET_ARRAY:
                     translateDataByAPI(entry.getValue(), request, counter, remainingChars, 1);
@@ -349,6 +348,7 @@ public class TranslateService {
 
     //处理JSON_TEXT类型的数据
     private void translateJsonText(List<RegisterTransactionRequest> registerTransactionRequests, ShopifyRequest request, CharacterCountUtils counter, int remainingChars) {
+
         String target = request.getTarget();
         Map<String, Object> translation = new HashMap<>();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
@@ -509,7 +509,8 @@ public class TranslateService {
             String translatableContentDigest = contentItemNode.get("digest").asText();
             String key = contentItemNode.get("key").asText();
             //TODO：可以做一个switch？
-            //             跳过 key 为 "handle" 的项
+
+            //跳过 key 为 "handle" 的项
             if ("handle".equals(contentItemNode.get("key").asText())
             ) {
                 continue;  // 跳过当前项
@@ -519,6 +520,7 @@ public class TranslateService {
                     || "JSON_STRING".equals(contentItemNode.get("type").asText())) {
                 //存放在json的集合里面
                 judgeData.get(JSON_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                continue;
             }
 
 
@@ -594,7 +596,7 @@ public class TranslateService {
     public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName, int remainingChars, TranslateRequest translateRequest) {
         TranslationCounterRequest request = new TranslationCounterRequest();
         request.setShopName(shopName);
-//        System.out.println("counter " + counter.getTotalChars() );
+
         if (counter.getTotalChars() >= remainingChars) {
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
