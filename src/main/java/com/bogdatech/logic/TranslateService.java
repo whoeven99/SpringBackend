@@ -553,7 +553,7 @@ public class TranslateService {
                     || "PACKING_SLIP_TEMPLATE".equals(contentItemNode.get("type").asText())
                     || "EMAIL_TEMPLATE".equals(contentItemNode.get("type").asText())) {
                 judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-                System.out.println("database: "+ value);
+//                System.out.println("database: "+ value);
                 continue;
             }
             //对value进行判断 plainText
