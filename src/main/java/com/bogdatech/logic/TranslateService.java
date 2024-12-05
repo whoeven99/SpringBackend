@@ -304,7 +304,6 @@ public class TranslateService {
             }
 
             if (resourceId != null && translatableContent != null) {
-//                translateSingleLineTextFields(translatableContent, request, counter, resourceId, remainingChars);
                 //存储集合在翻译
                 judgeAndStoreData(translatableContent, resourceId, judgeData);
             }
@@ -335,9 +334,10 @@ public class TranslateService {
                     translateDataByAPI(entry.getValue(), request, counter, remainingChars, 5);
                     break;
                 case HTML:
-
                     translateHtml(entry.getValue(), request, counter, remainingChars);
-
+                    break;
+                case JSON_TEXT:
+                    translateJsonText(entry.getValue(), request, counter, remainingChars);
                     break;
                 default:
                     //处理database数据
@@ -347,6 +347,24 @@ public class TranslateService {
         }
     }
 
+    //处理JSON_TEXT类型的数据
+    private void translateJsonText(List<RegisterTransactionRequest> registerTransactionRequests, ShopifyRequest request, CharacterCountUtils counter, int remainingChars) {
+        String target = request.getTarget();
+        Map<String, Object> translation = new HashMap<>();
+        for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
+            String value = registerTransactionRequest.getValue();
+            String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
+            String key = registerTransactionRequest.getKey();
+            String resourceId = registerTransactionRequest.getResourceId();
+            translation.put("locale", target);
+            translation.put("key", key);
+            translation.put("translatableContentDigest", translatableContentDigest);
+            //直接存放到shopify本地
+            saveToShopify(value, translation, resourceId, request);
+        }
+    }
+
+    //处理从数据库获取的数据
     private void translateDataByDatabase(List<RegisterTransactionRequest> registerTransactionRequests, ShopifyRequest request, CharacterCountUtils counter, int remainingChars) {
         String target = request.getTarget();
         Map<String, Object> translation = new HashMap<>();
@@ -366,11 +384,15 @@ public class TranslateService {
             counter.addChars(value.length());
             if (targetCache != null) {
                 saveToShopify(targetCache, translation, resourceId, request);
-                continue;
             } else if (targetText != null) {
                 addData(target, value, targetText);
                 saveToShopify(targetText, translation, resourceId, request);
-                continue;
+            } else {
+                //数据库为空的逻辑
+                String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+                addData(target, value, targetString);
+                saveToShopify(targetString, translation, resourceId, request);
             }
         }
     }
@@ -429,9 +451,7 @@ public class TranslateService {
                 } catch (Exception e) {
                     System.out.println("翻译失败后的字符数： " + counter.getTotalChars());
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-//                    translatesService.updateTranslateStatus(request.getShopName(), 3, target, source, request.getAccessToken());
-                    continue;
-//                    throw new ClientException("translated failed");
+                    saveToShopify(value, translation, resourceId, request);
                 }
             }
         }
@@ -480,24 +500,27 @@ public class TranslateService {
     private void judgeAndStoreData(ArrayNode contentNode, String resourceId, Map<String, List<RegisterTransactionRequest>> judgeData) {
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
-
-            //             跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText())
-                    || "JSON".equals(contentItemNode.get("type").asText())
-                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
-            ) {
-                continue;  // 跳过当前项
-            }
-
-            String value = contentItemNode.get("value").asText();
-//            System.out.println("当前正在翻译： " + value);
             // 跳过 value 为空的项
+            String value = contentItemNode.get("value").asText();
             if (value == null || value.isEmpty()) {
                 continue;  // 跳过当前项
             }
             String locale = contentItemNode.get("locale").asText();
             String translatableContentDigest = contentItemNode.get("digest").asText();
             String key = contentItemNode.get("key").asText();
+            //TODO：可以做一个switch？
+            //             跳过 key 为 "handle" 的项
+            if ("handle".equals(contentItemNode.get("key").asText())
+            ) {
+                continue;  // 跳过当前项
+            }
+            //对于json和json_string的数据直接存原文
+            if ("JSON".equals(contentItemNode.get("type").asText())
+                    || "JSON_STRING".equals(contentItemNode.get("type").asText())) {
+                //存放在json的集合里面
+                judgeData.get(JSON_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+            }
+
 
             //            //对从数据库中获取的数据单独处理
             if ("ONLINE_STORE_THEME".equals(contentItemNode.get("type").asText()) ||

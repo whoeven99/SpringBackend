@@ -228,4 +228,10 @@ public class TranslateController {
             return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
         }
     }
+
+    //火山翻译API
+    @PostMapping("/testVolcano")
+    public String testVolcano(@RequestBody TranslateRequest request) {
+        return translateApiIntegration.huoShanTranslate(request);
+    }
 }

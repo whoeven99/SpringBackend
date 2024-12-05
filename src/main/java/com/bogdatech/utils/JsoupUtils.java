@@ -3,6 +3,7 @@ package com.bogdatech.utils;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,6 +18,7 @@ import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 
 @Component
+@Slf4j
 public class JsoupUtils {
 
     @Autowired
@@ -53,14 +55,15 @@ public class JsoupUtils {
                 } else {
                     request.setContent(text);
                     //google翻译的接口
-    //                String targetString = translateApiIntegration.googleTranslate(request);
-                    String targetString = translateApiIntegration.microsoftTranslate(request);
+                    String targetString = translateApiIntegration.googleTranslate(request);
+//                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     addData(target, text, targetString);
                     translatedTexts.add(targetString);
                 }
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            log.info(e.getMessage());
+//            System.out.println(e.getMessage());
         }
 
 //         Replace original texts with translated ones

@@ -6,9 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
-import com.volcengine.model.request.translate.LangDetectRequest;
 import com.volcengine.model.request.translate.TranslateTextRequest;
-import com.volcengine.model.response.translate.LangDetectResponse;
 import com.volcengine.model.response.translate.TranslateTextResponse;
 import com.volcengine.service.translate.ITranslateService;
 import com.volcengine.service.translate.impl.TranslateServiceImpl;
@@ -27,7 +25,7 @@ import org.springframework.util.DigestUtils;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 @Component
@@ -52,7 +50,7 @@ public class TranslateApiIntegration {
 
     @Value("${microsoft.translation.endpoint}")
     private String microsoftEndpoint;
-
+    
     public String translateText(String text) {
         try {
 //            var ans = baseHttpIntegration.sendHttpGet("/google/translate");
@@ -185,37 +183,40 @@ public class TranslateApiIntegration {
 
     //火山翻译API
     public String huoShanTranslate(TranslateRequest request) {
-
         ITranslateService translateService = TranslateServiceImpl.getInstance();
-        // call below method if you dont set ak and sk in ～/.volc/config
 
-        translateService.setAccessKey("ak");
-        translateService.setSecretKey("sk");
+        translateService.setAccessKey(System.getenv("HUOSHAN_API_KEY"));
+        translateService.setSecretKey(System.getenv("HUOSHAN_API_SECRET"));
 
-        // lang detect
-        try {
-            LangDetectRequest langDetectRequest = new LangDetectRequest();
-            langDetectRequest.setTextList(Arrays.asList("hello world", "how are you"));
-
-            LangDetectResponse langDetectResponse = translateService.langDetect(langDetectRequest);
-            System.out.println(JSON.toJSONString(langDetectResponse));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        //对火山翻译API的语言进行处理
+        String huoShanTarget = ApiCodeUtils.huoShanTransformCode(request.getTarget());
+        System.out.println("huoShanTarget: " + huoShanTarget);
         // translate text
         TranslateTextResponse translateText = null;
+        String translation = null;
         try {
             TranslateTextRequest translateTextRequest = new TranslateTextRequest();
-            translateTextRequest.setSourceLanguage("en"); // 不设置表示自动检测
-            translateTextRequest.setTargetLanguage("zh");
-            translateTextRequest.setTextList(Arrays.asList("hello world", "how are you"));
+            translateTextRequest.setSourceLanguage(request.getSource());
+            translateTextRequest.setTargetLanguage(huoShanTarget);
+            translateTextRequest.setTextList(List.of(request.getContent()));
 
             translateText = translateService.translateText(translateTextRequest);
-            System.out.println(JSON.toJSONString(translateText));
+            // 将JSON字符串解析为JSONObject对象
+            String jsonString = JSON.toJSONString(translateText);
+//            System.out.println("translateText: " + jsonString);
+            JSONObject jsonResponse = JSON.parseObject(jsonString);
+
+            // 直接从jsonResponse中获取TranslationList的第一个元素
+            JSONArray translationList = jsonResponse.getJSONArray("TranslationList");
+            if (translationList != null && !translationList.isEmpty()) {
+                JSONObject firstTranslationItem = translationList.getJSONObject(0);
+                translation = firstTranslationItem.getString("Translation");
+            } else {
+                System.out.println("Translation list is empty or not present.");
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            appInsights.trackTrace(e.getMessage());
         }
-        return JSON.toJSONString(translateText);
+        return translation;
     }
 }

@@ -27,13 +27,16 @@ public class UserService {
         int i = usersService.addUser(usersDO);
         if (i > 0) {
             //创建Klaviyo用户并加入到初次安装的list中
-            String profileId = klaviyoService.createProfile(usersDO);
-            klaviyoService.addProfileToDatabase(new KlaviyoDataDO(usersDO.getShopName(), usersDO.getShopName(), PROFILE, profileId));
-            // 获取初次注册List的id
-            String listId = klaviyoService.getListId(I_I_E);
-            if (profileId != null && listId != null) {
-                klaviyoService.addProfileToKlaviyoList(new ProfileToListRequest(profileId, listId));
+            if (usersDO.getEmail() != null ){
+                String profileId = klaviyoService.createProfile(usersDO);
+                klaviyoService.addProfileToDatabase(new KlaviyoDataDO(usersDO.getShopName(), usersDO.getShopName(), PROFILE, profileId));
+                // 获取初次注册List的id
+                String listId = klaviyoService.getListId(I_I_E);
+                if (profileId != null && listId != null) {
+                    klaviyoService.addProfileToKlaviyoList(new ProfileToListRequest(profileId, listId));
+                }
             }
+            //TODO：当email为空时，还需要判断，问下汪恭伟
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
