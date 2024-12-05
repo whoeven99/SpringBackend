@@ -15,4 +15,5 @@ public interface IItemsService extends IService<ItemsDO> {
     Integer updateItemsByShopName(ShopifyRequest request, String key, int totalChars, int totalChars1);
     List<ItemsRequest> readSingleItemInfo(ShopifyRequest request, String key);
 
+    Integer updateItemsTotalData(ShopifyRequest shopifyRequest, int totalChars, String key);
 }

@@ -19,10 +19,13 @@ public class ItemsDO {
     private Integer totalNumber;
     private String target;
     private Integer translatedNumber;
+    private Integer status;
 
-    public ItemsDO(String itemName, int totalNumber, int translatedNumber) {
+    public ItemsDO(String itemName, int totalNumber, int translatedNumber, String target, int status) {
         this.itemName = itemName;
         this.totalNumber = totalNumber;
         this.translatedNumber = translatedNumber;
+        this.target = target;
+        this.status = status;
     }
 }

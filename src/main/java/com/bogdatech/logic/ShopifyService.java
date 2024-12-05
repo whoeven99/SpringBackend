@@ -59,7 +59,7 @@ public class ShopifyService {
 
     @Autowired
     private IItemsService itemsService;
-    
+
     @Autowired
     private ITranslatesService translatesService;
     private final TelemetryClient appInsights = new TelemetryClient();
@@ -400,6 +400,7 @@ public class ShopifyService {
 //            System.out.println("translated: " + translatedCounter.getTotalChars());
             //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
             if (!itemsService.readSingleItemInfo(shopifyRequest, resourceType).isEmpty()) {
+                itemsService.updateItemsTotalData(shopifyRequest, allCounter.getTotalChars(), resourceType);
                 itemsService.updateItemsByShopName(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
 
             } else {
@@ -465,12 +466,11 @@ public class ShopifyService {
                 // 当资源类型为 ONLINE_STORE_THEME 时，调用专门的计数方法
                 countThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
             } else {
-                // 处理其他类型的资源
-                countNonThemeData(translationsNode, counter, translatedCounter);
+                // 处理其他类型的数据
+                countNonThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
             }
         }
     }
-
 
     //计数 ONLINE_STORE_THEME 类型的资源数据。
     private void countThemeData(JsonNode translationsNode, JsonNode translatableContentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter) {
@@ -497,10 +497,14 @@ public class ShopifyService {
 
     }
 
-
     //计数非 ONLINE_STORE_THEME 类型的资源数据。
-    private void countNonThemeData(JsonNode translationsNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter) {
-        counter.addChars(1);
+    private void countNonThemeData(JsonNode translationsNode, JsonNode translatableContentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter) {
+//        System.out.println("translatableContentNode: " + translatableContentNode);
+        if (!translatableContentNode.isEmpty()) {
+            counter.addChars(1);
+        }else {
+            return;
+        }
         if (translationsNode != null && !translationsNode.isEmpty()) {
             // 如果翻译内容节点不为空，则增加已翻译的字符数
             translatedCounter.addChars(1);
@@ -542,13 +546,13 @@ public class ShopifyService {
         ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
         List<ItemsDO> itemsRequests = itemsService.readItemsInfo(shopifyRequest);
         Map<String, ItemsDO> itemMap = itemsRequests.stream()
-                .collect(Collectors.toMap(ItemsDO::getItemName, item -> new ItemsDO(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
+                .collect(Collectors.toMap(ItemsDO::getItemName, item -> new ItemsDO(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber(), item.getTarget(), item.getStatus())));
         if (itemsRequests.isEmpty()) {
             getTranslationItemsInfo(request);
             shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
             itemsRequests = itemsService.readItemsInfo(shopifyRequest);
             itemMap = itemsRequests.stream()
-                    .collect(Collectors.toMap(ItemsDO::getItemName, item -> new ItemsDO(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber())));
+                    .collect(Collectors.toMap(ItemsDO::getItemName, item -> new ItemsDO(item.getItemName(), item.getTotalNumber(), item.getTranslatedNumber(), item.getTarget(), item.getStatus())));
         }
         return new BaseResponse<>().CreateSuccessResponse(itemMap);
     }

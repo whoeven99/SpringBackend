@@ -25,6 +25,7 @@ public class ItemsServiceImpl extends ServiceImpl<ItemsMapper, ItemsDO> implemen
         itemsDO.setTotalNumber(totalChars);
         itemsDO.setTranslatedNumber(translatedCounter);
         itemsDO.setTarget(request.getTarget());
+        itemsDO.setStatus(1);
         return baseMapper.insert(itemsDO);
     }
 
@@ -36,5 +37,10 @@ public class ItemsServiceImpl extends ServiceImpl<ItemsMapper, ItemsDO> implemen
     @Override
     public List<ItemsRequest> readSingleItemInfo(ShopifyRequest request, String key) {
         return baseMapper.readSingleItemInfo(request.getShopName(), request.getTarget(), key);
+    }
+
+    @Override
+    public Integer updateItemsTotalData(ShopifyRequest shopifyRequest, int totalChars, String key) {
+        return baseMapper.updateItemsTotalData(shopifyRequest.getShopName(), totalChars, key);
     }
 }

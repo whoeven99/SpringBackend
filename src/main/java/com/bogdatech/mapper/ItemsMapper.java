@@ -14,9 +14,12 @@ public interface ItemsMapper extends BaseMapper<ItemsDO> {
     @Select("SELECT item_name, target, shop_name, translated_number, total_number FROM Items WHERE shop_name = #{shopName} and target = #{target}")
     List<ItemsDO> readItemsInfo(String shopName, String target);
 
-    @Update("UPDATE Items SET translated_number = #{totalChars1}, total_number = #{totalChars} WHERE shop_name = #{shopName} and target = #{target} and item_name = #{key}")
+    @Update("UPDATE Items SET translated_number = #{totalChars1}, total_number = #{totalChars}, status = 1 WHERE shop_name = #{shopName} and target = #{target} and item_name = #{key}")
     Integer updateItemsByShopName(String shopName, String target, String key, int totalChars, int totalChars1);
 
     @Select("SELECT item_name, target, shop_name, translated_number, total_number FROM Items WHERE shop_name = #{shopName} and target = #{target} and item_name = #{key}")
     List<ItemsRequest> readSingleItemInfo(String shopName, String target, String key);
+
+    @Update("UPDATE Items SET total_number = #{totalChars}, status = 1 WHERE shop_name = #{shopName} and item_name = #{key}")
+    Integer updateItemsTotalData(String shopName, int totalChars, String key);
 }
