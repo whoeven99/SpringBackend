@@ -39,8 +39,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.entity.TranslateResourceDTO.DATABASE_RESOURCES;
-import static com.bogdatech.entity.TranslateResourceDTO.TRANSLATION_RESOURCES;
+import static com.bogdatech.entity.TranslateResourceDTO.*;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 
@@ -205,7 +204,7 @@ public class TranslateService {
         // 如果没有超限，则开始翻译流程
         translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //TRANSLATION_RESOURCES
-        for (TranslateResourceDTO translateResource : TRANSLATION_RESOURCES) {
+        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
@@ -531,6 +530,7 @@ public class TranslateService {
                     || "PACKING_SLIP_TEMPLATE".equals(contentItemNode.get("type").asText())
                     || "EMAIL_TEMPLATE".equals(contentItemNode.get("type").asText())) {
                 judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                System.out.println("database: "+ value);
                 continue;
             }
             //对value进行判断 plainText
