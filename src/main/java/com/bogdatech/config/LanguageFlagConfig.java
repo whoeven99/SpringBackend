@@ -322,7 +322,7 @@ public class LanguageFlagConfig {
 
         // Chinese (Traditional)
         ZH_TW.put("Name", "Chinese (Traditional)");
-        ZH_TW.put("Local", "中文（繁体）");
+        ZH_TW.put("Local", "中文（繁體）");
         ZH_TW.put("isoCode", "zh-TW");
         ZH_TW.put("countries", new String[]{
                 "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TW.png",
