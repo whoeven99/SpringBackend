@@ -337,9 +337,12 @@ public class TranslateService {
                 case JSON_TEXT:
                     translateJsonText(entry.getValue(), request, counter, remainingChars);
                     break;
-                default:
+                case DATABASE:
                     //处理database数据
                     translateDataByDatabase(entry.getValue(), request, counter, remainingChars);
+                    break;
+                default:
+
                     break;
             }
         }
@@ -389,18 +392,16 @@ public class TranslateService {
             } else {
                 //数据库为空的逻辑
                 //判断数据类型
-                if ("handle".equals(value)
+                if ("handle".equals(key)
                 ) {
                     continue;  // 跳过当前项
-                }
-                //对于json和json_string的数据直接存原文
-                if ("JSON".equals(value)
-                        || "JSON_STRING".equals(value)) {
+                }else if ("JSON".equals(key)
+                        || "JSON_STRING".equals(key)) {
+                    //对于json和json_string的数据直接存原文
                     //存放在json的集合里面
                     saveToShopify(value, translation, resourceId, request);
                     continue;
-                }
-                if ("HTML".equals(value)) {
+                }else if ("HTML".equals(key)) {
                     //存放在html的list集合里面
                     try {
                         targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, request.getTarget());
@@ -408,13 +409,14 @@ public class TranslateService {
                         continue;
                     }
                     saveToShopify(targetText, translation, resourceId, request);
-                    continue;
+                }else {
+                    String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+                    addData(target, value, targetString);
+                    saveToShopify(targetString, translation, resourceId, request);
                 }
 
-                String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                addData(target, value, targetString);
-                saveToShopify(targetString, translation, resourceId, request);
+
             }
         }
     }

@@ -235,12 +235,10 @@ public class TranslateController {
         return translateApiIntegration.huoShanTranslate(request);
     }
 
-    //调用谷歌谷歌翻译接口
+    //封装谷歌谷歌翻译
     @PostMapping("/testGoogle")
     public String testGoogle(@RequestBody TranslateRequest request) {
-//        getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value)
-        String googleTranslateData = translateService.getGoogleTranslateData(request);
-        System.out.println("调用谷歌谷歌翻译接口:" + googleTranslateData);
+        String googleTranslateData = translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
         return googleTranslateData;
     }
 }
