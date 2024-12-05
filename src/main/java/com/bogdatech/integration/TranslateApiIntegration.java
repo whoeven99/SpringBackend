@@ -113,17 +113,21 @@ public class TranslateApiIntegration {
         JSONObject jsonObject;
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             // 获取响应实体并转换为字符串
-            String responseBody = EntityUtils.toString(response.getEntity(), "UTF-8");
-            jsonObject = JSONObject.parseObject(responseBody);
 
-                appInsights.trackTrace("翻译结果：" + jsonObject);
+//            String responseBody = EntityUtils.toString(response.getEntity(), "UTF-8");
+
+            HttpEntity responseEntity = response.getEntity();
+            String responseBody = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
+            jsonObject = JSONObject.parseObject(responseBody);
+            System.out.println("翻译结果：" + responseBody);
+            appInsights.trackTrace("翻译结果：" + responseBody);
             // 获取翻译结果
             JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
-            response.close();
-            httpClient.close();
-        } catch (IOException e) {
+//            response.close();
+//            httpClient.close();
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return result;
