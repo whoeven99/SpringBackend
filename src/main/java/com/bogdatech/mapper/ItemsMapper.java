@@ -11,7 +11,7 @@ import java.util.List;
 
 @Mapper
 public interface ItemsMapper extends BaseMapper<ItemsDO> {
-    @Select("SELECT item_name, target, shop_name, translated_number, total_number FROM Items WHERE shop_name = #{shopName} and target = #{target}")
+    @Select("SELECT item_name, target, shop_name, translated_number, total_number, status FROM Items WHERE shop_name = #{shopName} and target = #{target}")
     List<ItemsDO> readItemsInfo(String shopName, String target);
 
     @Update("UPDATE Items SET translated_number = #{totalChars1}, total_number = #{totalChars}, status = 1 WHERE shop_name = #{shopName} and target = #{target} and item_name = #{key}")
