@@ -11,7 +11,6 @@ import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.ItemsDO;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslateTextDO;
-import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
@@ -105,6 +104,7 @@ public class ShopifyService {
         CharacterCountUtils counter = new CharacterCountUtils();
         CharacterCountUtils translateCounter = new CharacterCountUtils();
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
+        System.out.println("target: " + request.getTarget());
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = shopifyRequestBody.getFirstQuery(translateResource);
@@ -120,9 +120,9 @@ public class ShopifyService {
     @Async
     public void countBeforeTranslateChars(String infoByShopify, ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
         JsonNode rootNode = ConvertStringToJsonNode(infoByShopify, translateResource);
-        JsonNode translatedRootNode = translateSingleLineTextFieldsRecursively(rootNode, request, counter, translateCounter);
+        translateSingleLineTextFieldsRecursively(rootNode, request, counter, translateCounter);
         // 递归处理下一页数据
-        handlePagination(translatedRootNode, request, counter, translateResource, translateCounter);
+        handlePagination(rootNode, request, counter, translateResource, translateCounter);
         //打印最后使用的值
 
     }
@@ -130,6 +130,7 @@ public class ShopifyService {
     //将String数据转化为JsonNode数据
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
         System.out.println("现在统计到： " + translateResource.getResourceType());
+
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
         try {
@@ -141,34 +142,43 @@ public class ShopifyService {
     }
 
     //递归遍历JSON树：使用 translateSingleLineTextFieldsRecursively 方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
-    private JsonNode translateSingleLineTextFieldsRecursively(JsonNode node, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
-        if (node.isObject()) {
-            return translateObjectNode((ObjectNode) node, request, counter, translateCounter);
-        } else if (node.isArray()) {
-            return translateArrayNode((ArrayNode) node, request, counter, translateCounter);
-        } else {
-            return node;
-        }
+    private void translateSingleLineTextFieldsRecursively(JsonNode node, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
+        translateObjectNode((ObjectNode) node, request, counter, translateCounter);
     }
 
     //对node节点进行判断，是否调用方法
-    private JsonNode translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
+    private void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
         AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
-        objectNode.fieldNames().forEachRemaining(fieldName -> {
-            JsonNode fieldValue = objectNode.get(fieldName);
-//            System.out.println("fieldName: " + fieldName);
-//            System.out.println("进来了");
-            //当translates里面有数据时
-            if ("translations".equals(fieldName)) {
-                strings.set(counterTranslatedContent((ArrayNode) fieldValue, translateCounter));
+        JsonNode translatableResourcesNode = objectNode.path("translatableResources");
+        if (!translatableResourcesNode.isObject()) {
+            return;
+        }
+        // 处理 nodes 数组
+        JsonNode nodesNode = translatableResourcesNode.path("nodes");
+        if (!nodesNode.isArray()) {
+            return;
+        }
+        ArrayNode nodesArray = (ArrayNode) nodesNode;
+        for (JsonNode nodeElement : nodesArray) {
+            if (!nodeElement.isObject()) {
+                continue;
             }
-            if ("translatableContent".equals(fieldName)) {
-                translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, translateCounter, strings.get());
-            } else {
-                objectNode.set(fieldName, translateSingleLineTextFieldsRecursively(fieldValue, request, counter, translateCounter));
+            Iterator<Map.Entry<String, JsonNode>> fields = nodeElement.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                String fieldName = field.getKey();
+                JsonNode fieldValue = field.getValue();
+                //当translates里面有数据时
+                if ("translations".equals(fieldName)) {
+                    strings.set(counterTranslatedContent((ArrayNode) fieldValue, translateCounter));
+                }
+                if ("translatableContent".equals(fieldName)) {
+                    translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, translateCounter, strings.get());
+                }
+
             }
-        });
-        return objectNode;
+        }
+
     }
 
     //将已翻译value的key放到list集合中
@@ -186,7 +196,7 @@ public class ShopifyService {
     private JsonNode translateArrayNode(ArrayNode arrayNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
         for (int i = 0; i < arrayNode.size(); i++) {
             JsonNode element = arrayNode.get(i);
-            arrayNode.set(i, translateSingleLineTextFieldsRecursively(element, request, counter, translateCounter));
+//            arrayNode.set(i, translateSingleLineTextFieldsRecursively(element, request, counter, translateCounter));
         }
         return arrayNode;
     }
@@ -199,19 +209,19 @@ public class ShopifyService {
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
 //            if ("handle".equals(contentItemNode.get("key").asText()) || "HTML".equals(contentItemNode.get("type").asText())) {
-            if ("handle".equals(contentItemNode.get("key").asText())
-                    || "JSON".equals(contentItemNode.get("type").asText())
-                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
-            ) {
-                continue;  // 跳过当前项
-            }
+//            if ("handle".equals(contentItemNode.get("key").asText())
+//                    || "JSON".equals(contentItemNode.get("type").asText())
+//                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
+//            ) {
+//                continue;  // 跳过当前项
+//            }
 //             获取 value
             String value = contentItemNode.get("value").asText();
             counter.addChars(value.length());
 
-            if (translatedContent.contains(contentItemNode.get("key").asText())) {
-                translatedCounter.addChars(value.length());
-            }
+//            if (translatedContent.contains(contentItemNode.get("key").asText())) {
+//                translatedCounter.addChars(value.length());
+//            }
         }
     }
 
@@ -234,15 +244,15 @@ public class ShopifyService {
     // 递归处理下一页数据
     private JsonNode translateNextPage(ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResource, CharacterCountUtils translateCounter) {
         JsonNode nextPageData = fetchNextPage(translateResource, request);
-        JsonNode translatedNextPage = translateSingleLineTextFieldsRecursively(nextPageData, request, counter, translateCounter);
+         translateSingleLineTextFieldsRecursively(nextPageData, request, counter, translateCounter);
 
-        if (hasNextPage(translatedNextPage)) {
-            String newEndCursor = getEndCursor(translatedNextPage);
+        if (hasNextPage(nextPageData)) {
+            String newEndCursor = getEndCursor(nextPageData);
             translateResource.setAfter(newEndCursor);
             return translateNextPage(request, counter, translateResource, translateCounter);
         }
 
-        return translatedNextPage;
+        return nextPageData;
     }
 
     // 检查是否有下一页
@@ -314,7 +324,8 @@ public class ShopifyService {
     }
 
     //在UserSubscription表里面添加一个购买了免费订阅计划的用户（商家）
-    public BaseResponse<Object> addUserFreeSubscription(UserSubscriptionsRequest request) {
+    @Async
+    public void addUserFreeSubscription(UserSubscriptionsRequest request) {
         request.setStatus(1);
         request.setPlanId(1);
         LocalDateTime localDate = LocalDateTime.now();
@@ -326,14 +337,15 @@ public class ShopifyService {
         String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request.getShopName());
         if (userSubscriptionPlan == null) {
             Integer i = userSubscriptionsService.addUserSubscription(request);
-            if (i > 0) {
-                return new BaseResponse<>().CreateSuccessResponse("success");
-            } else {
-                return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
-            }
-        } else {
-            return new BaseResponse<>().CreateSuccessResponse("success");
+//            if (i > 0) {
+////                return new BaseResponse<>().CreateSuccessResponse("success");
+//            } else {
+////                return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
+//            }
         }
+//        else {
+////            return new BaseResponse<>().CreateSuccessResponse("success");
+//        }
     }
 
     //修改shopify本地单条数据 和 更新本地数据库相应数据

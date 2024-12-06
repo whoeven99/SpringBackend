@@ -53,17 +53,18 @@ public class TranslateController {
      * 插入shop翻译项信息
      */
     @PostMapping("/translate/insertShopTranslateInfo")
-    public BaseResponse<Object> insertShopTranslateInfo(@RequestBody TranslateRequest request) {
-        Integer status = translatesService.readStatus(request);
-        if (status != null) {
-            return new BaseResponse<>().CreateErrorResponse(DATA_EXIST);
-        } else {
-            Integer result = translatesService.insertShopTranslateInfo(request, 0);
-            if (result > 0) {
-                return new BaseResponse<>().CreateSuccessResponse("Created language");
-            }
-            return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
-        }
+    public void insertShopTranslateInfo(@RequestBody TranslateRequest request) {
+        translateService.insertTranslateStatus(request);
+//        Integer status = translatesService.readStatus(request);
+//        if (status != null) {
+//            return new BaseResponse<>().CreateErrorResponse(DATA_EXIST);
+//        } else {
+//            Integer result = translatesService.insertShopTranslateInfo(request, 0);
+//            if (result > 0) {
+//                return new BaseResponse<>().CreateSuccessResponse("Created language");
+//            }
+//            return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+//        }
 //        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 

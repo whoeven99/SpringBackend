@@ -7,6 +7,7 @@ import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.model.controller.request.ProfileToListRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,5 +47,13 @@ public class UserService {
 
     public UsersDO getUser(UsersDO request) {
         return usersService.getUserByName(request.getShopName());
+    }
+
+    //添加User
+    @Async
+    public void addUserAsync(UsersDO userRequest) {
+        if (getUser(userRequest) == null) {
+             addUser(userRequest);
+        }
     }
 }
