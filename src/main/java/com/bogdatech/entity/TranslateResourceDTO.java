@@ -20,9 +20,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO("COLLECTION", "250", "", ""),
 
             new TranslateResourceDTO("ONLINE_STORE_THEME_APP_EMBED", "250", "", ""),
-
             new TranslateResourceDTO("ONLINE_STORE_THEME_JSON_TEMPLATE", "250", "", ""),
-
             new TranslateResourceDTO("ONLINE_STORE_THEME_SECTION_GROUP", "250", "", ""),
             new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_CATEGORY", "250", "", ""),
             new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS", "250", "", "")
@@ -74,14 +72,15 @@ public class TranslateResourceDTO {
             ,
             new TranslateResourceDTO("PACKING_SLIP_TEMPLATE", "250", "", ""),
             new TranslateResourceDTO("SHOP_POLICY", "250", "", ""),
-//            new TranslateResourceDTO("EMAIL_TEMPLATE", "250", "", ""),
+            new TranslateResourceDTO("EMAIL_TEMPLATE", "250", "", ""),
             new TranslateResourceDTO("ONLINE_STORE_THEME_LOCALE_CONTENT", "250", "", ""),
             new TranslateResourceDTO("MENU", "250", "", ""),
             new TranslateResourceDTO("LINK", "250", "", "")
             ,
             new TranslateResourceDTO("DELIVERY_METHOD_DEFINITION", "250", "", ""),
             new TranslateResourceDTO("FILTER", "250", "", ""),
-            new TranslateResourceDTO("METAFIELD", "250", "", ""),
+            new TranslateResourceDTO("METAFIELD", "250", "", "")
+            ,
             new TranslateResourceDTO("METAOBJECT", "250", "", ""),
             new TranslateResourceDTO("PAYMENT_GATEWAY", "250", "", ""),
             new TranslateResourceDTO("SELLING_PLAN", "250", "", ""),

@@ -84,10 +84,10 @@ public class TranslateApiIntegration {
             jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
 //            appInsights.trackTrace("翻译结果：" + jsonObject);
             // 获取翻译结果
-            System.out.println("jsonObject: " + jsonObject);
+//            System.out.println("jsonObject: " + jsonObject);
             if (jsonObject.containsKey("trans_result")) {
                 result = jsonObject.getJSONArray("trans_result").getJSONObject(0).getString("dst");
-                System.out.println("result: " + result);
+//                System.out.println("result: " + result);
             }
             response.close();
             httpClient.close();
@@ -106,21 +106,19 @@ public class TranslateApiIntegration {
                 "&target=" + request.getTarget() +
                 "&model=base";
         String result = null;
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+
         // 创建HttpGet请求
         HttpPost httpPost = new HttpPost(url);
         // 执行请求
         JSONObject jsonObject;
-        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault();
+                CloseableHttpResponse response = httpClient.execute(httpPost)) {
             // 获取响应实体并转换为字符串
-
-//            String responseBody = EntityUtils.toString(response.getEntity(), "UTF-8");
-
             HttpEntity responseEntity = response.getEntity();
             String responseBody = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             jsonObject = JSONObject.parseObject(responseBody);
-            System.out.println("翻译结果：" + responseBody);
-            appInsights.trackTrace("翻译结果：" + responseBody);
+//            System.out.println("翻译结果：" + responseBody);
+//            appInsights.trackTrace("翻译结果：" + responseBody);
             // 获取翻译结果
             JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
             JSONObject translation = translationsArray.getJSONObject(0);
@@ -194,7 +192,7 @@ public class TranslateApiIntegration {
 
         //对火山翻译API的语言进行处理
         String huoShanTarget = ApiCodeUtils.huoShanTransformCode(request.getTarget());
-        System.out.println("huoShanTarget: " + huoShanTarget);
+//        System.out.println("huoShanTarget: " + huoShanTarget);
         // translate text
         TranslateTextResponse translateText = null;
         String translation = null;
