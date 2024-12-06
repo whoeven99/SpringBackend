@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.*;
 @Mapper
 public interface CurrenciesMapper extends BaseMapper<CurrenciesDO> {
 
-    @Insert("INSERT INTO Currencies (shop_name, country_name, currency_code, rounding, exchange_rate) " +
+    @Insert("INSERT INTO Currencies (shop_name, currency_name, currency_code, rounding, exchange_rate) " +
             "VALUES (#{shopName}, #{countryName}, #{currencyCode}, #{rounding}, #{exchangeRate})")
     Integer insertCurrency(String shopName, String countryName, String currencyCode, String rounding, String exchangeRate);
 
