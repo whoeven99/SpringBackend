@@ -407,6 +407,7 @@ public class TranslateService {
                 continue;
             } catch (Exception e) {
                 //打印错误信息
+                saveToShopify(value, translation, resourceId, request);
                 appInsights.trackTrace(e.getMessage());
             }
             //数据库为空的逻辑
