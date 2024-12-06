@@ -213,6 +213,7 @@ public class TranslateService {
 //            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
         }
 
+
 //         更新数据库中的已使用字符数
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         // 将翻译状态改为“已翻译”// TODO: 正常来说是部分翻译，逻辑后面再改
