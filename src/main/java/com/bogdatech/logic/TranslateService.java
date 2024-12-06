@@ -339,7 +339,12 @@ public class TranslateService {
                     break;
                 case DATABASE:
                     //处理database数据
-                    translateDataByDatabase(entry.getValue(), request, counter, remainingChars);
+                    try {
+                        translateDataByDatabase(entry.getValue(), request, counter, remainingChars);
+                    } catch (Exception e) {
+                        appInsights.trackTrace(e.getMessage());
+                        continue;
+                    }
                     break;
                 default:
 
