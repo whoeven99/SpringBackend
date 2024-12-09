@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Master Build and Deploy to Test env
+name: Build and deploy JAR app to Azure Web App - SpringBackendProd
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Java version
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'microsoft'
 
       - name: Build with Maven
@@ -49,15 +49,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B483753AA7B04E05AD7E5B37C05D4B07 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9956A89329F2401C84B93A66C2064481 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FC63516FCE044D28A316A122B887865E }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_21B651CD481A4A529780488169AB779B }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7D4B9515D025455C8763DF9279864923 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D2CDFD608D4049BB9CF52A18B36DA1C5 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'SpringBackendService'
+          app-name: 'SpringBackendProd'
           slot-name: 'Production'
           package: '*.jar'
           
