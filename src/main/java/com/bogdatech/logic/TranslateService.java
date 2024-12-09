@@ -564,7 +564,7 @@ public class TranslateService {
 //                System.out.println("key = " + value);
                 continue;
             }
-//            System.out.println("value = " + value);
+            System.out.println("value = " + value);
             //TODO：可以做一个switch？
 
             //            //对从数据库中获取的数据单独处理
@@ -579,7 +579,7 @@ public class TranslateService {
             }
 
             //跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText())
+            if ("handle".equals(key)
             ) {
                 continue;  // 跳过当前项
             }
@@ -591,8 +591,9 @@ public class TranslateService {
                 continue;
             }
 
+
             //对value进行判断 plainText
-            if ("HTML".equals(contentItemNode.get("type").asText())) {
+            if ("HTML".equals(type)) {
                 //存放在html的list集合里面
                 judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                 continue;
@@ -861,6 +862,22 @@ public class TranslateService {
         return null;
     }
 
+    //插入语言状态
+    @Async
+    public void insertLanguageStatus(TranslateRequest request) {
+        Integer status = translatesService.readStatus(request);
+        if (status == null) {
+            translatesService.insertShopTranslateInfo(request, 0);
+        }
+    }
 
+    //插入翻译状态
+    @Async
+    public void insertTranslateStatus(TranslateRequest request) {
+        Integer status = translatesService.readStatus(request);
+        if (status == null) {
+            Integer result = translatesService.insertShopTranslateInfo(request, 0);
+        }
+    }
 }
 

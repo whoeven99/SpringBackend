@@ -99,8 +99,8 @@ public class ShopifyController {
 
     //当用户第一次订阅时，在用户订阅表里面添加用户及其付费计划
     @PostMapping("/shopify/addUserFreeSubscription")
-    public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request) {
-        return shopifyService.addUserFreeSubscription(request);
+    public void registerTransaction(@RequestBody UserSubscriptionsRequest request) {
+         shopifyService.addUserFreeSubscription(request);
     }
 
     //获取用户订阅计划

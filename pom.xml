@@ -16,9 +16,6 @@
 	<properties>
 		<java.version>17</java.version>
 	</properties>
-
-
-
 	<dependencies>
 
 		<dependency>
@@ -36,6 +33,7 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>

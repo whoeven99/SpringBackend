@@ -4,7 +4,6 @@ package com.bogdatech.controller;
 import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.logic.UserService;
-import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,14 +26,14 @@ public class UserController {
 
     // 添加用户
     @PostMapping("/user/add")
-    public BaseResponse<Object> addUser(@RequestBody UsersDO userRequest) {
+    public void addUser(@RequestBody UsersDO userRequest) {
 
-        if (userService.getUser(userRequest) == null) {
-            return userService.addUser(userRequest);
-        }else {
-            return new BaseResponse<>().CreateErrorResponse("User already exists");
-        }
-
+//        if (userService.getUser(userRequest) == null) {
+//            return userService.addUser(userRequest);
+//        }else {
+//            return new BaseResponse<>().CreateErrorResponse("User already exists");
+//        }
+        userService.addUserAsync(userRequest);
     }
 
 
