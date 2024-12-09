@@ -32,7 +32,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     public BaseResponse<Object> updateCurrency(CurrencyRequest request) {
         int result = baseMapper.updateCurrency(request.getId(), request.getRounding(),request.getExchangeRate());
         if (result > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(result);
+            return new BaseResponse<>().CreateSuccessResponse(200);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
 
