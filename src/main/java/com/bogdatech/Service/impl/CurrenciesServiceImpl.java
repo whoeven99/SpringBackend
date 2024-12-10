@@ -22,7 +22,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
         // 准备SQL插入语句
         if (baseMapper.insertCurrency(request.getShopName(), request.getCountryName(),
                 request.getCurrencyCode(), request.getRounding(), request.getExchangeRate()) > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
+            return new BaseResponse<>().CreateSuccessResponse(baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode()));
         } else {
             return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
         }
@@ -42,7 +42,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     public BaseResponse<Object> deleteCurrency(CurrencyRequest request) {
         int result = baseMapper.deleteCurrency(request.getId());
         if (result > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
+            return new BaseResponse<>().CreateSuccessResponse(request.getId());
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
     }
