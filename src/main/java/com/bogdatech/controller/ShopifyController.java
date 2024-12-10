@@ -142,6 +142,7 @@ public class ShopifyController {
             return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
         }
     }
+
     //先从数据库中获取在调用getItemsByShopName
     @PostMapping("/shopify/getItemsInSqlByShopName")
     public BaseResponse<Object> getItemsInSqlByShopName(@RequestBody ResourceTypeRequest request) {

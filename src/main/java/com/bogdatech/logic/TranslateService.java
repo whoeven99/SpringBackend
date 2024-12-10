@@ -466,6 +466,7 @@ public class TranslateService {
             try {
                 targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, request.getTarget());
             } catch (Exception e) {
+                saveToShopify(value, translation, resourceId, request);
                 continue;
             }
             saveToShopify(targetText, translation, resourceId, request);
@@ -563,7 +564,8 @@ public class TranslateService {
 //                System.out.println("key = " + value);
                 continue;
             }
-//            System.out.println("value = " + value);
+            System.out.println("value = " + value);
+            //TODO：可以做一个switch？
 
             //            //对从数据库中获取的数据单独处理
             if ("ONLINE_STORE_THEME".equals(resourceType) ||
@@ -588,6 +590,7 @@ public class TranslateService {
                 judgeData.get(JSON_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                 continue;
             }
+
 
             //对value进行判断 plainText
             if ("HTML".equals(type)) {
