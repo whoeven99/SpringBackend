@@ -49,7 +49,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
 
     @Override
     public BaseResponse<Object> getCurrencyByShopName(CurrencyRequest request) {
-       CurrenciesDO list = baseMapper.getCurrencyByShopName(request.getShopName());
+       CurrenciesDO[] list = baseMapper.getCurrencyByShopName(request.getShopName());
         return new BaseResponse<>().CreateSuccessResponse(list);
     }
 }
