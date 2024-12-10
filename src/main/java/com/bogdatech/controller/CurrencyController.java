@@ -34,4 +34,8 @@ public class CurrencyController {
         return currencyService.getCurrencyByShopName(request);
     }
 
+    @PostMapping("/currency/getCurrencyWithSymbol")
+    public BaseResponse<Object> getCurrencyByShopId(@RequestBody CurrencyRequest request) {
+        return currencyService.getCurrencyWithSymbol(request);
+    }
 }
