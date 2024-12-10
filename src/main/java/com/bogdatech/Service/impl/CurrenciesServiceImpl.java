@@ -22,7 +22,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
         // 准备SQL插入语句
         if (baseMapper.insertCurrency(request.getShopName(), request.getCountryName(),
                 request.getCurrencyCode(), request.getRounding(), request.getExchangeRate()) > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
+            return new BaseResponse<>().CreateSuccessResponse(baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode()));
         } else {
             return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
         }
@@ -32,7 +32,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     public BaseResponse<Object> updateCurrency(CurrencyRequest request) {
         int result = baseMapper.updateCurrency(request.getId(), request.getRounding(),request.getExchangeRate());
         if (result > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(result);
+            return new BaseResponse<>().CreateSuccessResponse(200);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
 
@@ -42,14 +42,14 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     public BaseResponse<Object> deleteCurrency(CurrencyRequest request) {
         int result = baseMapper.deleteCurrency(request.getId());
         if (result > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
+            return new BaseResponse<>().CreateSuccessResponse(request.getId());
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
     }
 
     @Override
     public BaseResponse<Object> getCurrencyByShopName(CurrencyRequest request) {
-       CurrenciesDO list = baseMapper.getCurrencyByShopName(request.getShopName());
+       CurrenciesDO[] list = baseMapper.getCurrencyByShopName(request.getShopName());
         return new BaseResponse<>().CreateSuccessResponse(list);
     }
 }

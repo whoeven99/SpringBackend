@@ -28,7 +28,7 @@ public class UserService {
         int i = usersService.addUser(usersDO);
         if (i > 0) {
             //创建Klaviyo用户并加入到初次安装的list中
-            if (usersDO.getEmail() != null ){
+            if (usersDO.getEmail() != null) {
                 String profileId = klaviyoService.createProfile(usersDO);
                 klaviyoService.addProfileToDatabase(new KlaviyoDataDO(usersDO.getShopName(), usersDO.getShopName(), PROFILE, profileId));
                 // 获取初次注册List的id
@@ -53,7 +53,25 @@ public class UserService {
     @Async
     public void addUserAsync(UsersDO userRequest) {
         if (getUser(userRequest) == null) {
-             addUser(userRequest);
+            addUser(userRequest);
         }
+    }
+
+    //用户卸载应用
+    public Boolean unInstallApp() {
+        return true;
+    }
+
+    //用户卸载应用后48小时后清除数据
+    public Boolean cleanData() {
+        return true;
+    }
+
+    public Boolean requestData() {
+        return true;
+    }
+
+    public Boolean deleteData() {
+        return true;
     }
 }

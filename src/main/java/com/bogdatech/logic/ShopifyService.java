@@ -397,7 +397,7 @@ public class ShopifyService {
         CharacterCountUtils allCounter = new CharacterCountUtils();
         CharacterCountUtils translatedCounter = new CharacterCountUtils();
 //            String resourceType = resourceList.getKey();
-//            System.out.println("resourceType: " + resourceType);
+//            System.out.println("resourceType: " + request.getResourceType());
 //            for (TranslateResourceDTO resource : resourceList.getValue()) {
         for (TranslateResourceDTO resource : RESOURCE_MAP.get(request.getResourceType())) {
             Map<String, Object> singleResult = new HashMap<>();

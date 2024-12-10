@@ -1,31 +1,53 @@
 package com.bogdatech;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.util.Properties;
+
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @EnableAsync
 public class Application {
 
+    private TelemetryClient appInsights = new TelemetryClient();
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
 
-    // TODO Need to move this to Mybatis
-//    @Bean
-//    public Connection getSqlJdbcConnection() {
-//        try {
-//            Properties properties = new Properties();
-//            properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
-//
-//            String env = System.getenv("ApplicationEnv");
-//            String connectionUrl = "prod".equals(env) ? properties.getProperty("prodSqlUrl") : properties.getProperty("devSqlUrl");
-//            //当 encrypt 属性设置为 true 且 trustServerCertificate 属性设置为 true 时，Microsoft JDBC Driver for SQL Server 将不验证SQL Server TLS 证书。 此设置常用于允许在测试环境中建立连接，如 SQL Server 实例只有自签名证书的情况。
-//            return DriverManager.getConnection(connectionUrl);
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource dataSource = new DruidDataSource();
+        try {
+            String env = System.getenv("ApplicationEnv");
+            Properties properties = new Properties();
+            properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
+            appInsights.trackTrace("env: " + env);
+            if ("prod".equals(env)) {
+                dataSource.setUrl(properties.getProperty("spring.datasource.master.url"));
+                dataSource.setUsername(properties.getProperty("spring.datasource.master.username"));
+                dataSource.setPassword(properties.getProperty("spring.datasource.master.password"));
+                dataSource.setDriverClassName(properties.getProperty("spring.datasource.master.driver-class-name"));
+//                System.out.println("prod: " + properties.getProperty("spring.datasource.master.username"));
+            } else {
+                dataSource.setUrl(properties.getProperty("spring.datasource.test.url"));
+                dataSource.setUsername(properties.getProperty("spring.datasource.test.username"));
+                dataSource.setPassword(properties.getProperty("spring.datasource.test.password"));
+                dataSource.setDriverClassName(properties.getProperty("spring.datasource.test.driver-class-name"));
+//                System.out.println("test: " + properties.getProperty("spring.datasource.test.username"));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return dataSource;
+    }
+
+
 }
