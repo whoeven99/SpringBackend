@@ -11,4 +11,6 @@ public interface ICurrenciesService extends IService<CurrenciesDO> {
     public BaseResponse<Object> updateCurrency(CurrencyRequest request);
     public BaseResponse<Object> deleteCurrency(CurrencyRequest request);
     public BaseResponse<Object> getCurrencyByShopName(CurrencyRequest request);
+
+    BaseResponse<Object> getCurrencyWithSymbol(CurrencyRequest request);
 }
