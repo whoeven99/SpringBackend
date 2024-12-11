@@ -1,6 +1,5 @@
 package com.bogdatech.integration;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,9 +20,9 @@ public class RateHttpIntegration {
 
     public static Map<String, Double> rateMap = new HashMap<String, Double>();
 
-    public JSON getFixerRate() {
+    public void getFixerRate() {
         String url = "https://data.fixer.io/api/latest?access_key=" + apiKey +
-                "&symbols=ARS,AMD,AWG,AUD,AZN,BDT,BSD,BHD,BBD,BIF,BYN,BZD,BMD,BTN,BAM,BRL,GBP,BOB,BWP,BND,BGN,MMK,KHR," +
+                "&symbols=AFN,ALL,ARS,AOA,AMD,AWG,AUD,AZN,BDT,BSD,BHD,BBD,BIF,BYN,BZD,BMD,BTN,BAM,BRL,GBP,BOB,BWP,BND,BGN,DZD,MMK,KHR," +
                 "CAD,CVE,KYD,XAF,CLP,CNY,COP,KMF,CDF,CRC,HRK,CZK,DKK,DJF,DOP,XCD,EGP,ERN,ETB,EUR,FKP,XPF,FJD,GIP,GMD,GHS" +
                 ",GTQ,GYD,GEL,GNF,HTG,HNL,HKD,HUF,ISK,INR,IDR,ILS,IQD,JMD,JPY,JEP,JOD,KZT,KES,KID,KWD,KGS,LAK,LVL,LBP,LSL" +
                 ",LRD,LYD,LTL,MGA,MKD,MOP,MWK,MVR,MRU,MXN,MYR,MUR,MDL,MAD,MNT,MZN,NAD,NPR,ANG,NZD,NIO,NGN,NOK,OMR,PAB,PKR" +
@@ -42,8 +41,7 @@ public class RateHttpIntegration {
         json.forEach((key, value) -> {
             rateMap.put(key, Double.valueOf(value.toString()));
         });
-        System.out.println("rateMap:" + rateMap.toString());
-        return json;
+//        System.out.println("rateMap:" + rateMap.toString());
+//        return json;
     }
-
 }

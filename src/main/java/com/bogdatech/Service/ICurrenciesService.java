@@ -5,6 +5,8 @@ import com.bogdatech.entity.CurrenciesDO;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 
+import java.util.Map;
+
 public interface ICurrenciesService extends IService<CurrenciesDO> {
     public BaseResponse<Object> insertCurrency(CurrencyRequest request);
 
@@ -12,5 +14,5 @@ public interface ICurrenciesService extends IService<CurrenciesDO> {
     public BaseResponse<Object> deleteCurrency(CurrencyRequest request);
     public BaseResponse<Object> getCurrencyByShopName(CurrencyRequest request);
 
-    BaseResponse<Object> getCurrencyWithSymbol(CurrencyRequest request);
+    Map<String, Object> getCurrencyWithSymbol(CurrencyRequest request);
 }

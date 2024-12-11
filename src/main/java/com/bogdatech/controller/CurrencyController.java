@@ -1,6 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ICurrenciesService;
+import com.bogdatech.logic.PurchaseService;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,9 @@ public class CurrencyController {
 
     @Autowired
     private ICurrenciesService currencyService;
+
+    @Autowired
+    private PurchaseService purchaseService;
 
     @PostMapping("/currency/insertCurrency")
     public BaseResponse<Object> addCurrency(@RequestBody CurrencyRequest request) {
@@ -34,8 +38,10 @@ public class CurrencyController {
         return currencyService.getCurrencyByShopName(request);
     }
 
-    @PostMapping("/currency/getCurrencyWithSymbol")
+    @PostMapping("/currency/getCacheData")
     public BaseResponse<Object> getCurrencyByShopId(@RequestBody CurrencyRequest request) {
-        return currencyService.getCurrencyWithSymbol(request);
+        return new BaseResponse<>().CreateSuccessResponse(purchaseService.getCacheData(request));
     }
+
+
 }

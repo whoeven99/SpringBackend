@@ -59,7 +59,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     }
 
     @Override
-    public BaseResponse<Object> getCurrencyWithSymbol(CurrencyRequest request) {
+    public Map<String, Object> getCurrencyWithSymbol(CurrencyRequest request) {
         CurrenciesDO currencyByShopNameAndCurrencyCode = baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode());
         Map<String, Object> map = new HashMap<>();
         map.put("id", currencyByShopNameAndCurrencyCode.getId());
@@ -76,6 +76,6 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
             throw new RuntimeException(e);
         }
         //TODO 将AUTO转为真正汇率
-        return new BaseResponse<>().CreateSuccessResponse(map);
+        return map;
     }
 }
