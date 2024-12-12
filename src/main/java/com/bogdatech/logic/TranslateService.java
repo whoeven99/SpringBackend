@@ -207,26 +207,23 @@ public class TranslateService {
             }
         }
 
-        //判断是否有同义词
-        Map<String, Object> glossaryMap = new HashMap<>();
-        getGlossaryByShopName(shopifyRequest, glossaryMap);
-
+//        //判断是否有同义词
+//        Map<String, Object> glossaryMap = new HashMap<>();
+//        getGlossaryByShopName(shopifyRequest, glossaryMap);
 
 //        // 如果没有超限，则开始翻译流程
-//        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
-//        //TRANSLATION_RESOURCES
-//        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-//            translateResource.setTarget(request.getTarget());
-//            String query = new ShopifyRequestBody().getFirstQuery(translateResource);
-//            cloudServiceRequest.setBody(query);
-//            String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
-//            translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
-////            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
-//        }
-//
-//
-////         更新数据库中的已使用字符数
-//        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
+        //TRANSLATION_RESOURCES
+        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
+            translateResource.setTarget(request.getTarget());
+            String query = new ShopifyRequestBody().getFirstQuery(translateResource);
+            cloudServiceRequest.setBody(query);
+            String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
+            translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
+//            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
+        }
+//         更新数据库中的已使用字符数
+        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         // 将翻译状态改为“已翻译”// TODO: 正常来说是部分翻译，逻辑后面再改
         translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
 
@@ -600,7 +597,7 @@ public class TranslateService {
 //                System.out.println("key = " + value);
                 continue;
             }
-            System.out.println("value = " + value);
+//            System.out.println("value = " + value);
             //TODO：可以做一个switch？
 
             //            //对从数据库中获取的数据单独处理
