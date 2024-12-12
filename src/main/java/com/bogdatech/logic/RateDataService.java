@@ -44,6 +44,7 @@ public class RateDataService {
         return toRate / fromRate;
     }
 
+    //获取自定义汇率
     public Object getRateRule() {
         return rateRule;
     }

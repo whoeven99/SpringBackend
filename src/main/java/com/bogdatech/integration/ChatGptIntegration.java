@@ -4,6 +4,7 @@ import com.azure.ai.openai.models.ChatCompletions;
 import com.azure.ai.openai.models.ChatCompletionsOptions;
 import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.azure.ai.openai.OpenAIClient;
@@ -16,10 +17,12 @@ import java.util.List;
 @Component
 public class ChatGptIntegration {
 
-    private static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
-    private static String apiKey = "3892b04e4a81497db4d37d4c5c18a720";
-    private static String deploymentName = "getting-started-deployment-241008214453";
-
+    @Value("${gpt.endpoint}")
+    private String endpoint;
+    @Value("${gpt.apiKey}")
+    private String apiKey;
+    @Value("${gpt.deploymentName}")
+    private String deploymentName;
     public String chatWithGpt(String prompt) {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
@@ -42,7 +45,7 @@ public class ChatGptIntegration {
                 .setStream(false);
 
         ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
-
+        System.out.println("Response: " + chatCompletions.getChoices().get(0).getMessage().getContent());
         // Todo Exception
         return chatCompletions.getChoices().get(0).getMessage().getContent();
     }
