@@ -210,7 +210,7 @@ public class TranslateService {
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         getGlossaryByShopName(shopifyRequest, glossaryMap);
-        System.out.println("glossaryMap: " + glossaryMap.toString());
+
 
 //        // 如果没有超限，则开始翻译流程
 //        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
@@ -241,21 +241,19 @@ public class TranslateService {
 
         for (GlossaryDO glossaryDO : glossaryDOS) {
             // 判断语言范围是否符合
-            if (!glossaryDO.getRangeCode().equals(request.getTarget()) || !glossaryDO.getRangeCode().equals("ALL")) {
-                continue;
+            if (glossaryDO.getRangeCode().equals(request.getTarget()) || glossaryDO.getRangeCode().equals("ALL")) {
+                // 判断术语是否启用
+                if (glossaryDO.getStatus() != 1) {
+                    continue;
+                }
+
+                // 存储术语数据
+                glossaryMap.put(glossaryDO.getSourceText() + SOURCE, glossaryDO.getSourceText());
+                glossaryMap.put(glossaryDO.getSourceText() + TARGET, glossaryDO.getTargetText());
+
+                // 存储区分大小写的信息
+                glossaryMap.put(glossaryDO.getSourceText() + CASE_SENSITIVE, glossaryDO.getCaseSensitive());
             }
-
-            // 判断术语是否启用
-            if (glossaryDO.getStatus() != 1) {
-                continue;
-            }
-
-            // 存储术语数据
-            glossaryMap.put(glossaryDO.getSourceText() + SOURCE, glossaryDO.getSourceText());
-            glossaryMap.put(glossaryDO.getSourceText() + TARGET, glossaryDO.getTargetText());
-
-            // 存储区分大小写的信息
-            glossaryMap.put(glossaryDO.getSourceText() + CASE_SENSITIVE, glossaryDO.getCaseSensitive());
         }
     }
 

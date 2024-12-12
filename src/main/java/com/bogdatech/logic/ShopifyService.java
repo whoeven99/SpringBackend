@@ -11,6 +11,7 @@ import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.ItemsDO;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslateTextDO;
+import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
@@ -324,8 +325,7 @@ public class ShopifyService {
     }
 
     //在UserSubscription表里面添加一个购买了免费订阅计划的用户（商家）
-    @Async
-    public void addUserFreeSubscription(UserSubscriptionsRequest request) {
+    public BaseResponse<Object> addUserFreeSubscription(UserSubscriptionsRequest request) {
         request.setStatus(1);
         request.setPlanId(1);
         LocalDateTime localDate = LocalDateTime.now();
@@ -337,15 +337,15 @@ public class ShopifyService {
         String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request.getShopName());
         if (userSubscriptionPlan == null) {
             Integer i = userSubscriptionsService.addUserSubscription(request);
-//            if (i > 0) {
-////                return new BaseResponse<>().CreateSuccessResponse("success");
-//            } else {
-////                return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
-//            }
+            if (i > 0) {
+                return new BaseResponse<>().CreateSuccessResponse("success");
+            } else {
+                return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
+            }
         }
-//        else {
-////            return new BaseResponse<>().CreateSuccessResponse("success");
-//        }
+        else {
+            return new BaseResponse<>().CreateSuccessResponse("success");
+        }
     }
 
     //修改shopify本地单条数据 和 更新本地数据库相应数据
