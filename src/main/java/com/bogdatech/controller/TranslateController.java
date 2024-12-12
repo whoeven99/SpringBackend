@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.*;
+import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 
 @RestController
 public class TranslateController {
@@ -152,7 +153,6 @@ public class TranslateController {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
-
         //翻译
         try {
             translateService.translating(request, remainingChars, counter);
@@ -239,7 +239,12 @@ public class TranslateController {
     //封装谷歌谷歌翻译
     @PostMapping("/testGoogle")
     public String testGoogle(@RequestBody TranslateRequest request) {
-        String googleTranslateData = translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
-        return googleTranslateData;
+        return translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
+    }
+
+    //计算OpenAI的token
+    @PostMapping("/testOpenAI")
+    public Integer testOpenAI(@RequestBody String content) {
+        return calculateToken(content);
     }
 }

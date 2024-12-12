@@ -1,7 +1,6 @@
 package com.bogdatech;
 
 import com.alibaba.druid.pool.DruidDataSource;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -17,7 +16,6 @@ import java.util.Properties;
 @EnableAsync
 public class Application {
 
-    private TelemetryClient appInsights = new TelemetryClient();
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
@@ -29,7 +27,6 @@ public class Application {
             String env = System.getenv("ApplicationEnv");
             Properties properties = new Properties();
             properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
-            appInsights.trackTrace("env: " + env);
             if ("prod".equals(env)) {
                 dataSource.setUrl(properties.getProperty("spring.datasource.master.url"));
                 dataSource.setUsername(properties.getProperty("spring.datasource.master.username"));

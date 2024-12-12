@@ -1,7 +1,6 @@
 package com.bogdatech.utils;
 
 public class ApiCodeUtils {
-    public static final String OS = "os";
 
     //微软代码处理
     public static String microsoftTransformCode(String code) {

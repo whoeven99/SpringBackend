@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @TableName("klaviyoData")
 public class KlaviyoDataDO {
-
+//    @TableId(type = IdType.AUTO)
+//    private Integer id;
     private String shopName;
     private String name;
     private String type;
