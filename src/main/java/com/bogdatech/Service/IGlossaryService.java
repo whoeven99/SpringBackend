@@ -7,7 +7,7 @@ public interface IGlossaryService {
 
     boolean deleteGlossaryById(GlossaryDO glossaryDO);
 
-    Object getGlossaryByShopName(GlossaryDO glossaryDO);
+    GlossaryDO[] getGlossaryByShopName(String shopName);
 
     boolean updateGlossaryInfoById(GlossaryDO glossaryDO);
 }

@@ -19,8 +19,8 @@ public class GlossaryServiceImpl extends ServiceImpl<GlossaryMapper, GlossaryDO>
     }
 
     @Override
-    public GlossaryDO[] getGlossaryByShopName(GlossaryDO glossaryDO) {
-        return baseMapper.readGlossaryByShopName(glossaryDO.getShopName());
+    public GlossaryDO[] getGlossaryByShopName(String shopName) {
+        return baseMapper.readGlossaryByShopName(shopName);
     }
 
     @Override

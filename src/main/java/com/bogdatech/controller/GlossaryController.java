@@ -37,7 +37,7 @@ public class GlossaryController {
     //根据shopName获得glossary数据
     @PostMapping("/glossary/getGlossaryByShopName")
     public BaseResponse<Object> getGlossaryByShopName(@RequestBody GlossaryDO glossaryDO) {
-        return new BaseResponse<>().CreateSuccessResponse(glossaryService.getGlossaryByShopName(glossaryDO));
+        return new BaseResponse<>().CreateSuccessResponse(glossaryService.getGlossaryByShopName(glossaryDO.getShopName()));
     }
 
     //根据id修改targetText，status，rangeCode，caseSensitive数据
@@ -48,4 +48,6 @@ public class GlossaryController {
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
     }
+
+
 }
