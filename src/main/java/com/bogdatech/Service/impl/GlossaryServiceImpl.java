@@ -12,4 +12,19 @@ public class GlossaryServiceImpl extends ServiceImpl<GlossaryMapper, GlossaryDO>
     public Boolean insertGlossaryInfo(GlossaryDO glossaryDO) {
         return baseMapper.insertGlossaryInfo(glossaryDO.getShopName(), glossaryDO.getSourceText(), glossaryDO.getTargetText(), glossaryDO.getRangeCode(), glossaryDO.getCaseSensitive(), glossaryDO.getStatus()) > 0;
     }
+
+    @Override
+    public boolean deleteGlossaryById(GlossaryDO glossaryDO) {
+        return baseMapper.deleteById(glossaryDO.getId()) > 0;
+    }
+
+    @Override
+    public GlossaryDO[] getGlossaryByShopName(GlossaryDO glossaryDO) {
+        return baseMapper.readGlossaryByShopName(glossaryDO.getShopName());
+    }
+
+    @Override
+    public boolean updateGlossaryInfoById(GlossaryDO glossaryDO) {
+        return baseMapper.updateGlossaryInfoById(glossaryDO.getId(), glossaryDO.getSourceText(), glossaryDO.getTargetText(), glossaryDO.getRangeCode(), glossaryDO.getCaseSensitive(), glossaryDO.getStatus()) > 0;
+    }
 }
