@@ -11,4 +11,6 @@ public class TranslateConstants {
     public static final String JSON_TEXT = "JSON_TEXT";
     public static final String SOURCE = "source";
     public static final String TARGET = "target";
+    public static final String GLOSSARY_0 = "Glossary0";
+    public static final String GLOSSARY_1 = "Glossary1";
 }
