@@ -1,6 +1,8 @@
 package com.bogdatech.logic;
 
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.Service.ITranslatesService;
@@ -15,6 +17,7 @@ import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
@@ -27,19 +30,23 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
-import static com.bogdatech.entity.TranslateResourceDTO.DATABASE_RESOURCES;
+import static com.bogdatech.entity.TranslateResourceDTO.*;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.utils.CaseSensitiveUtils.containsValue;
 import static com.bogdatech.utils.CaseSensitiveUtils.containsValueIgnoreCase;
+import static com.volcengine.model.tls.Const.CASE_SENSITIVE;
 
 @Component
 @EnableAsync
@@ -133,6 +140,62 @@ public class TranslateService {
         translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
     }
 
+    //写死的json
+    public BaseResponse<Object> userBDTranslateJsonObject() {
+        PathMatchingResourcePatternResolver resourceLoader = new PathMatchingResourcePatternResolver();
+        JSONObject data = null;
+        try {
+            Resource resource = resourceLoader.getResource("classpath:jsonData/project.json");
+            InputStream inputStream = resource.getInputStream();
+            ObjectMapper objectMapper = new ObjectMapper();
+            data = objectMapper.readValue(inputStream, JSONObject.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // 对options节点进行递归翻译处理
+        translateOptions(data != null ? data.getJSONObject("products") : null);
+        // 返回成功响应
+        return new BaseResponse<>().CreateSuccessResponse(data);
+    }
+
+    private void translateOptions(JSONObject options) {
+        if (options.containsKey("values")) {
+            JSONArray values = options.getJSONArray("values");
+            JSONArray translatedValues = new JSONArray();
+
+            for (Object valueObj : values) {
+                String value = (String) valueObj;
+                value = StringUtils.replaceSpaces(value, "-");
+                try {
+                    // 调用翻译接口
+                    String translatedValue = translateApiIntegration.baiDuTranslate(new TranslateRequest(0, null, null, "en", "zh", value));
+                    translatedValues.add(translatedValue);
+                } catch (Exception e) {
+                    // 如果翻译失败，则直接返回错误响应
+                    throw new RuntimeException("Translation failed", e);
+                }
+            }
+
+            // 替换原values值为翻译后的值
+            options.put("values", translatedValues);
+        }
+
+        // 递归处理options内的其他JSON对象
+        for (String key : options.keySet()) {
+            Object value = options.get(key);
+            if (value instanceof JSONObject) {
+                translateOptions((JSONObject) value);
+            } else if (value instanceof JSONArray) {
+                for (Object item : (JSONArray) value) {
+                    if (item instanceof JSONObject) {
+                        translateOptions((JSONObject) item);
+                    }
+                }
+            }
+        }
+    }
+
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
     public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter) {
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
@@ -180,7 +243,6 @@ public class TranslateService {
 
         for (GlossaryDO glossaryDO : glossaryDOS) {
             // 判断语言范围是否符合
-//            System.out.println("语言范围：" + glossaryDO.toString());
             if (glossaryDO.getRangeCode().equals(request.getTarget()) || glossaryDO.getRangeCode().equals("ALL")) {
                 // 判断术语是否启用
                 if (glossaryDO.getStatus() != 1) {
