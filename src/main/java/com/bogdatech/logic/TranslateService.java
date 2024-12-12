@@ -3,9 +3,11 @@ package com.bogdatech.logic;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.entity.GlossaryDO;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.entity.TranslatesDO;
@@ -42,6 +44,7 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.TranslateResourceDTO.*;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.ShopifyService.getVariables;
+import static com.volcengine.model.tls.Const.CASE_SENSITIVE;
 
 @Component
 @EnableAsync
@@ -71,6 +74,9 @@ public class TranslateService {
 
     @Autowired
     private ALiYunTranslateIntegration aliYunTranslateIntegration;
+
+    @Autowired
+    private IGlossaryService glossaryService;
     private final TelemetryClient appInsights = new TelemetryClient();
 
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
@@ -201,24 +207,56 @@ public class TranslateService {
             }
         }
 
-        // 如果没有超限，则开始翻译流程
-        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
-        //TRANSLATION_RESOURCES
-        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-            translateResource.setTarget(request.getTarget());
-            String query = new ShopifyRequestBody().getFirstQuery(translateResource);
-            cloudServiceRequest.setBody(query);
-            String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
-            translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
-//            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
-        }
+        //判断是否有同义词
+        Map<String, Object> glossaryMap = new HashMap<>();
+        getGlossaryByShopName(shopifyRequest, glossaryMap);
+        System.out.println("glossaryMap: " + glossaryMap.toString());
 
-
-//         更新数据库中的已使用字符数
-        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+//        // 如果没有超限，则开始翻译流程
+//        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
+//        //TRANSLATION_RESOURCES
+//        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
+//            translateResource.setTarget(request.getTarget());
+//            String query = new ShopifyRequestBody().getFirstQuery(translateResource);
+//            cloudServiceRequest.setBody(query);
+//            String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
+//            translateJson(shopifyData, shopifyRequest, translateResource, counter, remainingChars);
+////            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
+//        }
+//
+//
+////         更新数据库中的已使用字符数
+//        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         // 将翻译状态改为“已翻译”// TODO: 正常来说是部分翻译，逻辑后面再改
         translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
 
+    }
+
+    //判断词汇表中要判断的词
+    public void getGlossaryByShopName(ShopifyRequest request, Map<String, Object> glossaryMap) {
+        GlossaryDO[] glossaryDOS = glossaryService.getGlossaryByShopName(request.getShopName());
+        if (glossaryDOS == null) {
+            return; // 如果术语表为空，直接返回
+        }
+
+        for (GlossaryDO glossaryDO : glossaryDOS) {
+            // 判断语言范围是否符合
+            if (!glossaryDO.getRangeCode().equals(request.getTarget()) || !glossaryDO.getRangeCode().equals("ALL")) {
+                continue;
+            }
+
+            // 判断术语是否启用
+            if (glossaryDO.getStatus() != 1) {
+                continue;
+            }
+
+            // 存储术语数据
+            glossaryMap.put(glossaryDO.getSourceText() + SOURCE, glossaryDO.getSourceText());
+            glossaryMap.put(glossaryDO.getSourceText() + TARGET, glossaryDO.getTargetText());
+
+            // 存储区分大小写的信息
+            glossaryMap.put(glossaryDO.getSourceText() + CASE_SENSITIVE, glossaryDO.getCaseSensitive());
+        }
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
