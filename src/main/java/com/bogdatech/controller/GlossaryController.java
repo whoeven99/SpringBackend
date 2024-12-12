@@ -20,7 +20,7 @@ public class GlossaryController {
     @PostMapping("/glossary/insertGlossaryInfo")
     public BaseResponse<Object> insertGlossaryInfo(@RequestBody GlossaryDO glossaryDO) {
         if (glossaryService.insertGlossaryInfo(glossaryDO)){
-            return new BaseResponse<>().CreateSuccessResponse(200);
+            return new BaseResponse<>().CreateSuccessResponse(glossaryService.getSingleGlossaryByShopNameAndSource(glossaryDO.getShopName(), glossaryDO.getSourceText()));
         }
       return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
@@ -44,7 +44,7 @@ public class GlossaryController {
     @PostMapping("/glossary/updateTargetTextById")
     public BaseResponse<Object> updateTargetTextById(@RequestBody GlossaryDO glossaryDO) {
         if (glossaryService.updateGlossaryInfoById(glossaryDO)){
-            return new BaseResponse<>().CreateSuccessResponse(200);
+            return new BaseResponse<>().CreateSuccessResponse(glossaryDO);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
     }
