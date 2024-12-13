@@ -4,6 +4,7 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
+import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
@@ -149,6 +150,11 @@ public class TranslateController {
         try {
             translateService.translating(request, remainingChars, counter);
         } catch (Exception e) {
+            if ( e instanceof ClientException && ((ClientException) e).getErrorMessage().equals("The translation task is in progress. Please try translating again later.")) {
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+                throw e;
+            }
+
             translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
             throw e;
@@ -239,4 +245,16 @@ public class TranslateController {
     public Integer testOpenAI(@RequestBody String content) {
         return calculateToken(content);
     }
+
+    //测试html
+//    @PostMapping("/testHtml")
+//    public String testHtml(@RequestBody TranslateRequest request) {
+//        CharacterCountUtils counter = new CharacterCountUtils();
+//        Map<String, String> keyMap = Map.of(
+//                "Circumference", "苹果"
+//                , "Moissanite", "橘子"
+//        );
+//        return translateService.translateGlossaryHtmlText(request, counter,keyMap);
+////        return jsoupUtils.translateHtml(request.getContent(), request,counter, request.getTarget());
+//    }
 }
