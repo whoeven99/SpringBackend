@@ -239,4 +239,11 @@ public class TranslateController {
     public Integer testOpenAI(@RequestBody String content) {
         return calculateToken(content);
     }
+
+    //测试html
+    @PostMapping("/testHtml")
+    public String testHtml(@RequestBody TranslateRequest request) {
+        CharacterCountUtils counter = new CharacterCountUtils();
+        return translateService.translateGlossaryHtmlText(request, counter);
+    }
 }
