@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Objects;
+
 import static com.bogdatech.enums.ErrorEnum.*;
 
 @RestController
@@ -63,7 +65,7 @@ public class GlossaryController {
         GlossaryDO[] singleGlossaryByShopNameAndSource = glossaryService.getGlossaryByShopName(glossaryDO.getShopName());
         //判断是否冲突（sourceText， rangeCode， caseSensitive）
         for (GlossaryDO glossary : singleGlossaryByShopNameAndSource) {
-            if (glossary.getSourceText().equals(glossaryDO.getSourceText())) {
+            if (glossary.getSourceText().equals(glossaryDO.getSourceText()) && (!Objects.equals(glossary.getId(), glossaryDO.getId()))) {
                 // 当 rangeCode 为 "ALL" 时，处理冲突
                 if ("ALL".equals(glossaryDO.getRangeCode())) {
                     // 如果当前已经有具体的 rangeCode 存在，不能修改为 ALL
@@ -75,6 +77,7 @@ public class GlossaryController {
                     // 如果 rangeCode 不为 ALL，且相同的 sourceText 和 rangeCode 存在，直接跳过
                     if (glossary.getRangeCode().equals(glossaryDO.getRangeCode())) {
                         return new BaseResponse<>().CreateErrorResponse("The rangeCode '" + glossaryDO.getRangeCode() + "' cannot conflict with the same rangeCode.");
+//                    break;
                     }
                 }
             }
