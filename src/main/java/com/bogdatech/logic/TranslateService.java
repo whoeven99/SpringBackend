@@ -564,7 +564,7 @@ public class TranslateService {
 //                System.out.println("key = " + value);
                 continue;
             }
-            System.out.println("value = " + value);
+//            System.out.println("value = " + value);
             //TODO：可以做一个switch？
 
             //            //对从数据库中获取的数据单独处理

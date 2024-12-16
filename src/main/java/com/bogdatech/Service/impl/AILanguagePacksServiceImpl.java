@@ -1,0 +1,25 @@
+package com.bogdatech.Service.impl;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bogdatech.Service.IAILanguagePacksService;
+import com.bogdatech.entity.AILanguagePacksDO;
+import com.bogdatech.mapper.AILanguagePacksMapper;
+import com.bogdatech.model.controller.response.BaseResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
+
+@Service
+public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMapper, AILanguagePacksDO> implements IAILanguagePacksService {
+    @Autowired
+    private AILanguagePacksMapper aiLanguagePacksMapper;
+    @Override
+    public BaseResponse<Object> readAILanguagePacks() {
+        AILanguagePacksDO[] aiLanguagePacksDOS = aiLanguagePacksMapper.readAILanguagePacks();
+        if (aiLanguagePacksDOS != null) {
+            return new BaseResponse<>().CreateSuccessResponse(aiLanguagePacksDOS);
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+    }
+}
