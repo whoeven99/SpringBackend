@@ -7,4 +7,6 @@ import com.bogdatech.model.controller.response.BaseResponse;
 public interface IAILanguagePacksService extends IService<AILanguagePacksDO> {
 
     BaseResponse<Object> readAILanguagePacks();
+
+    BaseResponse<Object> addDefaultLanguagePack(String shopName);
 }

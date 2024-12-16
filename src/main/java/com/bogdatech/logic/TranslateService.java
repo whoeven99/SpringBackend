@@ -1,21 +1,19 @@
 package com.bogdatech.logic;
 
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.entity.GlossaryDO;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
-import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;

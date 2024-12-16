@@ -22,4 +22,12 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
+
+    @Override
+    public BaseResponse<Object> addDefaultLanguagePack(String shopName) {
+         if (baseMapper.addDefaultLanguagePack(shopName) > 0){
+             return new BaseResponse<>().CreateSuccessResponse(200);
+         }
+        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+    }
 }
