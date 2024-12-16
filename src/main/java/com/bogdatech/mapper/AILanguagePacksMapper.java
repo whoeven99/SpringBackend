@@ -5,6 +5,7 @@ import com.bogdatech.entity.AILanguagePacksDO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface AILanguagePacksMapper extends BaseMapper<AILanguagePacksDO> {
@@ -13,4 +14,7 @@ public interface AILanguagePacksMapper extends BaseMapper<AILanguagePacksDO> {
 
     @Insert("INSERT INTO User_AILanguagePacks (shop_name, pack_id) VALUES (#{shopName}, 2)")
     Integer addDefaultLanguagePack(String shopName);
+
+    @Update("UPDATE User_AILanguagePacks SET pack_id = #{packId} WHERE shop_name = #{shopName}")
+    Integer changeLanguagePack(String shopName, Integer packId);
 }

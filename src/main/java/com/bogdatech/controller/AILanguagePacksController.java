@@ -2,11 +2,10 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.IAILanguagePacksService;
 import com.bogdatech.Service.IUsersService;
+import com.bogdatech.model.controller.request.UserLanguageRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/aiLanguagePacks")
@@ -28,8 +27,8 @@ public class AILanguagePacksController {
         return aiLanguagePacksService.addDefaultLanguagePack(shopName);
     }
     //切换语言包功能
-//    @PostMapping("/changeLanguagePack")
-//    public BaseResponse<Object> changeLanguagePack(String PackId){
-//        return aiLanguagePacksService.changeLanguagePack(PackId);
-//    }
+    @PostMapping("/changeLanguagePack")
+    public BaseResponse<Object> changeLanguagePack(@RequestBody UserLanguageRequest userLanguageRequest){
+        return aiLanguagePacksService.changeLanguagePack(userLanguageRequest);
+    }
 }
