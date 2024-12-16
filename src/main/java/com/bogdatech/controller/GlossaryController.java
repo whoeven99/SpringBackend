@@ -23,24 +23,21 @@ public class GlossaryController {
     public BaseResponse<Object> insertGlossaryInfo(@RequestBody GlossaryDO glossaryDO) {
         //判断 如果数据库中有5个就不再插入了
         GlossaryDO[] singleGlossaryByShopNameAndSource = glossaryService.getGlossaryByShopName(glossaryDO.getShopName());
-        if (singleGlossaryByShopNameAndSource.length >= 5){
+        if (singleGlossaryByShopNameAndSource.length >= 5) {
             return new BaseResponse<>().CreateErrorResponse("If there are 5, no more insertions will be made.");
         }
         //判断是否冲突（sourceText， rangeCode， caseSensitive）
-        for (GlossaryDO glossary: singleGlossaryByShopNameAndSource) {
+        for (GlossaryDO glossary : singleGlossaryByShopNameAndSource) {
             if (glossary.getSourceText().equals(glossaryDO.getSourceText())) {
                 if (glossary.getRangeCode().equals(glossaryDO.getRangeCode()) || glossary.getRangeCode().equals("ALL") || glossaryDO.getRangeCode().equals("ALL")) {
                     return new BaseResponse<>().CreateErrorResponse("The information entered conflicts with existing");
                 }
             }
         }
-
-        try {
-            if (glossaryService.insertGlossaryInfo(glossaryDO)){
-                return new BaseResponse<>().CreateSuccessResponse(glossaryService.getSingleGlossaryByShopNameAndSource(glossaryDO.getShopName(), glossaryDO.getSourceText()));
-            }
-        } catch (Exception e) {
-            return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+        Boolean b = glossaryService.insertGlossaryInfo(glossaryDO);
+        if (b) {
+            GlossaryDO glossary = glossaryService.getSingleGlossaryByShopNameAndSource(glossaryDO.getShopName(), glossaryDO.getSourceText(), glossaryDO.getRangeCode());
+            return new BaseResponse<>().CreateSuccessResponse(glossary);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
@@ -48,7 +45,7 @@ public class GlossaryController {
     //根据id删除glossary数据
     @PostMapping("/deleteGlossaryById")
     public BaseResponse<Object> deleteGlossaryById(@RequestBody GlossaryDO glossaryDO) {
-        if (glossaryService.deleteGlossaryById(glossaryDO)){
+        if (glossaryService.deleteGlossaryById(glossaryDO)) {
             return new BaseResponse<>().CreateSuccessResponse(glossaryDO);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
@@ -65,20 +62,24 @@ public class GlossaryController {
     public BaseResponse<Object> updateTargetTextById(@RequestBody GlossaryDO glossaryDO) {
         GlossaryDO[] singleGlossaryByShopNameAndSource = glossaryService.getGlossaryByShopName(glossaryDO.getShopName());
         //判断是否冲突（sourceText， rangeCode， caseSensitive）
-        for (GlossaryDO glossary: singleGlossaryByShopNameAndSource) {
+        for (GlossaryDO glossary : singleGlossaryByShopNameAndSource) {
             if (glossary.getSourceText().equals(glossaryDO.getSourceText())) {
-                //找冲突
-                if (glossary.getRangeCode().equals("ALL") || glossaryDO.getRangeCode().equals("ALL") ) {
-                    return new BaseResponse<>().CreateErrorResponse("The information entered conflicts with existing");
+                // 当 rangeCode 为 "ALL" 时，处理冲突
+                if ("ALL".equals(glossaryDO.getRangeCode())) {
+                    // 如果当前已经有具体的 rangeCode 存在，不能修改为 ALL
+                    return new BaseResponse<>().CreateErrorResponse("The rangeCode 'ALL' cannot conflict with specific rangeCode.");
+                } else if ("ALL".equals(glossary.getRangeCode())) {
+                    // 当已有项的 rangeCode 为 "ALL"，不能再修改为具体的 rangeCode
+                    return new BaseResponse<>().CreateErrorResponse("The rangeCode 'ALL' cannot conflict with a specific rangeCode.");
+                } else {
+                    // 如果 rangeCode 不为 ALL，且相同的 sourceText 和 rangeCode 存在，直接跳过
+                    if (glossary.getRangeCode().equals(glossaryDO.getRangeCode())) {
+                        return new BaseResponse<>().CreateErrorResponse("The rangeCode '" + glossaryDO.getRangeCode() + "' cannot conflict with the same rangeCode.");
+                    }
                 }
-
-                if (glossary.getRangeCode().equals(glossaryDO.getRangeCode())){
-                    break;
-                }
-
             }
         }
-        if (glossaryService.updateGlossaryInfoById(glossaryDO)){
+        if (glossaryService.updateGlossaryInfoById(glossaryDO)) {
             return new BaseResponse<>().CreateSuccessResponse(glossaryDO);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);

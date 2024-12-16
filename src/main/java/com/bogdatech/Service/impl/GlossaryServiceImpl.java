@@ -29,7 +29,7 @@ public class GlossaryServiceImpl extends ServiceImpl<GlossaryMapper, GlossaryDO>
     }
 
     @Override
-    public GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText) {
-        return baseMapper.getSingleGlossaryByShopNameAndSource(shopName, sourceText);
+    public GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText, String rangeCode) {
+        return baseMapper.getSingleGlossaryByShopNameAndSource(shopName, sourceText, rangeCode);
     }
 }
