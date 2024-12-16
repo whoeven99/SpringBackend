@@ -44,9 +44,14 @@ public class ChatGptIntegration {
                 .setPresencePenalty(0.0)
                 .setStream(false);
 
-        ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
-        System.out.println("Response: " + chatCompletions.getChoices().get(0).getMessage().getContent());
-        // Todo Exception
-        return chatCompletions.getChoices().get(0).getMessage().getContent();
+        String content = null;
+        try {
+            ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
+            content = chatCompletions.getChoices().get(0).getMessage().getContent();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("Response: " + content);
+        return content;
     }
 }
