@@ -24,20 +24,20 @@ public class GlossaryController {
         //判断 如果数据库中有5个就不再插入了
         GlossaryDO[] singleGlossaryByShopNameAndSource = glossaryService.getGlossaryByShopName(glossaryDO.getShopName());
         if (singleGlossaryByShopNameAndSource.length >= 5){
-            return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+            return new BaseResponse<>().CreateErrorResponse("If there are 5, no more insertions will be made.");
         }
         //判断是否冲突（sourceText， rangeCode， caseSensitive）
         for (GlossaryDO glossary: singleGlossaryByShopNameAndSource) {
             if (glossary.getSourceText().equals(glossaryDO.getSourceText())) {
                 if (glossary.getRangeCode().equals(glossaryDO.getRangeCode()) || glossary.getRangeCode().equals("ALL") || glossaryDO.getRangeCode().equals("ALL")) {
-                    return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+                    return new BaseResponse<>().CreateErrorResponse("The information entered conflicts with existing");
                 }
             }
         }
 
         try {
             if (glossaryService.insertGlossaryInfo(glossaryDO)){
-                return new BaseResponse<>().CreateSuccessResponse(glossaryDO);
+                return new BaseResponse<>().CreateSuccessResponse(glossaryService.getSingleGlossaryByShopNameAndSource(glossaryDO.getShopName(), glossaryDO.getSourceText()));
             }
         } catch (Exception e) {
             return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
@@ -67,12 +67,9 @@ public class GlossaryController {
         //判断是否冲突（sourceText， rangeCode， caseSensitive）
         for (GlossaryDO glossary: singleGlossaryByShopNameAndSource) {
             if (glossary.getSourceText().equals(glossaryDO.getSourceText())) {
-                //如果相同就直接返回
-//                System.out.println("glossary.getcode()=" + glossary.getRangeCode());
-//                System.out.println("glossaryDO.getcode()=" + glossaryDO.getRangeCode());
                 //找冲突
                 if (glossary.getRangeCode().equals("ALL") || glossaryDO.getRangeCode().equals("ALL") ) {
-                    return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+                    return new BaseResponse<>().CreateErrorResponse("The information entered conflicts with existing");
                 }
 
                 if (glossary.getRangeCode().equals(glossaryDO.getRangeCode())){

@@ -240,8 +240,7 @@ public class TranslateService {
         judgeData.put(HTML, new ArrayList<>());
         judgeData.put(DATABASE, new ArrayList<>());
         judgeData.put(JSON_TEXT, new ArrayList<>());
-        judgeData.put(GLOSSARY_0, new ArrayList<>());
-        judgeData.put(GLOSSARY_1, new ArrayList<>());
+        judgeData.put(GLOSSARY, new ArrayList<>());
         // 获取 translatableResources 节点
         JsonNode translatableResourcesNode = node.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
@@ -326,7 +325,7 @@ public class TranslateService {
                         continue;
                     }
                     break;
-                case GLOSSARY_1:
+                case GLOSSARY:
                     try {
                         //区分大小写
                         translateDataByGlossary1(entry.getValue(), request, counter, remainingChars, glossaryMap);
@@ -361,6 +360,7 @@ public class TranslateService {
             }
             if (glossaryDO.getCaseSensitive() == 0) {
                 keyMap0.put(glossaryDO.getSourceText(), glossaryDO.getTargetText());
+                continue;
             }
         }
         //对caseSensitiveMap集合中的数据进行翻译
@@ -580,6 +580,7 @@ public class TranslateService {
 //                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
                 targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
 //                targetString = baiDuTranslate(new TranslateRequest(0, null, null, source, target, value));
+//                System.out.println("target: " + targetString);
                 addData(target, value, targetString);
                 saveToShopify(targetString, translation, resourceId, request);
                 break;
@@ -641,7 +642,8 @@ public class TranslateService {
                     GlossaryDO glossaryDO = (GlossaryDO) entry.getValue();
 //                    System.out.println("glossaryKey = " + glossaryKey);
                     if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
-                        judgeData.get(GLOSSARY_1).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+//                        System.out.println("glossaryValue: " + value);
+                        judgeData.get(GLOSSARY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                         break;
                     }
                 }
@@ -659,18 +661,23 @@ public class TranslateService {
             switch (StringUtils.judgeStringType(value)) {
                 case CURLY_BRACKET_ARRAY:
                     judgeData.get(CURLY_BRACKET_ARRAY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+//                    System.out.println("Curly_bracket_array: " + judgeData.get(CURLY_BRACKET_ARRAY).toString());
                     break;
                 case DOUBLE_BRACES:
                     judgeData.get(DOUBLE_BRACES).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+//                    System.out.println("Double_braces: " + judgeData.get(DOUBLE_BRACES).toString());
                     break;
                 case PERCENTAGE_CURLY_BRACES:
                     judgeData.get(PERCENTAGE_CURLY_BRACES).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+//                    System.out.println("Percentage_curly_braces: " + judgeData.get(PERCENTAGE_CURLY_BRACES).toString());
                     break;
                 case DOUBLE_CURLY_BRACKET_AND_HUNDRED:
                     judgeData.get(DOUBLE_CURLY_BRACKET_AND_HUNDRED).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+//                    System.out.println("Double_curly_bracket_and_hundred: " + judgeData.get(DOUBLE_CURLY_BRACKET_AND_HUNDRED).toString());
                     break;
                 default:
                     judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+//                    System.out.println("PLAIN_TEXT: " + judgeData.get(PLAIN_TEXT).toString());
                     break;
             }
 
