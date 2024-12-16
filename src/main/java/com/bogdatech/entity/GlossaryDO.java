@@ -20,4 +20,10 @@ public class GlossaryDO {
     private String rangeCode;
     private Integer caseSensitive;
     private Integer status;
+
+    public GlossaryDO(String sourceText, String targetText,  Integer caseSensitive) {
+        this.sourceText = sourceText;
+        this.targetText = targetText;
+        this.caseSensitive = caseSensitive;
+    }
 }

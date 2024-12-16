@@ -9,4 +9,8 @@ public class TranslateConstants {
     public static final String HTML = "HTML";
     public static final String DATABASE = "DATABASE";
     public static final String JSON_TEXT = "JSON_TEXT";
+    public static final String SOURCE = "source";
+    public static final String TARGET = "target";
+    public static final String GLOSSARY = "Glossary";
+
 }

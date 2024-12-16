@@ -19,12 +19,17 @@ public class GlossaryServiceImpl extends ServiceImpl<GlossaryMapper, GlossaryDO>
     }
 
     @Override
-    public GlossaryDO[] getGlossaryByShopName(GlossaryDO glossaryDO) {
-        return baseMapper.readGlossaryByShopName(glossaryDO.getShopName());
+    public GlossaryDO[] getGlossaryByShopName(String shopName) {
+        return baseMapper.readGlossaryByShopName(shopName);
     }
 
     @Override
     public boolean updateGlossaryInfoById(GlossaryDO glossaryDO) {
         return baseMapper.updateGlossaryInfoById(glossaryDO.getId(), glossaryDO.getSourceText(), glossaryDO.getTargetText(), glossaryDO.getRangeCode(), glossaryDO.getCaseSensitive(), glossaryDO.getStatus()) > 0;
+    }
+
+    @Override
+    public GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText) {
+        return baseMapper.getSingleGlossaryByShopNameAndSource(shopName, sourceText);
     }
 }

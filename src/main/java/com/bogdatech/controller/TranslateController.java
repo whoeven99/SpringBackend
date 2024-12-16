@@ -4,6 +4,7 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
+import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
@@ -129,14 +130,6 @@ public class TranslateController {
     }
 
     /*
-     * 用百度翻译API翻译json格式的数据
-     */
-    @PostMapping("/translate/userBDTranslateJson")
-    public BaseResponse<Object> userBDTranslateJsonObject() {
-        return translateService.userBDTranslateJsonObject();
-    }
-
-    /*
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @PostMapping("/translate/clickTranslation")
@@ -153,11 +146,15 @@ public class TranslateController {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
-
         //翻译
         try {
             translateService.translating(request, remainingChars, counter);
         } catch (Exception e) {
+            if ( e instanceof ClientException && ((ClientException) e).getErrorMessage().equals("The translation task is in progress. Please try translating again later.")) {
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+                throw e;
+            }
+
             translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
             throw e;
@@ -240,8 +237,7 @@ public class TranslateController {
     //封装谷歌谷歌翻译
     @PostMapping("/testGoogle")
     public String testGoogle(@RequestBody TranslateRequest request) {
-        String googleTranslateData = translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
-        return googleTranslateData;
+        return translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
     }
 
     //计算OpenAI的token
@@ -249,4 +245,16 @@ public class TranslateController {
     public Integer testOpenAI(@RequestBody String content) {
         return calculateToken(content);
     }
+
+    //测试html
+//    @PostMapping("/testHtml")
+//    public String testHtml(@RequestBody TranslateRequest request) {
+//        CharacterCountUtils counter = new CharacterCountUtils();
+//        Map<String, String> keyMap = Map.of(
+//                "Circumference", "苹果"
+//                , "Moissanite", "橘子"
+//        );
+//        return translateService.translateGlossaryHtmlText(request, counter,keyMap);
+////        return jsoupUtils.translateHtml(request.getContent(), request,counter, request.getTarget());
+//    }
 }

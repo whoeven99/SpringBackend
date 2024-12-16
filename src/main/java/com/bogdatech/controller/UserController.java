@@ -27,14 +27,14 @@ public class UserController {
 
     // 添加用户
     @PostMapping("/user/add")
-    public void addUser(@RequestBody UsersDO userRequest) {
+    public BaseResponse<Object> addUser(@RequestBody UsersDO userRequest) {
 
-//        if (userService.getUser(userRequest) == null) {
-//            return userService.addUser(userRequest);
-//        }else {
-//            return new BaseResponse<>().CreateErrorResponse("User already exists");
-//        }
-        userService.addUserAsync(userRequest);
+        if (userService.getUser(userRequest) == null) {
+            return userService.addUser(userRequest);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("User already exists");
+        }
+//        userService.addUserAsync(userRequest);
     }
 
     //用户卸载应用

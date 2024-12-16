@@ -123,13 +123,6 @@ public class TranslateResourceDTO {
         RESOURCE_MAP.put("Delivery", List.of(
                 new TranslateResourceDTO("DELIVERY_METHOD_DEFINITION", "250", "", "")
         ));
-
-        //        RESOURCE_MAP.put("App embeds", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_APP_EMBED", "250", "", "")));
-        //        RESOURCE_MAP.put("Section groups", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SECTION_GROUP", "250", "", "")));
-//        RESOURCE_MAP.put("Static sections", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS", "250", "", "")));
-//        RESOURCE_MAP.put("Templates", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_JSON_TEMPLATE", "250", "", "")));
-//        RESOURCE_MAP.put("Theme settings", List.of(new TranslateResourceDTO("ONLINE_STORE_THEME_SETTINGS_CATEGORY", "250", "", "")));
-
     }
 
     private String resourceType;
