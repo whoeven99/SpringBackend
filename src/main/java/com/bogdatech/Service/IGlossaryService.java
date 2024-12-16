@@ -11,5 +11,5 @@ public interface IGlossaryService {
 
     boolean updateGlossaryInfoById(GlossaryDO glossaryDO);
 
-    GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText);
+    GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText, String rangeCode);
 }
