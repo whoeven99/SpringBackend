@@ -17,7 +17,6 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
-import com.bogdatech.utils.StringUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -232,10 +231,6 @@ public class TranslateService {
                                                           int remainingChars, String resourceType, Map<String, Object> glossaryMap) {
         //定义HashMap存放判断后的对应数据
         HashMap<String, List<RegisterTransactionRequest>> judgeData = new HashMap<>();
-        judgeData.put(DOUBLE_BRACES, new ArrayList<>());
-        judgeData.put(PERCENTAGE_CURLY_BRACES, new ArrayList<>());
-        judgeData.put(CURLY_BRACKET_ARRAY, new ArrayList<>());
-        judgeData.put(DOUBLE_CURLY_BRACKET_AND_HUNDRED, new ArrayList<>());
         judgeData.put(PLAIN_TEXT, new ArrayList<>());
         judgeData.put(HTML, new ArrayList<>());
         judgeData.put(DATABASE, new ArrayList<>());
@@ -295,18 +290,6 @@ public class TranslateService {
                                       CharacterCountUtils counter, int remainingChars, Map<String, Object> glossaryMap) {
         for (Map.Entry<String, List<RegisterTransactionRequest>> entry : judgeData.entrySet()) {
             switch (entry.getKey()) {
-                case CURLY_BRACKET_ARRAY:
-                    translateDataByAPI(entry.getValue(), request, counter, remainingChars, 1);
-                    break;
-                case DOUBLE_BRACES:
-                    translateDataByAPI(entry.getValue(), request, counter, remainingChars, 2);
-                    break;
-                case PERCENTAGE_CURLY_BRACES:
-                    translateDataByAPI(entry.getValue(), request, counter, remainingChars, 3);
-                    break;
-                case DOUBLE_CURLY_BRACKET_AND_HUNDRED:
-                    translateDataByAPI(entry.getValue(), request, counter, remainingChars, 4);
-                    break;
                 case PLAIN_TEXT:
                     translateDataByAPI(entry.getValue(), request, counter, remainingChars, 5);
                     break;
@@ -554,37 +537,14 @@ public class TranslateService {
         String value = registerTransactionRequest.getValue();
         String target = request.getTarget();
         String source = registerTransactionRequest.getLocale();
-        switch (chooseData) {
-            case 1, 2:
-                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+        //百度API，火山API等等
 //                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                addData(target, value, targetString);
-                saveToShopify(targetString, translation, resourceId, request);
-                break;
-            case 3:
-                //阿里云API 待接入
-                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = aliYunTranslateIntegration.aliyunTranslate(new TranslateRequest(0, null, null, source, target, value));
-                addData(target, value, targetString);
-                saveToShopify(targetString, translation, resourceId, request);
-                break;
-            case 4:
-                //谷歌API
-//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-                addData(target, value, targetString);
-                saveToShopify(targetString, translation, resourceId, request);
-                break;
-            default:
-                //百度API，火山API等等
-//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+        targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
 //                targetString = baiDuTranslate(new TranslateRequest(0, null, null, source, target, value));
 //                System.out.println("target: " + targetString);
-                addData(target, value, targetString);
-                saveToShopify(targetString, translation, resourceId, request);
-                break;
-        }
+        addData(target, value, targetString);
+        saveToShopify(targetString, translation, resourceId, request);
+
     }
 
     //将获得的TRANSLATION_RESOURCES数据进行判断 存储到不同集合， 对不同集合的数据进行特殊处理
@@ -608,7 +568,7 @@ public class TranslateService {
                 continue;
             }
 
-
+            System.out.println("ONLINE");
             //            //对从数据库中获取的数据单独处理
             if ("ONLINE_STORE_THEME".equals(resourceType) ||
                     "ONLINE_STORE_THEME_LOCALE_CONTENT".equals(resourceType)
@@ -635,19 +595,21 @@ public class TranslateService {
 
             //对词汇表数据做判断
             //判断词汇表里面是否有数据
-//            System.out.println("value = " + value);
             if (!glossaryMap.isEmpty()) {
+                boolean success = false;
                 for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
                     String glossaryKey = entry.getKey();
-                    GlossaryDO glossaryDO = (GlossaryDO) entry.getValue();
 //                    System.out.println("glossaryKey = " + glossaryKey);
                     if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
 //                        System.out.println("glossaryValue: " + value);
                         judgeData.get(GLOSSARY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+                        success = true;
                         break;
                     }
                 }
-                continue;
+                if (success) {
+                    continue;
+                }
             }
 
             //对value进行判断 plainText
@@ -657,30 +619,8 @@ public class TranslateService {
                 continue;
             }
 
-            //用switch语句判断类型
-            switch (StringUtils.judgeStringType(value)) {
-                case CURLY_BRACKET_ARRAY:
-                    judgeData.get(CURLY_BRACKET_ARRAY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("Curly_bracket_array: " + judgeData.get(CURLY_BRACKET_ARRAY).toString());
-                    break;
-                case DOUBLE_BRACES:
-                    judgeData.get(DOUBLE_BRACES).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("Double_braces: " + judgeData.get(DOUBLE_BRACES).toString());
-                    break;
-                case PERCENTAGE_CURLY_BRACES:
-                    judgeData.get(PERCENTAGE_CURLY_BRACES).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("Percentage_curly_braces: " + judgeData.get(PERCENTAGE_CURLY_BRACES).toString());
-                    break;
-                case DOUBLE_CURLY_BRACKET_AND_HUNDRED:
-                    judgeData.get(DOUBLE_CURLY_BRACKET_AND_HUNDRED).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("Double_curly_bracket_and_hundred: " + judgeData.get(DOUBLE_CURLY_BRACKET_AND_HUNDRED).toString());
-                    break;
-                default:
-                    judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("PLAIN_TEXT: " + judgeData.get(PLAIN_TEXT).toString());
-                    break;
-            }
-
+            //存放在plainText的list集合里面
+            judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
         }
 
     }
