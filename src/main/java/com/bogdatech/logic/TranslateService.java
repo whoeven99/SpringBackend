@@ -637,17 +637,20 @@ public class TranslateService {
             //判断词汇表里面是否有数据
 //            System.out.println("value = " + value);
             if (!glossaryMap.isEmpty()) {
+                boolean success = false;
                 for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
                     String glossaryKey = entry.getKey();
-                    GlossaryDO glossaryDO = (GlossaryDO) entry.getValue();
 //                    System.out.println("glossaryKey = " + glossaryKey);
                     if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
 //                        System.out.println("glossaryValue: " + value);
                         judgeData.get(GLOSSARY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+                        success = true;
                         break;
                     }
                 }
-                continue;
+                if (success) {
+                    continue;
+                }
             }
 
             //对value进行判断 plainText
@@ -661,23 +664,18 @@ public class TranslateService {
             switch (StringUtils.judgeStringType(value)) {
                 case CURLY_BRACKET_ARRAY:
                     judgeData.get(CURLY_BRACKET_ARRAY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("Curly_bracket_array: " + judgeData.get(CURLY_BRACKET_ARRAY).toString());
                     break;
                 case DOUBLE_BRACES:
                     judgeData.get(DOUBLE_BRACES).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("Double_braces: " + judgeData.get(DOUBLE_BRACES).toString());
                     break;
                 case PERCENTAGE_CURLY_BRACES:
                     judgeData.get(PERCENTAGE_CURLY_BRACES).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("Percentage_curly_braces: " + judgeData.get(PERCENTAGE_CURLY_BRACES).toString());
                     break;
                 case DOUBLE_CURLY_BRACKET_AND_HUNDRED:
                     judgeData.get(DOUBLE_CURLY_BRACKET_AND_HUNDRED).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("Double_curly_bracket_and_hundred: " + judgeData.get(DOUBLE_CURLY_BRACKET_AND_HUNDRED).toString());
                     break;
                 default:
                     judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-//                    System.out.println("PLAIN_TEXT: " + judgeData.get(PLAIN_TEXT).toString());
                     break;
             }
 
