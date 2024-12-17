@@ -27,4 +27,9 @@ public class GlossaryServiceImpl extends ServiceImpl<GlossaryMapper, GlossaryDO>
     public boolean updateGlossaryInfoById(GlossaryDO glossaryDO) {
         return baseMapper.updateGlossaryInfoById(glossaryDO.getId(), glossaryDO.getSourceText(), glossaryDO.getTargetText(), glossaryDO.getRangeCode(), glossaryDO.getCaseSensitive(), glossaryDO.getStatus()) > 0;
     }
+
+    @Override
+    public GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText, String rangeCode) {
+        return baseMapper.getSingleGlossaryByShopNameAndSource(shopName, sourceText, rangeCode);
+    }
 }

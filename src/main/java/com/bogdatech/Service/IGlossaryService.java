@@ -10,4 +10,6 @@ public interface IGlossaryService {
     GlossaryDO[] getGlossaryByShopName(String shopName);
 
     boolean updateGlossaryInfoById(GlossaryDO glossaryDO);
+
+    GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText, String rangeCode);
 }
