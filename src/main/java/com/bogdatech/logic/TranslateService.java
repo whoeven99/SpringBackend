@@ -568,7 +568,7 @@ public class TranslateService {
                 continue;
             }
 
-            System.out.println("ONLINE");
+
             //            //对从数据库中获取的数据单独处理
             if ("ONLINE_STORE_THEME".equals(resourceType) ||
                     "ONLINE_STORE_THEME_LOCALE_CONTENT".equals(resourceType)
