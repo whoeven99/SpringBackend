@@ -1,6 +1,7 @@
 package com.bogdatech.utils;
 
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +27,12 @@ public class JsoupUtils {
 
     @Autowired
     private TranslateApiIntegration translateApiIntegration;
+    @Autowired
+    private ChatGptIntegration chatGptIntegration;
 
-
-    public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String target) {
+    public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String completePrompt) {
         Document doc = Jsoup.parse(html);
+        String target = request.getTarget();
         List<String> textsToTranslate = new ArrayList<>();
         List<String> altsToTranslate = new ArrayList<>();
         List<Element> elementsWithText = new ArrayList<>();
@@ -58,14 +61,17 @@ public class JsoupUtils {
         try {
             // Translate main text
             for (String text : textsToTranslate) {
-                String translated = translateSingleLine(text, request.getTarget());
+                String translated = translateSingleLine(text, target);
                 counter.addChars(text.length());
                 if (translated != null) {
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
+                    //AI翻译
+                    String targetString = chatGptIntegration.chatWithGpt(completePrompt + text);
+                    //普通翻译
 //                    String targetString = translateApiIntegration.googleTranslate(request);
-                    String targetString = translateApiIntegration.microsoftTranslate(request);
+//                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     addData(target, text, targetString);
                     translatedTexts.add(targetString);
                 }
@@ -78,7 +84,10 @@ public class JsoupUtils {
                     translatedAlts.add(translated);
                 } else {
                     request.setContent(altText);
-                    String targetString = translateApiIntegration.googleTranslate(request);
+                    //AI翻译
+                    String targetString = chatGptIntegration.chatWithGpt(completePrompt + altText);
+                    //普通翻译
+//                    String targetString = translateApiIntegration.googleTranslate(request);
 //                String targetString = translateApiIntegration.microsoftTranslate(request);
                     addData(target, altText, targetString);
                     translatedAlts.add(targetString);
@@ -111,7 +120,8 @@ public class JsoupUtils {
 
 
     // 对文本进行翻译（词汇表，区分大小写）
-    public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request, CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0) {
+    public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
+                                                     CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String completePromot) {
         Map<Element, List<String>> translatedTextMap = new HashMap<>();
 
         for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
@@ -127,9 +137,10 @@ public class JsoupUtils {
                 } else {
                     //占位符
                     Map<String, String> placeholderMap = new HashMap<>();
-                    //区分大小写
                     String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
                     request.setContent(updateText);
+                    //AI翻译
+//                    String targetString = chatGptIntegration.chatWithGpt(completePromot);
                     // 使用翻译API进行翻译（如Google或Microsoft）
                     String targetString = translateApiIntegration.googleTranslate(request);
 //                    String targetString = translateApiIntegration.microsoftTranslate(request);

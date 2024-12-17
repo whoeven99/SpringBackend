@@ -6,8 +6,10 @@ import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
+import com.bogdatech.logic.AILanguagePackService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -46,6 +48,12 @@ public class TranslateController {
 
     @Autowired
     ALiYunTranslateIntegration aliyunTranslateIntegration;
+
+    @Autowired
+    private AILanguagePackService aiLanguagePacksService;
+
+    @Autowired
+    private ChatGptIntegration chatGptIntegration;
     private TelemetryClient appInsights = new TelemetryClient();
 
     @Autowired
@@ -150,7 +158,7 @@ public class TranslateController {
         try {
             translateService.translating(request, remainingChars, counter);
         } catch (Exception e) {
-            if ( e instanceof ClientException && ((ClientException) e).getErrorMessage().equals("The translation task is in progress. Please try translating again later.")) {
+            if (e instanceof ClientException && ((ClientException) e).getErrorMessage().equals("The translation task is in progress. Please try translating again later.")) {
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                 throw e;
             }
@@ -204,7 +212,7 @@ public class TranslateController {
         return translateApiIntegration.microsoftTranslate(request);
     }
 
-    //对文本进行处理分解为单个单词
+    //对文本进行处理分解为单个单词 (等待删除)
     @PostMapping("/split")
     public void splitWords(@RequestBody String sentence) {
         String string = StringUtils.judgeStringType(sentence);
@@ -240,21 +248,11 @@ public class TranslateController {
         return translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
     }
 
-    //计算OpenAI的token
+    //计算OpenAI的token(等待删除)
     @PostMapping("/testOpenAI")
     public Integer testOpenAI(@RequestBody String content) {
         return calculateToken(content);
     }
 
-    //测试html
-//    @PostMapping("/testHtml")
-//    public String testHtml(@RequestBody TranslateRequest request) {
-//        CharacterCountUtils counter = new CharacterCountUtils();
-//        Map<String, String> keyMap = Map.of(
-//                "Circumference", "苹果"
-//                , "Moissanite", "橘子"
-//        );
-//        return translateService.translateGlossaryHtmlText(request, counter,keyMap);
-////        return jsoupUtils.translateHtml(request.getContent(), request,counter, request.getTarget());
-//    }
+
 }

@@ -41,4 +41,14 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
     }
+
+    @Override
+    public String getPromotByPackId(Integer packId) {
+        return baseMapper.getPromotByShopName(packId);
+    }
+
+    @Override
+    public Integer getPackIdByShopName(String shopName) {
+        return baseMapper.getPackIdByShopName(shopName);
+    }
 }

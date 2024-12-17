@@ -28,7 +28,7 @@ public class KlaviyoService {
 
    //将profile存入数据库中
     public Boolean addProfileToDatabase(KlaviyoDataDO klaviyoDataDO) {
-        return klaviyoDataService.saveProfile(klaviyoDataDO);
+        return klaviyoDataService.insertKlaviyoData(klaviyoDataDO);
     }
 
     //获取listId
