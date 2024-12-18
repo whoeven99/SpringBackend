@@ -49,4 +49,9 @@ public class StringUtils {
         }
         return PLAIN_TEXT;
     }
+
+    //对promot_word的文本进行处理，将第一个{{language}}替换成target
+    public static String replaceLanguage(String str, String target) {
+        return str.replaceFirst("\\{\\{language\\}\\}", target);
+    }
 }

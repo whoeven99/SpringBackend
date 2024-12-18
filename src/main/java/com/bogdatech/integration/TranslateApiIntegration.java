@@ -105,7 +105,7 @@ public class TranslateApiIntegration {
                 "&source=" + request.getSource() +
                 "&target=" + request.getTarget() +
                 "&model=base";
-        String result = null;
+        String result;
 
         // 创建HttpGet请求
         HttpPost httpPost = new HttpPost(url);
@@ -117,14 +117,10 @@ public class TranslateApiIntegration {
             HttpEntity responseEntity = response.getEntity();
             String responseBody = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             jsonObject = JSONObject.parseObject(responseBody);
-//            System.out.println("翻译结果：" + responseBody);
-//            appInsights.trackTrace("翻译结果：" + responseBody);
             // 获取翻译结果
             JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
-//            response.close();
-//            httpClient.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

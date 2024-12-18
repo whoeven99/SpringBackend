@@ -12,4 +12,8 @@ public interface IAILanguagePacksService extends IService<AILanguagePacksDO> {
     BaseResponse<Object> addDefaultLanguagePack(String shopName);
 
     BaseResponse<Object> changeLanguagePack(UserLanguageRequest userLanguageRequest);
+
+    String getPromotByPackId(Integer packId);
+
+    Integer getPackIdByShopName(String shopName);
 }

@@ -17,4 +17,11 @@ public interface AILanguagePacksMapper extends BaseMapper<AILanguagePacksDO> {
 
     @Update("UPDATE User_AILanguagePacks SET pack_id = #{packId} WHERE shop_name = #{shopName}")
     Integer changeLanguagePack(String shopName, Integer packId);
+
+    @Select("SELECT promot_word FROM AILanguagePacks WHERE id = #{packId}")
+    String getPromotByShopName(Integer packId);
+
+    @Select("SELECT pack_id FROM User_AILanguagePacks WHERE shop_name = #{shopName}")
+    Integer getPackIdByShopName(String shopName);
+
 }
