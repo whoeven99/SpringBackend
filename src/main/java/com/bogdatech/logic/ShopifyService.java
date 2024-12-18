@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -42,28 +41,37 @@ import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 
 @Component
 public class ShopifyService {
 
-    @Autowired
-    private ShopifyHttpIntegration shopifyApiIntegration;
+
+    private final ShopifyHttpIntegration shopifyApiIntegration;
+    private final TestingEnvironmentIntegration testingEnvironmentIntegration;
+    private final ITranslateTextService translateTextService;
+    private final IUserSubscriptionsService userSubscriptionsService;
+    private final IItemsService itemsService;
+    private final ITranslatesService translatesService;
 
     @Autowired
-    private TestingEnvironmentIntegration testingEnvironmentIntegration;
+    public ShopifyService(
+            ShopifyHttpIntegration shopifyApiIntegration,
+            TestingEnvironmentIntegration testingEnvironmentIntegration,
+            ITranslateTextService translateTextService,
+            IUserSubscriptionsService userSubscriptionsService,
+            IItemsService itemsService,
+            ITranslatesService translatesService
+    ) {
+        this.shopifyApiIntegration = shopifyApiIntegration;
+        this.testingEnvironmentIntegration = testingEnvironmentIntegration;
+        this.translateTextService = translateTextService;
+        this.userSubscriptionsService = userSubscriptionsService;
+        this.itemsService = itemsService;
+        this.translatesService = translatesService;
+    }
 
-    @Autowired
-    private ITranslateTextService translateTextService;
-
-    @Autowired
-    private IUserSubscriptionsService userSubscriptionsService;
-
-    @Autowired
-    private IItemsService itemsService;
-
-    @Autowired
-    private ITranslatesService translatesService;
-    private final TelemetryClient appInsights = new TelemetryClient();
+    //    private final TelemetryClient appInsights = new TelemetryClient();
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
     //封装调用云服务器实现获取shopify数据的方法
@@ -171,7 +179,7 @@ public class ShopifyService {
                 JsonNode fieldValue = field.getValue();
                 //当translates里面有数据时
                 if ("translations".equals(fieldName)) {
-                    strings.set(counterTranslatedContent((ArrayNode) fieldValue, translateCounter));
+                    strings.set(counterTranslatedContent((ArrayNode) fieldValue));
                 }
                 if ("translatableContent".equals(fieldName)) {
                     translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, translateCounter, strings.get());
@@ -183,7 +191,7 @@ public class ShopifyService {
     }
 
     //将已翻译value的key放到list集合中
-    private List<String> counterTranslatedContent(ArrayNode node, CharacterCountUtils counter) {
+    private List<String> counterTranslatedContent(ArrayNode node) {
         List<String> translatedContent = new ArrayList<>();
         for (JsonNode contentItem : node) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
@@ -218,8 +226,8 @@ public class ShopifyService {
 //            }
 //             获取 value
             String value = contentItemNode.get("value").asText();
-            counter.addChars(value.length());
-
+//            counter.addChars(value.length());
+            counter.addChars(calculateToken(value));
 //            if (translatedContent.contains(contentItemNode.get("key").asText())) {
 //                translatedCounter.addChars(value.length());
 //            }
@@ -245,7 +253,7 @@ public class ShopifyService {
     // 递归处理下一页数据
     private JsonNode translateNextPage(ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResource, CharacterCountUtils translateCounter) {
         JsonNode nextPageData = fetchNextPage(translateResource, request);
-         translateSingleLineTextFieldsRecursively(nextPageData, request, counter, translateCounter);
+        translateSingleLineTextFieldsRecursively(nextPageData, request, counter, translateCounter);
 
         if (hasNextPage(nextPageData)) {
             String newEndCursor = getEndCursor(nextPageData);
@@ -342,8 +350,7 @@ public class ShopifyService {
             } else {
                 return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
             }
-        }
-        else {
+        } else {
             return new BaseResponse<>().CreateSuccessResponse("success");
         }
     }
@@ -369,7 +376,7 @@ public class ShopifyService {
         if (i > 0 && string.equals(registerTransactionRequest.getValue())) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
-            return new BaseResponse<>().CreateErrorResponse("");
+            return new BaseResponse<>().CreateErrorResponse("insert or update error");
         }
     }
 
@@ -436,7 +443,7 @@ public class ShopifyService {
     @Async
     public void countAllItemsAndTranslatedItems(String infoByShopify, ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils allCounter, CharacterCountUtils translatedCounter) {
         JsonNode rootNode = ConvertStringToJsonNode(infoByShopify, translateResource);
-        JsonNode translatedRootNode = convertArrayNodeToJsonNode(rootNode, request, allCounter, translatedCounter, translateResource);
+        convertArrayNodeToJsonNode(rootNode, request, allCounter, translatedCounter, translateResource);
         // 递归处理下一页数据
         countHandlePagination(rootNode, request, allCounter, translateResource, translatedCounter);
     }
@@ -609,9 +616,7 @@ public class ShopifyService {
             System.out.println("Outer Key: " + outerKey);
 
             // 使用流来遍历内部的 Map
-            innerMap.forEach((innerKey, value) -> {
-                System.out.println("Inner Key: " + innerKey + ", Value: " + value);
-            });
+            innerMap.forEach((innerKey, value) -> System.out.println("Inner Key: " + innerKey + ", Value: " + value));
         });
     }
 }

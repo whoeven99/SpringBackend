@@ -41,6 +41,7 @@ import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.TranslateResourceDTO.DATABASE_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.ShopifyService.getVariables;
+import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 
 @Component
@@ -55,7 +56,7 @@ public class TranslateService {
     private final ITranslationCounterService translationCounterService;
     private final ITranslateTextService translateTextService;
     private final IGlossaryService glossaryService;
-    private final TelemetryClient appInsights;
+    TelemetryClient appInsights = new TelemetryClient();
     private final AILanguagePackService aiLanguagePackService;
     private final ChatGptIntegration chatGptIntegration;
     private final JsoupUtils jsoupUtils;
@@ -70,7 +71,6 @@ public class TranslateService {
             ITranslationCounterService translationCounterService,
             ITranslateTextService translateTextService,
             IGlossaryService glossaryService,
-            TelemetryClient appInsights,
             AILanguagePackService aiLanguagePackService,
             ChatGptIntegration chatGptIntegration,
             JsoupUtils jsoupUtils
@@ -83,7 +83,6 @@ public class TranslateService {
         this.translationCounterService = translationCounterService;
         this.translateTextService = translateTextService;
         this.glossaryService = glossaryService;
-        this.appInsights = appInsights;
         this.aiLanguagePackService = aiLanguagePackService;
         this.chatGptIntegration = chatGptIntegration;
         this.jsoupUtils = jsoupUtils;
@@ -186,6 +185,7 @@ public class TranslateService {
     }
 
     //判断词汇表中要判断的词
+    @Async
     public void getGlossaryByShopName(ShopifyRequest request, Map<String, Object> glossaryMap) {
         GlossaryDO[] glossaryDOS = glossaryService.getGlossaryByShopName(request.getShopName());
         if (glossaryDOS == null) {
@@ -209,7 +209,7 @@ public class TranslateService {
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
     @Async
     public void translateJson(TranslateContext translateContext) {
-        System.out.println("现在翻译到： " + translateContext.getTranslateResource().getResourceType());
+//        System.out.println("现在翻译到： " + translateContext.getTranslateResource().getResourceType());
         if (translateContext.getShopifyData() == null) {
             // 返回默认值或空结果
             return;
@@ -373,7 +373,10 @@ public class TranslateService {
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
-            counter.addChars(value.length());
+
+//            counter.addChars(value.length());
+            counter.addChars(calculateToken(value + translateContext.getCompletePrompt()));
+//            System.out.println("正在翻译： " + translateContext.getCompletePrompt() + value);
             String targetText;
             TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
             //判断是否为HTML
@@ -435,7 +438,9 @@ public class TranslateService {
 
             String targetCache = translateSingleLine(value, request.getTarget());
             String type = registerTransactionRequest.getTarget();
-            counter.addChars(value.length());
+//            counter.addChars(value.length())
+            counter.addChars(calculateToken(value + translateContext.getCompletePrompt()));
+//            System.out.println("正在翻译： " + translateContext.getCompletePrompt() + value);
             if (targetCache != null) {
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
@@ -473,18 +478,28 @@ public class TranslateService {
                 //存放在html的list集合里面
                 try {
                     targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, translateContext.getCompletePrompt());
+                    counter.addChars(calculateToken(targetText));
                 } catch (Exception e) {
                     saveToShopify(value, translation, resourceId, request);
                     continue;
                 }
                 saveToShopify(targetText, translation, resourceId, request);
+                continue;
             }
 
             //AI翻译
-            String targetString = chatGptIntegration.chatWithGpt(translateContext.getCompletePrompt() + value);
-            //普通翻译
-//            String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
+            String targetString;
+            try {
+                 targetString = chatGptIntegration.chatWithGpt(translateContext.getCompletePrompt() + value);
+                 counter.addChars(calculateToken(targetString));
+            } catch (Exception e) {
+                // 如果AI翻译失败，则使用谷歌翻译
+                targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//                         targetString = translateApiIntegration.microsoftTranslate(request);
+                addData(target, value, targetString);
+                saveToShopify(targetString, translation, resourceId, request);
+                continue;
+            }
             addData(target, value, targetString);
             saveToShopify(targetString, translation, resourceId, request);
         }
@@ -507,10 +522,16 @@ public class TranslateService {
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
-            counter.addChars(value.length());
+//            counter.addChars(value.length());
+            counter.addChars(calculateToken(value + translateContext.getCompletePrompt()));
+//            System.out.println("正在翻译： " + translateContext.getCompletePrompt() + value);
+//            System.out.println("已使用： " + counter.getTotalChars() + "字符， " + calculateToken(translateContext.getCompletePrompt() + value));
             String targetText;
             try {
                 targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, translateContext.getCompletePrompt());
+                counter.addChars(calculateToken(targetText));
+//                System.out.println("正在翻译： " + targetText);
+//                System.out.println("已使用： " + counter.getTotalChars() + "字符， " + calculateToken(targetText));
             } catch (Exception e) {
                 saveToShopify(value, translation, resourceId, request);
                 continue;
@@ -538,13 +559,16 @@ public class TranslateService {
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
             //获取缓存数据
             String targetCache = translateSingleLine(value, request.getTarget());
-            counter.addChars(value.length());
+            counter.addChars(calculateToken(value + translateContext.getCompletePrompt()));
+//            System.out.println("正在翻译： " + translateContext.getCompletePrompt() + value);
+//            System.out.println("已使用： " + counter.getTotalChars() + "字符");
+
             if (targetCache != null) {
                 saveToShopify(targetCache, translation, resourceId, request);
             } else {
                 //根据chooseData来判断用什么翻译API
                 try {
-                    chooseTranslateApi(translation, registerTransactionRequest, request, translateContext.getCompletePrompt());
+                    chooseTranslateApi(translation, registerTransactionRequest, request, translateContext.getCompletePrompt(), counter);
                 } catch (Exception e) {
                     System.out.println("翻译失败后的字符数： " + counter.getTotalChars());
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
@@ -555,13 +579,25 @@ public class TranslateService {
     }
 
     //根据chooseData来判断用什么翻译API
-    private void chooseTranslateApi(Map<String, Object> translation, RegisterTransactionRequest registerTransactionRequest, ShopifyRequest request, String completePrompt) {
+    private void chooseTranslateApi(Map<String, Object> translation, RegisterTransactionRequest registerTransactionRequest, ShopifyRequest request, String completePrompt, CharacterCountUtils counter) {
         String resourceId = registerTransactionRequest.getResourceId();
         String value = registerTransactionRequest.getValue();
         String target = request.getTarget();
-//        String source = registerTransactionRequest.getLocale();
+        String source = registerTransactionRequest.getLocale();
         //用AI翻译
-        String targetString = chatGptIntegration.chatWithGpt(completePrompt + value);
+        String targetString ;
+        try {
+            targetString = chatGptIntegration.chatWithGpt(completePrompt + value);
+            counter.addChars(calculateToken(targetString));
+//            System.out.println("已使用： " + counter.getTotalChars() + "字符");
+        } catch (Exception e) {
+            // 如果AI翻译失败，则使用谷歌翻译
+            targetString = getGoogleTranslateData(new TranslateRequest(0, null, request.getAccessToken(), source, target, value));
+            counter.addChars(calculateToken(value));
+            addData(target, value, targetString);
+            saveToShopify(targetString, translation, resourceId, request);
+            return;
+        }
         //百度API，火山API等等
 //                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
 //        targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
@@ -569,7 +605,6 @@ public class TranslateService {
 //                System.out.println("target: " + targetString);
         addData(target, value, targetString);
         saveToShopify(targetString, translation, resourceId, request);
-
     }
 
     //将获得的TRANSLATION_RESOURCES数据进行判断 存储到不同集合， 对不同集合的数据进行特殊处理
@@ -868,12 +903,12 @@ public class TranslateService {
     }
 
     //插入翻译状态
-    @Async
-    public void insertTranslateStatus(TranslateRequest request) {
-        Integer status = translatesService.readStatus(request);
-        if (status == null) {
-            translatesService.insertShopTranslateInfo(request, 0);
-        }
-    }
+//    @Async
+//    public void insertTranslateStatus(TranslateRequest request) {
+//        Integer status = translatesService.readStatus(request);
+//        if (status == null) {
+//            translatesService.insertShopTranslateInfo(request, 0);
+//        }
+//    }
 }
 

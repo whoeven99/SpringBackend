@@ -6,10 +6,8 @@ import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
-import com.bogdatech.logic.AILanguagePackService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -30,34 +28,34 @@ import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 
 @RestController
 public class TranslateController {
+    private final TranslateService translateService;
+    private final ITranslatesService translatesService;
+    private final ShopifyHttpIntegration shopifyApiIntegration;
+    private final TranslateApiIntegration translateApiIntegration;
+    private final ITranslationCounterService translationCounterService;
+    private final ALiYunTranslateIntegration aliyunTranslateIntegration;
+    private final JsoupUtils jsoupUtils;
 
     @Autowired
-    private TranslateService translateService;
+    public TranslateController(
+            TranslateService translateService,
+            ITranslatesService translatesService,
+            ShopifyHttpIntegration shopifyApiIntegration,
+            TranslateApiIntegration translateApiIntegration,
+            ITranslationCounterService translationCounterService,
+            ALiYunTranslateIntegration aliyunTranslateIntegration,
+            JsoupUtils jsoupUtils) {
+        this.translateService = translateService;
+        this.translatesService = translatesService;
+        this.shopifyApiIntegration = shopifyApiIntegration;
+        this.translateApiIntegration = translateApiIntegration;
+        this.translationCounterService = translationCounterService;
+        this.aliyunTranslateIntegration = aliyunTranslateIntegration;
+        this.jsoupUtils = jsoupUtils;
+    }
 
-    @Autowired
-    private ITranslatesService translatesService;
-
-    @Autowired
-    private ShopifyHttpIntegration shopifyApiIntegration;
-
-    @Autowired
-    TranslateApiIntegration translateApiIntegration;
-
-    @Autowired
-    ITranslationCounterService translationCounterService;
-
-    @Autowired
-    ALiYunTranslateIntegration aliyunTranslateIntegration;
-
-    @Autowired
-    private AILanguagePackService aiLanguagePacksService;
-
-    @Autowired
-    private ChatGptIntegration chatGptIntegration;
     private TelemetryClient appInsights = new TelemetryClient();
 
-    @Autowired
-    private JsoupUtils jsoupUtils;
 
     /*
      * 插入shop翻译项信息
@@ -65,17 +63,6 @@ public class TranslateController {
     @PostMapping("/translate/insertShopTranslateInfo")
     public void insertShopTranslateInfo(@RequestBody TranslateRequest request) {
         translateService.insertLanguageStatus(request);
-//        Integer status = translatesService.readStatus(request);
-//        if (status != null) {
-//            return new BaseResponse<>().CreateErrorResponse(DATA_EXIST);
-//        } else {
-//            Integer result = translatesService.insertShopTranslateInfo(request, 0);
-//            if (result > 0) {
-//                return new BaseResponse<>().CreateSuccessResponse("Created language");
-//            }
-//            return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
-//        }
-//        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 
     /*
@@ -162,7 +149,6 @@ public class TranslateController {
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                 throw e;
             }
-
             translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
             throw e;
