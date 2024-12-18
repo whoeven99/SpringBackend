@@ -1,7 +1,6 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.Service.ICurrenciesService;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,9 +26,11 @@ public class PurchaseService {
         //当exchangeRate为Auto时，从缓存中获取对应货币代码数据数据
         if (currencyWithSymbol.get("exchangeRate").equals("Auto")) {
             if (rateMap.isEmpty()){
-                throw new ClientException("no rateCache");
+//                throw new ClientException("no rateCache");
+                return currencyWithSymbol;
             }
             Double rate = rateMap.get(request.getCurrencyCode());
+            //与默认货币代码的汇率 TODO：
             currencyWithSymbol.put("exchangeRate", rate);
         }
         return currencyWithSymbol;

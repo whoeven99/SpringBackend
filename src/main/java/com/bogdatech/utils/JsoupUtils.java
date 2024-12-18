@@ -21,7 +21,8 @@ import java.util.Map;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
-import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
+import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
 
 @Component
 @Slf4j
@@ -73,6 +74,7 @@ public class JsoupUtils {
                     //AI翻译
                     try {
                         targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
+//                        targetString = translateApiIntegration.microsoftTranslate(request);
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         targetString = translateApiIntegration.googleTranslate(request);
@@ -97,6 +99,7 @@ public class JsoupUtils {
                     //AI翻译
                     try {
                         targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
+//                        targetString = translateApiIntegration.microsoftTranslate(request);
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         targetString = translateApiIntegration.googleTranslate(request);
@@ -119,6 +122,7 @@ public class JsoupUtils {
             for (int i = 0; i < elementsWithText.size(); i++) {
                 Element element = elementsWithText.get(i);
                 element.text(translatedTexts.get(i));
+
             }
 
             for (int i = 0; i < elementsWithAlt.size(); i++) {
@@ -126,6 +130,10 @@ public class JsoupUtils {
                 element.attr("alt", translatedAlts.get(i));
             }
         } catch (Exception e) {
+//            System.out.println("elementsWithText: " + elementsWithText.toString());
+//            System.out.println("altsToTranslate: " + translatedTexts.toString());
+//            System.out.println("translatedTexts: " + translatedTexts.toString());
+//            System.out.println("elementsWithAlt: " + translatedTexts.toString());
             throw new ClientException("This text is not a valid html element");
         }
 

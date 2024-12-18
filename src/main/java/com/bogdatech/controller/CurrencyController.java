@@ -5,11 +5,10 @@ import com.bogdatech.logic.PurchaseService;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/currency")
 public class CurrencyController {
 
     @Autowired
@@ -18,27 +17,27 @@ public class CurrencyController {
     @Autowired
     private PurchaseService purchaseService;
 
-    @PostMapping("/currency/insertCurrency")
+    @PostMapping("/insertCurrency")
     public BaseResponse<Object> addCurrency(@RequestBody CurrencyRequest request) {
         return currencyService.insertCurrency(request);
     }
 
-    @PostMapping("/currency/updateCurrency")
+    @PutMapping("/updateCurrency")
     public BaseResponse<Object> updateCurrency(@RequestBody CurrencyRequest request) {
         return currencyService.updateCurrency(request);
     }
 
-    @PostMapping("/currency/deleteCurrency")
+    @DeleteMapping("/deleteCurrency")
     public BaseResponse<Object> deleteCurrency(@RequestBody CurrencyRequest request) {
         return currencyService.deleteCurrency(request);
     }
 
-    @PostMapping("/currency/getCurrencyByShopName")
-    public BaseResponse<Object> getCurrencyByShopName(@RequestBody CurrencyRequest request) {
-        return currencyService.getCurrencyByShopName(request);
+    @GetMapping("/getCurrencyByShopName")
+    public BaseResponse<Object> getCurrencyByShopName(String shopName) {
+        return currencyService.getCurrencyByShopName(shopName);
     }
 
-    @PostMapping("/currency/getCacheData")
+    @PostMapping("/getCacheData")
     public BaseResponse<Object> getCurrencyByShopId(@RequestBody CurrencyRequest request) {
         return new BaseResponse<>().CreateSuccessResponse(purchaseService.getCacheData(request));
     }
