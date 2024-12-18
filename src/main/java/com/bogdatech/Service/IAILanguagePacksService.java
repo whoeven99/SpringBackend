@@ -13,7 +13,7 @@ public interface IAILanguagePacksService extends IService<AILanguagePacksDO> {
 
     BaseResponse<Object> changeLanguagePack(UserLanguageRequest userLanguageRequest);
 
-    String getPromotByPackId(Integer packId);
+    AILanguagePacksDO getPromotByPackId(Integer packId);
 
     Integer getPackIdByShopName(String shopName);
 }

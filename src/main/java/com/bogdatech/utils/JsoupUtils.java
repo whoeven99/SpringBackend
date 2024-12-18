@@ -1,5 +1,6 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
@@ -31,7 +32,7 @@ public class JsoupUtils {
     @Autowired
     private ChatGptIntegration chatGptIntegration;
 
-    public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String completePrompt) {
+    public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
         Document doc = Jsoup.parse(html);
         String target = request.getTarget();
         List<String> textsToTranslate = new ArrayList<>();
@@ -63,7 +64,7 @@ public class JsoupUtils {
             // Translate main text
             for (String text : textsToTranslate) {
                 String translated = translateSingleLine(text, target);
-                counter.addChars(calculateToken(text + completePrompt));
+                counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
                 String targetString;
                 if (translated != null) {
                     translatedTexts.add(translated);
@@ -71,7 +72,7 @@ public class JsoupUtils {
                     request.setContent(text);
                     //AI翻译
                     try {
-                        targetString = chatGptIntegration.chatWithGpt(completePrompt + text);
+                        targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         targetString = translateApiIntegration.googleTranslate(request);
@@ -95,7 +96,7 @@ public class JsoupUtils {
                     request.setContent(altText);
                     //AI翻译
                     try {
-                        targetString = chatGptIntegration.chatWithGpt(completePrompt + altText);
+                        targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         targetString = translateApiIntegration.googleTranslate(request);
@@ -134,7 +135,7 @@ public class JsoupUtils {
 
     // 对文本进行翻译（词汇表）
     public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
-                                                     CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String completePrompt) {
+                                                     CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, AILanguagePacksDO aiLanguagePacksDO) {
         Map<Element, List<String>> translatedTextMap = new HashMap<>();
 
         for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
@@ -145,7 +146,7 @@ public class JsoupUtils {
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
 //                counter.addChars(text.length());
-                counter.addChars(calculateToken(text + completePrompt));
+                counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
                 if (translated != null) {
                     translatedTexts.add(translated);
                 } else {

@@ -16,6 +16,6 @@ public class AILanguagePacksDO {
    private Integer id;
    private String packName;
    private String packDescribe;
-   private Float packPrice;
    private String promotWord;
+   private Integer deductionRate;
 }

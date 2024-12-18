@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
-import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 
 @Component
@@ -227,7 +226,7 @@ public class ShopifyService {
 //             获取 value
             String value = contentItemNode.get("value").asText();
 //            counter.addChars(value.length());
-            counter.addChars(calculateToken(value));
+            counter.addChars(calculateToken(value, 1));
 //            if (translatedContent.contains(contentItemNode.get("key").asText())) {
 //                translatedCounter.addChars(value.length());
 //            }
@@ -606,18 +605,5 @@ public class ShopifyService {
         return i1;
     }
 
-
-    //将缓存的数据存到数据库中
-    public void saveToTranslates() {
-        //添加数据
-
-        // 遍历外层的 Map
-        SINGLE_LINE_TEXT.forEach((outerKey, innerMap) -> {
-            System.out.println("Outer Key: " + outerKey);
-
-            // 使用流来遍历内部的 Map
-            innerMap.forEach((innerKey, value) -> System.out.println("Inner Key: " + innerKey + ", Value: " + value));
-        });
-    }
 }
 

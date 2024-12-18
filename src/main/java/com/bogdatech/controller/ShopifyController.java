@@ -154,11 +154,4 @@ public class ShopifyController {
     public String updateItem(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
         return shopifyService.updateShopifySingleData(registerTransactionRequest);
     }
-
-    //将缓存的数据存到数据库中
-    @PostMapping("/shopify/saveCacheToTranslates")
-    public String saveToTranslates() {
-        shopifyService.saveToTranslates();
-        return null;
-    }
 }

@@ -1,5 +1,6 @@
 package com.bogdatech.context;
 
+import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -18,5 +19,5 @@ public class TranslateContext {
     private CharacterCountUtils characterCountUtils;
     private Integer remainingChars;
     private Map<String, Object> glossaryMap;
-    private String completePrompt;
+    private AILanguagePacksDO aiLanguagePacksDO;
 }

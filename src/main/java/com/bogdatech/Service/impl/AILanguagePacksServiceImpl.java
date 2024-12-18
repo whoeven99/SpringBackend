@@ -43,8 +43,8 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
     }
 
     @Override
-    public String getPromotByPackId(Integer packId) {
-        return baseMapper.getPromotByShopName(packId);
+    public AILanguagePacksDO getPromotByPackId(Integer packId) {
+        return baseMapper.getPackByShopName(packId);
     }
 
     @Override
