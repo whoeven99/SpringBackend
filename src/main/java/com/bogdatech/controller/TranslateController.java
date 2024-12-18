@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.*;
-import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 
 @RestController
 public class TranslateController {
@@ -234,11 +233,11 @@ public class TranslateController {
         return translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
     }
 
-    //计算OpenAI的token(等待删除)
-    @PostMapping("/testOpenAI")
-    public Integer testOpenAI(@RequestBody String content) {
-        return calculateToken(content);
+
+    //将缓存的数据存到数据库中
+    @PostMapping("/translate/saveCacheToTranslates")
+    public String saveToTranslates() {
+        translateService.saveToTranslates();
+        return null;
     }
-
-
 }

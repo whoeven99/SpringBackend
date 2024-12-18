@@ -50,8 +50,10 @@ public class StringUtils {
         return PLAIN_TEXT;
     }
 
-    //对promot_word的文本进行处理，将第一个{{language}}替换成target
-    public static String replaceLanguage(String str, String target) {
-        return str.replaceFirst("\\{\\{language\\}\\}", target);
+    //对prompt_word的文本进行处理，将第一个{{Chinese}}替换成target
+    public static String replaceLanguage(String prompt, String target, String translateResourceType, String industry) {
+        prompt = prompt.replaceFirst("\\{\\{apparel\\}\\}", industry);
+        prompt = prompt.replaceFirst("\\{\\{product\\}\\}", translateResourceType);
+        return prompt.replaceFirst("\\{\\{Chinese\\}\\}", target);
     }
 }
