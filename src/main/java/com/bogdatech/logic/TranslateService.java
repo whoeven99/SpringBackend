@@ -172,7 +172,6 @@ public class TranslateService {
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
             String shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
-            //TODO: 减少方法的参数
             TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, completePrompt);
             translateJson(translateContext);
 //            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
