@@ -37,8 +37,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public List<TranslatesDO> readInfoByShopName(TranslateRequest request) {
-        return baseMapper.readInfoByShopName(request.getShopName());
+    public List<TranslatesDO> readInfoByShopName(String shopName) {
+        return baseMapper.readInfoByShopName(shopName);
     }
 
     @Override

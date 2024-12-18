@@ -14,8 +14,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogdatech.enums.ErrorEnum.SQL_DELETE_ERROR;
-import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
+import static com.bogdatech.enums.ErrorEnum.*;
 
 @Service
 @Transactional
@@ -39,7 +38,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
         if (result > 0) {
             return new BaseResponse<>().CreateSuccessResponse(request);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
 
     }
 
@@ -53,8 +52,8 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     }
 
     @Override
-    public BaseResponse<Object> getCurrencyByShopName(CurrencyRequest request) {
-       CurrenciesDO[] list = baseMapper.getCurrencyByShopName(request.getShopName());
+    public BaseResponse<Object> getCurrencyByShopName(String shopName) {
+       CurrenciesDO[] list = baseMapper.getCurrencyByShopName(shopName);
         return new BaseResponse<>().CreateSuccessResponse(list);
     }
 
@@ -72,10 +71,13 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
             Field field = CurrencyConfig.class.getField(request.getCurrencyCode().toUpperCase());
             Map<String, Object> currencyInfo = (Map<String, Object>) field.get(null);
             map.put("symbol", currencyInfo.get("symbol"));
+            //TODO 默认货币和目标货币的转化
+//            map.put("flag", currencyInfo.get("flag"));
+            //国旗图片
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        //TODO 将AUTO转为真正汇率
+
         return map;
     }
 }

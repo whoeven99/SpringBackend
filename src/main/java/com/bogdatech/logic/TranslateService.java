@@ -809,6 +809,8 @@ public class TranslateService {
                 if (translation.path("value").asText().isEmpty() || translation.path("key").asText().isEmpty()) {
                     return;
                 }
+                //当用户修改数据后，outdated的状态为true，将该数据放入要翻译的集合中
+
                 TranslateTextDO translateTextDO = new TranslateTextDO();
                 translateTextDO.setTextKey(translation.path("key").asText());
                 translateTextDO.setTargetText(translation.path("value").asText());

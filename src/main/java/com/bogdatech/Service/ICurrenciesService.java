@@ -12,7 +12,7 @@ public interface ICurrenciesService extends IService<CurrenciesDO> {
 
     public BaseResponse<Object> updateCurrency(CurrencyRequest request);
     public BaseResponse<Object> deleteCurrency(CurrencyRequest request);
-    public BaseResponse<Object> getCurrencyByShopName(CurrencyRequest request);
+    public BaseResponse<Object> getCurrencyByShopName(String shopName);
 
     Map<String, Object> getCurrencyWithSymbol(CurrencyRequest request);
 }

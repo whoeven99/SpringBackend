@@ -22,7 +22,7 @@ public class AILanguagePacksController {
     }
 
     //默认新增默认语言包
-    @GetMapping("/addDefaultLanguagePack")
+    @PutMapping("/addDefaultLanguagePack")
     public BaseResponse<Object> addDefaultLanguagePack(String shopName){
         return aiLanguagePacksService.addDefaultLanguagePack(shopName);
     }

@@ -4,10 +4,7 @@ import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.entity.GlossaryDO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
 
@@ -45,7 +42,7 @@ public class GlossaryController {
     }
 
     //根据id删除glossary数据
-    @PostMapping("/deleteGlossaryById")
+    @DeleteMapping("/deleteGlossaryById")
     public BaseResponse<Object> deleteGlossaryById(@RequestBody GlossaryDO glossaryDO) {
         if (glossaryService.deleteGlossaryById(glossaryDO)) {
             return new BaseResponse<>().CreateSuccessResponse(glossaryDO);
@@ -54,9 +51,9 @@ public class GlossaryController {
     }
 
     //根据shopName获得glossary数据
-    @PostMapping("/getGlossaryByShopName")
-    public BaseResponse<Object> getGlossaryByShopName(@RequestBody GlossaryDO glossaryDO) {
-        return new BaseResponse<>().CreateSuccessResponse(glossaryService.getGlossaryByShopName(glossaryDO.getShopName()));
+    @GetMapping("/getGlossaryByShopName")
+    public BaseResponse<Object> getGlossaryByShopName(String shopName) {
+        return new BaseResponse<>().CreateSuccessResponse(glossaryService.getGlossaryByShopName(shopName));
     }
 
     //根据id修改targetText，status，rangeCode，caseSensitive数据
