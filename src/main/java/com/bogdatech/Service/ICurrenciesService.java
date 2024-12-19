@@ -8,13 +8,15 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import java.util.Map;
 
 public interface ICurrenciesService extends IService<CurrenciesDO> {
-    public BaseResponse<Object> insertCurrency(CurrencyRequest request);
+    public BaseResponse<Object> insertCurrency(CurrenciesDO currenciesDO);
 
     public BaseResponse<Object> updateCurrency(CurrencyRequest request);
     public BaseResponse<Object> deleteCurrency(CurrencyRequest request);
     public BaseResponse<Object> getCurrencyByShopName(String shopName);
 
-    Map<String, Object> getCurrencyWithSymbol(CurrencyRequest request);
+    Map<String, Object> getCurrencyWithSymbol(CurrenciesDO request);
 
-    BaseResponse<Object> initCurrency(CurrenciesDO currenciesDO);
+    BaseResponse<Object> initCurrency(String shopName);
+
+    String getCurrencyCodeByPrimaryStatusAndShopName(String shopName);
 }

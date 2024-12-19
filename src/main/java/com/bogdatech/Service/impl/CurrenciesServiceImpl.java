@@ -18,14 +18,14 @@ import static com.bogdatech.enums.ErrorEnum.*;
 
 @Service
 @Transactional
-public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, CurrenciesDO> implements ICurrenciesService{
+public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, CurrenciesDO> implements ICurrenciesService {
 
 
     @Override
-    public BaseResponse<Object> insertCurrency(CurrencyRequest request) {
+    public BaseResponse<Object> insertCurrency(CurrenciesDO request) {
         // 准备SQL插入语句
         if (baseMapper.insertCurrency(request.getShopName(), request.getCurrencyName(),
-                request.getCurrencyCode(), request.getRounding(), request.getExchangeRate()) > 0) {
+                request.getCurrencyCode(), request.getRounding(), request.getExchangeRate(), request.getPrimaryStatus()) > 0) {
             return new BaseResponse<>().CreateSuccessResponse(baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode()));
         } else {
             return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
@@ -34,7 +34,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
 
     @Override
     public BaseResponse<Object> updateCurrency(CurrencyRequest request) {
-        int result = baseMapper.updateCurrency(request.getId(), request.getRounding(),request.getExchangeRate());
+        int result = baseMapper.updateCurrency(request.getId(), request.getRounding(), request.getExchangeRate());
         if (result > 0) {
             return new BaseResponse<>().CreateSuccessResponse(request);
         }
@@ -53,12 +53,12 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
 
     @Override
     public BaseResponse<Object> getCurrencyByShopName(String shopName) {
-       CurrenciesDO[] list = baseMapper.getCurrencyByShopName(shopName);
+        CurrenciesDO[] list = baseMapper.getCurrencyByShopName(shopName);
         return new BaseResponse<>().CreateSuccessResponse(list);
     }
 
     @Override
-    public Map<String, Object> getCurrencyWithSymbol(CurrencyRequest request) {
+    public Map<String, Object> getCurrencyWithSymbol(CurrenciesDO request) {
         CurrenciesDO currencyByShopNameAndCurrencyCode = baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode());
         Map<String, Object> map = new HashMap<>();
         map.put("id", currencyByShopNameAndCurrencyCode.getId());
@@ -67,23 +67,29 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
         map.put("currencyName", currencyByShopNameAndCurrencyCode.getCurrencyName());
         map.put("rounding", currencyByShopNameAndCurrencyCode.getRounding());
         map.put("exchangeRate", currencyByShopNameAndCurrencyCode.getExchangeRate());
+        map.put("primaryStatus", currencyByShopNameAndCurrencyCode.getPrimaryStatus());
         try {
             Field field = CurrencyConfig.class.getField(request.getCurrencyCode().toUpperCase());
             Map<String, Object> currencyInfo = (Map<String, Object>) field.get(null);
             map.put("symbol", currencyInfo.get("symbol"));
-            //TODO 默认货币和目标货币的转化
-//            map.put("flag", currencyInfo.get("flag"));
-            //国旗图片
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-
         return map;
     }
 
     @Override
-    public BaseResponse<Object> initCurrency(CurrenciesDO currenciesDO) {
-        CurrenciesDO currency = baseMapper.getPrimaryStatusByShopName(currenciesDO.getShopName());
-        return null;
+    public BaseResponse<Object> initCurrency(String shopName) {
+        CurrenciesDO currency = baseMapper.getPrimaryStatusByShopName(shopName);
+        if (currency != null) {
+            return new BaseResponse<>().CreateSuccessResponse(currency);
+        } else {
+            return new BaseResponse<>().CreateSuccessResponse("");
+        }
+    }
+
+    @Override
+    public String getCurrencyCodeByPrimaryStatusAndShopName(String shopName) {
+        return baseMapper.getCurrencyCodeByPrimaryStatusAndShopName(shopName);
     }
 }

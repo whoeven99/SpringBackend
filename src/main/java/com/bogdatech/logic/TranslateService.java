@@ -223,6 +223,7 @@ public class TranslateService {
         } catch (JsonProcessingException e) {
             throw new ClientException(e.getMessage());
         }
+
         // 递归处理下一页数据
         handlePagination(rootNode, translateContext);
     }
@@ -298,7 +299,7 @@ public class TranslateService {
             }
         }
 
-
+        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopifyRequest.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));
     }
 
     //对judgeData数据进行翻译和存入shopify,除了html
@@ -333,7 +334,7 @@ public class TranslateService {
                     }
                     break;
                 default:
-                    System.out.println("未知的翻译文本： " + entry.getValue());
+                    appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
                     break;
             }
         }
@@ -375,9 +376,6 @@ public class TranslateService {
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
 
-//            counter.addChars(value.length());
-            counter.addChars(calculateToken(value + translateContext.getAiLanguagePacksDO().getPromotWord(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
-//            System.out.println("正在翻译： " + translateContext.getCompletePrompt() + value);
             String targetText;
             TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
             //判断是否为HTML
@@ -392,9 +390,8 @@ public class TranslateService {
                 continue;
             }
 
-            //AI翻译 TODO：待做，等产品给对应的提示词 连上面的html也需要修改
-
-            //其他语言，对数据做处理再翻译
+            //其他数据类型，对数据做处理再翻译
+            counter.addChars(calculateToken(value, 5));
             String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0);
             translateRequest.setContent(updateText);
             String translatedText = getGoogleTranslateData(translateRequest);
@@ -436,12 +433,9 @@ public class TranslateService {
             translation.put("translatableContentDigest", translatableContentDigest);
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
             //从数据库中获取数据，如果不为空，存入shopify本地；如果为空翻译
-
             String targetCache = translateSingleLine(value, request.getTarget());
             String type = registerTransactionRequest.getTarget();
-//            counter.addChars(value.length())
             counter.addChars(calculateToken(value + translateContext.getAiLanguagePacksDO().getPromotWord(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
-//            System.out.println("正在翻译： " + translateContext.getCompletePrompt() + value);
             if (targetCache != null) {
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
@@ -491,8 +485,12 @@ public class TranslateService {
             //AI翻译
             String targetString;
             try {
-                 targetString = chatGptIntegration.chatWithGpt(translateContext.getAiLanguagePacksDO().getPromotWord() + value);
-                 counter.addChars(calculateToken(targetString, translateContext.getAiLanguagePacksDO().getDeductionRate()));
+                if (value.length() > 40) {
+                    targetString = chatGptIntegration.chatWithGpt(translateContext.getAiLanguagePacksDO().getPromotWord() + value);
+                    counter.addChars(calculateToken(targetString, translateContext.getAiLanguagePacksDO().getDeductionRate()));
+                } else {
+                    targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+                }
             } catch (Exception e) {
                 // 如果AI翻译失败，则使用谷歌翻译
                 targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
@@ -523,16 +521,11 @@ public class TranslateService {
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
-//            counter.addChars(value.length());
             counter.addChars(calculateToken(value + translateContext.getAiLanguagePacksDO().getPromotWord(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
-//            System.out.println("正在翻译： " + translateContext.getCompletePrompt() + value);
-//            System.out.println("已使用： " + counter.getTotalChars() + "字符， " + calculateToken(translateContext.getCompletePrompt() + value));
             String targetText;
             try {
                 targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, translateContext.getAiLanguagePacksDO());
                 counter.addChars(calculateToken(targetText, translateContext.getAiLanguagePacksDO().getDeductionRate()));
-//                System.out.println("正在翻译： " + targetText);
-//                System.out.println("已使用： " + counter.getTotalChars() + "字符， " + calculateToken(targetText));
             } catch (Exception e) {
                 saveToShopify(value, translation, resourceId, request);
                 continue;
@@ -560,16 +553,22 @@ public class TranslateService {
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
             //获取缓存数据
             String targetCache = translateSingleLine(value, request.getTarget());
-            counter.addChars(calculateToken(value + translateContext.getAiLanguagePacksDO().getPromotWord(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
-//            System.out.println("正在翻译： " + translateContext.getCompletePrompt() + value);
-//            System.out.println("已使用： " + counter.getTotalChars() + "字符");
 
             if (targetCache != null) {
                 saveToShopify(targetCache, translation, resourceId, request);
             } else {
-                //根据chooseData来判断用什么翻译API
+                String targetString;
+                //根据文本字符长度来判断用什么翻译API 40一下用谷歌翻译（或者其他翻译API）  40以上用AI翻译
                 try {
-                    chooseTranslateApi(translation, registerTransactionRequest, request, translateContext.getAiLanguagePacksDO(), counter);
+                    if (value.length() > 40) {
+                        counter.addChars(calculateToken(value + translateContext.getAiLanguagePacksDO().getPromotWord(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
+                        aiTranslateApi(translation, registerTransactionRequest, request, translateContext.getAiLanguagePacksDO(), counter);
+                    } else {
+                        counter.addChars(calculateToken(value, 5));
+                        targetString = getGoogleTranslateData(new TranslateRequest(0, null, request.getAccessToken(), source, target, value));
+                        addData(target, value, targetString);
+                        saveToShopify(targetString, translation, resourceId, request);
+                    }
                 } catch (Exception e) {
                     System.out.println("翻译失败后的字符数： " + counter.getTotalChars());
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
@@ -579,18 +578,19 @@ public class TranslateService {
         }
     }
 
+
     //根据chooseData来判断用什么翻译API
-    private void chooseTranslateApi(Map<String, Object> translation, RegisterTransactionRequest registerTransactionRequest, ShopifyRequest request, AILanguagePacksDO aiLanguagePacksDO, CharacterCountUtils counter) {
+    private void aiTranslateApi(Map<String, Object> translation, RegisterTransactionRequest registerTransactionRequest, ShopifyRequest request, AILanguagePacksDO aiLanguagePacksDO, CharacterCountUtils counter) {
         String resourceId = registerTransactionRequest.getResourceId();
         String value = registerTransactionRequest.getValue();
         String target = request.getTarget();
         String source = registerTransactionRequest.getLocale();
-        //用AI翻译
-        String targetString ;
+        String targetString;
+        // 对翻译的文本做判断
         try {
+            //用AI翻译
             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + value);
             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
-//            System.out.println("已使用： " + counter.getTotalChars() + "字符");
         } catch (Exception e) {
             // 如果AI翻译失败，则使用谷歌翻译
             targetString = getGoogleTranslateData(new TranslateRequest(0, null, request.getAccessToken(), source, target, value));
@@ -600,10 +600,6 @@ public class TranslateService {
             return;
         }
         //百度API，火山API等等
-//                targetString = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, null, null, source, target, value));
-//        targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-//                targetString = baiDuTranslate(new TranslateRequest(0, null, null, source, target, value));
-//                System.out.println("target: " + targetString);
         addData(target, value, targetString);
         saveToShopify(targetString, translation, resourceId, request);
     }
@@ -659,9 +655,7 @@ public class TranslateService {
                 boolean success = false;
                 for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
                     String glossaryKey = entry.getKey();
-//                    System.out.println("glossaryKey = " + glossaryKey);
                     if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
-//                        System.out.println("glossaryValue: " + value);
                         judgeData.get(GLOSSARY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                         success = true;
                         break;
