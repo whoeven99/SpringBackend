@@ -80,7 +80,7 @@ public class ShopifyService {
         String string;
         try {
             String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
-            string = testingEnvironmentIntegration.sendShopifyPost("shopify/test123", requestBody);
+            string = testingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
         } catch (JsonProcessingException e) {
             throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }

@@ -913,7 +913,7 @@ public class TranslateService {
             // 使用流来遍历内部的 Map
             System.out.println("outerKey: " + outerKey);
             innerMap.forEach((innerKey, value) -> {
-                System.out.println("Key: " + outerKey + ", Inner Key: " + innerKey + ", Value: " + value);
+                appInsights.trackTrace("Key: " + outerKey + ", Inner Key: " + innerKey + ", Value: " + value);
 //                translateTextService.insertTranslateText(new TranslateTextDO(null,null, null, null, null, innerKey, value, null, outerKey));
             });
         });

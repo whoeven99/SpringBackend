@@ -1,11 +1,11 @@
 package com.bogdatech.task;
 
 import com.bogdatech.integration.RateHttpIntegration;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,8 +16,8 @@ public class RateTask {
     private RateHttpIntegration rateHttpIntegration;
 
 
-//    @PostConstruct
-    @Scheduled(cron = "0 0 0/1 * * ?")
+    @PostConstruct
+//    @Scheduled(cron = "0 0 0/1 * * ?")
     @Async
     public void getRateEveryHour() {
 //        System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
