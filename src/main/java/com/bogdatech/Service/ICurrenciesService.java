@@ -19,4 +19,6 @@ public interface ICurrenciesService extends IService<CurrenciesDO> {
     BaseResponse<Object> initCurrency(String shopName);
 
     String getCurrencyCodeByPrimaryStatusAndShopName(String shopName);
+
+    BaseResponse<Object> updateDefaultCurrency(CurrencyRequest request);
 }

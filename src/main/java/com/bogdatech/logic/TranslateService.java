@@ -334,7 +334,7 @@ public class TranslateService {
                     break;
                 default:
                     appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
-                    System.out.println("未知的翻译文本： " + entry.getValue());
+//                    System.out.println("未知的翻译文本： " + entry.getValue());
                     break;
             }
         }
@@ -907,14 +907,17 @@ public class TranslateService {
     public void saveToTranslates() {
         //添加数据
         // 遍历外层的 Map
+        List<TranslateTextDO> list = new ArrayList<>();
         SINGLE_LINE_TEXT.forEach((outerKey, innerMap) -> {
             // 使用流来遍历内部的 Map
-            System.out.println("outerKey: " + outerKey);
+//            System.out.println("outerKey: " + outerKey);
             innerMap.forEach((innerKey, value) -> {
-                appInsights.trackTrace("Key: " + outerKey + ", Inner Key: " + innerKey + ", Value: " + value);
+//                appInsights.trackTrace("Key: " + outerKey + ", Inner Key: " + innerKey + ", Value: " + value);
 //                translateTextService.insertTranslateText(new TranslateTextDO(null,null, null, null, null, innerKey, value, null, outerKey));
+            list.add(new TranslateTextDO(null,null, null, null, null, innerKey, value, null, outerKey));
             });
         });
+        translateTextService.getExistTranslateTextList(list);
     }
 
     //插入翻译状态
