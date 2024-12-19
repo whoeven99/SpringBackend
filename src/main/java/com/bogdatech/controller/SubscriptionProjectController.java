@@ -14,9 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/subscriptionProject")
 public class SubscriptionProjectController {
 
+
+    private final ISubscriptionProjectService subscriptionProjectService;
     @Autowired
-    private ISubscriptionProjectService subscriptionProjectService;
-    // TODO:计划项目的CRUD
+    public SubscriptionProjectController(ISubscriptionProjectService subscriptionProjectService) {
+        this.subscriptionProjectService = subscriptionProjectService;
+    }
 
     //插入和更新SubscriptionProject
     @PostMapping("/insertOrUpdateProject")

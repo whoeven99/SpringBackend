@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/purchase")
 public class PurchaseController {
 
+    private final PurchaseService purchaseService;
     @Autowired
-    private PurchaseService purchaseService;
-
+    public PurchaseController(PurchaseService purchaseService) {
+        this.purchaseService = purchaseService;
+    }
     //付费表单推荐购买字符数（根据商店总字符数推荐）
     @GetMapping("/getRecommendation")
     public BaseResponse<Object> getRecommendation() {

@@ -78,13 +78,13 @@ public class JsoupUtils {
                             //AI翻译
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
                         } else {
-//                            targetString = translateApiIntegration.googleTranslate(request);
-                            targetString = translateApiIntegration.microsoftTranslate(request);
+                            targetString = translateApiIntegration.googleTranslate(request);
+//                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-//                        targetString = translateApiIntegration.googleTranslate(request);
-                         targetString = translateApiIntegration.microsoftTranslate(request);
+                        targetString = translateApiIntegration.googleTranslate(request);
+//                         targetString = translateApiIntegration.microsoftTranslate(request);
                         addData(target, text, targetString);
                         translatedTexts.add(targetString);
                         continue;
@@ -109,13 +109,13 @@ public class JsoupUtils {
                             //AI翻译
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
                         } else {
-//                            targetString = translateApiIntegration.googleTranslate(request);
-                            targetString = translateApiIntegration.microsoftTranslate(request);
+                            targetString = translateApiIntegration.googleTranslate(request);
+//                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-//                        targetString = translateApiIntegration.googleTranslate(request);
-                         targetString = translateApiIntegration.microsoftTranslate(request);
+                        targetString = translateApiIntegration.googleTranslate(request);
+//                         targetString = translateApiIntegration.microsoftTranslate(request);
                         addData(target, altText, targetString);
                         translatedTexts.add(targetString);
                         continue;
@@ -169,8 +169,8 @@ public class JsoupUtils {
                     Map<String, String> placeholderMap = new HashMap<>();
                     String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
                     request.setContent(updateText);
-//                    String targetString = translateApiIntegration.googleTranslate(request);
-                    String targetString = translateApiIntegration.microsoftTranslate(request);
+                    String targetString = translateApiIntegration.googleTranslate(request);
+//                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     String finalText = restoreKeywords(targetString, placeholderMap);
                     addData(request.getTarget(), text, finalText);
                     translatedTexts.add(finalText);

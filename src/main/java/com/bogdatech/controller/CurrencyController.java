@@ -12,11 +12,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/currency")
 public class CurrencyController {
 
+    private final ICurrenciesService currencyService;
+    private final PurchaseService purchaseService;
     @Autowired
-    private ICurrenciesService currencyService;
-
-    @Autowired
-    private PurchaseService purchaseService;
+    public CurrencyController(ICurrenciesService currencyService, PurchaseService purchaseService) {
+        this.currencyService = currencyService;
+        this.purchaseService = purchaseService;
+    }
 
     @PostMapping("/insertCurrency")
     public BaseResponse<Object> addCurrency(@RequestBody CurrenciesDO currenciesDO) {

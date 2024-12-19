@@ -10,7 +10,6 @@ import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,22 +23,23 @@ import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 @RestController
 @RequestMapping("/shopify")
 public class ShopifyController {
-    @Autowired
-    private ShopifyHttpIntegration shopifyApiIntegration;
 
-
-    @Autowired
-    private ShopifyService shopifyService;
-
-    @Autowired
-    private ITranslatesService translatesService;
+    private final ShopifyHttpIntegration shopifyApiIntegration;
+    private final ShopifyService shopifyService;
+    private final ITranslatesService translatesService;
+    private final ITranslationCounterService translationCounterService;
+    private final IUserSubscriptionsService userSubscriptionsService;
 
     @Autowired
-    private ITranslationCounterService translationCounterService;
+    public ShopifyController(ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService) {
+        this.shopifyApiIntegration = shopifyApiIntegration;
+        this.shopifyService = shopifyService;
+        this.translatesService = translatesService;
+        this.translationCounterService = translationCounterService;
+        this.userSubscriptionsService = userSubscriptionsService;
 
-    @Autowired
-    private IUserSubscriptionsService userSubscriptionsService;
-    private final TelemetryClient appInsights = new TelemetryClient();
+    }
+//    private final TelemetryClient appInsights = new TelemetryClient();
 
     //通过测试环境调shopify的API
     @PostMapping("/test123")
@@ -99,7 +99,7 @@ public class ShopifyController {
     //当用户第一次订阅时，在用户订阅表里面添加用户及其付费计划
     @PostMapping("/addUserFreeSubscription")
     public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request) {
-         return shopifyService.addUserFreeSubscription(request);
+        return shopifyService.addUserFreeSubscription(request);
     }
 
     //获取用户订阅计划
@@ -126,7 +126,7 @@ public class ShopifyController {
         Map<String, Map<String, Object>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
         if (translationItemsInfo == null) {
             return new BaseResponse<>().CreateErrorResponse("Get items failed");
-        }else {
+        } else {
             return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
         }
     }
@@ -135,9 +135,9 @@ public class ShopifyController {
     @PutMapping("/updateTranslationStatus")
     public BaseResponse<Object> updateTranslationStatus(@RequestBody TranslateRequest request) {
         int i = shopifyService.updateTranslationStatus(request);
-        if(i > 0){
+        if (i > 0) {
             return new BaseResponse<>().CreateSuccessResponse(200);
-        }else{
+        } else {
             return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
         }
     }

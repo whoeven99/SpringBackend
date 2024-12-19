@@ -13,8 +13,11 @@ import static com.bogdatech.enums.ErrorEnum.*;
 @RequestMapping("/translationCounter")
 public class TranslationCounterController {
 
+    private final ITranslationCounterService translationCounterService;
     @Autowired
-    private ITranslationCounterService translationCounterService;
+    public TranslationCounterController(ITranslationCounterService translationCounterService) {
+        this.translationCounterService = translationCounterService;
+    }
 
     //
     @PostMapping("/insertCharsByShopName")

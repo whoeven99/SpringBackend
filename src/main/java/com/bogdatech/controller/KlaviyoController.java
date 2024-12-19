@@ -12,9 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/klaviyo")
 public class KlaviyoController {
-    @Autowired
-    private KlaviyoService klaviyoService;
 
+    private final KlaviyoService klaviyoService;
+    @Autowired
+    public KlaviyoController(KlaviyoService klaviyoService) {
+        this.klaviyoService = klaviyoService;
+    }
     //创建profile
     @PostMapping("/createProfile")
     public String createProfile(@RequestBody UsersDO usersDO){

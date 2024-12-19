@@ -1,7 +1,6 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.IAILanguagePacksService;
-import com.bogdatech.Service.IUsersService;
 import com.bogdatech.model.controller.request.UserLanguageRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +10,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/aiLanguagePacks")
 public class AILanguagePacksController {
 
+    private final IAILanguagePacksService aiLanguagePacksService;
     @Autowired
-    private IAILanguagePacksService aiLanguagePacksService;
-    @Autowired
-    private IUsersService usersService;
+    public AILanguagePacksController(IAILanguagePacksService aiLanguagePacksService) {
+        this.aiLanguagePacksService = aiLanguagePacksService;
+    }
+
     //获取AI语言包的数据
     @GetMapping("/readAILanguagePacks")
     public BaseResponse<Object> readAILanguagePacks(){

@@ -15,9 +15,11 @@ import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 @RequestMapping("/orders")
 public class CharsOrdersController {
 
+    private final OrderService orderService;
     @Autowired
-    private OrderService orderService;
-
+    public CharsOrdersController(OrderService orderService) {
+        this.orderService = orderService;
+    }
     //存储和更新订单
     @PostMapping("/insertOrUpdateOrder")
     public BaseResponse<Object> insertOrUpdateOrder(@RequestBody CharsOrdersDO charsOrdersDO) {
