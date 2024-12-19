@@ -42,5 +42,6 @@ public class CurrencyController {
         return new BaseResponse<>().CreateSuccessResponse(purchaseService.getCacheData(request));
     }
 
+   //对currency的初始化方法，添加默认代码
 
 }
