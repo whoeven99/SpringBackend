@@ -19,8 +19,8 @@ public class CurrencyController {
     private PurchaseService purchaseService;
 
     @PostMapping("/insertCurrency")
-    public BaseResponse<Object> addCurrency(@RequestBody CurrencyRequest request) {
-        return currencyService.insertCurrency(request);
+    public BaseResponse<Object> addCurrency(@RequestBody CurrenciesDO currenciesDO) {
+        return currencyService.insertCurrency(currenciesDO);
     }
 
     @PutMapping("/updateCurrency")
@@ -39,14 +39,13 @@ public class CurrencyController {
     }
 
     @PostMapping("/getCacheData")
-    public BaseResponse<Object> getCurrencyByShopId(@RequestBody CurrencyRequest request) {
+    public BaseResponse<Object> getCurrencyByShopId(@RequestBody CurrenciesDO request) {
         return new BaseResponse<>().CreateSuccessResponse(purchaseService.getCacheData(request));
     }
 
    //对currency的初始化方法，添加默认代码
-    @PostMapping("/initCurrency")
-    public BaseResponse<Object> initCurrency(@RequestBody CurrenciesDO currenciesDO) {
-        currencyService.initCurrency(currenciesDO);
-        return null;
+    @GetMapping("/initCurrency")
+    public BaseResponse<Object> initCurrency(String shopName) {
+        return currencyService.initCurrency(shopName);
     }
 }

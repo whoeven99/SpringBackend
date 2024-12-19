@@ -66,7 +66,7 @@ public class ChatGptIntegration {
             }
         }
 
-        System.out.println("Response: " + content);
+//        System.out.println("Response: " + content);
         return content;
     }
 }

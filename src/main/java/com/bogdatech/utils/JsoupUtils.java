@@ -71,14 +71,20 @@ public class JsoupUtils {
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
-                    //AI翻译
+
                     try {
-                        targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
-//                        targetString = translateApiIntegration.microsoftTranslate(request);
+                        if (text.length() > 40) {
+//                            System.out.println("altText: + " + text);
+                            //AI翻译
+                            targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
+                        } else {
+//                            targetString = translateApiIntegration.googleTranslate(request);
+                            targetString = translateApiIntegration.microsoftTranslate(request);
+                        }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-                        targetString = translateApiIntegration.googleTranslate(request);
-//                         targetString = translateApiIntegration.microsoftTranslate(request);
+//                        targetString = translateApiIntegration.googleTranslate(request);
+                         targetString = translateApiIntegration.microsoftTranslate(request);
                         addData(target, text, targetString);
                         translatedTexts.add(targetString);
                         continue;
@@ -98,12 +104,18 @@ public class JsoupUtils {
                     request.setContent(altText);
                     //AI翻译
                     try {
-                        targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
-//                        targetString = translateApiIntegration.microsoftTranslate(request);
+                        if (altText.length() > 40) {
+//                            System.out.println("altText: + " + altText);
+                            //AI翻译
+                            targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
+                        } else {
+//                            targetString = translateApiIntegration.googleTranslate(request);
+                            targetString = translateApiIntegration.microsoftTranslate(request);
+                        }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-                        targetString = translateApiIntegration.googleTranslate(request);
-//                         targetString = translateApiIntegration.microsoftTranslate(request);
+//                        targetString = translateApiIntegration.googleTranslate(request);
+                         targetString = translateApiIntegration.microsoftTranslate(request);
                         addData(target, altText, targetString);
                         translatedTexts.add(targetString);
                         continue;
@@ -130,10 +142,6 @@ public class JsoupUtils {
                 element.attr("alt", translatedAlts.get(i));
             }
         } catch (Exception e) {
-//            System.out.println("elementsWithText: " + elementsWithText.toString());
-//            System.out.println("altsToTranslate: " + translatedTexts.toString());
-//            System.out.println("translatedTexts: " + translatedTexts.toString());
-//            System.out.println("elementsWithAlt: " + translatedTexts.toString());
             throw new ClientException("This text is not a valid html element");
         }
 
@@ -153,20 +161,16 @@ public class JsoupUtils {
             List<String> translatedTexts = new ArrayList<>();
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
-//                counter.addChars(text.length());
-                counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
+                counter.addChars(calculateToken(text , 5));
                 if (translated != null) {
                     translatedTexts.add(translated);
                 } else {
-                    //占位符
+                    //目前没有翻译html的提示词，用的是谷歌翻译
                     Map<String, String> placeholderMap = new HashMap<>();
                     String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
                     request.setContent(updateText);
-                    //AI翻译
-//                    String targetString = chatGptIntegration.chatWithGpt(completePromot);
-                    // 使用翻译API进行翻译（如Google或Microsoft）
-                    String targetString = translateApiIntegration.googleTranslate(request);
-//                    String targetString = translateApiIntegration.microsoftTranslate(request);
+//                    String targetString = translateApiIntegration.googleTranslate(request);
+                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     String finalText = restoreKeywords(targetString, placeholderMap);
                     addData(request.getTarget(), text, finalText);
                     translatedTexts.add(finalText);

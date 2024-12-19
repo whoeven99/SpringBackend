@@ -119,7 +119,7 @@ public class ShopifyService {
             cloudServiceRequest.setBody(query);
             String infoByShopify = getShopifyData(cloudServiceRequest);
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter);
-            System.out.println("目前统计total的总数是： " + counter.getTotalChars());
+//            System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
         return counter.getTotalChars();
     }
@@ -137,7 +137,7 @@ public class ShopifyService {
 
     //将String数据转化为JsonNode数据
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
-        System.out.println("现在统计到： " + translateResource.getResourceType());
+//        System.out.println("现在统计到： " + translateResource.getResourceType());
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
