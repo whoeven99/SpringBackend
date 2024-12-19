@@ -15,4 +15,6 @@ public interface ICurrenciesService extends IService<CurrenciesDO> {
     public BaseResponse<Object> getCurrencyByShopName(String shopName);
 
     Map<String, Object> getCurrencyWithSymbol(CurrencyRequest request);
+
+    BaseResponse<Object> initCurrency(CurrenciesDO currenciesDO);
 }

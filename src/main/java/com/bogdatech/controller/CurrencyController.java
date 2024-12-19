@@ -1,6 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ICurrenciesService;
+import com.bogdatech.entity.CurrenciesDO;
 import com.bogdatech.logic.PurchaseService;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -43,5 +44,9 @@ public class CurrencyController {
     }
 
    //对currency的初始化方法，添加默认代码
-
+    @PostMapping("/initCurrency")
+    public BaseResponse<Object> initCurrency(@RequestBody CurrenciesDO currenciesDO) {
+        currencyService.initCurrency(currenciesDO);
+        return null;
+    }
 }

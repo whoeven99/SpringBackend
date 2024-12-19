@@ -22,4 +22,8 @@ public interface CurrenciesMapper extends BaseMapper<CurrenciesDO> {
 
     @Select("SELECT id, shop_name, currency_name, currency_code, rounding, exchange_rate FROM Currencies  WHERE shop_name = #{shopName} AND currency_code = #{currencyCode}")
     CurrenciesDO getCurrencyByShopNameAndCurrencyCode(String shopName, String currencyCode);
+
+    @Select("SELECT id, shop_name, currency_name, currency_code, rounding, exchange_rate, primary_status FROM Currencies  WHERE shop_name = #{shopName} AND primary_status = 1")
+    CurrenciesDO getPrimaryStatusByShopName(String shopName);
+
 }
