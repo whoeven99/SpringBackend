@@ -80,4 +80,10 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
 
         return map;
     }
+
+    @Override
+    public BaseResponse<Object> initCurrency(CurrenciesDO currenciesDO) {
+        CurrenciesDO currency = baseMapper.getPrimaryStatusByShopName(currenciesDO.getShopName());
+        return null;
+    }
 }
