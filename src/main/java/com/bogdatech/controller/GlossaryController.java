@@ -14,8 +14,11 @@ import static com.bogdatech.enums.ErrorEnum.*;
 @RequestMapping("/glossary")
 public class GlossaryController {
 
+    private final IGlossaryService glossaryService;
     @Autowired
-    private IGlossaryService glossaryService;
+    public GlossaryController(IGlossaryService glossaryService) {
+        this.glossaryService = glossaryService;
+    }
 
     //插入glossary数据
     @PostMapping("/insertGlossaryInfo")

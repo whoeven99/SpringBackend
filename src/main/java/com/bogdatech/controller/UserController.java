@@ -1,7 +1,6 @@
 package com.bogdatech.controller;
 
 
-import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.logic.UserService;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -11,12 +10,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-
+    private final UserService userService;
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ITranslateTextService translateService;
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/get")
     public UsersDO getUser(@RequestBody UsersDO userRequest) {

@@ -14,47 +14,47 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class TestController {
+    private final TranslatesServiceImpl translatesServiceImpl;
+    private final ChatGptIntegration chatGptIntegration;
+    private final ShopifyHttpIntegration shopifyApiIntegration;
 
-//	private JdbcTestRepository jdbcTestRepository;
-	@Autowired
-	private TranslatesServiceImpl translatesServiceImpl;
-
-	@Autowired
-	private ChatGptIntegration chatGptIntegration;
-
-	@Autowired
-	private ShopifyHttpIntegration shopifyApiIntegration;
+    @Autowired
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration) {
+        this.translatesServiceImpl = translatesServiceImpl;
+        this.chatGptIntegration = chatGptIntegration;
+        this.shopifyApiIntegration = shopifyApiIntegration;
+    }
 //	@GetMapping("/test")
 //	public List<JdbcTestModel> test() {
 //		return jdbcTestRepository.sqlTest();
 //	}
 
-	@GetMapping("/ping")
-	public String ping() {
-		TelemetryClient appInsights = new TelemetryClient();
-		appInsights.trackTrace("SpringBackend Ping Successful");
-		return "Ping Successful!";
-	}
+    @GetMapping("/ping")
+    public String ping() {
+        TelemetryClient appInsights = new TelemetryClient();
+        appInsights.trackTrace("SpringBackend Ping Successful");
+        return "Ping Successful!";
+    }
 
-	@GetMapping("/gpt")
-	public String chat(@RequestParam String prompt) {
-		return chatGptIntegration.chatWithGpt(prompt);
-	}
+    @GetMapping("/gpt")
+    public String chat(@RequestParam String prompt) {
+        return chatGptIntegration.chatWithGpt(prompt);
+    }
 
-	@PostMapping("/test/test1")
-	public int test1(@RequestBody TranslatesDO name) {
-		return translatesServiceImpl.updateTranslateStatus(name.getShopName(),name.getStatus(),name.getTarget(), name.getSource(), name.getAccessToken());
-	}
+    @PostMapping("/test/test1")
+    public int test1(@RequestBody TranslatesDO name) {
+        return translatesServiceImpl.updateTranslateStatus(name.getShopName(), name.getStatus(), name.getTarget(), name.getSource(), name.getAccessToken());
+    }
 
-	//通过测试环境调shopify的API
-	@PostMapping("/test123")
-	public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
-		ShopifyRequest request = new ShopifyRequest();
-		request.setShopName(cloudServiceRequest.getShopName());
-		request.setAccessToken(cloudServiceRequest.getAccessToken());
-		request.setTarget(cloudServiceRequest.getTarget());
-		String body = cloudServiceRequest.getBody();
-		JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
-		return infoByShopify.toString();
-	}
+    //通过测试环境调shopify的API
+    @PostMapping("/test123")
+    public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(cloudServiceRequest.getShopName());
+        request.setAccessToken(cloudServiceRequest.getAccessToken());
+        request.setTarget(cloudServiceRequest.getTarget());
+        String body = cloudServiceRequest.getBody();
+        JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
+        return infoByShopify.toString();
+    }
 }

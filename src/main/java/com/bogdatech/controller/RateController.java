@@ -4,17 +4,22 @@ import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.RateDataService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/rate")
 public class RateController {
-    @Autowired
-    private RateHttpIntegration rateHttpIntegration;
 
+    private final RateHttpIntegration rateHttpIntegration;
+    private final RateDataService rateDataService;
     @Autowired
-    private RateDataService rateDataService;
-
+    public RateController(RateHttpIntegration rateHttpIntegration, RateDataService rateDataService) {
+        this.rateHttpIntegration = rateHttpIntegration;
+        this.rateDataService = rateDataService;
+    }
     //重新实现的获取135条货币的汇率信息，存入RateMap中
     @GetMapping("/getRate")
     public BaseResponse<Object> getRate() {

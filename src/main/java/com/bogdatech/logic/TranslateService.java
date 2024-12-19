@@ -294,11 +294,10 @@ public class TranslateService {
                     //存储集合在翻译
                     judgeAndStoreData(translatableContent, resourceId, judgeData, translateContext.getTranslateResource().getResourceType(), translatableContentMap, translateContext.getGlossaryMap());
                 }
-                //对judgeData数据进行翻译和存入shopify,除了html
-                translateAndSaveData(judgeData, translateContext);
             }
         }
-
+        //对judgeData数据进行翻译和存入shopify,除了html
+        translateAndSaveData(judgeData, translateContext);
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopifyRequest.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));
     }
 
@@ -335,6 +334,7 @@ public class TranslateService {
                     break;
                 default:
                     appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
+                    System.out.println("未知的翻译文本： " + entry.getValue());
                     break;
             }
         }
@@ -368,6 +368,7 @@ public class TranslateService {
         //对caseSensitiveMap集合中的数据进行翻译
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             String value = registerTransactionRequest.getValue();
+//            System.out.println("目前翻译： " + value);
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
             translation.put("locale", target);
@@ -424,6 +425,7 @@ public class TranslateService {
         Map<String, Object> translation = new HashMap<>();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             String value = registerTransactionRequest.getValue();
+//            System.out.println("目前翻译： " + value);
             String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
             String key = registerTransactionRequest.getKey();
             String source = registerTransactionRequest.getLocale();
@@ -514,6 +516,7 @@ public class TranslateService {
         Map<String, Object> translation = new HashMap<>();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             String value = registerTransactionRequest.getValue();
+//            System.out.println("目前翻译： " + value);
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
             translation.put("locale", target);
@@ -544,6 +547,7 @@ public class TranslateService {
         Map<String, Object> translation = new HashMap<>();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             String value = registerTransactionRequest.getValue();
+//            System.out.println("目前翻译： " + value);
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
             translation.put("locale", target);

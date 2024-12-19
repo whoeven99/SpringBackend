@@ -6,7 +6,6 @@ import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.logic.TranslateService;
@@ -32,7 +31,6 @@ public class TranslateController {
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final TranslateApiIntegration translateApiIntegration;
     private final ITranslationCounterService translationCounterService;
-    private final ALiYunTranslateIntegration aliyunTranslateIntegration;
     private final JsoupUtils jsoupUtils;
 
     @Autowired
@@ -42,14 +40,12 @@ public class TranslateController {
             ShopifyHttpIntegration shopifyApiIntegration,
             TranslateApiIntegration translateApiIntegration,
             ITranslationCounterService translationCounterService,
-            ALiYunTranslateIntegration aliyunTranslateIntegration,
             JsoupUtils jsoupUtils) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.translateApiIntegration = translateApiIntegration;
         this.translationCounterService = translationCounterService;
-        this.aliyunTranslateIntegration = aliyunTranslateIntegration;
         this.jsoupUtils = jsoupUtils;
     }
 
@@ -213,12 +209,6 @@ public class TranslateController {
 //    public void splitWords(@RequestBody String sentence) {
 //        String string = StringUtils.judgeStringType(sentence);
 //        System.out.println("打印的结果： " + string);
-//    }
-
-    //阿里云翻译API
-//    @PostMapping("/testAli")
-//    public String testAli(@RequestBody TranslateRequest request) {
-//        return aliyunTranslateIntegration.aliyunTranslate(request);
 //    }
 
     //删除翻译状态的语言
