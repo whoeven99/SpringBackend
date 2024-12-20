@@ -77,14 +77,17 @@ public class JsoupUtils {
 //                            System.out.println("altText: + " + text);
                             //AI翻译
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
+
+                            counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
-                            targetString = translateApiIntegration.googleTranslate(request);
-//                            targetString = translateApiIntegration.microsoftTranslate(request);
+//                            targetString = translateApiIntegration.googleTranslate(request);
+//                            counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
+                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-                        targetString = translateApiIntegration.googleTranslate(request);
-//                         targetString = translateApiIntegration.microsoftTranslate(request);
+//                        targetString = translateApiIntegration.googleTranslate(request);
+                        targetString = translateApiIntegration.microsoftTranslate(request);
                         addData(target, text, targetString);
                         translatedTexts.add(targetString);
                         continue;
@@ -108,14 +111,15 @@ public class JsoupUtils {
 //                            System.out.println("altText: + " + altText);
                             //AI翻译
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
+                            counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
-                            targetString = translateApiIntegration.googleTranslate(request);
-//                            targetString = translateApiIntegration.microsoftTranslate(request);
+//                            targetString = translateApiIntegration.googleTranslate(request);
+                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-                        targetString = translateApiIntegration.googleTranslate(request);
-//                         targetString = translateApiIntegration.microsoftTranslate(request);
+//                        targetString = translateApiIntegration.googleTranslate(request);
+                         targetString = translateApiIntegration.microsoftTranslate(request);
                         addData(target, altText, targetString);
                         translatedTexts.add(targetString);
                         continue;
@@ -134,7 +138,6 @@ public class JsoupUtils {
             for (int i = 0; i < elementsWithText.size(); i++) {
                 Element element = elementsWithText.get(i);
                 element.text(translatedTexts.get(i));
-
             }
 
             for (int i = 0; i < elementsWithAlt.size(); i++) {
@@ -145,23 +148,22 @@ public class JsoupUtils {
             throw new ClientException("This text is not a valid html element");
         }
 
+        System.out.println("OPENAI 翻译结果：" + doc.toString());
         return doc.html();
     }
 
 
     // 对文本进行翻译（词汇表）
-    public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
+    public Map<Element, List<String>> translateGlossaryTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
                                                      CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, AILanguagePacksDO aiLanguagePacksDO) {
         Map<Element, List<String>> translatedTextMap = new HashMap<>();
-
         for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
             Element element = entry.getKey();
             List<String> texts = entry.getValue();
-
             List<String> translatedTexts = new ArrayList<>();
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
-                counter.addChars(calculateToken(text , 5));
+                counter.addChars(calculateToken(text, 5));
                 if (translated != null) {
                     translatedTexts.add(translated);
                 } else {
@@ -176,10 +178,35 @@ public class JsoupUtils {
                     translatedTexts.add(finalText);
                 }
             }
-
             translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
         }
+        return translatedTextMap;
+    }
 
+
+    //对文本进行翻译（通用）
+    public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
+                                                             CharacterCountUtils counter) {
+        Map<Element, List<String>> translatedTextMap = new HashMap<>();
+        for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
+            Element element = entry.getKey();
+            List<String> texts = entry.getValue();
+            List<String> translatedTexts = new ArrayList<>();
+            for (String text : texts) {
+                String translated = translateSingleLine(text, request.getTarget());
+                counter.addChars(calculateToken(text, 5));
+                if (translated != null) {
+                    translatedTexts.add(translated);
+                } else {
+                    request.setContent(text);
+//                    String targetString = translateApiIntegration.googleTranslate(request);
+                    String targetString = translateApiIntegration.microsoftTranslate(request);
+                    addData(request.getTarget(), text, targetString);
+                    translatedTexts.add(targetString);
+                }
+            }
+            translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
+        }
         return translatedTextMap;
     }
 
