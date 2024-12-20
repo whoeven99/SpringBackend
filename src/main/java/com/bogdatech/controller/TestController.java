@@ -57,4 +57,33 @@ public class TestController {
         JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
         return infoByShopify.toString();
     }
+
+    //微软翻译API(待删）
+//    @PostMapping("/testAzure")
+//    public String testAzure(@RequestBody TranslateRequest request) {
+//        return translateApiIntegration.microsoftTranslate(request);
+//    }
+
+    //火山翻译API(待删）
+//    @PostMapping("/testVolcano")
+//    public String testVolcano(@RequestBody TranslateRequest request) {
+//        return translateApiIntegration.huoShanTranslate(request);
+//    }
+
+//    @PostMapping("/test")
+//    public String test(@RequestBody String content) {
+//
+////        try {
+////            // 使用 JSoup 将 HTML 内容转换为 Document
+////            Document document = Jsoup.parse(content);
+////            // 获取纯文本内容，去掉 HTML 标签
+////            String textContent = document.text();
+////            System.out.println("text: " + textContent);
+////            return new ResponseEntity<>(textContent, HttpStatus.OK);
+////        } catch (Exception e) {
+////            return new ResponseEntity<>("Failed to parse HTML content", HttpStatus.INTERNAL_SERVER_ERROR);
+////        }
+////        return jsoupUtils.isHtml(content);
+//        return jsoupUtils.translateHtml(content, new TranslateRequest(0,null, null, "en", "zh-CN", content ), new CharacterCountUtils(), new AILanguagePacksDO(0,"General", null, "Accurately translate the product data of the e-commerce website into zh-CN. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: " + content, 1));
+//    }
 }

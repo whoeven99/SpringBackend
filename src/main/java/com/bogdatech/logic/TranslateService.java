@@ -769,16 +769,12 @@ public class TranslateService {
     //分析node数据进行合并数据，检查是否有下一页
     private void processNodes(JsonNode rootNode, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
         //用封装后的接口测，没有data节点
-//        JsonNode translatableResourcesNode = rootNode.path("data").path("translatableResources").path("nodes");
         JsonNode translatableResourcesNode = rootNode.path("translatableResources").path("nodes");
         Map<String, TranslateTextDO> translatableContentMap = null;
-//        List<TranslateTextDO> depositContents = new ArrayList<>();
         for (JsonNode node : translatableResourcesNode) {
             String resourceId = node.path("resourceId").asText();
             Map<String, TranslateTextDO> translationsMap = extractTranslations(node, resourceId, request);
             translatableContentMap = extractTranslatableContent(node, translationsMap);
-//            System.out.println("合并后的map数据为： " + translatableContentMap);
-
         }
         if (translatableContentMap != null) {
             List<TranslateTextDO> translateTextDOList = new ArrayList<>(translatableContentMap.values());
@@ -888,7 +884,6 @@ public class TranslateService {
     //优化策略1： 利用翻译后的数据，对singleLine的数据全局匹配并翻译
     public String translateSingleLine(String sourceText, String target) {
         if (SINGLE_LINE_TEXT.get(target) != null) {
-//            System.out.println("translateSingleLine2: " + SINGLE_LINE_TEXT.get(target).get(sourceText));
             return SINGLE_LINE_TEXT.get(target).get(sourceText);
         }
         return null;
@@ -904,20 +899,20 @@ public class TranslateService {
     }
 
     //将缓存的数据存到数据库中
+    @Async
     public void saveToTranslates() {
         //添加数据
         // 遍历外层的 Map
         List<TranslateTextDO> list = new ArrayList<>();
         SINGLE_LINE_TEXT.forEach((outerKey, innerMap) -> {
             // 使用流来遍历内部的 Map
-//            System.out.println("outerKey: " + outerKey);
             innerMap.forEach((innerKey, value) -> {
-//                appInsights.trackTrace("Key: " + outerKey + ", Inner Key: " + innerKey + ", Value: " + value);
-//                translateTextService.insertTranslateText(new TranslateTextDO(null,null, null, null, null, innerKey, value, null, outerKey));
             list.add(new TranslateTextDO(null,null, null, null, null, innerKey, value, null, outerKey));
             });
         });
-        translateTextService.getExistTranslateTextList(list);
+        if (!list.isEmpty()){
+            translateTextService.getExistTranslateTextList(list);
+        }
     }
 
     //插入翻译状态
