@@ -2,17 +2,14 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
-import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -29,24 +26,21 @@ public class TranslateController {
     private final TranslateService translateService;
     private final ITranslatesService translatesService;
     private final ShopifyHttpIntegration shopifyApiIntegration;
-    private final TranslateApiIntegration translateApiIntegration;
     private final ITranslationCounterService translationCounterService;
-    private final JsoupUtils jsoupUtils;
+
 
     @Autowired
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
             ShopifyHttpIntegration shopifyApiIntegration,
-            TranslateApiIntegration translateApiIntegration,
-            ITranslationCounterService translationCounterService,
-            JsoupUtils jsoupUtils) {
+            ITranslationCounterService translationCounterService
+    ) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.shopifyApiIntegration = shopifyApiIntegration;
-        this.translateApiIntegration = translateApiIntegration;
         this.translationCounterService = translationCounterService;
-        this.jsoupUtils = jsoupUtils;
+
     }
 
     private TelemetryClient appInsights = new TelemetryClient();
@@ -180,37 +174,6 @@ public class TranslateController {
     }
 
 
-    //测试将html语句拆解
-    @PostMapping("/test")
-    public String test(@RequestBody String content) {
-
-//        try {
-//            // 使用 JSoup 将 HTML 内容转换为 Document
-//            Document document = Jsoup.parse(content);
-//            // 获取纯文本内容，去掉 HTML 标签
-//            String textContent = document.text();
-//            System.out.println("text: " + textContent);
-//            return new ResponseEntity<>(textContent, HttpStatus.OK);
-//        } catch (Exception e) {
-//            return new ResponseEntity<>("Failed to parse HTML content", HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//        return jsoupUtils.isHtml(content);
-        return jsoupUtils.translateHtml(content, new TranslateRequest(0,null, null, "en", "zh-CN", content ), new CharacterCountUtils(), new AILanguagePacksDO(0,"General", null, "Accurately translate the product data of the e-commerce website into zh-CN. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: " + content, 1));
-    }
-
-    //微软翻译API
-//    @PostMapping("/testAzure")
-//    public String testAzure(@RequestBody TranslateRequest request) {
-//        return translateApiIntegration.microsoftTranslate(request);
-//    }
-
-    //对文本进行处理分解为单个单词 (等待删除)
-//    @PostMapping("/split")
-//    public void splitWords(@RequestBody String sentence) {
-//        String string = StringUtils.judgeStringType(sentence);
-//        System.out.println("打印的结果： " + string);
-//    }
-
     //删除翻译状态的语言
     @PostMapping("/deleteFromTranslates")
     public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
@@ -222,18 +185,11 @@ public class TranslateController {
         }
     }
 
-    //火山翻译API
-//    @PostMapping("/testVolcano")
-//    public String testVolcano(@RequestBody TranslateRequest request) {
-//        return translateApiIntegration.huoShanTranslate(request);
-//    }
-
     //封装谷歌谷歌翻译
     @PostMapping("/testGoogle")
     public String testGoogle(@RequestBody TranslateRequest request) {
         return translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
     }
-
 
     //将缓存的数据存到数据库中
     @PostMapping("/saveCacheToTranslates")
