@@ -26,11 +26,11 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
     }
 
     @Override
-    public BaseResponse<Object> addDefaultLanguagePack(String shopName) {
-         if (baseMapper.addDefaultLanguagePack(shopName) > 0){
-             return new BaseResponse<>().CreateSuccessResponse(200);
-         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+    public void addDefaultLanguagePack(String shopName) {
+        //先判断数据库里是否有数据 没有就添加 有就跳过
+        if (baseMapper.getPackIdByShopName(shopName) == null){
+            baseMapper.addDefaultLanguagePack(shopName);
+        }
     }
 
     @Override
