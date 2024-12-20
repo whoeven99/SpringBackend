@@ -25,6 +25,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -112,14 +115,14 @@ public class ShopifyService {
         CharacterCountUtils counter = new CharacterCountUtils();
         CharacterCountUtils translateCounter = new CharacterCountUtils();
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-        System.out.println("target: " + request.getTarget());
+//        System.out.println("target: " + request.getTarget());
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = shopifyRequestBody.getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
             String infoByShopify = getShopifyData(cloudServiceRequest);
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter);
-//            System.out.println("目前统计total的总数是： " + counter.getTotalChars());
+            System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
         return counter.getTotalChars();
     }
@@ -137,7 +140,7 @@ public class ShopifyService {
 
     //将String数据转化为JsonNode数据
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
-//        System.out.println("现在统计到： " + translateResource.getResourceType());
+        System.out.println("现在统计到： " + translateResource.getResourceType());
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
@@ -216,21 +219,73 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
-//            if ("handle".equals(contentItemNode.get("key").asText()) || "HTML".equals(contentItemNode.get("type").asText())) {
-//            if ("handle".equals(contentItemNode.get("key").asText())
-//                    || "JSON".equals(contentItemNode.get("type").asText())
-//                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
-//            ) {
-//                continue;  // 跳过当前项
-//            }
+            if ("handle".equals(contentItemNode.get("key").asText()) || "HTML".equals(contentItemNode.get("type").asText())) {
+                if ("handle".equals(contentItemNode.get("key").asText())
+                        || "JSON".equals(contentItemNode.get("type").asText())
+                        || "JSON_STRING".equals(contentItemNode.get("type").asText())
+                ) {
+                    continue;  // 跳过当前项
+                }
+            }
 //             获取 value
+            //处理html的数据
+            if ("HTML".equals(contentItemNode.get("type").asText())) {
+                Document doc = Jsoup.parse(contentItemNode.get("value").asText());
+                Map<Element, List<String>> elementListMap = extractTextsToTranslate(doc);
+                translateTexts(elementListMap, counter);
+                continue;
+            }
+
+
             String value = contentItemNode.get("value").asText();
 //            counter.addChars(value.length());
-            counter.addChars(calculateToken(value, 1));
+            counter.addChars(calculateToken(value, 10));
 //            if (translatedContent.contains(contentItemNode.get("key").asText())) {
 //                translatedCounter.addChars(value.length());
 //            }
         }
+    }
+
+    // 提取需要翻译的文本（包括文本和alt属性）
+    public Map<Element, List<String>> extractTextsToTranslate(Document doc) {
+        Map<Element, List<String>> elementTextMap = new HashMap<>();
+        for (Element element : doc.getAllElements()) {
+            if (!element.is("script, style")) { // 忽略script和style标签
+                List<String> texts = new ArrayList<>();
+
+                // 提取文本
+                String text = element.ownText().trim();
+                if (!text.isEmpty()) {
+                    texts.add(text);
+                }
+
+                // 提取 alt 属性
+                if (element.hasAttr("alt")) {
+                    String altText = element.attr("alt").trim();
+                    if (!altText.isEmpty()) {
+                        texts.add(altText);
+                    }
+                }
+
+                if (!texts.isEmpty()) {
+                    elementTextMap.put(element, texts); // 记录元素和对应的文本及 alt
+                }
+            }
+        }
+        return elementTextMap;
+    }
+
+    public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap,
+                                                     CharacterCountUtils counter) {
+        Map<Element, List<String>> translatedTextMap = new HashMap<>();
+        for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
+            List<String> texts = entry.getValue();
+
+            for (String text : texts) {
+                counter.addChars(calculateToken(text, 10));
+            }
+        }
+        return translatedTextMap;
     }
 
     // 递归处理下一页数据
