@@ -2,7 +2,6 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ICurrenciesService;
-import com.bogdatech.config.CurrencyConfig;
 import com.bogdatech.entity.CurrenciesDO;
 import com.bogdatech.mapper.CurrenciesMapper;
 import com.bogdatech.model.controller.request.CurrencyRequest;
@@ -10,11 +9,12 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.*;
+import static com.bogdatech.utils.MapUtils.getCurrencyDOS;
 
 @Service
 @Transactional
@@ -54,28 +54,18 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     @Override
     public BaseResponse<Object> getCurrencyByShopName(String shopName) {
         CurrenciesDO[] list = baseMapper.getCurrencyByShopName(shopName);
-        return new BaseResponse<>().CreateSuccessResponse(list);
+        List<Map<String, Object>> mapList = new ArrayList<>();
+        for (CurrenciesDO currenciesDO : list) {
+            Map<String, Object> currencyDOS = new java.util.HashMap<>(getCurrencyDOS(currenciesDO));
+            mapList.add(currencyDOS);
+        }
+        return new BaseResponse<>().CreateSuccessResponse(mapList);
     }
 
     @Override
     public Map<String, Object> getCurrencyWithSymbol(CurrenciesDO request) {
         CurrenciesDO currencyByShopNameAndCurrencyCode = baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode());
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", currencyByShopNameAndCurrencyCode.getId());
-        map.put("shopName", currencyByShopNameAndCurrencyCode.getShopName());
-        map.put("currencyCode", currencyByShopNameAndCurrencyCode.getCurrencyCode());
-        map.put("currencyName", currencyByShopNameAndCurrencyCode.getCurrencyName());
-        map.put("rounding", currencyByShopNameAndCurrencyCode.getRounding());
-        map.put("exchangeRate", currencyByShopNameAndCurrencyCode.getExchangeRate());
-        map.put("primaryStatus", currencyByShopNameAndCurrencyCode.getPrimaryStatus());
-        try {
-            Field field = CurrencyConfig.class.getField(request.getCurrencyCode().toUpperCase());
-            Map<String, Object> currencyInfo = (Map<String, Object>) field.get(null);
-            map.put("symbol", currencyInfo.get("symbol"));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-        return map;
+        return new java.util.HashMap<>(getCurrencyDOS(currencyByShopNameAndCurrencyCode));
     }
 
     @Override

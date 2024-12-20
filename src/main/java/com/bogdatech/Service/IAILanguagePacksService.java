@@ -9,7 +9,7 @@ public interface IAILanguagePacksService extends IService<AILanguagePacksDO> {
 
     BaseResponse<Object> readAILanguagePacks();
 
-    BaseResponse<Object> addDefaultLanguagePack(String shopName);
+    void addDefaultLanguagePack(String shopName);
 
     BaseResponse<Object> changeLanguagePack(UserLanguageRequest userLanguageRequest);
 

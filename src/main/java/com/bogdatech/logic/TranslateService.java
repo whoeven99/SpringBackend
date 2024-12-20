@@ -248,12 +248,8 @@ public class TranslateService {
     private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();
         //定义HashMap存放判断后的对应数据
-        HashMap<String, List<RegisterTransactionRequest>> judgeData = new HashMap<>();
-        judgeData.put(PLAIN_TEXT, new ArrayList<>());
-        judgeData.put(HTML, new ArrayList<>());
-        judgeData.put(DATABASE, new ArrayList<>());
-        judgeData.put(JSON_TEXT, new ArrayList<>());
-        judgeData.put(GLOSSARY, new ArrayList<>());
+        // 初始化 judgeData 用于分类存储数据
+        Map<String, List<RegisterTransactionRequest>> judgeData = initializeJudgeData();
         // 获取 translatableResources 节点
         JsonNode translatableResourcesNode = node.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
@@ -296,11 +292,26 @@ public class TranslateService {
                 }
             }
         }
+        System.out.println("PLAIN_TEXT: " + judgeData.get(PLAIN_TEXT).toString());
+        System.out.println("HTML: " + judgeData.get(HTML).toString());
+        System.out.println("DATABASE: " + judgeData.get(DATABASE).toString());
+        System.out.println("JSON_TEXT: " + judgeData.get(JSON_TEXT).toString());
+        System.out.println("GLOSSARY: " + judgeData.get(GLOSSARY).toString());
         //对judgeData数据进行翻译和存入shopify,除了html
-        translateAndSaveData(judgeData, translateContext);
+//        translateAndSaveData(judgeData, translateContext);
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopifyRequest.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));
     }
 
+    // 初始化 judgeData，用于存储不同类型的数据
+    private Map<String, List<RegisterTransactionRequest>> initializeJudgeData() {
+        return new HashMap<>() {{
+            put(PLAIN_TEXT, new ArrayList<>());
+            put(HTML, new ArrayList<>());
+            put(DATABASE, new ArrayList<>());
+            put(JSON_TEXT, new ArrayList<>());
+            put(GLOSSARY, new ArrayList<>());
+        }};
+    }
     //对judgeData数据进行翻译和存入shopify,除了html
     private void translateAndSaveData(HashMap<String, List<RegisterTransactionRequest>> judgeData, TranslateContext translateContext) {
         for (Map.Entry<String, List<RegisterTransactionRequest>> entry : judgeData.entrySet()) {
@@ -615,7 +626,7 @@ public class TranslateService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             // 跳过 value 为空的项
             String value = contentItemNode.get("value").asText();
-
+//            System.out.println("value : " + value);
             if (value == null || value.isEmpty()) {
                 continue;  // 跳过当前项
             }
