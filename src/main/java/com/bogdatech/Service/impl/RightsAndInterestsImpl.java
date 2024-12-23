@@ -29,7 +29,7 @@ public class RightsAndInterestsImpl extends ServiceImpl<RightsAndInterestsMapper
         UserRightsAndInterestsDO userRightsAndInterestsDO = baseMapper.getUserRightsAndInterests(userId, userRAIRequest.getRightsAndInterestsId());
         if (userRightsAndInterestsDO != null){
             //如果存在，则直接返回
-            return new BaseResponse<>().CreateSuccessResponse(200);
+            return new BaseResponse<>().CreateSuccessResponse("You already own this benefit.");
         }else {
             //如果不存在，则创建
             baseMapper.addUserRightsAndInterests(userId, userRAIRequest.getRightsAndInterestsId());

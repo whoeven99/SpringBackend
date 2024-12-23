@@ -15,14 +15,14 @@ public class RightsAndInterestController {
         this.rightsAndInterestsService = rightsAndInterestsService;
     }
 
-    // 读取权益
+    // 读取所有权益
     @GetMapping("/readRightsAndInterests")
     public BaseResponse<Object> readRightsAndInterests() {
         return rightsAndInterestsService.readRightsAndInterests();
     }
 
     //创建用户对应的权益
-    @PutMapping("/createRightsAndInterests")
+    @PostMapping("/createRightsAndInterests")
     public BaseResponse<Object> createOrUpdateRightsAndInterests(@RequestBody UserRAIRequest userRAIRequest) {
         return rightsAndInterestsService.createOrUpdateRightsAndInterests(userRAIRequest);
     }
