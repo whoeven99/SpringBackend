@@ -615,7 +615,7 @@ public class TranslateService {
                     // 替换原始文本为翻译后的文本
                     jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
 //                    counter.addChars(calculateToken(doc.toString(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
-                    System.out.println("HTML翻译后的数据： " + doc.toString());
+//                    System.out.println("HTML翻译后的数据： " + doc.toString());
                 } catch (Exception e) {
                     saveToShopify(doc.toString(), translation, resourceId, request);
                     continue;
@@ -641,7 +641,6 @@ public class TranslateService {
         Map<String, Object> translation = new HashMap<>();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             String value = registerTransactionRequest.getValue();
-//            System.out.println("目前翻译： " + value);
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
             translation.put("locale", target);
@@ -649,16 +648,24 @@ public class TranslateService {
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
-            counter.addChars(calculateToken(value + translateContext.getAiLanguagePacksDO().getPromotWord(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
-            String targetText;
+            counter.addChars(calculateToken(value , 5));
+            //存放在html的list集合里面
+            // 解析HTML文档
+            Document doc = Jsoup.parse(value);
             try {
-                targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, translateContext.getAiLanguagePacksDO());
-                counter.addChars(calculateToken(targetText, translateContext.getAiLanguagePacksDO().getDeductionRate()));
+                TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
+                // 提取需要翻译的文本
+                Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
+                // 翻译文本
+                Map<Element, List<String>> translatedTextMap = jsoupUtils.translateTexts(elementTextMap, translateRequest, counter);
+                // 替换原始文本为翻译后的文本
+                jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
+//                System.out.println("HTML翻译后的数据： " + doc.toString());
             } catch (Exception e) {
-                saveToShopify(value, translation, resourceId, request);
+                saveToShopify(doc.toString(), translation, resourceId, request);
                 continue;
             }
-            saveToShopify(targetText, translation, resourceId, request);
+            saveToShopify(doc.toString(), translation, resourceId, request);
         }
     }
 

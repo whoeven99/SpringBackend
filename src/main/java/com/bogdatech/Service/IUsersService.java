@@ -5,6 +5,5 @@ import com.bogdatech.entity.UsersDO;
 
 public interface IUsersService extends IService<UsersDO> {
     int addUser(UsersDO request);
-
     UsersDO getUserByName(String shopName);
 }
