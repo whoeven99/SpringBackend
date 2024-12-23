@@ -77,11 +77,9 @@ public class JsoupUtils {
 //                            System.out.println("altText: + " + text);
                             //AI翻译
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
-
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
 //                            targetString = translateApiIntegration.googleTranslate(request);
-//                            counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                             targetString = translateApiIntegration.microsoftTranslate(request);
                         }
                     } catch (Exception e) {
