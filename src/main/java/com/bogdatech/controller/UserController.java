@@ -16,6 +16,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    //获得用户数据
     @GetMapping("/get")
     public UsersDO getUser(@RequestBody UsersDO userRequest) {
         return userService.getUser(userRequest);
@@ -35,14 +36,16 @@ public class UserController {
 
     //用户卸载应用
     @DeleteMapping("/uninstall")
-    public BaseResponse<Object> uninstallApp() {
-        return new BaseResponse<>().CreateSuccessResponse(userService.unInstallApp());
+    public BaseResponse<Object> uninstallApp(@RequestBody UsersDO userRequest) {
+        //当卸载时，更新卸载时间
+        return new BaseResponse<>().CreateSuccessResponse(userService.unInstallApp(userRequest));
     }
 
     //用户卸载应用后48小时后清除数据
     @DeleteMapping("/cleanData")
-    public BaseResponse<Object> cleanData() {
-        return new BaseResponse<>().CreateSuccessResponse(userService.cleanData());
+    public BaseResponse<Object> cleanData(@RequestBody UsersDO userRequest) {
+        userService.cleanData(userRequest);
+        return new BaseResponse<>().CreateSuccessResponse(200);
     }
 
     //客户可以向店主请求其数据
