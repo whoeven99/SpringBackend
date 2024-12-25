@@ -29,7 +29,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     }
 
     @Override
-    public int getMaxCharsByShopName(String shopName) {
+    public Integer getMaxCharsByShopName(String shopName) {
         return baseMapper.getMaxCharsByShopName(shopName);
     }
 

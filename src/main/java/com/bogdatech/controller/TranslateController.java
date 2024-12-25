@@ -121,7 +121,7 @@ public class TranslateController {
 
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
-        int remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {

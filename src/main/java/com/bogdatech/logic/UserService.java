@@ -1,5 +1,8 @@
 package com.bogdatech.logic;
 
+import com.bogdatech.Service.IAILanguagePacksService;
+import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.enums.ErrorEnum;
@@ -15,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,17 +29,22 @@ import java.util.concurrent.atomic.AtomicReference;
 public class UserService {
 
     private final IUsersService usersService;
-    private final KlaviyoService klaviyoService;
     private final TaskScheduler taskScheduler;
+    private final ITranslationCounterService translationCounterService;
+    private final IAILanguagePacksService aiLanguagePacksService;
+    private final IUserSubscriptionsService userSubscriptionsService;
     TelemetryClient appInsights = new TelemetryClient();
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
     @Autowired
-    public UserService(IUsersService usersService, KlaviyoService klaviyoService, TaskScheduler taskScheduler) {
+    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService) {
         this.usersService = usersService;
-        this.klaviyoService = klaviyoService;
         this.taskScheduler = taskScheduler;
+        this.translationCounterService = translationCounterService;
+        this.aiLanguagePacksService = aiLanguagePacksService;
+        this.userSubscriptionsService = userSubscriptionsService;
     }
 
+    //添加用户
     public BaseResponse<Object> addUser(UsersDO usersDO) {
         int i = usersService.addUser(usersDO);
         if (i > 0) {
@@ -46,6 +56,7 @@ public class UserService {
 
     }
 
+    //获取用户信息
     public UsersDO getUser(UsersDO request) {
         //更新用户登陆时间
         usersService.updateUserLoginTime(request.getShopName());
@@ -121,5 +132,39 @@ public class UserService {
 
     public Boolean deleteData() {
         return true;
+    }
+
+    //检测以上四个接口返回值是否符合预期，符合预期则返回{`${接口名}`:true ...}，后续前端根据返回值调用对应的接口，其中语言数据也会在返回值中存在false值集体调用，正常情况下都是经过webhook通知后调用
+    public Map<String, Boolean> InitializationDetection(String shopName) {
+        Map<String, Boolean> map = new HashMap<>();
+        //查询用户是否初始化
+        if (usersService.getUserByName(shopName) != null) {
+            map.put("add", true);
+        }else {
+            map.put("add", false);
+        }
+
+        //查询是否添加免费额度
+        if(translationCounterService.getMaxCharsByShopName(shopName) != null){
+            map.put("insertCharsByShopName", true);
+        }else {
+            map.put("insertCharsByShopName", false);
+        }
+
+        //查询是否添加默认语言包
+        if (aiLanguagePacksService.getPackIdByShopName(shopName) != null) {
+            map.put("addDefaultLanguagePack", true);
+        }else {
+            map.put("addDefaultLanguagePack", false);
+        }
+
+        //查询是否添加用户付费计划
+        if(userSubscriptionsService.getUserSubscriptionPlan(shopName) != null){
+            map.put("addUserSubscriptionPlan", true);
+        }else {
+            map.put("addUserSubscriptionPlan", false);
+        }
+
+        return map;
     }
 }

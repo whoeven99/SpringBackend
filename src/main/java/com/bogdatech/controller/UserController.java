@@ -59,4 +59,10 @@ public class UserController {
     public BaseResponse<Object> deleteData() {
         return new BaseResponse<>().CreateSuccessResponse(userService.deleteData());
     }
+
+    //用户初始化检测
+    @GetMapping("/InitializationDetection")
+    public BaseResponse<Object> InitializationDetection(String shopName) {
+        return new BaseResponse<>().CreateSuccessResponse(userService.InitializationDetection(shopName));
+    }
 }

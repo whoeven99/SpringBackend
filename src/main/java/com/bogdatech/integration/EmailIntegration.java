@@ -17,9 +17,9 @@ import java.io.IOException;
 public class EmailIntegration {
 
     @Value("${email.key}")
-    private static String mailChimpKey;
+    private String mailChimpKey;
 
-    public static String sendEmail(SendEmailRequest sendEmailRequest) {
+    public  String sendEmail(SendEmailRequest sendEmailRequest) {
         sendEmailRequest.setEmailKey(mailChimpKey);
 //        System.out.println("mailChimpKey: " + mailChimpKey);
         EmailRequestBody emailRequestBody = new EmailRequestBody();

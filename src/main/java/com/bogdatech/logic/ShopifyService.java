@@ -232,15 +232,14 @@ public class ShopifyService {
             //处理html的数据
             if ("HTML".equals(contentItemNode.get("type").asText())) {
                 Document doc = Jsoup.parse(contentItemNode.get("value").asText());
-                Map<Element, List<String>> elementListMap = extractTextsToTranslate(doc);
-                translateTexts(elementListMap, counter);
+                extractTextsToTranslate(doc, counter);
                 continue;
             }
 
 
             String value = contentItemNode.get("value").asText();
-//            counter.addChars(value.length());
-            counter.addChars(calculateToken(value, 1));
+            counter.addChars(value.length());
+//            counter.addChars(calculateToken(value, 1));
 
 //            if (translatedContent.contains(contentItemNode.get("key").asText())) {
 //                translatedCounter.addChars(value.length());
@@ -249,7 +248,7 @@ public class ShopifyService {
     }
 
     // 提取需要翻译的文本（包括文本和alt属性）
-    public Map<Element, List<String>> extractTextsToTranslate(Document doc) {
+    public Map<Element, List<String>> extractTextsToTranslate(Document doc, CharacterCountUtils counter) {
         Map<Element, List<String>> elementTextMap = new HashMap<>();
         for (Element element : doc.getAllElements()) {
             if (!element.is("script, style")) { // 忽略script和style标签
@@ -259,6 +258,8 @@ public class ShopifyService {
                 String text = element.ownText().trim();
                 if (!text.isEmpty()) {
                     texts.add(text);
+//                    System.out.println("text: " + text);
+                    counter.addChars(text.length());
                 }
 
                 // 提取 alt 属性
@@ -266,6 +267,7 @@ public class ShopifyService {
                     String altText = element.attr("alt").trim();
                     if (!altText.isEmpty()) {
                         texts.add(altText);
+                        counter.addChars(altText.length());
                     }
                 }
 
