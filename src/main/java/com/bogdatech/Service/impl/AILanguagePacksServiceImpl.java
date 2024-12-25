@@ -29,7 +29,8 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
     public void addDefaultLanguagePack(String shopName) {
         //先判断数据库里是否有数据 没有就添加 有就跳过
         if (baseMapper.getPackIdByShopName(shopName) == null){
-            baseMapper.addDefaultLanguagePack(shopName);
+            Integer id = baseMapper.getPackIdByPackName("General");
+            baseMapper.addDefaultLanguagePack(shopName, id);
         }
     }
 

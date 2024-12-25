@@ -158,7 +158,8 @@ public class ShopifyService {
     }
 
     //对node节点进行判断，是否调用方法
-    private void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
+    @Async
+    public void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
         AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
         JsonNode translatableResourcesNode = objectNode.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
@@ -180,9 +181,9 @@ public class ShopifyService {
                 String fieldName = field.getKey();
                 JsonNode fieldValue = field.getValue();
                 //当translates里面有数据时
-                if ("translations".equals(fieldName)) {
-                    strings.set(counterTranslatedContent((ArrayNode) fieldValue));
-                }
+//                if ("translations".equals(fieldName)) {
+//                    strings.set(counterTranslatedContent((ArrayNode) fieldValue));
+//                }
                 if ("translatableContent".equals(fieldName)) {
                     translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, translateCounter, strings.get());
                 }
@@ -214,19 +215,19 @@ public class ShopifyService {
 
 
     //对符合条件的 value 进行计数
-    private void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translatedCounter, List<String> translatedContent) {
+    @Async
+    public void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translatedCounter, List<String> translatedContent) {
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText()) || "HTML".equals(contentItemNode.get("type").asText())) {
                 if ("handle".equals(contentItemNode.get("key").asText())
                         || "JSON".equals(contentItemNode.get("type").asText())
                         || "JSON_STRING".equals(contentItemNode.get("type").asText())
                 ) {
                     continue;  // 跳过当前项
                 }
-            }
+
 //             获取 value
             //处理html的数据
             if ("HTML".equals(contentItemNode.get("type").asText())) {
@@ -239,7 +240,8 @@ public class ShopifyService {
 
             String value = contentItemNode.get("value").asText();
 //            counter.addChars(value.length());
-            counter.addChars(calculateToken(value, 10));
+            counter.addChars(calculateToken(value, 1));
+
 //            if (translatedContent.contains(contentItemNode.get("key").asText())) {
 //                translatedCounter.addChars(value.length());
 //            }
@@ -275,17 +277,18 @@ public class ShopifyService {
         return elementTextMap;
     }
 
-    public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap,
+    @Async
+    public void translateTexts(Map<Element, List<String>> elementTextMap,
                                                      CharacterCountUtils counter) {
         Map<Element, List<String>> translatedTextMap = new HashMap<>();
         for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
             List<String> texts = entry.getValue();
 
             for (String text : texts) {
-                counter.addChars(calculateToken(text, 10));
+                counter.addChars(calculateToken(text, 1));
             }
         }
-        return translatedTextMap;
+//        return translatedTextMap;
     }
 
     // 递归处理下一页数据

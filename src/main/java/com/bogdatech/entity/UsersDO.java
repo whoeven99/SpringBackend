@@ -21,4 +21,6 @@ public class UsersDO {
     private String realAddress;
     private String ipAddress;
     private String userTag;
+    private String firstName;
+    private String lastName;
 }
