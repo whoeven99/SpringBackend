@@ -776,7 +776,8 @@ public class TranslateService {
             if (PRODUCT.equals(resourceType)
                     || PRODUCT_OPTION.equals(resourceType)
                     || PRODUCT_OPTION_VALUE.equals(resourceType)
-                    || BLOG.equals(resourceType)) {
+                    || BLOG.equals(resourceType)
+                    || ARTICLE.equals(resourceType)) {
                 judgeData.get(OPENAI).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
