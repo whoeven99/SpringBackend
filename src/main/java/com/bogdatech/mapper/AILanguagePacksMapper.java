@@ -12,8 +12,8 @@ public interface AILanguagePacksMapper extends BaseMapper<AILanguagePacksDO> {
     @Select("SELECT id, pack_name, pack_describe, promot_word FROM AILanguagePacks")
     AILanguagePacksDO[] readAILanguagePacks();
 
-    @Insert("INSERT INTO User_AILanguagePacks (shop_name, pack_id) VALUES (#{shopName}, 2)")
-    Integer addDefaultLanguagePack(String shopName);
+    @Insert("INSERT INTO User_AILanguagePacks (shop_name, pack_id) VALUES (#{shopName}, #{id})")
+    Integer addDefaultLanguagePack(String shopName, Integer id);
 
     @Update("UPDATE User_AILanguagePacks SET pack_id = #{packId} WHERE shop_name = #{shopName}")
     Integer changeLanguagePack(String shopName, Integer packId);
@@ -24,4 +24,6 @@ public interface AILanguagePacksMapper extends BaseMapper<AILanguagePacksDO> {
     @Select("SELECT pack_id FROM User_AILanguagePacks WHERE shop_name = #{shopName}")
     Integer getPackIdByShopName(String shopName);
 
+    @Select("SELECT id FROM AILanguagePacks WHERE pack_name = #{packName}")
+    Integer getPackIdByPackName(String general);
 }

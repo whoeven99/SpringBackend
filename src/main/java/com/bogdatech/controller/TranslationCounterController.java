@@ -19,7 +19,7 @@ public class TranslationCounterController {
         this.translationCounterService = translationCounterService;
     }
 
-    //
+    //给用户添加一个免费额度
     @PostMapping("/insertCharsByShopName")
     public BaseResponse<Object> insertCharsByShopName(@RequestBody TranslationCounterRequest request) {
         TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(request.getShopName());

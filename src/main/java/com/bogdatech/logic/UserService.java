@@ -38,17 +38,7 @@ public class UserService {
     public BaseResponse<Object> addUser(UsersDO usersDO) {
         int i = usersService.addUser(usersDO);
         if (i > 0) {
-            //创建Klaviyo用户并加入到初次安装的list中
-//            if (usersDO.getEmail() != null) {
-//                String profileId = klaviyoService.createProfile(usersDO);
-//                klaviyoService.addProfileToDatabase(new KlaviyoDataDO(usersDO.getShopName(), usersDO.getShopName(), PROFILE, profileId));
-//                // 获取初次注册List的id
-//                String listId = klaviyoService.getListId(I_I_E);
-//                if (profileId != null && listId != null) {
-//                    klaviyoService.addProfileToKlaviyoList(new ProfileToListRequest(profileId, listId));
-//                }
-//            }
-
+            //TODO: 发送邮件
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);

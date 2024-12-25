@@ -8,7 +8,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SendEmailRequest {
-
-    private String from_email;
-
+    private String emailKey;
+    private String templateName;
+    private String templateContent;
+    private String subject;
+    private String fromEmail;
+    private String toEmail;
+    private String user;
 }
