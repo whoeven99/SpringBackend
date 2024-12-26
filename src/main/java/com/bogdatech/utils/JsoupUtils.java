@@ -81,14 +81,14 @@ public class JsoupUtils {
 //                            System.out.println("翻译的数据为： " + targetString);
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
-//                            targetString = translateApiIntegration.googleTranslate(request);
-                            targetString = translateApiIntegration.microsoftTranslate(request);
+                            targetString = translateApiIntegration.googleTranslate(request);
+//                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         counter.addChars(calculateToken(text,1));
-//                        targetString = translateApiIntegration.googleTranslate(request);
-                        targetString = translateApiIntegration.microsoftTranslate(request);
+                        targetString = translateApiIntegration.googleTranslate(request);
+//                        targetString = translateApiIntegration.microsoftTranslate(request);
 //                        System.out.println("翻译的数据为： " + targetString);
                         addData(target, text, targetString);
                         translatedTexts.add(targetString);
@@ -118,14 +118,14 @@ public class JsoupUtils {
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
                             counter.addChars(calculateToken(altText,1));
-//                            targetString = translateApiIntegration.googleTranslate(request);
-                            targetString = translateApiIntegration.microsoftTranslate(request);
+                            targetString = translateApiIntegration.googleTranslate(request);
+//                            targetString = translateApiIntegration.microsoftTranslate(request);
 //                            System.out.println("翻译的数据为： " + targetString);
                         }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-//                        targetString = translateApiIntegration.googleTranslate(request);
-                         targetString = translateApiIntegration.microsoftTranslate(request);
+                        targetString = translateApiIntegration.googleTranslate(request);
+//                         targetString = translateApiIntegration.microsoftTranslate(request);
                         addData(target, altText, targetString);
                         translatedTexts.add(targetString);
                         continue;
@@ -177,8 +177,8 @@ public class JsoupUtils {
                     Map<String, String> placeholderMap = new HashMap<>();
                     String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
                     request.setContent(updateText);
-//                    String targetString = translateApiIntegration.googleTranslate(request);
-                    String targetString = translateApiIntegration.microsoftTranslate(request);
+                    String targetString = translateApiIntegration.googleTranslate(request);
+//                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     System.out.println("翻译后的结果为： " + targetString);
                     String finalText = restoreKeywords(targetString, placeholderMap);
                     addData(request.getTarget(), text, finalText);
@@ -206,8 +206,8 @@ public class JsoupUtils {
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
-//                    String targetString = translateApiIntegration.googleTranslate(request);
-                    String targetString = translateApiIntegration.microsoftTranslate(request);
+                    String targetString = translateApiIntegration.googleTranslate(request);
+//                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     System.out.println("翻译后的结果为： " + targetString);
                     addData(request.getTarget(), text, targetString);
                     translatedTexts.add(targetString);

@@ -53,7 +53,9 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(EMAIL_TEMPLATE, "250", "", ""),
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, "250", "", "")
             ,
-            new TranslateResourceDTO(ONLINE_STORE_THEME, "250", "", "")
+            new TranslateResourceDTO(ONLINE_STORE_THEME, "250", "", ""),
+            new TranslateResourceDTO(MENU, "250", "", ""),
+            new TranslateResourceDTO(LINK, "250", "", "")
     ));
 
     public static final List<TranslateResourceDTO> ALL_RESOURCES = new ArrayList<>(Arrays.asList(

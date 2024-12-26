@@ -20,4 +20,5 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     String getShopName(String shopName, String target, String source);
 
     Boolean deleteFromTranslates(TranslateRequest request);
+
 }
