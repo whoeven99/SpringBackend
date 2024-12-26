@@ -52,6 +52,11 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
+    public int updateStatusByShopNameAnd2(String shopName) {
+        return baseMapper.updateStatusByShopNameAnd2(shopName);
+    }
+
+    @Override
     public String getShopName(String shopName, String target, String source) {
         return baseMapper.getShopName(shopName, target, source);
     }

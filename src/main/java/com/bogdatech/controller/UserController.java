@@ -2,20 +2,22 @@ package com.bogdatech.controller;
 
 
 import com.bogdatech.entity.UsersDO;
+import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogdatech.logic.TranslateService.isStopped;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
     private final UserService userService;
+    private final TranslateService translateService;
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, TranslateService translateService) {
         this.userService = userService;
+        this.translateService = translateService;
     }
 
     //获得用户数据
@@ -39,7 +41,8 @@ public class UserController {
     //用户卸载应用
     @DeleteMapping("/uninstall")
     public BaseResponse<Object> uninstallApp(@RequestBody UsersDO userRequest) {
-        isStopped.set(true);
+        //卸载时，停止翻译
+        translateService.stopTranslation(userRequest.getShopName());
         //当卸载时，更新卸载时间
         return new BaseResponse<>().CreateSuccessResponse(userService.unInstallApp(userRequest));
     }
