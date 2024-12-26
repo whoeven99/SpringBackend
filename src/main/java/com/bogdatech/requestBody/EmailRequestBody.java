@@ -9,6 +9,7 @@ public class EmailRequestBody {
                 "    \"template_name\": \"" + sendEmailRequest.getTemplateName() + "\",\n" +
                 "    \"template_content\": " + sendEmailRequest.getTemplateContent() + ",\n" +
                 "    \"message\": {\n" +
+                "    \"global_merge_vars\": " + sendEmailRequest.getTemplateContent() + ",\n" +
                 "        \"subject\": \"" + sendEmailRequest.getSubject() + "\",\n" +
                 "        \"from_email\": \"" + sendEmailRequest.getFromEmail() + "\",\n" +
                 "        \"to\": [\n" +

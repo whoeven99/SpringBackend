@@ -58,6 +58,11 @@ public class TestController {
         return infoByShopify.toString();
     }
 
+//    //获取tokens里面的数据
+//    @GetMapping("/getToken")
+//    public void getToken() {
+//        System.out.println("tokens: " + tokens.toString());
+//    }
     //微软翻译API(待删）
 //    @PostMapping("/testAzure")
 //    public String testAzure(@RequestBody TranslateRequest request) {

@@ -523,7 +523,7 @@ public class TranslateService {
             }
 
             //其他数据类型，对数据做处理再翻译
-            counter.addChars(calculateToken(value, 5));
+            counter.addChars(calculateToken(value, 1));
             String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0);
             translateRequest.setContent(updateText);
             String translatedText = getGoogleTranslateData(translateRequest);
@@ -676,23 +676,25 @@ public class TranslateService {
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
         int remainingChars = translateContext.getRemainingChars();
         String target = request.getTarget();
-        Map<String, Object> translation = new HashMap<>();
+
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
+
             String value = registerTransactionRequest.getValue();
 //            System.out.println("目前翻译： " + value);
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
-            translation.put("locale", target);
-            translation.put("key", registerTransactionRequest.getKey());
-            translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
+
+            //需要测试
+            Map<String, Object> translation = createTranslationMap(target, registerTransactionRequest);
+
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
             //获取缓存数据
             String targetCache = translateSingleLine(value, request.getTarget());
-
             if (targetCache != null) {
                 saveToShopify(targetCache, translation, resourceId, request);
-            } else {
+                continue;
+            }
                 String targetString;
                 //根据文本字符长度来判断用什么翻译API 40一下用谷歌翻译（或者其他翻译API）  40以上用AI翻译
                 try {
@@ -700,7 +702,7 @@ public class TranslateService {
                         counter.addChars(calculateToken(value + translateContext.getAiLanguagePacksDO().getPromotWord(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
                         aiTranslateApi(translation, registerTransactionRequest, request, translateContext.getAiLanguagePacksDO(), counter);
                     } else {
-                        counter.addChars(calculateToken(value, 5));
+                        counter.addChars(calculateToken(value, 1));
                         targetString = getGoogleTranslateData(new TranslateRequest(0, null, request.getAccessToken(), source, target, value));
                         addData(target, value, targetString);
                         saveToShopify(targetString, translation, resourceId, request);
@@ -710,10 +712,35 @@ public class TranslateService {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                     saveToShopify(value, translation, resourceId, request);
                 }
-            }
+
         }
     }
 
+    private String translateWithAPI(String value, RegisterTransactionRequest registerTransactionRequest, ShopifyRequest request, CharacterCountUtils counter, TranslateContext translateContext) throws Exception {
+        String targetString = null;
+
+        if (value.length() > 40) {
+            // AI翻译
+            counter.addChars(calculateToken(value + translateContext.getAiLanguagePacksDO().getPromotWord(), translateContext.getAiLanguagePacksDO().getDeductionRate()));
+            aiTranslateApi(createTranslationMap(request.getTarget(), registerTransactionRequest), registerTransactionRequest, request, translateContext.getAiLanguagePacksDO(), counter);
+        } else {
+            // Google翻译
+            counter.addChars(calculateToken(value, 1));
+            targetString = getGoogleTranslateData(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value));
+            addData(request.getTarget(), value, targetString);
+        }
+
+        return targetString;
+    }
+
+    //创建存储翻译项的Map
+    private Map<String, Object> createTranslationMap(String target, RegisterTransactionRequest registerTransactionRequest) {
+        Map<String, Object> translation = new HashMap<>();
+        translation.put("locale", target);
+        translation.put("key", registerTransactionRequest.getKey());
+        translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
+        return translation;
+    }
 
     //根据chooseData来判断用什么翻译API
     private void aiTranslateApi(Map<String, Object> translation, RegisterTransactionRequest registerTransactionRequest, ShopifyRequest request, AILanguagePacksDO aiLanguagePacksDO, CharacterCountUtils counter) {
@@ -730,7 +757,7 @@ public class TranslateService {
         } catch (Exception e) {
             // 如果AI翻译失败，则使用谷歌翻译
             targetString = getGoogleTranslateData(new TranslateRequest(0, null, request.getAccessToken(), source, target, value));
-            counter.addChars(calculateToken(value, aiLanguagePacksDO.getDeductionRate()));
+            counter.addChars(calculateToken(value, 1));
             addData(target, value, targetString);
             saveToShopify(targetString, translation, resourceId, request);
             return;
@@ -762,22 +789,14 @@ public class TranslateService {
             }
 
             //对从数据库中获取的数据单独处理
-            if (ONLINE_STORE_THEME.equals(resourceType) ||
-                    ONLINE_STORE_THEME_LOCALE_CONTENT.equals(resourceType)
-                    || SHOP_POLICY.equals(resourceType)
-                    || PACKING_SLIP_TEMPLATE.equals(resourceType)
-                    || EMAIL_TEMPLATE.equals(resourceType)) {
+            if (isDatabaseResourceType(resourceType)) {
                 //先将type存在target里面
                 judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
 
             //对product和blog的type用AI翻译
-            if (PRODUCT.equals(resourceType)
-                    || PRODUCT_OPTION.equals(resourceType)
-                    || PRODUCT_OPTION_VALUE.equals(resourceType)
-                    || BLOG.equals(resourceType)
-                    || ARTICLE.equals(resourceType)) {
+            if (isAiTranslateResourceType(resourceType)) {
                 judgeData.get(OPENAI).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
@@ -816,14 +835,34 @@ public class TranslateService {
             if ("HTML".equals(type)) {
                 //存放在html的list集合里面
                 judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-                continue;
+            }else {
+                //存放在plainText的list集合里面
+                judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
             }
 
-            //存放在plainText的list集合里面
-            judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+
         }
 
     }
+
+    // 判断是否为数据库资源类型
+    private boolean isDatabaseResourceType(String resourceType) {
+        return ONLINE_STORE_THEME.equals(resourceType) ||
+                ONLINE_STORE_THEME_LOCALE_CONTENT.equals(resourceType) ||
+                SHOP_POLICY.equals(resourceType) ||
+                PACKING_SLIP_TEMPLATE.equals(resourceType) ||
+                EMAIL_TEMPLATE.equals(resourceType);
+    }
+
+    // 判断是否需要 AI 翻译的资源类型
+    private boolean isAiTranslateResourceType(String resourceType) {
+        return PRODUCT.equals(resourceType) ||
+                PRODUCT_OPTION.equals(resourceType) ||
+                PRODUCT_OPTION_VALUE.equals(resourceType) ||
+                BLOG.equals(resourceType) ||
+                ARTICLE.equals(resourceType);
+    }
+
 
     //将翻译后的数据放入内存中
     public static void addData(String outerKey, String innerKey, String value) {
