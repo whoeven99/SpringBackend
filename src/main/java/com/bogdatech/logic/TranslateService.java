@@ -113,7 +113,8 @@ public class TranslateService {
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
                 System.out.println("用户 " + shopName + " 的翻译任务已停止");
-                userStopFlags.get(shopName).set(false);
+                System.out.println("用户 " + shopName + " 的翻译任务已停止" + userStopFlags.get(shopName));
+//                userStopFlags.get(shopName).set(false);
 //                 将翻译状态改为“部分翻译” shopName, status=2
                 translatesService.updateStatusByShopNameAnd2(shopName);
             }
@@ -233,6 +234,7 @@ public class TranslateService {
     private boolean checkIsStopped(String shopName, CharacterCountUtils counter) {
         if (userStopFlags.get(shopName).get()) {
             System.out.println("翻译任务被中止");
+            System.out.println("现在boolean为：" + userStopFlags.get(shopName).get());
 //                更新数据库中的已使用字符数
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”//
@@ -444,9 +446,16 @@ public class TranslateService {
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
             if (checkIsStopped(request.getShopName(), counter)) return;
+            //睡眠5秒钟
+            try {
+                Thread.sleep(1000);
+                if (checkIsStopped(request.getShopName(), counter)) return;
+            }catch (Exception e){
+                System.out.println(e.getMessage());
+            }
             String value = registerTransactionRequest.getValue();
-//            System.out.println("现在正在翻译 ： " + value);
-//            System.out.println("消耗的字符数为： " + counter.getTotalChars());
+            System.out.println("现在正在翻译 ： " + value);
+            System.out.println("消耗的字符数为： " + counter.getTotalChars());
             String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
             String key = registerTransactionRequest.getKey();
             String source = registerTransactionRequest.getLocale();
@@ -460,6 +469,7 @@ public class TranslateService {
             // 从缓存中获取翻译结果
             String targetCache = translateSingleLine(value, target);
             if (targetCache != null) {
+                counter.addChars(calculateToken(value,1));
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
             }
