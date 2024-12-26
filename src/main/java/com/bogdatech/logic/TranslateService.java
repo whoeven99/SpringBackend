@@ -262,9 +262,10 @@ public class TranslateService {
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    public void translateJson(TranslateContext translateContext) {
-//        System.out.println("现在翻译到： " + translateContext.getTranslateResource().getResourceType());
-        if (translateContext.getShopifyData() == null) {
+    @Async
+    public void translateJson(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO, CharacterCountUtils counter, int remainingChars, Map<String, Object> glossaryMap) {
+//        System.out.println("现在翻译到： " + translateResourceDTO.getResourceType());
+        if (objectData == null) {
             // 返回默认值或空结果
             return;
         }

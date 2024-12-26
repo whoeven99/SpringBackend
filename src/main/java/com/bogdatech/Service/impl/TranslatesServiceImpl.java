@@ -66,5 +66,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.deleteFromTranslates(request.getShopName(), request.getSource(), request.getTarget());
     }
 
+    @Override
+    public void updateStatusByShopNameAnd2(String shopName) {
+         baseMapper.updateStatusByShopNameAnd2(shopName);
+    }
+
 
 }
