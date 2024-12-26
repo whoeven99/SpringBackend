@@ -113,7 +113,6 @@ public class TranslateService {
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
                 appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
-//                userStopFlags.get(shopName).set(false);
 //                 将翻译状态改为“部分翻译” shopName, status=2
                 translatesService.updateStatusByShopNameAnd2(shopName);
             }
@@ -218,7 +217,6 @@ public class TranslateService {
             }
             TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, aiLanguagePacksDO);
             translateJson(translateContext);
-            System.out.println("已经使用了： " + counter.getTotalChars() + "个字符");
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter)) return;
 
@@ -232,8 +230,6 @@ public class TranslateService {
 
     private boolean checkIsStopped(String shopName, CharacterCountUtils counter) {
         if (userStopFlags.get(shopName).get()) {
-            System.out.println("翻译任务被中止");
-            System.out.println("现在boolean为：" + userStopFlags.get(shopName).get());
 //                更新数据库中的已使用字符数
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”//
@@ -445,16 +441,7 @@ public class TranslateService {
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
             if (checkIsStopped(request.getShopName(), counter)) return;
-            //睡眠5秒钟
-            try {
-                Thread.sleep(1000);
-                if (checkIsStopped(request.getShopName(), counter)) return;
-            }catch (Exception e){
-                System.out.println(e.getMessage());
-            }
             String value = registerTransactionRequest.getValue();
-            appInsights.trackTrace("现在正在翻译 ： " + value);
-            appInsights.trackTrace("消耗的字符数为： " + counter.getTotalChars());
             String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
             String key = registerTransactionRequest.getKey();
             String source = registerTransactionRequest.getLocale();
@@ -579,8 +566,6 @@ public class TranslateService {
             if (checkIsStopped(request.getShopName(), counter)) return;
 
             String value = registerTransactionRequest.getValue();
-            System.out.println("目前翻译： " + value);
-            System.out.println("消耗的字符数为： " + counter.getTotalChars());
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
             translation.put("locale", target);
@@ -629,8 +614,6 @@ public class TranslateService {
             if (checkIsStopped(request.getShopName(), counter)) return;
             //判断是否停止翻译
             if (checkIsStopped(request.getShopName(), counter)) return;
-            System.out.println("目前翻译： " + registerTransactionRequest.getValue());
-            System.out.println("消耗的字符数为： " + counter.getTotalChars());
             translation.put("locale", target);
             translation.put("key", registerTransactionRequest.getKey());
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
@@ -656,8 +639,6 @@ public class TranslateService {
             if (checkIsStopped(request.getShopName(), counter)) return;
 
             String value = registerTransactionRequest.getValue();
-            System.out.println("目前翻译： " + value);
-            System.out.println("消耗的字符数为： " + counter.getTotalChars());
             String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
             String key = registerTransactionRequest.getKey();
             String source = registerTransactionRequest.getLocale();
@@ -753,8 +734,6 @@ public class TranslateService {
             if (checkIsStopped(request.getShopName(), counter)) return;
 
             String value = registerTransactionRequest.getValue();
-            System.out.println("目前翻译： " + value);
-            System.out.println("消耗的字符数为： " + counter.getTotalChars());
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
             translation.put("locale", target);
@@ -797,8 +776,6 @@ public class TranslateService {
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             if (checkIsStopped(request.getShopName(), counter)) return;
             String value = registerTransactionRequest.getValue();
-            System.out.println("目前翻译： " + value);
-            System.out.println("消耗的字符数为： " + counter.getTotalChars());
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
 
