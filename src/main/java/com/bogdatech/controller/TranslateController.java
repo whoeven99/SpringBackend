@@ -132,7 +132,7 @@ public class TranslateController {
         counter.addChars(usedChars);
         //翻译
         try {
-            translateService.translating(request, remainingChars, counter);
+            translateService.startTranslation(request, remainingChars, counter);
         } catch (Exception e) {
             if (e instanceof ClientException && ((ClientException) e).getErrorMessage().equals("The translation task is in progress. Please try translating again later.")) {
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
@@ -146,11 +146,11 @@ public class TranslateController {
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
 
-    //暂停翻译
-    @GetMapping("/stop")
-    public void stop() {
-        translateService.stopTranslation();
-    }
+//    //暂停翻译
+//    @GetMapping("/stop")
+//    public void stop(String shopName) {
+//        translateService.stopTranslation(shopName);
+//    }
 
     /*
      *  一键存储数据库流程
@@ -204,5 +204,15 @@ public class TranslateController {
         return SINGLE_LINE_TEXT.toString();
     }
 
+    //将target以集合的形式插入到数据库中
+    @PostMapping("/insertTargets")
+    public void insertTargets(@RequestBody TargetListRequest request) {
+        List<String> targetList = request.getTargetList();
+        for (String target : targetList
+             ) {
+            TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(),  request.getSource(), target, null );
+            translateService.insertLanguageStatus(request1);
+        }
+    }
 
 }
