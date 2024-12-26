@@ -21,5 +21,4 @@ public interface ITranslatesService extends IService<TranslatesDO> {
 
     Boolean deleteFromTranslates(TranslateRequest request);
 
-    void updateStatusByShopNameAnd2(String shopName);
 }
