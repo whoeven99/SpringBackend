@@ -148,7 +148,7 @@ public class TranslateController {
         counter.addChars(usedChars);
         //翻译
         try {
-            translateService.translating(request, remainingChars, counter);
+            translateService.startTranslation(request, remainingChars, counter);
         } catch (Exception e) {
             if ( e instanceof ClientException && ((ClientException) e).getErrorMessage().equals("The translation task is in progress. Please try translating again later.")) {
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));

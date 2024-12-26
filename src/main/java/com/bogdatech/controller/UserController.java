@@ -3,6 +3,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.entity.UsersDO;
+import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ public class UserController {
 
     @Autowired
     private ITranslateTextService translateService;
+    @Autowired
+    private TranslateService translateServices;
 
     @GetMapping("/user/get")
     public UsersDO getUser(@RequestBody UsersDO userRequest) {
@@ -39,7 +42,8 @@ public class UserController {
 
     //用户卸载应用
     @PostMapping("/user/uninstall")
-    public BaseResponse<Object> uninstallApp() {
+    public BaseResponse<Object> uninstallApp(@RequestBody UsersDO userRequest) {
+        translateServices.stopTranslation(userRequest.getShopName());
         return new BaseResponse<>().CreateSuccessResponse(userService.unInstallApp());
     }
 
