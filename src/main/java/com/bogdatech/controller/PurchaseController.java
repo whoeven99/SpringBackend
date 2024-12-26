@@ -4,16 +4,20 @@ import com.bogdatech.logic.PurchaseService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/purchase")
 public class PurchaseController {
 
+    private final PurchaseService purchaseService;
     @Autowired
-    private PurchaseService purchaseService;
-
+    public PurchaseController(PurchaseService purchaseService) {
+        this.purchaseService = purchaseService;
+    }
     //付费表单推荐购买字符数（根据商店总字符数推荐）
-    @GetMapping("/purchase/getRecommendation")
+    @GetMapping("/getRecommendation")
     public BaseResponse<Object> getRecommendation() {
         return new BaseResponse<>().CreateSuccessResponse(purchaseService.recommendPurchaseAmount());
     }

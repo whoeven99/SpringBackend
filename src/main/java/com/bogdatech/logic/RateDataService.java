@@ -38,7 +38,7 @@ public class RateDataService {
     }
 
     //前端传入两个货币代码，返回他们对应的汇率。获取rateMap数据，因为是以欧元为基础，所以要做处理
-    public double getRateByRateMap(String from, String to) {
+    public static double getRateByRateMap(String from, String to) {
         Double fromRate = RateHttpIntegration.rateMap.get(from);
         Double toRate = RateHttpIntegration.rateMap.get(to);
         return toRate / fromRate;

@@ -32,10 +32,15 @@ public class ChatGptIntegration {
 
         // 模拟聊天交互
         ChatMessage messagereq = new ChatMessage(ChatRole.USER);
+//        ChatMessage messagersy= new ChatMessage(ChatRole.SYSTEM);
         messagereq.setContent(prompt);
+//        messagersy.setContent("Please translate the following English text into Chinese, following the rules: \n" +
+//                "never translate:\"Shoes\" → \"Shoes\" \n" +
+//                "always translate:\"Girls\" → \"女生\" ");
 
         List<ChatMessage> prompts = new ArrayList<> ();
         prompts.add(messagereq);
+//        prompts.add(messagersy);
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
                 .setMaxTokens(800)
                 .setTemperature(0.7)
@@ -45,13 +50,23 @@ public class ChatGptIntegration {
                 .setStream(false);
 
         String content = null;
-        try {
-            ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
-            content = chatCompletions.getChoices().get(0).getMessage().getContent();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        int retryCount = 0;
+        final int maxRetries = 3;
+        while (retryCount < maxRetries) {
+            try {
+                ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
+                content = chatCompletions.getChoices().get(0).getMessage().getContent();
+
+                if (content != null && !content.trim().isEmpty()) {
+                    return content;
+                }
+            } catch (Exception e) {
+                retryCount++;
+                System.err.println("Attempt " + retryCount + " failed: " + e.getMessage());
+            }
         }
-        System.out.println("Response: " + content);
+
+//        System.out.println("Response: " + content);
         return content;
     }
 }

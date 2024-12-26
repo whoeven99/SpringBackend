@@ -19,4 +19,5 @@ public class CurrenciesDO {
     private String currencyName;
     private String rounding;
     private String exchangeRate;
+    private Integer primaryStatus;
 }

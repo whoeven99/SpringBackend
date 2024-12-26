@@ -61,8 +61,7 @@ public class ShopifyHttpIntegration {
     public JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {
         String string = sendShopifyPost(shopifyRequest, query, null);
         JSONObject jsonObject = JSONObject.parseObject(string);
-        JSONObject data = jsonObject.getJSONObject("data");
-        return data;
+        return jsonObject.getJSONObject("data");
     }
 
     public String registerTransaction(ShopifyRequest request, Map<String, Object> variables) {

@@ -37,8 +37,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public List<TranslatesDO> readInfoByShopName(TranslateRequest request) {
-        return baseMapper.readInfoByShopName(request.getShopName());
+    public List<TranslatesDO> readInfoByShopName(String shopName) {
+        return baseMapper.readInfoByShopName(shopName);
     }
 
     @Override
@@ -52,6 +52,11 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
+    public int updateStatusByShopNameAnd2(String shopName) {
+        return baseMapper.updateStatusByShopNameAnd2(shopName);
+    }
+
+    @Override
     public String getShopName(String shopName, String target, String source) {
         return baseMapper.getShopName(shopName, target, source);
     }
@@ -61,10 +66,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.deleteFromTranslates(request.getShopName(), request.getSource(), request.getTarget());
     }
 
-    @Override
-    public void updateStatusByShopNameAnd2(String shopName) {
-         baseMapper.updateStatusByShopNameAnd2(shopName);
-    }
 
 
 }

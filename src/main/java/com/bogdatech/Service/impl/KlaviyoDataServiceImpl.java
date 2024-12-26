@@ -20,5 +20,10 @@ public class KlaviyoDataServiceImpl extends ServiceImpl<KlaviyoDataMapper, Klavi
     public String getListId(String listName) {
         return baseMapper.getListId(listName, LIST);
     }
+
+    @Override
+    public Boolean insertKlaviyoData(KlaviyoDataDO klaviyoDataDO) {
+        return baseMapper.insertKlaviyoData(klaviyoDataDO.getShopName(), klaviyoDataDO.getName(), klaviyoDataDO.getType(), klaviyoDataDO.getStringId());
+    }
 }
 

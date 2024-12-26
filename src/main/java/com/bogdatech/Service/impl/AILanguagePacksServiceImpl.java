@@ -26,11 +26,12 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
     }
 
     @Override
-    public BaseResponse<Object> addDefaultLanguagePack(String shopName) {
-         if (baseMapper.addDefaultLanguagePack(shopName) > 0){
-             return new BaseResponse<>().CreateSuccessResponse(200);
-         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+    public void addDefaultLanguagePack(String shopName) {
+        //先判断数据库里是否有数据 没有就添加 有就跳过
+        if (baseMapper.getPackIdByShopName(shopName) == null){
+            Integer id = baseMapper.getPackIdByPackName("General");
+            baseMapper.addDefaultLanguagePack(shopName, id);
+        }
     }
 
     @Override
@@ -40,5 +41,15 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
             return new BaseResponse<>().CreateSuccessResponse(200);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+    }
+
+    @Override
+    public AILanguagePacksDO getPromotByPackId(Integer packId) {
+        return baseMapper.getPackByShopName(packId);
+    }
+
+    @Override
+    public Integer getPackIdByShopName(String shopName) {
+        return baseMapper.getPackIdByShopName(shopName);
     }
 }

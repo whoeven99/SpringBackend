@@ -4,10 +4,7 @@ import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.entity.GlossaryDO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
 
@@ -17,16 +14,19 @@ import static com.bogdatech.enums.ErrorEnum.*;
 @RequestMapping("/glossary")
 public class GlossaryController {
 
+    private final IGlossaryService glossaryService;
     @Autowired
-    private IGlossaryService glossaryService;
+    public GlossaryController(IGlossaryService glossaryService) {
+        this.glossaryService = glossaryService;
+    }
 
     //插入glossary数据
     @PostMapping("/insertGlossaryInfo")
     public BaseResponse<Object> insertGlossaryInfo(@RequestBody GlossaryDO glossaryDO) {
         //判断 如果数据库中有5个就不再插入了
         GlossaryDO[] singleGlossaryByShopNameAndSource = glossaryService.getGlossaryByShopName(glossaryDO.getShopName());
-        if (singleGlossaryByShopNameAndSource.length >= 5) {
-            return new BaseResponse<>().CreateErrorResponse("If there are 5, no more insertions will be made.");
+        if (singleGlossaryByShopNameAndSource.length > 1) {
+            return new BaseResponse<>().CreateErrorResponse("If there is 1, no more insertions will be made.");
         }
         //判断是否冲突（sourceText， rangeCode， caseSensitive）
         for (GlossaryDO glossary : singleGlossaryByShopNameAndSource) {
@@ -45,7 +45,7 @@ public class GlossaryController {
     }
 
     //根据id删除glossary数据
-    @PostMapping("/deleteGlossaryById")
+    @DeleteMapping("/deleteGlossaryById")
     public BaseResponse<Object> deleteGlossaryById(@RequestBody GlossaryDO glossaryDO) {
         if (glossaryService.deleteGlossaryById(glossaryDO)) {
             return new BaseResponse<>().CreateSuccessResponse(glossaryDO);
@@ -54,9 +54,9 @@ public class GlossaryController {
     }
 
     //根据shopName获得glossary数据
-    @PostMapping("/getGlossaryByShopName")
-    public BaseResponse<Object> getGlossaryByShopName(@RequestBody GlossaryDO glossaryDO) {
-        return new BaseResponse<>().CreateSuccessResponse(glossaryService.getGlossaryByShopName(glossaryDO.getShopName()));
+    @GetMapping("/getGlossaryByShopName")
+    public BaseResponse<Object> getGlossaryByShopName(String shopName) {
+        return new BaseResponse<>().CreateSuccessResponse(glossaryService.getGlossaryByShopName(shopName));
     }
 
     //根据id修改targetText，status，rangeCode，caseSensitive数据

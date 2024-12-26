@@ -7,17 +7,22 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/subscriptionProject")
 public class SubscriptionProjectController {
 
+
+    private final ISubscriptionProjectService subscriptionProjectService;
     @Autowired
-    private ISubscriptionProjectService subscriptionProjectService;
-    // TODO:计划项目的CRUD
+    public SubscriptionProjectController(ISubscriptionProjectService subscriptionProjectService) {
+        this.subscriptionProjectService = subscriptionProjectService;
+    }
 
     //插入和更新SubscriptionProject
-    @PostMapping("/subscriptionProject/insertOrUpdateProject")
+    @PostMapping("/insertOrUpdateProject")
     public BaseResponse<Object> insertOrUpdateProject(SubscriptionProjectDO subscriptionProjectDO) {
         SubscriptionProjectDO byId = subscriptionProjectService.getById(subscriptionProjectDO.getProjectId());
         if (byId == null) {
@@ -38,7 +43,7 @@ public class SubscriptionProjectController {
     }
 
     //获得SubscriptionProject所有的数据
-    @GetMapping("/subscriptionProject/readSubscriptionProject")
+    @GetMapping("/readSubscriptionProject")
     public BaseResponse<Object> readSubscriptionProject() {
         SubscriptionProjectDO[] subscriptionProjectDOS = subscriptionProjectService.readSubscriptionProject();
         if (subscriptionProjectDOS != null) {

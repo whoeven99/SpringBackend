@@ -11,15 +11,14 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     public Integer insertShopTranslateInfo(TranslateRequest request, int status);
     public List<TranslatesDO> readTranslateInfo(Integer status);
     public int updateTranslateStatus(String shopName, int status, String target, String source, String accessToken);
-    public List<TranslatesDO> readInfoByShopName(TranslateRequest request);
+    public List<TranslatesDO> readInfoByShopName(String shopName);
     public List<Integer> readStatusInTranslatesByShopName(TranslateRequest request);
 
     TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO);
-
+    public int updateStatusByShopNameAnd2(String shopName);
 
     String getShopName(String shopName, String target, String source);
 
     Boolean deleteFromTranslates(TranslateRequest request);
 
-    void updateStatusByShopNameAnd2(String shopName);
 }

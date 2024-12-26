@@ -9,12 +9,21 @@ import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface AILanguagePacksMapper extends BaseMapper<AILanguagePacksDO> {
-    @Select("SELECT id, pack_name, pack_describe, pack_price, promot_word FROM AILanguagePacks")
+    @Select("SELECT id, pack_name, pack_describe, promot_word FROM AILanguagePacks")
     AILanguagePacksDO[] readAILanguagePacks();
 
-    @Insert("INSERT INTO User_AILanguagePacks (shop_name, pack_id) VALUES (#{shopName}, 2)")
-    Integer addDefaultLanguagePack(String shopName);
+    @Insert("INSERT INTO User_AILanguagePacks (shop_name, pack_id) VALUES (#{shopName}, #{id})")
+    Integer addDefaultLanguagePack(String shopName, Integer id);
 
     @Update("UPDATE User_AILanguagePacks SET pack_id = #{packId} WHERE shop_name = #{shopName}")
     Integer changeLanguagePack(String shopName, Integer packId);
+
+    @Select("SELECT id, promot_word, pack_name, deduction_rate FROM AILanguagePacks WHERE id = #{packId}")
+    AILanguagePacksDO getPackByShopName(Integer packId);
+
+    @Select("SELECT pack_id FROM User_AILanguagePacks WHERE shop_name = #{shopName}")
+    Integer getPackIdByShopName(String shopName);
+
+    @Select("SELECT id FROM AILanguagePacks WHERE pack_name = #{packName}")
+    Integer getPackIdByPackName(String general);
 }

@@ -5,22 +5,24 @@ import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.enums.ErrorEnum.*;
 
 @RestController
+@RequestMapping("/translationCounter")
 public class TranslationCounterController {
 
+    private final ITranslationCounterService translationCounterService;
     @Autowired
-    private ITranslationCounterService translationCounterService;
+    public TranslationCounterController(ITranslationCounterService translationCounterService) {
+        this.translationCounterService = translationCounterService;
+    }
 
-    //
-    @PostMapping("/translationCounter/insertCharsByShopName")
+    //给用户添加一个免费额度
+    @PostMapping("/insertCharsByShopName")
     public BaseResponse<Object> insertCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(request);
+        TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(request.getShopName());
         if (translationCounterDO == null) {
             Integer result = translationCounterService.insertCharsByShopName(request);
             //int result = 1;
@@ -36,16 +38,16 @@ public class TranslationCounterController {
 
     }
 
-    @PostMapping("/translationCounter/getCharsByShopName")
-    public BaseResponse<Object> getCharsByShopName(@RequestBody TranslationCounterRequest request) {
-       TranslationCounterDO translatesDOS = translationCounterService.readCharsByShopName(request);
+    @GetMapping("/getCharsByShopName")
+    public BaseResponse<Object> getCharsByShopName(String shopName) {
+       TranslationCounterDO translatesDOS = translationCounterService.readCharsByShopName(shopName);
         if (translatesDOS != null){
             return new BaseResponse().CreateSuccessResponse(translatesDOS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
-    @PostMapping("/translationCounter/updateCharsByShopName")
+    @PutMapping("/updateCharsByShopName")
     public BaseResponse<Object> updateCharsByShopName(@RequestBody TranslationCounterRequest request) {
         int result = translationCounterService.updateUsedCharsByShopName(request);
         if (result > 0) {
@@ -55,7 +57,7 @@ public class TranslationCounterController {
     }
 
     //添加字符额度
-    @PostMapping("/translateCounter/addCharsByShopName")
+    @PostMapping("/addCharsByShopName")
     public BaseResponse<Object> addCharsByShopName(@RequestBody TranslationCounterRequest request) {
         if (translationCounterService.updateCharsByShopName(request)){
             return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);

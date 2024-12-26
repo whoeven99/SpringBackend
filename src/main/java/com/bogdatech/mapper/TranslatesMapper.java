@@ -38,5 +38,5 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
     Boolean deleteFromTranslates(String shopName, String source, String target);
 
     @Update("UPDATE Translates SET status = 3 WHERE shop_name = #{shopName} and status = 2")
-    void updateStatusByShopNameAnd2(String shopName);
+    int updateStatusByShopNameAnd2(String shopName);
 }

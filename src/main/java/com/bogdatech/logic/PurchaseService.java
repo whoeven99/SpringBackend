@@ -1,14 +1,14 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.Service.ICurrenciesService;
-import com.bogdatech.exception.ClientException;
-import com.bogdatech.model.controller.request.CurrencyRequest;
+import com.bogdatech.entity.CurrenciesDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
+import static com.bogdatech.logic.RateDataService.getRateByRateMap;
 
 @Component
 public class PurchaseService {
@@ -21,16 +21,21 @@ public class PurchaseService {
     }
 
     //从缓存中获取数据，根据传入的数据作为判断条件
-    public Map<String, Object> getCacheData(CurrencyRequest request){
+    public Map<String, Object> getCacheData(CurrenciesDO currencyDO){
         //获取对应货币代码符号和国旗图片
-        Map<String, Object> currencyWithSymbol = currenciesService.getCurrencyWithSymbol(request);
+        Map<String, Object> currencyWithSymbol = currenciesService.getCurrencyWithSymbol(currencyDO);
+        String defaultCurrencyCode = currenciesService.getCurrencyCodeByPrimaryStatusAndShopName(currencyDO.getShopName());
         //当exchangeRate为Auto时，从缓存中获取对应货币代码数据数据
-        if (currencyWithSymbol.get("exchangeRate").equals("Auto")) {
+        if (currencyWithSymbol.get("primaryStatus").equals(0) && currencyWithSymbol.get("exchangeRate").equals("Auto")) {
             if (rateMap.isEmpty()){
-                throw new ClientException("no rateCache");
+                return currencyWithSymbol;
             }
-            Double rate = rateMap.get(request.getCurrencyCode());
-            currencyWithSymbol.put("exchangeRate", rate);
+            //与默认货币代码的汇率
+            if (defaultCurrencyCode.isEmpty()){
+                return currencyWithSymbol;
+            }
+            double rateByRateMap = getRateByRateMap(defaultCurrencyCode, currencyDO.getCurrencyCode());
+            currencyWithSymbol.put("exchangeRate", rateByRateMap);
         }
         return currencyWithSymbol;
     }

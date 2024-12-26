@@ -8,4 +8,6 @@ public interface IKlaviyoDataService extends IService<KlaviyoDataDO> {
     public Boolean saveProfile(KlaviyoDataDO klaviyoDataDO);
 
     String getListId(String listName);
+
+    Boolean insertKlaviyoData(KlaviyoDataDO klaviyoDataDO);
 }

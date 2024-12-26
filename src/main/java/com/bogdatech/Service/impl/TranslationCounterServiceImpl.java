@@ -14,8 +14,8 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
 
 
     @Override
-    public TranslationCounterDO readCharsByShopName(TranslationCounterRequest request) {
-        return baseMapper.readCharsByShopName(request.getShopName());
+    public TranslationCounterDO readCharsByShopName(String shopName) {
+        return baseMapper.readCharsByShopName(shopName);
     }
 
     @Override
@@ -29,7 +29,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     }
 
     @Override
-    public int getMaxCharsByShopName(String shopName) {
+    public Integer getMaxCharsByShopName(String shopName) {
         return baseMapper.getMaxCharsByShopName(shopName);
     }
 
