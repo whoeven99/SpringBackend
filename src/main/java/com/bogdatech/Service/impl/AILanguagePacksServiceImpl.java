@@ -31,6 +31,7 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
         if (baseMapper.getPackIdByShopName(shopName) == null){
             Integer id = baseMapper.getPackIdByPackName("General");
             baseMapper.addDefaultLanguagePack(shopName, id);
+
         }
     }
 
