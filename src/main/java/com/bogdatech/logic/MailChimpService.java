@@ -26,7 +26,7 @@ public class MailChimpService {
         sendEmailRequest.setTemplateName(FIRST_INSTALL);
         sendEmailRequest.setFromEmail(FROM_EMAIL);
 
-        Map<String, String> userName = Map.of("name", "LNAME",
+        Map<String, String> userName = Map.of("name", "EMAIL",
                 "content", sendEmailRequest.getUser());
         List<Map<String, String>> userNameList = List.of(userName);
 

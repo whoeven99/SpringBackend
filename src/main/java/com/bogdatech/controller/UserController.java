@@ -7,6 +7,8 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import static com.bogdatech.logic.TranslateService.isStopped;
+
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -37,6 +39,7 @@ public class UserController {
     //用户卸载应用
     @DeleteMapping("/uninstall")
     public BaseResponse<Object> uninstallApp(@RequestBody UsersDO userRequest) {
+        isStopped.set(true);
         //当卸载时，更新卸载时间
         return new BaseResponse<>().CreateSuccessResponse(userService.unInstallApp(userRequest));
     }

@@ -146,6 +146,12 @@ public class TranslateController {
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
 
+    //暂停翻译
+    @GetMapping("/stop")
+    public void stop() {
+        translateService.stopTranslation();
+    }
+
     /*
      *  一键存储数据库流程
      */
@@ -197,4 +203,6 @@ public class TranslateController {
         translateService.saveToTranslates();
         return SINGLE_LINE_TEXT.toString();
     }
+
+
 }

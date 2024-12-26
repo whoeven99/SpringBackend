@@ -6,6 +6,7 @@ import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.logic.TestService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -17,12 +18,14 @@ public class TestController {
     private final TranslatesServiceImpl translatesServiceImpl;
     private final ChatGptIntegration chatGptIntegration;
     private final ShopifyHttpIntegration shopifyApiIntegration;
+    private final TestService testService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
+        this.testService = testService;
     }
 //	@GetMapping("/test")
 //	public List<JdbcTestModel> test() {
@@ -58,6 +61,20 @@ public class TestController {
         return infoByShopify.toString();
     }
 
+    @GetMapping("/clickTranslate")
+    public void clickTranslate() {
+        testService.startTask();
+    }
+
+    @GetMapping("/stop")
+    public void stop() {
+        testService.stopTask();
+    }
+//    //获取tokens里面的数据
+//    @GetMapping("/getToken")
+//    public void getToken() {
+//        System.out.println("tokens: " + tokens.toString());
+//    }
     //微软翻译API(待删）
 //    @PostMapping("/testAzure")
 //    public String testAzure(@RequestBody TranslateRequest request) {
