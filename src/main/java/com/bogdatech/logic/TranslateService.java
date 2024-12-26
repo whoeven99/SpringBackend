@@ -112,8 +112,7 @@ public class TranslateService {
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
-                System.out.println("用户 " + shopName + " 的翻译任务已停止");
-                System.out.println("用户 " + shopName + " 的翻译任务已停止" + userStopFlags.get(shopName));
+                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
 //                userStopFlags.get(shopName).set(false);
 //                 将翻译状态改为“部分翻译” shopName, status=2
                 translatesService.updateStatusByShopNameAnd2(shopName);
@@ -454,8 +453,8 @@ public class TranslateService {
                 System.out.println(e.getMessage());
             }
             String value = registerTransactionRequest.getValue();
-            System.out.println("现在正在翻译 ： " + value);
-            System.out.println("消耗的字符数为： " + counter.getTotalChars());
+            appInsights.trackTrace("现在正在翻译 ： " + value);
+            appInsights.trackTrace("消耗的字符数为： " + counter.getTotalChars());
             String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
             String key = registerTransactionRequest.getKey();
             String source = registerTransactionRequest.getLocale();
