@@ -17,7 +17,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
@@ -30,9 +29,6 @@ import java.util.Random;
 
 @Component
 public class TranslateApiIntegration {
-
-    @Autowired
-    private BaseHttpIntegration baseHttpIntegration;
 
     private TelemetryClient appInsights = new TelemetryClient();
 
