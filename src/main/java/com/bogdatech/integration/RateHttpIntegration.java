@@ -41,7 +41,5 @@ public class RateHttpIntegration {
         json.forEach((key, value) -> {
             rateMap.put(key, Double.valueOf(value.toString()));
         });
-//        System.out.println("rateMap:" + rateMap.toString());
-//        return json;
     }
 }

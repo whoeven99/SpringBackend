@@ -60,7 +60,6 @@ public class KlaviyoIntegration {
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 // 获取响应实体并转换为JSON格式
                 jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
-//                System.out.println("jsonObject: " + jsonObject.toString());
                 // 获取"data"对象
                 data = jsonObject.getJSONObject("data");
 

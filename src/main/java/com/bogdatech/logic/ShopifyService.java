@@ -102,7 +102,6 @@ public class ShopifyService {
             String requestBody = objectMapper.writeValueAsString(registerTransactionRequest);
             string = testingEnvironmentIntegration.sendShopifyPost("shopify/updateItem", requestBody);
             JSONObject jsonObject = JSON.parseObject(string);
-//            System.out.println("jsonObject: " + jsonObject);
             translationsArray = jsonObject.getJSONObject("translationsRegister");
             translationsObject = translationsArray.getJSONArray("translations");
         } catch (JsonProcessingException e) {
@@ -116,7 +115,6 @@ public class ShopifyService {
         CharacterCountUtils counter = new CharacterCountUtils();
         CharacterCountUtils translateCounter = new CharacterCountUtils();
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-//        System.out.println("target: " + request.getTarget());
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = shopifyRequestBody.getFirstQuery(translateResource);
@@ -201,7 +199,6 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             translatedContent.add(contentItemNode.get("key").asText());
         }
-//        System.out.println("List内的数据为： " + translatedContent);
         return translatedContent;
     }
 
@@ -283,7 +280,6 @@ public class ShopifyService {
                 String text = element.ownText().trim();
                 if (!text.isEmpty()) {
                     texts.add(text);
-//                    System.out.println("text: " + text);
                     if (text.length() >40){
                         String s = text + " Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: ";
                         counter.addChars(calculateToken(s,1));
@@ -457,12 +453,9 @@ public class ShopifyService {
         if (string == null) {
             throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
-//        System.out.println("string = " + string);
         TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
         TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
-//        System.out.println("translateTextDO = " + translateTextDO);
         TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
-//        System.out.println("translateTextRequests = " + translateTextRequests);
         int i;
         if (translateTextRequests == null) {
             i = translateTextService.insertTranslateText(translateTextDO);
@@ -496,12 +489,8 @@ public class ShopifyService {
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
         Map<String, Map<String, Object>> result = new HashMap<>();
         // 遍历List中的每个TranslateResourceDTO对象
-//        for (Map.Entry<String, List<TranslateResourceDTO>> resourceList : RESOURCE_MAP.entrySet()) {
         CharacterCountUtils allCounter = new CharacterCountUtils();
         CharacterCountUtils translatedCounter = new CharacterCountUtils();
-//            String resourceType = resourceList.getKey();
-//            System.out.println("resourceType: " + request.getResourceType());
-//            for (TranslateResourceDTO resource : resourceList.getValue()) {
         for (TranslateResourceDTO resource : RESOURCE_MAP.get(request.getResourceType())) {
             Map<String, Object> singleResult = new HashMap<>();
             singleResult.put("itemName", resource.getResourceType());
@@ -520,17 +509,6 @@ public class ShopifyService {
             singleResult.put("status", 1);
             result.put(request.getResourceType(), singleResult);
         }
-//            System.out.println("total: " + allCounter.getTotalChars());
-//            System.out.println("translated: " + translatedCounter.getTotalChars());
-        //判断数据库中是否有符合条件的数据，如果有，更新数据库，如果没有插入信息
-//            if (!itemsService.readSingleItemInfo(shopifyRequest, resourceType).isEmpty()) {
-////                itemsService.updateItemsTotalData(shopifyRequest, allCounter.getTotalChars(), resourceType);
-//                itemsService.updateItemsByShopName(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
-//
-//            } else {
-//                itemsService.insertItems(shopifyRequest, resourceType, allCounter.getTotalChars(), translatedCounter.getTotalChars());
-//            }
-//        }
         return result;
     }
 
