@@ -20,8 +20,6 @@ public class CalculateTokenUtils {
         // 进行编码
         IntArrayList encode = enc.encode(token);
         // 输出编码后的集合大小（也就是token数）
-//        System.out.println("消耗的token数： " +  encode.size());
-//        System.out.println("消耗的token数*倍率： " + encode.size() * rate);
         if (getTokens(token) != null){
             return getTokens(token) * rate;
         }
