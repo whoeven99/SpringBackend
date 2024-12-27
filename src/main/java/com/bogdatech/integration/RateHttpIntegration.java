@@ -41,7 +41,6 @@ public class RateHttpIntegration {
 
         JSONObject jsonObject = JSONObject.parseObject(response);
         JSONObject json = jsonObject.getJSONObject("rates");
-//        System.out.println("获取的汇率： " + json.toString());
         if (json != null) {
             //对json做遍历将每条数据存储到rateMap缓存中
             json.forEach((key, value) -> {
