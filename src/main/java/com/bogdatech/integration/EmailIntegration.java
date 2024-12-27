@@ -43,7 +43,6 @@ public class EmailIntegration {
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 // 获取响应实体并转换为JSON格式
                 String entity = EntityUtils.toString(response.getEntity(), "UTF-8");
-//                System.out.println("jsonObject: " + jsonObject.toString());
                 // 获取status对象
                 if (entity.contains("sent")) {
                     return "Success";

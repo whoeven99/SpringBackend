@@ -34,9 +34,6 @@ public class ChatGptIntegration {
         ChatMessage messagereq = new ChatMessage(ChatRole.USER);
 //        ChatMessage messagersy= new ChatMessage(ChatRole.SYSTEM);
         messagereq.setContent(prompt);
-//        messagersy.setContent("Please translate the following English text into Chinese, following the rules: \n" +
-//                "never translate:\"Shoes\" → \"Shoes\" \n" +
-//                "always translate:\"Girls\" → \"女生\" ");
 
         List<ChatMessage> prompts = new ArrayList<> ();
         prompts.add(messagereq);
@@ -65,8 +62,6 @@ public class ChatGptIntegration {
                 System.err.println("Attempt " + retryCount + " failed: " + e.getMessage());
             }
         }
-
-//        System.out.println("Response: " + content);
         return content;
     }
 }

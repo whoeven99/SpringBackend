@@ -65,31 +65,30 @@ public class JsoupUtils {
             // Translate main text
             for (String text : textsToTranslate) {
                 String translated = translateSingleLine(text, target);
-                counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
+
                 String targetString;
                 if (translated != null) {
+                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
 
                     try {
                         if (text.length() > 40) {
-//                            System.out.println("altText: + " + text);
                             //AI翻译
                             counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
-//                            System.out.println("翻译的数据为： " + targetString);
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
+                            counter.addChars(calculateToken(text, 1));
                             targetString = translateApiIntegration.googleTranslate(request);
 //                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-                        counter.addChars(calculateToken(text,1));
+                        counter.addChars(calculateToken(text, 1));
                         targetString = translateApiIntegration.googleTranslate(request);
 //                        targetString = translateApiIntegration.microsoftTranslate(request);
-//                        System.out.println("翻译的数据为： " + targetString);
                         addData(target, text, targetString);
                         translatedTexts.add(targetString);
                         continue;
@@ -110,17 +109,14 @@ public class JsoupUtils {
                     //AI翻译
                     try {
                         if (altText.length() > 40) {
-//                            System.out.println("altText: + " + altText);
                             //AI翻译
                             counter.addChars(calculateToken(altText + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
-//                            System.out.println("翻译的数据为： " + targetString);
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
-                            counter.addChars(calculateToken(altText,1));
+                            counter.addChars(calculateToken(altText, 1));
                             targetString = translateApiIntegration.googleTranslate(request);
 //                            targetString = translateApiIntegration.microsoftTranslate(request);
-//                            System.out.println("翻译的数据为： " + targetString);
                         }
                     } catch (Exception e) {
                         // 如果AI翻译失败，则使用谷歌翻译
@@ -161,7 +157,7 @@ public class JsoupUtils {
 
     // 对文本进行翻译（词汇表）
     public Map<Element, List<String>> translateGlossaryTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
-                                                     CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, AILanguagePacksDO aiLanguagePacksDO) {
+                                                             CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, AILanguagePacksDO aiLanguagePacksDO) {
         Map<Element, List<String>> translatedTextMap = new HashMap<>();
         for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
             Element element = entry.getKey();
@@ -169,17 +165,18 @@ public class JsoupUtils {
             List<String> translatedTexts = new ArrayList<>();
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
-                counter.addChars(calculateToken(text, 1));
+
                 if (translated != null) {
+                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     //目前没有翻译html的提示词，用的是谷歌翻译
+                    counter.addChars(calculateToken(text, 1));
                     Map<String, String> placeholderMap = new HashMap<>();
                     String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
                     request.setContent(updateText);
                     String targetString = translateApiIntegration.googleTranslate(request);
 //                    String targetString = translateApiIntegration.microsoftTranslate(request);
-                    System.out.println("翻译后的结果为： " + targetString);
                     String finalText = restoreKeywords(targetString, placeholderMap);
                     addData(request.getTarget(), text, finalText);
                     translatedTexts.add(finalText);
@@ -193,7 +190,7 @@ public class JsoupUtils {
 
     //对文本进行翻译（通用）
     public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
-                                                             CharacterCountUtils counter) {
+                                                     CharacterCountUtils counter) {
         Map<Element, List<String>> translatedTextMap = new HashMap<>();
         for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
             Element element = entry.getKey();
@@ -208,7 +205,6 @@ public class JsoupUtils {
                     request.setContent(text);
                     String targetString = translateApiIntegration.googleTranslate(request);
 //                    String targetString = translateApiIntegration.microsoftTranslate(request);
-                    System.out.println("翻译后的结果为： " + targetString);
                     addData(request.getTarget(), text, targetString);
                     translatedTexts.add(targetString);
                 }
