@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SendEmailRequest {
+public class MailChampSendEmailRequest {
     private String emailKey;
     private String templateName;
     private String templateContent;

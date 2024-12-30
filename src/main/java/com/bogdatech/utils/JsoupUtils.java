@@ -5,6 +5,7 @@ import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.microsoft.applicationinsights.TelemetryClient;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -33,6 +34,7 @@ public class JsoupUtils {
     @Autowired
     private ChatGptIntegration chatGptIntegration;
 
+    TelemetryClient appInsights = new TelemetryClient();
     public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
         Document doc = Jsoup.parse(html);
         String target = request.getTarget();
@@ -132,7 +134,7 @@ public class JsoupUtils {
             }
 
         } catch (Exception e) {
-            log.info(e.getMessage());
+            appInsights.trackTrace("HTML" + e.getMessage());
         }
 
         // Replace original texts and alt attributes with translated ones

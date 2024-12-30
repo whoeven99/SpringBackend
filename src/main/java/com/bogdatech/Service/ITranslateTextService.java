@@ -18,4 +18,6 @@ public interface ITranslateTextService extends IService<TranslateTextDO> {
     String[] getTargetTextByDigest(String digest, String target);
 
     void getExistTranslateTextList(List<TranslateTextDO> translateTexts);
+
+    Integer updateOrInsertTranslateTextTable(TranslateTextDO translateTextDO);
 }

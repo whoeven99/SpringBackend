@@ -1,7 +1,20 @@
 package com.bogdatech.integration;
 
-import com.bogdatech.model.controller.request.SendEmailRequest;
+import com.bogdatech.model.controller.request.MailChampSendEmailRequest;
+import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.requestBody.EmailRequestBody;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tencentcloudapi.common.AbstractModel;
+import com.tencentcloudapi.common.Credential;
+import com.tencentcloudapi.common.exception.TencentCloudSDKException;
+import com.tencentcloudapi.common.profile.ClientProfile;
+import com.tencentcloudapi.common.profile.HttpProfile;
+import com.tencentcloudapi.ses.v20201002.SesClient;
+import com.tencentcloudapi.ses.v20201002.models.SendEmailRequest;
+import com.tencentcloudapi.ses.v20201002.models.SendEmailResponse;
+import com.tencentcloudapi.ses.v20201002.models.Simple;
+import com.tencentcloudapi.ses.v20201002.models.Template;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -12,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class EmailIntegration {
@@ -19,7 +33,7 @@ public class EmailIntegration {
     @Value("${email.key}")
     private String mailChimpKey;
 
-    public  String sendEmail(SendEmailRequest sendEmailRequest) {
+    public  String sendEmail(MailChampSendEmailRequest sendEmailRequest) {
         sendEmailRequest.setEmailKey(mailChimpKey);
 //        System.out.println("mailChimpKey: " + mailChimpKey);
         EmailRequestBody emailRequestBody = new EmailRequestBody();
@@ -70,5 +84,48 @@ public class EmailIntegration {
         return "Error: Max retries exceeded";
     }
 
+    //腾讯邮件发送
+    public void sendEmailByTencent(TencentSendEmailRequest tencentSendEmailRequest) {
+        Map<String, String> templateData = tencentSendEmailRequest.getTemplateData();
+        ObjectMapper objectMapper = new ObjectMapper();
 
+        try{
+            Credential cred = new Credential(System.getenv("Tencent_Cloud_KEY_ID"), System.getenv("Tencent_Cloud_KEY"));
+            String templateDataJson = objectMapper.writeValueAsString(templateData);
+            // 实例化一个http选项，可选的，没有特殊需求可以跳过
+            HttpProfile httpProfile = new HttpProfile();
+//            httpProfile.setEndpoint("ses.ap-guangzhou-open.tencentcloudapi.com");
+            // 实例化一个client选项，可选的，没有特殊需求可以跳过
+            ClientProfile clientProfile = new ClientProfile();
+            clientProfile.setHttpProfile(httpProfile);
+            // 实例化要请求产品的client对象,clientProfile是可选的
+            SesClient client = new SesClient(cred, "ap-hongkong", clientProfile);
+            // 实例化一个请求对象,每个接口都会对应一个request对象
+            SendEmailRequest req = new SendEmailRequest();
+            req.setFromEmailAddress(tencentSendEmailRequest.getFromEmail());
+
+            String[] destination1 = {tencentSendEmailRequest.getToEmail()};
+            req.setDestination(destination1);
+
+            req.setSubject(tencentSendEmailRequest.getSubject());
+            Template template1 = new Template();
+            template1.setTemplateID(tencentSendEmailRequest.getTemplateId());
+            template1.setTemplateData(templateDataJson);
+            req.setTemplate(template1);
+
+            Simple simple1 = new Simple();
+            simple1.setText(tencentSendEmailRequest.getSimple1());
+            req.setSimple(simple1);
+
+            // 返回的resp是一个SendEmailResponse的实例，与请求对象对应
+            SendEmailResponse resp = client.SendEmail(req);
+            // 输出json格式的字符串回包
+            System.out.println(AbstractModel.toJsonString(resp));
+        } catch (TencentCloudSDKException e) {
+            System.out.println(e.toString());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+//        return "Success";
+    }
 }
