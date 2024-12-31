@@ -13,7 +13,6 @@ import com.tencentcloudapi.common.profile.HttpProfile;
 import com.tencentcloudapi.ses.v20201002.SesClient;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailRequest;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailResponse;
-import com.tencentcloudapi.ses.v20201002.models.Simple;
 import com.tencentcloudapi.ses.v20201002.models.Template;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -112,10 +111,6 @@ public class EmailIntegration {
             template1.setTemplateID(tencentSendEmailRequest.getTemplateId());
             template1.setTemplateData(templateDataJson);
             req.setTemplate(template1);
-
-            Simple simple1 = new Simple();
-            simple1.setText(tencentSendEmailRequest.getSimple1());
-            req.setSimple(simple1);
 
             // 返回的resp是一个SendEmailResponse的实例，与请求对象对应
             SendEmailResponse resp = client.SendEmail(req);

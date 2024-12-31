@@ -15,5 +15,4 @@ public class TencentSendEmailRequest {
     private String subject;
     private String fromEmail;
     private String toEmail;
-    private String simple1;
 }

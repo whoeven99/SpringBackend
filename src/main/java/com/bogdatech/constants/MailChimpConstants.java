@@ -16,4 +16,6 @@ public class MailChimpConstants {
 
     //from_email
     public static final String FROM_EMAIL = "support@ciwi.ai";
+    public static final String TENCENT_FROM_EMAIL = "support@msg.ciwi.ai";
 }
+
