@@ -1,7 +1,7 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.integration.EmailIntegration;
-import com.bogdatech.model.controller.request.SendEmailRequest;
+import com.bogdatech.model.controller.request.MailChampSendEmailRequest;
 import com.bogdatech.model.controller.request.TranslateSuccessRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ public class MailChimpService {
         this.emailIntegration = emailIntegration;
     }
     //发送首次安装的邮件
-    public String sendFirstInstallMail(SendEmailRequest sendEmailRequest) {
+    public String sendFirstInstallMail(MailChampSendEmailRequest sendEmailRequest) {
         sendEmailRequest.setSubject(FIRST_INSTALL_SUBJECT);
         sendEmailRequest.setTemplateName(FIRST_INSTALL);
         sendEmailRequest.setFromEmail(FROM_EMAIL);
@@ -37,7 +37,7 @@ public class MailChimpService {
     }
 
     //翻译成功后发送邮件
-    public  String sendTranslateSuccessMail(SendEmailRequest sendEmailRequest, TranslateSuccessRequest translateSuccessRequest) {
+    public  String sendTranslateSuccessMail(MailChampSendEmailRequest sendEmailRequest, TranslateSuccessRequest translateSuccessRequest) {
         sendEmailRequest.setSubject(SUCCESSFUL_TRANSLATION_SUBJECT);
         sendEmailRequest.setTemplateName(SUCCESSFUL_TRANSLATION);
         sendEmailRequest.setFromEmail(FROM_EMAIL);
@@ -61,7 +61,7 @@ public class MailChimpService {
     }
 
     //翻译失败后发送邮件
-    public  String sendTranslateFailMail(SendEmailRequest sendEmailRequest, String failureMessage) {
+    public  String sendTranslateFailMail(MailChampSendEmailRequest sendEmailRequest, String failureMessage) {
         sendEmailRequest.setSubject(TRANSLATION_FAILED_SUBJECT);
         sendEmailRequest.setTemplateName(TRANSLATION_FAILED);
         sendEmailRequest.setFromEmail(FROM_EMAIL);
@@ -78,7 +78,7 @@ public class MailChimpService {
     }
 
     //字符购买成功后发送邮件
-    public  String sendCharacterPurchaseSuccessMail(SendEmailRequest sendEmailRequest, String purchaseAmount, String remainingChars) {
+    public  String sendCharacterPurchaseSuccessMail(MailChampSendEmailRequest sendEmailRequest, String purchaseAmount, String remainingChars) {
         sendEmailRequest.setSubject(CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT);
         sendEmailRequest.setTemplateName(CHARACTER_PURCHASE_SUCCESSFUL);
         sendEmailRequest.setFromEmail(FROM_EMAIL);
@@ -98,7 +98,7 @@ public class MailChimpService {
     }
 
     //字符超限后发送邮件
-    public  String sendCharacterQuotaUsedUpMail(SendEmailRequest sendEmailRequest) {
+    public  String sendCharacterQuotaUsedUpMail(MailChampSendEmailRequest sendEmailRequest) {
         sendEmailRequest.setSubject(CHARACTER_QUOTA_USED_UP_SUBJECT);
         sendEmailRequest.setTemplateName(CHARACTER_QUOTA_USED_UP);
         sendEmailRequest.setFromEmail(FROM_EMAIL);

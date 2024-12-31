@@ -1,9 +1,9 @@
 package com.bogdatech.requestBody;
 
-import com.bogdatech.model.controller.request.SendEmailRequest;
+import com.bogdatech.model.controller.request.MailChampSendEmailRequest;
 
 public class EmailRequestBody {
-    public String sendEmail(SendEmailRequest sendEmailRequest){
+    public String sendEmail(MailChampSendEmailRequest sendEmailRequest){
         return "{\n" +
                 "    \"key\": \"" + sendEmailRequest.getEmailKey() + "\",\n" +
                 "    \"template_name\": \"" + sendEmailRequest.getTemplateName() + "\",\n" +

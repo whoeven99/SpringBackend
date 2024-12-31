@@ -84,5 +84,19 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
         }
     }
 
+    @Override
+    public Integer updateOrInsertTranslateTextTable(TranslateTextDO translateTextDO) {
+        //做判断，如果查到这样一个数据，则更新数据库；如果没查到，则插入该数据
+        TranslateTextDO[] targetTextByDigest = baseMapper.getTargetTextByDigestAndCodeAndResourceId(translateTextDO.getDigest(), translateTextDO.getTargetCode(), translateTextDO.getResourceId(), translateTextDO.getSourceCode());
+        if (targetTextByDigest.length > 0) {
+            TranslateTextDO translateText = targetTextByDigest[0];
+            System.out.println("translateText:" + translateText.toString());
+            return baseMapper.updateTranslateTextTable(translateText.getResourceId(), translateText.getDigest(), translateText.getTextType(), translateTextDO.getTargetText(), translateText.getTargetCode(), translateTextDO.getSourceText(), translateText.getSourceCode());
+        }else {
+            return baseMapper.insertTranslateTextTable(translateTextDO.getResourceId(), translateTextDO.getDigest(), translateTextDO.getTextType(), translateTextDO.getTargetText(), translateTextDO.getTargetCode(), translateTextDO.getSourceText(), translateTextDO.getSourceCode());
+        }
+
+    }
+
 
 }

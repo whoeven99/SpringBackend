@@ -136,6 +136,13 @@
 			<artifactId>jtokkit</artifactId>
 			<version>1.1.0</version>
 		</dependency>
+
+		<!-- 腾讯邮件 -->
+		<dependency>
+			<groupId>com.tencentcloudapi</groupId>
+			<artifactId>tencentcloud-sdk-java-ses</artifactId>
+			<version>3.1.1129</version>
+		</dependency>
 	</dependencies>
 
 	<build>

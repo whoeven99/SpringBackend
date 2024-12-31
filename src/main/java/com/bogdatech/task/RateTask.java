@@ -7,8 +7,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 
 @Component
@@ -21,7 +19,7 @@ public class RateTask {
     public RateTask(RateHttpIntegration rateHttpIntegration) {
         this.rateHttpIntegration = rateHttpIntegration;
     }
-    @PostConstruct
+//    @PostConstruct
 //    @Scheduled(cron = "0 15 1 ? * *")
     @Async
     public void getRateEveryHour() {

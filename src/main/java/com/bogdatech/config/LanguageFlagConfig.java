@@ -153,8 +153,8 @@ public class LanguageFlagConfig {
         AF.put("Local", "Afrikaans");
         AF.put("isoCode", "af");
         AF.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ZA.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NA.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ZA.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NA.webp"
         });
 
         // Akan
@@ -162,7 +162,7 @@ public class LanguageFlagConfig {
         AK.put("Local", "Akan");
         AK.put("isoCode", "ak");
         AK.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GH.webp"
         });
 
         // Albanian
@@ -170,8 +170,8 @@ public class LanguageFlagConfig {
         SQ.put("Local", "Shqip");
         SQ.put("isoCode", "sq");
         SQ.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AL.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/XK.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AL.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/XK.webp"
         });
 
         // Amharic
@@ -179,7 +179,7 @@ public class LanguageFlagConfig {
         AM.put("Local", "አማርኛ");
         AM.put("isoCode", "am");
         AM.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ET.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ET.webp"
         });
 
         // Arabic
@@ -187,10 +187,10 @@ public class LanguageFlagConfig {
         AR.put("Local", "العربية");
         AR.put("isoCode", "ar");
         AR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SA.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/EG.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/JO.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SA.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/EG.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/JO.webp"
         });
 
         // Armenian
@@ -198,7 +198,7 @@ public class LanguageFlagConfig {
         HY.put("Local", "Հայերեն");
         HY.put("isoCode", "hy");
         HY.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AM.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AM.webp"
         });
 
         // Assamese
@@ -206,7 +206,7 @@ public class LanguageFlagConfig {
         AS.put("Local", "অসমীয়া");
         AS.put("isoCode", "as");
         AS.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Azerbaijani
@@ -214,11 +214,11 @@ public class LanguageFlagConfig {
         AZ.put("Local", "Azərbaycandili");
         AZ.put("isoCode", "az");
         AZ.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AZ.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RU.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AZ.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/RU.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GE.webp"
         });
 
         // Bambara
@@ -226,7 +226,7 @@ public class LanguageFlagConfig {
         BM.put("Local", "Bamanankan");
         BM.put("isoCode", "bm");
         BM.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ML.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ML.webp"
         });
 
         // Bangla
@@ -234,7 +234,7 @@ public class LanguageFlagConfig {
         BN.put("Local", "বাংলা");
         BN.put("isoCode", "bn");
         BN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BN.webp"
         });
 
         // Basque
@@ -242,8 +242,8 @@ public class LanguageFlagConfig {
         EU.put("Local", "Euskara");
         EU.put("isoCode", "eu");
         EU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ES.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FR.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ES.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/FR.webp"
         });
 
         // Belarusian
@@ -251,7 +251,7 @@ public class LanguageFlagConfig {
         BE.put("Local", "беларуская");
         BE.put("isoCode", "be");
         BE.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BY.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BY.webp"
         });
 
         // Bosnian
@@ -259,7 +259,7 @@ public class LanguageFlagConfig {
         BS.put("Local", "Bosanski");
         BS.put("isoCode", "bs");
         BS.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BA.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BA.webp"
         });
 
         // Breton
@@ -267,7 +267,7 @@ public class LanguageFlagConfig {
         BR.put("Local", "Brezhoneg");
         BR.put("isoCode", "br");
         BR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FR.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/FR.webp"
         });
 
         // Bulgarian
@@ -275,7 +275,7 @@ public class LanguageFlagConfig {
         BG.put("Local", "български");
         BG.put("isoCode", "bg");
         BG.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BG.webp"
         });
 
         // Burmese
@@ -283,7 +283,7 @@ public class LanguageFlagConfig {
         MY.put("Local", "မြန်မာစာ");
         MY.put("isoCode", "my");
         MY.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MM.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MM.webp"
         });
 
         // Catalan
@@ -291,8 +291,8 @@ public class LanguageFlagConfig {
         CA.put("Local", "Català");
         CA.put("isoCode", "ca");
         CA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ES.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AD.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ES.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AD.webp"
         });
 
         // Central Kurdish
@@ -300,8 +300,8 @@ public class LanguageFlagConfig {
         CKB.put("Local", "کوردییناوەڕاست");
         CKB.put("isoCode", "ckb");
         CKB.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IQ.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IR.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IQ.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IR.webp"
         });
 
         // Chechen
@@ -309,7 +309,7 @@ public class LanguageFlagConfig {
         CE.put("Local", "Нохчийн");
         CE.put("isoCode", "ce");
         CE.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RU.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/RU.webp"
         });
 
         // Chinese (Simplified)
@@ -317,7 +317,7 @@ public class LanguageFlagConfig {
         ZH_CN.put("Local", "中文（简体）");
         ZH_CN.put("isoCode", "zh-CN");
         ZH_CN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CN.webp"
         });
 
         // Chinese (Traditional)
@@ -325,9 +325,9 @@ public class LanguageFlagConfig {
         ZH_TW.put("Local", "中文（繁體）");
         ZH_TW.put("isoCode", "zh-TW");
         ZH_TW.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TW.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/HK.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MO.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TW.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/HK.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MO.webp"
         });
 
         // Cornish
@@ -335,7 +335,7 @@ public class LanguageFlagConfig {
         KW.put("Local", "Kernewek");
         KW.put("isoCode", "kw");
         KW.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GB.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GB.webp"
         });
 
         // Croatian
@@ -343,7 +343,7 @@ public class LanguageFlagConfig {
         HR.put("Local", "Hrvatski");
         HR.put("isoCode", "hr");
         HR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/HR.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/HR.webp"
         });
 
         // Czech
@@ -351,7 +351,7 @@ public class LanguageFlagConfig {
         CS.put("Local", "Čeština");
         CS.put("isoCode", "cs");
         CS.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CZ.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CZ.webp"
         });
 
         // Danish
@@ -359,7 +359,7 @@ public class LanguageFlagConfig {
         DA.put("Local", "Dansk");
         DA.put("isoCode", "da");
         DA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/DK.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/DK.webp"
         });
 
         // Dutch
@@ -367,9 +367,9 @@ public class LanguageFlagConfig {
         NL.put("Local", "Nederlands");
         NL.put("isoCode", "nl");
         NL.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NL.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SR.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NL.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SR.webp"
         });
 
         // Dzongkha
@@ -377,7 +377,7 @@ public class LanguageFlagConfig {
         DZ.put("Local", "རྫོང་ཁ");
         DZ.put("isoCode", "dz");
         DZ.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BT.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BT.webp"
         });
 
         // English
@@ -385,10 +385,10 @@ public class LanguageFlagConfig {
         EN.put("Local", "English");
         EN.put("isoCode", "en");
         EN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/US.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GB.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CA.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AU.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/US.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GB.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CA.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AU.webp"
         });
 
         // Esperanto
@@ -396,7 +396,7 @@ public class LanguageFlagConfig {
         EO.put("Local", "Esperanto");
         EO.put("isoCode", "eo");
         EO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/union.jpeg"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/union.jpeg"
         });
 
         // Estonian
@@ -404,7 +404,7 @@ public class LanguageFlagConfig {
         ET.put("Local", "Eesti");
         ET.put("isoCode", "et");
         ET.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/EE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/EE.webp"
         });
 
         // Ewe
@@ -412,8 +412,8 @@ public class LanguageFlagConfig {
         EE.put("Local", "Eʋegbe");
         EE.put("isoCode", "ee");
         EE.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TG.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TG.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GH.webp"
         });
 
         // Faroese
@@ -421,7 +421,7 @@ public class LanguageFlagConfig {
         FO.put("Local", "Føroyskt");
         FO.put("isoCode", "fo");
         FO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FO.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/FO.webp"
         });
 
         // Filipino
@@ -429,7 +429,7 @@ public class LanguageFlagConfig {
         FIL.put("Local", "Filipino");
         FIL.put("isoCode", "fil");
         FIL.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PH.webp"
         });
 
         // Finnish
@@ -437,7 +437,7 @@ public class LanguageFlagConfig {
         FI.put("Local", "Suomi");
         FI.put("isoCode", "fi");
         FI.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FI.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/FI.webp"
         });
 
         // French
@@ -445,10 +445,10 @@ public class LanguageFlagConfig {
         FR.put("Local", "Français");
         FR.put("isoCode", "fr");
         FR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CA.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/FR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CA.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CH.webp"
         });
 
         // Fulah
@@ -456,9 +456,9 @@ public class LanguageFlagConfig {
         FF.put("Local", "Pulaar");
         FF.put("isoCode", "ff");
         FF.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SN.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NG.webp"
         });
 
         // Galician
@@ -466,7 +466,7 @@ public class LanguageFlagConfig {
         GL.put("Local", "Galego");
         GL.put("isoCode", "gl");
         GL.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ES.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ES.webp"
         });
 
         // Ganda
@@ -474,7 +474,7 @@ public class LanguageFlagConfig {
         LG.put("Local", "Luganda");
         LG.put("isoCode", "lg");
         LG.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/UG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/UG.webp"
         });
 
         // Georgian
@@ -482,7 +482,7 @@ public class LanguageFlagConfig {
         KA.put("Local", "ქართული");
         KA.put("isoCode", "ka");
         KA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GE.webp"
         });
 
         // German
@@ -490,9 +490,9 @@ public class LanguageFlagConfig {
         DE.put("Local", "Deutsch");
         DE.put("isoCode", "de");
         DE.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/DE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AT.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/DE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AT.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CH.webp"
         });
 
         // Greek
@@ -500,8 +500,8 @@ public class LanguageFlagConfig {
         EL.put("Local", "Ελληνικά");
         EL.put("isoCode", "el");
         EL.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CY.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CY.webp"
         });
 
         // Gujarati
@@ -509,7 +509,7 @@ public class LanguageFlagConfig {
         GU.put("Local", "ગુજરાતી");
         GU.put("isoCode", "gu");
         GU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Hausa
@@ -517,9 +517,9 @@ public class LanguageFlagConfig {
         HA.put("Local", "Hausa");
         HA.put("isoCode", "ha");
         HA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NG.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NG.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GH.webp"
         });
 
         // Hebrew
@@ -527,7 +527,7 @@ public class LanguageFlagConfig {
         HE.put("Local", "עברית");
         HE.put("isoCode", "he");
         HE.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IL.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IL.webp"
         });
 
         // Hindi
@@ -535,8 +535,8 @@ public class LanguageFlagConfig {
         HI.put("Local", "हिन्दी");
         HI.put("isoCode", "hi");
         HI.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NP.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NP.webp"
         });
 
         // Hungarian
@@ -544,7 +544,7 @@ public class LanguageFlagConfig {
         HU.put("Local", "Magyar");
         HU.put("isoCode", "hu");
         HU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/HU.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/HU.webp"
         });
 
         // Icelandic
@@ -552,7 +552,7 @@ public class LanguageFlagConfig {
         IS.put("Local", "Íslenska");
         IS.put("isoCode", "is");
         IS.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IS.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IS.webp"
         });
 
         // Igbo
@@ -560,7 +560,7 @@ public class LanguageFlagConfig {
         IG.put("Local", "Igbo");
         IG.put("isoCode", "ig");
         IG.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NG.webp"
         });
 
         // Indonesian
@@ -568,7 +568,7 @@ public class LanguageFlagConfig {
         ID.put("Local", "BahasaIndonesia");
         ID.put("isoCode", "id");
         ID.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ID.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ID.webp"
         });
 
         // Interlingua
@@ -576,7 +576,7 @@ public class LanguageFlagConfig {
         IA.put("Local", "Interlingua");
         IA.put("isoCode", "ia");
         IA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/union.jpeg"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/union.jpeg"
         });
 
         // Irish
@@ -584,7 +584,7 @@ public class LanguageFlagConfig {
         GA.put("Local", "Gaeilge");
         GA.put("isoCode", "ga");
         GA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IE.webp"
         });
 
         // Italian
@@ -592,8 +592,8 @@ public class LanguageFlagConfig {
         IT.put("Local", "Italiano");
         IT.put("isoCode", "it");
         IT.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IT.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IT.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CH.webp"
         });
 
         // Japanese
@@ -601,7 +601,7 @@ public class LanguageFlagConfig {
         JA.put("Local", "日本語");
         JA.put("isoCode", "ja");
         JA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/JP.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/JP.webp"
         });
 
         // Javanese
@@ -609,7 +609,7 @@ public class LanguageFlagConfig {
         JV.put("Local", "ꦧꦱꦗꦮ");
         JV.put("isoCode", "jv");
         JV.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ID.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ID.webp"
         });
 
         // Kalaallisut
@@ -617,7 +617,7 @@ public class LanguageFlagConfig {
         KL.put("Local", "Kalaallisut");
         KL.put("isoCode", "kl");
         KL.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GL.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GL.webp"
         });
 
         // Kannada
@@ -625,7 +625,7 @@ public class LanguageFlagConfig {
         KN.put("Local", "ಕನ್ನಡ");
         KN.put("isoCode", "kn");
         KN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Kashmiri
@@ -633,8 +633,8 @@ public class LanguageFlagConfig {
         KS.put("Local", "كٲشُر");
         KS.put("isoCode", "ks");
         KS.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PK.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PK.webp"
         });
 
         // Kazakh
@@ -642,7 +642,7 @@ public class LanguageFlagConfig {
         KK.put("Local", "Қазақша");
         KK.put("isoCode", "kk");
         KK.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KZ.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KZ.webp"
         });
 
         // Khmer
@@ -650,7 +650,7 @@ public class LanguageFlagConfig {
         KM.put("Local", "ខ្មែរ");
         KM.put("isoCode", "km");
         KM.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KH.webp"
         });
 
         // Kikuyu
@@ -658,7 +658,7 @@ public class LanguageFlagConfig {
         KI.put("Local", "Gĩkũyũ");
         KI.put("isoCode", "ki");
         KI.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KE.webp"
         });
 
         // Kinyarwanda
@@ -666,7 +666,7 @@ public class LanguageFlagConfig {
         RW.put("Local", "Ikinyarwanda");
         RW.put("isoCode", "rw");
         RW.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RW.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/RW.webp"
         });
 
         // Korean
@@ -674,9 +674,9 @@ public class LanguageFlagConfig {
         KO.put("Local", "한국어");
         KO.put("isoCode", "ko");
         KO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KR.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KR.webp"
 //                ,
-//                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KP.png"
+//                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KP.webp"
         });
 
         // Kurdish
@@ -684,10 +684,10 @@ public class LanguageFlagConfig {
         KU.put("Local", "Kurdî");
         KU.put("isoCode", "ku");
         KU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IQ.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SY.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IQ.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SY.webp"
         });
 
         // Kyrgyz
@@ -695,7 +695,7 @@ public class LanguageFlagConfig {
         KY.put("Local", "Кыргызча");
         KY.put("isoCode", "ky");
         KY.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KG.webp"
         });
 
         // Lao
@@ -703,7 +703,7 @@ public class LanguageFlagConfig {
         LO.put("Local", "ລາວ");
         LO.put("isoCode", "lo");
         LO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/LA.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/LA.webp"
         });
 
         // Latvian
@@ -711,7 +711,7 @@ public class LanguageFlagConfig {
         LV.put("Local", "Latviešu");
         LV.put("isoCode", "lv");
         LV.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/LV.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/LV.webp"
         });
 
         // Lingala
@@ -719,8 +719,8 @@ public class LanguageFlagConfig {
         LN.put("Local", "Lingála");
         LN.put("isoCode", "ln");
         LN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CD.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CD.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CG.webp"
         });
 
         // Lithuanian
@@ -728,7 +728,7 @@ public class LanguageFlagConfig {
         LT.put("Local", "Lietuvių");
         LT.put("isoCode", "lt");
         LT.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/LT.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/LT.webp"
         });
 
         // Luba-Katanga
@@ -736,7 +736,7 @@ public class LanguageFlagConfig {
         LU.put("Local", "Katanga");
         LU.put("isoCode", "lu");
         LU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CD.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CD.webp"
         });
 
         // Luxembourgish
@@ -744,7 +744,7 @@ public class LanguageFlagConfig {
         LB.put("Local", "Lëtzebuergesch");
         LB.put("isoCode", "lb");
         LB.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/LU.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/LU.webp"
         });
 
         // Macedonian
@@ -752,7 +752,7 @@ public class LanguageFlagConfig {
         MK.put("Local", "Македонски");
         MK.put("isoCode", "mk");
         MK.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MK.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MK.webp"
         });
 
         // Malagasy
@@ -760,7 +760,7 @@ public class LanguageFlagConfig {
         MG.put("Local", "Malagasy");
         MG.put("isoCode", "mg");
         MG.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MG.webp"
         });
 
         // Malay
@@ -768,9 +768,9 @@ public class LanguageFlagConfig {
         MS.put("Local", "BahasaMelayu");
         MS.put("isoCode", "ms");
         MS.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MY.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SG.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MY.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SG.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BN.webp"
         });
 
         // Malayalam
@@ -778,7 +778,7 @@ public class LanguageFlagConfig {
         ML.put("Local", "മലയാളം");
         ML.put("isoCode", "ml");
         ML.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Maltese
@@ -786,7 +786,7 @@ public class LanguageFlagConfig {
         MT.put("Local", "Malti");
         MT.put("isoCode", "mt");
         MT.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MT.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MT.webp"
         });
 
         // Manx
@@ -794,7 +794,7 @@ public class LanguageFlagConfig {
         GV.put("Local", "Gaelg");
         GV.put("isoCode", "gv");
         GV.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IM.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IM.webp"
         });
 
         // Maori
@@ -802,7 +802,7 @@ public class LanguageFlagConfig {
         MI.put("Local", "Māori");
         MI.put("isoCode", "mi");
         MI.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NZ.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NZ.webp"
         });
 
         // Marathi
@@ -810,7 +810,7 @@ public class LanguageFlagConfig {
         MR.put("Local", "मराठी");
         MR.put("isoCode", "mr");
         MR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Mongolian
@@ -818,8 +818,8 @@ public class LanguageFlagConfig {
         MN.put("Local", "Монгол");
         MN.put("isoCode", "mn");
         MN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MN.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CN.webp"
         });
 
         // Nepali
@@ -827,8 +827,8 @@ public class LanguageFlagConfig {
         NE.put("Local", "नेपाली");
         NE.put("isoCode", "ne");
         NE.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NP.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NP.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // North Ndebele
@@ -836,7 +836,7 @@ public class LanguageFlagConfig {
         ND.put("Local", "isiNdebele");
         ND.put("isoCode", "nd");
         ND.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ZW.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ZW.webp"
         });
 
         // Northern Sami
@@ -844,9 +844,9 @@ public class LanguageFlagConfig {
         SE.put("Local", "Davvisámegiella");
         SE.put("isoCode", "se");
         SE.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NO.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FI.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NO.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/FI.webp"
         });
 
         // Norwegian
@@ -854,7 +854,7 @@ public class LanguageFlagConfig {
         NO.put("Local", "Norsk");
         NO.put("isoCode", "no");
         NO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NO.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NO.webp"
         });
 
         // Norwegian (Bokmål)
@@ -862,7 +862,7 @@ public class LanguageFlagConfig {
         NB.put("Local", "Bokmål");
         NB.put("isoCode", "nb");
         NB.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NO.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NO.webp"
         });
 
         // Norwegian Nynorsk
@@ -870,7 +870,7 @@ public class LanguageFlagConfig {
         NN.put("Local", "Nynorsk");
         NN.put("isoCode", "nn");
         NN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NO.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NO.webp"
         });
 
         // Odia
@@ -878,7 +878,7 @@ public class LanguageFlagConfig {
         OR.put("Local", "ଓଡ଼ିଆ");
         OR.put("isoCode", "or");
         OR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Oromo
@@ -886,8 +886,8 @@ public class LanguageFlagConfig {
         OM.put("Local", "AfaanOromoo");
         OM.put("isoCode", "om");
         OM.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ET.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ET.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KE.webp"
         });
 
         // Ossetic
@@ -895,8 +895,8 @@ public class LanguageFlagConfig {
         OS.put("Local", "Ирон");
         OS.put("isoCode", "os");
         OS.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RU.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/RU.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GE.webp"
         });
 
         // Pashto
@@ -904,8 +904,8 @@ public class LanguageFlagConfig {
         PS.put("Local", "پښتو");
         PS.put("isoCode", "ps");
         PS.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AF.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PK.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AF.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PK.webp"
         });
 
         // Persian
@@ -913,9 +913,9 @@ public class LanguageFlagConfig {
         FA.put("Local", "فارسی");
         FA.put("isoCode", "fa");
         FA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AF.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TJ.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AF.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TJ.webp"
         });
 
         // Polish
@@ -923,7 +923,7 @@ public class LanguageFlagConfig {
         PL.put("Local", "Polski");
         PL.put("isoCode", "pl");
         PL.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PL.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PL.webp"
         });
 
         // Portuguese (Brazil)
@@ -931,7 +931,7 @@ public class LanguageFlagConfig {
         PT_BR.put("Local", "Português(Brasil)");
         PT_BR.put("isoCode", "pt-BR");
         PT_BR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BR.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BR.webp"
         });
 
         // Portuguese (Portugal)
@@ -939,7 +939,7 @@ public class LanguageFlagConfig {
         PT_PT.put("Local", "Português(Portugal)");
         PT_PT.put("isoCode", "pt-PT");
         PT_PT.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PT.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PT.webp"
         });
 
         // Punjabi
@@ -947,8 +947,8 @@ public class LanguageFlagConfig {
         PA.put("Local", "ਪੰਜਾਬੀ");
         PA.put("isoCode", "pa");
         PA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PK.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PK.webp"
         });
 
         // Quechua
@@ -956,9 +956,9 @@ public class LanguageFlagConfig {
         QU.put("Local", "RunaSimi");
         QU.put("isoCode", "qu");
         QU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BO.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/EC.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BO.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/EC.webp"
         });
 
         // Romanian
@@ -966,8 +966,8 @@ public class LanguageFlagConfig {
         RO.put("Local", "Română");
         RO.put("isoCode", "ro");
         RO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RO.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MD.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/RO.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MD.webp"
         });
 
         // Romansh
@@ -975,7 +975,7 @@ public class LanguageFlagConfig {
         RM.put("Local", "Rumantsch");
         RM.put("isoCode", "rm");
         RM.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CH.webp"
         });
 
         // Rundi
@@ -983,7 +983,7 @@ public class LanguageFlagConfig {
         RN.put("Local", "Kirundi");
         RN.put("isoCode", "rn");
         RN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BI.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BI.webp"
         });
 
         // Russian
@@ -991,16 +991,16 @@ public class LanguageFlagConfig {
         RU.put("Local", "Русский");
         RU.put("isoCode", "ru");
         RU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RU.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BY.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KZ.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/RU.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BY.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KZ.webp"
         });
 // Sango
         SG.put("Name", "Sango");
         SG.put("Local", "Sängö");
         SG.put("isoCode", "sg");
         SG.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CF.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CF.webp"
         });
 
         // Sanskrit
@@ -1008,7 +1008,7 @@ public class LanguageFlagConfig {
         SA.put("Local", "संस्कृतम्");
         SA.put("isoCode", "sa");
         SA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Sardinian
@@ -1016,7 +1016,7 @@ public class LanguageFlagConfig {
         SC.put("Local", "Sardu");
         SC.put("isoCode", "sc");
         SC.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IT.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IT.webp"
         });
 
         // Scottish Gaelic
@@ -1024,7 +1024,7 @@ public class LanguageFlagConfig {
         GD.put("Local", "Gàidhlig");
         GD.put("isoCode", "gd");
         GD.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GB.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GB.webp"
         });
 
         // Serbian
@@ -1032,8 +1032,8 @@ public class LanguageFlagConfig {
         SR.put("Local", "Српски");
         SR.put("isoCode", "sr");
         SR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RS.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BA.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/RS.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BA.webp"
         });
 
         // Shona
@@ -1041,7 +1041,7 @@ public class LanguageFlagConfig {
         SN.put("Local", "ChiShona");
         SN.put("isoCode", "sn");
         SN.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ZW.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ZW.webp"
         });
 
         // Sichuan Yi
@@ -1049,7 +1049,7 @@ public class LanguageFlagConfig {
         II.put("Local", "ꆈꌠ꒿");
         II.put("isoCode", "ii");
         II.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CN.webp"
         });
 
         // Sindhi
@@ -1057,8 +1057,8 @@ public class LanguageFlagConfig {
         SD.put("Local", "سنڌي");
         SD.put("isoCode", "sd");
         SD.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PK.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PK.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Sinhala
@@ -1066,7 +1066,7 @@ public class LanguageFlagConfig {
         SI.put("Local", "සිංහල");
         SI.put("isoCode", "si");
         SI.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/LK.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/LK.webp"
         });
 
         // Slovak
@@ -1074,7 +1074,7 @@ public class LanguageFlagConfig {
         SK.put("Local", "Slovenčina");
         SK.put("isoCode", "sk");
         SK.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SK.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SK.webp"
         });
 
         // Slovenian
@@ -1082,7 +1082,7 @@ public class LanguageFlagConfig {
         SL.put("Local", "Slovenščina");
         SL.put("isoCode", "sl");
         SL.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SI.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SI.webp"
         });
 
         // Somali
@@ -1090,9 +1090,9 @@ public class LanguageFlagConfig {
         SO.put("Local", "Soomaali");
         SO.put("isoCode", "so");
         SO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SO.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/DJ.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SO.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/DJ.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KE.webp"
         });
 
         // Spanish
@@ -1100,10 +1100,10 @@ public class LanguageFlagConfig {
         ES.put("Local", "Español");
         ES.put("isoCode", "es");
         ES.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ES.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MX.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/AR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CO.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ES.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MX.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/AR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CO.webp"
         });
 
         // Sundanese
@@ -1111,7 +1111,7 @@ public class LanguageFlagConfig {
         SU.put("Local", "BasaSunda");
         SU.put("isoCode", "su");
         SU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ID.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ID.webp"
         });
 
         // Swahili
@@ -1119,9 +1119,9 @@ public class LanguageFlagConfig {
         SW.put("Local", "Kiswahili");
         SW.put("isoCode", "sw");
         SW.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/KE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TZ.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/UG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TZ.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/UG.webp"
         });
 
         // Swedish
@@ -1129,8 +1129,8 @@ public class LanguageFlagConfig {
         SV.put("Local", "Svenska");
         SV.put("isoCode", "sv");
         SV.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SE.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/FI.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SE.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/FI.webp"
         });
 
         // Tajik
@@ -1138,7 +1138,7 @@ public class LanguageFlagConfig {
         TG.put("Local", "Тоҷикӣ");
         TG.put("isoCode", "tg");
         TG.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TJ.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TJ.webp"
         });
 
         // Tamil
@@ -1146,10 +1146,10 @@ public class LanguageFlagConfig {
         TA.put("Local", "தமிழ்");
         TA.put("isoCode", "ta");
         TA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/LK.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SG.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/MY.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/LK.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SG.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MY.webp"
         });
 
         // Tatar
@@ -1157,7 +1157,7 @@ public class LanguageFlagConfig {
         TT.put("Local", "Татар");
         TT.put("isoCode", "tt");
         TT.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/RU.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/RU.webp"
         });
 
         // Telugu
@@ -1165,7 +1165,7 @@ public class LanguageFlagConfig {
         TE.put("Local", "తెలుగు");
         TE.put("isoCode", "te");
         TE.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Thai
@@ -1173,7 +1173,7 @@ public class LanguageFlagConfig {
         TH.put("Local", "ไทย");
         TH.put("isoCode", "th");
         TH.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TH.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TH.webp"
         });
 
         // Tibetan
@@ -1181,7 +1181,7 @@ public class LanguageFlagConfig {
         BO.put("Local", "བོད་ཡིག");
         BO.put("isoCode", "bo");
         BO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CN.webp"
         });
 
         // Tigrinya
@@ -1189,8 +1189,8 @@ public class LanguageFlagConfig {
         TI.put("Local", "ትግርኛ");
         TI.put("isoCode", "ti");
         TI.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ER.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ET.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ER.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ET.webp"
         });
 
         // Tonga
@@ -1198,7 +1198,7 @@ public class LanguageFlagConfig {
         TO.put("Local", "Chitonga");
         TO.put("isoCode", "to");
         TO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TO.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TO.webp"
         });
 
         // Turkish
@@ -1206,8 +1206,8 @@ public class LanguageFlagConfig {
         TR.put("Local", "Türkçe");
         TR.put("isoCode", "tr");
         TR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TR.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CY.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TR.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CY.webp"
         });
 
         // Turkmen
@@ -1215,7 +1215,7 @@ public class LanguageFlagConfig {
         TK.put("Local", "Türkmençe");
         TK.put("isoCode", "tk");
         TK.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TM.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TM.webp"
         });
 
         // Ukrainian
@@ -1223,7 +1223,7 @@ public class LanguageFlagConfig {
         UK.put("Local", "Українська");
         UK.put("isoCode", "uk");
         UK.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/UA.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/UA.webp"
         });
 
         // Urdu
@@ -1231,8 +1231,8 @@ public class LanguageFlagConfig {
         UR.put("Local", "اردو");
         UR.put("isoCode", "ur");
         UR.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/PK.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/IN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/PK.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/IN.webp"
         });
 
         // Uyghur
@@ -1240,7 +1240,7 @@ public class LanguageFlagConfig {
         UG.put("Local", "ئۇيغۇرچە");
         UG.put("isoCode", "ug");
         UG.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/CN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/CN.webp"
         });
 
         // Uzbek
@@ -1248,7 +1248,7 @@ public class LanguageFlagConfig {
         UZ.put("Local", "Oʻzbekcha");
         UZ.put("isoCode", "uz");
         UZ.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/UZ.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/UZ.webp"
         });
 
         // Vietnamese
@@ -1256,7 +1256,7 @@ public class LanguageFlagConfig {
         VI.put("Local", "TiếngViệt");
         VI.put("isoCode", "vi");
         VI.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/VN.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/VN.webp"
         });
 
         // Welsh
@@ -1264,7 +1264,7 @@ public class LanguageFlagConfig {
         CY.put("Local", "Cymraeg");
         CY.put("isoCode", "cy");
         CY.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GB.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GB.webp"
         });
 
         // Western Frisian
@@ -1272,7 +1272,7 @@ public class LanguageFlagConfig {
         FY.put("Local", "Frysk");
         FY.put("isoCode", "fy");
         FY.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NL.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NL.webp"
         });
 
         // Wolof
@@ -1280,8 +1280,8 @@ public class LanguageFlagConfig {
         WO.put("Local", "Wolof");
         WO.put("isoCode", "wo");
         WO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/SN.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/GM.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/SN.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/GM.webp"
         });
 
         // Xhosa
@@ -1289,7 +1289,7 @@ public class LanguageFlagConfig {
         XH.put("Local", "isiXhosa");
         XH.put("isoCode", "xh");
         XH.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ZA.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ZA.webp"
         });
 
         // Yiddish
@@ -1297,7 +1297,7 @@ public class LanguageFlagConfig {
         YI.put("Local", "ייִדיש");
         YI.put("isoCode", "yi");
         YI.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/DE.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/DE.webp"
         });
 
         // Yoruba
@@ -1305,9 +1305,9 @@ public class LanguageFlagConfig {
         YO.put("Local", "Yorùbá");
         YO.put("isoCode", "yo");
         YO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/NG.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/BJ.png",
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/TG.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/NG.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/BJ.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TG.webp"
         });
 
         // Zulu
@@ -1315,7 +1315,7 @@ public class LanguageFlagConfig {
         ZU.put("Local", "isiZulu");
         ZU.put("isoCode", "zu");
         ZU.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag/ZA.png"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ZA.webp"
         });
     }
 
