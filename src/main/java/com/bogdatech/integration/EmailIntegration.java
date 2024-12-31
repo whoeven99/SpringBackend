@@ -84,11 +84,12 @@ public class EmailIntegration {
     }
 
     //腾讯邮件发送
-    public void sendEmailByTencent(TencentSendEmailRequest tencentSendEmailRequest) {
+    public Boolean sendEmailByTencent(TencentSendEmailRequest tencentSendEmailRequest) {
         Map<String, String> templateData = tencentSendEmailRequest.getTemplateData();
         ObjectMapper objectMapper = new ObjectMapper();
 
-        try{
+        String jsonString = null;
+        try {
             Credential cred = new Credential(System.getenv("Tencent_Cloud_KEY_ID"), System.getenv("Tencent_Cloud_KEY"));
             String templateDataJson = objectMapper.writeValueAsString(templateData);
             // 实例化一个http选项，可选的，没有特殊需求可以跳过
@@ -115,12 +116,14 @@ public class EmailIntegration {
             // 返回的resp是一个SendEmailResponse的实例，与请求对象对应
             SendEmailResponse resp = client.SendEmail(req);
             // 输出json格式的字符串回包
-            System.out.println(AbstractModel.toJsonString(resp));
+            jsonString = AbstractModel.toJsonString(resp);
         } catch (TencentCloudSDKException e) {
             System.out.println(e.toString());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-//        return "Success";
+        //判断服务的返回值是否含有RequestId
+        assert jsonString != null;
+        return jsonString.contains("RequestId");
+        }
     }
-}

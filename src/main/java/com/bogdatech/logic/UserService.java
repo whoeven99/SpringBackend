@@ -8,7 +8,6 @@ import com.bogdatech.entity.UsersDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
-import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +24,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.bogdatech.constants.MailChimpConstants.FIRST_INSTALL_SUBJECT;
-import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
 
 @Component
 @Transactional
@@ -57,10 +53,10 @@ public class UserService {
         if (i > 0) {
 
             //首次登陆 发送邮件
-            Map<String, String> templateData = new HashMap<>();
-            templateData.put("user",  usersDO.getFirstName());
-            emailIntegration.sendEmailByTencent(
-                    new TencentSendEmailRequest(133142L, templateData, FIRST_INSTALL_SUBJECT , TENCENT_FROM_EMAIL, usersDO.getEmail()));
+//            Map<String, String> templateData = new HashMap<>();
+//            templateData.put("user",  usersDO.getFirstName());
+//            emailIntegration.sendEmailByTencent(
+//                    new TencentSendEmailRequest(133142L, templateData, FIRST_INSTALL_SUBJECT , TENCENT_FROM_EMAIL, usersDO.getEmail()));
 
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
