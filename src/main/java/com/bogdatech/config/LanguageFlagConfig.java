@@ -396,7 +396,7 @@ public class LanguageFlagConfig {
         EO.put("Local", "Esperanto");
         EO.put("isoCode", "eo");
         EO.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/union.jpeg"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/UN.webp"
         });
 
         // Estonian
@@ -576,7 +576,7 @@ public class LanguageFlagConfig {
         IA.put("Local", "Interlingua");
         IA.put("isoCode", "ia");
         IA.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/union.jpeg"
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/UN.webp"
         });
 
         // Irish

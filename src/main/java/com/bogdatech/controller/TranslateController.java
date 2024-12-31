@@ -14,6 +14,7 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -118,7 +119,8 @@ public class TranslateController {
      */
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
-
+        LocalDateTime begin = LocalDateTime.now();
+        System.out.println("begin: " + begin);
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
@@ -130,7 +132,7 @@ public class TranslateController {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
-        //翻译
+//        //翻译
         try {
             translateService.startTranslation(request, remainingChars, counter);
         } catch (Exception e) {
@@ -143,6 +145,8 @@ public class TranslateController {
             throw e;
         }
 
+        //翻译成功后发送翻译成功的邮件
+//        translateService.translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
 
@@ -209,8 +213,8 @@ public class TranslateController {
     public void insertTargets(@RequestBody TargetListRequest request) {
         List<String> targetList = request.getTargetList();
         for (String target : targetList
-             ) {
-            TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(),  request.getSource(), target, null );
+        ) {
+            TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), request.getSource(), target, null);
             translateService.insertLanguageStatus(request1);
         }
     }
