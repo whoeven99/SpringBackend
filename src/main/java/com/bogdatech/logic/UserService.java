@@ -6,6 +6,7 @@ import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.enums.ErrorEnum;
+import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -33,22 +34,30 @@ public class UserService {
     private final ITranslationCounterService translationCounterService;
     private final IAILanguagePacksService aiLanguagePacksService;
     private final IUserSubscriptionsService userSubscriptionsService;
+    private final EmailIntegration emailIntegration;
     TelemetryClient appInsights = new TelemetryClient();
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
     @Autowired
-    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService) {
+    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration) {
         this.usersService = usersService;
         this.taskScheduler = taskScheduler;
         this.translationCounterService = translationCounterService;
         this.aiLanguagePacksService = aiLanguagePacksService;
         this.userSubscriptionsService = userSubscriptionsService;
+        this.emailIntegration = emailIntegration;
     }
 
     //添加用户
     public BaseResponse<Object> addUser(UsersDO usersDO) {
         int i = usersService.addUser(usersDO);
         if (i > 0) {
-            //TODO: 发送邮件
+
+            //首次登陆 发送邮件
+//            Map<String, String> templateData = new HashMap<>();
+//            templateData.put("user",  usersDO.getFirstName());
+//            emailIntegration.sendEmailByTencent(
+//                    new TencentSendEmailRequest(133142L, templateData, FIRST_INSTALL_SUBJECT , TENCENT_FROM_EMAIL, usersDO.getEmail()));
+
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);

@@ -5,10 +5,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.*;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.ChatGptIntegration;
-import com.bogdatech.integration.ShopifyHttpIntegration;
-import com.bogdatech.integration.TestingEnvironmentIntegration;
-import com.bogdatech.integration.TranslateApiIntegration;
+import com.bogdatech.integration.*;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -28,6 +25,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,6 +58,8 @@ public class TranslateService {
     private final ChatGptIntegration chatGptIntegration;
     private final JsoupUtils jsoupUtils;
     private final IAILanguagePacksService aiLanguagePacksService;
+    private final IUsersService usersService;
+    private final EmailIntegration emailIntegration;
 
     @Autowired
     public TranslateService(
@@ -73,8 +74,9 @@ public class TranslateService {
             AILanguagePackService aiLanguagePackService,
             ChatGptIntegration chatGptIntegration,
             JsoupUtils jsoupUtils,
-            IAILanguagePacksService aiLanguagePacksService
-    ) {
+            IAILanguagePacksService aiLanguagePacksService,
+            IUsersService usersService,
+            EmailIntegration emailIntegration) {
         this.translateApiIntegration = translateApiIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
@@ -87,6 +89,8 @@ public class TranslateService {
         this.chatGptIntegration = chatGptIntegration;
         this.jsoupUtils = jsoupUtils;
         this.aiLanguagePacksService = aiLanguagePacksService;
+        this.usersService = usersService;
+        this.emailIntegration = emailIntegration;
     }
 
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
@@ -513,7 +517,7 @@ public class TranslateService {
         try {
             String translatedText;
             if (value.length() > 40) {
-                counter.addChars(calculateToken(translateContext.getAiLanguagePacksDO().getPromotWord() + value , translateContext.getAiLanguagePacksDO().getDeductionRate()));
+                counter.addChars(calculateToken(translateContext.getAiLanguagePacksDO().getPromotWord() + value, translateContext.getAiLanguagePacksDO().getDeductionRate()));
                 translatedText = chatGptIntegration.chatWithGpt(translateContext.getAiLanguagePacksDO().getPromotWord() + value);
                 counter.addChars(calculateToken(translatedText, translateContext.getAiLanguagePacksDO().getDeductionRate()));
             } else {
@@ -778,7 +782,7 @@ public class TranslateService {
             //获取缓存数据
             String targetCache = translateSingleLine(value, request.getTarget());
             if (targetCache != null) {
-                counter.addChars(calculateToken(targetCache,1));
+                counter.addChars(calculateToken(targetCache, 1));
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
             }
@@ -1185,6 +1189,58 @@ public class TranslateService {
             translateTextService.getExistTranslateTextList(list);
         }
     }
+
+    //翻译成功后发送邮件
+    public void translateSuccessEmail(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int beginChars, Integer remainingChars) {
+        String shopName = request.getShopName();
+        //通过shopName获取用户信息 需要 {{user}} {{language}} {{credit_count}} {{time}} {{remaining_credits}}
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("user", usersDO.getFirstName());
+        templateData.put("language", request.getTarget());
+        System.out.println("user: " + usersDO.getFirstName());
+        System.out.println("language: " + request.getTarget());
+
+        //获取更新前后的时间
+        LocalDateTime end = LocalDateTime.now();
+        System.out.println("end date: " + end);
+        Duration duration = Duration.between(begin, end);
+        long costTime = duration.toMinutes();
+        templateData.put("time", String.valueOf(costTime));
+        System.out.println("costTime: " + costTime);
+
+        //共消耗的字符数
+        counter.addChars(1);
+        int endChars = counter.getTotalChars();
+        int costChars = endChars - beginChars;
+        templateData.put("credit_count", String.valueOf(costChars));
+        System.out.println("credit_count: " + costChars);
+        //还剩下的字符数
+        int remaining = remainingChars - endChars;
+        if (remaining < 0) {
+            templateData.put("remaining_credits", "0");
+            System.out.println("remaining_credits: 0");
+        } else {
+            templateData.put("remaining_credits", String.valueOf(remaining));
+            System.out.println("remaining_credits: " + remaining);
+        }
+
+        System.out.println("templateData: " + templateData.toString());
+        //由腾讯发送邮件
+//        emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133297L, templateData, SUCCESSFUL_TRANSLATION, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+
+    }
+
+    //翻译失败后发送邮件
+    public void translateFailEmail(String shopName, String errorReason) {
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("user", usersDO.getFirstName());
+
+        //错误原因
+    }
+
+
 
     //插入翻译状态
 //    @Async
