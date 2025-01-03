@@ -204,14 +204,5 @@ public class TranslateController {
         }
     }
 
-    //停止翻译
-    @PostMapping("/stopTranslate")
-    public BaseResponse<Object> stopTranslate(@RequestBody TranslateRequest request) {
-        Boolean b = translateService.stopTranslationManual(request.getShopName());
-        if (b) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
-        }else {
-            return new BaseResponse<>().CreateErrorResponse("Manual translation failed");
-        }
-    }
+
 }

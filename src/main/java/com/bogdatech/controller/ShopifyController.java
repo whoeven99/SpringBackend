@@ -149,7 +149,7 @@ public class ShopifyController {
     }
 
     //修改单行文本
-    @PutMapping("/updateItem")
+    @PostMapping("/updateItem")
     public String updateItem(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
         return shopifyService.updateShopifySingleData(registerTransactionRequest);
     }
