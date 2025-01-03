@@ -35,7 +35,7 @@ public class EmailController {
 //        return null;
     }
 
-    //由腾讯发送
+    //由腾讯发送邮件
     @PostMapping("/sendByTencent")
     public void sendEmailByTencent(@RequestBody TencentSendEmailRequest TencentSendEmailRequest) {
         tencentEmailService.sendEmailByEmail(TencentSendEmailRequest);
@@ -50,6 +50,7 @@ public class EmailController {
         }else {
             return new BaseResponse<>().CreateErrorResponse("false");
         }
-
     }
+
+
 }

@@ -1,6 +1,7 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.Service.ICharsOrdersService;
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.CharsOrdersDO;
 import com.bogdatech.entity.UsersDO;
@@ -23,12 +24,14 @@ public class OrderService {
     private final ICharsOrdersService charsOrdersService;
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
+    private final ITranslationCounterService translationCounterService;
     TelemetryClient appInsights = new TelemetryClient();
     @Autowired
-    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration){
+    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService){
     this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
+        this.translationCounterService = translationCounterService;
     }
 
     public Boolean insertOrUpdateOrder(CharsOrdersDO charsOrdersDO) {
@@ -49,8 +52,13 @@ public class OrderService {
         UsersDO usersDO = usersService.getUserByName(purchaseSuccessRequest.getShopName());
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
-//        templateData.put("order", purchaseSuccessRequest.getOrder());
-        //TODO: 完善变量值
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133297L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        templateData.put("number_of_credits", purchaseSuccessRequest.getCredit() + " Credits");
+        templateData.put("amount", purchaseSuccessRequest.getAmount() + " $");
+
+        //获取用户现在总共的值
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(purchaseSuccessRequest.getShopName());
+        templateData.put("total_credits_count", remainingChars + " Credits");
+
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133302L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 }

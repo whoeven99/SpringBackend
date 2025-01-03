@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EmailDO {
-    private String id;
+    private Integer id;
     private String shopName;
     private String fromSend;
     private String toSend;
