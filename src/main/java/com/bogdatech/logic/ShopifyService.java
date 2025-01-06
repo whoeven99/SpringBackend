@@ -45,6 +45,7 @@ import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
+import static com.bogdatech.utils.StringUtils.countWords;
 
 @Component
 public class ShopifyService {
@@ -219,11 +220,8 @@ public class ShopifyService {
             case "tokens":
                 calculateExactToken(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO);
                 break;
-            case "items":
-
-                break;
             case "words":
-
+                estimatedTranslationWords(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO);
                 break;
         }
 //            counter.addChars(calculateToken(value, 1));
@@ -231,6 +229,59 @@ public class ShopifyService {
 //            if (translatedContent.contains(contentItemNode.get("key").asText())) {
 //                translatedCounter.addChars(value.length());
 //            }
+    }
+
+    private void estimatedTranslationWords(ArrayNode contentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter, List<String> translatedContent, TranslateResourceDTO translateResourceDTO) {
+        for (JsonNode contentItem : contentNode) {
+            ObjectNode contentItemNode = (ObjectNode) contentItem;
+            //打印当前遍历的值 为什么部分不翻译
+            // 跳过 key 为 "handle" 的项
+            if ("handle".equals(contentItemNode.get("key").asText())
+                    || "JSON".equals(contentItemNode.get("type").asText())
+                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
+            ) {
+                continue;  // 跳过当前项
+            }
+
+            String value = contentItemNode.get("value").asText();
+
+            //如果value为空跳过
+            if (value.isEmpty()) {
+                continue;
+            }
+
+            //处理用AI翻译包翻译的类型
+            String resourceType = translateResourceDTO.getResourceType();
+            if (PRODUCT.equals(resourceType)
+                    || PRODUCT_OPTION.equals(resourceType)
+                    || PRODUCT_OPTION_VALUE.equals(resourceType)
+                    || BLOG.equals(resourceType)
+                    || ARTICLE.equals(resourceType)) {
+
+                //处理html数据
+                if ("HTML".equals(contentItemNode.get("type").asText())) {
+                    Document doc = Jsoup.parse(contentItemNode.get("value").asText());
+                    extractTextsToCount(doc, counter);
+                    continue;
+                }
+                if (value.length() > 40) {
+//                    String s = value + " Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: ";
+//                    counter.addChars(countWords(s));
+                    counter.addChars(countWords(value));
+                } else {
+                    counter.addChars(countWords(value));
+                }
+                continue;
+            }
+//             获取 value
+            //处理html的数据
+            if ("HTML".equals(contentItemNode.get("type").asText())) {
+                Document doc = Jsoup.parse(contentItemNode.get("value").asText());
+                extractTextsToCount(doc, counter);
+                continue;
+            }
+            counter.addChars(countWords(value));
+        }
     }
 
     //计算精确值
@@ -289,7 +340,6 @@ public class ShopifyService {
     }
     // 提取需要翻译的文本（包括文本和alt属性）
     public void extractTextsToTranslate(Document doc, CharacterCountUtils counter) {
-        Map<Element, List<String>> elementTextMap = new HashMap<>();
         for (Element element : doc.getAllElements()) {
             if (!element.is("script, style")) { // 忽略script和style标签
                 List<String> texts = new ArrayList<>();
@@ -324,6 +374,48 @@ public class ShopifyService {
             }
         }
     }
+
+    public void extractTextsToCount(Document doc, CharacterCountUtils counter) {
+        // 使用 StringBuilder 减少字符串拼接的开销
+        StringBuilder translationTextBuilder = new StringBuilder();
+
+        for (Element element : doc.getAllElements()) {
+            if (!element.is("script, style")) { // 忽略script和style标签
+                processTextElement(element, counter, translationTextBuilder);
+
+                // 提取 alt 属性
+                if (element.hasAttr("alt")) {
+                    String altText = element.attr("alt").trim();
+                    if (!altText.isEmpty()) {
+                        processTextForTranslation(altText, counter, translationTextBuilder);
+                    }
+                }
+            }
+        }
+    }
+
+    private void processTextElement(Element element, CharacterCountUtils counter, StringBuilder translationTextBuilder) {
+        String text = element.ownText().trim();
+        if (!text.isEmpty()) {
+            processTextForTranslation(text, counter, translationTextBuilder);
+        }
+    }
+
+    private void processTextForTranslation(String text, CharacterCountUtils counter, StringBuilder translationTextBuilder) {
+        if (text.length() > 40) {
+            // 清空 StringBuilder，避免每次拼接时创建新的字符串对象
+            translationTextBuilder.setLength(0);
+//            translationTextBuilder.append(text)
+//                    .append(" Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required. Please keep the text format unchanged. Punctuation should be consistent with the original text. Translate: ");
+
+            // 计算字符数
+//            counter.addChars(countWords(translationTextBuilder.toString()));
+            counter.addChars(countWords(text));
+        } else {
+            counter.addChars(countWords(text));
+        }
+    }
+
 
     @Async
     public void translateTexts(Map<Element, List<String>> elementTextMap,

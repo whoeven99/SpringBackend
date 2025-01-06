@@ -56,4 +56,15 @@ public class StringUtils {
         prompt = prompt.replaceFirst("\\{\\{product\\}\\}", translateResourceType);
         return prompt.replaceFirst("\\{\\{Chinese\\}\\}", target);
     }
+
+    //计算一段文本中的单词数
+    public static int countWords(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return 0;
+        }
+        // 用正则表达式匹配单词
+        String[] words = text.trim().split("[\\s\\p{Punct}]+");
+//        System.out.println("words: " + Arrays.toString(words));
+        return words.length;
+    }
 }

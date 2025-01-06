@@ -25,6 +25,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
+import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -168,7 +169,7 @@ public class TranslateService {
 
     //封装调用云服务器实现获取谷歌翻译数据的方法
     public String getGoogleTranslateData(TranslateRequest request) {
-        //TODO：调用google翻译前需要先判断 是否是google支持的语言 如果不支持改用AI翻译
+
 
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
@@ -765,7 +766,6 @@ public class TranslateService {
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
             if (checkIsStopped(request.getShopName(), counter)) return;
-
             String value = registerTransactionRequest.getValue();
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
@@ -1249,9 +1249,11 @@ public class TranslateService {
         templateData.put("time", costTime + " minutes");
 
         //共消耗的字符数
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         int endChars = counter.getTotalChars();
         int costChars = endChars - beginChars;
-        templateData.put("credit_count", String.valueOf(costChars));
+        String formattedNumber = formatter.format(costChars);
+        templateData.put("credit_count", formattedNumber);
 
         //还剩下的字符数
         int remaining = remainingChars - endChars;
@@ -1259,7 +1261,8 @@ public class TranslateService {
             templateData.put("remaining_credits", "0");
 
         } else {
-            templateData.put("remaining_credits", String.valueOf(remaining));
+            String formattedNumber2 = formatter.format(remaining);
+            templateData.put("remaining_credits", formattedNumber2);
         }
 
         //由腾讯发送邮件

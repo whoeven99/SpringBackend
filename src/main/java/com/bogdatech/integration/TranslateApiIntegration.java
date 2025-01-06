@@ -105,7 +105,7 @@ public class TranslateApiIntegration {
         // 执行请求
         JSONObject jsonObject;
         try (CloseableHttpClient httpClient = HttpClients.createDefault();
-                CloseableHttpResponse response = httpClient.execute(httpPost)) {
+             CloseableHttpResponse response = httpClient.execute(httpPost)) {
             // 获取响应实体并转换为字符串
             HttpEntity responseEntity = response.getEntity();
             String responseBody = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);

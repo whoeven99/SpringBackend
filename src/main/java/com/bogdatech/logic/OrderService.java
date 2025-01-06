@@ -12,8 +12,10 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.bogdatech.constants.MailChimpConstants.CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT;
@@ -51,13 +53,16 @@ public class OrderService {
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(purchaseSuccessRequest.getShopName());
         Map<String, String> templateData = new HashMap<>();
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        String formattedNumber = formatter.format(purchaseSuccessRequest.getCredit());
         templateData.put("user", usersDO.getFirstName());
-        templateData.put("number_of_credits", purchaseSuccessRequest.getCredit() + " Credits");
-        templateData.put("amount", purchaseSuccessRequest.getAmount() + " $");
+        templateData.put("number_of_credits", formattedNumber + " Credits");
+        templateData.put("amount", String.format("%.2f", purchaseSuccessRequest.getAmount()) + " $");
 
         //获取用户现在总共的值
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(purchaseSuccessRequest.getShopName());
-        templateData.put("total_credits_count", remainingChars + " Credits");
+        String formattedNumber2 = formatter.format(remainingChars);
+        templateData.put("total_credits_count", formattedNumber2 + " Credits");
 
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133302L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
