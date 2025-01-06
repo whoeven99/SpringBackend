@@ -216,6 +216,7 @@ public class ShopifyService {
     @Async
     public void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translatedCounter, List<String> translatedContent, TranslateResourceDTO translateResourceDTO, String method) {
         switch (method) {
+
             case "tokens":
                 calculateExactToken(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO);
                 break;
