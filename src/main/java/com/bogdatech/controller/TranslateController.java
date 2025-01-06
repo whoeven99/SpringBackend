@@ -4,7 +4,6 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.*;
@@ -14,10 +13,10 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 
@@ -119,34 +118,20 @@ public class TranslateController {
      */
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
-        LocalDateTime begin = LocalDateTime.now();
-        System.out.println("begin: " + begin);
+
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            return new BaseResponse<>().CreateErrorResponse("Character Limit Reached");
+            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         }
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
-//        //翻译
-        try {
-            translateService.startTranslation(request, remainingChars, counter);
-        } catch (Exception e) {
-            if (e instanceof ClientException && ((ClientException) e).getErrorMessage().equals("The translation task is in progress. Please try translating again later.")) {
-                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-                throw e;
-            }
-            translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
-            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-            throw e;
-        }
-
-        //翻译成功后发送翻译成功的邮件
-//        translateService.translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+//      翻译
+        translateService.startTranslation(request, remainingChars, counter, usedChars);
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
 
@@ -218,5 +203,6 @@ public class TranslateController {
             translateService.insertLanguageStatus(request1);
         }
     }
+
 
 }

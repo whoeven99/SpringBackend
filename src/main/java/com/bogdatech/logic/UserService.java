@@ -1,13 +1,12 @@
 package com.bogdatech.logic;
 
-import com.bogdatech.Service.IAILanguagePacksService;
-import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.Service.IUserSubscriptionsService;
-import com.bogdatech.Service.IUsersService;
+import com.bogdatech.Service.*;
+import com.bogdatech.entity.EmailDO;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
+import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.bogdatech.constants.MailChimpConstants.*;
+
 @Component
 @Transactional
 public class UserService {
@@ -35,16 +36,19 @@ public class UserService {
     private final IAILanguagePacksService aiLanguagePacksService;
     private final IUserSubscriptionsService userSubscriptionsService;
     private final EmailIntegration emailIntegration;
+    private final IEmailService emailServicel;
     TelemetryClient appInsights = new TelemetryClient();
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
+
     @Autowired
-    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration) {
+    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel) {
         this.usersService = usersService;
         this.taskScheduler = taskScheduler;
         this.translationCounterService = translationCounterService;
         this.aiLanguagePacksService = aiLanguagePacksService;
         this.userSubscriptionsService = userSubscriptionsService;
         this.emailIntegration = emailIntegration;
+        this.emailServicel = emailServicel;
     }
 
     //添加用户
@@ -53,12 +57,20 @@ public class UserService {
         if (i > 0) {
 
             //首次登陆 发送邮件
-//            Map<String, String> templateData = new HashMap<>();
-//            templateData.put("user",  usersDO.getFirstName());
-//            emailIntegration.sendEmailByTencent(
-//                    new TencentSendEmailRequest(133142L, templateData, FIRST_INSTALL_SUBJECT , TENCENT_FROM_EMAIL, usersDO.getEmail()));
+            Map<String, String> templateData = new HashMap<>();
+            templateData.put("user", usersDO.getFirstName());
+            Boolean flag1 = emailIntegration.sendEmailByTencent(
+                    new TencentSendEmailRequest(133300L, templateData, FIRST_INSTALL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
 
-            return new BaseResponse<>().CreateSuccessResponse(true);
+            //存数据库中
+            Integer flag2 = emailServicel.saveEmail(new EmailDO(0, usersDO.getShopName(), TENCENT_FROM_EMAIL, usersDO.getEmail(), FIRST_INSTALL_SUBJECT, flag1 ? 1 : 0));
+
+            if (flag2 > 0 && flag1) {
+                return new BaseResponse<>().CreateSuccessResponse(true);
+            }else {
+                return new BaseResponse<>().CreateErrorResponse(TENCENT_SEND_FAILED);
+            }
+
         } else {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
         }
@@ -88,7 +100,7 @@ public class UserService {
                 usersService.unInstallApp(userRequest);
                 success = true;  // 如果没有抛出异常，则表示执行成功，退出循环
             } catch (Exception e) {
-                System.out.println("Uninstallation failed, retrying...");
+            appInsights.trackTrace("Uninstallation failed, retrying...");
             }
         }
         return true;
@@ -123,11 +135,12 @@ public class UserService {
         //获取用户的登陆时间
         LoginAndUninstallRequest loginAndUninstallRequest = usersService.getUserLoginTime(shopName);
         //当登陆时间 > 卸载时间时，什么都不做； 当登陆时间 < 卸载时间时，删除数据
-        if (loginAndUninstallRequest.getLoginTime().before(loginAndUninstallRequest.getUninstallTime())){
+        if (loginAndUninstallRequest.getLoginTime().before(loginAndUninstallRequest.getUninstallTime())) {
             deleteUserData(shopName);
         }
     }
-    public void deleteUserData(String shopName){
+
+    public void deleteUserData(String shopName) {
         appInsights.trackTrace("删除数据: " + shopName);
         usersService.deleteUserGlossaryData(shopName);
         usersService.deleteCurrenciesData(shopName);
@@ -135,6 +148,7 @@ public class UserService {
         appInsights.trackTrace("删除数据完成: " + shopName);
 
     }
+
     public Boolean requestData() {
         return true;
     }
@@ -149,28 +163,28 @@ public class UserService {
         //查询用户是否初始化
         if (usersService.getUserByName(shopName) != null) {
             map.put("add", true);
-        }else {
+        } else {
             map.put("add", false);
         }
 
         //查询是否添加免费额度
-        if(translationCounterService.getMaxCharsByShopName(shopName) != null){
+        if (translationCounterService.getMaxCharsByShopName(shopName) != null) {
             map.put("insertCharsByShopName", true);
-        }else {
+        } else {
             map.put("insertCharsByShopName", false);
         }
 
         //查询是否添加默认语言包
         if (aiLanguagePacksService.getPackIdByShopName(shopName) != null) {
             map.put("addDefaultLanguagePack", true);
-        }else {
+        } else {
             map.put("addDefaultLanguagePack", false);
         }
 
         //查询是否添加用户付费计划
-        if(userSubscriptionsService.getUserSubscriptionPlan(shopName) != null){
+        if (userSubscriptionsService.getUserSubscriptionPlan(shopName) != null) {
             map.put("addUserSubscriptionPlan", true);
-        }else {
+        } else {
             map.put("addUserSubscriptionPlan", false);
         }
 

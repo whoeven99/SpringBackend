@@ -1,9 +1,12 @@
 package com.bogdatech.controller;
 
+import com.bogdatech.Service.IEmailService;
+import com.bogdatech.entity.EmailDO;
 import com.bogdatech.logic.MailChimpService;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.model.controller.request.MailChampSendEmailRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
+import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,10 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmailController {
     private final MailChimpService mailChimpService;
     private final TencentEmailService tencentEmailService;
+    private final IEmailService emailService;
     @Autowired
-    public EmailController(MailChimpService mailChimpService, TencentEmailService tencentEmailService) {
+    public EmailController(MailChimpService mailChimpService, TencentEmailService tencentEmailService, IEmailService emailService) {
         this.mailChimpService = mailChimpService;
         this.tencentEmailService = tencentEmailService;
+        this.emailService = emailService;
     }
 
     @PostMapping("/send")
@@ -30,9 +35,22 @@ public class EmailController {
 //        return null;
     }
 
-    //由腾讯发送
+    //由腾讯发送邮件
     @PostMapping("/sendByTencent")
     public void sendEmailByTencent(@RequestBody TencentSendEmailRequest TencentSendEmailRequest) {
         tencentEmailService.sendEmailByEmail(TencentSendEmailRequest);
     }
+
+    //将翻译的数据存储到数据库
+    @PostMapping("/saveEmail")
+    public BaseResponse<Object> saveTranslate(@RequestBody EmailDO emailDO) {
+        Integer i = emailService.saveEmail(emailDO);
+        if (i > 0 ){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("false");
+        }
+    }
+
+
 }

@@ -1,6 +1,7 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.Service.ICharsOrdersService;
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.CharsOrdersDO;
 import com.bogdatech.entity.UsersDO;
@@ -11,8 +12,10 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.bogdatech.constants.MailChimpConstants.CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT;
@@ -23,12 +26,14 @@ public class OrderService {
     private final ICharsOrdersService charsOrdersService;
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
+    private final ITranslationCounterService translationCounterService;
     TelemetryClient appInsights = new TelemetryClient();
     @Autowired
-    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration){
+    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService){
     this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
+        this.translationCounterService = translationCounterService;
     }
 
     public Boolean insertOrUpdateOrder(CharsOrdersDO charsOrdersDO) {
@@ -48,9 +53,17 @@ public class OrderService {
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(purchaseSuccessRequest.getShopName());
         Map<String, String> templateData = new HashMap<>();
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        String formattedNumber = formatter.format(purchaseSuccessRequest.getCredit());
         templateData.put("user", usersDO.getFirstName());
-//        templateData.put("order", purchaseSuccessRequest.getOrder());
-        //TODO: 完善变量值
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133297L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        templateData.put("number_of_credits", formattedNumber + " Credits");
+        templateData.put("amount", String.format("%.2f", purchaseSuccessRequest.getAmount()) + " $");
+
+        //获取用户现在总共的值
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(purchaseSuccessRequest.getShopName());
+        String formattedNumber2 = formatter.format(remainingChars);
+        templateData.put("total_credits_count", formattedNumber2 + " Credits");
+
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133302L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 }

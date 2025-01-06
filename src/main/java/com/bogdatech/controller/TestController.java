@@ -7,11 +7,18 @@ import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TestService;
+import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+
+import static com.bogdatech.utils.StringUtils.countWords;
 
 @RestController
 public class TestController {
@@ -19,13 +26,15 @@ public class TestController {
     private final ChatGptIntegration chatGptIntegration;
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final TestService testService;
+    private final TranslateService translateService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.testService = testService;
+        this.translateService = translateService;
     }
 //	@GetMapping("/test")
 //	public List<JdbcTestModel> test() {
@@ -70,37 +79,25 @@ public class TestController {
     public void stop() {
         testService.stopTask();
     }
+
+    @GetMapping("/countWords")
+    public int countWord(@RequestParam String text) {
+//        System.out.println("要计数的文本：" + text);
+        return countWords(text);
+    }
+
+    //发送成功翻译的邮件
+    @GetMapping("/sendEmail")
+    public void sendEmail() {
+        CharacterCountUtils characterCount = new CharacterCountUtils();
+        characterCount.addChars(10000);
+        LocalDateTime localDateTime = LocalDateTime.now();
+        translateService.translateSuccessEmail(new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", null), characterCount, localDateTime, 0, 12311);
+    }
 //    //获取tokens里面的数据
 //    @GetMapping("/getToken")
 //    public void getToken() {
 //        System.out.println("tokens: " + tokens.toString());
 //    }
-    //微软翻译API(待删）
-//    @PostMapping("/testAzure")
-//    public String testAzure(@RequestBody TranslateRequest request) {
-//        return translateApiIntegration.microsoftTranslate(request);
-//    }
 
-    //火山翻译API(待删）
-//    @PostMapping("/testVolcano")
-//    public String testVolcano(@RequestBody TranslateRequest request) {
-//        return translateApiIntegration.huoShanTranslate(request);
-//    }
-
-//    @PostMapping("/test")
-//    public String test(@RequestBody String content) {
-//
-////        try {
-////            // 使用 JSoup 将 HTML 内容转换为 Document
-////            Document document = Jsoup.parse(content);
-////            // 获取纯文本内容，去掉 HTML 标签
-////            String textContent = document.text();
-////            System.out.println("text: " + textContent);
-////            return new ResponseEntity<>(textContent, HttpStatus.OK);
-////        } catch (Exception e) {
-////            return new ResponseEntity<>("Failed to parse HTML content", HttpStatus.INTERNAL_SERVER_ERROR);
-////        }
-////        return jsoupUtils.isHtml(content);
-//        return jsoupUtils.translateHtml(content, new TranslateRequest(0,null, null, "en", "zh-CN", content ), new CharacterCountUtils(), new AILanguagePacksDO(0,"General", null, "Accurately translate the product data of the e-commerce website into zh-CN. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: " + content, 1));
-//    }
 }
