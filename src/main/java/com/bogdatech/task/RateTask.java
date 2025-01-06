@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
-import static com.bogdatech.integration.RateHttpIntegration.rateMap;
-
 @Component
 @EnableScheduling
 @EnableAsync
@@ -29,6 +27,6 @@ public class RateTask {
 //        System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
         //改为存储在缓存中（后面存储到redis中）
         rateHttpIntegration.getFixerRate();
-        System.out.println("rateMap: " + rateMap.toString());
+//        System.out.println("rateMap: " + rateMap.toString());
     }
 }
