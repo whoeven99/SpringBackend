@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PurchaseSuccessRequest {
     private String shopName;
-    private Integer amount;
-    private Integer credit;
+    private double amount;
+    private double credit;
 }

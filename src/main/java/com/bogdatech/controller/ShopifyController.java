@@ -73,10 +73,10 @@ public class ShopifyController {
         return new BaseResponse<>().CreateSuccessResponse(translatesDos);
     }
 
-    //查询需要翻译的总字数-已翻译字符数
+    //查询需要翻译的总字数-已翻译字符数. 计算翻译的项数
     @PostMapping("/getTotalWords")
-    public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(shopifyService.getTotalWords(shopifyRequest));
+    public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String method) {
+        return new BaseResponse<>().CreateSuccessResponse(shopifyService.getTotalWords(shopifyRequest, method));
     }
 
     //根据前端的传值,更新shopify后台和数据库

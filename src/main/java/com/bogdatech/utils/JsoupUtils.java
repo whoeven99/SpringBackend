@@ -167,7 +167,6 @@ public class JsoupUtils {
             List<String> translatedTexts = new ArrayList<>();
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
-
                 if (translated != null) {
                     counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
@@ -277,4 +276,38 @@ public class JsoupUtils {
         }
         return null;
     }
+
+    //TODO：调用google翻译前需要先判断 是否是google支持的语言 如果不支持改用AI翻译
+    public String googleTranslateJudgeCode(TranslateRequest request, AILanguagePacksDO aiLanguagePacksDO) {
+        String target = request.getTarget();
+        String source = request.getSource();
+        if (googleTransformCode.contains(target) || googleTransformCode.contains(source)) {
+            return chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + request.getContent());
+        }
+        return translateApiIntegration.googleTranslate(request);
+    }
+
+    public  String googleTransformCode = """
+               ce
+               kw
+               fo
+               ia
+               kl
+               ks
+               ki
+               lu
+               gv
+               nd
+               se
+               nb
+               nn
+               os
+               rm
+               sc
+               ii
+               bo
+               to
+               wo""";
+
+
 }

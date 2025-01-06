@@ -25,6 +25,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
+import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -124,7 +125,7 @@ public class TranslateService {
             }
             //         更新数据库中的已使用字符数
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-            // 将翻译状态改为“已翻译”// TODO: 正常来说是部分翻译，逻辑后面再改
+            // 将翻译状态改为“已翻译”//
             translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
             translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
@@ -168,6 +169,8 @@ public class TranslateService {
 
     //封装调用云服务器实现获取谷歌翻译数据的方法
     public String getGoogleTranslateData(TranslateRequest request) {
+
+
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
         String string;
@@ -188,7 +191,7 @@ public class TranslateService {
         try {
             String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
             testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
-        } catch (JsonProcessingException e) {
+        } catch (JsonProcessingException | ClientException e) {
             appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
 //            throw new ClientException("Failed to deposit locally");
         }
@@ -247,26 +250,12 @@ public class TranslateService {
                 shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
             } catch (Exception e) {
                 // 如果出现异常，则跳过, 翻译其他的内容
+                //更新当前字符数
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                 continue;
             }
             TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, aiLanguagePacksDO);
             translateJson(translateContext);
-//            try {
-//                // 假设这里调用的translateJson包含异步方法
-//                Future<Void> future = translateJson(translateContext);
-//                // 等待异步任务完成并捕获异常
-//                future.get();  // 这将抛出异常，如果异步方法中抛出了异常
-//            } catch (ClientException e) {
-//                // 处理字符限制异常
-//                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-//                translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
-//                return;
-//            } catch (ExecutionException | InterruptedException e) {
-//                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-//                translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
-//                appInsights.trackTrace("翻译失败" + e.getMessage());
-//                throw new RuntimeException(e);
-//            }
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter)) return;
         }
@@ -777,7 +766,6 @@ public class TranslateService {
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
             if (checkIsStopped(request.getShopName(), counter)) return;
-
             String value = registerTransactionRequest.getValue();
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
@@ -1261,9 +1249,11 @@ public class TranslateService {
         templateData.put("time", costTime + " minutes");
 
         //共消耗的字符数
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         int endChars = counter.getTotalChars();
         int costChars = endChars - beginChars;
-        templateData.put("credit_count", String.valueOf(costChars));
+        String formattedNumber = formatter.format(costChars);
+        templateData.put("credit_count", formattedNumber);
 
         //还剩下的字符数
         int remaining = remainingChars - endChars;
@@ -1271,7 +1261,8 @@ public class TranslateService {
             templateData.put("remaining_credits", "0");
 
         } else {
-            templateData.put("remaining_credits", String.valueOf(remaining));
+            String formattedNumber2 = formatter.format(remaining);
+            templateData.put("remaining_credits", formattedNumber2);
         }
 
         //由腾讯发送邮件
