@@ -26,19 +26,23 @@ import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
 @Slf4j
 public class JsoupUtils {
 
-    @Autowired
-    private TranslateApiIntegration translateApiIntegration;
-    @Autowired
-    private ChatGptIntegration chatGptIntegration;
-
+    private final TranslateApiIntegration translateApiIntegration;
+    private final ChatGptIntegration chatGptIntegration;
     TelemetryClient appInsights = new TelemetryClient();
+
+    @Autowired
+    public JsoupUtils(TranslateApiIntegration translateApiIntegration, ChatGptIntegration chatGptIntegration) {
+        this.translateApiIntegration = translateApiIntegration;
+        this.chatGptIntegration = chatGptIntegration;
+    }
+
     public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
         Document doc = Jsoup.parse(html);
         String target = request.getTarget();
         List<String> textsToTranslate = new ArrayList<>();
         List<String> altsToTranslate = new ArrayList<>();
-        List<Element> elementsWithText = new ArrayList<>();
-        List<Element> elementsWithAlt = new ArrayList<>();
+        Map<Element, String> elementsWithText = new HashMap<>();
+        Map<Element, String> elementsWithAlt = new HashMap<>();
 
         // Extract text and alt attributes to translate
         Elements elements = doc.getAllElements();
@@ -47,110 +51,80 @@ public class JsoupUtils {
                 String text = element.ownText();
                 if (!text.trim().isEmpty()) {
                     textsToTranslate.add(text);
-                    elementsWithText.add(element);
+                    elementsWithText.put(element, text);
                 }
                 if (element.hasAttr("alt")) {
                     String altText = element.attr("alt");
                     altsToTranslate.add(altText);
-                    elementsWithAlt.add(element);
+                    elementsWithAlt.put(element, altText);
                 }
             }
         }
 
-        // Translate texts and alt attributes
-        List<String> translatedTexts = new ArrayList<>();
-        List<String> translatedAlts = new ArrayList<>();
+        // Translate texts and alt attributes using a helper method
         try {
-            // Translate main text
-            for (String text : textsToTranslate) {
-                String translated = translateSingleLine(text, target);
+            List<String> translatedTexts = translateTexts(textsToTranslate, target, request, counter, aiLanguagePacksDO);
+            List<String> translatedAlts = translateTexts(altsToTranslate, target, request, counter, aiLanguagePacksDO);
 
-                String targetString;
-                if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
-                    translatedTexts.add(translated);
-                } else {
-                    request.setContent(text);
-
-                    try {
-                        if (text.length() > 40) {
-                            //AI翻译
-                            counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
-                            targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
-                            counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
-                        } else {
-                            counter.addChars(calculateToken(text, 1));
-                            targetString = translateApiIntegration.googleTranslate(request);
-//                            targetString = translateApiIntegration.microsoftTranslate(request);
-                        }
-                    } catch (Exception e) {
-                        // 如果AI翻译失败，则使用谷歌翻译
-                        counter.addChars(calculateToken(text, 1));
-                        targetString = translateApiIntegration.googleTranslate(request);
-//                        targetString = translateApiIntegration.microsoftTranslate(request);
-                        addData(target, text, targetString);
-                        translatedTexts.add(targetString);
-                        continue;
-                    }
-                    addData(target, text, targetString);
-                    translatedTexts.add(targetString);
-                }
-            }
-
-            // Translate alt text
-            for (String altText : altsToTranslate) {
-                String translated = translateSingleLine(altText, request.getTarget());
-                String targetString;
-                if (translated != null) {
-                    translatedAlts.add(translated);
-                } else {
-                    request.setContent(altText);
-                    //AI翻译
-                    try {
-                        if (altText.length() > 40) {
-                            //AI翻译
-                            counter.addChars(calculateToken(altText + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
-                            targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
-                            counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
-                        } else {
-                            counter.addChars(calculateToken(altText, 1));
-                            targetString = translateApiIntegration.googleTranslate(request);
-//                            targetString = translateApiIntegration.microsoftTranslate(request);
-                        }
-                    } catch (Exception e) {
-                        // 如果AI翻译失败，则使用谷歌翻译
-                        targetString = translateApiIntegration.googleTranslate(request);
-//                         targetString = translateApiIntegration.microsoftTranslate(request);
-                        addData(target, altText, targetString);
-                        translatedTexts.add(targetString);
-                        continue;
-                    }
-                    addData(target, altText, targetString);
-                    translatedAlts.add(targetString);
-                }
-            }
+            // Replace original texts and alt attributes with translated ones
+            updateElementsWithTranslation(elementsWithText, translatedTexts);
+            updateElementsWithTranslation(elementsWithAlt, translatedAlts);
 
         } catch (Exception e) {
-            appInsights.trackTrace("HTML" + e.getMessage());
+            appInsights.trackTrace("HTML Translation Error: " + e.getMessage());
         }
 
-        // Replace original texts and alt attributes with translated ones
-        try {
-            for (int i = 0; i < elementsWithText.size(); i++) {
-                Element element = elementsWithText.get(i);
-                element.text(translatedTexts.get(i));
-            }
-
-            for (int i = 0; i < elementsWithAlt.size(); i++) {
-                Element element = elementsWithAlt.get(i);
-                element.attr("alt", translatedAlts.get(i));
-            }
-        } catch (Exception e) {
-            throw new ClientException("This text is not a valid html element");
-        }
-
-//        System.out.println("OPENAI 翻译结果：" + doc.toString());
         return doc.html();
+    }
+
+    private List<String> translateTexts(List<String> texts, String target, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
+        List<String> translatedTexts = new ArrayList<>();
+        for (String text : texts) {
+            String translated = translateSingleLine(text, target);
+            if (translated != null) {
+                translatedTexts.add(translated);
+                counter.addChars(calculateToken(text, 1));
+            } else {
+                String targetString = translateTextWithFallback(text, request, counter, aiLanguagePacksDO);
+                translatedTexts.add(targetString);
+            }
+        }
+        return translatedTexts;
+    }
+
+    private String translateTextWithFallback(String text, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
+        String targetString = null;
+        try {
+            if (text.length() > 40) {
+                // Use AI translation
+                counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
+                targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
+                counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
+            } else {
+                targetString = translateAndCount(request, counter, aiLanguagePacksDO);
+//            targetString = translateApiIntegration.microsoftTranslate(request);
+            }
+        } catch (Exception e) {
+            // Fall back to Google Translate if AI fails
+            targetString = translateAndCount(request, counter, aiLanguagePacksDO);
+//        targetString = translateApiIntegration.microsoftTranslate(request);
+        }
+        addData(request.getTarget(), text, targetString);
+        return targetString;
+    }
+
+    private <T> void updateElementsWithTranslation(Map<Element, T> elementsWithTranslation, List<String> translatedTexts) {
+        Iterator<Map.Entry<Element, T>> entryIterator = elementsWithTranslation.entrySet().iterator();
+        for (String translatedText : translatedTexts) {
+            if (entryIterator.hasNext()) {
+                Map.Entry<Element, T> entry = entryIterator.next();
+                Element element = entry.getKey();
+                if (entry.getValue() instanceof String) {
+                    // Update text or alt attribute
+                    element.text((String) entry.getValue());
+                }
+            }
+        }
     }
 
 
@@ -202,7 +176,8 @@ public class JsoupUtils {
                 } else {
                     request.setContent(text);
                     //TODO： 目前没有翻译html的提示词，用的是谷歌翻译
-                    translateAndCount(request, counter, aiLanguagePacksDO, translatedTexts);
+                    String targetString = translateAndCount(request, counter, aiLanguagePacksDO);
+                    translatedTexts.add(targetString);
                 }
             }
             translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
@@ -291,8 +266,8 @@ public class JsoupUtils {
     }
 
     //在调用googleTranslateJudgeCode的基础上添加计数功能,并添加到翻译后的文本
-    public void translateAndCount(TranslateRequest request,
-                                  CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO, List<String> translatedTexts){
+    public String translateAndCount(TranslateRequest request,
+                                    CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
         String text = request.getContent();
         List<String> strings = googleTranslateJudgeCode(request, aiLanguagePacksDO);
         String targetString = strings.get(0);
@@ -300,11 +275,13 @@ public class JsoupUtils {
         if ("0".equals(flag)) {
             counter.addChars(calculateToken(aiLanguagePacksDO.getPromotWord() + text, aiLanguagePacksDO.getDeductionRate()));
             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
+            return targetString;
         }
         counter.addChars(calculateToken(text, 1));
         addData(request.getTarget(), text, targetString);
-        translatedTexts.add(targetString);
+        return targetString;
     }
+
     // 定义语言代码集合
     private static final Set<String> LANGUAGE_CODES = new HashSet<>(Arrays.asList(
             "ce", "kw", "fo", "ia", "kl", "ks", "ki", "lu", "gv", "nd",

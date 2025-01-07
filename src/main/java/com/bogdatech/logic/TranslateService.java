@@ -360,7 +360,7 @@ public class TranslateService {
         try {
             translateAndSaveData(judgeData, translateContext);
         } catch (Exception e) {
-           appInsights.trackTrace("翻译过程中抛出的异常" + e.getMessage());
+            appInsights.trackTrace("翻译过程中抛出的异常" + e.getMessage());
         }
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopifyRequest.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));
     }
@@ -466,6 +466,7 @@ public class TranslateService {
     private void translateDataByOPENAI(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
         ShopifyRequest request = translateContext.getShopifyRequest();
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
+        AILanguagePacksDO aiLanguagePacksDO = translateContext.getAiLanguagePacksDO();
         //判断是否停止翻译
         if (checkIsStopped(request.getShopName(), counter)) return;
 
@@ -503,13 +504,14 @@ public class TranslateService {
                 continue;
             }
 
-            // 用AI和谷歌翻译
-            String translatedText = getTranslatedText(value, source, target, translateContext, counter);
-            if (translatedText != null) {
-                saveToShopify(translatedText, translation, resourceId, request);
-            } else {
-                saveToShopify(value, translation, resourceId, request);
-            }
+            // TODO: 判断用AI和谷歌翻译
+            translateByGoogleOrAI(request, counter, aiLanguagePacksDO, registerTransactionRequest, translation);
+//            String translatedText = getTranslatedText(value, source, target, translateContext, counter);
+//            if (translatedText != null) {
+//                saveToShopify(translatedText, translation, resourceId, request);
+//            } else {
+//                saveToShopify(value, translation, resourceId, request);
+//            }
             if (checkIsStopped(request.getShopName(), counter)) return;
         }
     }
@@ -739,11 +741,12 @@ public class TranslateService {
             }
 
             counter.addChars(calculateToken(value, 1));
-            String targetString;
+
             //TODO: 改为判断语言代码方法
-            targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-            addData(target, value, targetString);
-            saveToShopify(targetString, translation, resourceId, request);
+            translateByGoogleOrAI(request, counter, aiLanguagePacksDO, registerTransactionRequest, translation);
+//                        String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+//            addData(target, value, targetString);
+//            saveToShopify(targetString, translation, resourceId, request);
             if (checkIsStopped(request.getShopName(), counter)) return;
         }
 
@@ -838,12 +841,20 @@ public class TranslateService {
         String value = registerTransactionRequest.getValue();
         List<String> strings = jsoupUtils.googleTranslateJudgeCode(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), aiLanguagePacksDO);
         String targetString = strings.get(0);
+        if (targetString.isEmpty()){
+            saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
+            return;
+        }
         String flag = strings.get(1);
         if ("0".equals(flag)) {
             counter.addChars(calculateToken(aiLanguagePacksDO.getPromotWord() + value, aiLanguagePacksDO.getDeductionRate()));
             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
+            addData(request.getTarget(), value, targetString);
+            saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
+            return;
         }
         counter.addChars(calculateToken(value, 1));
+        addData(request.getTarget(), value, targetString);
         saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
     }
 
