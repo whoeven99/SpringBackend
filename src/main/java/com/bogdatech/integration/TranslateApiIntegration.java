@@ -206,7 +206,7 @@ public class TranslateApiIntegration {
                 System.out.println("Translation list is empty or not present.");
             }
         } catch (Exception e) {
-            appInsights.trackTrace(e.getMessage());
+            appInsights.trackTrace("huoShanTranslate " + e.getMessage());
         }
         return translation;
     }

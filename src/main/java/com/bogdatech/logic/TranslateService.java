@@ -304,7 +304,7 @@ public class TranslateService {
         try {
             rootNode = objectMapper.readTree(translateContext.getShopifyData());
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace(e.getMessage());
+            appInsights.trackTrace("rootNode " + e.getMessage());
             return null;
         }
         translateSingleLineTextFieldsRecursively(rootNode, translateContext);
@@ -421,10 +421,18 @@ public class TranslateService {
                 return;
             switch (entry.getKey()) {
                 case PLAIN_TEXT:
-                    translateDataByAPI(entry.getValue(), translateContext);
+                    try {
+                        translateDataByAPI(entry.getValue(), translateContext);
+                    } catch (Exception e) {
+                        appInsights.trackTrace("PLAIN_TEXT " + e.getMessage());
+                    }
                     break;
                 case HTML:
-                    translateHtml(entry.getValue(), translateContext);
+                    try {
+                        translateHtml(entry.getValue(), translateContext);
+                    } catch (Exception e) {
+                        appInsights.trackTrace("HTML " + e.getMessage());
+                    }
                     break;
                 case JSON_TEXT:
                     translateJsonText(entry.getValue(), translateContext);
@@ -434,7 +442,7 @@ public class TranslateService {
                     try {
                         translateDataByDatabase(entry.getValue(), translateContext);
                     } catch (Exception e) {
-                        appInsights.trackTrace(e.getMessage());
+                        appInsights.trackTrace("DATABASE " + e.getMessage());
                         continue;
                     }
                     break;
@@ -443,7 +451,7 @@ public class TranslateService {
                         //区分大小写
                         translateDataByGlossary(entry.getValue(), translateContext);
                     } catch (Exception e) {
-                        appInsights.trackTrace(e.getMessage());
+                        appInsights.trackTrace("GLOSSARY " + e.getMessage());
                         continue;
                     }
                     break;
@@ -451,7 +459,7 @@ public class TranslateService {
                     try {
                         translateDataByOPENAI(entry.getValue(), translateContext);
                     } catch (Exception e) {
-                        appInsights.trackTrace(e.getMessage());
+                        appInsights.trackTrace("OPENAI " + e.getMessage());
                         continue;
                     }
                     break;
@@ -701,7 +709,7 @@ public class TranslateService {
             } catch (Exception e) {
                 //打印错误信息
                 saveToShopify(value, translation, resourceId, request);
-                appInsights.trackTrace(e.getMessage());
+                appInsights.trackTrace("translateDataByDatabase " + e.getMessage());
             }
             //数据库为空的逻辑
             //判断数据类型
