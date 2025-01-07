@@ -14,10 +14,7 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
@@ -191,7 +188,7 @@ public class JsoupUtils {
 
     //对文本进行翻译（通用）
     public Map<Element, List<String>> translateTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
-                                                     CharacterCountUtils counter) {
+                                                     CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
         Map<Element, List<String>> translatedTextMap = new HashMap<>();
         for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
             Element element = entry.getKey();
@@ -199,15 +196,13 @@ public class JsoupUtils {
             List<String> translatedTexts = new ArrayList<>();
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
-                counter.addChars(calculateToken(text, 1));
                 if (translated != null) {
+                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
-                    String targetString = translateApiIntegration.googleTranslate(request);
-//                    String targetString = translateApiIntegration.microsoftTranslate(request);
-                    addData(request.getTarget(), text, targetString);
-                    translatedTexts.add(targetString);
+                    //TODO： 目前没有翻译html的提示词，用的是谷歌翻译
+                    translateAndCount(request, counter, aiLanguagePacksDO, translatedTexts);
                 }
             }
             translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
@@ -277,37 +272,44 @@ public class JsoupUtils {
         return null;
     }
 
-    //TODO：调用google翻译前需要先判断 是否是google支持的语言 如果不支持改用AI翻译
-    public String googleTranslateJudgeCode(TranslateRequest request, AILanguagePacksDO aiLanguagePacksDO) {
+    //调用google翻译前需要先判断 是否是google支持的语言 如果不支持改用AI翻译
+    public List<String> googleTranslateJudgeCode(TranslateRequest request, AILanguagePacksDO aiLanguagePacksDO) {
         String target = request.getTarget();
         String source = request.getSource();
-        if (googleTransformCode.contains(target) || googleTransformCode.contains(source)) {
-            return chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + request.getContent());
+        List<String> result = new ArrayList<>();
+        if (LANGUAGE_CODES.contains(target) || LANGUAGE_CODES.contains(source)) {
+            String s = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + request.getContent());
+            result.add(s);
+            result.add("0");
+            return result;
         }
-        return translateApiIntegration.googleTranslate(request);
+        String s = translateApiIntegration.googleTranslate(request);
+//        String s = translateApiIntegration.microsoftTranslate(request);
+        result.add(s);
+        result.add("1");
+        return result;
     }
 
-    public  String googleTransformCode = """
-               ce
-               kw
-               fo
-               ia
-               kl
-               ks
-               ki
-               lu
-               gv
-               nd
-               se
-               nb
-               nn
-               os
-               rm
-               sc
-               ii
-               bo
-               to
-               wo""";
+    //在调用googleTranslateJudgeCode的基础上添加计数功能,并添加到翻译后的文本
+    public void translateAndCount(TranslateRequest request,
+                                  CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO, List<String> translatedTexts){
+        String text = request.getContent();
+        List<String> strings = googleTranslateJudgeCode(request, aiLanguagePacksDO);
+        String targetString = strings.get(0);
+        String flag = strings.get(1);
+        if ("0".equals(flag)) {
+            counter.addChars(calculateToken(aiLanguagePacksDO.getPromotWord() + text, aiLanguagePacksDO.getDeductionRate()));
+            counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
+        }
+        counter.addChars(calculateToken(text, 1));
+        addData(request.getTarget(), text, targetString);
+        translatedTexts.add(targetString);
+    }
+    // 定义语言代码集合
+    private static final Set<String> LANGUAGE_CODES = new HashSet<>(Arrays.asList(
+            "ce", "kw", "fo", "ia", "kl", "ks", "ki", "lu", "gv", "nd",
+            "se", "nb", "nn", "os", "rm", "sc", "ii", "bo", "to", "wo", "ar-EG"
+    ));
 
 
 }

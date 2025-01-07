@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -9,6 +10,7 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -27,20 +29,22 @@ public class TranslateController {
     private final ITranslatesService translatesService;
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final ITranslationCounterService translationCounterService;
-
+    private final JsoupUtils jsoupUtils;
 
     @Autowired
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
             ShopifyHttpIntegration shopifyApiIntegration,
-            ITranslationCounterService translationCounterService
-    ) {
+            ITranslationCounterService translationCounterService,
+
+            JsoupUtils jsoupUtils) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.translationCounterService = translationCounterService;
 
+        this.jsoupUtils = jsoupUtils;
     }
 
     private TelemetryClient appInsights = new TelemetryClient();
@@ -60,6 +64,22 @@ public class TranslateController {
     @PostMapping("/googleTranslate")
     public String googleTranslate(@RequestBody TranslateRequest request) {
         return translateService.googleTranslate(request);
+
+    }
+
+    /*
+     * 调用判断语言的翻译接口
+     */
+    @PostMapping("/judgeLanguage")
+    public List<String> judgeLanguage(@RequestBody GoogleAndAIRequest request) {
+        TranslateRequest translateRequest = new TranslateRequest();
+        translateRequest.setContent(request.getContent());
+        translateRequest.setSource(request.getSource());
+        translateRequest.setTarget(request.getTarget());
+        AILanguagePacksDO aiLanguagePacksDO = new AILanguagePacksDO();
+        aiLanguagePacksDO.setPromotWord(request.getPromotWord());
+        aiLanguagePacksDO.setDeductionRate(request.getDeductionRate());
+        return jsoupUtils.googleTranslateJudgeCode(translateRequest, aiLanguagePacksDO);
     }
 
     /*
