@@ -121,7 +121,11 @@ public class TranslateService {
                 }
                 translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-                translateFailEmail(request.getShopName(), e.getErrorMessage());
+                //发送报错邮件
+                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(request.getShopName(), k -> new AtomicBoolean(false));
+                if (emailSent.compareAndSet(false, true)) {
+                    translateFailEmail(request.getShopName(), CHARACTER_LIMIT);
+                }
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 return;
             }
@@ -677,20 +681,21 @@ public class TranslateService {
                 continue;
             }
 
-            String targetText;
+            String targetText = null;
             try {
                 targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target)[0];
-                if (targetText != null) {
-                    counter.addChars(calculateToken(value, 1));
-                    addData(target, value, targetText);
-                    saveToShopify(targetText, translation, resourceId, request);
-                    continue;
-                }
             } catch (Exception e) {
                 //打印错误信息
-                saveToShopify(value, translation, resourceId, request);
+//                saveToShopify(value, translation, resourceId, request);
                 appInsights.trackTrace("translateDataByDatabase " + e.getMessage());
             }
+            if (targetText != null) {
+                counter.addChars(calculateToken(value, 1));
+                addData(target, value, targetText);
+                saveToShopify(targetText, translation, resourceId, request);
+                continue;
+            }
+
             //数据库为空的逻辑
             //判断数据类型
             if (value.isEmpty()) {
@@ -994,11 +999,6 @@ public class TranslateService {
         if (counter.getTotalChars() >= remainingChars) {
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-            //发送报错邮件
-            AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
-            if (emailSent.compareAndSet(false, true)) {
-                translateFailEmail(shopName, CHARACTER_LIMIT);
-            }
             throw new ClientException(CHARACTER_LIMIT);
         }
     }
