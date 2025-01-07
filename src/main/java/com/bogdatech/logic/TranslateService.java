@@ -361,6 +361,7 @@ public class TranslateService {
             translateAndSaveData(judgeData, translateContext);
         } catch (Exception e) {
             appInsights.trackTrace("翻译过程中抛出的异常" + e.getMessage());
+            throw e;
         }
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopifyRequest.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));
     }
@@ -419,54 +420,35 @@ public class TranslateService {
         for (Map.Entry<String, List<RegisterTransactionRequest>> entry : judgeData.entrySet()) {
             if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils()))
                 return;
-            switch (entry.getKey()) {
-                case PLAIN_TEXT:
-                    try {
+            try {
+                switch (entry.getKey()) {
+                    case PLAIN_TEXT:
                         translateDataByAPI(entry.getValue(), translateContext);
-                    } catch (Exception e) {
-                        appInsights.trackTrace("PLAIN_TEXT " + e.getMessage());
-                    }
-                    break;
-                case HTML:
-                    try {
+                        break;
+                    case HTML:
                         translateHtml(entry.getValue(), translateContext);
-                    } catch (Exception e) {
-                        appInsights.trackTrace("HTML " + e.getMessage());
-                    }
-                    break;
-                case JSON_TEXT:
-                    translateJsonText(entry.getValue(), translateContext);
-                    break;
-                case DATABASE:
-                    //处理database数据
-                    try {
+                        break;
+                    case JSON_TEXT:
+                        translateJsonText(entry.getValue(), translateContext);
+                        break;
+                    case DATABASE:
+                        //处理database数据
                         translateDataByDatabase(entry.getValue(), translateContext);
-                    } catch (Exception e) {
-                        appInsights.trackTrace("DATABASE " + e.getMessage());
-                        continue;
-                    }
-                    break;
-                case GLOSSARY:
-                    try {
+                        break;
+                    case GLOSSARY:
                         //区分大小写
                         translateDataByGlossary(entry.getValue(), translateContext);
-                    } catch (Exception e) {
-                        appInsights.trackTrace("GLOSSARY " + e.getMessage());
-                        continue;
-                    }
-                    break;
-                case OPENAI:
-                    try {
+                        break;
+                    case OPENAI:
                         translateDataByOPENAI(entry.getValue(), translateContext);
-                    } catch (Exception e) {
-                        appInsights.trackTrace("OPENAI " + e.getMessage());
-                        continue;
-                    }
-                    break;
-                default:
-                    appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
-//                    System.out.println("未知的翻译文本： " + entry.getValue());
-                    break;
+                        break;
+                    default:
+                        appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
+    //                    System.out.println("未知的翻译文本： " + entry.getValue());
+                        break;
+                }
+            } catch (ClientException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -849,7 +831,7 @@ public class TranslateService {
         String value = registerTransactionRequest.getValue();
         List<String> strings = jsoupUtils.googleTranslateJudgeCode(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), aiLanguagePacksDO);
         String targetString = strings.get(0);
-        if (targetString.isEmpty()){
+        if (targetString.isEmpty()) {
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
         }
