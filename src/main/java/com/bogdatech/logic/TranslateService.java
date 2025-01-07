@@ -116,12 +116,14 @@ public class TranslateService {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                     translateFailEmail(request.getShopName(), e.getErrorMessage());
-                    throw e;
+                    appInsights.trackTrace("startTranslation " + e.getErrorMessage());
+                    return;
                 }
                 translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                 translateFailEmail(request.getShopName(), e.getErrorMessage());
-                throw e;
+                appInsights.trackTrace("startTranslation " + e.getErrorMessage());
+                return;
             }
             //         更新数据库中的已使用字符数
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
@@ -359,7 +361,7 @@ public class TranslateService {
         //对judgeData数据进行翻译和存入shopify,除了html
         try {
             translateAndSaveData(judgeData, translateContext);
-        } catch (Exception e) {
+        } catch (ClientException e) {
             appInsights.trackTrace("翻译过程中抛出的异常" + e.getMessage());
             throw e;
         }
@@ -420,35 +422,31 @@ public class TranslateService {
         for (Map.Entry<String, List<RegisterTransactionRequest>> entry : judgeData.entrySet()) {
             if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils()))
                 return;
-            try {
-                switch (entry.getKey()) {
-                    case PLAIN_TEXT:
-                        translateDataByAPI(entry.getValue(), translateContext);
-                        break;
-                    case HTML:
-                        translateHtml(entry.getValue(), translateContext);
-                        break;
-                    case JSON_TEXT:
-                        translateJsonText(entry.getValue(), translateContext);
-                        break;
-                    case DATABASE:
-                        //处理database数据
-                        translateDataByDatabase(entry.getValue(), translateContext);
-                        break;
-                    case GLOSSARY:
-                        //区分大小写
-                        translateDataByGlossary(entry.getValue(), translateContext);
-                        break;
-                    case OPENAI:
-                        translateDataByOPENAI(entry.getValue(), translateContext);
-                        break;
-                    default:
-                        appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
-    //                    System.out.println("未知的翻译文本： " + entry.getValue());
-                        break;
-                }
-            } catch (ClientException e) {
-                throw new RuntimeException(e);
+            switch (entry.getKey()) {
+                case PLAIN_TEXT:
+                    translateDataByAPI(entry.getValue(), translateContext);
+                    break;
+                case HTML:
+                    translateHtml(entry.getValue(), translateContext);
+                    break;
+                case JSON_TEXT:
+                    translateJsonText(entry.getValue(), translateContext);
+                    break;
+                case DATABASE:
+                    //处理database数据
+                    translateDataByDatabase(entry.getValue(), translateContext);
+                    break;
+                case GLOSSARY:
+                    //区分大小写
+                    translateDataByGlossary(entry.getValue(), translateContext);
+                    break;
+                case OPENAI:
+                    translateDataByOPENAI(entry.getValue(), translateContext);
+                    break;
+                default:
+                    appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
+//                    System.out.println("未知的翻译文本： " + entry.getValue());
+                    break;
             }
         }
     }
