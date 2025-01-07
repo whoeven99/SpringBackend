@@ -98,7 +98,7 @@ public class TranslateApiIntegration {
                 "&source=" + request.getSource() +
                 "&target=" + request.getTarget() +
                 "&model=base";
-        String result;
+        String result = null;
 
         // 创建HttpGet请求
         HttpPost httpPost = new HttpPost(url);
@@ -115,7 +115,7 @@ public class TranslateApiIntegration {
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            appInsights.trackTrace("翻译错误信息：" + e.getMessage());
         }
         return result;
     }
@@ -206,7 +206,7 @@ public class TranslateApiIntegration {
                 System.out.println("Translation list is empty or not present.");
             }
         } catch (Exception e) {
-            appInsights.trackTrace(e.getMessage());
+            appInsights.trackTrace("huoShanTranslate " + e.getMessage());
         }
         return translation;
     }

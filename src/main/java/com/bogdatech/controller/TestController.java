@@ -12,6 +12,7 @@ import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -27,14 +28,16 @@ public class TestController {
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final TestService testService;
     private final TranslateService translateService;
+    private final JsoupUtils jsoupUtils;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.testService = testService;
         this.translateService = translateService;
+        this.jsoupUtils = jsoupUtils;
     }
 //	@GetMapping("/test")
 //	public List<JdbcTestModel> test() {
@@ -94,10 +97,6 @@ public class TestController {
         LocalDateTime localDateTime = LocalDateTime.now();
         translateService.translateSuccessEmail(new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", null), characterCount, localDateTime, 0, 12311);
     }
-//    //获取tokens里面的数据
-//    @GetMapping("/getToken")
-//    public void getToken() {
-//        System.out.println("tokens: " + tokens.toString());
-//    }
+
 
 }
