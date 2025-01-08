@@ -5,6 +5,7 @@ import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.requestBody.EmailRequestBody;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microsoft.applicationinsights.TelemetryClient;
 import com.tencentcloudapi.common.AbstractModel;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
@@ -32,6 +33,7 @@ public class EmailIntegration {
     @Value("${email.key}")
     private String mailChimpKey;
 
+    TelemetryClient appInsights = new TelemetryClient();
     public  String sendEmail(MailChampSendEmailRequest sendEmailRequest) {
         sendEmailRequest.setEmailKey(mailChimpKey);
 //        System.out.println("mailChimpKey: " + mailChimpKey);
@@ -118,7 +120,7 @@ public class EmailIntegration {
             // 输出json格式的字符串回包
             jsonString = AbstractModel.toJsonString(resp);
         } catch (TencentCloudSDKException e) {
-            System.out.println(e.toString());
+            appInsights.trackTrace(e.toString());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
