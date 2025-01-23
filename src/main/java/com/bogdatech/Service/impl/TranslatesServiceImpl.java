@@ -66,6 +66,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.deleteFromTranslates(request.getShopName(), request.getSource(), request.getTarget());
     }
 
+    @Override
+    public List<TranslatesDO> getLanguageListCounter(String shopName) {
+        return baseMapper.getLanguageListCounter(shopName);
+    }
 
 
 }

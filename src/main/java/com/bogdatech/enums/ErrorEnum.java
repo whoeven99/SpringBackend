@@ -51,7 +51,11 @@ public enum ErrorEnum {
     /*
      * 数据为空
      */
-    DATA_IS_EMPTY(10012, "DATA_IS_EMPTY");
+    DATA_IS_EMPTY(10012, "DATA_IS_EMPTY"),
+    /*
+     * 数据超限
+     */
+    DATA_IS_LIMIT(10013, "DATA_IS_LIMIT");
 
     public int errCode;
     public String errMsg;
