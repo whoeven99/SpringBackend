@@ -142,6 +142,12 @@ public class TranslateController {
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
+
+        //经翻译的语言数量，超过 2 种，则抛异常报错
+        if (translatesService.getLanguageListCounter(request.getShopName()).size() > 2) {
+            return new BaseResponse<>().CreateErrorResponse(DATA_IS_LIMIT);
+        }
+
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {

@@ -39,4 +39,10 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
 
     @Update("UPDATE Translates SET status = 3 WHERE shop_name = #{shopName} and status = 2")
     int updateStatusByShopNameAnd2(String shopName);
+
+    @Select("SELECT *\n" +
+            "FROM Translates\n" +
+            "WHERE shop_name = #{shopName} -- 替换为目标 shop_name\n" +
+            "  AND status > 0;")
+    List<TranslatesDO> getLanguageListCounter(String shopName);
 }
