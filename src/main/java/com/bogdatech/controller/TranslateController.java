@@ -155,11 +155,11 @@ public class TranslateController {
         return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
     }
 
-//    //暂停翻译
-//    @GetMapping("/stop")
-//    public void stop(String shopName) {
-//        translateService.stopTranslation(shopName);
-//    }
+    //暂停翻译
+    @DeleteMapping("/stop")
+    public void stop(String shopName) {
+        translateService.stopTranslation(shopName);
+    }
 
     /*
      *  一键存储数据库流程
