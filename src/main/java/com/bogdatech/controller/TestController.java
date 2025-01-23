@@ -93,7 +93,7 @@ public class TestController {
         return countWords(text);
     }
 
-    //发送成功翻译的邮件
+    //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
     public void sendEmail() {
         CharacterCountUtils characterCount = new CharacterCountUtils();
