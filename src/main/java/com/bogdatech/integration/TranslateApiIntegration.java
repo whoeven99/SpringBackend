@@ -115,7 +115,7 @@ public class TranslateApiIntegration {
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
         } catch (Exception e) {
-            appInsights.trackTrace("翻译错误信息：" + e.getMessage());
+            appInsights.trackTrace("信息：" + e.getMessage());
         }
         return result;
     }
@@ -147,7 +147,7 @@ public class TranslateApiIntegration {
             HttpEntity responseEntity = response.getEntity();
             responseContent = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             // 获取翻译结果
-//            appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
+            appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
 //            System.out.println("翻译错误信息：" + responseContent);
             JSONArray jsonArray = JSON.parseArray(responseContent);
             for (int i = 0; i < jsonArray.size(); i++) {
