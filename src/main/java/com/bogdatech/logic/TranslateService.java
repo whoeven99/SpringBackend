@@ -98,48 +98,59 @@ public class TranslateService {
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
 
     //判断是否可以终止翻译流程
-    private ExecutorService executorService = Executors.newFixedThreadPool(50); // 使用线程池来处理多个用户任务
+
     private Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
     private Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
     private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     private final ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
-
+    private ExecutorService executorService = new ThreadPoolExecutor(
+            2,  // 核心线程数（CPU 密集型：1+1）
+            10, // 最大线程数（IO 密集型：1 * (1 + 9)）
+            60L, TimeUnit.SECONDS, // 空闲线程存活时间
+            new LinkedBlockingQueue<>(50), // 任务队列（避免内存过载）
+            new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
+    );
     // 启动翻译任务
     public void startTranslation(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars) {
         // 创建并启动翻译任务
+        String shopName = request.getShopName();
+        String source = request.getSource();
+        String target = request.getTarget();
         Future<?> future = executorService.submit(() -> {
             LocalDateTime begin = LocalDateTime.now();
+            appInsights.trackTrace("Task submitted at: " + begin + " for shop: " + shopName);
             try {
                 translating(request, remainingChars, counter, usedChars);  // 执行翻译任务
             } catch (ClientException e) {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
-                    translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-                    translateFailEmail(request.getShopName(), e.getErrorMessage());
+                    translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                    translateFailEmail(shopName, e.getErrorMessage());
                     appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                     return;
                 }
-                translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
-                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+                translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 //发送报错邮件
-                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(request.getShopName(), k -> new AtomicBoolean(false));
+                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
                 if (emailSent.compareAndSet(false, true)) {
-                    translateFailEmail(request.getShopName(), CHARACTER_LIMIT);
+                    translateFailEmail(shopName, CHARACTER_LIMIT);
                 }
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 return;
-            }
-            //         更新数据库中的已使用字符数
-            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+            } catch (Exception e) {
+                appInsights.trackTrace("Translation task failed: " + e.getMessage());
+            }            //         更新数据库中的已使用字符数
+            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态改为“已翻译”//
-            translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
+            translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
             translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
         });
 
-        userTasks.put(request.getShopName(), future);  // 存储用户的任务
-        userEmailStatus.put(request.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(request.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        userTasks.put(shopName, future);  // 存储用户的任务
+        userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
     }
 
     // 用户卸载停止指定用户的翻译任务
@@ -151,7 +162,7 @@ public class TranslateService {
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
                 appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
-//                 将翻译状态改为“部分翻译” shopName, status=2
+//                 将翻译状态改为“部分翻译” shopName, status=3
                 translatesService.updateStatusByShopNameAnd2(shopName);
                 translateFailEmail(shopName, TRANSLATING_STOPPED);
             }
@@ -200,7 +211,6 @@ public class TranslateService {
         }
     }
 
-    @Async
     public void test(TranslatesDO request) {
         appInsights.trackTrace("我要翻译了" + Thread.currentThread().getName());
         //睡眠1分钟
@@ -298,7 +308,7 @@ public class TranslateService {
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    @Async
+
     public Future<Void> translateJson(TranslateContext translateContext) {
 //        System.out.println("现在翻译到： " + translateContext.getTranslateResource().getResourceType());
         if (translateContext.getShopifyData() == null) {
@@ -366,7 +376,7 @@ public class TranslateService {
         try {
             translateAndSaveData(judgeData, translateContext);
         } catch (ClientException e) {
-            appInsights.trackTrace("翻译过程中抛出的异常" + e.getMessage());
+            appInsights.trackTrace("翻译过程中抛出的异常" + e.getErrorMessage());
             throw e;
         }
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopifyRequest.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));

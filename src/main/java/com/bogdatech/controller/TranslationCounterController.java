@@ -5,6 +5,7 @@ import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.enums.ErrorEnum.*;
@@ -58,10 +59,12 @@ public class TranslationCounterController {
 
     //添加字符额度
     @PostMapping("/addCharsByShopName")
-    public BaseResponse<Object> addCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        if (translationCounterService.updateCharsByShopName(request)){
-            return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+    @Async
+    public void addCharsByShopName(@RequestBody TranslationCounterRequest request) {
+        translationCounterService.updateCharsByShopName(request);
+//        if (translationCounterService.updateCharsByShopName(request)){
+//            return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
+//        }
+//        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
     }
 }

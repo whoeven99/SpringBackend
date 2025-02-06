@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ChatGptIntegration;
+import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.utils.StringUtils.countWords;
 
 @RestController
@@ -29,15 +31,17 @@ public class TestController {
     private final TestService testService;
     private final TranslateService translateService;
     private final JsoupUtils jsoupUtils;
+    private final RateHttpIntegration rateHttpIntegration;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.testService = testService;
         this.translateService = translateService;
         this.jsoupUtils = jsoupUtils;
+        this.rateHttpIntegration = rateHttpIntegration;
     }
 //	@GetMapping("/test")
 //	public List<JdbcTestModel> test() {
@@ -89,13 +93,20 @@ public class TestController {
         return countWords(text);
     }
 
-    //发送成功翻译的邮件
+    //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
     public void sendEmail() {
         CharacterCountUtils characterCount = new CharacterCountUtils();
         characterCount.addChars(10000);
         LocalDateTime localDateTime = LocalDateTime.now();
         translateService.translateSuccessEmail(new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", null), characterCount, localDateTime, 0, 12311);
+    }
+
+    //获取汇率
+    @GetMapping("/getRate")
+    public void getRate() {
+        rateHttpIntegration.getFixerRate();
+        System.out.println("rateMap: " + rateMap.toString());
     }
 
 

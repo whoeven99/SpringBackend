@@ -50,7 +50,7 @@ public class UserController {
     //用户卸载应用后48小时后清除数据
     @DeleteMapping("/cleanData")
     public BaseResponse<Object> cleanData(@RequestBody UsersDO userRequest) {
-        userService.cleanData(userRequest);
+//        userService.cleanData(userRequest);
         return new BaseResponse<>().CreateSuccessResponse(200);
     }
 
