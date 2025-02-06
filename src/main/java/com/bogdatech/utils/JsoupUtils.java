@@ -286,6 +286,7 @@ public class JsoupUtils {
         List<String> result = new ArrayList<>();
         if (LANGUAGE_CODES.contains(target) || LANGUAGE_CODES.contains(source)) {
             String s = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + request.getContent());
+            //TODO 改用其他翻译API
             result.add(s);
             result.add("0");
             return result;

@@ -107,7 +107,11 @@ public class UserService {
     }
 
     //用户卸载应用后48小时后清除数据
+    @Async
     public void cleanData(UsersDO userRequest) {
+        //TODO: 测试 这一部分有问题
+        System.out.println("开始执行定时任务： " + userRequest.getShopName());
+        String shopName = userRequest.getShopName();
 //        long delayMillis = TimeUnit.HOURS.toMillis(48); // 48小时转为毫秒
         long delayMillis = TimeUnit.SECONDS.toMillis(10);
         // 创建一个触发器，在48小时后执行
@@ -119,7 +123,7 @@ public class UserService {
         // 使用 taskScheduler 来调度任务
         futureRef.set(taskScheduler.schedule(() -> {
             // 执行任务
-            judgeUserLogin(userRequest.getShopName());
+            judgeUserLogin(shopName);
             // 任务执行完后，取消任务
             ScheduledFuture<?> future = futureRef.get();
             if (future != null) {
@@ -135,6 +139,7 @@ public class UserService {
         //获取用户的登陆时间
         LoginAndUninstallRequest loginAndUninstallRequest = usersService.getUserLoginTime(shopName);
         //当登陆时间 > 卸载时间时，什么都不做； 当登陆时间 < 卸载时间时，删除数据
+//        loginAndUninstallRequest.getLoginTime();
         if (loginAndUninstallRequest.getLoginTime().before(loginAndUninstallRequest.getUninstallTime())) {
             deleteUserData(shopName);
         }
@@ -142,10 +147,10 @@ public class UserService {
 
     public void deleteUserData(String shopName) {
         appInsights.trackTrace("删除数据: " + shopName);
-        usersService.deleteUserGlossaryData(shopName);
-        usersService.deleteCurrenciesData(shopName);
-        usersService.deleteTranslatesData(shopName);
-        appInsights.trackTrace("删除数据完成: " + shopName);
+//        usersService.deleteUserGlossaryData(shopName);
+//        usersService.deleteCurrenciesData(shopName);
+//        usersService.deleteTranslatesData(shopName);
+//        appInsights.trackTrace("删除数据完成: " + shopName);
 
     }
 
