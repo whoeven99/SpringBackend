@@ -77,7 +77,7 @@ public class ShopifyService {
 
     //    private final TelemetryClient appInsights = new TelemetryClient();
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
-
+    private final int length = 32;
     //封装调用云服务器实现获取shopify数据的方法
     public String getShopifyData(CloudServiceRequest cloudServiceRequest) {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
@@ -265,7 +265,7 @@ public class ShopifyService {
                     extractTextsToCount(doc, counter);
                     continue;
                 }
-                if (value.length() > 40) {
+                if (value.length() > length) {
 //                    String s = value + " Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: ";
 //                    counter.addChars(countWords(s));
                     counter.addChars(countWords(value));
@@ -318,7 +318,7 @@ public class ShopifyService {
                     extractTextsToTranslate(doc, counter);
                     continue;
                 }
-                if (value.length() > 40) {
+                if (value.length() > length) {
                     String s = value + " Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: ";
                     counter.addChars(calculateToken(s, 1));
                     counter.addChars(values().length);
@@ -349,7 +349,7 @@ public class ShopifyService {
                 String text = element.ownText().trim();
                 if (!text.isEmpty()) {
                     texts.add(text);
-                    if (text.length() >40){
+                    if (text.length() >length){
                         String s = text + " Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: ";
                         counter.addChars(calculateToken(s,1));
                         counter.addChars(values().length);
@@ -363,7 +363,7 @@ public class ShopifyService {
                     String altText = element.attr("alt").trim();
                     if (!altText.isEmpty()) {
                         texts.add(altText);
-                        if (text.length() >40){
+                        if (text.length() >length){
                             String s = text + " Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: ";
                             counter.addChars(calculateToken(s,1));
                             counter.addChars(values().length);
@@ -403,7 +403,7 @@ public class ShopifyService {
     }
 
     private void processTextForTranslation(String text, CharacterCountUtils counter, StringBuilder translationTextBuilder) {
-        if (text.length() > 40) {
+        if (text.length() > length) {
             // 清空 StringBuilder，避免每次拼接时创建新的字符串对象
             translationTextBuilder.setLength(0);
 //            translationTextBuilder.append(text)
