@@ -553,7 +553,7 @@ public class TranslateService {
     private String getTranslatedText(String value, String source, String target, TranslateContext translateContext, CharacterCountUtils counter) {
         try {
             String translatedText;
-            if (value.length() > 40) {
+            if (value.length() > 32) {
                 counter.addChars(calculateToken(translateContext.getAiLanguagePacksDO().getPromotWord() + value, translateContext.getAiLanguagePacksDO().getDeductionRate()));
                 translatedText = chatGptIntegration.chatWithGpt(translateContext.getAiLanguagePacksDO().getPromotWord() + value);
                 counter.addChars(calculateToken(translatedText, translateContext.getAiLanguagePacksDO().getDeductionRate()));
