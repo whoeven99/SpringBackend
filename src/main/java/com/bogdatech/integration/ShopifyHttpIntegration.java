@@ -66,10 +66,33 @@ public class ShopifyHttpIntegration {
 
     public String registerTransaction(ShopifyRequest request, Map<String, Object> variables) {
         ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
-        String string = sendShopifyPost(request, shopifyRequestBody.registerTransactionQuery(), variables);
-        JSONObject jsonObject = JSONObject.parseObject(string);
-        return jsonObject.getString("data");
+        JSONObject jsonObject = null;
+        int retryCount = 3;  // 最大重试次数
+        int retryInterval = 2000;  // 每次重试间隔，单位：毫秒
+
+        for (int i = 0; i < retryCount; i++) {
+            try {
+                String responseString = sendShopifyPost(request, shopifyRequestBody.registerTransactionQuery(), variables);
+                jsonObject = JSONObject.parseObject(responseString);
+                if (jsonObject != null && jsonObject.containsKey("data")) {
+                    return jsonObject.getString("data");
+                }
+            } catch (Exception e) {
+                appInsights.trackTrace("registerTransaction error: " + e.getMessage());
+            }
+
+            // 如果没有成功，等待一段时间再重试
+            try {
+                Thread.sleep(retryInterval);  // 延迟后进行下一次重试
+            } catch (InterruptedException e) {
+                appInsights.trackTrace("Thread sleep interrupted: " + e.getMessage());
+            }
+        }
+
+        // 如果重试后仍然失败，返回 null
+        return null;
     }
+
 
 }
 

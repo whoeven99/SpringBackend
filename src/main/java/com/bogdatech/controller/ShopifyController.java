@@ -50,7 +50,16 @@ public class ShopifyController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
-        JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
+        JSONObject infoByShopify = null;
+        try {
+            infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
+        } catch (Exception e) {
+//            throw new RuntimeException(e);
+            appInsights.trackTrace("无法获取shopify数据");
+        }
+        if (infoByShopify == null) {
+            return null;
+        }
         return infoByShopify.toString();
     }
 
