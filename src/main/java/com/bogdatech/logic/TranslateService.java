@@ -126,7 +126,7 @@ public class TranslateService {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                     translateFailEmail(shopName, e.getErrorMessage());
-                    appInsights.trackTrace("startTranslation " + e.getErrorMessage());
+                    appInsights.trackTrace("翻译失败的原因： " + e.getErrorMessage());
                     return;
                 }
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
@@ -225,23 +225,9 @@ public class TranslateService {
         }
     }
 
-    public void test(TranslatesDO request) {
-        appInsights.trackTrace("我要翻译了" + Thread.currentThread().getName());
-        //睡眠1分钟
-        try {
-            Thread.sleep(1000 * 60);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        appInsights.trackTrace("翻译完成" + Thread.currentThread().getName());
-        //更新状态
-        translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
-    }
 
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
     public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars) {
-
-//        System.out.println("翻译中");
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
 
@@ -276,6 +262,8 @@ public class TranslateService {
             try {
                 //TODO：判断当前的使用环境，本地用封装的接口；test和prod直接调用
                 String env = System.getenv("ApplicationEnv");
+                System.out.println("当前环境为：" + env);
+                appInsights.trackTrace("当前环境为：" + env);
                 if("prod".equals(env) || "dev".equals(env)){
                     shopifyData = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
                 }else {
@@ -292,6 +280,7 @@ public class TranslateService {
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter)) return;
         }
+        System.out.println("翻译失败");
     }
 
     private boolean checkIsStopped(String shopName, CharacterCountUtils counter) {
@@ -330,7 +319,7 @@ public class TranslateService {
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
 
     public Future<Void> translateJson(TranslateContext translateContext) {
-//        System.out.println("现在翻译到： " + translateContext.getTranslateResource().getResourceType());
+        System.out.println("现在翻译到： " + translateContext.getTranslateResource().getResourceType());
         if (translateContext.getShopifyData() == null) {
             // 返回默认值或空结果
             return null;
@@ -340,7 +329,7 @@ public class TranslateService {
         try {
             rootNode = objectMapper.readTree(translateContext.getShopifyData());
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("rootNode " + e.getMessage());
+            appInsights.trackTrace("rootNode错误： " + e.getMessage());
             return null;
         }
         translateSingleLineTextFieldsRecursively(rootNode, translateContext);
@@ -365,7 +354,8 @@ public class TranslateService {
         }
     }
 
-    //递归遍历JSON树：使用 translateSingleLineTextFieldsRecursively 方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
+    //递归遍历JSON树：使用 translateSingleLineTe
+    // xtFieldsRecursively 方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
     private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
 
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();

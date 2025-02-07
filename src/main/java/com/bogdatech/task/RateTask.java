@@ -21,8 +21,8 @@ public class RateTask {
         this.rateHttpIntegration = rateHttpIntegration;
     }
     private final TelemetryClient appInsights = new TelemetryClient();
-    @PostConstruct
-    @Scheduled(cron = "0 15 1 ? * *")
+//    @PostConstruct
+//    @Scheduled(cron = "0 15 1 ? * *")
     @Async
     public void getRateEveryHour() {
 //        System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());

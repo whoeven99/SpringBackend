@@ -32,7 +32,7 @@ public class TranslateTask {
             //调用翻译
             System.out.println("正在进行翻译");
             //翻译功能目前注释中
-            translateService.test(request);
+//            translateService.test(request);
             //修改status状态
 //            int i = translatesServiceImpl.updateTranslateStatus(request.getShopName(), 2, request.getTarget());
             //判断是否修改成功
