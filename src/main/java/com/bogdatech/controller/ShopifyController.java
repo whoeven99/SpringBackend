@@ -10,6 +10,7 @@ import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +40,7 @@ public class ShopifyController {
         this.userSubscriptionsService = userSubscriptionsService;
 
     }
-//    private final TelemetryClient appInsights = new TelemetryClient();
+    private final TelemetryClient appInsights = new TelemetryClient();
 
     //通过测试环境调shopify的API
     @PostMapping("/test123")
@@ -62,8 +63,33 @@ public class ShopifyController {
     // 用户消耗的字符数
     @GetMapping("/getConsumedWords")
     public BaseResponse<Object> getConsumedWords(String shopName) {
-        TranslationCounterDO translationCounterRequests = translationCounterService.readCharsByShopName(shopName);
-        return new BaseResponse<>().CreateSuccessResponse(translationCounterRequests.getUsedChars());
+        TranslationCounterDO translationCounterRequests = null;
+        int retryCount = 3; // 最大重试次数
+        int retryDelay = 1000; // 重试间隔时间，单位毫秒
+
+        for (int i = 0; i < retryCount; i++) {
+            try {
+                translationCounterRequests = translationCounterService.readCharsByShopName(shopName);
+                if (translationCounterRequests != null) {
+                    return new BaseResponse<>().CreateSuccessResponse(translationCounterRequests.getUsedChars());
+                }
+            } catch (Exception e) {
+                // 日志记录错误，便于后续排查
+                appInsights.trackTrace("Error while getConsumedWords for shop " + e.getMessage());
+//                logger.error("Error while querying translation counter for shop " + shopName, e);
+            }
+
+            // 如果未成功且重试次数未达上限，等待一段时间后再重试
+            try {
+                Thread.sleep(retryDelay); // 重试间隔
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            retryDelay *= 2; // 可选：指数回退策略
+        }
+
+        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
     //获取用户的状态
@@ -88,12 +114,36 @@ public class ShopifyController {
     //获取用户的额度字符数 和 已使用的字符
     @GetMapping("/getUserLimitChars")
     public BaseResponse<Object> getUserLimitChars(String shopName) {
-        TranslationCounterDO translationCounterRequests = translationCounterService.readCharsByShopName(shopName);
-        Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
+        TranslationCounterDO translationCounterRequests = null;
+        int retryCount = 3; // 最大重试次数
+        int retryDelay = 1000; // 重试间隔时间，单位毫秒
         Map<String, Object> map = new HashMap<>();
-        map.put("chars", translationCounterRequests.getUsedChars());
-        map.put("totalChars", maxCharsByShopName);
-        return new BaseResponse<>().CreateSuccessResponse(map);
+        for (int i = 0; i < retryCount; i++) {
+            try {
+                translationCounterRequests = translationCounterService.readCharsByShopName(shopName);
+                if (translationCounterRequests != null) {
+                    Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
+                    map.put("chars", translationCounterRequests.getUsedChars());
+                    map.put("totalChars", maxCharsByShopName);
+                    return new BaseResponse<>().CreateSuccessResponse(map);
+                }
+            } catch (Exception e) {
+                // 日志记录错误，便于后续排查
+                appInsights.trackTrace("Error while getUserLimitChars for shop " + e.getMessage());
+//                logger.error("Error while querying translation counter for shop " + shopName, e);
+            }
+
+            // 如果未成功且重试次数未达上限，等待一段时间后再重试
+            try {
+                Thread.sleep(retryDelay); // 重试间隔
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            retryDelay *= 2; // 可选：指数回退策略
+        }
+
+        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
     //当用户第一次订阅时，在用户订阅表里面添加用户及其付费计划

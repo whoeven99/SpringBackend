@@ -77,7 +77,7 @@ public class JsoupUtils {
                     request.setContent(text);
 
                     try {
-                        if (text.length() > 40) {
+                        if (text.length() > 32) {
                             //AI翻译
                             counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
@@ -112,7 +112,7 @@ public class JsoupUtils {
                     request.setContent(altText);
                     //AI翻译
                     try {
-                        if (altText.length() > 40) {
+                        if (altText.length() > 32) {
                             //AI翻译
                             counter.addChars(calculateToken(altText + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
                             targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
