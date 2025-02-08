@@ -180,8 +180,8 @@ public class JsoupUtils {
                     Map<String, String> placeholderMap = new HashMap<>();
                     String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
                     request.setContent(updateText);
-//                    String targetString = translateApiIntegration.getGoogleTranslationWithRetry(request);
-                    String targetString = translateApiIntegration.microsoftTranslate(request);
+                    String targetString = translateApiIntegration.getGoogleTranslationWithRetry(request);
+//                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     String finalText = restoreKeywords(targetString, placeholderMap);
                     addData(request.getTarget(), text, finalText);
                     translatedTexts.add(finalText);
@@ -293,8 +293,8 @@ public class JsoupUtils {
             return result;
         }
 
-//        String s = translateApiIntegration.getGoogleTranslationWithRetry(request);
-        String s = translateApiIntegration.microsoftTranslate(request);
+        String s = translateApiIntegration.getGoogleTranslationWithRetry(request);
+//        String s = translateApiIntegration.microsoftTranslate(request);
 
         result.add(s);
         result.add("1");
