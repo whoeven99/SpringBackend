@@ -120,6 +120,35 @@ public class TranslateApiIntegration {
         return result;
     }
 
+    //对谷歌翻译API做重试机制
+    public String getGoogleTranslationWithRetry(TranslateRequest request) {
+        int maxRetries = 3; // 最大重试次数
+        int retryCount = 0; // 当前重试次数
+        int baseDelay = 1000; // 初始等待时间（1秒）
+        String translatedText = null;
+
+        do {
+            try {
+                translatedText = googleTranslate(request);
+                if (translatedText != null) {
+                    return translatedText; // 成功获取翻译，直接返回
+                }
+            } catch (Exception e) {
+                appInsights.trackTrace("翻译 API 调用失败，重试次数：" + retryCount + "，错误信息：" + e.getMessage());
+            }
+
+            try {
+                Thread.sleep(baseDelay * (long) Math.pow(2, retryCount)); // 指数退避
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // 恢复中断状态
+            }
+
+            retryCount++;
+        } while (retryCount < maxRetries);
+
+        return null; // 重试后仍然失败，返回 null
+    }
+
     //微软翻译API
     public String microsoftTranslate(TranslateRequest request) {
 //        String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);

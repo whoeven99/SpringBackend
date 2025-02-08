@@ -38,6 +38,7 @@ public class JsoupUtils {
 
     public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
         Document doc = Jsoup.parse(html);
+//        System.out.println("html: " + html);
         String target = request.getTarget();
         List<String> textsToTranslate = new ArrayList<>();
         List<String> altsToTranslate = new ArrayList<>();
@@ -179,7 +180,7 @@ public class JsoupUtils {
                     Map<String, String> placeholderMap = new HashMap<>();
                     String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
                     request.setContent(updateText);
-                    String targetString = translateApiIntegration.googleTranslate(request);
+                    String targetString = translateApiIntegration.getGoogleTranslationWithRetry(request);
 //                    String targetString = translateApiIntegration.microsoftTranslate(request);
                     String finalText = restoreKeywords(targetString, placeholderMap);
                     addData(request.getTarget(), text, finalText);
@@ -291,8 +292,10 @@ public class JsoupUtils {
             result.add("0");
             return result;
         }
-        String s = translateApiIntegration.googleTranslate(request);
+
+        String s = translateApiIntegration.getGoogleTranslationWithRetry(request);
 //        String s = translateApiIntegration.microsoftTranslate(request);
+
         result.add(s);
         result.add("1");
         return result;
