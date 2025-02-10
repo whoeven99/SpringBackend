@@ -1,6 +1,7 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.entity.TranslateTextDO;
@@ -96,6 +97,15 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
             return baseMapper.insertTranslateTextTable(translateTextDO.getResourceId(), translateTextDO.getDigest(), translateTextDO.getTextType(), translateTextDO.getTargetText(), translateTextDO.getTargetCode(), translateTextDO.getSourceText(), translateTextDO.getSourceCode());
         }
 
+    }
+
+    @Override
+    public List<TranslateTextDO> getTranslateTextData() {
+        // 通过条件查询所有的 source_text，target_text，source_code，target_code
+        QueryWrapper<TranslateTextDO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("source_text", "target_text", "source_code", "target_code");
+
+        return this.list(queryWrapper);  // 返回所有满足条件的数据
     }
 
 
