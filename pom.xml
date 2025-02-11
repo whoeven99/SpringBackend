@@ -143,6 +143,13 @@
 			<artifactId>tencentcloud-sdk-java-ses</artifactId>
 			<version>3.1.1129</version>
 		</dependency>
+		<!-- csv 数据处理-->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.10.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

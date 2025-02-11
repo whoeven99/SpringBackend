@@ -20,4 +20,5 @@ public interface ITranslateTextService extends IService<TranslateTextDO> {
     void getExistTranslateTextList(List<TranslateTextDO> translateTexts);
 
     Integer updateOrInsertTranslateTextTable(TranslateTextDO translateTextDO);
+     List<TranslateTextDO> getTranslateTextData();
 }
