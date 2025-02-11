@@ -139,6 +139,11 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         }
     }
 
+    @Override
+    public void storeTranslationsInVocabularyByCsv() {
+
+    }
+
     // 设置对应语言字段
     private void setLanguageField(VocabularyDO vocabulary, String languageCode, String sourceText) {
         // 如果 sourceText 为 null，直接返回，不做任何处理
