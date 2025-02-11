@@ -8,8 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogdatech.constants.MailChimpConstants.FIRST_INSTALL_SUBJECT;
-import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
+import static com.bogdatech.constants.MailChimpConstants.*;
 
 @Component
 public class TencentEmailService {
@@ -33,7 +32,7 @@ public class TencentEmailService {
         templateData.put("source_language", source);
         templateData.put("target_language", target);
         return emailIntegration.sendEmailByTencent(
-                new TencentSendEmailRequest(134741L, templateData, FIRST_INSTALL_SUBJECT, TENCENT_FROM_EMAIL, "notification@ciwi.ai"));
+                new TencentSendEmailRequest(134741L, templateData, ONLINE_NOT_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, "notification@ciwi.ai"));
     }
 
 }

@@ -8,4 +8,6 @@ public interface IVocabularyService extends IService<VocabularyDO> {
      * 将Translations存入Vocabulary
      */
     void storeTranslationsInVocabulary();
+
+    void storeTranslationsInVocabularyByCsv();
 }

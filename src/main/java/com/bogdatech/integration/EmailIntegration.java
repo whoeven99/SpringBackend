@@ -125,6 +125,7 @@ public class EmailIntegration {
             throw new RuntimeException(e);
         }
         //判断服务的返回值是否含有RequestId
+//        System.out.println("jsonString = " + jsonString);
         assert jsonString != null;
         return jsonString.contains("RequestId");
         }

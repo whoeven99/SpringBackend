@@ -11,6 +11,8 @@ public class TranslateConstants {
     public static final String JSON_TEXT = "JSON_TEXT";
     public static final String GLOSSARY = "GLOSSARY";
     public static final String OPENAI = "OPENAI";
+    public static final String BUG = "BUG";
+
 
     public static final String PRODUCT = "PRODUCT";
     public static final String PRODUCT_OPTION = "PRODUCT_OPTION";
