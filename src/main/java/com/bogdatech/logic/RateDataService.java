@@ -1,6 +1,7 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.integration.RateHttpIntegration;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -14,7 +15,7 @@ public class RateDataService {
     private final Map<String, LinkedHashMap<String, Object>> value = new ConcurrentHashMap<>();
 
     private static final Map<String, Object> rateRule = new ConcurrentHashMap<>();
-
+    private static final TelemetryClient appInsights = new TelemetryClient();
     static {
         rateRule.put("No decimal", "直接将小数点抹去，例如13.76变为13");
         rateRule.put("1.00", "四舍五入，例如12.34变为12.00；13.76变为14.00");
@@ -40,6 +41,10 @@ public class RateDataService {
     //前端传入两个货币代码，返回他们对应的汇率。获取rateMap数据，因为是以欧元为基础，所以要做处理
     public static double getRateByRateMap(String from, String to) {
         Double fromRate = RateHttpIntegration.rateMap.get(from);
+        if (fromRate == null) {
+            appInsights.trackTrace("RateMap中没有找到" + from + "的汇率");
+            return 1;
+        }
         Double toRate = RateHttpIntegration.rateMap.get(to);
         return toRate / fromRate;
     }
