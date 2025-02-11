@@ -22,7 +22,7 @@ public class RateTask {
     }
     private final TelemetryClient appInsights = new TelemetryClient();
 //    @PostConstruct
-//    @Scheduled(cron = "0 15 1 ? * *")
+//    @Scheduled(cron = "0 15 14 ? * *")
     @Async
     public void getRateEveryHour() {
 //        System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
