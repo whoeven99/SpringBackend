@@ -63,6 +63,7 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         LANGUAGE_CODE_TO_FIELD.put("et", "et");
     }
 
+
     // 用于存储翻译到 VocabularyDO 表
     @Override
     public void storeTranslationsInVocabulary(List<TranslateTextDO> translateTextList) {

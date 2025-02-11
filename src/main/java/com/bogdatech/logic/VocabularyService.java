@@ -10,11 +10,13 @@ import java.util.List;
 
 @Component
 public class VocabularyService {
+    private final IVocabularyService vocabularyService;
+    private final ITranslateTextService translateTextService;
     @Autowired
-    private IVocabularyService vocabularyService;
-
-    @Autowired
-    private ITranslateTextService translateTextService;
+    public VocabularyService(IVocabularyService vocabularyService, ITranslateTextService translateTextService) {
+        this.vocabularyService = vocabularyService;
+        this.translateTextService = translateTextService;
+    }
     //转换数据库表数据 老-》新
     public void storeTranslationsInVocabulary(){
         List<TranslateTextDO> translateTextList = translateTextService.getTranslateTextData();
