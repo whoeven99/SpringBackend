@@ -866,7 +866,7 @@ public class TranslateService {
     }
 
     //创建存储翻译项的Map
-    private Map<String, Object> createTranslationMap(String target, RegisterTransactionRequest registerTransactionRequest) {
+    public static Map<String, Object> createTranslationMap(String target, RegisterTransactionRequest registerTransactionRequest) {
         Map<String, Object> translation = new HashMap<>();
         translation.put("locale", target);
         translation.put("key", registerTransactionRequest.getKey());
