@@ -28,10 +28,10 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         LANGUAGE_CODE_TO_FIELD.put("es", "es");
         LANGUAGE_CODE_TO_FIELD.put("fr", "fr");
         LANGUAGE_CODE_TO_FIELD.put("de", "de");
-        LANGUAGE_CODE_TO_FIELD.put("pt_BR", "[pt_BR]");
-        LANGUAGE_CODE_TO_FIELD.put("pt_PT", "[pt_PT]");
-        LANGUAGE_CODE_TO_FIELD.put("zh_CN", "[zh_CN]");
-        LANGUAGE_CODE_TO_FIELD.put("zh_TW", "[zh_TW]");
+        LANGUAGE_CODE_TO_FIELD.put("pt-BR", "pt_BR");
+        LANGUAGE_CODE_TO_FIELD.put("pt-PT", "pt_PT");
+        LANGUAGE_CODE_TO_FIELD.put("zh-CN", "zh_CN");
+        LANGUAGE_CODE_TO_FIELD.put("zh-TW", "zh_TW");
         LANGUAGE_CODE_TO_FIELD.put("ja", "ja");
         LANGUAGE_CODE_TO_FIELD.put("it", "it");
         LANGUAGE_CODE_TO_FIELD.put("ru", "ru");
@@ -150,14 +150,25 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
 
         // 获取目标语言的翻译
         List<VocabularyDO> results = baseMapper.selectList(queryWrapper);
-        System.out.println("results: " + results.toString());
+//        System.out.println("results: " + results.toString());
         if (results != null && !results.isEmpty()) {
             VocabularyDO vocabulary = results.get(0);  // 假设取第一个结果
-            System.out.println("vocabulary: " + vocabulary.getJa());
+//            System.out.println("vocabulary: " + vocabulary.getJa());
             return getTargetLanguageText(vocabulary, target);
         }
 
         return null;  // 如果没有找到对应的翻译
+    }
+
+    @Override
+    public void testInsert(String target, String value, String source) {
+        VocabularyDO vocabularyDO = new VocabularyDO();
+        vocabularyDO.setEn(value);  // 假设 en 作为 sourceCode
+//        vocabularyDO.setZhCN("翻译结果");  // 假设 zhCN 作为 targetCode
+        //TODO: zh-CN还没有测试完。
+        int updateResult = baseMapper.update(vocabularyDO, new QueryWrapper<VocabularyDO>()
+                .eq(LANGUAGE_CODE_TO_FIELD.get(source), "翻译结果"));
+        System.out.println("updateResult: " + updateResult);
     }
 
 

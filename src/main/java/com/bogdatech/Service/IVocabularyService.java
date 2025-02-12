@@ -15,4 +15,6 @@ public interface IVocabularyService extends IService<VocabularyDO> {
     void storeTranslationsInVocabulary(List<TranslateTextDO> translateTextList);
 
     String getTranslateTextDataInVocabulary(String target, String value, String source);
+
+    void testInsert(String target, String value, String source);
 }

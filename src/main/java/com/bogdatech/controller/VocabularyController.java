@@ -46,9 +46,17 @@ public class VocabularyController {
         return new BaseResponse<>().CreateSuccessResponse(200);
     }
 
+    //根据target，value，source获取对应的targetText
     @GetMapping("/getVocabulary")
     public BaseResponse<Object> getVocabulary(String target, String value, String source ) {
         String translateTextDataInVocabulary = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
         return new BaseResponse<>().CreateSuccessResponse(translateTextDataInVocabulary);
+    }
+
+    //测试单条插入数据
+    @PostMapping("/testInsert")
+    public BaseResponse<Object> testInsert(String target, String value, String source) {
+        vocabularyService.testInsert(target, value, source);
+        return new BaseResponse<>().CreateSuccessResponse(null);
     }
 }
