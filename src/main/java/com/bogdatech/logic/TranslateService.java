@@ -62,6 +62,7 @@ public class TranslateService {
     private final EmailIntegration emailIntegration;
     private final IEmailService emailService;
     private final IVocabularyService vocabularyService;
+    private final TencentEmailService tencentEmailService;
 
     @Autowired
     public TranslateService(
@@ -79,7 +80,7 @@ public class TranslateService {
             IAILanguagePacksService aiLanguagePacksService,
             IUsersService usersService,
             EmailIntegration emailIntegration,
-            IEmailService emailService, IVocabularyService vocabularyService) {
+            IEmailService emailService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService) {
         this.translateApiIntegration = translateApiIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
@@ -96,6 +97,7 @@ public class TranslateService {
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
         this.vocabularyService = vocabularyService;
+        this.tencentEmailService = tencentEmailService;
     }
 
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
@@ -135,6 +137,7 @@ public class TranslateService {
                 }
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                tencentEmailService.sendEmailByOnline(shopName, source, target);
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
                 if (emailSent.compareAndSet(false, true)) {
@@ -154,12 +157,14 @@ public class TranslateService {
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
             translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+            tencentEmailService.sendEmailByOnline(shopName, source, target);
         });
 
         userTasks.put(shopName, future);  // 存储用户的任务
         userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
         userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
     }
+
 
     // 用户卸载停止指定用户的翻译任务
     public void stopTranslation(String shopName) {
