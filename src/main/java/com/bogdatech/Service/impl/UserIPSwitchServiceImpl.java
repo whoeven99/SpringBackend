@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 public class UserIPSwitchServiceImpl extends ServiceImpl<UserIPSwitchMapper, UserIPSwitchDO> implements IUserIPSwitchService {
     @Override
     public int insertSwitch(UserIPSwitchDO userIPSwitchDO) {
+        if (baseMapper.getShopName(userIPSwitchDO.getShopName()) != null) {
+            //则更新数据
+            return baseMapper.updateSwitchId(userIPSwitchDO.getShopName(), userIPSwitchDO.getSwitchId());
+        }
         return baseMapper.insertSwitch(userIPSwitchDO.getShopName(), userIPSwitchDO.getSwitchId());
     }
 

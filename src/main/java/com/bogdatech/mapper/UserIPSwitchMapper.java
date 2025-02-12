@@ -5,6 +5,7 @@ import com.bogdatech.entity.UserIPSwitchDO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface UserIPSwitchMapper extends BaseMapper<UserIPSwitchDO> {
@@ -13,4 +14,10 @@ public interface UserIPSwitchMapper extends BaseMapper<UserIPSwitchDO> {
 
     @Select("SELECT switch_id FROM UserIPSwitch WHERE shop_name = #{shopName}")
     int getSwitchId(String shopName);
+
+    @Select("SELECT shop_name FROM UserIPSwitch WHERE shop_name = #{shopName}")
+    String getShopName(String shopName);
+
+    @Update("UPDATE UserIPSwitch SET switch_id = #{switchId} WHERE shop_name = #{shopName}")
+    int updateSwitchId(String shopName, int switchId);
 }
