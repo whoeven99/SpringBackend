@@ -248,7 +248,6 @@ public class ShopifyService {
                                               CharacterCountUtils translatedCounter, List<String> translatedContent,
                                               TranslateResourceDTO translateResourceDTO, String method, List<CsvRequest> csvRequestList, Map<String, String> csvMap, String resourceId) {
         switch (method) {
-
             case "tokens":
                 calculateExactToken(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO);
                 break;
@@ -472,7 +471,10 @@ public class ShopifyService {
             if (value == null) {
                 continue;
             }
-            System.out.println("value: " + value);
+
+
+            System.out.println("type: " + contentItemNode.get("type").asText(null) +" key: " + contentItemNode.get("key").asText(null) + " value: " + value);
+
             //处理用AI翻译包翻译的类型
             String resourceType = translateResourceDTO.getResourceType();
             if (PRODUCT.equals(resourceType)
