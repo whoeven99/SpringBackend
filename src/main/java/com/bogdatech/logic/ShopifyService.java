@@ -472,7 +472,7 @@ public class ShopifyService {
             if (value == null) {
                 continue;
             }
-
+            System.out.println("value: " + value);
             //处理用AI翻译包翻译的类型
             String resourceType = translateResourceDTO.getResourceType();
             if (PRODUCT.equals(resourceType)
