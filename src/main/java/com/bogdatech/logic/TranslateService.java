@@ -891,7 +891,7 @@ public class TranslateService {
 
             //如果包含相对路径则跳过
             if (value.contains("shopify://")){
-                continue;
+                return;
             }
 
             //对从数据库中获取的数据单独处理
