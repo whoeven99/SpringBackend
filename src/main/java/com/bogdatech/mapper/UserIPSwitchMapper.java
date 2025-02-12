@@ -13,4 +13,7 @@ public interface UserIPSwitchMapper extends BaseMapper<UserIPSwitchDO> {
 
     @Select("SELECT switch_id FROM UserIPSwitch WHERE shop_name = #{shopName}")
     int getSwitchId(String shopName);
+
+    @Select("SELECT shop_name FROM UserIPSwitch WHERE shop_name = #{shopName}")
+    String getShopName(String shopName);
 }
