@@ -163,11 +163,11 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
     @Override
     public void testInsert(String target, String value, String source) {
         VocabularyDO vocabularyDO = new VocabularyDO();
-        vocabularyDO.setEn(value);  // 假设 en 作为 sourceCode
+        vocabularyDO.setPtBR(value);  // 假设 en 作为 sourceCode
+        vocabularyDO.setZhCN("翻译结果");
 //        vocabularyDO.setZhCN("翻译结果");  // 假设 zhCN 作为 targetCode
-        //TODO: zh-CN还没有测试完。
         int updateResult = baseMapper.update(vocabularyDO, new QueryWrapper<VocabularyDO>()
-                .eq(LANGUAGE_CODE_TO_FIELD.get(source), "翻译结果"));
+                .eq(LANGUAGE_CODE_TO_FIELD.get(source), value));
         System.out.println("updateResult: " + updateResult);
     }
 
