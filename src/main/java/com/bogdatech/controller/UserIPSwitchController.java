@@ -21,10 +21,10 @@ public class UserIPSwitchController {
     @PostMapping("/insertSwitch")
     public BaseResponse<Object> insertSwitch(@RequestBody UserIPSwitchDO userIPSwitchDO) {
         int i = userIPSwitchService.insertSwitch(userIPSwitchDO);
-        if (i > 0) {
-            return new BaseResponse<>().CreateSuccessResponse("success");
+        if (i != 3) {
+            return new BaseResponse<>().CreateSuccessResponse(i);
         }else {
-            return new BaseResponse<>().CreateErrorResponse("fail");
+            return new BaseResponse<>().CreateErrorResponse(String.valueOf(i));
         }
     }
 
@@ -34,7 +34,7 @@ public class UserIPSwitchController {
             return new BaseResponse<>().CreateSuccessResponse(userIPSwitchService.getSwitchId(shopName));
         } catch (Exception e) {
             System.out.println("getSwitchId error: " + e.getMessage());
-            appInsights.trackTrace("getSwitchId error: " + e.getMessage());
+//            appInsights.trackTrace("getSwitchId error: " + e.getMessage());
         }
         return new BaseResponse<>().CreateErrorResponse("fail");
     }
