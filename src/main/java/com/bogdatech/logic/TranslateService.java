@@ -688,6 +688,7 @@ public class TranslateService {
 
             String targetText = null;
             try {
+                //TODO：后面要修改从数据库中获取翻译的方法
                 targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target)[0];
             } catch (Exception e) {
                 //打印错误信息
@@ -703,45 +704,45 @@ public class TranslateService {
 
             //数据库为空的逻辑
             //判断数据类型
-            if (value.isEmpty()) {
-                continue;
-            }
-            if ("handle".equals(key)
-            ) {
-                saveToShopify(value, translation, resourceId, request);
-                continue;
-            }
-            if ("JSON".equals(type)
-                    || "JSON_STRING".equals(type)) {
-                //对于json和json_string的数据直接存原文
-                //存放在json的集合里面
-                saveToShopify(value, translation, resourceId, request);
-                continue;
-            }
-            if ("HTML".equals(type)) {
-                //存放在html的list集合里面
-                // 解析HTML文档
-                Document doc = Jsoup.parse(value);
-                try {
-                    TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
-                    // 提取需要翻译的文本
-                    Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
-                    // 翻译文本
-                    Map<Element, List<String>> translatedTextMap = jsoupUtils.translateTexts(elementTextMap, translateRequest, counter, aiLanguagePacksDO);
-                    // 替换原始文本为翻译后的文本
-                    jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
-                } catch (Exception e) {
-                    saveToShopify(doc.toString(), translation, resourceId, request);
-                    continue;
-                }
-                saveToShopify(doc.toString(), translation, resourceId, request);
-                continue;
-            }
-
-            counter.addChars(calculateToken(value, 1));
-
-            //TODO: 改为判断语言代码方法
-            translateByGoogleOrAI(request, counter, aiLanguagePacksDO, registerTransactionRequest, translation);
+//            if (value.isEmpty()) {
+//                continue;
+//            }
+//            if ("handle".equals(key)
+//            ) {
+//                saveToShopify(value, translation, resourceId, request);
+//                continue;
+//            }
+//            if ("JSON".equals(type)
+//                    || "JSON_STRING".equals(type)) {
+//                //对于json和json_string的数据直接存原文
+//                //存放在json的集合里面
+//                saveToShopify(value, translation, resourceId, request);
+//                continue;
+//            }
+//            if ("HTML".equals(type)) {
+//                //存放在html的list集合里面
+//                // 解析HTML文档
+//                Document doc = Jsoup.parse(value);
+//                try {
+//                    TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
+//                    // 提取需要翻译的文本
+//                    Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
+//                    // 翻译文本
+//                    Map<Element, List<String>> translatedTextMap = jsoupUtils.translateTexts(elementTextMap, translateRequest, counter, aiLanguagePacksDO);
+//                    // 替换原始文本为翻译后的文本
+//                    jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
+//                } catch (Exception e) {
+//                    saveToShopify(doc.toString(), translation, resourceId, request);
+//                    continue;
+//                }
+//                saveToShopify(doc.toString(), translation, resourceId, request);
+//                continue;
+//            }
+//
+//            counter.addChars(calculateToken(value, 1));
+//
+//            //TODO: 改为判断语言代码方法
+//            translateByGoogleOrAI(request, counter, aiLanguagePacksDO, registerTransactionRequest, translation);
 //                        String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
 //            addData(target, value, targetString);
 //            saveToShopify(targetString, translation, resourceId, request);
