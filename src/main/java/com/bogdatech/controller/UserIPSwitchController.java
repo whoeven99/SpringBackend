@@ -20,8 +20,9 @@ public class UserIPSwitchController {
 
     @PostMapping("/insertSwitch")
     public BaseResponse<Object> insertSwitch(@RequestBody UserIPSwitchDO userIPSwitchDO) {
+
         int i = userIPSwitchService.insertSwitch(userIPSwitchDO);
-        if (i != 3) {
+        if (i > 0 ) {
             return new BaseResponse<>().CreateSuccessResponse(i);
         }else {
             return new BaseResponse<>().CreateErrorResponse(String.valueOf(i));
@@ -38,4 +39,5 @@ public class UserIPSwitchController {
         }
         return new BaseResponse<>().CreateErrorResponse("fail");
     }
+
 }
