@@ -21,4 +21,6 @@ public interface ITranslateTextService extends IService<TranslateTextDO> {
 
     Integer updateOrInsertTranslateTextTable(TranslateTextDO translateTextDO);
      List<TranslateTextDO> getTranslateTextData();
+
+    String[] getTranslateTextDataInVocabulary(String target, String value, String source);
 }

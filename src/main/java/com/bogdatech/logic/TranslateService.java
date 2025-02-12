@@ -688,7 +688,7 @@ public class TranslateService {
 
             String targetText = null;
             try {
-                //TODO：后面要修改从数据库中获取翻译的方法
+//                translateTextService.getTranslateTextDataInVocabulary(target, value, source)[0];
                 targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target)[0];
             } catch (Exception e) {
                 //打印错误信息

@@ -108,5 +108,11 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
         return this.list(queryWrapper);  // 返回所有满足条件的数据
     }
 
+    @Override
+    public String[] getTranslateTextDataInVocabulary(String target, String value, String source) {
+
+        return new String[0];
+    }
+
 
 }
