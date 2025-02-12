@@ -23,9 +23,9 @@ public class UserIPSwitchController {
 
         int i = userIPSwitchService.insertSwitch(userIPSwitchDO);
         if (i > 0 ) {
-            return new BaseResponse<>().CreateSuccessResponse(i);
+            return new BaseResponse<>().CreateSuccessResponse(userIPSwitchDO.getSwitchId());
         }else {
-            return new BaseResponse<>().CreateErrorResponse(String.valueOf(i));
+            return new BaseResponse<>().CreateErrorResponse(String.valueOf(userIPSwitchDO.getSwitchId()));
         }
     }
 
