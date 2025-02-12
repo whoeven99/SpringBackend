@@ -4,6 +4,7 @@ import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.logic.VocabularyService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,5 +44,11 @@ public class VocabularyController {
        }
 
         return new BaseResponse<>().CreateSuccessResponse(200);
+    }
+
+    @GetMapping("/getVocabulary")
+    public BaseResponse<Object> getVocabulary(String target, String value, String source ) {
+        String translateTextDataInVocabulary = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
+        return new BaseResponse<>().CreateSuccessResponse(translateTextDataInVocabulary);
     }
 }

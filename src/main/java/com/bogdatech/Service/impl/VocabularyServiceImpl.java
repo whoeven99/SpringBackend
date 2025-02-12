@@ -140,6 +140,26 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         }
     }
 
+    @Override
+    public String getTranslateTextDataInVocabulary(String target, String value, String source) {
+        // 构造查询条件
+        QueryWrapper<VocabularyDO> queryWrapper = new QueryWrapper<>();
+
+        // 设置查询条件：sourceCode 和 sourceText
+        queryWrapper.eq(source, value);
+
+        // 获取目标语言的翻译
+        List<VocabularyDO> results = baseMapper.selectList(queryWrapper);
+        System.out.println("results: " + results.toString());
+        if (results != null && !results.isEmpty()) {
+            VocabularyDO vocabulary = results.get(0);  // 假设取第一个结果
+            System.out.println("vocabulary: " + vocabulary.getJa());
+            return getTargetLanguageText(vocabulary, target);
+        }
+
+        return null;  // 如果没有找到对应的翻译
+    }
+
 
     // 设置对应语言字段
     private void setLanguageField(VocabularyDO vocabulary, String languageCode, String sourceText) {
@@ -197,5 +217,85 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
+    private String getTargetLanguageText(VocabularyDO vocabulary, String targetCode) {
+        switch (targetCode) {
+            case "en":
+                return vocabulary.getEn();
+            case "es":
+                return vocabulary.getEs();
+            case "fr":
+                return vocabulary.getFr();
+            case "de":
+                return vocabulary.getDe();
+            case "pt_BR":
+                return vocabulary.getPtBR();
+            case "pt_PT":
+                return vocabulary.getPtPT();
+            case "zh_CN":
+                return vocabulary.getZhCN();
+            case "zh_TW":
+                return vocabulary.getZhTW();
+            case "ja":
+                return vocabulary.getJa();
+            case "it":
+                return vocabulary.getIt();
+            case "ru":
+                return vocabulary.getRu();
+            case "ko":
+                return vocabulary.getKo();
+            case "nl":
+                return vocabulary.getNl();
+            case "da":
+                return vocabulary.getDa();
+            case "hi":
+                return vocabulary.getHi();
+            case "bg":
+                return vocabulary.getBg();
+            case "cs":
+                return vocabulary.getCs();
+            case "el":
+                return vocabulary.getEl();
+            case "fi":
+                return vocabulary.getFi();
+            case "hr":
+                return vocabulary.getHr();
+            case "hu":
+                return vocabulary.getHu();
+            case "id":
+                return vocabulary.getId();
+            case "lt":
+                return vocabulary.getLt();
+            case "nb":
+                return vocabulary.getNb();
+            case "pl":
+                return vocabulary.getPl();
+            case "ro":
+                return vocabulary.getRo();
+            case "sk":
+                return vocabulary.getSk();
+            case "sl":
+                return vocabulary.getSl();
+            case "sv":
+                return vocabulary.getSv();
+            case "th":
+                return vocabulary.getTh();
+            case "tr":
+                return vocabulary.getTr();
+            case "vi":
+                return vocabulary.getVi();
+            case "ar":
+                return vocabulary.getAr();
+            case "no":
+                return vocabulary.getNo();
+            case "uk":
+                return vocabulary.getUk();
+            case "lv":
+                return vocabulary.getLv();
+            case "et":
+                return vocabulary.getEt();
+            default:
+                return null;
+        }
+    }
 }
 

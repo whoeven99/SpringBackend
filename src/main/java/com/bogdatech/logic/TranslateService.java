@@ -61,6 +61,7 @@ public class TranslateService {
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
     private final IEmailService emailService;
+    private final IVocabularyService vocabularyService;
 
     @Autowired
     public TranslateService(
@@ -77,7 +78,8 @@ public class TranslateService {
             JsoupUtils jsoupUtils,
             IAILanguagePacksService aiLanguagePacksService,
             IUsersService usersService,
-            EmailIntegration emailIntegration, IEmailService emailService) {
+            EmailIntegration emailIntegration,
+            IEmailService emailService, IVocabularyService vocabularyService) {
         this.translateApiIntegration = translateApiIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
@@ -93,6 +95,7 @@ public class TranslateService {
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
+        this.vocabularyService = vocabularyService;
     }
 
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
@@ -688,8 +691,8 @@ public class TranslateService {
 
             String targetText = null;
             try {
-//                translateTextService.getTranslateTextDataInVocabulary(target, value, source)[0];
-                targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target)[0];
+                targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
+//                targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target)[0];
             } catch (Exception e) {
                 //打印错误信息
 //                saveToShopify(value, translation, resourceId, request);

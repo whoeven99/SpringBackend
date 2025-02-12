@@ -13,4 +13,6 @@ public interface IVocabularyService extends IService<VocabularyDO> {
 
     // 用于存储翻译到 VocabularyDO 表
     void storeTranslationsInVocabulary(List<TranslateTextDO> translateTextList);
+
+    String getTranslateTextDataInVocabulary(String target, String value, String source);
 }
