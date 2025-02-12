@@ -29,7 +29,14 @@ public class VocabularyController {
     public BaseResponse<Object> convertDataByCsv(String filePath) {
         //读csv文件将csv的数据转换为TranslateTextDO类型的List
        for (int i = 2; i < 11; i++) {
-           List<TranslateTextDO> list = readCsv("src/main/java/com/bogdatech/requestBody/" + filePath + i + ".csv");
+           List<TranslateTextDO> list = null;
+           try {
+               list = readCsv("src/main/java/com/bogdatech/requestBody/" + filePath + i + ".csv");
+           } catch (Exception e) {
+               System.out.println("第" + i + "个文件读取失败");
+               continue;
+//               throw new RuntimeException(e);
+           }
 
            //将TranslateTextDO类型的List的数据转换为数据库中
            vocabularyService.storeTranslationsInVocabularyByCsv(list);
