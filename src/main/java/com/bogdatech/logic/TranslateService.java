@@ -893,6 +893,14 @@ public class TranslateService {
                 continue;
             }
 
+            //如果包含相对路径则跳过
+            if (type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+                    || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
+                    || type.equals(("LIST_URL"))) {
+//                System.out.println("FileReference: " + value);
+                continue;
+            }
+
             //对从数据库中获取的数据单独处理
             if (isDatabaseResourceType(resourceType)) {
                 //先将type存在target里面
