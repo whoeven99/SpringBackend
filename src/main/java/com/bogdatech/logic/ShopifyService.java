@@ -127,7 +127,7 @@ public class ShopifyService {
         Map<String, String> csvMap = new HashMap<>();
         if (method.equals("translate")){
             //读csv文件并转化为List<CsvRequest>
-            csvMap = readCsvToCsvRequest("src/main/java/com/bogdatech/requestBody/translations.csv");
+            csvMap = readCsvToCsvRequest("src/main/java/com/bogdatech/requestBody/translation1.csv");
 //            System.out.println("csvMap: " + csvMap.toString());
         }
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
@@ -139,7 +139,7 @@ public class ShopifyService {
             System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
         if (method.equals("csv")) {
-            writeCsv(csvRequestList, "src/main/java/com/bogdatech/requestBody/translations.csv");
+            writeCsv(csvRequestList, "src/main/java/com/bogdatech/requestBody/translation1.csv");
             System.out.println("写入完成");
         }
         return counter.getTotalChars();
@@ -366,7 +366,7 @@ public class ShopifyService {
             //如果包含相对路径则跳过
             if (type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
-                    || type.equals(("LIST_URL"))) {
+                    || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD)  || resourceType.equals(SHOP_POLICY)) {
 //                System.out.println("FileReference: " + value);
                 continue;
             }

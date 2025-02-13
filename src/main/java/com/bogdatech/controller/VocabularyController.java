@@ -32,19 +32,20 @@ public class VocabularyController {
     @PostMapping("/convertDataByCsv")
     public BaseResponse<Object> convertDataByCsv(String filePath) {
         //读csv文件将csv的数据转换为TranslateTextDO类型的List
-       for (int i = 2; i < 11; i++) {
+//       for (int i = 0; i < 11; i++) {
            List<TranslateTextDO> list = null;
            try {
-               list = readCsv("src/main/java/com/bogdatech/requestBody/" + filePath + i + ".csv");
+               list = readCsv("src/main/java/com/bogdatech/requestBody/" + filePath + 1 + ".csv");
            } catch (Exception e) {
-               System.out.println("第" + i + "个文件读取失败");
-               continue;
+               System.out.println("错误原因： " + e.getMessage());
+//               System.out.println("第" + i + "个文件读取失败");
+//               continue;
 //               throw new RuntimeException(e);
            }
 
            //将TranslateTextDO类型的List的数据转换为数据库中
            vocabularyService.storeTranslationsInVocabularyByCsv(list);
-       }
+//       }
 
         return new BaseResponse<>().CreateSuccessResponse(200);
     }
@@ -85,7 +86,7 @@ public class VocabularyController {
         csvRequestList.add(request2);
 
         // 设置文件路径
-        String filePath = "src/main/java/com/bogdatech/requestBody/translations.csv";
+        String filePath = "src/main/java/com/bogdatech/requestBody/translation1.csv";
 
         // 调用 writeCsv 方法，将数据写入 CSV 文件
         writeCsv(csvRequestList, filePath);

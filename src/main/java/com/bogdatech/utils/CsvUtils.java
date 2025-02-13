@@ -35,9 +35,9 @@ public class CsvUtils {
                 vocabulary.setSourceText(record.get("source_text"));
                 System.out.println("source_text: " + record.get("source_text"));
                 vocabulary.setTargetText(record.get("target_text"));
-//                System.out.println("target_text: " + record.get("target_txte"));
+                System.out.println("target_text: " + record.get("target_text"));
                 vocabulary.setTargetCode(record.get("target_code"));
-//                System.out.println("target_code: " + record.get("target_code"));
+                System.out.println("target_code: " + record.get("target_code"));
                 vocabularyList.add(vocabulary);
             }
         } catch (FileNotFoundException e) {
