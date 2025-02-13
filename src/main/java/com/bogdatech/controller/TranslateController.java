@@ -125,8 +125,8 @@ public class TranslateController {
      * 读取shopName的所有翻译状态信息
      */
     @GetMapping("/readInfoByShopName")
-    public BaseResponse<Object> readInfoByShopName(String shopName) {
-        List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(shopName);
+    public BaseResponse<Object> readInfoByShopName(String shopName, String source) {
+        List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(shopName, source);
         if (!translatesDos.isEmpty()) {
             return new BaseResponse<>().CreateSuccessResponse(translatesDos);
         }
