@@ -28,6 +28,14 @@ public class VocabularyService {
         vocabularyService.storeTranslationsInVocabulary(translateTextList);
     }
 
+    public String getTranslateTextDataInVocabulary(String target, String value, String source) {
+        return vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
+    }
+
+    public void testInsert(String target, String value, String source) {
+        vocabularyService.testInsert(target, value, source);
+    }
+
     //单独翻译online数据
 
 

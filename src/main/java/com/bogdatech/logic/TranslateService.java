@@ -61,6 +61,8 @@ public class TranslateService {
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
     private final IEmailService emailService;
+    private final IVocabularyService vocabularyService;
+    private final TencentEmailService tencentEmailService;
 
     @Autowired
     public TranslateService(
@@ -77,7 +79,8 @@ public class TranslateService {
             JsoupUtils jsoupUtils,
             IAILanguagePacksService aiLanguagePacksService,
             IUsersService usersService,
-            EmailIntegration emailIntegration, IEmailService emailService) {
+            EmailIntegration emailIntegration,
+            IEmailService emailService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService) {
         this.translateApiIntegration = translateApiIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
@@ -93,6 +96,8 @@ public class TranslateService {
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
+        this.vocabularyService = vocabularyService;
+        this.tencentEmailService = tencentEmailService;
     }
 
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
@@ -132,6 +137,7 @@ public class TranslateService {
                 }
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                tencentEmailService.sendEmailByOnline(shopName, source, target);
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
                 if (emailSent.compareAndSet(false, true)) {
@@ -151,12 +157,14 @@ public class TranslateService {
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
             translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+            tencentEmailService.sendEmailByOnline(shopName, source, target);
         });
 
         userTasks.put(shopName, future);  // 存储用户的任务
         userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
         userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
     }
+
 
     // 用户卸载停止指定用户的翻译任务
     public void stopTranslation(String shopName) {
@@ -688,7 +696,8 @@ public class TranslateService {
 
             String targetText = null;
             try {
-                targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target)[0];
+                targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
+//                targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target)[0];
             } catch (Exception e) {
                 //打印错误信息
 //                saveToShopify(value, translation, resourceId, request);
@@ -703,45 +712,45 @@ public class TranslateService {
 
             //数据库为空的逻辑
             //判断数据类型
-            if (value.isEmpty()) {
-                continue;
-            }
-            if ("handle".equals(key)
-            ) {
-                saveToShopify(value, translation, resourceId, request);
-                continue;
-            }
-            if ("JSON".equals(type)
-                    || "JSON_STRING".equals(type)) {
-                //对于json和json_string的数据直接存原文
-                //存放在json的集合里面
-                saveToShopify(value, translation, resourceId, request);
-                continue;
-            }
-            if ("HTML".equals(type)) {
-                //存放在html的list集合里面
-                // 解析HTML文档
-                Document doc = Jsoup.parse(value);
-                try {
-                    TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
-                    // 提取需要翻译的文本
-                    Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
-                    // 翻译文本
-                    Map<Element, List<String>> translatedTextMap = jsoupUtils.translateTexts(elementTextMap, translateRequest, counter, aiLanguagePacksDO);
-                    // 替换原始文本为翻译后的文本
-                    jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
-                } catch (Exception e) {
-                    saveToShopify(doc.toString(), translation, resourceId, request);
-                    continue;
-                }
-                saveToShopify(doc.toString(), translation, resourceId, request);
-                continue;
-            }
-
-            counter.addChars(calculateToken(value, 1));
-
-            //TODO: 改为判断语言代码方法
-            translateByGoogleOrAI(request, counter, aiLanguagePacksDO, registerTransactionRequest, translation);
+//            if (value.isEmpty()) {
+//                continue;
+//            }
+//            if ("handle".equals(key)
+//            ) {
+//                saveToShopify(value, translation, resourceId, request);
+//                continue;
+//            }
+//            if ("JSON".equals(type)
+//                    || "JSON_STRING".equals(type)) {
+//                //对于json和json_string的数据直接存原文
+//                //存放在json的集合里面
+//                saveToShopify(value, translation, resourceId, request);
+//                continue;
+//            }
+//            if ("HTML".equals(type)) {
+//                //存放在html的list集合里面
+//                // 解析HTML文档
+//                Document doc = Jsoup.parse(value);
+//                try {
+//                    TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
+//                    // 提取需要翻译的文本
+//                    Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
+//                    // 翻译文本
+//                    Map<Element, List<String>> translatedTextMap = jsoupUtils.translateTexts(elementTextMap, translateRequest, counter, aiLanguagePacksDO);
+//                    // 替换原始文本为翻译后的文本
+//                    jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
+//                } catch (Exception e) {
+//                    saveToShopify(doc.toString(), translation, resourceId, request);
+//                    continue;
+//                }
+//                saveToShopify(doc.toString(), translation, resourceId, request);
+//                continue;
+//            }
+//
+//            counter.addChars(calculateToken(value, 1));
+//
+//            //TODO: 改为判断语言代码方法
+//            translateByGoogleOrAI(request, counter, aiLanguagePacksDO, registerTransactionRequest, translation);
 //                        String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
 //            addData(target, value, targetString);
 //            saveToShopify(targetString, translation, resourceId, request);

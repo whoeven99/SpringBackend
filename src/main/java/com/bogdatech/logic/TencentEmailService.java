@@ -26,7 +26,6 @@ public class TencentEmailService {
 
     //发生主题未翻译的邮件
     public Boolean sendEmailByOnline(String shopName, String source, String target) {
-        //首次登陆 发送邮件
         Map<String, String> templateData = new HashMap<>();
         templateData.put("shop_name", shopName);
         templateData.put("source_language", source);
