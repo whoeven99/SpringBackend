@@ -24,22 +24,14 @@ public class Application {
     public DataSource dataSource() {
         DruidDataSource dataSource = new DruidDataSource();
         try {
-            String env = System.getenv("ApplicationEnv");
             Properties properties = new Properties();
             properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
-            if ("prod".equals(env)) {
-                dataSource.setUrl(properties.getProperty("spring.datasource.master.url"));
-                dataSource.setUsername(properties.getProperty("spring.datasource.master.username"));
-                dataSource.setPassword(properties.getProperty("spring.datasource.master.password"));
-                dataSource.setDriverClassName(properties.getProperty("spring.datasource.master.driver-class-name"));
+            dataSource.setUrl(properties.getProperty("spring.datasource.master.url"));
+            dataSource.setUsername(properties.getProperty("spring.datasource.master.username"));
+            dataSource.setPassword(properties.getProperty("spring.datasource.master.password"));
+            dataSource.setDriverClassName(properties.getProperty("spring.datasource.master.driver-class-name"));
 //                System.out.println("prod: " + properties.getProperty("spring.datasource.master.username"));
-            } else {
-                dataSource.setUrl(properties.getProperty("spring.datasource.test.url"));
-                dataSource.setUsername(properties.getProperty("spring.datasource.test.username"));
-                dataSource.setPassword(properties.getProperty("spring.datasource.test.password"));
-                dataSource.setDriverClassName(properties.getProperty("spring.datasource.test.driver-class-name"));
-//                System.out.println("test: " + properties.getProperty("spring.datasource.test.username"));
-            }
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
