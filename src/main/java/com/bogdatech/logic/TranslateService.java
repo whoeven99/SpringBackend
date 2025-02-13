@@ -901,7 +901,7 @@ public class TranslateService {
             //如果包含相对路径则跳过
             if (type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
-                    || type.equals(("LIST_URL"))) {
+                    || type.equals(("LIST_URL")) || resourceType.equals("METAFIELD")) {
 //                System.out.println("FileReference: " + value);
                 continue;
             }
