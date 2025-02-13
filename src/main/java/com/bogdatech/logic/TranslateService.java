@@ -971,7 +971,12 @@ public class TranslateService {
                 PACKING_SLIP_TEMPLATE.equals(resourceType) ||
                 EMAIL_TEMPLATE.equals(resourceType) ||
                 LINK.equals(resourceType) ||
-                MENU.equals(resourceType);
+                MENU.equals(resourceType) ||
+                ONLINE_STORE_THEME_APP_EMBED.equals(resourceType) ||
+                ONLINE_STORE_THEME_JSON_TEMPLATE.equals(resourceType) ||
+                ONLINE_STORE_THEME_SECTION_GROUP.equals(resourceType) ||
+                ONLINE_STORE_THEME_SETTINGS_CATEGORY.equals(resourceType) ||
+                ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS.equals(resourceType);
     }
 
     // 判断是否需要 AI 翻译的资源类型
