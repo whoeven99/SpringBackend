@@ -206,9 +206,9 @@ public class ShopifyService {
                 String fieldName = field.getKey();
                 JsonNode fieldValue = field.getValue();
                 //当translates里面有数据时
-//                if ("translations".equals(fieldName)) {
-//                    strings.set(counterTranslatedContent((ArrayNode) fieldValue));
-//                }
+                if ("translations".equals(fieldName)) {
+                    strings.set(counterTranslatedContent((ArrayNode) fieldValue));
+                }
                 if (fieldValue == null){
                     break;
                 }
@@ -291,7 +291,7 @@ public class ShopifyService {
                     //如果包含相对路径则跳过
                     if (type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                             || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
-                            || type.equals(("LIST_URL"))) {
+                            || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD) || resourceType.equals(SHOP_POLICY)) {
 //                System.out.println("FileReference: " + value);
                         continue;
                     }
@@ -300,7 +300,7 @@ public class ShopifyService {
                     //对从数据库中获取的数据单独处理
                     if (isDatabaseResourceType(resourceType)) {
                         //从读csv的数据的List中获取对应的数据
-                        if (csvMap.containsKey(value)) {
+                        if (csvMap.containsKey(value) && !translatedContent.contains(key)) {
                             //翻译对应的数据
                             Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
                             String targetText = csvMap.get(value);

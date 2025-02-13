@@ -77,24 +77,25 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, "250", "", ""),
             new TranslateResourceDTO(SHOP_POLICY, "250", "", ""),
             new TranslateResourceDTO(EMAIL_TEMPLATE, "250", "", ""),
-            new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, "250", "", ""),
-            new TranslateResourceDTO(MENU, "250", "", ""),
-            new TranslateResourceDTO(LINK, "250", "", "")
-            ,
-            new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, "250", "", ""),
-            new TranslateResourceDTO(FILTER, "250", "", ""),
-            new TranslateResourceDTO(METAFIELD, "250", "", "")
-            ,
-            new TranslateResourceDTO(METAOBJECT, "250", "", ""),
-            new TranslateResourceDTO(PAYMENT_GATEWAY, "250", "", ""),
-            new TranslateResourceDTO(SELLING_PLAN, "250", "", ""),
-            new TranslateResourceDTO(SELLING_PLAN_GROUP, "250", "", ""),
-            new TranslateResourceDTO(SHOP, "250", "", ""),
-            new TranslateResourceDTO(ARTICLE, "250", "", "")
-            ,
-            new TranslateResourceDTO(BLOG, "250", "", "")
-            ,
-            new TranslateResourceDTO(PAGE, "250", "", "")
+            new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, "250", "", "")
+//            ,
+//            new TranslateResourceDTO(MENU, "250", "", ""),
+//            new TranslateResourceDTO(LINK, "250", "", "")
+//            ,
+//            new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, "250", "", ""),
+//            new TranslateResourceDTO(FILTER, "250", "", ""),
+//            new TranslateResourceDTO(METAFIELD, "250", "", "")
+//            ,
+//            new TranslateResourceDTO(METAOBJECT, "250", "", ""),
+//            new TranslateResourceDTO(PAYMENT_GATEWAY, "250", "", ""),
+//            new TranslateResourceDTO(SELLING_PLAN, "250", "", ""),
+//            new TranslateResourceDTO(SELLING_PLAN_GROUP, "250", "", ""),
+//            new TranslateResourceDTO(SHOP, "250", "", ""),
+//            new TranslateResourceDTO(ARTICLE, "250", "", "")
+//            ,
+//            new TranslateResourceDTO(BLOG, "250", "", "")
+//            ,
+//            new TranslateResourceDTO(PAGE, "250", "", "")
     ));
     public static final Map<String, List<TranslateResourceDTO>> RESOURCE_MAP = new HashMap<>();
 
