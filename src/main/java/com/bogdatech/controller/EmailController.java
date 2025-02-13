@@ -39,6 +39,7 @@ public class EmailController {
     @PostMapping("/sendByTencent")
     public void sendEmailByTencent(@RequestBody TencentSendEmailRequest TencentSendEmailRequest) {
         tencentEmailService.sendEmailByEmail(TencentSendEmailRequest);
+
     }
 
     //将翻译的数据存储到数据库
@@ -52,5 +53,15 @@ public class EmailController {
         }
     }
 
+    @PostMapping("/sendOnlineEmail")
+    public BaseResponse<Object> sendEmail(String shopName, String target, String source) {
+        Boolean b = tencentEmailService.sendEmailByOnline(shopName, target, source);
+        if(b){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        else {
+            return new BaseResponse<>().CreateErrorResponse("false");
+        }
+    }
 
 }
