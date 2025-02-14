@@ -273,8 +273,8 @@ public class TranslateService {
             try {
                 //TODO：判断当前的使用环境，本地用封装的接口；test和prod直接调用
                 String env = System.getenv("ApplicationEnv");
-                System.out.println("当前环境为：" + env);
-                appInsights.trackTrace("当前环境为：" + env);
+//                System.out.println("当前环境为：" + env);
+//                appInsights.trackTrace("当前环境为：" + env);
                 if ("prod".equals(env) || "dev".equals(env)) {
                     shopifyData = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
                 } else {
@@ -700,11 +700,10 @@ public class TranslateService {
 //                targetText = translateTextService.getTargetTextByDigest(translatableContentDigest, target)[0];
             } catch (Exception e) {
                 //打印错误信息
-//                saveToShopify(value, translation, resourceId, request);
                 appInsights.trackTrace("translateDataByDatabase " + e.getMessage());
             }
             if (targetText != null) {
-                counter.addChars(calculateToken(value, 1));
+//                counter.addChars(calculateToken(value, 1));
                 addData(target, value, targetText);
                 saveToShopify(targetText, translation, resourceId, request);
                 continue;
