@@ -1,10 +1,27 @@
 package com.bogdatech.integration;
 
+
+import com.alibaba.dashscope.aigc.generation.Generation;
+import com.alibaba.dashscope.aigc.generation.GenerationParam;
+import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.Role;
+import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.aliyun.alimt20181012.models.TranslateGeneralResponse;
 import com.aliyun.tea.TeaException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class ALiYunTranslateIntegration {
@@ -66,5 +83,93 @@ public class ALiYunTranslateIntegration {
             com.aliyun.teautil.Common.assertAsString(error.message);
             throw new RuntimeException(error);
         }
+    }
+
+
+    public static List<String> callWithMessages(String model, List<String> translateTexts, String cueWord) throws ApiException, NoApiKeyException, InputRequiredException {
+        Generation gen = new Generation();
+        List<Message> list = new ArrayList<Message>();
+
+        Message systemMsg = Message.builder()
+                .role(Role.SYSTEM.getValue())
+                .content(cueWord)
+                .build();
+        list.add(systemMsg);
+        for (String text : translateTexts
+        ) {
+            Message userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(text)
+                    .build();
+            list.add(userMsg);
+        }
+
+        GenerationParam param = GenerationParam.builder()
+                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .model(model)
+                .messages(list)
+                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .build();
+        String content = gen.call(param).getOutput().getChoices().get(0).getMessage().getContent();
+//        System.out.println("content1: " + content);
+        //将content进行处理，转换为List<String>返回。
+        return stringToList(content);
+
+    }
+
+    public static String callWithMessage(String model, String translateText, String cueWord) throws ApiException, NoApiKeyException, InputRequiredException {
+        Generation gen = new Generation();
+        Message systemMsg = Message.builder()
+                .role(Role.SYSTEM.getValue())
+                .content(cueWord)
+                .build();
+        Message userMsg = Message.builder()
+                .role(Role.USER.getValue())
+                .content(translateText)
+                .build();
+        GenerationParam param = GenerationParam.builder()
+                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .model(model)
+                .messages(Arrays.asList(systemMsg, userMsg))
+                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .build();
+//        return gen.call(param);
+
+        return gen.call(param).getOutput().getChoices().get(0).getMessage().getContent();
+    }
+
+    public static List<String> stringToList(String context) {
+        //对返回的数据做处理，只要[]里面的数据
+        System.out.println("context: " + context);
+        String regex = "\\[(.*?)\\]";
+        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL); // 使用 Pattern.DOTALL 让点号匹配换行符
+        Matcher matcher = pattern.matcher(context);
+
+        List<String> list = null;
+        if (matcher.find()) {
+            // 提取并输出方括号中的内容
+            String extractedData = matcher.group(1);
+            // 使用 Jackson 来解析 JSON 数组为 List<String>
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                // 解析提取出来的 JSON 数组字符串为 List<String>
+                list = objectMapper.readValue("[" + extractedData + "]", List.class);
+
+                // 输出 List<String>
+                System.out.println("Extracted List: " + list);
+            } catch (JsonMappingException e) {
+                throw new RuntimeException(e);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        // 打印 List 内容
+        assert list != null;
+        for (String item : list) {
+            System.out.println(item);
+        }
+        return list;
     }
 }
