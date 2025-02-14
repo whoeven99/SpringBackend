@@ -71,5 +71,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.getLanguageListCounter(shopName);
     }
 
+    @Override
+    public void updateTranslatesResourceType(String shopName, String target, String source, String resourceType) {
+         baseMapper.updateTranslatesResourceType(shopName, target, source, resourceType);
+    }
+
 
 }
