@@ -103,8 +103,8 @@ public class ShopifyController {
 
     //获取用户的状态
     @GetMapping("/getUserStatus")
-    public BaseResponse<Object> getUserStatus(String shopName) {
-        List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(shopName);
+    public BaseResponse<Object> getUserStatus(String shopName, String source) {
+        List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(shopName, source);
         return new BaseResponse<>().CreateSuccessResponse(translatesDos);
     }
 
