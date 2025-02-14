@@ -22,4 +22,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     Boolean deleteFromTranslates(TranslateRequest request);
 
     List<TranslatesDO> getLanguageListCounter(String shopName);
+
+    void updateTranslatesResourceType(String shopName, String target, String source, String resourceType);
 }
