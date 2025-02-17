@@ -78,9 +78,9 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(SHOP_POLICY, "250", "", ""),
             new TranslateResourceDTO(EMAIL_TEMPLATE, "250", "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, "250", "", "")
-//            ,
-//            new TranslateResourceDTO(MENU, "250", "", ""),
-//            new TranslateResourceDTO(LINK, "250", "", "")
+            ,
+            new TranslateResourceDTO(MENU, "250", "", ""),
+            new TranslateResourceDTO(LINK, "250", "", "")
 //            ,
 //            new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, "250", "", ""),
 //            new TranslateResourceDTO(FILTER, "250", "", ""),

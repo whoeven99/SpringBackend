@@ -283,10 +283,14 @@ public class ShopifyService {
                         continue;  // 跳过当前项
                     }
 
+                    String key = contentItemNode.path("key").asText(null);
+                    if (translatedContent.contains(key)){
+                        continue;
+                    }
+
                     String type = contentItemNode.path("type").asText(null);
                     String locale = contentItemNode.path("locale").asText(null);
                     String translatableContentDigest = contentItemNode.path("digest").asText(null);
-                    String key = contentItemNode.path("key").asText(null);
                     String target = request.getTarget();
                     //如果包含相对路径则跳过
                     if (type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
@@ -326,6 +330,7 @@ public class ShopifyService {
     }
 
     //封装调用云服务器实现将数据存入shopify本地的方法
+    @Async
     public void saveToShopify(CloudInsertRequest cloudServiceRequest) {
         ObjectMapper objectMapper = new ObjectMapper();
         ShopifyRequest request = new ShopifyRequest();
@@ -356,9 +361,15 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             // 跳过 value 为空的项
 
+
             String value = contentItemNode.path("value").asText(null);
             if (value == null || value.isEmpty()) {
                 continue;  // 跳过当前项
+            }
+
+            String key = contentItemNode.path("key").asText(null);
+            if (translatedContent.contains(key)){
+                continue;
             }
 
             String type = contentItemNode.path("type").asText(null);
