@@ -4,6 +4,8 @@ import com.azure.ai.openai.models.ChatCompletions;
 import com.azure.ai.openai.models.ChatCompletionsOptions;
 import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
+import com.bogdatech.exception.ClientException;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +25,8 @@ public class ChatGptIntegration {
     private String apiKey;
     @Value("${gpt.deploymentName}")
     private String deploymentName;
+
+    TelemetryClient appInsights = new TelemetryClient();
     public String chatWithGpt(String prompt) {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
@@ -59,7 +63,11 @@ public class ChatGptIntegration {
                 }
             } catch (Exception e) {
                 retryCount++;
-                System.err.println("Attempt " + retryCount + " failed: " + e.getMessage());
+                appInsights.trackTrace("Error occurred while calling GPT: " + e.getMessage());
+                if (retryCount >= 2){
+                    // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
+                    throw new ClientException("Translation exception");
+                }
             }
         }
         return content;

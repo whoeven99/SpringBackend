@@ -89,13 +89,16 @@ public class JsoupUtils {
 //                            targetString = translateApiIntegration.googleTranslate(request);
 //                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
-                    } catch (Exception e) {
+                    } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
 //                        counter.addChars(calculateToken(text, 1));
 //                        targetString = translateApiIntegration.googleTranslate(request);
 ////                        targetString = translateApiIntegration.microsoftTranslate(request);
 //                        addData(target, text, targetString);
                         translatedTexts.add(text);
+                        if (e.getErrorMessage().equals("Translation exception")){
+                            //终止翻译，并返回状态4
+                        }
                         continue;
                     }
                     addData(target, text, targetString);
