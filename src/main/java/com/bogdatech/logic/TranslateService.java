@@ -286,12 +286,13 @@ public class TranslateService {
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                 continue;
             }
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, aiLanguagePacksDO);
+            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, aiLanguagePacksDO, request.getSource());
             translateJson(translateContext);
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter)) return;
         }
-        System.out.println("翻译失败");
+        translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
+        System.out.println("翻译结束");
     }
 
     private boolean checkIsStopped(String shopName, CharacterCountUtils counter) {
@@ -330,7 +331,12 @@ public class TranslateService {
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
 
     public Future<Void> translateJson(TranslateContext translateContext) {
-        System.out.println("现在翻译到： " + translateContext.getTranslateResource().getResourceType());
+        String resourceType = translateContext.getTranslateResource().getResourceType();
+        ShopifyRequest request = translateContext.getShopifyRequest();
+        System.out.println("现在翻译到： " + resourceType);
+        //将目前的状态，添加到数据库中
+        translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), translateContext.getSource(), resourceType);
+
         if (translateContext.getShopifyData() == null) {
             // 返回默认值或空结果
             return null;
