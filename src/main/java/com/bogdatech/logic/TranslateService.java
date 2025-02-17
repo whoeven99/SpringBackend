@@ -559,7 +559,7 @@ public class TranslateService {
         if ("HTML".equals(type)) {
             try {
                 //TODO：重新实现一个方法用于用新提示词进行长文本翻译。
-                String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, registerTransactionRequest.getLocale(), request.getTarget(), value), counter, translateContext.getAiLanguagePacksDO());
+                String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, request.getShopName(), request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, translateContext.getAiLanguagePacksDO());
                 saveToShopify(targetText, translation, resourceId, request);
                 return true;
             } catch (Exception e) {

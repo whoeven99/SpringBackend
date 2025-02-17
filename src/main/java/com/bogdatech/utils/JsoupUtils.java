@@ -1,5 +1,6 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ChatGptIntegration;
@@ -28,12 +29,14 @@ public class JsoupUtils {
 
     private final TranslateApiIntegration translateApiIntegration;
     private final ChatGptIntegration chatGptIntegration;
+    private final ITranslatesService translatesService;
     TelemetryClient appInsights = new TelemetryClient();
 
     @Autowired
-    public JsoupUtils(TranslateApiIntegration translateApiIntegration, ChatGptIntegration chatGptIntegration) {
+    public JsoupUtils(TranslateApiIntegration translateApiIntegration, ChatGptIntegration chatGptIntegration, ITranslatesService translatesService) {
         this.translateApiIntegration = translateApiIntegration;
         this.chatGptIntegration = chatGptIntegration;
+        this.translatesService = translatesService;
     }
 
     public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
@@ -98,6 +101,9 @@ public class JsoupUtils {
                         translatedTexts.add(text);
                         if (e.getErrorMessage().equals("Translation exception")){
                             //终止翻译，并返回状态4
+                            System.out.println("翻译异常，终止翻译");
+                            translatesService.updateTranslateStatus(request.getShopName(), 4, target, request.getSource(), request.getAccessToken());
+                            士大夫
                         }
                         continue;
                     }
