@@ -517,7 +517,7 @@ public class TranslateService {
             // 从缓存中获取翻译结果
             String targetCache = translateSingleLine(value, target);
             if (targetCache != null) {
-                counter.addChars(calculateToken(value, 1));
+//                counter.addChars(calculateToken(value, 1));
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
             }
@@ -689,7 +689,7 @@ public class TranslateService {
             String type = registerTransactionRequest.getTarget();
 
             if (targetCache != null) {
-                counter.addChars(calculateToken(value, 1));
+//                counter.addChars(calculateToken(value, 1));
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
             }
@@ -822,7 +822,7 @@ public class TranslateService {
             //获取缓存数据
             String targetCache = translateSingleLine(value, request.getTarget());
             if (targetCache != null) {
-                counter.addChars(calculateToken(targetCache, 1));
+//                counter.addChars(calculateToken(targetCache, 1));
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
             }
@@ -884,19 +884,24 @@ public class TranslateService {
             // 跳过 value 为空的项
 
             String value = null;
+            String locale = null;
+            String translatableContentDigest = null;
+            String key = null;
+            String type = null;
             try {
                 value = contentItemNode.path("value").asText(null);
-                if (value == null) {
+                locale = contentItemNode.path("locale").asText(null);
+                translatableContentDigest = contentItemNode.path("digest").asText(null);
+                key = contentItemNode.path("key").asText(null);
+                type = contentItemNode.path("type").asText(null);
+                if (value == null ) {
                     continue;  // 跳过当前项
                 }
             } catch (Exception e) {
                 appInsights.trackTrace("失败的原因： " + e.getMessage());
+                continue;
             }
 
-            String locale = contentItemNode.path("locale").asText(null);
-            String translatableContentDigest = contentItemNode.path("digest").asText(null);
-            String key = contentItemNode.path("key").asText(null);
-            String type = contentItemNode.path("type").asText(null);
             //如果translatableContentMap里面有该key则不翻译，没有则翻译
             if (translatableContentMap.containsKey(key)) {
                 continue;

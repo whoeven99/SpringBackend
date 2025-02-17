@@ -72,7 +72,7 @@ public class JsoupUtils {
 
                 String targetString;
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
@@ -172,7 +172,7 @@ public class JsoupUtils {
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     //目前没有翻译html的提示词，用的是谷歌翻译
@@ -204,7 +204,7 @@ public class JsoupUtils {
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
