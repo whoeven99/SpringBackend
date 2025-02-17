@@ -125,6 +125,7 @@ public class ShopifyService {
         //设置一个source_code,source_text,target_code,target_text的数据类型
         List<CsvRequest> csvRequestList = new ArrayList<>();
         Map<String, String> csvMap = new HashMap<>();
+        System.out.println("开始： " + method + " 方法");
         if (method.equals("translate")){
             //读csv文件并转化为List<CsvRequest>
             csvMap = readCsvToCsvRequest("src/main/java/com/bogdatech/requestBody/translation1.csv");
