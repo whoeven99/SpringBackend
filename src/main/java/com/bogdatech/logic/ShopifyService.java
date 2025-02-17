@@ -140,7 +140,7 @@ public class ShopifyService {
             System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
         if (method.equals("csv")) {
-            writeCsv(csvRequestList, "src/main/java/com/bogdatech/requestBody/translation1.csv");
+            writeCsv(csvRequestList, "src/main/java/com/bogdatech/requestBody/translation.csv");
             System.out.println("写入完成");
         }
         return counter.getTotalChars();
@@ -379,7 +379,7 @@ public class ShopifyService {
             if (type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD)  || resourceType.equals(SHOP_POLICY)) {
-//                System.out.println("FileReference: " + value);
+                System.out.println("FileReference: " + value);
                 continue;
             }
 

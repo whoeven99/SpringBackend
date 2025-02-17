@@ -86,7 +86,7 @@ public class VocabularyController {
         csvRequestList.add(request2);
 
         // 设置文件路径
-        String filePath = "src/main/java/com/bogdatech/requestBody/translation1.csv";
+        String filePath = "src/main/java/com/bogdatech/requestBody/translation.csv";
 
         // 调用 writeCsv 方法，将数据写入 CSV 文件
         writeCsv(csvRequestList, filePath);
