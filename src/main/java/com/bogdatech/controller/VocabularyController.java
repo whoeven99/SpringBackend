@@ -35,7 +35,7 @@ public class VocabularyController {
 //       for (int i = 0; i < 11; i++) {
            List<TranslateTextDO> list = null;
            try {
-               list = readCsv("src/main/java/com/bogdatech/requestBody/" + filePath + 1 + ".csv");
+               list = readCsv("src/main/java/com/bogdatech/requestBody/" + filePath + ".csv");
            } catch (Exception e) {
                System.out.println("错误原因： " + e.getMessage());
 //               System.out.println("第" + i + "个文件读取失败");
