@@ -137,7 +137,7 @@ public class TranslateService {
                 }
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                tencentEmailService.sendEmailByOnline(shopName, source, target);
+//                tencentEmailService.sendEmailByOnline(shopName, source, target);
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
                 if (emailSent.compareAndSet(false, true)) {
@@ -157,7 +157,7 @@ public class TranslateService {
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
             translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
-            tencentEmailService.sendEmailByOnline(shopName, source, target);
+//            tencentEmailService.sendEmailByOnline(shopName, source, target);
         });
 
         userTasks.put(shopName, future);  // 存储用户的任务
@@ -562,14 +562,32 @@ public class TranslateService {
                 String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, request.getShopName(), request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, translateContext.getAiLanguagePacksDO());
                 saveToShopify(targetText, translation, resourceId, request);
                 return true;
-            } catch (Exception e) {
+            } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
+                ChatgptException(e, request, registerTransactionRequest.getLocale());
                 return true;
             }
         }
         return false;
     }
 
+    //对openAI翻译中报错做处理，两次以上直接结束翻译
+    public void ChatgptException(ClientException e, ShopifyRequest request, String source){
+        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+            String shopName = request.getShopName();
+            //终止翻译。
+            AtomicBoolean stopFlag = userStopFlags.get(shopName);
+            if (stopFlag != null) {
+                stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
+                Future<?> future = userTasks.get(shopName);
+                if (future != null && !future.isDone()) {
+                    future.cancel(true);  // 中断正在执行的任务
+                    appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
+                    translatesService.updateTranslateStatus(shopName, 4, request.getTarget(), source, request.getAccessToken());
+                }
+            }
+        }
+    }
     //对词汇表数据进行处理
     public void translateDataByGlossary(List<RegisterTransactionRequest> registerTransactionRequests,
                                         TranslateContext translateContext) {
@@ -845,7 +863,15 @@ public class TranslateService {
     //首选谷歌翻译，翻译不了用AI翻译
     public void translateByGoogleOrAI(ShopifyRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO, RegisterTransactionRequest registerTransactionRequest, Map<String, Object> translation) {
         String value = registerTransactionRequest.getValue();
-        List<String> strings = jsoupUtils.googleTranslateJudgeCode(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), aiLanguagePacksDO);
+        List<String> strings = null;
+        try {
+            strings = jsoupUtils.googleTranslateJudgeCode(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), aiLanguagePacksDO);
+        } catch (ClientException e) {
+            if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+                ChatgptException(e, request, registerTransactionRequest.getLocale());
+            }
+            return;
+        }
         String targetString = strings.get(0);
         if (targetString.isEmpty()) {
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);

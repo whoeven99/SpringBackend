@@ -64,6 +64,7 @@ public class ChatGptIntegration {
             } catch (Exception e) {
                 retryCount++;
                 appInsights.trackTrace("Error occurred while calling GPT: " + e.getMessage());
+                appInsights.trackTrace("报错的文本是： " + prompt);
                 if (retryCount >= 2){
                     // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
                     throw new ClientException("Translation exception");

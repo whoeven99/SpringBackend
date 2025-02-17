@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+import static com.bogdatech.constants.TranslateConstants.TRANSLATION_EXCEPTION;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
@@ -99,11 +100,10 @@ public class JsoupUtils {
 ////                        targetString = translateApiIntegration.microsoftTranslate(request);
 //                        addData(target, text, targetString);
                         translatedTexts.add(text);
-                        if (e.getErrorMessage().equals("Translation exception")){
+                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
                             //终止翻译，并返回状态4
                             System.out.println("翻译异常，终止翻译");
-                            translatesService.updateTranslateStatus(request.getShopName(), 4, target, request.getSource(), request.getAccessToken());
-                            士大夫
+                            throw new ClientException(TRANSLATION_EXCEPTION);
                         }
                         continue;
                     }
