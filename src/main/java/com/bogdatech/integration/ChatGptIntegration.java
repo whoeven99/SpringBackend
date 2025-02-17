@@ -41,9 +41,8 @@ public class ChatGptIntegration {
 
         List<ChatMessage> prompts = new ArrayList<> ();
         prompts.add(messagereq);
-//        prompts.add(messagersy);
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
-                .setMaxTokens(800)
+                .setMaxTokens(8)
                 .setTemperature(0.7)
                 .setTopP(0.95)
                 .setFrequencyPenalty(0.0)
@@ -55,15 +54,19 @@ public class ChatGptIntegration {
         final int maxRetries = 3;
         while (retryCount < maxRetries) {
             try {
+
                 ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
                 content = chatCompletions.getChoices().get(0).getMessage().getContent();
 
                 if (content != null && !content.trim().isEmpty()) {
                     return content;
                 }
-            }catch (HttpResponseException e) {
+            }
+            catch (HttpResponseException e) {
+                retryCount++;
                 if (e.getMessage().contains("400")) {
                     appInsights.trackTrace("报错的文本是： " + prompt);
+                    System.out.println("报错的文本是： " + prompt);
                     if (retryCount >= 2){
                         // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
                         throw new ClientException("Translation exception");
@@ -73,6 +76,11 @@ public class ChatGptIntegration {
             catch (Exception e) {
                 retryCount++;
                 appInsights.trackTrace("Error occurred while calling GPT: " + e.getMessage());
+                System.out.println("Error occurred while calling GPT: " + e.getMessage());
+                if (retryCount >= 2){
+                        // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
+                        throw new ClientException("Translation exception");
+                    }
             }
         }
         return content;
