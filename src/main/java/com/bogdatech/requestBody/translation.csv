@@ -1,18 +1,65 @@
 source_code,source_text,target_code,target_text
-en,You no longer have permission to place B2B orders. %{logout_url} to place a personal order instead.,zh-CN,您不再具有下 B2B 订单的权限。 %{logout_url} 来下个人订单。
-en,Log out,zh-CN,退出
-en,https://www.instagram.com/memoryzingcc,zh-CN,https://www.instagram.com/memoryzingcc
-en,Popular Merchandise,zh-CN,热门商品
-en,Select Language,zh-CN,选择语言
-en,Popular Merchandise,zh-CN,热门商品
-en,https://www.instagram.com/memoryzingcc,zh-CN,https://www.instagram.com/memoryzingcc
-en,You no longer have permission to place B2B orders. %{logout_url} to place a personal order instead.,zh-CN,您不再具有下 B2B 订单的权限。 %{logout_url} 来下个人订单。
-en,Log out,zh-CN,退出
-en,页脚菜单,zh-CN,页脚菜单
-en,All goods,zh-CN,所有商品
-en,搜索,zh-CN,搜索
-en,商店,zh-CN,商店
-en,订单,zh-CN,订单
-en,不出售或共享我的个人信息,zh-CN,不出售或共享我的个人信息
-en,所有产品,zh-CN,所有产品
-en,关于我们,zh-CN,关于我们
+zh-CN,未找到 Shop Cash。,zh-TW,未找到 Shop Cash。
+zh-CN,添加 Google Pay 付款方式,zh-TW,新增 Google Pay 付款方式
+zh-CN,正在加载 Google Pay,zh-TW,正在加載 Google Pay
+zh-CN,添加 PayPal 付款方式,zh-TW,新增 PayPal 付款方式
+zh-CN,"正在加载 PayPal,",zh-TW,"正在加載 PayPal,"
+zh-CN,<p></p>,zh-TW,<p></p>
+zh-CN,Share,zh-TW,分享
+zh-CN,关于我们品牌的幻灯片,zh-TW,關於我們品牌的幻燈片
+zh-CN,图片幻灯片,zh-TW,圖片幻燈片
+zh-CN,通过图片讲述您的品牌故事,zh-TW,透過圖片講述您的品牌故事
+zh-CN,按钮标签,zh-TW,按鈕標籤
+zh-CN,Collections,zh-TW,收藏
+zh-CN,芯航友航空总部大厦,zh-TW,芯航友航空總部大廈
+zh-CN,<p>项目位置：北京大兴机场临空经济区</p><p>物业类型：办公楼及其配套商业设施</p><p>土地面积：20亩</p><p>建筑面积：3.8万平方米</p>,zh-TW,<p>專案位置：北京大興機場臨空經濟區</p><p>物業類型：辦公大樓及其配套商業設施</p><p>土地面積：20英畝</p><p>建築面積：3.8萬平方公尺</p>
+zh-CN,Submit,zh-TW,提交
+zh-CN,请与我们联系,zh-TW,請與我們聯繫
+zh-CN,<p>如果您有应急服务相关问题，请随时联络我们</p>,zh-TW,<p>如果您有緊急服務相關問題，請隨時聯絡我們</p>
+zh-CN,"<p>華芯國際投資有限公司(HuaXin International Investment co.,Limited)是一家國際知名投資公司，總部位于香港，同時在北京、上海、廣州、南京等地都設有辦事機構;公司通過整合産業投資、運營優勢和領先高端産業/企業資源，開拓出“産業投資”的新經濟模式，助力社會和産業經濟增長。<br/></p>",zh-TW,"<p>華芯國際投資有限公司(HuaXin International Investment co.,Limited)是一家國際知名投資公司，總部位于香港，同時在北京、上海、廣州、南京等地都設有辦事機構;公司通過整合産業投資、運營優勢和領先高端産業/企業資源，開拓出“産業投資”的新經濟模式，助力社會和産業經濟增長。<br/></p>"
+zh-CN,公司动态,zh-TW,公司動態
+zh-CN,<strong>高端制造</strong>,zh-TW,<strong>高階製造</strong>
+zh-CN,<p>智能机器人、高端装备等的研发、生产制造，以及与之相关的配套基础设施的开发运营</p>,zh-TW,<p>智慧機器人、高階裝備等的研發、生產製造，以及與之相關的配套基礎設施的開發運作</p>
+zh-CN,Opening soon,zh-TW,即將開業
+zh-CN,<p>Be the first to know when we launch.</p>,zh-TW,<p>成為第一個知道我們何時推出的人。
+zh-CN,{{ product.vendor }},zh-TW,{{ product.vendor }}
+zh-CN,Share,zh-TW,分享
+zh-CN,You may also like,zh-TW,您可能也喜歡
+zh-CN,Subscribe to our emails,zh-TW,訂閱我們的電子郵件
+zh-CN,<p>Join our email list for exclusive offers and the latest news. </p>,zh-TW,<p>加入我們的電子郵件列表，以獲取獨家優惠和最新消息。 </p>
+zh-CN,Subscribe to our emails,zh-TW,訂閱我們的電子郵件
+zh-CN,如何找到我们,zh-TW,如何找到我們
+zh-CN,<p>联系电话：（+86）13829709766</p><p>联络邮箱：hxgi-002@huaxin-hk.cn</p>,zh-TW,<p>聯絡電話：（+86）13829709766</p><p>聯絡信箱：hxgi-002@huaxin-hk.cn</p>
+zh-CN,快速链接,zh-TW,快速連結
+zh-CN,Welcome to our store,zh-TW,歡迎來到我們的商店
+zh-CN,Share,zh-TW,分享
+zh-CN,关于我们品牌的幻灯片,zh-TW,關於我們品牌的幻燈片
+zh-CN,图片幻灯片,zh-TW,圖片幻燈片
+zh-CN,通过图片讲述您的品牌故事,zh-TW,透過圖片講述您的品牌故事
+zh-CN,按钮标签,zh-TW,按鈕標籤
+zh-CN,Collections,zh-TW,收藏
+zh-CN,"<p>華芯國際投資有限公司(HuaXin International Investment co.,Limited)是一家國際知名投資公司，總部位于香港，同時在北京、上海、廣州、南京等地都設有辦事機構;公司通過整合産業投資、運營優勢和領先高端産業/企業資源，開拓出“産業投資”的新經濟模式，助力社會和産業經濟增長。<br/></p>",zh-TW,"<p>華芯國際投資有限公司(HuaXin International Investment co.,Limited)是一家國際知名投資公司，總部位于香港，同時在北京、上海、廣州、南京等地都設有辦事機構;公司通過整合産業投資、運營優勢和領先高端産業/企業資源，開拓出“産業投資”的新經濟模式，助力社會和産業經濟增長。<br/></p>"
+zh-CN,公司动态,zh-TW,公司動態
+zh-CN,<strong>高端制造</strong>,zh-TW,<strong>高階製造</strong>
+zh-CN,<p>智能机器人、高端装备等的研发、生产制造，以及与之相关的配套基础设施的开发运营</p>,zh-TW,<p>智慧機器人、高階裝備等的研發、生產製造，以及與之相關的配套基礎設施的開發運作</p>
+zh-CN,芯航友航空总部大厦,zh-TW,芯航友航空總部大廈
+zh-CN,<p>项目位置：北京大兴机场临空经济区</p><p>物业类型：办公楼及其配套商业设施</p><p>土地面积：20亩</p><p>建筑面积：3.8万平方米</p>,zh-TW,<p>專案位置：北京大興機場臨空經濟區</p><p>物業類型：辦公大樓及其配套商業設施</p><p>土地面積：20英畝</p><p>建築面積：3.8萬平方公尺</p>
+zh-CN,Submit,zh-TW,提交
+zh-CN,Opening soon,zh-TW,即將開業
+zh-CN,<p>Be the first to know when we launch.</p>,zh-TW,<p>成為第一個知道我們何時推出的人。
+zh-CN,{{ product.vendor }},zh-TW,{{ product.vendor }}
+zh-CN,Share,zh-TW,分享
+zh-CN,You may also like,zh-TW,您可能也喜歡
+zh-CN,Subscribe to our emails,zh-TW,訂閱我們的電子郵件
+zh-CN,<p>Join our email list for exclusive offers and the latest news. </p>,zh-TW,<p>加入我們的電子郵件列表，以獲取獨家優惠和最新消息。 </p>
+zh-CN,Subscribe to our emails,zh-TW,訂閱我們的電子郵件
+zh-CN,如何找到我们,zh-TW,如何找到我們
+zh-CN,<p>联系电话：（+86）13829709766</p><p>联络邮箱：hxgi-002@huaxin-hk.cn</p>,zh-TW,<p>聯絡電話：（+86）13829709766</p><p>聯絡信箱：hxgi-002@huaxin-hk.cn</p>
+zh-CN,快速链接,zh-TW,快速連結
+zh-CN,Welcome to our store,zh-TW,歡迎來到我們的商店
+zh-CN,<p></p>,zh-TW,<p></p>
+zh-CN,未找到 Shop Cash。,zh-TW,未找到 Shop Cash。
+zh-CN,添加 Google Pay 付款方式,zh-TW,新增 Google Pay 付款方式
+zh-CN,正在加载 Google Pay,zh-TW,正在加載 Google Pay
+zh-CN,添加 PayPal 付款方式,zh-TW,新增 PayPal 付款方式
+zh-CN,"正在加载 PayPal,",zh-TW,"正在加載 PayPal,"
