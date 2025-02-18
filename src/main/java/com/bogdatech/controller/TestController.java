@@ -193,6 +193,7 @@ public class TestController {
 
     @PostMapping("/calculateBaiLianToken")
     public Integer calculateBaiLianTokens(@RequestBody String text) {
+//        System.out.println("test: " + text);
         Integer i = null;
         try {
             i = calculateBaiLianToken(text);

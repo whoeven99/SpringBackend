@@ -15,6 +15,7 @@ import com.bogdatech.utils.ApiCodeUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import java.util.regex.Pattern;
 
 @Component
 public class ALiYunTranslateIntegration {
-
+    TelemetryClient appInsights = new TelemetryClient();
 
     public com.aliyun.alimt20181012.Client createClient() {
         // 工程代码泄露可能会导致 AccessKey 泄露，并威胁账号下所有资源的安全性。以下代码示例仅供参考。
@@ -176,9 +177,6 @@ public class ALiYunTranslateIntegration {
     public static Integer calculateBaiLianToken(String text){
         Tokenizer tokenizer = TokenizerFactory.qwen();
         try {
-            List<Integer> ids = tokenizer.encode(text, "all");
-            String decodedString = tokenizer.decode(ids);
-            System.out.println(decodedString);
             return tokenizer.encode(text, "all").size();
         } catch (NoSpecialTokenExists | UnSupportedSpecialTokenMode e) {
             throw new RuntimeException(e);
