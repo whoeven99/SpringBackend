@@ -1,0 +1,336 @@
+source_code,source_text,target_code,target_text
+en,Shop Cash was not found.,nl,Winkelgeld is niet gevonden.
+en,You no longer have permission to place B2B orders. %{logout_url} to place a personal order instead.,nl,U heeft geen toestemming meer om B2B-bestellingen te plaatsen. %{logout_url} om in plaats daarvan een persoonlijke bestelling te plaatsen.
+en,Log out,nl,Uitloggen
+en,Exclusive offers from Shop,nl,Exclusieve aanbiedingen van Shop
+en,Get directions,nl,Routebeschrijving opvragen
+en,Error looking up that address,nl,Fout bij het opzoeken van dat adres
+en,No results for that address,nl,Geen resultaten voor dat adres
+en,"You have exceeded the Google API usage limit. Consider upgrading to a <a href=""https://developers.google.com/maps/premium/usage-limits"">Premium Plan</a>.",nl,"U heeft de gebruikslimiet van de Google API overschreden. Overweeg een upgrade naar een <a href=""https://developers.google.com/maps/premium/usage-limits"">Premium-abonnement</a>."
+en,"There was a problem authenticating your Google Maps account. Create and enable the <a href=""https://developers.google.com/maps/documentation/javascript/get-api-key"">JavaScript API</a> and <a href=""https://developers.google.com/maps/documentation/geocoding/get-api-key"">Geocoding API</a> permissions of your app.",nl,"Er is een probleem opgetreden bij het verifiëren van uw Google Maps-account. Maak en schakel de machtigingen <a href=""https://developers.google.com/maps/documentation/javascript/get-api-key"">JavaScript API</a> en <a href=""https://developers.google.com/maps/documentation/geocoding/get-api-key"">Geocoding API</a> voor uw app in."
+en,Close (esc),nl,Sluiten (esc)
+en,"Tagged ""{{ tags }}""",nl,"Getagd ""{{ tags }}"""
+en,Page {{ page }},nl,Pagina {{ page }}
+en,404 Page Not Found,nl,404 Pagina niet gevonden
+en,<p>The page you were looking for does not exist.</p><p><a href='{{ url }}'>Continue shopping</a></p>,nl,<p>De pagina die u zocht bestaat niet.</p><p><a href='{{ url }}'>Ga verder met winkelen</a></p>
+en,Enter store using password,nl,Ga de winkel binnen met een wachtwoord
+en,Email,nl,E-mail
+en,We will send you an email right before we open!,nl,Wij sturen u vlak voordat wij opengaan een e-mail!
+en,"Store owner? <a href=""/admin"" class=""text-link"">Log in here</a>",nl,"Winkeleigenaar? <a href=""/admin"" class=""text-link"">Log hier in</a>"
+en,Home,nl,Thuis
+en,Back to the frontpage,nl,Terug naar de voorpagina
+en,Share,nl,Deel
+en,Tweet,nl,Tweeten
+en,Pin it,nl,Speld het vast
+en,Tweet on Twitter,nl,Twitteren op Twitter
+en,Enter your email,nl,Voer uw e-mailadres in
+en,Subscribe,nl,Abonneren
+en,Pages:,nl,Pagina's:
+en,Articles:,nl,Artikelen:
+en,"Your search for ""{{ terms }}"" did not yield any results.",nl,"Uw zoekopdracht naar ""{{ terms }}"" heeft geen resultaten opgeleverd."
+en,"Your search for ""{{ terms }}"" revealed the following:",nl,"Uw zoekopdracht naar ""{{ terms }}"" heeft het volgende opgeleverd:"
+en,Search our store,nl,Zoek in onze winkel
+en,{{ count }} results,nl,{{ count }} resultaten
+en,Site navigation,nl,Sitenavigatie
+en,Close menu,nl,Menu sluiten
+en,Expand submenu,nl,Submenu uitvouwen
+en,Collapse submenu,nl,Submenu samenvouwen
+en,Currency,nl,Munteenheid
+en,Tags,nl,Labels
+en,Continue reading,nl,Lees verder
+en,Back to {{ title }},nl,Terug naar {{ title }}
+en,Message,nl,Bericht
+en,"Please note, comments must be approved before they are published",nl,Let op: reacties moeten worden goedgekeurd voordat ze worden gepubliceerd
+en,{{ count }} comment,nl,{{ count }} reactie
+en,Order note,nl,Bestel opmerking
+en,"Shipping, taxes, and discounts codes calculated at checkout.",nl,"Verzend-, belasting- en kortingscodes berekend bij het afrekenen."
+en,Update cart,nl,Winkelwagen bijwerken
+en,Your cart is currently empty.,nl,Uw winkelwagen is momenteel leeg.
+en,Continue browsing <a href='{{ url }}'>here</a>.,nl,Ga <a href='{{ url }}'>hier</a> verder met browsen.
+en,Close cart,nl,Winkelwagen sluiten
+en,You're saving {{ savings }},nl,Je bespaart {{ savings }}
+en,Reduce item quantity by one,nl,Verminder het aantal artikelen met één
+en,Increase item quantity by one,nl,Verhoog de artikelhoeveelheid met één
+en,I agree with the terms and conditions,nl,Ik ga akkoord met de algemene voorwaarden
+en,I agree with the <a href='{{ url }}' target='_blank'>terms and conditions</a>,nl,Ik ga akkoord met de <a href='{{ url }}' target='_blank'>algemene voorwaarden</a>
+en,You must agree with the terms and conditions of sales to check out,nl,U moet akkoord gaan met de verkoopvoorwaarden om af te rekenen
+en,Total,nl,Totaal
+en,Catalog,nl,Catalogus
+en,View all<br>{{ count }} products,nl,Bekijk alle<br>{{ count }} producten
+en,Show more,nl,Laat meer zien
+en,"Sorry, there are no products in this collection.",nl,"Sorry, er zijn geen producten in deze collectie."
+en,All products,nl,Alle producten
+en,Email,nl,E-mail
+en,Thanks for contacting us. We'll get back to you as soon as possible.,nl,Bedankt dat u contact met ons opneemt. We nemen zo snel mogelijk contact met u op.
+en,My account,nl,Mijn rekening
+en,Return to account,nl,Terug naar rekening
+en,Create your password to activate your account.,nl,Maak uw wachtwoord aan om uw account te activeren.
+en,Decline invitation,nl,Uitnodiging afwijzen
+en,Edit address,nl,Adres bewerken
+en,Address1,nl,Adres1
+en,Address2,nl,Adres2
+en,City,nl,Stad
+en,Country,nl,Land
+en,Set as default address,nl,Instellen als standaardadres
+en,Edit,nl,Bewerking
+en,Email,nl,E-mail
+en,Forgot?,nl,Vergeten?
+en,Continue as a guest,nl,Ga verder als gast
+en,Date,nl,Datum
+en,You haven't placed any orders yet.,nl,U heeft nog geen bestellingen geplaatst.
+en,Reason: {{ reason }},nl,Reden: {{ reason }}
+en,Fulfillment status,nl,Vervullingsstatus
+en,Product,nl,Product
+en,Total,nl,Totaal
+en,Email,nl,E-mail
+en,We will send you an email to reset your password.,nl,Wij sturen u een e-mail om uw wachtwoord opnieuw in te stellen.
+en,Reset account password,nl,Accountwachtwoord opnieuw instellen
+en,Enter a new password for {{ email }},nl,Voer een nieuw wachtwoord in voor {{ email }}
+en,Create Account,nl,Account aanmaken
+en,Password,nl,Wachtwoord
+en,Example product,nl,Voorbeeldproduct
+en,"This area is used to describe your product’s details. Tell customers about the look, feel, and style of your product. Add details on color,  materials used, sizing, and where it was made.",nl,"Dit gebied wordt gebruikt om de details van uw product te beschrijven. Vertel klanten over het uiterlijk, het gevoel en de stijl van uw product. Voeg details toe over de kleur, de gebruikte materialen, de maatvoering en waar het is gemaakt."
+en,This section doesn’t currently include any content. Add content to this section using the sidebar.,nl,Dit gedeelte bevat momenteel geen inhoud. Voeg inhoud aan deze sectie toe via de zijbalk.
+en,Cart,nl,Winkelwagen
+en,Create account,nl,Account aanmaken
+en,{{ name }} on {{ platform }},nl,{{ name }} op {{ platform }}
+en,Save {{ saved_amount }},nl,Bespaar {{ saved_amount }}
+en,Back to {{ collection }},nl,Terug naar {{ collection }}
+en,Next: {{ title }},nl,Volgende: {{ title }}
+en,{{ count }} in stock,nl,{{ count }} op voorraad
+en,Sold Out,nl,Uitverkocht
+en,Pre-order,nl,Voorbestellen
+en,Tax included.,nl,Belasting inbegrepen.
+en,<a href='{{ link }}'>Shipping</a> calculated at checkout.,nl,<a href='{{ link }}'>Verzending</a> berekend bij het afrekenen.
+en,Will not ship until {{ date }},nl,Wordt pas verzonden op {{ date }}
+en,Will be in stock after {{ date }},nl,Zal op voorraad zijn na {{ date }}
+en,Inventory on the way,nl,Inventaris onderweg
+en,Here's your {{ value }} gift card for {{ shop }}!,nl,Hier is je cadeaubon van {{ value }} voor {{ shop }}!
+en,Here's your gift card!,nl,Hier is je cadeaubon!
+en,Disabled,nl,Gehandicapt
+en,Expired on {{ expiry }},nl,Verlopen op {{ expiry }}
+en,Expires on {{ expiry }},nl,Verloopt op {{ expiry }}
+en,Use this code at checkout to redeem your gift card,nl,Gebruik deze code bij het afrekenen om uw cadeaubon in te wisselen
+en,Start shopping,nl,Begin met winkelen
+en,"%b %d, %Y",nl,"%b %d, %Y"
+en,Free shipping and returns,nl,Gratis verzending en retourneren
+en,Sign up and save,nl,Meld u aan en bespaar
+en,"<p>Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>",nl,"<p>Abonneer u om speciale aanbiedingen, gratis weggeefacties en eenmalige aanbiedingen te ontvangen.</p>"
+en,Kontakt:,nl,Neem contact op met:
+en,"<p><strong>Telefon </strong>: 0845 165 7686</p><p><strong>Adresse </strong>: 2 Canning Circus, Ilkeston Road, London SW17 0ND, United Kingdom</p><p><strong>Mail </strong>: contact@licktopse.shop</p>",nl,"<p><strong>Telefoon </strong>: 0845 165 7686</p><p><strong>Adres </strong>: 2 Canning Circus, Ilkeston Road, Londen SW17 0ND, Verenigd Koninkrijk</p><p><strong>Mail </strong>: contact@licktopse.shop</p>"
+en,<p>Sparen Sie bis zu 30%</p>,nl,<p>Bespaar tot 30%</p>
+en,Collection Candy,nl,Collectie snoep
+en,Shop candy,nl,Koop snoep
+en,Shop All,nl,Winkel alles
+en,Improved,nl,Verbeterd
+en,Image with text,nl,Afbeelding met tekst
+en,"<p>Pair large text with an image to tell a story, explain a detail about your product, or describe a new promotion.</p>",nl,"<p>Koppel grote tekst aan een afbeelding om een ​​verhaal te vertellen, een detail over uw product uit te leggen of een nieuwe promotie te beschrijven.</p>"
+en,Optional button,nl,Optionele knop
+en,Impressive,nl,Indrukwekkend
+en,Large image with text box,nl,Grote afbeelding met tekstvak
+en,<p>Pair large text with a full-width image to draw attention to an important detail of your brand or product line.</p>,nl,<p>Koppel grote tekst aan een afbeelding over de volledige breedte om de aandacht te vestigen op een belangrijk detail van uw merk of productlijn.</p>
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,"Bring your
+brand to life.",nl,"Breng uw
+merk tot leven."
+en,Seamless hero videos,nl,Naadloze heldenvideo's
+en,Optional button,nl,Optionele knop
+en,https://www.youtube.com/watch?v=_9VUPq3SxOc,nl,https://www.youtube.com/watch?v=_9VUPq3SxOc
+en,Beautifully animated,nl,Prachtig geanimeerd
+en,titles and images,nl,titels en afbeeldingen
+en,Use this section,nl,Gebruik dit gedeelte
+en,to impress customers,nl,om indruk te maken op klanten
+en,<p>Use this section for any descriptive text you need to fill out your pages or to add introductory headings between other blocks.</p>,nl,<p>Gebruik dit gedeelte voor alle beschrijvende tekst die u nodig heeft om uw pagina's in te vullen of om inleidende koppen tussen andere blokken toe te voegen.</p>
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Impressive,nl,Indrukwekkend
+en,Large image with text box,nl,Grote afbeelding met tekstvak
+en,<p>Pair large text with a full-width image to draw attention to an important detail of your brand or product line.</p>,nl,<p>Koppel grote tekst aan een afbeelding over de volledige breedte om de aandacht te vestigen op een belangrijk detail van uw merk of productlijn.</p>
+en,Featured collection,nl,Uitgelichte collectie
+en,Sign up and save,nl,Meld u aan en bespaar
+en,<p>Entice customers to sign up for your mailing list with discounts or exclusive offers. Include an image for extra impact.</p>,nl,<p>Verleid klanten om zich aan te melden voor uw mailinglijst met kortingen of exclusieve aanbiedingen. Voeg een afbeelding toe voor extra impact.</p>
+en,No thanks,nl,Nee bedankt
+en,Optional button,nl,Optionele knop
+en,Sparen Sie bis zu 30%,nl,Bespaar tot 30%
+en,Quick view,nl,Snel bekijken
+en,Ask a question,nl,Stel een vraag
+en,Quick view,nl,Snel bekijken
+en,Ask a question,nl,Stel een vraag
+en,Free shipping and returns,nl,Gratis verzending en retourneren
+en,Sign up and save,nl,Meld u aan en bespaar
+en,"<p>Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>",nl,"<p>Abonneer u om speciale aanbiedingen, gratis weggeefacties en eenmalige aanbiedingen te ontvangen.</p>"
+en,Kontakt:,nl,Neem contact op met:
+en,"<p><strong>Telefon </strong>: 0845 165 7686</p><p><strong>Adresse </strong>: 2 Canning Circus, Ilkeston Road, London SW17 0ND, United Kingdom</p><p><strong>Mail </strong>: contact@licktopse.shop</p>",nl,"<p><strong>Telefoon </strong>: 0845 165 7686</p><p><strong>Adres </strong>: 2 Canning Circus, Ilkeston Road, Londen SW17 0ND, Verenigd Koninkrijk</p><p><strong>Mail </strong>: contact@licktopse.shop</p>"
+en,<p>Sparen Sie bis zu 30%</p>,nl,<p>Bespaar tot 30%</p>
+en,Collection Candy,nl,Collectie snoep
+en,Shop candy,nl,Koop snoep
+en,Shop All,nl,Winkel alles
+en,Improved,nl,Verbeterd
+en,Image with text,nl,Afbeelding met tekst
+en,"<p>Pair large text with an image to tell a story, explain a detail about your product, or describe a new promotion.</p>",nl,"<p>Koppel grote tekst aan een afbeelding om een ​​verhaal te vertellen, een detail over uw product uit te leggen of een nieuwe promotie te beschrijven.</p>"
+en,Optional button,nl,Optionele knop
+en,Impressive,nl,Indrukwekkend
+en,Large image with text box,nl,Grote afbeelding met tekstvak
+en,<p>Pair large text with a full-width image to draw attention to an important detail of your brand or product line.</p>,nl,<p>Koppel grote tekst aan een afbeelding over de volledige breedte om de aandacht te vestigen op een belangrijk detail van uw merk of productlijn.</p>
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,"Bring your
+brand to life.",nl,"Breng uw
+merk tot leven."
+en,Seamless hero videos,nl,Naadloze heldenvideo's
+en,Optional button,nl,Optionele knop
+en,https://www.youtube.com/watch?v=_9VUPq3SxOc,nl,https://www.youtube.com/watch?v=_9VUPq3SxOc
+en,Beautifully animated,nl,Prachtig geanimeerd
+en,titles and images,nl,titels en afbeeldingen
+en,Use this section,nl,Gebruik dit gedeelte
+en,to impress customers,nl,om indruk te maken op klanten
+en,<p>Use this section for any descriptive text you need to fill out your pages or to add introductory headings between other blocks.</p>,nl,<p>Gebruik dit gedeelte voor alle beschrijvende tekst die u nodig heeft om uw pagina's in te vullen of om inleidende koppen tussen andere blokken toe te voegen.</p>
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Example title,nl,Voorbeeld titel
+en,"<p>Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.</p>",nl,"<p>Gebruik dit gedeelte om een ​​reeks productfuncties uit te leggen, om naar een reeks pagina's te linken of om veelgestelde vragen over uw producten te beantwoorden. Voeg afbeeldingen toe om de nadruk te leggen.</p>"
+en,Impressive,nl,Indrukwekkend
+en,Large image with text box,nl,Grote afbeelding met tekstvak
+en,<p>Pair large text with a full-width image to draw attention to an important detail of your brand or product line.</p>,nl,<p>Koppel grote tekst aan een afbeelding over de volledige breedte om de aandacht te vestigen op een belangrijk detail van uw merk of productlijn.</p>
+en,Featured collection,nl,Uitgelichte collectie
+en,Sign up and save,nl,Meld u aan en bespaar
+en,<p>Entice customers to sign up for your mailing list with discounts or exclusive offers. Include an image for extra impact.</p>,nl,<p>Verleid klanten om zich aan te melden voor uw mailinglijst met kortingen of exclusieve aanbiedingen. Voeg een afbeelding toe voor extra impact.</p>
+en,No thanks,nl,Nee bedankt
+en,Optional button,nl,Optionele knop
+en,Sparen Sie bis zu 30%,nl,Bespaar tot 30%
+en,Shop Cash was not found.,nl,Winkelgeld is niet gevonden.
+en,You no longer have permission to place B2B orders. %{logout_url} to place a personal order instead.,nl,U heeft geen toestemming meer om B2B-bestellingen te plaatsen. %{logout_url} om in plaats daarvan een persoonlijke bestelling te plaatsen.
+en,Log out,nl,Uitloggen
+en,Exclusive offers from Shop,nl,Exclusieve aanbiedingen van Shop
+en,Get directions,nl,Routebeschrijving opvragen
+en,Error looking up that address,nl,Fout bij het opzoeken van dat adres
+en,No results for that address,nl,Geen resultaten voor dat adres
+en,"You have exceeded the Google API usage limit. Consider upgrading to a <a href=""https://developers.google.com/maps/premium/usage-limits"">Premium Plan</a>.",nl,"U heeft de gebruikslimiet van de Google API overschreden. Overweeg een upgrade naar een <a href=""https://developers.google.com/maps/premium/usage-limits"">Premium-abonnement</a>."
+en,"There was a problem authenticating your Google Maps account. Create and enable the <a href=""https://developers.google.com/maps/documentation/javascript/get-api-key"">JavaScript API</a> and <a href=""https://developers.google.com/maps/documentation/geocoding/get-api-key"">Geocoding API</a> permissions of your app.",nl,"Er is een probleem opgetreden bij het verifiëren van uw Google Maps-account. Maak en schakel de machtigingen <a href=""https://developers.google.com/maps/documentation/javascript/get-api-key"">JavaScript API</a> en <a href=""https://developers.google.com/maps/documentation/geocoding/get-api-key"">Geocoding API</a> voor uw app in."
+en,Close (esc),nl,Sluiten (esc)
+en,"Tagged ""{{ tags }}""",nl,"Getagd ""{{ tags }}"""
+en,Page {{ page }},nl,Pagina {{ page }}
+en,404 Page Not Found,nl,404 Pagina niet gevonden
+en,<p>The page you were looking for does not exist.</p><p><a href='{{ url }}'>Continue shopping</a></p>,nl,<p>De pagina die u zocht bestaat niet.</p><p><a href='{{ url }}'>Ga verder met winkelen</a></p>
+en,Enter store using password,nl,Ga de winkel binnen met een wachtwoord
+en,Email,nl,E-mail
+en,We will send you an email right before we open!,nl,Wij sturen u vlak voordat wij opengaan een e-mail!
+en,"Store owner? <a href=""/admin"" class=""text-link"">Log in here</a>",nl,"Winkeleigenaar? <a href=""/admin"" class=""text-link"">Log hier in</a>"
+en,Home,nl,Thuis
+en,Back to the frontpage,nl,Terug naar de voorpagina
+en,Share,nl,Deel
+en,Tweet,nl,Tweeten
+en,Pin it,nl,Speld het vast
+en,Tweet on Twitter,nl,Twitteren op Twitter
+en,Enter your email,nl,Voer uw e-mailadres in
+en,Subscribe,nl,Abonneren
+en,Pages:,nl,Pagina's:
+en,Articles:,nl,Artikelen:
+en,"Your search for ""{{ terms }}"" did not yield any results.",nl,"Uw zoekopdracht naar ""{{ terms }}"" heeft geen resultaten opgeleverd."
+en,"Your search for ""{{ terms }}"" revealed the following:",nl,"Uw zoekopdracht naar ""{{ terms }}"" heeft het volgende opgeleverd:"
+en,Search our store,nl,Zoek in onze winkel
+en,{{ count }} results,nl,{{ count }} resultaten
+en,Site navigation,nl,Sitenavigatie
+en,Close menu,nl,Menu sluiten
+en,Expand submenu,nl,Submenu uitvouwen
+en,Collapse submenu,nl,Submenu samenvouwen
+en,Currency,nl,Munteenheid
+en,Tags,nl,Labels
+en,Continue reading,nl,Lees verder
+en,Back to {{ title }},nl,Terug naar {{ title }}
+en,Message,nl,Bericht
+en,"Please note, comments must be approved before they are published",nl,Let op: reacties moeten worden goedgekeurd voordat ze worden gepubliceerd
+en,{{ count }} comment,nl,{{ count }} reactie
+en,Order note,nl,Bestel opmerking
+en,"Shipping, taxes, and discounts codes calculated at checkout.",nl,"Verzend-, belasting- en kortingscodes berekend bij het afrekenen."
+en,Update cart,nl,Winkelwagen bijwerken
+en,Your cart is currently empty.,nl,Uw winkelwagen is momenteel leeg.
+en,Continue browsing <a href='{{ url }}'>here</a>.,nl,Ga <a href='{{ url }}'>hier</a> verder met browsen.
+en,Close cart,nl,Winkelwagen sluiten
+en,You're saving {{ savings }},nl,Je bespaart {{ savings }}
+en,Reduce item quantity by one,nl,Verminder het aantal artikelen met één
+en,Increase item quantity by one,nl,Verhoog de artikelhoeveelheid met één
+en,I agree with the terms and conditions,nl,Ik ga akkoord met de algemene voorwaarden
+en,I agree with the <a href='{{ url }}' target='_blank'>terms and conditions</a>,nl,Ik ga akkoord met de <a href='{{ url }}' target='_blank'>algemene voorwaarden</a>
+en,You must agree with the terms and conditions of sales to check out,nl,U moet akkoord gaan met de verkoopvoorwaarden om af te rekenen
+en,Total,nl,Totaal
+en,Catalog,nl,Catalogus
+en,View all<br>{{ count }} products,nl,Bekijk alle<br>{{ count }} producten
+en,Show more,nl,Laat meer zien
+en,"Sorry, there are no products in this collection.",nl,"Sorry, er zijn geen producten in deze collectie."
+en,All products,nl,Alle producten
+en,Email,nl,E-mail
+en,Thanks for contacting us. We'll get back to you as soon as possible.,nl,Bedankt dat u contact met ons opneemt. We nemen zo snel mogelijk contact met u op.
+en,My account,nl,Mijn rekening
+en,Return to account,nl,Terug naar rekening
+en,Create your password to activate your account.,nl,Maak uw wachtwoord aan om uw account te activeren.
+en,Decline invitation,nl,Uitnodiging afwijzen
+en,Edit address,nl,Adres bewerken
+en,Address1,nl,Adres1
+en,Address2,nl,Adres2
+en,City,nl,Stad
+en,Country,nl,Land
+en,Set as default address,nl,Instellen als standaardadres
+en,Edit,nl,Bewerking
+en,Email,nl,E-mail
+en,Forgot?,nl,Vergeten?
+en,Continue as a guest,nl,Ga verder als gast
+en,Date,nl,Datum
+en,You haven't placed any orders yet.,nl,U heeft nog geen bestellingen geplaatst.
+en,Reason: {{ reason }},nl,Reden: {{ reason }}
+en,Fulfillment status,nl,Vervullingsstatus
+en,Product,nl,Product
+en,Total,nl,Totaal
+en,Email,nl,E-mail
+en,We will send you an email to reset your password.,nl,Wij sturen u een e-mail om uw wachtwoord opnieuw in te stellen.
+en,Reset account password,nl,Accountwachtwoord opnieuw instellen
+en,Enter a new password for {{ email }},nl,Voer een nieuw wachtwoord in voor {{ email }}
+en,Create Account,nl,Account aanmaken
+en,Password,nl,Wachtwoord
+en,Example product,nl,Voorbeeldproduct
+en,"This area is used to describe your product’s details. Tell customers about the look, feel, and style of your product. Add details on color,  materials used, sizing, and where it was made.",nl,"Dit gebied wordt gebruikt om de details van uw product te beschrijven. Vertel klanten over het uiterlijk, het gevoel en de stijl van uw product. Voeg details toe over de kleur, de gebruikte materialen, de maatvoering en waar het is gemaakt."
+en,This section doesn’t currently include any content. Add content to this section using the sidebar.,nl,Dit gedeelte bevat momenteel geen inhoud. Voeg inhoud aan deze sectie toe via de zijbalk.
+en,Cart,nl,Winkelwagen
+en,Create account,nl,Account aanmaken
+en,{{ name }} on {{ platform }},nl,{{ name }} op {{ platform }}
+en,Save {{ saved_amount }},nl,Bespaar {{ saved_amount }}
+en,Back to {{ collection }},nl,Terug naar {{ collection }}
+en,Next: {{ title }},nl,Volgende: {{ title }}
+en,{{ count }} in stock,nl,{{ count }} op voorraad
+en,Sold Out,nl,Uitverkocht
+en,Pre-order,nl,Voorbestellen
+en,Tax included.,nl,Belasting inbegrepen.
+en,<a href='{{ link }}'>Shipping</a> calculated at checkout.,nl,<a href='{{ link }}'>Verzending</a> berekend bij het afrekenen.
+en,Will not ship until {{ date }},nl,Wordt pas verzonden op {{ date }}
+en,Will be in stock after {{ date }},nl,Zal op voorraad zijn na {{ date }}
+en,Inventory on the way,nl,Inventaris onderweg
+en,Here's your {{ value }} gift card for {{ shop }}!,nl,Hier is je cadeaubon van {{ value }} voor {{ shop }}!
+en,Here's your gift card!,nl,Hier is je cadeaubon!
+en,Disabled,nl,Gehandicapt
+en,Expired on {{ expiry }},nl,Verlopen op {{ expiry }}
+en,Expires on {{ expiry }},nl,Verloopt op {{ expiry }}
+en,Use this code at checkout to redeem your gift card,nl,Gebruik deze code bij het afrekenen om uw cadeaubon in te wisselen
+en,Start shopping,nl,Begin met winkelen
+en,"%b %d, %Y",nl,"%b %d, %Y"
+en,Main menu,nl,Hoofdmenu
+en,Footer menu,nl,Voettekstmenu
+en,Customer account main menu,nl,Hoofdmenu klantaccount
+en,policies,nl,beleid
+en,Home,nl,Thuis
+en,Catalog,nl,Catalogus
+en,Shop,nl,Winkel
