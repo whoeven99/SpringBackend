@@ -1,65 +1,90 @@
 source_code,source_text,target_code,target_text
-zh-CN,未找到 Shop Cash。,zh-TW,未找到 Shop Cash。
-zh-CN,添加 Google Pay 付款方式,zh-TW,新增 Google Pay 付款方式
-zh-CN,正在加载 Google Pay,zh-TW,正在加載 Google Pay
-zh-CN,添加 PayPal 付款方式,zh-TW,新增 PayPal 付款方式
-zh-CN,"正在加载 PayPal,",zh-TW,"正在加載 PayPal,"
-zh-CN,<p></p>,zh-TW,<p></p>
-zh-CN,Share,zh-TW,分享
-zh-CN,关于我们品牌的幻灯片,zh-TW,關於我們品牌的幻燈片
-zh-CN,图片幻灯片,zh-TW,圖片幻燈片
-zh-CN,通过图片讲述您的品牌故事,zh-TW,透過圖片講述您的品牌故事
-zh-CN,按钮标签,zh-TW,按鈕標籤
-zh-CN,Collections,zh-TW,收藏
-zh-CN,芯航友航空总部大厦,zh-TW,芯航友航空總部大廈
-zh-CN,<p>项目位置：北京大兴机场临空经济区</p><p>物业类型：办公楼及其配套商业设施</p><p>土地面积：20亩</p><p>建筑面积：3.8万平方米</p>,zh-TW,<p>專案位置：北京大興機場臨空經濟區</p><p>物業類型：辦公大樓及其配套商業設施</p><p>土地面積：20英畝</p><p>建築面積：3.8萬平方公尺</p>
-zh-CN,Submit,zh-TW,提交
-zh-CN,请与我们联系,zh-TW,請與我們聯繫
-zh-CN,<p>如果您有应急服务相关问题，请随时联络我们</p>,zh-TW,<p>如果您有緊急服務相關問題，請隨時聯絡我們</p>
-zh-CN,"<p>華芯國際投資有限公司(HuaXin International Investment co.,Limited)是一家國際知名投資公司，總部位于香港，同時在北京、上海、廣州、南京等地都設有辦事機構;公司通過整合産業投資、運營優勢和領先高端産業/企業資源，開拓出“産業投資”的新經濟模式，助力社會和産業經濟增長。<br/></p>",zh-TW,"<p>華芯國際投資有限公司(HuaXin International Investment co.,Limited)是一家國際知名投資公司，總部位于香港，同時在北京、上海、廣州、南京等地都設有辦事機構;公司通過整合産業投資、運營優勢和領先高端産業/企業資源，開拓出“産業投資”的新經濟模式，助力社會和産業經濟增長。<br/></p>"
-zh-CN,公司动态,zh-TW,公司動態
-zh-CN,<strong>高端制造</strong>,zh-TW,<strong>高階製造</strong>
-zh-CN,<p>智能机器人、高端装备等的研发、生产制造，以及与之相关的配套基础设施的开发运营</p>,zh-TW,<p>智慧機器人、高階裝備等的研發、生產製造，以及與之相關的配套基礎設施的開發運作</p>
-zh-CN,Opening soon,zh-TW,即將開業
-zh-CN,<p>Be the first to know when we launch.</p>,zh-TW,<p>成為第一個知道我們何時推出的人。
-zh-CN,{{ product.vendor }},zh-TW,{{ product.vendor }}
-zh-CN,Share,zh-TW,分享
-zh-CN,You may also like,zh-TW,您可能也喜歡
-zh-CN,Subscribe to our emails,zh-TW,訂閱我們的電子郵件
-zh-CN,<p>Join our email list for exclusive offers and the latest news. </p>,zh-TW,<p>加入我們的電子郵件列表，以獲取獨家優惠和最新消息。 </p>
-zh-CN,Subscribe to our emails,zh-TW,訂閱我們的電子郵件
-zh-CN,如何找到我们,zh-TW,如何找到我們
-zh-CN,<p>联系电话：（+86）13829709766</p><p>联络邮箱：hxgi-002@huaxin-hk.cn</p>,zh-TW,<p>聯絡電話：（+86）13829709766</p><p>聯絡信箱：hxgi-002@huaxin-hk.cn</p>
-zh-CN,快速链接,zh-TW,快速連結
-zh-CN,Welcome to our store,zh-TW,歡迎來到我們的商店
-zh-CN,Share,zh-TW,分享
-zh-CN,关于我们品牌的幻灯片,zh-TW,關於我們品牌的幻燈片
-zh-CN,图片幻灯片,zh-TW,圖片幻燈片
-zh-CN,通过图片讲述您的品牌故事,zh-TW,透過圖片講述您的品牌故事
-zh-CN,按钮标签,zh-TW,按鈕標籤
-zh-CN,Collections,zh-TW,收藏
-zh-CN,"<p>華芯國際投資有限公司(HuaXin International Investment co.,Limited)是一家國際知名投資公司，總部位于香港，同時在北京、上海、廣州、南京等地都設有辦事機構;公司通過整合産業投資、運營優勢和領先高端産業/企業資源，開拓出“産業投資”的新經濟模式，助力社會和産業經濟增長。<br/></p>",zh-TW,"<p>華芯國際投資有限公司(HuaXin International Investment co.,Limited)是一家國際知名投資公司，總部位于香港，同時在北京、上海、廣州、南京等地都設有辦事機構;公司通過整合産業投資、運營優勢和領先高端産業/企業資源，開拓出“産業投資”的新經濟模式，助力社會和産業經濟增長。<br/></p>"
-zh-CN,公司动态,zh-TW,公司動態
-zh-CN,<strong>高端制造</strong>,zh-TW,<strong>高階製造</strong>
-zh-CN,<p>智能机器人、高端装备等的研发、生产制造，以及与之相关的配套基础设施的开发运营</p>,zh-TW,<p>智慧機器人、高階裝備等的研發、生產製造，以及與之相關的配套基礎設施的開發運作</p>
-zh-CN,芯航友航空总部大厦,zh-TW,芯航友航空總部大廈
-zh-CN,<p>项目位置：北京大兴机场临空经济区</p><p>物业类型：办公楼及其配套商业设施</p><p>土地面积：20亩</p><p>建筑面积：3.8万平方米</p>,zh-TW,<p>專案位置：北京大興機場臨空經濟區</p><p>物業類型：辦公大樓及其配套商業設施</p><p>土地面積：20英畝</p><p>建築面積：3.8萬平方公尺</p>
-zh-CN,Submit,zh-TW,提交
-zh-CN,Opening soon,zh-TW,即將開業
-zh-CN,<p>Be the first to know when we launch.</p>,zh-TW,<p>成為第一個知道我們何時推出的人。
-zh-CN,{{ product.vendor }},zh-TW,{{ product.vendor }}
-zh-CN,Share,zh-TW,分享
-zh-CN,You may also like,zh-TW,您可能也喜歡
-zh-CN,Subscribe to our emails,zh-TW,訂閱我們的電子郵件
-zh-CN,<p>Join our email list for exclusive offers and the latest news. </p>,zh-TW,<p>加入我們的電子郵件列表，以獲取獨家優惠和最新消息。 </p>
-zh-CN,Subscribe to our emails,zh-TW,訂閱我們的電子郵件
-zh-CN,如何找到我们,zh-TW,如何找到我們
-zh-CN,<p>联系电话：（+86）13829709766</p><p>联络邮箱：hxgi-002@huaxin-hk.cn</p>,zh-TW,<p>聯絡電話：（+86）13829709766</p><p>聯絡信箱：hxgi-002@huaxin-hk.cn</p>
-zh-CN,快速链接,zh-TW,快速連結
-zh-CN,Welcome to our store,zh-TW,歡迎來到我們的商店
-zh-CN,<p></p>,zh-TW,<p></p>
-zh-CN,未找到 Shop Cash。,zh-TW,未找到 Shop Cash。
-zh-CN,添加 Google Pay 付款方式,zh-TW,新增 Google Pay 付款方式
-zh-CN,正在加载 Google Pay,zh-TW,正在加載 Google Pay
-zh-CN,添加 PayPal 付款方式,zh-TW,新增 PayPal 付款方式
-zh-CN,"正在加载 PayPal,",zh-TW,"正在加載 PayPal,"
+en,Shop Cash was not found.,da,Shop Cash blev ikke fundet.
+en,You no longer have permission to place B2B orders. %{logout_url} to place a personal order instead.,da,Du har ikke længere tilladelse til at afgive B2B-ordrer. %{logout_url} for at afgive en personlig ordre i stedet.
+en,Exclusive offers from Shop,da,Eksklusive tilbud fra Shop
+en,<strong>Follow Us</strong>,da,<strong>Følg os</strong>
+en,https://www.facebook.com/#,da,https://www.facebook.com/#
+en,https://www.instagram.com/#,da,https://www.instagram.com/#
+en,https://www.youtube.com/#,da,https://www.youtube.com/#
+en,http://tiktok.com/#,da,http://tiktok.com/#
+en,https://www.pinterest.com/#,da,https://www.pinterest.com/#
+en,Share,da,Dele
+en,New Products,da,Nye produkter
+en,Share,da,Dele
+en,About Us,da,Om os
+en,"Welcome to Luannan Spade! Leveraging the strong industrial advantages of Luannan County, Hebei Province—known as the ""Hometown of Chinese Spades""—we are committed to providing global customers with high-quality and diverse spade products. As the largest spade production base in China, Luannan County brings together numerous outstanding enterprises, utilizing advanced technology, a complete industrial chain, and robust production capabilities to become a leading spade supplier in the industry.",da,"Velkommen til Luannan Spade! Ved at udnytte de stærke industrielle fordele i Luannan County, Hebei-provinsen – kendt som ""Den kinesiske spades hjemby"" – er vi forpligtet til at give globale kunder højkvalitets og forskelligartede spadeprodukter. Som den største spadeproduktionsbase i Kina samler Luannan County adskillige fremragende virksomheder, der bruger avanceret teknologi, en komplet industriel kæde og robuste produktionskapaciteter til at blive en førende spadeleverandør i branchen."
+en,view more>,da,se mere>
+en,<strong>Main Products</strong>,da,<strong>Hovedprodukter</strong>
+en,"<p>Our main products include various different models of shovels and a series of camping tools such as rakes, shovels, spades, knives, steel forks, etc. We have passed ISO9001, ISO14001, ISO45001 certifications. These products are of high quality and reasonable price, and now enjoy a high reputation in domestic and foreign markets.</p>",da,"<p>Vores hovedprodukter omfatter forskellige modeller af skovle og en række campingværktøjer såsom river, skovle, spader, knive, stålgafler osv. Vi har bestået ISO9001, ISO14001, ISO45001 certificeringer. Disse produkter er af høj kvalitet og rimelige priser og nyder nu et højt omdømme på indenlandske og udenlandske markeder.</p>"
+en,view more >,da,se mere >
+en,News Center,da,Nyhedscenter
+en,Opening soon,da,Åbner snart
+en,<p>Be the first to know when we launch.</p>,da,"<p>Vær den første til at vide, hvornår vi lancerer.</p>"
+en,Share,da,Dele
+en,You may also like,da,Du kan også lide
+en,Send Inquiry,da,Send forespørgsel
+en,Subscribe to our emails,da,Abonner på vores e-mails
+en,<strong>Contact Us</strong>,da,<strong>Kontakt os</strong>
+en,"<p>Address: Spade Industrial Base, Luannan County, Tangshan City, Hebei Province, China<br/>Phone: +86-XXX-XXXXXXX<br/>Mail: outwardluannan@163.com</p>",da,"<p>Adresse: Spade Industrial Base, Luannan County, Tangshan City, Hebei-provinsen, Kina<br/>Telefon: +86-XXX-XXXXXXX<br/>Mail: outwardluannan@163.com</p>"
+en,<strong>Quick Links</strong>,da,<strong>Hurtige links</strong>
+en,<strong>Policies & Terms</strong>,da,<strong>Politikker og vilkår</strong>
+en,Email:  outwardluannan@163.com       WhatsApp: +86-XXX-XXXXXXX,da,E-mail:  outwardluannan@163.com WhatsApp: +86-XXX-XXXXXXX
+en,"Hi
+thank you for your message，i am not here now
+please leave your message on my WhatsApp or email
+WhatsApp：+86-XXX-XXXXXXX
+Email：outwardluannan@163.com
+Waiting for your information
+Regards",da,"Hej
+tak for din besked, jeg er her ikke nu
+læg venligst din besked på min WhatsApp eller e-mail
+WhatsApp：+86-XXX-XXXXXXX
+E-mail:outwardluannan@163.com
+Venter på dine oplysninger
+Med venlig hilsen"
+en,Share,da,Dele
+en,New Products,da,Nye produkter
+en,Share,da,Dele
+en,About Us,da,Om os
+en,"Welcome to Luannan Spade! Leveraging the strong industrial advantages of Luannan County, Hebei Province—known as the ""Hometown of Chinese Spades""—we are committed to providing global customers with high-quality and diverse spade products. As the largest spade production base in China, Luannan County brings together numerous outstanding enterprises, utilizing advanced technology, a complete industrial chain, and robust production capabilities to become a leading spade supplier in the industry.",da,"Velkommen til Luannan Spade! Ved at udnytte de stærke industrielle fordele i Luannan County, Hebei-provinsen – kendt som ""Den kinesiske spades hjemby"" – er vi forpligtet til at give globale kunder højkvalitets og forskelligartede spadeprodukter. Som den største spadeproduktionsbase i Kina samler Luannan County adskillige fremragende virksomheder, der bruger avanceret teknologi, en komplet industriel kæde og robuste produktionskapaciteter til at blive en førende spadeleverandør i branchen."
+en,view more>,da,se mere>
+en,<strong>Main Products</strong>,da,<strong>Hovedprodukter</strong>
+en,"<p>Our main products include various different models of shovels and a series of camping tools such as rakes, shovels, spades, knives, steel forks, etc. We have passed ISO9001, ISO14001, ISO45001 certifications. These products are of high quality and reasonable price, and now enjoy a high reputation in domestic and foreign markets.</p>",da,"<p>Vores hovedprodukter omfatter forskellige modeller af skovle og en række campingværktøjer såsom river, skovle, spader, knive, stålgafler osv. Vi har bestået ISO9001, ISO14001, ISO45001 certificeringer. Disse produkter er af høj kvalitet og rimelige priser og nyder nu et højt omdømme på indenlandske og udenlandske markeder.</p>"
+en,view more >,da,se mere >
+en,News Center,da,Nyhedscenter
+en,Opening soon,da,Åbner snart
+en,<p>Be the first to know when we launch.</p>,da,"<p>Vær den første til at vide, hvornår vi lancerer.</p>"
+en,Share,da,Dele
+en,You may also like,da,Du kan også lide
+en,Send Inquiry,da,Send forespørgsel
+en,Subscribe to our emails,da,Abonner på vores e-mails
+en,<strong>Contact Us</strong>,da,<strong>Kontakt os</strong>
+en,"<p>Address: Spade Industrial Base, Luannan County, Tangshan City, Hebei Province, China<br/>Phone: +86-XXX-XXXXXXX<br/>Mail: outwardluannan@163.com</p>",da,"<p>Adresse: Spade Industrial Base, Luannan County, Tangshan City, Hebei-provinsen, Kina<br/>Telefon: +86-XXX-XXXXXXX<br/>Mail: outwardluannan@163.com</p>"
+en,<strong>Quick Links</strong>,da,<strong>Hurtige links</strong>
+en,<strong>Policies & Terms</strong>,da,<strong>Politikker og vilkår</strong>
+en,Email:  outwardluannan@163.com       WhatsApp: +86-XXX-XXXXXXX,da,E-mail:  outwardluannan@163.com WhatsApp: +86-XXX-XXXXXXX
+en,<strong>Follow Us</strong>,da,<strong>Følg os</strong>
+en,https://www.facebook.com/#,da,https://www.facebook.com/#
+en,https://www.instagram.com/#,da,https://www.instagram.com/#
+en,https://www.youtube.com/#,da,https://www.youtube.com/#
+en,http://tiktok.com/#,da,http://tiktok.com/#
+en,https://www.pinterest.com/#,da,https://www.pinterest.com/#
+en,Shop Cash was not found.,da,Shop Cash blev ikke fundet.
+en,You no longer have permission to place B2B orders. %{logout_url} to place a personal order instead.,da,Du har ikke længere tilladelse til at afgive B2B-ordrer. %{logout_url} for at afgive en personlig ordre i stedet.
+en,Exclusive offers from Shop,da,Eksklusive tilbud fra Shop
+en,Products1,da,Produkter 1
+en,页脚菜单,da,Sidefod menu
+en,客户账户主菜单,da,Kundekonto hovedmenu
+en,Quick Links,da,Hurtige links
+en,Policies & Terms,da,Politikker og vilkår
+en,搜索,da,søge
+en,商店,da,butik
+en,订单,da,Bestille
+en,Home,da,Hjem
+en,About Us,da,Om os
+en,News,da,Nyheder
+en,Knowledge,da,Viden
+en,Feedback,da,Feedback
+en,About Us,da,Om os
+en,Customization Services,da,Tilpasningstjenester
+en,Return Policy,da,Returpolitik
