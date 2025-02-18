@@ -89,20 +89,12 @@ public class JsoupUtils {
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
                             targetString = translateAndCount(request, counter, aiLanguagePacksDO);
-//                            counter.addChars(calculateToken(text, 1));
-//                            targetString = translateApiIntegration.googleTranslate(request);
-//                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-//                        counter.addChars(calculateToken(text, 1));
-//                        targetString = translateApiIntegration.googleTranslate(request);
-////                        targetString = translateApiIntegration.microsoftTranslate(request);
-//                        addData(target, text, targetString);
                         translatedTexts.add(text);
-                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
                             //终止翻译，并返回状态4
-                            System.out.println("翻译异常，终止翻译");
                             throw new ClientException(TRANSLATION_EXCEPTION);
                         }
                         continue;
@@ -129,16 +121,14 @@ public class JsoupUtils {
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
                             targetString = translateAndCount(request, counter, aiLanguagePacksDO);
-//                            counter.addChars(calculateToken(altText, 1));
-//                            targetString = translateApiIntegration.googleTranslate(request);
-//                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
-                    } catch (Exception e) {
+                    } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-//                        targetString = translateApiIntegration.googleTranslate(request);
-////                         targetString = translateApiIntegration.microsoftTranslate(request);
-//                        addData(target, altText, targetString);
                         translatedAlts.add(altText);
+                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
+                            //终止翻译，并返回状态4
+                            throw new ClientException(TRANSLATION_EXCEPTION);
+                        }
                         continue;
                     }
                     addData(target, altText, targetString);
@@ -146,6 +136,11 @@ public class JsoupUtils {
                 }
             }
 
+        } catch (ClientException e) {
+            if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
+                //终止翻译，并返回状态4
+                throw new ClientException(TRANSLATION_EXCEPTION);
+            }
         } catch (Exception e) {
             appInsights.trackTrace("HTML" + e.getMessage());
         }

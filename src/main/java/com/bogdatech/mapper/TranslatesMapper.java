@@ -48,4 +48,7 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
 
     @Update("UPDATE Translates SET resource_type = #{resourceType} WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
     void updateTranslatesResourceType(String shopName, String target, String source, String resourceType);
+
+    @Select("SELECT status FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
+    int getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
 }
