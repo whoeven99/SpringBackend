@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -145,8 +146,12 @@ public class TranslateService {
                 }
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 return;
-            } catch (Exception e) {
-                appInsights.trackTrace("Translation task failed: " + e.getMessage());
+            }catch (CannotCreateTransactionException e){
+                appInsights.trackTrace("Translation task failed: " + e);
+                return;
+            }
+            catch (Exception e) {
+                appInsights.trackTrace("Translation task failed: " + e);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 return;
@@ -299,6 +304,7 @@ public class TranslateService {
         if (userStopFlags.get(shopName).get()) {
             //从数据库中获取当前状态 2，改成正在翻译，4，改成翻译异常
             int status = translatesService.getStatusByShopNameAndTargetAndSource(shopName, target, source);
+            System.out.println("statuss: " + status);
             if (status == 2){
                 //                更新数据库中的已使用字符数
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
@@ -595,21 +601,21 @@ public class TranslateService {
 
     //对openAI翻译中报错做处理，两次以上直接结束翻译
     public void ChatgptException(ShopifyRequest request, String source) {
-        System.out.println("shopName: " + request.getShopName());
-        System.out.println("accessToken: " + request.getAccessToken());
-        System.out.println("source: " + source);
         System.out.println("进来了ChatgptException方法！！！！");
         String shopName = request.getShopName();
         //终止翻译。
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
         if (stopFlag != null) {
+            translatesService.updateTranslateStatus(shopName, 4, request.getTarget(), source, request.getAccessToken());
+            int status = translatesService.getStatusByShopNameAndTargetAndSource(shopName, request.getTarget(), source);
+            System.out.println("status: " + status);
             stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
                 appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
                 System.out.println("用户 " + shopName + " 的翻译任务已停止");
-                translatesService.updateTranslateStatus(shopName, 4, request.getTarget(), source, request.getAccessToken());
+
             }
         }
     }
