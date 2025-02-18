@@ -137,7 +137,7 @@ public class TranslateService {
                 }
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                tencentEmailService.sendEmailByOnline(shopName, source, target);
+//                tencentEmailService.sendEmailByOnline(shopName, source, target);
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
                 if (emailSent.compareAndSet(false, true)) {
@@ -157,7 +157,7 @@ public class TranslateService {
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
             translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
-            tencentEmailService.sendEmailByOnline(shopName, source, target);
+//            tencentEmailService.sendEmailByOnline(shopName, source, target);
         });
 
         userTasks.put(shopName, future);  // 存储用户的任务
@@ -523,7 +523,7 @@ public class TranslateService {
             // 从缓存中获取翻译结果
             String targetCache = translateSingleLine(value, target);
             if (targetCache != null) {
-                counter.addChars(calculateToken(value, 1));
+//                counter.addChars(calculateToken(value, 1));
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
             }
@@ -565,17 +565,35 @@ public class TranslateService {
         if ("HTML".equals(type)) {
             try {
                 //TODO：重新实现一个方法用于用新提示词进行长文本翻译。
-                String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, registerTransactionRequest.getLocale(), request.getTarget(), value), counter, translateContext.getAiLanguagePacksDO());
+                String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, request.getShopName(), request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, translateContext.getAiLanguagePacksDO());
                 saveToShopify(targetText, translation, resourceId, request);
                 return true;
-            } catch (Exception e) {
+            } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
+                ChatgptException(e, request, registerTransactionRequest.getLocale());
                 return true;
             }
         }
         return false;
     }
 
+    //对openAI翻译中报错做处理，两次以上直接结束翻译
+    public void ChatgptException(ClientException e, ShopifyRequest request, String source){
+        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+            String shopName = request.getShopName();
+            //终止翻译。
+            AtomicBoolean stopFlag = userStopFlags.get(shopName);
+            if (stopFlag != null) {
+                stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
+                Future<?> future = userTasks.get(shopName);
+                if (future != null && !future.isDone()) {
+                    future.cancel(true);  // 中断正在执行的任务
+                    appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
+                    translatesService.updateTranslateStatus(shopName, 4, request.getTarget(), source, request.getAccessToken());
+                }
+            }
+        }
+    }
     //对词汇表数据进行处理
     public void translateDataByGlossary(List<RegisterTransactionRequest> registerTransactionRequests,
                                         TranslateContext translateContext) {
@@ -695,7 +713,7 @@ public class TranslateService {
             String type = registerTransactionRequest.getTarget();
 
             if (targetCache != null) {
-                counter.addChars(calculateToken(value, 1));
+//                counter.addChars(calculateToken(value, 1));
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
             }
@@ -717,48 +735,48 @@ public class TranslateService {
 
             //数据库为空的逻辑
             //判断数据类型
-//            if (value.isEmpty()) {
-//                continue;
-//            }
-//            if ("handle".equals(key)
-//            ) {
-//                saveToShopify(value, translation, resourceId, request);
-//                continue;
-//            }
-//            if ("JSON".equals(type)
-//                    || "JSON_STRING".equals(type)) {
-//                //对于json和json_string的数据直接存原文
-//                //存放在json的集合里面
-//                saveToShopify(value, translation, resourceId, request);
-//                continue;
-//            }
-//            if ("HTML".equals(type)) {
-//                //存放在html的list集合里面
-//                // 解析HTML文档
-//                Document doc = Jsoup.parse(value);
-//                try {
-//                    TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
-//                    // 提取需要翻译的文本
-//                    Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
-//                    // 翻译文本
-//                    Map<Element, List<String>> translatedTextMap = jsoupUtils.translateTexts(elementTextMap, translateRequest, counter, aiLanguagePacksDO);
-//                    // 替换原始文本为翻译后的文本
-//                    jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
-//                } catch (Exception e) {
-//                    saveToShopify(doc.toString(), translation, resourceId, request);
-//                    continue;
-//                }
-//                saveToShopify(doc.toString(), translation, resourceId, request);
-//                continue;
-//            }
-//
-//            counter.addChars(calculateToken(value, 1));
-//
-//            //TODO: 改为判断语言代码方法
-//            translateByGoogleOrAI(request, counter, aiLanguagePacksDO, registerTransactionRequest, translation);
-//                        String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
-//            addData(target, value, targetString);
-//            saveToShopify(targetString, translation, resourceId, request);
+            if (value == null) {
+                continue;
+            }
+            if ("handle".equals(key)
+            ) {
+                saveToShopify(value, translation, resourceId, request);
+                continue;
+            }
+            if ("JSON".equals(type)
+                    || "JSON_STRING".equals(type)) {
+                //对于json和json_string的数据直接存原文
+                //存放在json的集合里面
+                saveToShopify(value, translation, resourceId, request);
+                continue;
+            }
+            if ("HTML".equals(type)) {
+                //存放在html的list集合里面
+                // 解析HTML文档
+                Document doc = Jsoup.parse(value);
+                try {
+                    TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
+                    // 提取需要翻译的文本
+                    Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
+                    // 翻译文本
+                    Map<Element, List<String>> translatedTextMap = jsoupUtils.translateTexts(elementTextMap, translateRequest, counter, aiLanguagePacksDO);
+                    // 替换原始文本为翻译后的文本
+                    jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
+                } catch (Exception e) {
+                    saveToShopify(doc.toString(), translation, resourceId, request);
+                    continue;
+                }
+                saveToShopify(doc.toString(), translation, resourceId, request);
+                continue;
+            }
+
+            counter.addChars(calculateToken(value, 1));
+
+            //TODO: 改为判断语言代码方法
+            translateByGoogleOrAI(request, counter, aiLanguagePacksDO, registerTransactionRequest, translation);
+                        String targetString = getGoogleTranslateData(new TranslateRequest(0, null, null, source, target, value));
+            addData(target, value, targetString);
+            saveToShopify(targetString, translation, resourceId, request);
             if (checkIsStopped(request.getShopName(), counter)) return;
         }
 
@@ -828,7 +846,7 @@ public class TranslateService {
             //获取缓存数据
             String targetCache = translateSingleLine(value, request.getTarget());
             if (targetCache != null) {
-                counter.addChars(calculateToken(targetCache, 1));
+//                counter.addChars(calculateToken(targetCache, 1));
                 saveToShopify(targetCache, translation, resourceId, request);
                 continue;
             }
@@ -851,7 +869,15 @@ public class TranslateService {
     //首选谷歌翻译，翻译不了用AI翻译
     public void translateByGoogleOrAI(ShopifyRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO, RegisterTransactionRequest registerTransactionRequest, Map<String, Object> translation) {
         String value = registerTransactionRequest.getValue();
-        List<String> strings = jsoupUtils.googleTranslateJudgeCode(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), aiLanguagePacksDO);
+        List<String> strings = null;
+        try {
+            strings = jsoupUtils.googleTranslateJudgeCode(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), aiLanguagePacksDO);
+        } catch (ClientException e) {
+            if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+                ChatgptException(e, request, registerTransactionRequest.getLocale());
+            }
+            return;
+        }
         String targetString = strings.get(0);
         if (targetString.isEmpty()) {
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
@@ -889,15 +915,25 @@ public class TranslateService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             // 跳过 value 为空的项
 
-            String value = contentItemNode.path("value").asText(null);
-            if (value == null || value.isEmpty()) {
-                continue;  // 跳过当前项
+            String value = null;
+            String locale = null;
+            String translatableContentDigest = null;
+            String key = null;
+            String type = null;
+            try {
+                value = contentItemNode.path("value").asText(null);
+                locale = contentItemNode.path("locale").asText(null);
+                translatableContentDigest = contentItemNode.path("digest").asText(null);
+                key = contentItemNode.path("key").asText(null);
+                type = contentItemNode.path("type").asText(null);
+                if (value == null ) {
+                    continue;  // 跳过当前项
+                }
+            } catch (Exception e) {
+                appInsights.trackTrace("失败的原因： " + e.getMessage());
+                continue;
             }
 
-            String locale = contentItemNode.path("locale").asText(null);
-            String translatableContentDigest = contentItemNode.path("digest").asText(null);
-            String key = contentItemNode.path("key").asText(null);
-            String type = contentItemNode.path("type").asText(null);
             //如果translatableContentMap里面有该key则不翻译，没有则翻译
             if (translatableContentMap.containsKey(key)) {
                 continue;

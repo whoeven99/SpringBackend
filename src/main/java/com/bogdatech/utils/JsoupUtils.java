@@ -1,7 +1,6 @@
 package com.bogdatech.utils;
 
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ChatGptIntegration;
@@ -18,8 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 
-import static com.bogdatech.constants.TranslateConstants.QWEN_TURBO;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
+import static com.bogdatech.constants.TranslateConstants.TRANSLATION_EXCEPTION;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
@@ -32,12 +30,14 @@ public class JsoupUtils {
 
     private final TranslateApiIntegration translateApiIntegration;
     private final ChatGptIntegration chatGptIntegration;
+    private final ITranslatesService translatesService;
     TelemetryClient appInsights = new TelemetryClient();
 
     @Autowired
-    public JsoupUtils(TranslateApiIntegration translateApiIntegration, ChatGptIntegration chatGptIntegration) {
+    public JsoupUtils(TranslateApiIntegration translateApiIntegration, ChatGptIntegration chatGptIntegration, ITranslatesService translatesService) {
         this.translateApiIntegration = translateApiIntegration;
         this.chatGptIntegration = chatGptIntegration;
+        this.translatesService = translatesService;
     }
 
     public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
@@ -76,7 +76,7 @@ public class JsoupUtils {
 
                 String targetString;
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
@@ -85,8 +85,7 @@ public class JsoupUtils {
                         if (text.length() > 32) {
                             //AI翻译
                             counter.addChars(calculateToken(text + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
-//                            targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
-                            targetString = callWithMessage(QWEN_TURBO, text, aiLanguagePacksDO.getPromotWord());
+                            targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + text);
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
                             targetString = translateAndCount(request, counter, aiLanguagePacksDO);
@@ -94,13 +93,18 @@ public class JsoupUtils {
 //                            targetString = translateApiIntegration.googleTranslate(request);
 //                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
-                    } catch (Exception e) {
+                    } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
 //                        counter.addChars(calculateToken(text, 1));
 //                        targetString = translateApiIntegration.googleTranslate(request);
 ////                        targetString = translateApiIntegration.microsoftTranslate(request);
 //                        addData(target, text, targetString);
                         translatedTexts.add(text);
+                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+                            //终止翻译，并返回状态4
+                            System.out.println("翻译异常，终止翻译");
+                            throw new ClientException(TRANSLATION_EXCEPTION);
+                        }
                         continue;
                     }
                     addData(target, text, targetString);
@@ -121,8 +125,7 @@ public class JsoupUtils {
                         if (altText.length() > 32) {
                             //AI翻译
                             counter.addChars(calculateToken(altText + aiLanguagePacksDO.getPromotWord(), aiLanguagePacksDO.getDeductionRate()));
-//                            targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
-                            targetString = callWithMessage(QWEN_TURBO, altText, aiLanguagePacksDO.getPromotWord());
+                            targetString = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + altText);
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
                             targetString = translateAndCount(request, counter, aiLanguagePacksDO);
@@ -178,7 +181,7 @@ public class JsoupUtils {
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     //目前没有翻译html的提示词，用的是谷歌翻译
@@ -210,7 +213,7 @@ public class JsoupUtils {
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
@@ -292,13 +295,7 @@ public class JsoupUtils {
         String source = request.getSource();
         List<String> result = new ArrayList<>();
         if (LANGUAGE_CODES.contains(target) || LANGUAGE_CODES.contains(source)) {
-//            String s = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + request.getContent());
-            String s = null;
-            try {
-                s = callWithMessage(QWEN_TURBO, request.getContent(), aiLanguagePacksDO.getPromotWord());
-            } catch (NoApiKeyException | InputRequiredException e) {
-                throw new RuntimeException(e);
-            }
+            String s = chatGptIntegration.chatWithGpt(aiLanguagePacksDO.getPromotWord() + request.getContent());
             //TODO 改用其他翻译API
             result.add(s);
             result.add("0");
