@@ -570,7 +570,9 @@ public class TranslateService {
                 return true;
             } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
-                ChatgptException(e, request, registerTransactionRequest.getLocale());
+                if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+                    ChatgptException(e, request, registerTransactionRequest.getLocale());
+                }
                 return true;
             }
         }
