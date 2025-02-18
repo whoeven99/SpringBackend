@@ -1,0 +1,1457 @@
+source_code,source_text,target_code,target_text
+pt-PT,Cluster de {{number}} marcadores,de,Cluster von {{number}} Markierungen
+pt-PT,Tem {{ count }} moradas guardadas,de,Sie haben {{ count }} Adressen gespeichert
+pt-PT,Sem entrega disponível para %{count} itens,de,Für %{count} Artikel ist keine Lieferung verfügbar
+pt-PT,Estes itens serão removidos do seu carrinho porque não há métodos de entrega disponíveis para a morada.,de,"Diese Artikel werden aus Ihrem Warenkorb entfernt, da keine Versandmethoden an die Adresse verfügbar sind."
+pt-PT,{{count}} itens,de,{{count}} Artikel
+pt-PT,%{delivery_method} já não está disponível para estes itens.,de,%{delivery_method} ist für diese Artikel nicht mehr verfügbar.
+pt-PT,O método de entrega selecionado já não está disponível para estes itens.,de,Die ausgewählte Versandart ist für diese Artikel nicht mehr verfügbar.
+pt-PT,Mostrar %{count} itens,de,%{count} Artikel anzeigen
+pt-PT,Ocultar %{count} itens,de,%{count} Elemente ausblenden
+pt-PT,%{count} itens,de,%{count} Artikel
+pt-PT,Descontos,de,Rabatte
+pt-PT,Descontos de encomenda,de,Bestellen Sie Rabatte
+pt-PT,Subtotal · %{count} itens,de,Zwischensumme · %{count} Elemente
+pt-PT,%{count} itens,de,%{count} Artikel
+pt-PT,Ver todos os %{count} itens,de,Alle %{count} Artikel anzeigen
+pt-PT,Os itens não estão disponíveis para recolha na loja,de,Die Artikel können nicht im Geschäft abgeholt werden
+pt-PT,%{count} dias úteis,de,%{count} Werktage
+pt-PT,%{count} outros métodos disponíveis a partir de,de,%{count} andere Methoden verfügbar von
+pt-PT,para %{count} entregas,de,für %{count} Lieferungen
+pt-PT,a cada %{count} dias,de,alle %{count} Tage
+pt-PT,a cada %{count} semanas,de,alle %{count} Wochen
+pt-PT,a cada %{count} meses,de,alle %{count} Monate
+pt-PT,a cada %{count} anos,de,alle %{count} Jahre
+pt-PT,Primeiras %{count} encomendas gratuitas,de,Die ersten %{count} Bestellungen sind kostenlos
+pt-PT,Para as primeiras %{count} encomendas,de,Für die ersten %{count} Bestellungen
+pt-PT,Envio gratuito para mais %{count} entregas,de,Kostenloser Versand für weitere %{count} Lieferungen
+pt-PT,Envio gratuito para %{count} entregas,de,Kostenloser Versand für %{count} Lieferungen
+pt-PT,"Envio gratuito para mais %{count} entregas, posteriormente, %{recurring_order_shipping_price}",de,"Kostenloser Versand für weitere %{count} Lieferungen, später %{recurring_order_shipping_price}"
+pt-PT,"Envio gratuito para %{count} entregas, posteriormente, %{recurring_order_shipping_price}",de,Kostenloser Versand für %{count} Lieferungen danach %{recurring_order_shipping_price}
+pt-PT,Mais %{count} entregas por %{shipping_price} cada,de,Weitere %{count} Lieferungen für jeweils %{shipping_price}
+pt-PT,Mais %{count} entregas por %{shipping_price} cada,de,Weitere %{count} Lieferungen für jeweils %{shipping_price}
+pt-PT,"Envio gratuito para o primeiro %{cycle}, seguido de %{recurring_order_shipping_price}",de,"Kostenloser Versand für den ersten %{cycle}, gefolgt von %{recurring_order_shipping_price}"
+pt-PT,%{shipping_price} para mais %{count} entregas (%{per_delivery_cost}),de,%{shipping_price} für weitere %{count} Lieferungen (%{per_delivery_cost})
+pt-PT,%{shipping_price} para %{count} entregas (%{per_delivery_cost}),de,%{shipping_price} für %{count} Lieferungen (%{per_delivery_cost})
+pt-PT,"%{shipping_price} para mais %{count} entregas (%{per_delivery_cost}), seguido de %{recurring_order_shipping_price}",de,"%{shipping_price} für weitere %{count} Lieferungen (%{per_delivery_cost}), gefolgt von %{recurring_order_shipping_price}"
+pt-PT,"%{shipping_price} para %{count} entregas (%{per_delivery_cost}), seguido de %{recurring_order_shipping_price}",de,"%{shipping_price} für %{count} Lieferungen (%{per_delivery_cost}), gefolgt von %{recurring_order_shipping_price}"
+pt-PT,Primeiros envios,de,Erste Lieferungen
+pt-PT,Envios recorrentes,de,Wiederkehrende Versendungen
+pt-PT,O valor da sua compra está coberto pelos seus cartões-oferta.,de,Der Wert Ihres Einkaufs ist durch Ihre Geschenkkarten abgedeckt.
+pt-PT,"De momento, não estão disponíveis pagamentos por cartão de crédito.<br><a href=""%{current_url}"">Atualize esta página</a> ou utilize um método de pagamento diferente.",de,"Kreditkartenzahlungen sind derzeit nicht verfügbar.<br><a href=""%{current_url}"">Aktualisieren Sie diese Seite</a> oder verwenden Sie eine andere Zahlungsmethode."
+pt-PT,"Existem %{count} cartões expirados, que pode visualizar e editar na sua conta.",de,"Es gibt %{count} abgelaufene Karten, die Sie in Ihrem Konto anzeigen und bearbeiten können."
+pt-PT,Adicionados %{count},de,%{count} hinzugefügt
+pt-PT,Não é possível enviar alguns itens do seu carrinho para o endereço que introduziu. Reveja o seu endereço para garantir que está correto e tente novamente ou selecione um endereço diferente.,de,"Einige Artikel in Ihrem Warenkorb können nicht an die von Ihnen eingegebene Adresse gesendet werden. Bitte überprüfen Sie Ihre Adresse, um sicherzustellen, dass sie korrekt ist, und versuchen Sie es erneut oder wählen Sie eine andere Adresse aus."
+pt-PT,Um ou mais itens que adicionou não são enviados para a sua localização. Remova-os para finalizar a compra ou entre em contacto com a loja.,de,"Ein oder mehrere von Ihnen hinzugefügte Artikel werden nicht an Ihren Standort gesendet. Entfernen Sie sie, um den Kauf abzuschließen oder wenden Sie sich an das Geschäft."
+pt-PT,A sua encomenda está a ser processada. O tempo de espera estimado é de %{count} minutos.,de,Ihre Bestellung wird bearbeitet. Die geschätzte Wartezeit beträgt %{count} Minuten.
+pt-PT,comprar também estes produtos,de,Kaufen Sie diese Produkte auch
+pt-PT,Receberá uma mensagem de texto com os seus cartões de oferta dentro de alguns minutos.,de,Sie erhalten innerhalb weniger Minuten eine SMS mit Ihren Geschenkkarten.
+pt-PT,Receberá um e-mail com os seus cartões de oferta dentro de alguns minutos.,de,Sie erhalten innerhalb weniger Minuten eine E-Mail mit Ihren Geschenkkarten.
+pt-PT,Os cartões de oferta foram enviados por e-mail,de,Geschenkgutscheine wurden per E-Mail verschickt
+pt-PT,Os cartões de oferta foram enviados por mensagem de texto,de,Geschenkgutscheine wurden per SMS verschickt
+pt-PT,Os cartões de oferta foram reenviados.,de,Geschenkkarten wurden erneut versendet.
+pt-PT,Ocorreu um problema ao reenviar os seus cartões de oferta. Tente novamente ou entre contacto connosco.,de,Beim erneuten Versenden Ihrer Geschenkkarten ist ein Problem aufgetreten. Versuchen Sie es erneut oder kontaktieren Sie uns.
+pt-PT,%{count} adicionado,de,%{count} hinzugefügt
+pt-PT,Comprar %{product_name} e %{count} outros itens,de,Kaufen Sie %{product_name} und %{count} weitere Artikel
+pt-PT,Primeiros %{count} pagamentos %{total_price} cada,de,Die ersten %{count} Zahlungen jeweils %{total_price}
+pt-PT,%{count} dias,de,%{count} Tage
+pt-PT,%{count} semanas,de,%{count} Wochen
+pt-PT,%{count} meses,de,%{count} Monate
+pt-PT,%{count} anos,de,%{count} Jahre
+pt-PT,depois %{count} pagamentos a %{total_price} cada,de,dann %{count} Zahlungen zu jeweils %{total_price}
+pt-PT,Produtos indisponíveis,de,Nicht verfügbare Produkte
+pt-PT,Estes produtos serão removidos do seu carrinho porque não estão disponíveis no seu país/região.,de,"Diese Produkte werden aus Ihrem Warenkorb entfernt, da sie in Ihrem Land/Ihrer Region nicht verfügbar sind."
+pt-PT,Estes produtos não estão disponíveis no seu país/região.,de,Diese Produkte sind in Ihrem Land/Ihrer Region nicht verfügbar.
+pt-PT,Tempo de espera estimado: {{count}} minutos,de,Geschätzte Wartezeit: {{count}} Minuten
+pt-PT,Sem entrega disponível para %{count} itens,de,Für %{count} Artikel ist keine Lieferung verfügbar
+pt-PT,Estes itens serão removidos do seu carrinho porque não há métodos de entrega disponíveis para a morada.,de,"Diese Artikel werden aus Ihrem Warenkorb entfernt, da keine Versandmethoden an die Adresse verfügbar sind."
+pt-PT,A mostrar %{first} - %{last} de %{count} pontos,de,Zeigt %{first} - %{last} von %{count} Punkten an
+pt-PT,%{pickup_point_index} de %{count} pontos,de,%{pickup_point_index} von %{count} Punkten
+pt-PT,%{first} - %{last} de %{count} pontos,de,%{first} – %{last} von %{count} Punkten
+pt-PT,%{count} pontos de recolha perto da sua localização,de,%{count} Sammelstellen in der Nähe Ihres Standorts
+pt-PT,%{count} lojas com stock perto de %{address},de,%{count} Geschäfte mit Lagerbestand in der Nähe von %{address}
+pt-PT,%{first} - %{last} de %{count} lojas,de,%{first} – %{last} von %{count} Geschäften
+pt-PT,Mostrar mais %{count} localizações,de,Weitere %{count} Standorte anzeigen
+pt-PT,remover itens indisponíveis,de,Nicht verfügbare Elemente entfernen
+pt-PT,Outros,de,Andere
+pt-PT,"Pesquisa: %{count} resultados encontrados para ""%{terms}""",de,Suche: %{count} Ergebnisse für „%{terms}“ gefunden
+pt-PT,{{count}} itens,de,{{count}} Artikel
+pt-PT,Os cartões de oferta foram enviados por e-mail.,de,Geschenkgutscheine wurden per E-Mail verschickt.
+pt-PT,Cartões de oferta,de,Geschenkkarten
+pt-PT,Reenviar e-mails,de,E-Mails erneut senden
+pt-PT,"Se não foram recebidos, reenvie os e-mails ou",de,"Wenn sie nicht empfangen wurden, senden Sie die E-Mails erneut oder"
+pt-PT,Cada cartão de oferta será enviado num e-mail em separado.,de,Jede Geschenkkarte wird in einer separaten E-Mail versendet.
+pt-PT,Os cartões de oferta foram enviados por mensagem.,de,Geschenkkarten wurden per Nachricht verschickt.
+pt-PT,Reenviar mensagens,de,Nachrichten erneut senden
+pt-PT,"Se não foram recebidos, reenvie as mensagens ou",de,"Wenn sie nicht empfangen wurden, senden Sie die Nachrichten erneut oder"
+pt-PT,Cada cartão de oferta será enviado numa mensagem em separado.,de,Jede Geschenkkarte wird in einer separaten Nachricht versendet.
+pt-PT,Cartões de oferta reenviados,de,Geschenkkarten erneut senden
+pt-PT,Ocorreu um problema ao reenviar os seus cartões de oferta. Tente novamente ou entre contacto connosco.,de,Beim erneuten Versenden Ihrer Geschenkkarten ist ein Problem aufgetreten. Versuchen Sie es erneut oder kontaktieren Sie uns.
+pt-PT,Estes itens estão completos.,de,Diese Artikel sind vollständig.
+pt-PT,Números de rastreio,de,Tracking-Nummern
+pt-PT,"Se não foram recebidos,",de,"Wenn nicht erhalten,"
+pt-PT,Carregar mais {{count}} item,de,Weitere {{count}} Artikel laden
+pt-PT,Tem {{count}} encomendas pendentes,de,Sie haben {{count}} ausstehende Bestellungen
+pt-PT,O seu pagamento está há {{count}} dias em dívida,de,Ihre Zahlung ist {{count}} Tage fällig
+pt-PT,O seu pagamento expira em {{count}} dias,de,Ihre Zahlung läuft in {{count}} Tagen ab
+pt-PT,Existem {{count}} erros,de,Es liegen {{count}} Fehler vor
+pt-PT,{{count}} itens disponíveis,de,{{count}} verfügbare Artikel
+pt-PT,meses,de,Monate
+pt-PT,Cluster de {{number}} marcadores,de,Cluster von {{number}} Markierungen
+pt-PT,Há {{count}} minutos,de,Vor {{count}} Minuten
+pt-PT,View all,de,Alle anzeigen
+pt-PT,Load more,de,Mehr laden
+pt-PT,Verified buyer,de,Verifizierter Käufer
+pt-PT,Show more,de,Mehr anzeigen
+pt-PT,Recent searches,de,Aktuelle Suchanfragen
+pt-PT,Popular searches,de,Beliebte Suchanfragen
+pt-PT,Popular items,de,Beliebte Artikel
+pt-PT,Suggestions,de,Vorschläge
+pt-PT,Pages,de,Seiten
+pt-PT,Search for “{{ terms }}”,de,Suchen Sie nach „{{ terms }}“
+pt-PT,Your cart is empty,de,Ihr Warenkorb ist leer
+pt-PT,Continue shopping,de,Shoppen Sie weiter
+pt-PT,Cart,de,Karte
+pt-PT,Estimated total,de,Geschätzte Gesamtsumme
+pt-PT,Check out,de,Kasse
+pt-PT,View cart,de,Diagramm ansehen
+pt-PT,View product,de,Produkt ansehen
+pt-PT,On,de,An
+pt-PT,By,de,Von
+pt-PT,View more,de,Mehr anzeigen
+pt-PT,Clear all,de,Alles löschen
+pt-PT,To,de,Zu
+pt-PT,Sort by:,de,Sortieren nach:
+pt-PT,{{ product_count }} product found,de,{{ product_count }} Produkt gefunden
+pt-PT,{{ product_count }} products found,de,{{ product_count }} Produkte gefunden
+pt-PT,{{ product_count }} product,de,{{ product_count }} Produkt
+pt-PT,{{ product_count }} products,de,{{ product_count }} Produkte
+pt-PT,Load more,de,Mehr laden
+pt-PT,Search results,de,Suchergebnisse
+pt-PT,"Found {{ count }} result for ""{{ terms }}""",de,{{ count }} Ergebnis für „{{ terms }}“ gefunden
+pt-PT,"Found {{ count }} results for ""{{ terms }}""",de,Es wurden {{ count }} Ergebnisse für „{{ terms }}“ gefunden.
+pt-PT,Sort by:,de,Sortieren nach:
+pt-PT,No results could be found. Please try again with a different query.,de,Es konnten keine Ergebnisse gefunden werden. Bitte versuchen Sie es erneut mit einer anderen Abfrage.
+pt-PT,Blog,de,Blog
+pt-PT,Page,de,Seite
+pt-PT,Next,de,Nächste
+pt-PT,Previous,de,Vorherige
+pt-PT,{{ count }} comment,de,{{ count }} Kommentar
+pt-PT,{{ count }} comments,de,{{ count }} Kommentare
+pt-PT,Leave a comment,de,Hinterlassen Sie einen Kommentar
+pt-PT,Your email address will not be published,de,Ihre E-Mail-Adresse wird nicht veröffentlicht
+pt-PT,"Please note, comments need to be approved before they are published.",de,"Bitte beachten Sie, dass Kommentare vor der Veröffentlichung genehmigt werden müssen."
+pt-PT,Email,de,E-Mail
+pt-PT,Message,de,Nachricht
+pt-PT,Post comment,de,Kommentar posten
+pt-PT,Error: An issue has occurred!,de,Fehler: Es ist ein Problem aufgetreten!
+pt-PT,Your comment was posted successfully! Thank you!,de,Ihr Kommentar wurde erfolgreich gepostet! Danke schön!
+pt-PT,"Your comment was posted successfully. We will publish it in a little while, as our blog is moderated.",de,"Ihr Kommentar wurde erfolgreich gepostet. Wir werden es in Kürze veröffentlichen, da unser Blog moderiert wird."
+pt-PT,Subscribe,de,Abonnieren
+pt-PT,Copy,de,Kopie
+pt-PT,Copy Discount,de,Kopierrabatt
+pt-PT,Copied Discount,de,Kopierter Rabatt
+pt-PT,Send message,de,Nachricht senden
+pt-PT,Message,de,Nachricht
+pt-PT,Enter your email,de,Geben Sie Ihre E-Mail-Adresse ein
+pt-PT,Your email,de,Ihre E-Mail
+pt-PT,{{ field }} is required,de,{{ field }} ist erforderlich
+pt-PT,{{ field }} is invalid,de,{{ field }} ist ungültig
+pt-PT,"An error occurred, please check the information and resubmit.",de,Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Informationen und übermitteln Sie sie erneut.
+pt-PT,Thanks for contacting us. We'll get back to you as soon as possible.,de,"Vielen Dank, dass Sie uns kontaktiert haben. Wir werden uns so schnell wie möglich bei Ihnen melden."
+pt-PT,Thanks for subscribing,de,Vielen Dank für Ihr Abonnement
+pt-PT,Email,de,E-Mail
+pt-PT,Password,de,Passwort
+pt-PT,Forgot your password?,de,Passwort vergessen?
+pt-PT,Sign in,de,anmelden
+pt-PT,Don't have account?,de,Sie haben noch kein Konto?
+pt-PT,Sign up,de,Melden Sie sich an
+pt-PT,Reset your password,de,Setzen Sie Ihr Passwort zurück
+pt-PT,We will send you an email to reset your password,de,"Wir senden Ihnen eine E-Mail, um Ihr Passwort zurückzusetzen"
+pt-PT,Submit,de,Einreichen
+pt-PT,We've sent you an email with a link to update your password.,de,Wir haben Ihnen eine E-Mail mit einem Link zur Aktualisierung Ihres Passworts gesendet.
+pt-PT,No account found with that email.,de,Mit dieser E-Mail wurde kein Konto gefunden.
+pt-PT,First name,de,Vorname
+pt-PT,Last name,de,Nachname
+pt-PT,Create account,de,Benutzerkonto erstellen
+pt-PT,Already has an account?,de,Sie haben bereits ein Konto?
+pt-PT,Add to cart,de,In den Warenkorb legen
+pt-PT,Buy it now,de,Kaufe es jetzt
+pt-PT,Quantity,de,Menge
+pt-PT,Product type,de,Produkttyp
+pt-PT,Vendor,de,Verkäufer
+pt-PT,Tags,de,Schlagworte
+pt-PT,I want to send this as a gift,de,Ich möchte das als Geschenk verschicken
+pt-PT,200 characters max,de,Maximal 200 Zeichen
+pt-PT,Send on(optional),de,Senden am (optional)
+pt-PT,in cart,de,im Warenkorb
+pt-PT,{{ cart_qty }} in cart,de,{{ cart_qty }} im Warenkorb
+pt-PT,All,de,Alle
+pt-PT,item is already added to cart!,de,Der Artikel wurde bereits zum Warenkorb hinzugefügt!
+pt-PT,items are already added to cart!,de,Artikel sind bereits zum Warenkorb hinzugefügt!
+pt-PT,item is in cart!,de,Artikel ist im Warenkorb!
+pt-PT,items are in cart!,de,Artikel sind im Warenkorb!
+pt-PT,You can't add more,de,Sie können nicht mehr hinzufügen
+pt-PT,to the cart,de,zur Karte
+pt-PT,Cart added,de,Warenkorb hinzugefügt
+pt-PT,Add cart failed,de,Das Hinzufügen der Karte ist fehlgeschlagen
+pt-PT,Sold out,de,Ausverkauft
+pt-PT,Sale {{ sale_percent }},de,Verkauf {{ sale_percent }}
+pt-PT,Sale,de,Verkauf
+pt-PT,No products,de,Keine Produkte
+pt-PT,From {{ price }},de,Ab {{ price }}
+pt-PT,Unit price,de,Stückpreis
+pt-PT,per,de,pro
+pt-PT,Select options,de,Wählen Sie Optionen aus
+pt-PT,Total price,de,Gesamtpreis
+pt-PT,Add (<span class='item-bunble-selected'></span>) items to cart,de,Fügen Sie (<span class='item-bunble-selected'></span>) Artikel zum Warenkorb hinzu
+pt-PT,Add all items to cart,de,Alle Artikel in den Warenkorb legen
+pt-PT,This item,de,Dieser Artikel
+pt-PT,In stock,de,Auf Lager
+pt-PT,Low stock,de,Geringer Lagerbestand
+pt-PT,left,de,links
+pt-PT,Low stock {{ quantity }} left,de,Wenig Lagerbestand: {{ quantity }} übrig
+pt-PT,Out of stock,de,Ausverkauft
+pt-PT,Product link,de,Produktlink
+pt-PT,Email,de,E-Mail
+pt-PT,Phone number,de,Telefonnummer
+pt-PT,Question,de,Frage
+pt-PT,Submit question successfully,de,Frage erfolgreich abschicken
+pt-PT,Submit question failed,de,Das Senden der Frage ist fehlgeschlagen
+pt-PT,Submit,de,Einreichen
+pt-PT,"Taxes, discounts and <a href=""{{ link }}"">shipping</a> calculated at checkout",de,"Steuern, Rabatte und <a href=""{{ link }}"">Versand</a> werden beim Bezahlvorgang berechnet"
+pt-PT,Tax included and shipping and discounts calculated at checkout,de,Inklusive Steuern; Versand und Rabatte werden an der Kasse berechnet
+pt-PT,"Tax included. <a href=""{{ link }}"">shipping</a> and discounts calculated at checkout.",de,"Steuer inbegriffen. <a href=""{{ link }}"">Versand</a> und Rabatte werden an der Kasse berechnet."
+pt-PT,"Taxes, discounts and shipping calculated at checkout",de,"Steuern, Rabatte und Versandkosten werden an der Kasse berechnet"
+pt-PT,Save,de,Speichern
+pt-PT,Cancel,de,Stornieren
+pt-PT,Note field is required,de,Hinweisfeld ist erforderlich
+pt-PT,"An error occurred, please check the information and resubmit",de,Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Informationen und übermitteln Sie sie erneut
+pt-PT,Product,de,Produkt
+pt-PT,Quantity,de,Menge
+pt-PT,Total,de,Gesamt
+pt-PT,Your cart is empty,de,Ihr Warenkorb ist leer
+pt-PT,Your cart is currently empty. Discover exciting products on our Shop page,de,Ihr Warenkorb ist derzeit leer. Entdecken Sie spannende Produkte auf unserer Shop-Seite
+pt-PT,Back to shopping,de,Zurück zum Einkaufen
+pt-PT,Your cart is empty,de,Ihr Warenkorb ist leer
+pt-PT,Your cart,de,Ihre Karte
+pt-PT,Continue shopping,de,Shoppen Sie weiter
+pt-PT,Your cart is currently empty. Discover exciting products on our Shop page,de,Ihr Warenkorb ist derzeit leer. Entdecken Sie spannende Produkte auf unserer Shop-Seite
+pt-PT,Have an account?,de,Haben Sie ein Konto?
+pt-PT,"<a href=""{{ link }}"" class=""link underlined-link"">Log in</a> to check out faster.",de,"<a href=""{{ link }}"" class=""link underlined-link"">Melden Sie sich an</a>, um schneller zur Kasse zu gehen."
+pt-PT,Decrease quantity for,de,Menge verringern für
+pt-PT,Increase quantity for,de,Menge erhöhen für
+pt-PT,Quantity for,de,Menge für
+pt-PT,Regular price,de,Regulärer Preis
+pt-PT,Sale price,de,Verkaufspreis
+pt-PT,Sale price,de,Verkaufspreis
+pt-PT,Add order note,de,Bestellnotiz hinzufügen
+pt-PT,Estimated total,de,Geschätzte Gesamtsumme
+pt-PT,Estimate shipping,de,Kostenvoranschlag für den Versand
+pt-PT,"Taxes, discounts and shipping calculated at checkout",de,"Steuern, Rabatte und Versandkosten werden an der Kasse berechnet"
+pt-PT,Remove {{ title }},de,{{ title }} entfernen
+pt-PT,Estimate Shipping,de,Kostenvoranschlag für den Versand
+pt-PT,Country,de,Land
+pt-PT,Choose Country,de,Wählen Sie Land
+pt-PT,Province,de,Provinz
+pt-PT,Choose Province,de,Wählen Sie Provinz
+pt-PT,Enter a ZIP code,de,Geben Sie eine Postleitzahl ein
+pt-PT,Estimate,de,Schätzen
+pt-PT,We found several shipping rates available for your address:,de,Wir haben für Ihre Adresse mehrere verfügbare Versandtarife gefunden:
+pt-PT,There are several shipping rates for your address:,de,Für Ihre Adresse gelten verschiedene Versandkosten:
+pt-PT,There are no shipping rates for your address.,de,Für Ihre Adresse gibt es keine Versandkosten.
+pt-PT,There are some errors:,de,Es gibt einige Fehler:
+pt-PT,FREE,de,FREI
+pt-PT,Dashboard,de,Armaturenbrett
+pt-PT,Address,de,Adresse
+pt-PT,Wishlist,de,Wunschliste
+pt-PT,Compare,de,Vergleichen
+pt-PT,Order history,de,Bestellhistorie
+pt-PT,Order,de,Befehl
+pt-PT,Date,de,Datum
+pt-PT,Payment status,de,Zahlungsstatus
+pt-PT,Fulfillment status,de,Erfüllungsstatus
+pt-PT,Total,de,Gesamt
+pt-PT,Account details,de,Kontodaten
+pt-PT,default address,de,Standardadresse
+pt-PT,Cancel,de,Stornieren
+pt-PT,Sign up,de,Melden Sie sich an
+pt-PT,Email,de,E-Mail
+pt-PT,Forgot your password?,de,Passwort vergessen?
+pt-PT,Continue,de,Weitermachen
+pt-PT,Continue as a guest,de,Weiter als Gast
+pt-PT,Password,de,Passwort
+pt-PT,Sign in,de,anmelden
+pt-PT,Submit,de,Einreichen
+pt-PT,Order {{ name }},de,Bestellen Sie {{ name }}
+pt-PT,Placed on {{ date }},de,Gepostet am {{ date }}
+pt-PT,Order Cancelled on {{ date }},de,Bestellung storniert am {{ date }}
+pt-PT,Reason: {{ reason }},de,Grund: {{ reason }}
+pt-PT,Billing Address,de,Rechnungsadresse
+pt-PT,Payment Status,de,Zahlungsstatus
+pt-PT,Shipping Address,de,Lieferadresse
+pt-PT,Fulfillment Status,de,Erfüllungsstatus
+pt-PT,Discount,de,Rabatt
+pt-PT,Tax,de,Steuer
+pt-PT,Product,de,Produkt
+pt-PT,SKU,de,Artikelnummer
+pt-PT,Price,de,Preis
+pt-PT,Quantity,de,Menge
+pt-PT,Total,de,Gesamt
+pt-PT,Refunded,de,Erstattet
+pt-PT,Fulfilled {{ date }},de,Erfüllt am {{ date }}
+pt-PT,Track shipment,de,Sendung verfolgen
+pt-PT,Tracking link,de,Tracking-Link
+pt-PT,Carrier,de,Träger
+pt-PT,Tracking number,de,Tracking-Nummer
+pt-PT,Subtotal,de,Zwischensumme
+pt-PT,Duties,de,Aufgaben
+pt-PT,Your address,de,Ihre Adresse
+pt-PT,Your addresses,de,Ihre Adressen
+pt-PT,default adderss,de,Standardaddierer
+pt-PT,Add a new address,de,Fügen Sie eine neue Adresse hinzu
+pt-PT,Edit address,de,Adresse bearbeiten
+pt-PT,First name,de,Vorname
+pt-PT,Last name,de,Nachname
+pt-PT,Company,de,Unternehmen
+pt-PT,Address 1,de,Adresse 1
+pt-PT,Address 2,de,Adresse 2
+pt-PT,City,de,Stadt
+pt-PT,Country/region,de,Land/Region
+pt-PT,Province,de,Provinz
+pt-PT,Postal/ZIP code,de,Postleitzahl
+pt-PT,Phone,de,Telefon
+pt-PT,Set as default address,de,Als Standardadresse festlegen
+pt-PT,Add address,de,Adresse hinzufügen
+pt-PT,Update address,de,Adresse aktualisieren
+pt-PT,Cancel,de,Stornieren
+pt-PT,Edit,de,Bearbeiten
+pt-PT,Delete,de,Löschen
+pt-PT,Are you sure you wish to delete this address?,de,"Sind Sie sicher, dass Sie diese Adresse löschen möchten?"
+pt-PT,Error,de,Fehler
+pt-PT,Wrong password!,de,Falsches Passwort!
+pt-PT,Enter using password,de,Geben Sie mit dem Passwort ein
+pt-PT,Close,de,Schließen
+pt-PT,Enter store using password:,de,Betreten Sie den Shop mit dem Passwort:
+pt-PT,Your password,de,Ihr Passwort
+pt-PT,Enter,de,Eingeben
+pt-PT,"<span>Are you the store owner?</span> <a href=""/admin"" class=""link underlined-link"">Log in here</a>",de,"<span>Sind Sie der Ladenbesitzer?</span> <a href=""/admin"" class=""link underlined-link"">Melden Sie sich hier an</a>"
+pt-PT,Notify me,de,Benachrichtigen Sie mich
+pt-PT,Add wishlist,de,Wunschliste hinzufügen
+pt-PT,Remove from wishlist,de,Von der Wunschliste entfernen
+pt-PT,Visit wishlist page,de,Besuchen Sie die Seite mit der Wunschliste
+pt-PT,Add compare,de,Vergleich hinzufügen
+pt-PT,Remove from compare,de,Aus Vergleich entfernen
+pt-PT,Visit compare page,de,Besuchen Sie die Vergleichsseite
+pt-PT,Page not found,de,Seite nicht gefunden
+pt-PT,Captcha,de,Captcha
+pt-PT,Cart,de,Karte
+pt-PT,List collections,de,Sammlungen auflisten
+pt-PT,Account,de,Konto
+pt-PT,Active accout,de,Aktives Konto
+pt-PT,Address,de,Adresse
+pt-PT,Order,de,Befehl
+pt-PT,Register,de,Registrieren
+pt-PT,Reset password,de,Passwort zurücksetzen
+pt-PT,Gift card,de,Geschenkkarte
+pt-PT,Metaobject,de,Metaobjekt
+pt-PT,Password,de,Passwort
+pt-PT,Policy,de,Politik
+pt-PT,Wishlist is empty,de,Die Wunschliste ist leer
+pt-PT,No items in your wishlist yet. Discover exciting products on our Shop page,de,Noch keine Artikel auf Ihrer Wunschliste. Entdecken Sie spannende Produkte auf unserer Shop-Seite
+pt-PT,Compare is empty,de,Vergleichen ist leer
+pt-PT,Quick add,de,Schnell hinzufügen
+pt-PT,No items in your compare yet. Discover exciting products on our Shop page,de,Noch keine Artikel in Ihrem Vergleich. Entdecken Sie spannende Produkte auf unserer Shop-Seite
+pt-PT,View all,de,Alle anzeigen
+pt-PT,Load more,de,Mehr laden
+pt-PT,READ MORE,de,MEHR LESEN
+pt-PT,Copy link,de,Link kopieren
+pt-PT,Copied,de,Kopiert
+pt-PT,Facebook,de,Facebook
+pt-PT,Twitter,de,Twitter
+pt-PT,Pinterest,de,Pinterest
+pt-PT,Tumblr,de,Tumblr
+pt-PT,{{ field }} is required,de,{{ field }} ist erforderlich
+pt-PT,{{ field }} is invalid,de,{{ field }} ist ungültig
+pt-PT,is required,de,ist erforderlich
+pt-PT,is invalid,de,ist ungültig
+pt-PT,"An error occurred, please check the information and resubmit.",de,Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Informationen und übermitteln Sie sie erneut.
+pt-PT,Thanks for contacting us. We'll get back to you as soon as possible.,de,"Vielen Dank, dass Sie uns kontaktiert haben. Wir werden uns so schnell wie möglich bei Ihnen melden."
+pt-PT,Subscribe failed,de,Das Abonnieren ist fehlgeschlagen
+pt-PT,Subscribe successes,de,Erfolge abonnieren
+pt-PT,Your name,de,Ihr Name
+pt-PT,Your email,de,Ihre E-Mail
+pt-PT,Your phone,de,Dein Telefon
+pt-PT,Your message,de,Ihre Nachricht
+pt-PT,Example product title,de,Beispiel für einen Produkttitel
+pt-PT,Add to cart,de,In den Warenkorb legen
+pt-PT,Cart added!,de,Warenkorb hinzugefügt!
+pt-PT,Add cart failed,de,Das Hinzufügen der Karte ist fehlgeschlagen
+pt-PT,Sold out,de,Ausverkauft
+pt-PT,Save {{ price }},de,Sparen Sie {{ price }}
+pt-PT,No products,de,Keine Produkte
+pt-PT,From {{ price }},de,Ab {{ price }}
+pt-PT,Unit price,de,Stückpreis
+pt-PT,per,de,pro
+pt-PT,Unavailable,de,Nicht verfügbar
+pt-PT,{{ option_value }} - Unavailable,de,{{ option_value }} – Nicht verfügbar
+pt-PT,Zero,de,Null
+pt-PT,{{ count }} review,de,{{ count }} Rezension
+pt-PT,{{ count }} reviews,de,{{ count }} Bewertungen
+pt-PT,Quantity,de,Menge
+pt-PT,Quantity Input,de,Mengeneingabe
+pt-PT,SKU,de,Artikelnummer
+pt-PT,In stock,de,Auf Lager
+pt-PT,{{ quantity }} in stock,de,{{ quantity }} auf Lager
+pt-PT,Low stock,de,Geringer Lagerbestand
+pt-PT,Low stock: {{ quantity }} left,de,Geringer Lagerbestand: {{ quantity }} übrig
+pt-PT,Out of stock,de,Ausverkauft
+pt-PT,In stock,de,Auf Lager
+pt-PT,Please adjust the following:,de,Bitte passen Sie Folgendes an:
+pt-PT,I want to send this as a gift,de,Ich möchte das als Geschenk verschicken
+pt-PT,Gift card recipient form expanded,de,Formular für Geschenkkartenempfänger erweitert
+pt-PT,Gift card recipient form collapsed,de,Das Formular für den Empfänger der Geschenkkarte ist ausgeblendet
+pt-PT,Recipient email,de,E-Mail-Empfänger
+pt-PT,Recipient email (optional),de,Empfänger-E-Mail (optional)
+pt-PT,Email,de,E-Mail
+pt-PT,Recipient name (optional),de,Empfängername (optional)
+pt-PT,Message (optional),de,Nachricht (optional)
+pt-PT,Message,de,Nachricht
+pt-PT,{{ max_chars }} characters max,de,{{ max_chars }} Zeichen max
+pt-PT,YYYY-MM-DD,de,JJJJ-MM-TT
+pt-PT,Send on (optional),de,Senden an (optional)
+pt-PT,All rights reserved.,de,Alle Rechte vorbehalten.
+pt-PT,Welcome to our store,de,Willkommen in unserem Shop
+pt-PT,https://facebook.com/betterwithalmonds,de,https://facebook.com/betterwithalmonds
+pt-PT,https://instagram.com/betterwithalmonds,de,https://instagram.com/betterwithalmonds
+pt-PT,https://youtube.com/betterwithalmonds,de,https://youtube.com/betterwithalmonds
+pt-PT,"<p>Utilizamos cookies para melhorar a sua experiência no nosso site. Ao continuar navegando, você concorda com o uso de cookies. <a href=""/policies/privacy-policy"" target=""_blank"" title=""Privacy Policy"">Política de privacidade.</a></p>",de,"<p>Wir verwenden Cookies, um Ihr Erlebnis auf unserer Website zu verbessern. Indem Sie weitersurfen, stimmen Sie der Verwendung von Cookies zu. <a href=""/policies/privacy-policy"" target=""_blank"" title=""Privacy Policy"">Datenschutzerklärung.</a></p>"
+pt-PT,30,de,30
+pt-PT,Portugal,de,Portugal
+pt-PT,Winter Fairy by Sheeran,de,Winterfee von Sheeran
+pt-PT,"Perfect for hours of family fun, it’s a gift he’ll never forget.",de,"Perfekt für stundenlangen Familienspaß, ein Geschenk, das er nie vergessen wird."
+pt-PT,Add to cart - $28.50,de,"In den Warenkorb legen – 28,50 $"
+pt-PT,Red Liquids by Huston,de,Rote Flüssigkeiten von Huston
+pt-PT,Add descriptive text for your slide here.,de,Fügen Sie hier einen beschreibenden Text für Ihre Folie hinzu.
+pt-PT,Add to cart - $12.20,de,"In den Warenkorb legen – 12,20 $"
+pt-PT,Triangles by Kulpreet,de,Dreiecke von Kulpreet
+pt-PT,Add descriptive text for your slide here.,de,Fügen Sie hier einen beschreibenden Text für Ihre Folie hinzu.
+pt-PT,Add to cart - $18.00,de,"In den Warenkorb legen – 18,00 $"
+pt-PT,Beautiful Books At Affordable Prices & An Unforgettable Experience,de,Wunderschöne Bücher zu erschwinglichen Preisen und ein unvergessliches Erlebnis
+pt-PT,<p>The only place you can afford to get lost is inside a book.</p>,de,"<p>Der einzige Ort, an dem Sie sich verlieren können, ist in einem Buch.</p>"
+pt-PT,"<p>A few years ago, Bainbridge set off on a road trip across America to interview bartenders, drink experts and chefs and to discover unusual and delicious alcohol-free mixed beverages.</p>",de,"<p>Vor einigen Jahren begab sich Bainbridge auf einen Roadtrip durch Amerika, um Barkeeper, Getränkeexperten und Köche zu interviewen und ungewöhnliche und köstliche alkoholfreie Mixgetränke zu entdecken.</p>"
+pt-PT,<p>RECYCLED PAPERS</p>,de,<p>RECYCLING-PAPIER</p>
+pt-PT,<p>SHIP WORLDWIDE</p>,de,<p>WELTWEIT VERSENDEN</p>
+pt-PT,<p>ADD GIFT WRAP</p>,de,<p>GESCHENKVERPACKUNG HINZUFÜGEN</p>
+pt-PT,<p>PERSONALIZED BOOKS</p>,de,<p>PERSONALISIERTE BÜCHER</p>
+pt-PT,Night Light,de,Nachtlicht
+pt-PT,"<p>Chatting and joking around outside her apartment building, they lost track of time. The next thing she knew, it was too late. Too late to get home unnoticed. Too late to avoid being told off by her parents. So she formed a plan, although you could hardly call it that, to leave everything behind—her family, her home and life as she’d known it in a housing project on the outskirts of Lyon.1</p>",de,"<p>Als sie vor ihrem Wohnhaus plauderten und Witze machten, verloren sie das Zeitgefühl. Das nächste, was sie wusste, war, dass es zu spät war. Zu spät, um unbemerkt nach Hause zu kommen. Zu spät, um der Beschimpfung durch ihre Eltern zu entgehen. Also fasste sie den Plan, alles hinter sich zu lassen – ihre Familie, ihr Zuhause und das Leben, wie sie es in einem Wohnprojekt am Stadtrand von Lyon gekannt hatte.1</p>"
+pt-PT,Add to cart - $34.30,de,"In den Warenkorb legen – 34,30 $"
+pt-PT,"<p>“Why did you do all this for me?’ he asked. ‘I don’t deserve it. I’ve never done anything for you.’ ‘You have been my friend,’ replied Charlotte. ‘That in itself is a tremendous thing.”</p>",de,"<p>„Warum hast du das alles für mich getan?“ fragte er. „Ich verdiene es nicht.“ Ich habe nie etwas für dich getan.“ „Du warst meine Freundin“, antwortete Charlotte. „Das ist an sich schon eine gewaltige Sache.“</p>"
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,"<p>“From that time on, the world was hers for the reading. She would never be lonely again, never miss the lack of intimate friends. Books became her friends and there was one for every mood.”</p>",de,<p>„Von da an gehörte ihr die Welt zum Lesen. Sie würde nie wieder einsam sein und nie den Mangel an intimen Freunden vermissen. Bücher wurden zu ihren Freunden und für jede Stimmung war eines dabei.“</p>
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,"<p>“The same substance composes us — the tree overhead, the stone beneath us, the bird, the beast, the star — we are all one, all moving to the same end.”</p>",de,"<p>„Die gleiche Substanz besteht aus uns – der Baum über uns, der Stein unter uns, der Vogel, das Tier, der Stern – wir sind alle eins und verfolgen alle das gleiche Ziel.“</p>"
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,From The Blog,de,Aus dem Blog
+pt-PT,<p>Add a short description on your brand news</p>,de,<p>Fügen Sie eine kurze Beschreibung zu Ihren Markennachrichten hinzu</p>
+pt-PT,Signup for Our Newsletter,de,Melden Sie sich für unseren Newsletter an
+pt-PT,<p>Invite customers to join your mailing list.</p>,de,"<p>Laden Sie Kunden ein, Ihrer Mailingliste beizutreten.</p>"
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Kimmy Guletta. </p>",de,"<p>Entdecken Sie unsere <em>Sommerkollektion</em>, entworfen von Kimmy Guletta. </p>"
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,Independent Styles,de,Unabhängige Stile
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",de,"<p>Ich wusste nicht einmal, dass es bessere Bedingungen für die Flucht gab, aber ich war mehr als bereit, mein Risiko unter Menschen einzugehen, die nach meinem eigenen Vorbild geformt waren, anstatt länger unter den abscheulichen und blutrünstigen grünen Männern des Mars zu bleiben.</p>"
+pt-PT,LEARN MORE,de,Erfahren Sie mehr
+pt-PT,Featured Products,de,Ausgewählte Produkte
+pt-PT,Premium Life Products,de,Premium-Lebensprodukte
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people.</p>",de,"<p>Ich wusste nicht einmal, dass es bessere Bedingungen für die Flucht gab, aber ich war mehr als bereit, mein Risiko unter Menschen einzugehen.</p>"
+pt-PT,Latest News,de,Neueste Nachrichten
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,de,<p>Erhalten Sie die <em>neuesten Nachrichten zu Mode- und Beauty-Trends.</em></p>
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,<p>“Quick and easy service from North. Would recommend this company to everyone looking for a premium products at a good price.”</p>,de,"<p>„Schneller und einfacher Service von North. Ich würde dieses Unternehmen jedem empfehlen, der auf der Suche nach Premiumprodukten zu einem guten Preis ist.“</p>"
+pt-PT,"<p>“An exceptional theme, strong structural quality and the ability to create anything your imagination can dream of!”</p>",de,"<p>„Ein außergewöhnliches Thema, starke strukturelle Qualität und die Fähigkeit, alles zu schaffen, wovon Ihre Fantasie träumt!“</p>"
+pt-PT,Ralph Lauren,de,Ralph Lauren
+pt-PT,<p>“This is the best theme I have ever buyed with great support! They help me in a very short time every time I asked.”</p>,de,"<p>„Das ist das beste Theme, das ich je gekauft habe, mit großartigem Support!“ Sie haben mir jedes Mal, wenn ich gefragt habe, in sehr kurzer Zeit geholfen.“</p>"
+pt-PT,Guess,de,Erraten
+pt-PT,Conhece,de,Wissen Sie
+pt-PT,Compra,de,Kaufen
+pt-PT,Conhece,de,Wissen Sie
+pt-PT,Compra,de,Kaufen
+pt-PT,Conhece,de,Wissen Sie
+pt-PT,Compra,de,Kaufen
+pt-PT,PRODUTOS,de,PRODUKTE
+pt-PT,COMPRA AQUI,de,HIER KAUFEN
+pt-PT,Tudo fica melhor com amêndoas,de,Mit Mandeln ist alles besser
+pt-PT,<p></p><p>A<strong> Better With</strong> é fruto da ideia de que a vida tem muito mais sabor em boa companhia. Gostamos de procurar o extraordinário no comum e de misturar o óbvio com o inesperado. Acreditamos que a magia que acontece nesses encontros é o sal e a pimenta do dia-a-dia. <br/></p>,de,"<p></p><p><strong>Better With</strong> ist das Ergebnis der Idee, dass das Leben in guter Gesellschaft viel mehr Geschmack hat. Wir suchen gerne das Außergewöhnliche im Gewöhnlichen und vermischen das Offensichtliche mit dem Unerwarteten. Wir glauben, dass die Magie, die bei diesen Treffen entsteht, das Salz und der Pfeffer des Alltags ist. <br/></p>"
+pt-PT,<p>Descobre aqui todos os nossos sabores e os seus ingredientes e informações nutricionais. </p>,de,<p>Entdecken Sie hier alle unsere Geschmacksrichtungen sowie deren Inhaltsstoffe und Nährwertangaben. </p>
+pt-PT,Conhece os sabores,de,Kennen Sie die Aromen
+pt-PT,As nossas Boxes,de,Unsere Boxen
+pt-PT,"<p>As nossas boxes Better With são a escolha perfeita para quem procura lanches saudáveis e deliciosos. Disponíveis tanto para compra única como por subscrição mensal, oferecem uma seleção variada de amêndoas premium com sabores únicos e irresistíveis.</p>",de,"<p>Unsere Better With-Boxen sind die perfekte Wahl für alle, die auf der Suche nach gesunden und leckeren Snacks sind. Sie sind sowohl zum einmaligen Kauf als auch zum monatlichen Abonnement erhältlich und bieten eine vielfältige Auswahl an Premium-Mandeln mit einzigartigen und unwiderstehlichen Aromen.</p>"
+pt-PT,LITTLE FÃ,de,KLEINER FAN
+pt-PT,A subscrição perfeita para começar.,de,Das perfekte Abo für den Einstieg.
+pt-PT,7 Sabores de 140g     ,de,7 Geschmacksrichtungen à 140 g     
+pt-PT,4 Sabores de 30g,de,4 Geschmacksrichtungen à 30 g
+pt-PT,Recebe Mensalmente,de,Monatlich erhalten
+pt-PT,10% Desconto,de,10 % Rabatt
+pt-PT,Cancela quando quiseres,de,"Kündigen Sie, wann immer Sie möchten"
+pt-PT,Portes Grátis em todas as subscrições,de,Kostenloser Versand für alle Abonnements
+pt-PT,Subscrever,de,Abonnieren
+pt-PT,ALMOND LOVER,de,MANDELLIEBHABER
+pt-PT,A subscrição para os que sabem como é delicioso.,de,"Ein Abo für alle, die wissen, wie lecker es ist."
+pt-PT, 10 Sabores de 140g,de, 10 Geschmacksrichtungen à 140 g
+pt-PT,6 Sabores de 30g,de,6 Geschmacksrichtungen à 30 g
+pt-PT,Recebe Mensalmente ,de,Monatlich erhalten 
+pt-PT,10% Desconto,de,10 % Rabatt
+pt-PT,Recebe uma Bolsa Personalizada,de,Erhalten Sie eine personalisierte Tasche
+pt-PT,Cancela quando quiseres,de,"Kündigen Sie, wann immer Sie möchten"
+pt-PT,Portes Grátis em todas as subscrições,de,Kostenloser Versand für alle Abonnements
+pt-PT,Subscrever,de,Abonnieren
+pt-PT,CRAZY FÃ,de,VERRÜCKTER FAN
+pt-PT,Para os que já estão completamente rendidos aos nossos sabores! ,de,"Für diejenigen, die sich unseren Aromen bereits völlig hingegeben haben! "
+pt-PT,15 Sabores de 140g,de,15 Geschmacksrichtungen à 140 g
+pt-PT,8 Sabores de 30g,de,8 Geschmacksrichtungen à 30 g
+pt-PT,Recebe Mensalmente ,de,Monatlich erhalten 
+pt-PT,10% Desconto,de,10 % Rabatt
+pt-PT,Recebe uma Bolsa Personalizada,de,Erhalten Sie eine personalisierte Tasche
+pt-PT,Recebe a nossa Gift Box,de,Erhalten Sie unsere Geschenkbox
+pt-PT,Cancela quando quiseres!,de,"Kündigen Sie, wann immer Sie möchten!"
+pt-PT,Portes Grátis Portes Grátis em todas as subscrições,de,Kostenloser Versand Kostenloser Versand für alle Abonnements
+pt-PT,Subscrever,de,Abonnieren
+pt-PT,"Do campo à mesa, hoje e amanhã.",de,"Vom Feld auf den Tisch, heute und morgen."
+pt-PT,"<p>Como agricultores responsáveis, estamos totalmente conscientes da importância de reduzir a nossa pegada de carbono. O nosso objetivo é promover um ecossistema equilibrado, minimizando o impacto ambiental. Tomamos medidas proativas, como a implementação de cobertura vegetal permanente e o apoio à captura de carbono através da plantação de 1,5 milhões de árvores. Estas ações refletem o nosso compromisso em construir um futuro sustentável para as nossas plantações e, consequentemente, para o nosso planeta. </p>",de,"<p>Als verantwortungsbewusste Landwirte sind wir uns der Bedeutung der Reduzierung unseres CO2-Fußabdrucks voll und ganz bewusst. Unser Ziel ist es, ein ausgewogenes Ökosystem zu fördern und die Auswirkungen auf die Umwelt zu minimieren. Wir ergreifen proaktive Maßnahmen, wie die Einrichtung einer dauerhaften Vegetationsbedeckung und die Unterstützung der Kohlenstoffbindung durch die Pflanzung von 1,5 Millionen Bäumen. Diese Maßnahmen spiegeln unser Engagement für den Aufbau einer nachhaltigen Zukunft für unsere Plantagen und damit für unseren Planeten wider. </p>"
+pt-PT,SABE MAIS SOBRE NÓS,de,Erfahren Sie mehr über uns
+pt-PT,A melhores amêndoas que já provei. São simplesmente deliciosas e super diferentes.,de,"Die besten Mandeln, die ich je gegessen habe. Sie sind einfach köstlich und super anders."
+pt-PT,Catarina Barata,de,Catarina Barata
+pt-PT,Muito boas e crocantes. Diferente de tudo que já provei. Gostei imenso.,de,"Sehr gut und knusprig. Anders als alles, was ich jemals probiert habe. Es hat mir wirklich gut gefallen."
+pt-PT,João Pedro,de,John Pedro
+pt-PT,"Gosto de várias, mas as minhas favoritas são a Mel e Sal Marinho.",de,"Ich mag mehrere, aber meine Favoriten sind Honig und Meersalz."
+pt-PT,Pedro Sousa,de,Pedro Sousa
+pt-PT,Alecrim e sal tem tudo a ver com amêndoa. Descobri isso ao provar a Better With.,de,"Bei Rosmarin und Salz dreht sich alles um Mandeln. Das habe ich entdeckt, als ich Better With ausprobiert habe."
+pt-PT,Rute Pereira,de,Ruth Pereira
+pt-PT,As Nossas Herdades,de,Unsere Anwesen
+pt-PT,"<p>Espalhadas por 1.300 hectares, em 6 propriedades, nos concelhos do Fundão e Idanha-a-Nova, em Portugal.</p>",de,<p>Verteilt auf 1.300 Hektar auf 6 Grundstücken in den Gemeinden Fundão und Idanha-a-Nova in Portugal.</p>
+pt-PT,Agricultura Regenerativa,de,Regenerative Landwirtschaft
+pt-PT,"<p>A nossa paixão pela sustentabilidade levou-nos a adotar práticas de agricultura sustentáveis no cultivo das nossas amêndoas, colhidas e tratadas nas nossas herdades. </p>",de,"<p>Unsere Leidenschaft für Nachhaltigkeit hat uns dazu veranlasst, beim Anbau unserer Mandeln, die auf unseren Farmen geerntet und behandelt werden, nachhaltige landwirtschaftliche Praktiken anzuwenden. </p>"
+pt-PT,Produtos,de,Produkte
+pt-PT,"<p>Disponíveis em embalagens de 30g e 140g, estamos prontos para te acompanhar no dia-a-dia e em momentos especiais. </p>",de,"<p>Erhältlich in 30g- und 140g-Packungen sind wir bereit, Sie im Alltag und in besonderen Momenten zu begleiten. </p>"
+pt-PT,Loucos por Amêndoas,de,Verrückt nach Mandeln
+pt-PT,<p>Somos a combinação irresistível de uma alimentação saudável com uma experiência gastronómica irresistível: a fusão de amêndoas premium com um mix de 15 sabores artesanais. </p>,de,<p>Wir sind die unwiderstehliche Kombination aus gesunder Ernährung und einem unwiderstehlichen gastronomischen Erlebnis: die Fusion erstklassiger Mandeln mit einer Mischung aus 15 handwerklich hergestellten Geschmacksrichtungen. </p>
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,Comprar,de,Kaufen
+pt-PT,#INSTAGRAM,de,#INSTAGRAM
+pt-PT,<p>#betterwithalmonds #Amendoasincriveis #AmendoasPortuguesas #Regenerativas #sustentaveis #suaproteinadiaria #amoamendoas</p>,de,<p>#bessermitMandeln #Amendoasincriveis #AmendoasPortuguesas #Regenerativas #sustentaveis #suaproteinadiaria #amoamendoas</p>
+pt-PT,Ug739536477,de,Ug739536477
+pt-PT,100% CERTIFIED PRODUCTS,de,100 % ZERTIFIZIERTE PRODUKTE
+pt-PT,Detox the body. Look fabulous.,de,Entgiften Sie den Körper. Fabelhafter Look.
+pt-PT,Whether you crave a total reset or a nutrient boost.,de,"Ganz gleich, ob Sie sich nach einem kompletten Neustart oder einem Nährstoffschub sehnen."
+pt-PT,Shop our flavors,de,Kaufen Sie unsere Aromen
+pt-PT,Add a tagline,de,Fügen Sie einen Slogan hinzu
+pt-PT,Being energetic is the new you,de,Energiegeladen zu sein ist das neue Ich
+pt-PT,Add descriptive text for your slide here.,de,Fügen Sie hier einen beschreibenden Text für Ihre Folie hinzu.
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,What Makes Us Different?,de,Was unterscheidet uns?
+pt-PT,"<p>Share information about your brand with your customers. Describe a product, make announcements, or welcome customers to your store. </p>",de,"<p>Teilen Sie Informationen über Ihre Marke mit Ihren Kunden. Beschreiben Sie ein Produkt, machen Sie Ankündigungen oder heißen Sie Kunden in Ihrem Geschäft willkommen. </p>"
+pt-PT,<p>Sugar Friendly</p>,de,<p>Zuckerfreundlich</p>
+pt-PT,<p>Probiotics</p>,de,<p>Probiotika</p>
+pt-PT,<p>100% Vegan</p>,de,<p>100 % vegan</p>
+pt-PT,<p>Gluten-free</p>,de,<p>Glutenfrei</p>
+pt-PT,<p>18 Cals</p>,de,<p>18 Kalorien</p>
+pt-PT,<p>Zero Waste</p>,de,<p>Kein Abfall</p>
+pt-PT,Meet Our Products,de,Lernen Sie unsere Produkte kennen
+pt-PT,<p>This half-day fast eases you in with 3 of our lower sugar juices from each category.</p>,de,<p>Diese halbtägige Fastenkur erleichtert Ihnen den Einstieg mit 3 unserer zuckerarmen Säfte aus jeder Kategorie.</p>
+pt-PT,The Daily Wellness Bundle,de,Das tägliche Wellness-Paket
+pt-PT,<p>This half-day fast eases you in with 3 of our lower sugar juices from each category.</p>,de,<p>Diese halbtägige Fastenkur erleichtert Ihnen den Einstieg mit 3 unserer zuckerarmen Säfte aus jeder Kategorie.</p>
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,Save 20%,de,Sparen Sie 20 %
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",de,"<p>Diese Reinigung verfügt über eine zusätzliche charakteristische Mischung aus Mandeln, die zusätzliche gesunde Fette und Proteine ​​liefert, die dafür sorgen, dass Sie sich satt fühlen. Cleanse 1 enthält außerdem einige unserer beliebtesten, leckersten Säfte, damit es kinderleicht ist.</p>"
+pt-PT,Money Back Guarantee,de,Geld-zurück-Garantie
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",de,"<p>Diese Reinigung verfügt über eine zusätzliche charakteristische Mischung aus Mandeln, die zusätzliche gesunde Fette und Proteine ​​liefert, die dafür sorgen, dass Sie sich satt fühlen. Cleanse 1 enthält außerdem einige unserer beliebtesten, leckersten Säfte, damit es kinderleicht ist.</p>"
+pt-PT,Certified Organic,de,Aus kontrolliert biologischem Anbau
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",de,"<p>Diese Reinigung verfügt über eine zusätzliche charakteristische Mischung aus Mandeln, die zusätzliche gesunde Fette und Proteine ​​liefert, die dafür sorgen, dass Sie sich satt fühlen. Cleanse 1 enthält außerdem einige unserer beliebtesten, leckersten Säfte, damit es kinderleicht ist.</p>"
+pt-PT,Restore Your Vitality In 30 Days,de,Stellen Sie Ihre Vitalität in 30 Tagen wieder her
+pt-PT,"<p>It's a blend of cucumber, celery, spinach, lemon, kale and parsley. Simple, clean, and full of green goodness.</p>",de,"<p>Es ist eine Mischung aus Gurke, Sellerie, Spinat, Zitrone, Grünkohl und Petersilie. Einfach, sauber und voller grüner Köstlichkeiten.</p>"
+pt-PT,In the Press,de,In der Presse
+pt-PT,"<p>“Loved the juice and soup cleanse, was my first time doing a cleanse. Found the juices very satisfying.”</p>",de,"<p>„Die Saft- und Suppenkur hat mir sehr gut gefallen, es war das erste Mal, dass ich eine Kur gemacht habe. Ich fand die Säfte sehr zufriedenstellend.“</p>"
+pt-PT,"<p>""I will start by saying their juice is fantastic. I love it and I have purchased several times.""</p>",de,"<p>„Zunächst möchte ich sagen, dass ihr Saft fantastisch ist. Ich liebe ihn und habe ihn schon mehrere Male gekauft.“</p>"
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,"<p>""They taste great and are full of everything you need to start your journey towards better overall health.""</p>",de,"<p>„Sie schmecken großartig und enthalten alles, was Sie brauchen, um Ihre Reise zu einer besseren allgemeinen Gesundheit zu beginnen.“</p>"
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,Blog posts,de,Blogbeiträge
+pt-PT,<p>Add a short description on your brand news</p>,de,<p>Fügen Sie eine kurze Beschreibung zu Ihren Markennachrichten hinzu</p>
+pt-PT,Summer Collection,de,Sommerkollektion
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Sarah Taylor.<br/>Free shipping in the US for any purchase over $60.</p>",de,"<p>Entdecken Sie unsere <em>Sommerkollektion</em>, entworfen von Sarah Taylor.<br/>Kostenloser Versand in den USA für jeden Einkauf über 60 $.</p>"
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,Free Delivery,de,Kostenlose Lieferung
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,30-Day Returns,de,30-tägige Rückgabe
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,International Warranty,de,Internationale Garantie
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,New & Stylish Collections,de,Neue und stilvolle Kollektionen
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",de,"<p>Ich wusste nicht einmal, dass es bessere Bedingungen für die Flucht gab, aber ich war mehr als bereit, mein Risiko unter Menschen einzugehen, die nach meinem eigenen Vorbild geformt waren, anstatt länger unter den abscheulichen und blutrünstigen grünen Männern des Mars zu bleiben.</p>"
+pt-PT,Flash Sale: 50-70% Accessories,de,Flash-Sale: 50–70 % Zubehör
+pt-PT,Shop Sale,de,Ladenverkauf
+pt-PT,Recent Arrivals,de,Neuzugänge
+pt-PT,<p>Add some <em>new</em> pieces to your wardrobe by shopping our goodies.</p>,de,"<p>Fügen Sie Ihrer Garderobe einige <em>neue</em> Stücke hinzu, indem Sie unsere Leckereien kaufen.</p>"
+pt-PT,Summer Collection,de,Sommerkollektion
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Sarah Taylor.<br/>Free shipping in the US for any purchase over $60.</p>",de,"<p>Entdecken Sie unsere <em>Sommerkollektion</em>, entworfen von Sarah Taylor.<br/>Kostenloser Versand in den USA für jeden Einkauf über 60 $.</p>"
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,Latest News,de,Neueste Nachrichten
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,de,<p>Erhalten Sie die <em>neuesten Nachrichten zu Mode- und Beauty-Trends.</em></p>
+pt-PT,"Signup for our newsletter to receive special offers, news, &amp; events.",de,"Melden Sie sich für unseren Newsletter an, um Sonderangebote, Neuigkeiten und Neuigkeiten zu erhalten. Ereignisse."
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,de,"<p>Ich wusste nicht einmal, dass es bessere Fluchtbedingungen gibt.</p>"
+pt-PT,Discover Our Collection,de,Entdecken Sie unsere Kollektion
+pt-PT,"<p>Slowly she drifted to the southeast, rising higher and higher as the flames ateaway her wooden parts and diminished the weight upon her. </p>",de,"<p>Langsam driftete sie nach Südosten und stieg immer höher, während die Flammen ihre Holzteile wegfraßen und das Gewicht, das auf ihr lastete, verringerten. </p>"
+pt-PT,Recent Arrivals,de,Neuzugänge
+pt-PT,<p>Add some <em>new</em> pieces to your wardrobe by shopping our goodies.</p>,de,"<p>Fügen Sie Ihrer Garderobe einige <em>neue</em> Stücke hinzu, indem Sie unsere Leckereien kaufen.</p>"
+pt-PT,"<p>Slowly she drifted to the southeast, rising higher and higher as the flames ateaway her wooden parts and diminished the weight upon her. Ascending to the roof of the building I watched her for hours until she was lost in the dim finally.</p>",de,"<p>Langsam driftete sie nach Südosten und stieg immer höher, während die Flammen ihre Holzteile wegfraßen und das Gewicht, das auf ihr lastete, verringerten. Als ich auf das Dach des Gebäudes stieg, beobachtete ich sie stundenlang, bis sie sich schließlich in der Dunkelheit verlor.</p>"
+pt-PT,Shop now,de,Jetzt einkaufen
+pt-PT,Best Sellers,de,Bestseller
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,de,"<p>Ich wusste nicht einmal, dass es bessere Fluchtbedingungen gibt.</p>"
+pt-PT,Signup for our newsletter,de,Melden Sie sich für unseren Newsletter an
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,de,"<p>Ich wusste nicht einmal, dass es bessere Fluchtbedingungen gibt.</p>"
+pt-PT,Designed in San Francisco. Handcrafted responsibly in Paris.,de,Entworfen in San Francisco. Verantwortungsvoll handgefertigt in Paris.
+pt-PT,Shop now,de,Jetzt einkaufen
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",de,"<p>Ich wusste nicht einmal, dass es bessere Bedingungen für die Flucht gab, aber ich war mehr als bereit, mein Risiko unter Menschen einzugehen, die nach meinem eigenen Vorbild geformt waren, anstatt länger unter den abscheulichen und blutrünstigen grünen Männern des Mars zu bleiben.</p>"
+pt-PT,Learn More,de,Erfahren Sie mehr
+pt-PT,"<p>Discover our <em>Luxury Collection</em>, designed by Ann Maya.<br/>Free shipping in the US for any purchase over $60.</p>",de,"<p>Entdecken Sie unsere <em>Luxuskollektion</em>, entworfen von Ann Maya.<br/>Kostenloser Versand in den USA für jeden Einkauf über 60 $.</p>"
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,Latest News,de,Neueste Nachrichten
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,de,<p>Erhalten Sie die <em>neuesten Nachrichten zu Mode- und Beauty-Trends.</em></p>
+pt-PT,Free Delivery,de,Kostenlose Lieferung
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,30-Day Returns,de,30-tägige Rückgabe
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,International Warranty,de,Internationale Garantie
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,Gift Package,de,Geschenkpaket
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,Heading,de,Überschrift
+pt-PT,"<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>",de,"<p>Kombinieren Sie Text mit einem Bild, um das ausgewählte Produkt, die ausgewählte Sammlung oder den ausgewählten Blog-Beitrag hervorzuheben. Fügen Sie Details zur Verfügbarkeit und zum Stil hinzu oder geben Sie sogar eine Bewertung ab.</p>"
+pt-PT,<p>Add your store address or<br/>your store hours</p>,de,<p>Fügen Sie Ihre Geschäftsadresse oder<br/>Ihre Geschäftsöffnungszeiten hinzu</p>
+pt-PT,Our Stores,de,Unsere Geschäfte
+pt-PT,Store location,de,Standort des Geschäfts
+pt-PT,<p>Add your store address or<br/>your store hours</p>,de,<p>Fügen Sie Ihre Geschäftsadresse oder<br/>Ihre Geschäftsöffnungszeiten hinzu</p>
+pt-PT,Get Directions,de,Wegbeschreibung abrufen
+pt-PT,Store location,de,Standort des Geschäfts
+pt-PT,<p>Add your store address or<br/>your store hours</p>,de,<p>Fügen Sie Ihre Geschäftsadresse oder<br/>Ihre Geschäftsöffnungszeiten hinzu</p>
+pt-PT,Get Directions,de,Wegbeschreibung abrufen
+pt-PT,Store location,de,Standort des Geschäfts
+pt-PT,<p>Add your store address or<br/>your store hours</p>,de,<p>Fügen Sie Ihre Geschäftsadresse oder<br/>Ihre Geschäftsöffnungszeiten hinzu</p>
+pt-PT,Get Directions,de,Wegbeschreibung abrufen
+pt-PT,Heading,de,Überschrift
+pt-PT,"<p>Focus on your upcoming sales. Add details on availability, style, or even provide a review.</p>",de,<p>Konzentrieren Sie sich auf Ihre bevorstehenden Verkäufe. Fügen Sie Details zur Verfügbarkeit und zum Stil hinzu oder geben Sie sogar eine Bewertung ab.</p>
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,Heading,de,Überschrift
+pt-PT,"<p>Focus on your upcoming sales. Add details on availability, style, or even provide a review.</p>",de,<p>Konzentrieren Sie sich auf Ihre bevorstehenden Verkäufe. Fügen Sie Details zur Verfügbarkeit und zum Stil hinzu oder geben Sie sogar eine Bewertung ab.</p>
+pt-PT,Say Hello,de,Sag Hallo
+pt-PT,Entra em Contacto,de,Nehmen Sie Kontakt auf
+pt-PT,<p>Através do formulário ou por e-mail. <strong>Estamos aqui!</strong></p>,de,<p>Über das Formular oder per E-Mail. <strong>Wir sind da!</strong></p>
+pt-PT,<h3>Better With Us</h3>,de,<h3>Besser bei uns</h3>
+pt-PT,"<p>Rua Filarmónica Idanhense, 68</p><p>6060-188 Idanha-a-Nova</p><p>hello@betterwithalmonds.com</p>",de,"<p>Rua Filarmónica Idanhense, 68</p><p>6060-188 Idanha-a-Nova</p><p>hello@betterwithalmonds.com</p>"
+pt-PT,<p></p><h3><strong>Fala connosco!</strong></h3>,de,<p></p><h3><strong>Sprechen Sie mit uns!</strong></h3>
+pt-PT,"<p>Envia-nos as tuas dúvidas, críticas e elogios. :)</p>",de,"<p>Senden Sie uns Ihre Fragen, Kritik und Komplimente. :)</p>"
+pt-PT,"<p>A nossa dedicação à<strong> agricultura sustentável</strong> levou-nos a especializar-nos em <strong>amêndoas mediterrânicas</strong> de primeira qualidade provenientes de <strong>agricultura regenerativa</strong>, colhidas e tratadas com o máximo cuidado. A <strong>Better With</strong> é uma marca da <strong>Veracruz Almonds</strong>, a empresa produtora.</p>",de,"<p>Unser Engagement für eine<strong>nachhaltige Landwirtschaft</strong> hat uns dazu gebracht, uns auf hochwertige <strong>mediterrane Mandeln</strong> aus <strong>regenerativer Landwirtschaft</strong> zu spezialisieren, die mit größter Sorgfalt geerntet und behandelt werden. <strong>Better With</strong> ist eine Marke von <strong>Veracruz Almonds</strong>, dem produzierenden Unternehmen.</p>"
+pt-PT,Conhece a Veracruz,de,Lernen Sie Veracruz kennen
+pt-PT,conhece a nossa origem,de,Kennen Sie unsere Herkunft
+pt-PT,"<p>A melhor amêndoa mediterrânica nasce do contacto entre o sol e a terra, do respeito e do amor, da incorporação de tecnologia na agricultura. Destas e de outras combinações nasce uma marca com presença: no sofá ou na praia, no verão ou no inverno, em qualquer dia, a qualquer hora. </p>",de,"<p>Die besten mediterranen Mandeln entstehen durch den Kontakt zwischen Sonne und Erde, durch Respekt und Liebe, durch die Einbindung von Technologie in die Landwirtschaft. Aus diesen und anderen Kombinationen entsteht eine Marke mit Präsenz: auf dem Sofa oder am Strand, im Sommer oder Winter, an jedem Tag, zu jeder Zeit. </p>"
+pt-PT,"<p>Em<strong> 1.300 hectares</strong>, distribuídos por seis propriedades nos concelhos do Fundão e Idanha-a-Nova, utilizamos<strong> as mais avançadas técnicas de agricultura de precisão</strong>, juntamente com <strong>práticas de responsabilidade social</strong>. Adotamos uma abordagem verdadeiramente holística que beneficia todos os envolvidos!</p>",de,"<p>Auf<strong>1.300 Hektar</strong>, verteilt auf sechs Grundstücke in den Gemeinden Fundão und Idanha-a-Nova, nutzen wir<strong>die fortschrittlichsten Präzisionslandwirtschaftstechniken</strong> sowie <strong>Praktiken der sozialen Verantwortung</strong>. Wir verfolgen einen wirklich ganzheitlichen Ansatz, der allen Beteiligten zugute kommt!</p>"
+pt-PT,"<p>Nas nossas herdades, praticamos uma <strong>agricultura regenerativa</strong>, focada na preservação de recursos preciosos como o <strong>solo</strong>, a <strong>água</strong>, a <strong>vida selvagem</strong> e a <strong>flora </strong>para as gerações futuras. Orgulhamo-nos de lutar por uma maior <strong>biodiversidade</strong>, a fim de proteger o equilíbrio da natureza!</p>",de,"<p>Auf unseren Höfen betreiben wir <strong>regenerative Landwirtschaft</strong>, wobei der Schwerpunkt auf der Erhaltung wertvoller Ressourcen wie <strong>Boden</strong>, <strong>Wasser</strong>, <strong>Tierwelt</strong> und <strong>Flora</strong> für künftige Generationen liegt. Wir sind stolz darauf, für mehr <strong>Biodiversität</strong> zu kämpfen, um das Gleichgewicht der Natur zu schützen!</p>"
+pt-PT,As nossas herdades,de,Unsere Bauernhöfe
+pt-PT,NOSSAS CERTIFICAÇÕES,de,UNSERE ZERTIFIZIERUNGEN
+pt-PT,É melhor com confiança. Do campo à mesa. Hoje e amanhã.,de,Mit Selbstvertrauen ist es besser. Vom Feld auf den Tisch. Heute und morgen.
+pt-PT,Torrada com Sal,de,Toast mit Salz
+pt-PT,Natural,de,Natürlich
+pt-PT,Torrada,de,Toast
+pt-PT,Mel e Sal Marinho,de,Honig und Meersalz
+pt-PT,Fudge Caramelo Inglês,de,Englischer Karamellfondant
+pt-PT,Alecrim e Sal,de,Rosmarin und Salz
+pt-PT,Caril,de,Curry
+pt-PT,Regenerativas e sustentáveis,de,Regenerativ und nachhaltig
+pt-PT,"<p>Nossa paixão pela <strong>agricultura sustentável</strong> nos levou a focar em <strong>amêndoas premium regenerativas</strong>, que são colhidas e processadas com muito carinho e cuidado em <strong>nossas próprias fazendas.</strong></p>",de,"<p>Unsere Leidenschaft für <strong>nachhaltige Landwirtschaft</strong> hat uns dazu veranlasst, uns auf <strong>regenerative Premium-Mandeln</strong> zu konzentrieren, die mit großer Sorgfalt und Sorgfalt auf <strong>unseren eigenen Farmen</strong> geerntet und verarbeitet werden.</strong></p>"
+pt-PT,Produzidas em Portugal,de,Hergestellt in Portugal
+pt-PT,"<p>Espalhadas por <strong>1.300 hectares </strong>de terra em <strong>6 propriedades</strong> nos municípios de Fundão e Idanha-a-Nova, em <strong>Portugal</strong>, utilizamos técnicas avançadas de <strong>agricultura de precisão</strong>, juntamente com práticas de <strong>responsabilidade social</strong>, para garantir que todos se beneficiem!</p>",de,"<p>Verteilt auf <strong>1.300 Hektar</strong> Land auf <strong>6 Grundstücken</strong> in den Gemeinden Fundão und Idanha-a-Nova in <strong>Portugal</strong> nutzen wir fortschrittliche <strong>Präzisionslandwirtschaft</strong>-Techniken sowie Praktiken der <strong>sozialen Verantwortung</strong>, um sicherzustellen, dass alle davon profitieren!</p>"
+pt-PT,O seu snack perfeito,de,Dein perfekter Snack
+pt-PT,"<p>Queremos levar a experiência de saborear amêndoas a novos patamares com a nossa marca <strong>BETTER WITH. </strong>Apresentamos uma combinação irresistível de nutrição saudável e satisfação pura, utilizando amêndoas premium do Mediterrâneo e uma variedade incrível de sabores artesanais que são verdadeiramente tentadores.</p>",de,"<p>Mit unserer Marke <strong>BETTER WITH wollen wir das Erlebnis des Mandelgenusses auf ein neues Niveau heben. </strong>Wir präsentieren eine unwiderstehliche Kombination aus gesunder Ernährung und purer Zufriedenheit mit erstklassigen mediterranen Mandeln und einer unglaublichen Vielfalt an handwerklich hergestellten Aromen, die wirklich verlockend sind.</p>"
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,➜ Ingredientes,de,➜ Zutaten
+pt-PT,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>,de,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>
+pt-PT,★ Informação Nutricional,de,★ Nährwertangaben
+pt-PT,{{ product.metafields.custom.informacao_nutricional | metafield_tag }},de,{{ product.metafields.custom.informacao_nutricional | metafield_tag }}
+pt-PT,♥ Origem e variedade,de,♥ Herkunft und Vielfalt
+pt-PT,"<p>Origem: Beira Interior, Portugal<br/>Variedade: Soleta</p>",de,"<p>Herkunft: Beira Interior, Portugal<br/>Sorte: Soleta</p>"
+pt-PT,❗ Alergénios e Informações Importantes,de,❗ Allergene und wichtige Informationen
+pt-PT,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }},de,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }}
+pt-PT,⛟ Entrega e Portes,de,⛟ Lieferung und Versand
+pt-PT,<p>Envio em 2 dias úteis. Portes gratuitos em compras acima de 25€.</p>,de,<p>Versand innerhalb von 2 Werktagen. Kostenloser Versand für Einkäufe über 25 €.</p>
+pt-PT,Combina com,de,Kombiniert mit
+pt-PT,Também pode gostar,de,Vielleicht gefällt es Ihnen auch
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,Pode gostar também,de,Das könnte Ihnen auch gefallen
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,➜ Ingredientes,de,➜ Zutaten
+pt-PT,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>,de,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>
+pt-PT,★ Informação Nutricional,de,★ Nährwertangaben
+pt-PT,{{ product.metafields.custom.informacao_nutricional | metafield_tag }},de,{{ product.metafields.custom.informacao_nutricional | metafield_tag }}
+pt-PT,♥ Origem e variedade,de,♥ Herkunft und Vielfalt
+pt-PT,"<p>Origem: Beira Interior, Portugal<br/>Variedade: Amêndoa Mediterrânica</p>",de,"<p>Herkunft: Beira Interior, Portugal<br/>Sorte: Mediterrane Mandel</p>"
+pt-PT,❗ Alergénios e Informações Importantes,de,❗ Allergene und wichtige Informationen
+pt-PT,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }},de,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }}
+pt-PT,⛟ Entrega e Portes,de,⛟ Lieferung und Versand
+pt-PT,<p>Envio em 2 dias úteis. Portes gratuitos em compras acima de 25€.</p>,de,<p>Versand innerhalb von 2 Werktagen. Kostenloser Versand für Einkäufe über 25 €.</p>
+pt-PT,Combina com,de,Kombiniert mit
+pt-PT,Também pode gostar,de,Vielleicht gefällt es Ihnen auch
+pt-PT,Fica a par de todas as novidades e promoções,de,Bleiben Sie über alle Neuigkeiten und Aktionen auf dem Laufenden
+pt-PT,<p>Sê o primeiro a saber!</p>,de,"<p>Seien Sie der Erste, der es erfährt!</p>"
+pt-PT,Portugal.,de,Portugal.
+pt-PT,Inscreva-se e receba novidades e promoções:,de,Melden Sie sich an und erhalten Sie Neuigkeiten und Aktionen:
+pt-PT,BETTER WITH ALMONDS,de,BESSER MIT MANDELN
+pt-PT,Formulário de Contacto,de,Kontaktformular
+pt-PT,PRODUTOS,de,PRODUKTE
+pt-PT,Livro de Reclamações,de,Beschwerdebuch
+pt-PT,Livro de Reclamações Eletrónico,de,Elektronisches Beschwerdebuch
+pt-PT,Please select an option,de,Bitte wählen Sie eine Option aus
+pt-PT,"[data-simple-bundles-options] select { 
+    padding-top: 0px;
+    padding-right: 8px;
+    padding-bottom: 0px;
+    padding-left: 8px;
+}",de,"[data-simple-bundles-options] select { 
+    padding-top: 0px;
+    padding-right: 8px;
+    padding-bottom: 0px;
+    padding-left: 8px;
+}"
+pt-PT,Portugal,de,Portugal
+pt-PT,Conhece,de,Wissen Sie
+pt-PT,Compra,de,Kaufen
+pt-PT,Conhece,de,Wissen Sie
+pt-PT,Compra,de,Kaufen
+pt-PT,Conhece,de,Wissen Sie
+pt-PT,Compra,de,Kaufen
+pt-PT,PRODUTOS,de,PRODUKTE
+pt-PT,COMPRA AQUI,de,HIER KAUFEN
+pt-PT,Tudo fica melhor com amêndoas,de,Mit Mandeln ist alles besser
+pt-PT,<p></p><p>A<strong> Better With</strong> é fruto da ideia de que a vida tem muito mais sabor em boa companhia. Gostamos de procurar o extraordinário no comum e de misturar o óbvio com o inesperado. Acreditamos que a magia que acontece nesses encontros é o sal e a pimenta do dia-a-dia. <br/></p>,de,"<p></p><p><strong>Better With</strong> ist das Ergebnis der Idee, dass das Leben in guter Gesellschaft viel mehr Geschmack hat. Wir suchen gerne das Außergewöhnliche im Gewöhnlichen und vermischen das Offensichtliche mit dem Unerwarteten. Wir glauben, dass die Magie, die bei diesen Treffen entsteht, das Salz und der Pfeffer des Alltags ist. <br/></p>"
+pt-PT,<p>Descobre aqui todos os nossos sabores e os seus ingredientes e informações nutricionais. </p>,de,<p>Entdecken Sie hier alle unsere Geschmacksrichtungen sowie deren Inhaltsstoffe und Nährwertangaben. </p>
+pt-PT,Conhece os sabores,de,Kennen Sie die Aromen
+pt-PT,As nossas Boxes,de,Unsere Boxen
+pt-PT,"<p>As nossas boxes Better With são a escolha perfeita para quem procura lanches saudáveis e deliciosos. Disponíveis tanto para compra única como por subscrição mensal, oferecem uma seleção variada de amêndoas premium com sabores únicos e irresistíveis.</p>",de,"<p>Unsere Better With-Boxen sind die perfekte Wahl für alle, die auf der Suche nach gesunden und leckeren Snacks sind. Sie sind sowohl zum einmaligen Kauf als auch zum monatlichen Abonnement erhältlich und bieten eine vielfältige Auswahl an Premium-Mandeln mit einzigartigen und unwiderstehlichen Aromen.</p>"
+pt-PT,LITTLE FÃ,de,KLEINER FAN
+pt-PT,A subscrição perfeita para começar.,de,Das perfekte Abo für den Einstieg.
+pt-PT,7 Sabores de 140g     ,de,7 Geschmacksrichtungen à 140 g     
+pt-PT,4 Sabores de 30g,de,4 Geschmacksrichtungen à 30 g
+pt-PT,Recebe Mensalmente,de,Monatlich erhalten
+pt-PT,10% Desconto,de,10 % Rabatt
+pt-PT,Cancela quando quiseres,de,"Kündigen Sie, wann immer Sie möchten"
+pt-PT,Portes Grátis em todas as subscrições,de,Kostenloser Versand für alle Abonnements
+pt-PT,Subscrever,de,Abonnieren
+pt-PT,ALMOND LOVER,de,MANDELLIEBHABER
+pt-PT,A subscrição para os que sabem como é delicioso.,de,"Ein Abo für alle, die wissen, wie lecker es ist."
+pt-PT, 10 Sabores de 140g,de, 10 Geschmacksrichtungen à 140 g
+pt-PT,6 Sabores de 30g,de,6 Geschmacksrichtungen à 30 g
+pt-PT,Recebe Mensalmente ,de,Monatlich erhalten 
+pt-PT,10% Desconto,de,10 % Rabatt
+pt-PT,Recebe uma Bolsa Personalizada,de,Erhalten Sie eine personalisierte Tasche
+pt-PT,Cancela quando quiseres,de,"Kündigen Sie, wann immer Sie möchten"
+pt-PT,Portes Grátis em todas as subscrições,de,Kostenloser Versand für alle Abonnements
+pt-PT,Subscrever,de,Abonnieren
+pt-PT,CRAZY FÃ,de,VERRÜCKTER FAN
+pt-PT,Para os que já estão completamente rendidos aos nossos sabores! ,de,"Für diejenigen, die sich unseren Aromen bereits völlig hingegeben haben! "
+pt-PT,15 Sabores de 140g,de,15 Geschmacksrichtungen à 140 g
+pt-PT,8 Sabores de 30g,de,8 Geschmacksrichtungen à 30 g
+pt-PT,Recebe Mensalmente ,de,Monatlich erhalten 
+pt-PT,10% Desconto,de,10 % Rabatt
+pt-PT,Recebe uma Bolsa Personalizada,de,Erhalten Sie eine personalisierte Tasche
+pt-PT,Recebe a nossa Gift Box,de,Erhalten Sie unsere Geschenkbox
+pt-PT,Cancela quando quiseres!,de,"Kündigen Sie, wann immer Sie möchten!"
+pt-PT,Portes Grátis Portes Grátis em todas as subscrições,de,Kostenloser Versand Kostenloser Versand für alle Abonnements
+pt-PT,Subscrever,de,Abonnieren
+pt-PT,"Do campo à mesa, hoje e amanhã.",de,"Vom Feld auf den Tisch, heute und morgen."
+pt-PT,"<p>Como agricultores responsáveis, estamos totalmente conscientes da importância de reduzir a nossa pegada de carbono. O nosso objetivo é promover um ecossistema equilibrado, minimizando o impacto ambiental. Tomamos medidas proativas, como a implementação de cobertura vegetal permanente e o apoio à captura de carbono através da plantação de 1,5 milhões de árvores. Estas ações refletem o nosso compromisso em construir um futuro sustentável para as nossas plantações e, consequentemente, para o nosso planeta. </p>",de,"<p>Als verantwortungsbewusste Landwirte sind wir uns der Bedeutung der Reduzierung unseres CO2-Fußabdrucks voll und ganz bewusst. Unser Ziel ist es, ein ausgewogenes Ökosystem zu fördern und die Auswirkungen auf die Umwelt zu minimieren. Wir ergreifen proaktive Maßnahmen, wie die Einrichtung einer dauerhaften Vegetationsbedeckung und die Unterstützung der Kohlenstoffbindung durch die Pflanzung von 1,5 Millionen Bäumen. Diese Maßnahmen spiegeln unser Engagement für den Aufbau einer nachhaltigen Zukunft für unsere Plantagen und damit für unseren Planeten wider. </p>"
+pt-PT,SABE MAIS SOBRE NÓS,de,Erfahren Sie mehr über uns
+pt-PT,A melhores amêndoas que já provei. São simplesmente deliciosas e super diferentes.,de,"Die besten Mandeln, die ich je gegessen habe. Sie sind einfach köstlich und super anders."
+pt-PT,Catarina Barata,de,Catarina Barata
+pt-PT,Muito boas e crocantes. Diferente de tudo que já provei. Gostei imenso.,de,"Sehr gut und knusprig. Anders als alles, was ich jemals probiert habe. Es hat mir wirklich gut gefallen."
+pt-PT,João Pedro,de,John Pedro
+pt-PT,"Gosto de várias, mas as minhas favoritas são a Mel e Sal Marinho.",de,"Ich mag mehrere, aber meine Favoriten sind Honig und Meersalz."
+pt-PT,Pedro Sousa,de,Pedro Sousa
+pt-PT,Alecrim e sal tem tudo a ver com amêndoa. Descobri isso ao provar a Better With.,de,"Bei Rosmarin und Salz dreht sich alles um Mandeln. Das habe ich entdeckt, als ich Better With ausprobiert habe."
+pt-PT,Rute Pereira,de,Ruth Pereira
+pt-PT,As Nossas Herdades,de,Unsere Anwesen
+pt-PT,"<p>Espalhadas por 1.300 hectares, em 6 propriedades, nos concelhos do Fundão e Idanha-a-Nova, em Portugal.</p>",de,<p>Verteilt auf 1.300 Hektar auf 6 Grundstücken in den Gemeinden Fundão und Idanha-a-Nova in Portugal.</p>
+pt-PT,Agricultura Regenerativa,de,Regenerative Landwirtschaft
+pt-PT,"<p>A nossa paixão pela sustentabilidade levou-nos a adotar práticas de agricultura sustentáveis no cultivo das nossas amêndoas, colhidas e tratadas nas nossas herdades. </p>",de,"<p>Unsere Leidenschaft für Nachhaltigkeit hat uns dazu veranlasst, beim Anbau unserer Mandeln, die auf unseren Farmen geerntet und behandelt werden, nachhaltige landwirtschaftliche Praktiken anzuwenden. </p>"
+pt-PT,Produtos,de,Produkte
+pt-PT,"<p>Disponíveis em embalagens de 30g e 140g, estamos prontos para te acompanhar no dia-a-dia e em momentos especiais. </p>",de,"<p>Erhältlich in 30g- und 140g-Packungen sind wir bereit, Sie im Alltag und in besonderen Momenten zu begleiten. </p>"
+pt-PT,Loucos por Amêndoas,de,Verrückt nach Mandeln
+pt-PT,<p>Somos a combinação irresistível de uma alimentação saudável com uma experiência gastronómica irresistível: a fusão de amêndoas premium com um mix de 15 sabores artesanais. </p>,de,<p>Wir sind die unwiderstehliche Kombination aus gesunder Ernährung und einem unwiderstehlichen gastronomischen Erlebnis: die Fusion erstklassiger Mandeln mit einer Mischung aus 15 handwerklich hergestellten Geschmacksrichtungen. </p>
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,Comprar,de,Kaufen
+pt-PT,#INSTAGRAM,de,#INSTAGRAM
+pt-PT,<p>#betterwithalmonds #Amendoasincriveis #AmendoasPortuguesas #Regenerativas #sustentaveis #suaproteinadiaria #amoamendoas</p>,de,<p>#bessermitMandeln #Amendoasincriveis #AmendoasPortuguesas #Regenerativas #sustentaveis #suaproteinadiaria #amoamendoas</p>
+pt-PT,Ug739536477,de,Ug739536477
+pt-PT,Winter Fairy by Sheeran,de,Winterfee von Sheeran
+pt-PT,"Perfect for hours of family fun, it’s a gift he’ll never forget.",de,"Perfekt für stundenlangen Familienspaß, ein Geschenk, das er nie vergessen wird."
+pt-PT,Add to cart - $28.50,de,"In den Warenkorb legen – 28,50 $"
+pt-PT,Red Liquids by Huston,de,Rote Flüssigkeiten von Huston
+pt-PT,Add descriptive text for your slide here.,de,Fügen Sie hier einen beschreibenden Text für Ihre Folie hinzu.
+pt-PT,Add to cart - $12.20,de,"In den Warenkorb legen – 12,20 $"
+pt-PT,Triangles by Kulpreet,de,Dreiecke von Kulpreet
+pt-PT,Add descriptive text for your slide here.,de,Fügen Sie hier einen beschreibenden Text für Ihre Folie hinzu.
+pt-PT,Add to cart - $18.00,de,"In den Warenkorb legen – 18,00 $"
+pt-PT,Beautiful Books At Affordable Prices & An Unforgettable Experience,de,Wunderschöne Bücher zu erschwinglichen Preisen und ein unvergessliches Erlebnis
+pt-PT,<p>The only place you can afford to get lost is inside a book.</p>,de,"<p>Der einzige Ort, an dem Sie sich verlieren können, ist in einem Buch.</p>"
+pt-PT,"<p>A few years ago, Bainbridge set off on a road trip across America to interview bartenders, drink experts and chefs and to discover unusual and delicious alcohol-free mixed beverages.</p>",de,"<p>Vor einigen Jahren begab sich Bainbridge auf einen Roadtrip durch Amerika, um Barkeeper, Getränkeexperten und Köche zu interviewen und ungewöhnliche und köstliche alkoholfreie Mixgetränke zu entdecken.</p>"
+pt-PT,<p>RECYCLED PAPERS</p>,de,<p>RECYCLING-PAPIER</p>
+pt-PT,<p>SHIP WORLDWIDE</p>,de,<p>WELTWEIT VERSENDEN</p>
+pt-PT,<p>ADD GIFT WRAP</p>,de,<p>GESCHENKVERPACKUNG HINZUFÜGEN</p>
+pt-PT,<p>PERSONALIZED BOOKS</p>,de,<p>PERSONALISIERTE BÜCHER</p>
+pt-PT,Night Light,de,Nachtlicht
+pt-PT,"<p>Chatting and joking around outside her apartment building, they lost track of time. The next thing she knew, it was too late. Too late to get home unnoticed. Too late to avoid being told off by her parents. So she formed a plan, although you could hardly call it that, to leave everything behind—her family, her home and life as she’d known it in a housing project on the outskirts of Lyon.1</p>",de,"<p>Als sie vor ihrem Wohnhaus plauderten und Witze machten, verloren sie das Zeitgefühl. Das nächste, was sie wusste, war, dass es zu spät war. Zu spät, um unbemerkt nach Hause zu kommen. Zu spät, um der Beschimpfung durch ihre Eltern zu entgehen. Also fasste sie den Plan, alles hinter sich zu lassen – ihre Familie, ihr Zuhause und das Leben, wie sie es in einem Wohnprojekt am Stadtrand von Lyon gekannt hatte.1</p>"
+pt-PT,Add to cart - $34.30,de,"In den Warenkorb legen – 34,30 $"
+pt-PT,"<p>“Why did you do all this for me?’ he asked. ‘I don’t deserve it. I’ve never done anything for you.’ ‘You have been my friend,’ replied Charlotte. ‘That in itself is a tremendous thing.”</p>",de,"<p>„Warum hast du das alles für mich getan?“ fragte er. „Ich verdiene es nicht.“ Ich habe nie etwas für dich getan.“ „Du warst meine Freundin“, antwortete Charlotte. „Das ist an sich schon eine gewaltige Sache.“</p>"
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,"<p>“From that time on, the world was hers for the reading. She would never be lonely again, never miss the lack of intimate friends. Books became her friends and there was one for every mood.”</p>",de,<p>„Von da an gehörte ihr die Welt zum Lesen. Sie würde nie wieder einsam sein und nie den Mangel an intimen Freunden vermissen. Bücher wurden zu ihren Freunden und für jede Stimmung war eines dabei.“</p>
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,"<p>“The same substance composes us — the tree overhead, the stone beneath us, the bird, the beast, the star — we are all one, all moving to the same end.”</p>",de,"<p>„Die gleiche Substanz besteht aus uns – der Baum über uns, der Stein unter uns, der Vogel, das Tier, der Stern – wir sind alle eins und verfolgen alle das gleiche Ziel.“</p>"
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,From The Blog,de,Aus dem Blog
+pt-PT,<p>Add a short description on your brand news</p>,de,<p>Fügen Sie eine kurze Beschreibung zu Ihren Markennachrichten hinzu</p>
+pt-PT,Signup for Our Newsletter,de,Melden Sie sich für unseren Newsletter an
+pt-PT,<p>Invite customers to join your mailing list.</p>,de,"<p>Laden Sie Kunden ein, Ihrer Mailingliste beizutreten.</p>"
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Kimmy Guletta. </p>",de,"<p>Entdecken Sie unsere <em>Sommerkollektion</em>, entworfen von Kimmy Guletta. </p>"
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,Independent Styles,de,Unabhängige Stile
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",de,"<p>Ich wusste nicht einmal, dass es bessere Bedingungen für die Flucht gab, aber ich war mehr als bereit, mein Risiko unter Menschen einzugehen, die nach meinem eigenen Vorbild geformt waren, anstatt länger unter den abscheulichen und blutrünstigen grünen Männern des Mars zu bleiben.</p>"
+pt-PT,LEARN MORE,de,Erfahren Sie mehr
+pt-PT,Featured Products,de,Ausgewählte Produkte
+pt-PT,Premium Life Products,de,Premium-Lebensprodukte
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people.</p>",de,"<p>Ich wusste nicht einmal, dass es bessere Bedingungen für die Flucht gab, aber ich war mehr als bereit, mein Risiko unter Menschen einzugehen.</p>"
+pt-PT,Latest News,de,Neueste Nachrichten
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,de,<p>Erhalten Sie die <em>neuesten Nachrichten zu Mode- und Beauty-Trends.</em></p>
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,<p>“Quick and easy service from North. Would recommend this company to everyone looking for a premium products at a good price.”</p>,de,"<p>„Schneller und einfacher Service von North. Ich würde dieses Unternehmen jedem empfehlen, der auf der Suche nach Premiumprodukten zu einem guten Preis ist.“</p>"
+pt-PT,"<p>“An exceptional theme, strong structural quality and the ability to create anything your imagination can dream of!”</p>",de,"<p>„Ein außergewöhnliches Thema, starke strukturelle Qualität und die Fähigkeit, alles zu schaffen, wovon Ihre Fantasie träumt!“</p>"
+pt-PT,Ralph Lauren,de,Ralph Lauren
+pt-PT,<p>“This is the best theme I have ever buyed with great support! They help me in a very short time every time I asked.”</p>,de,"<p>„Das ist das beste Theme, das ich je gekauft habe, mit großartigem Support!“ Sie haben mir jedes Mal, wenn ich gefragt habe, in sehr kurzer Zeit geholfen.“</p>"
+pt-PT,Guess,de,Erraten
+pt-PT,100% CERTIFIED PRODUCTS,de,100 % ZERTIFIZIERTE PRODUKTE
+pt-PT,Detox the body. Look fabulous.,de,Entgiften Sie den Körper. Fabelhafter Look.
+pt-PT,Whether you crave a total reset or a nutrient boost.,de,"Ganz gleich, ob Sie sich nach einem kompletten Neustart oder einem Nährstoffschub sehnen."
+pt-PT,Shop our flavors,de,Kaufen Sie unsere Aromen
+pt-PT,Add a tagline,de,Fügen Sie einen Slogan hinzu
+pt-PT,Being energetic is the new you,de,Energiegeladen zu sein ist das neue Ich
+pt-PT,Add descriptive text for your slide here.,de,Fügen Sie hier einen beschreibenden Text für Ihre Folie hinzu.
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,What Makes Us Different?,de,Was unterscheidet uns?
+pt-PT,"<p>Share information about your brand with your customers. Describe a product, make announcements, or welcome customers to your store. </p>",de,"<p>Teilen Sie Informationen über Ihre Marke mit Ihren Kunden. Beschreiben Sie ein Produkt, machen Sie Ankündigungen oder heißen Sie Kunden in Ihrem Geschäft willkommen. </p>"
+pt-PT,<p>Sugar Friendly</p>,de,<p>Zuckerfreundlich</p>
+pt-PT,<p>Probiotics</p>,de,<p>Probiotika</p>
+pt-PT,<p>100% Vegan</p>,de,<p>100 % vegan</p>
+pt-PT,<p>Gluten-free</p>,de,<p>Glutenfrei</p>
+pt-PT,<p>18 Cals</p>,de,<p>18 Kalorien</p>
+pt-PT,<p>Zero Waste</p>,de,<p>Kein Abfall</p>
+pt-PT,Meet Our Products,de,Lernen Sie unsere Produkte kennen
+pt-PT,<p>This half-day fast eases you in with 3 of our lower sugar juices from each category.</p>,de,<p>Diese halbtägige Fastenkur erleichtert Ihnen den Einstieg mit 3 unserer zuckerarmen Säfte aus jeder Kategorie.</p>
+pt-PT,The Daily Wellness Bundle,de,Das tägliche Wellness-Paket
+pt-PT,<p>This half-day fast eases you in with 3 of our lower sugar juices from each category.</p>,de,<p>Diese halbtägige Fastenkur erleichtert Ihnen den Einstieg mit 3 unserer zuckerarmen Säfte aus jeder Kategorie.</p>
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,Save 20%,de,Sparen Sie 20 %
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",de,"<p>Diese Reinigung verfügt über eine zusätzliche charakteristische Mischung aus Mandeln, die zusätzliche gesunde Fette und Proteine ​​liefert, die dafür sorgen, dass Sie sich satt fühlen. Cleanse 1 enthält außerdem einige unserer beliebtesten, leckersten Säfte, damit es kinderleicht ist.</p>"
+pt-PT,Money Back Guarantee,de,Geld-zurück-Garantie
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",de,"<p>Diese Reinigung verfügt über eine zusätzliche charakteristische Mischung aus Mandeln, die zusätzliche gesunde Fette und Proteine ​​liefert, die dafür sorgen, dass Sie sich satt fühlen. Cleanse 1 enthält außerdem einige unserer beliebtesten, leckersten Säfte, damit es kinderleicht ist.</p>"
+pt-PT,Certified Organic,de,Aus kontrolliert biologischem Anbau
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",de,"<p>Diese Reinigung verfügt über eine zusätzliche charakteristische Mischung aus Mandeln, die zusätzliche gesunde Fette und Proteine ​​liefert, die dafür sorgen, dass Sie sich satt fühlen. Cleanse 1 enthält außerdem einige unserer beliebtesten, leckersten Säfte, damit es kinderleicht ist.</p>"
+pt-PT,Restore Your Vitality In 30 Days,de,Stellen Sie Ihre Vitalität in 30 Tagen wieder her
+pt-PT,"<p>It's a blend of cucumber, celery, spinach, lemon, kale and parsley. Simple, clean, and full of green goodness.</p>",de,"<p>Es ist eine Mischung aus Gurke, Sellerie, Spinat, Zitrone, Grünkohl und Petersilie. Einfach, sauber und voller grüner Köstlichkeiten.</p>"
+pt-PT,In the Press,de,In der Presse
+pt-PT,"<p>“Loved the juice and soup cleanse, was my first time doing a cleanse. Found the juices very satisfying.”</p>",de,"<p>„Die Saft- und Suppenkur hat mir sehr gut gefallen, es war das erste Mal, dass ich eine Kur gemacht habe. Ich fand die Säfte sehr zufriedenstellend.“</p>"
+pt-PT,"<p>""I will start by saying their juice is fantastic. I love it and I have purchased several times.""</p>",de,"<p>„Zunächst möchte ich sagen, dass ihr Saft fantastisch ist. Ich liebe ihn und habe ihn schon mehrere Male gekauft.“</p>"
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,"<p>""They taste great and are full of everything you need to start your journey towards better overall health.""</p>",de,"<p>„Sie schmecken großartig und enthalten alles, was Sie brauchen, um Ihre Reise zu einer besseren allgemeinen Gesundheit zu beginnen.“</p>"
+pt-PT,Review author,de,Rezensionsautor
+pt-PT,Blog posts,de,Blogbeiträge
+pt-PT,<p>Add a short description on your brand news</p>,de,<p>Fügen Sie eine kurze Beschreibung zu Ihren Markennachrichten hinzu</p>
+pt-PT,Summer Collection,de,Sommerkollektion
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Sarah Taylor.<br/>Free shipping in the US for any purchase over $60.</p>",de,"<p>Entdecken Sie unsere <em>Sommerkollektion</em>, entworfen von Sarah Taylor.<br/>Kostenloser Versand in den USA für jeden Einkauf über 60 $.</p>"
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,Free Delivery,de,Kostenlose Lieferung
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,30-Day Returns,de,30-tägige Rückgabe
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,International Warranty,de,Internationale Garantie
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,New & Stylish Collections,de,Neue und stilvolle Kollektionen
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",de,"<p>Ich wusste nicht einmal, dass es bessere Bedingungen für die Flucht gab, aber ich war mehr als bereit, mein Risiko unter Menschen einzugehen, die nach meinem eigenen Vorbild geformt waren, anstatt länger unter den abscheulichen und blutrünstigen grünen Männern des Mars zu bleiben.</p>"
+pt-PT,Flash Sale: 50-70% Accessories,de,Flash-Sale: 50–70 % Zubehör
+pt-PT,Shop Sale,de,Ladenverkauf
+pt-PT,Recent Arrivals,de,Neuzugänge
+pt-PT,<p>Add some <em>new</em> pieces to your wardrobe by shopping our goodies.</p>,de,"<p>Fügen Sie Ihrer Garderobe einige <em>neue</em> Stücke hinzu, indem Sie unsere Leckereien kaufen.</p>"
+pt-PT,Summer Collection,de,Sommerkollektion
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Sarah Taylor.<br/>Free shipping in the US for any purchase over $60.</p>",de,"<p>Entdecken Sie unsere <em>Sommerkollektion</em>, entworfen von Sarah Taylor.<br/>Kostenloser Versand in den USA für jeden Einkauf über 60 $.</p>"
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,Latest News,de,Neueste Nachrichten
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,de,<p>Erhalten Sie die <em>neuesten Nachrichten zu Mode- und Beauty-Trends.</em></p>
+pt-PT,"Signup for our newsletter to receive special offers, news, &amp; events.",de,"Melden Sie sich für unseren Newsletter an, um Sonderangebote, Neuigkeiten und Neuigkeiten zu erhalten. Ereignisse."
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,de,"<p>Ich wusste nicht einmal, dass es bessere Fluchtbedingungen gibt.</p>"
+pt-PT,Discover Our Collection,de,Entdecken Sie unsere Kollektion
+pt-PT,"<p>Slowly she drifted to the southeast, rising higher and higher as the flames ateaway her wooden parts and diminished the weight upon her. </p>",de,"<p>Langsam driftete sie nach Südosten und stieg immer höher, während die Flammen ihre Holzteile wegfraßen und das Gewicht, das auf ihr lastete, verringerten. </p>"
+pt-PT,Recent Arrivals,de,Neuzugänge
+pt-PT,<p>Add some <em>new</em> pieces to your wardrobe by shopping our goodies.</p>,de,"<p>Fügen Sie Ihrer Garderobe einige <em>neue</em> Stücke hinzu, indem Sie unsere Leckereien kaufen.</p>"
+pt-PT,"<p>Slowly she drifted to the southeast, rising higher and higher as the flames ateaway her wooden parts and diminished the weight upon her. Ascending to the roof of the building I watched her for hours until she was lost in the dim finally.</p>",de,"<p>Langsam driftete sie nach Südosten und stieg immer höher, während die Flammen ihre Holzteile wegfraßen und das Gewicht, das auf ihr lastete, verringerten. Als ich auf das Dach des Gebäudes stieg, beobachtete ich sie stundenlang, bis sie sich schließlich in der Dunkelheit verlor.</p>"
+pt-PT,Shop now,de,Jetzt einkaufen
+pt-PT,Best Sellers,de,Bestseller
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,de,"<p>Ich wusste nicht einmal, dass es bessere Fluchtbedingungen gibt.</p>"
+pt-PT,Signup for our newsletter,de,Melden Sie sich für unseren Newsletter an
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,de,"<p>Ich wusste nicht einmal, dass es bessere Fluchtbedingungen gibt.</p>"
+pt-PT,Designed in San Francisco. Handcrafted responsibly in Paris.,de,Entworfen in San Francisco. Verantwortungsvoll handgefertigt in Paris.
+pt-PT,Shop now,de,Jetzt einkaufen
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,SHOP NOW,de,JETZT EINKAUFEN
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",de,"<p>Ich wusste nicht einmal, dass es bessere Bedingungen für die Flucht gab, aber ich war mehr als bereit, mein Risiko unter Menschen einzugehen, die nach meinem eigenen Vorbild geformt waren, anstatt länger unter den abscheulichen und blutrünstigen grünen Männern des Mars zu bleiben.</p>"
+pt-PT,Learn More,de,Erfahren Sie mehr
+pt-PT,"<p>Discover our <em>Luxury Collection</em>, designed by Ann Maya.<br/>Free shipping in the US for any purchase over $60.</p>",de,"<p>Entdecken Sie unsere <em>Luxuskollektion</em>, entworfen von Ann Maya.<br/>Kostenloser Versand in den USA für jeden Einkauf über 60 $.</p>"
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,Latest News,de,Neueste Nachrichten
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,de,<p>Erhalten Sie die <em>neuesten Nachrichten zu Mode- und Beauty-Trends.</em></p>
+pt-PT,Free Delivery,de,Kostenlose Lieferung
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,30-Day Returns,de,30-tägige Rückgabe
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,International Warranty,de,Internationale Garantie
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,Gift Package,de,Geschenkpaket
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",de,"<p>Immer wieder erntete ich den Applaus der blutrünstigen Menge, und gegen Ende gab es Schreie.</p>"
+pt-PT,"<p>A nossa dedicação à<strong> agricultura sustentável</strong> levou-nos a especializar-nos em <strong>amêndoas mediterrânicas</strong> de primeira qualidade provenientes de <strong>agricultura regenerativa</strong>, colhidas e tratadas com o máximo cuidado. A <strong>Better With</strong> é uma marca da <strong>Veracruz Almonds</strong>, a empresa produtora.</p>",de,"<p>Unser Engagement für eine<strong>nachhaltige Landwirtschaft</strong> hat uns dazu gebracht, uns auf hochwertige <strong>mediterrane Mandeln</strong> aus <strong>regenerativer Landwirtschaft</strong> zu spezialisieren, die mit größter Sorgfalt geerntet und behandelt werden. <strong>Better With</strong> ist eine Marke von <strong>Veracruz Almonds</strong>, dem produzierenden Unternehmen.</p>"
+pt-PT,Conhece a Veracruz,de,Lernen Sie Veracruz kennen
+pt-PT,conhece a nossa origem,de,Kennen Sie unsere Herkunft
+pt-PT,"<p>A melhor amêndoa mediterrânica nasce do contacto entre o sol e a terra, do respeito e do amor, da incorporação de tecnologia na agricultura. Destas e de outras combinações nasce uma marca com presença: no sofá ou na praia, no verão ou no inverno, em qualquer dia, a qualquer hora. </p>",de,"<p>Die besten mediterranen Mandeln entstehen durch den Kontakt zwischen Sonne und Erde, durch Respekt und Liebe, durch die Einbindung von Technologie in die Landwirtschaft. Aus diesen und anderen Kombinationen entsteht eine Marke mit Präsenz: auf dem Sofa oder am Strand, im Sommer oder Winter, an jedem Tag, zu jeder Zeit. </p>"
+pt-PT,"<p>Em<strong> 1.300 hectares</strong>, distribuídos por seis propriedades nos concelhos do Fundão e Idanha-a-Nova, utilizamos<strong> as mais avançadas técnicas de agricultura de precisão</strong>, juntamente com <strong>práticas de responsabilidade social</strong>. Adotamos uma abordagem verdadeiramente holística que beneficia todos os envolvidos!</p>",de,"<p>Auf<strong>1.300 Hektar</strong>, verteilt auf sechs Grundstücke in den Gemeinden Fundão und Idanha-a-Nova, nutzen wir<strong>die fortschrittlichsten Präzisionslandwirtschaftstechniken</strong> sowie <strong>Praktiken der sozialen Verantwortung</strong>. Wir verfolgen einen wirklich ganzheitlichen Ansatz, der allen Beteiligten zugute kommt!</p>"
+pt-PT,"<p>Nas nossas herdades, praticamos uma <strong>agricultura regenerativa</strong>, focada na preservação de recursos preciosos como o <strong>solo</strong>, a <strong>água</strong>, a <strong>vida selvagem</strong> e a <strong>flora </strong>para as gerações futuras. Orgulhamo-nos de lutar por uma maior <strong>biodiversidade</strong>, a fim de proteger o equilíbrio da natureza!</p>",de,"<p>Auf unseren Höfen betreiben wir <strong>regenerative Landwirtschaft</strong>, wobei der Schwerpunkt auf der Erhaltung wertvoller Ressourcen wie <strong>Boden</strong>, <strong>Wasser</strong>, <strong>Tierwelt</strong> und <strong>Flora</strong> für künftige Generationen liegt. Wir sind stolz darauf, für mehr <strong>Biodiversität</strong> zu kämpfen, um das Gleichgewicht der Natur zu schützen!</p>"
+pt-PT,As nossas herdades,de,Unsere Bauernhöfe
+pt-PT,NOSSAS CERTIFICAÇÕES,de,UNSERE ZERTIFIZIERUNGEN
+pt-PT,É melhor com confiança. Do campo à mesa. Hoje e amanhã.,de,Mit Selbstvertrauen ist es besser. Vom Feld auf den Tisch. Heute und morgen.
+pt-PT,Heading,de,Überschrift
+pt-PT,"<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>",de,"<p>Kombinieren Sie Text mit einem Bild, um das ausgewählte Produkt, die ausgewählte Sammlung oder den ausgewählten Blog-Beitrag hervorzuheben. Fügen Sie Details zur Verfügbarkeit und zum Stil hinzu oder geben Sie sogar eine Bewertung ab.</p>"
+pt-PT,<p>Add your store address or<br/>your store hours</p>,de,<p>Fügen Sie Ihre Geschäftsadresse oder<br/>Ihre Geschäftsöffnungszeiten hinzu</p>
+pt-PT,Our Stores,de,Unsere Geschäfte
+pt-PT,Store location,de,Standort des Geschäfts
+pt-PT,<p>Add your store address or<br/>your store hours</p>,de,<p>Fügen Sie Ihre Geschäftsadresse oder<br/>Ihre Geschäftsöffnungszeiten hinzu</p>
+pt-PT,Get Directions,de,Wegbeschreibung abrufen
+pt-PT,Store location,de,Standort des Geschäfts
+pt-PT,<p>Add your store address or<br/>your store hours</p>,de,<p>Fügen Sie Ihre Geschäftsadresse oder<br/>Ihre Geschäftsöffnungszeiten hinzu</p>
+pt-PT,Get Directions,de,Wegbeschreibung abrufen
+pt-PT,Store location,de,Standort des Geschäfts
+pt-PT,<p>Add your store address or<br/>your store hours</p>,de,<p>Fügen Sie Ihre Geschäftsadresse oder<br/>Ihre Geschäftsöffnungszeiten hinzu</p>
+pt-PT,Get Directions,de,Wegbeschreibung abrufen
+pt-PT,Heading,de,Überschrift
+pt-PT,"<p>Focus on your upcoming sales. Add details on availability, style, or even provide a review.</p>",de,<p>Konzentrieren Sie sich auf Ihre bevorstehenden Verkäufe. Fügen Sie Details zur Verfügbarkeit und zum Stil hinzu oder geben Sie sogar eine Bewertung ab.</p>
+pt-PT,Shop Now,de,Jetzt einkaufen
+pt-PT,Heading,de,Überschrift
+pt-PT,"<p>Focus on your upcoming sales. Add details on availability, style, or even provide a review.</p>",de,<p>Konzentrieren Sie sich auf Ihre bevorstehenden Verkäufe. Fügen Sie Details zur Verfügbarkeit und zum Stil hinzu oder geben Sie sogar eine Bewertung ab.</p>
+pt-PT,Say Hello,de,Sag Hallo
+pt-PT,Entra em Contacto,de,Nehmen Sie Kontakt auf
+pt-PT,<p>Através do formulário ou por e-mail. <strong>Estamos aqui!</strong></p>,de,<p>Über das Formular oder per E-Mail. <strong>Wir sind da!</strong></p>
+pt-PT,<h3>Better With Us</h3>,de,<h3>Besser bei uns</h3>
+pt-PT,"<p>Rua Filarmónica Idanhense, 68</p><p>6060-188 Idanha-a-Nova</p><p>hello@betterwithalmonds.com</p>",de,"<p>Rua Filarmónica Idanhense, 68</p><p>6060-188 Idanha-a-Nova</p><p>hello@betterwithalmonds.com</p>"
+pt-PT,<p></p><h3><strong>Fala connosco!</strong></h3>,de,<p></p><h3><strong>Sprechen Sie mit uns!</strong></h3>
+pt-PT,"<p>Envia-nos as tuas dúvidas, críticas e elogios. :)</p>",de,"<p>Senden Sie uns Ihre Fragen, Kritik und Komplimente. :)</p>"
+pt-PT,Torrada com Sal,de,Toast mit Salz
+pt-PT,Natural,de,Natürlich
+pt-PT,Torrada,de,Toast
+pt-PT,Mel e Sal Marinho,de,Honig und Meersalz
+pt-PT,Fudge Caramelo Inglês,de,Englischer Karamellfondant
+pt-PT,Alecrim e Sal,de,Rosmarin und Salz
+pt-PT,Caril,de,Curry
+pt-PT,Regenerativas e sustentáveis,de,Regenerativ und nachhaltig
+pt-PT,"<p>Nossa paixão pela <strong>agricultura sustentável</strong> nos levou a focar em <strong>amêndoas premium regenerativas</strong>, que são colhidas e processadas com muito carinho e cuidado em <strong>nossas próprias fazendas.</strong></p>",de,"<p>Unsere Leidenschaft für <strong>nachhaltige Landwirtschaft</strong> hat uns dazu veranlasst, uns auf <strong>regenerative Premium-Mandeln</strong> zu konzentrieren, die mit großer Sorgfalt und Sorgfalt auf <strong>unseren eigenen Farmen</strong> geerntet und verarbeitet werden.</strong></p>"
+pt-PT,Produzidas em Portugal,de,Hergestellt in Portugal
+pt-PT,"<p>Espalhadas por <strong>1.300 hectares </strong>de terra em <strong>6 propriedades</strong> nos municípios de Fundão e Idanha-a-Nova, em <strong>Portugal</strong>, utilizamos técnicas avançadas de <strong>agricultura de precisão</strong>, juntamente com práticas de <strong>responsabilidade social</strong>, para garantir que todos se beneficiem!</p>",de,"<p>Verteilt auf <strong>1.300 Hektar</strong> Land auf <strong>6 Grundstücken</strong> in den Gemeinden Fundão und Idanha-a-Nova in <strong>Portugal</strong> nutzen wir fortschrittliche <strong>Präzisionslandwirtschaft</strong>-Techniken sowie Praktiken der <strong>sozialen Verantwortung</strong>, um sicherzustellen, dass alle davon profitieren!</p>"
+pt-PT,O seu snack perfeito,de,Dein perfekter Snack
+pt-PT,"<p>Queremos levar a experiência de saborear amêndoas a novos patamares com a nossa marca <strong>BETTER WITH. </strong>Apresentamos uma combinação irresistível de nutrição saudável e satisfação pura, utilizando amêndoas premium do Mediterrâneo e uma variedade incrível de sabores artesanais que são verdadeiramente tentadores.</p>",de,"<p>Mit unserer Marke <strong>BETTER WITH wollen wir das Erlebnis des Mandelgenusses auf ein neues Niveau heben. </strong>Wir präsentieren eine unwiderstehliche Kombination aus gesunder Ernährung und purer Zufriedenheit mit erstklassigen mediterranen Mandeln und einer unglaublichen Vielfalt an handwerklich hergestellten Aromen, die wirklich verlockend sind.</p>"
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,➜ Ingredientes,de,➜ Zutaten
+pt-PT,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>,de,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>
+pt-PT,★ Informação Nutricional,de,★ Nährwertangaben
+pt-PT,{{ product.metafields.custom.informacao_nutricional | metafield_tag }},de,{{ product.metafields.custom.informacao_nutricional | metafield_tag }}
+pt-PT,♥ Origem e variedade,de,♥ Herkunft und Vielfalt
+pt-PT,"<p>Origem: Beira Interior, Portugal<br/>Variedade: Soleta</p>",de,"<p>Herkunft: Beira Interior, Portugal<br/>Sorte: Soleta</p>"
+pt-PT,❗ Alergénios e Informações Importantes,de,❗ Allergene und wichtige Informationen
+pt-PT,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }},de,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }}
+pt-PT,⛟ Entrega e Portes,de,⛟ Lieferung und Versand
+pt-PT,<p>Envio em 2 dias úteis. Portes gratuitos em compras acima de 25€.</p>,de,<p>Versand innerhalb von 2 Werktagen. Kostenloser Versand für Einkäufe über 25 €.</p>
+pt-PT,Combina com,de,Kombiniert mit
+pt-PT,Também pode gostar,de,Vielleicht gefällt es Ihnen auch
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,Pode gostar também,de,Das könnte Ihnen auch gefallen
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,Size,de,Größe
+pt-PT,Sizing guide,de,Größenanleitung
+pt-PT,➜ Ingredientes,de,➜ Zutaten
+pt-PT,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>,de,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>
+pt-PT,★ Informação Nutricional,de,★ Nährwertangaben
+pt-PT,{{ product.metafields.custom.informacao_nutricional | metafield_tag }},de,{{ product.metafields.custom.informacao_nutricional | metafield_tag }}
+pt-PT,♥ Origem e variedade,de,♥ Herkunft und Vielfalt
+pt-PT,"<p>Origem: Beira Interior, Portugal<br/>Variedade: Amêndoa Mediterrânica</p>",de,"<p>Herkunft: Beira Interior, Portugal<br/>Sorte: Mediterrane Mandel</p>"
+pt-PT,❗ Alergénios e Informações Importantes,de,❗ Allergene und wichtige Informationen
+pt-PT,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }},de,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }}
+pt-PT,⛟ Entrega e Portes,de,⛟ Lieferung und Versand
+pt-PT,<p>Envio em 2 dias úteis. Portes gratuitos em compras acima de 25€.</p>,de,<p>Versand innerhalb von 2 Werktagen. Kostenloser Versand für Einkäufe über 25 €.</p>
+pt-PT,Combina com,de,Kombiniert mit
+pt-PT,Também pode gostar,de,Vielleicht gefällt es Ihnen auch
+pt-PT,Fica a par de todas as novidades e promoções,de,Bleiben Sie über alle Neuigkeiten und Aktionen auf dem Laufenden
+pt-PT,<p>Sê o primeiro a saber!</p>,de,"<p>Seien Sie der Erste, der es erfährt!</p>"
+pt-PT,Portugal.,de,Portugal.
+pt-PT,Inscreva-se e receba novidades e promoções:,de,Melden Sie sich an und erhalten Sie Neuigkeiten und Aktionen:
+pt-PT,BETTER WITH ALMONDS,de,BESSER MIT MANDELN
+pt-PT,Formulário de Contacto,de,Kontaktformular
+pt-PT,PRODUTOS,de,PRODUKTE
+pt-PT,Livro de Reclamações,de,Beschwerdebuch
+pt-PT,Livro de Reclamações Eletrónico,de,Elektronisches Beschwerdebuch
+pt-PT,30,de,30
+pt-PT,"<p>Utilizamos cookies para melhorar a sua experiência no nosso site. Ao continuar navegando, você concorda com o uso de cookies. <a href=""/policies/privacy-policy"" target=""_blank"" title=""Privacy Policy"">Política de privacidade.</a></p>",de,"<p>Wir verwenden Cookies, um Ihr Erlebnis auf unserer Website zu verbessern. Indem Sie weitersurfen, stimmen Sie der Verwendung von Cookies zu. <a href=""/policies/privacy-policy"" target=""_blank"" title=""Privacy Policy"">Datenschutzerklärung.</a></p>"
+pt-PT,https://facebook.com/betterwithalmonds,de,https://facebook.com/betterwithalmonds
+pt-PT,https://instagram.com/betterwithalmonds,de,https://instagram.com/betterwithalmonds
+pt-PT,https://youtube.com/betterwithalmonds,de,https://youtube.com/betterwithalmonds
+pt-PT,All rights reserved.,de,Alle Rechte vorbehalten.
+pt-PT,Welcome to our store,de,Willkommen in unserem Shop
+pt-PT,Cluster de {{number}} marcadores,de,Cluster von {{number}} Markierungen
+pt-PT,Tem {{ count }} moradas guardadas,de,Sie haben {{ count }} Adressen gespeichert
+pt-PT,Sem entrega disponível para %{count} itens,de,Für %{count} Artikel ist keine Lieferung verfügbar
+pt-PT,Estes itens serão removidos do seu carrinho porque não há métodos de entrega disponíveis para a morada.,de,"Diese Artikel werden aus Ihrem Warenkorb entfernt, da keine Versandmethoden an die Adresse verfügbar sind."
+pt-PT,{{count}} itens,de,{{count}} Artikel
+pt-PT,%{delivery_method} já não está disponível para estes itens.,de,%{delivery_method} ist für diese Artikel nicht mehr verfügbar.
+pt-PT,O método de entrega selecionado já não está disponível para estes itens.,de,Die ausgewählte Versandart ist für diese Artikel nicht mehr verfügbar.
+pt-PT,Mostrar %{count} itens,de,%{count} Artikel anzeigen
+pt-PT,Ocultar %{count} itens,de,%{count} Elemente ausblenden
+pt-PT,%{count} itens,de,%{count} Artikel
+pt-PT,Descontos,de,Rabatte
+pt-PT,Descontos de encomenda,de,Bestellen Sie Rabatte
+pt-PT,Subtotal · %{count} itens,de,Zwischensumme · %{count} Elemente
+pt-PT,%{count} itens,de,%{count} Artikel
+pt-PT,Ver todos os %{count} itens,de,Alle %{count} Artikel anzeigen
+pt-PT,Os itens não estão disponíveis para recolha na loja,de,Die Artikel können nicht im Geschäft abgeholt werden
+pt-PT,%{count} dias úteis,de,%{count} Werktage
+pt-PT,%{count} outros métodos disponíveis a partir de,de,%{count} andere Methoden verfügbar von
+pt-PT,para %{count} entregas,de,für %{count} Lieferungen
+pt-PT,a cada %{count} dias,de,alle %{count} Tage
+pt-PT,a cada %{count} semanas,de,alle %{count} Wochen
+pt-PT,a cada %{count} meses,de,alle %{count} Monate
+pt-PT,a cada %{count} anos,de,alle %{count} Jahre
+pt-PT,Primeiras %{count} encomendas gratuitas,de,Die ersten %{count} Bestellungen sind kostenlos
+pt-PT,Para as primeiras %{count} encomendas,de,Für die ersten %{count} Bestellungen
+pt-PT,Envio gratuito para mais %{count} entregas,de,Kostenloser Versand für weitere %{count} Lieferungen
+pt-PT,Envio gratuito para %{count} entregas,de,Kostenloser Versand für %{count} Lieferungen
+pt-PT,"Envio gratuito para mais %{count} entregas, posteriormente, %{recurring_order_shipping_price}",de,"Kostenloser Versand für weitere %{count} Lieferungen, später %{recurring_order_shipping_price}"
+pt-PT,"Envio gratuito para %{count} entregas, posteriormente, %{recurring_order_shipping_price}",de,Kostenloser Versand für %{count} Lieferungen danach %{recurring_order_shipping_price}
+pt-PT,Mais %{count} entregas por %{shipping_price} cada,de,Weitere %{count} Lieferungen für jeweils %{shipping_price}
+pt-PT,Mais %{count} entregas por %{shipping_price} cada,de,Weitere %{count} Lieferungen für jeweils %{shipping_price}
+pt-PT,"Envio gratuito para o primeiro %{cycle}, seguido de %{recurring_order_shipping_price}",de,"Kostenloser Versand für den ersten %{cycle}, gefolgt von %{recurring_order_shipping_price}"
+pt-PT,%{shipping_price} para mais %{count} entregas (%{per_delivery_cost}),de,%{shipping_price} für weitere %{count} Lieferungen (%{per_delivery_cost})
+pt-PT,%{shipping_price} para %{count} entregas (%{per_delivery_cost}),de,%{shipping_price} für %{count} Lieferungen (%{per_delivery_cost})
+pt-PT,"%{shipping_price} para mais %{count} entregas (%{per_delivery_cost}), seguido de %{recurring_order_shipping_price}",de,"%{shipping_price} für weitere %{count} Lieferungen (%{per_delivery_cost}), gefolgt von %{recurring_order_shipping_price}"
+pt-PT,"%{shipping_price} para %{count} entregas (%{per_delivery_cost}), seguido de %{recurring_order_shipping_price}",de,"%{shipping_price} für %{count} Lieferungen (%{per_delivery_cost}), gefolgt von %{recurring_order_shipping_price}"
+pt-PT,Primeiros envios,de,Erste Lieferungen
+pt-PT,Envios recorrentes,de,Wiederkehrende Versendungen
+pt-PT,O valor da sua compra está coberto pelos seus cartões-oferta.,de,Der Wert Ihres Einkaufs ist durch Ihre Geschenkkarten abgedeckt.
+pt-PT,"De momento, não estão disponíveis pagamentos por cartão de crédito.<br><a href=""%{current_url}"">Atualize esta página</a> ou utilize um método de pagamento diferente.",de,"Kreditkartenzahlungen sind derzeit nicht verfügbar.<br><a href=""%{current_url}"">Aktualisieren Sie diese Seite</a> oder verwenden Sie eine andere Zahlungsmethode."
+pt-PT,"Existem %{count} cartões expirados, que pode visualizar e editar na sua conta.",de,"Es gibt %{count} abgelaufene Karten, die Sie in Ihrem Konto anzeigen und bearbeiten können."
+pt-PT,Adicionados %{count},de,%{count} hinzugefügt
+pt-PT,Não é possível enviar alguns itens do seu carrinho para o endereço que introduziu. Reveja o seu endereço para garantir que está correto e tente novamente ou selecione um endereço diferente.,de,"Einige Artikel in Ihrem Warenkorb können nicht an die von Ihnen eingegebene Adresse gesendet werden. Bitte überprüfen Sie Ihre Adresse, um sicherzustellen, dass sie korrekt ist, und versuchen Sie es erneut oder wählen Sie eine andere Adresse aus."
+pt-PT,Um ou mais itens que adicionou não são enviados para a sua localização. Remova-os para finalizar a compra ou entre em contacto com a loja.,de,"Ein oder mehrere von Ihnen hinzugefügte Artikel werden nicht an Ihren Standort gesendet. Entfernen Sie sie, um den Kauf abzuschließen oder wenden Sie sich an das Geschäft."
+pt-PT,A sua encomenda está a ser processada. O tempo de espera estimado é de %{count} minutos.,de,Ihre Bestellung wird bearbeitet. Die geschätzte Wartezeit beträgt %{count} Minuten.
+pt-PT,comprar também estes produtos,de,Kaufen Sie diese Produkte auch
+pt-PT,Receberá uma mensagem de texto com os seus cartões de oferta dentro de alguns minutos.,de,Sie erhalten innerhalb weniger Minuten eine SMS mit Ihren Geschenkkarten.
+pt-PT,Receberá um e-mail com os seus cartões de oferta dentro de alguns minutos.,de,Sie erhalten innerhalb weniger Minuten eine E-Mail mit Ihren Geschenkkarten.
+pt-PT,Os cartões de oferta foram enviados por e-mail,de,Geschenkgutscheine wurden per E-Mail verschickt
+pt-PT,Os cartões de oferta foram enviados por mensagem de texto,de,Geschenkgutscheine wurden per SMS verschickt
+pt-PT,Os cartões de oferta foram reenviados.,de,Geschenkkarten wurden erneut versendet.
+pt-PT,Ocorreu um problema ao reenviar os seus cartões de oferta. Tente novamente ou entre contacto connosco.,de,Beim erneuten Versenden Ihrer Geschenkkarten ist ein Problem aufgetreten. Versuchen Sie es erneut oder kontaktieren Sie uns.
+pt-PT,%{count} adicionado,de,%{count} hinzugefügt
+pt-PT,Comprar %{product_name} e %{count} outros itens,de,Kaufen Sie %{product_name} und %{count} weitere Artikel
+pt-PT,Primeiros %{count} pagamentos %{total_price} cada,de,Die ersten %{count} Zahlungen jeweils %{total_price}
+pt-PT,%{count} dias,de,%{count} Tage
+pt-PT,%{count} semanas,de,%{count} Wochen
+pt-PT,%{count} meses,de,%{count} Monate
+pt-PT,%{count} anos,de,%{count} Jahre
+pt-PT,depois %{count} pagamentos a %{total_price} cada,de,dann %{count} Zahlungen zu jeweils %{total_price}
+pt-PT,Produtos indisponíveis,de,Nicht verfügbare Produkte
+pt-PT,Estes produtos serão removidos do seu carrinho porque não estão disponíveis no seu país/região.,de,"Diese Produkte werden aus Ihrem Warenkorb entfernt, da sie in Ihrem Land/Ihrer Region nicht verfügbar sind."
+pt-PT,Estes produtos não estão disponíveis no seu país/região.,de,Diese Produkte sind in Ihrem Land/Ihrer Region nicht verfügbar.
+pt-PT,Tempo de espera estimado: {{count}} minutos,de,Geschätzte Wartezeit: {{count}} Minuten
+pt-PT,Sem entrega disponível para %{count} itens,de,Für %{count} Artikel ist keine Lieferung verfügbar
+pt-PT,Estes itens serão removidos do seu carrinho porque não há métodos de entrega disponíveis para a morada.,de,"Diese Artikel werden aus Ihrem Warenkorb entfernt, da keine Versandmethoden an die Adresse verfügbar sind."
+pt-PT,A mostrar %{first} - %{last} de %{count} pontos,de,Zeigt %{first} - %{last} von %{count} Punkten an
+pt-PT,%{pickup_point_index} de %{count} pontos,de,%{pickup_point_index} von %{count} Punkten
+pt-PT,%{first} - %{last} de %{count} pontos,de,%{first} – %{last} von %{count} Punkten
+pt-PT,%{count} pontos de recolha perto da sua localização,de,%{count} Sammelstellen in der Nähe Ihres Standorts
+pt-PT,%{count} lojas com stock perto de %{address},de,%{count} Geschäfte mit Lagerbestand in der Nähe von %{address}
+pt-PT,%{first} - %{last} de %{count} lojas,de,%{first} – %{last} von %{count} Geschäften
+pt-PT,Mostrar mais %{count} localizações,de,Weitere %{count} Standorte anzeigen
+pt-PT,remover itens indisponíveis,de,Nicht verfügbare Elemente entfernen
+pt-PT,Outros,de,Andere
+pt-PT,"Pesquisa: %{count} resultados encontrados para ""%{terms}""",de,Suche: %{count} Ergebnisse für „%{terms}“ gefunden
+pt-PT,{{count}} itens,de,{{count}} Artikel
+pt-PT,Os cartões de oferta foram enviados por e-mail.,de,Geschenkgutscheine wurden per E-Mail verschickt.
+pt-PT,Cartões de oferta,de,Geschenkkarten
+pt-PT,Reenviar e-mails,de,E-Mails erneut senden
+pt-PT,"Se não foram recebidos, reenvie os e-mails ou",de,"Wenn sie nicht empfangen wurden, senden Sie die E-Mails erneut oder"
+pt-PT,Cada cartão de oferta será enviado num e-mail em separado.,de,Jede Geschenkkarte wird in einer separaten E-Mail versendet.
+pt-PT,Os cartões de oferta foram enviados por mensagem.,de,Geschenkkarten wurden per Nachricht verschickt.
+pt-PT,Reenviar mensagens,de,Nachrichten erneut senden
+pt-PT,"Se não foram recebidos, reenvie as mensagens ou",de,"Wenn sie nicht empfangen wurden, senden Sie die Nachrichten erneut oder"
+pt-PT,Cada cartão de oferta será enviado numa mensagem em separado.,de,Jede Geschenkkarte wird in einer separaten Nachricht versendet.
+pt-PT,Cartões de oferta reenviados,de,Geschenkkarten erneut senden
+pt-PT,Ocorreu um problema ao reenviar os seus cartões de oferta. Tente novamente ou entre contacto connosco.,de,Beim erneuten Versenden Ihrer Geschenkkarten ist ein Problem aufgetreten. Versuchen Sie es erneut oder kontaktieren Sie uns.
+pt-PT,Estes itens estão completos.,de,Diese Artikel sind vollständig.
+pt-PT,Números de rastreio,de,Tracking-Nummern
+pt-PT,"Se não foram recebidos,",de,"Wenn nicht erhalten,"
+pt-PT,Carregar mais {{count}} item,de,Weitere {{count}} Artikel laden
+pt-PT,Tem {{count}} encomendas pendentes,de,Sie haben {{count}} ausstehende Bestellungen
+pt-PT,O seu pagamento está há {{count}} dias em dívida,de,Ihre Zahlung ist {{count}} Tage fällig
+pt-PT,O seu pagamento expira em {{count}} dias,de,Ihre Zahlung läuft in {{count}} Tagen ab
+pt-PT,Existem {{count}} erros,de,Es liegen {{count}} Fehler vor
+pt-PT,{{count}} itens disponíveis,de,{{count}} verfügbare Artikel
+pt-PT,meses,de,Monate
+pt-PT,Cluster de {{number}} marcadores,de,Cluster von {{number}} Markierungen
+pt-PT,Há {{count}} minutos,de,Vor {{count}} Minuten
+pt-PT,View all,de,Alle anzeigen
+pt-PT,Load more,de,Mehr laden
+pt-PT,Verified buyer,de,Verifizierter Käufer
+pt-PT,Show more,de,Mehr anzeigen
+pt-PT,Recent searches,de,Aktuelle Suchanfragen
+pt-PT,Popular searches,de,Beliebte Suchanfragen
+pt-PT,Popular items,de,Beliebte Artikel
+pt-PT,Suggestions,de,Vorschläge
+pt-PT,Pages,de,Seiten
+pt-PT,Search for “{{ terms }}”,de,Suchen Sie nach „{{ terms }}“
+pt-PT,Your cart is empty,de,Ihr Warenkorb ist leer
+pt-PT,Continue shopping,de,Shoppen Sie weiter
+pt-PT,Cart,de,Karte
+pt-PT,Estimated total,de,Geschätzte Gesamtsumme
+pt-PT,Check out,de,Kasse
+pt-PT,View cart,de,Diagramm ansehen
+pt-PT,View product,de,Produkt ansehen
+pt-PT,On,de,An
+pt-PT,By,de,Von
+pt-PT,View more,de,Mehr anzeigen
+pt-PT,Clear all,de,Alles löschen
+pt-PT,To,de,Zu
+pt-PT,Sort by:,de,Sortieren nach:
+pt-PT,{{ product_count }} product found,de,{{ product_count }} Produkt gefunden
+pt-PT,{{ product_count }} products found,de,{{ product_count }} Produkte gefunden
+pt-PT,{{ product_count }} product,de,{{ product_count }} Produkt
+pt-PT,{{ product_count }} products,de,{{ product_count }} Produkte
+pt-PT,Load more,de,Mehr laden
+pt-PT,Search results,de,Suchergebnisse
+pt-PT,"Found {{ count }} result for ""{{ terms }}""",de,{{ count }} Ergebnis für „{{ terms }}“ gefunden
+pt-PT,"Found {{ count }} results for ""{{ terms }}""",de,Es wurden {{ count }} Ergebnisse für „{{ terms }}“ gefunden.
+pt-PT,Sort by:,de,Sortieren nach:
+pt-PT,No results could be found. Please try again with a different query.,de,Es konnten keine Ergebnisse gefunden werden. Bitte versuchen Sie es erneut mit einer anderen Abfrage.
+pt-PT,Blog,de,Blog
+pt-PT,Page,de,Seite
+pt-PT,Next,de,Nächste
+pt-PT,Previous,de,Vorherige
+pt-PT,{{ count }} comment,de,{{ count }} Kommentar
+pt-PT,{{ count }} comments,de,{{ count }} Kommentare
+pt-PT,Leave a comment,de,Hinterlassen Sie einen Kommentar
+pt-PT,Your email address will not be published,de,Ihre E-Mail-Adresse wird nicht veröffentlicht
+pt-PT,"Please note, comments need to be approved before they are published.",de,"Bitte beachten Sie, dass Kommentare vor der Veröffentlichung genehmigt werden müssen."
+pt-PT,Email,de,E-Mail
+pt-PT,Message,de,Nachricht
+pt-PT,Post comment,de,Kommentar posten
+pt-PT,Error: An issue has occurred!,de,Fehler: Es ist ein Problem aufgetreten!
+pt-PT,Your comment was posted successfully! Thank you!,de,Ihr Kommentar wurde erfolgreich gepostet! Danke schön!
+pt-PT,"Your comment was posted successfully. We will publish it in a little while, as our blog is moderated.",de,"Ihr Kommentar wurde erfolgreich gepostet. Wir werden es in Kürze veröffentlichen, da unser Blog moderiert wird."
+pt-PT,Subscribe,de,Abonnieren
+pt-PT,Copy,de,Kopie
+pt-PT,Copy Discount,de,Kopierrabatt
+pt-PT,Copied Discount,de,Kopierter Rabatt
+pt-PT,Send message,de,Nachricht senden
+pt-PT,Message,de,Nachricht
+pt-PT,Enter your email,de,Geben Sie Ihre E-Mail-Adresse ein
+pt-PT,Your email,de,Ihre E-Mail
+pt-PT,{{ field }} is required,de,{{ field }} ist erforderlich
+pt-PT,{{ field }} is invalid,de,{{ field }} ist ungültig
+pt-PT,"An error occurred, please check the information and resubmit.",de,Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Informationen und übermitteln Sie sie erneut.
+pt-PT,Thanks for contacting us. We'll get back to you as soon as possible.,de,"Vielen Dank, dass Sie uns kontaktiert haben. Wir werden uns so schnell wie möglich bei Ihnen melden."
+pt-PT,Thanks for subscribing,de,Vielen Dank für Ihr Abonnement
+pt-PT,Email,de,E-Mail
+pt-PT,Password,de,Passwort
+pt-PT,Forgot your password?,de,Passwort vergessen?
+pt-PT,Sign in,de,anmelden
+pt-PT,Don't have account?,de,Sie haben noch kein Konto?
+pt-PT,Sign up,de,Melden Sie sich an
+pt-PT,Reset your password,de,Setzen Sie Ihr Passwort zurück
+pt-PT,We will send you an email to reset your password,de,"Wir senden Ihnen eine E-Mail, um Ihr Passwort zurückzusetzen"
+pt-PT,Submit,de,Einreichen
+pt-PT,We've sent you an email with a link to update your password.,de,Wir haben Ihnen eine E-Mail mit einem Link zur Aktualisierung Ihres Passworts gesendet.
+pt-PT,No account found with that email.,de,Mit dieser E-Mail wurde kein Konto gefunden.
+pt-PT,First name,de,Vorname
+pt-PT,Last name,de,Nachname
+pt-PT,Create account,de,Benutzerkonto erstellen
+pt-PT,Already has an account?,de,Sie haben bereits ein Konto?
+pt-PT,Add to cart,de,In den Warenkorb legen
+pt-PT,Buy it now,de,Kaufe es jetzt
+pt-PT,Quantity,de,Menge
+pt-PT,Product type,de,Produkttyp
+pt-PT,Vendor,de,Verkäufer
+pt-PT,Tags,de,Schlagworte
+pt-PT,I want to send this as a gift,de,Ich möchte das als Geschenk verschicken
+pt-PT,200 characters max,de,Maximal 200 Zeichen
+pt-PT,Send on(optional),de,Senden am (optional)
+pt-PT,in cart,de,im Warenkorb
+pt-PT,{{ cart_qty }} in cart,de,{{ cart_qty }} im Warenkorb
+pt-PT,All,de,Alle
+pt-PT,item is already added to cart!,de,Der Artikel wurde bereits zum Warenkorb hinzugefügt!
+pt-PT,items are already added to cart!,de,Artikel sind bereits zum Warenkorb hinzugefügt!
+pt-PT,item is in cart!,de,Artikel ist im Warenkorb!
+pt-PT,items are in cart!,de,Artikel sind im Warenkorb!
+pt-PT,You can't add more,de,Sie können nicht mehr hinzufügen
+pt-PT,to the cart,de,zur Karte
+pt-PT,Cart added,de,Warenkorb hinzugefügt
+pt-PT,Add cart failed,de,Das Hinzufügen der Karte ist fehlgeschlagen
+pt-PT,Sold out,de,Ausverkauft
+pt-PT,Sale {{ sale_percent }},de,Verkauf {{ sale_percent }}
+pt-PT,Sale,de,Verkauf
+pt-PT,No products,de,Keine Produkte
+pt-PT,From {{ price }},de,Ab {{ price }}
+pt-PT,Unit price,de,Stückpreis
+pt-PT,per,de,pro
+pt-PT,Select options,de,Wählen Sie Optionen aus
+pt-PT,Total price,de,Gesamtpreis
+pt-PT,Add (<span class='item-bunble-selected'></span>) items to cart,de,Fügen Sie (<span class='item-bunble-selected'></span>) Artikel zum Warenkorb hinzu
+pt-PT,Add all items to cart,de,Alle Artikel in den Warenkorb legen
+pt-PT,This item,de,Dieser Artikel
+pt-PT,In stock,de,Auf Lager
+pt-PT,Low stock,de,Geringer Lagerbestand
+pt-PT,left,de,links
+pt-PT,Low stock {{ quantity }} left,de,Wenig Lagerbestand: {{ quantity }} übrig
+pt-PT,Out of stock,de,Ausverkauft
+pt-PT,Product link,de,Produktlink
+pt-PT,Email,de,E-Mail
+pt-PT,Phone number,de,Telefonnummer
+pt-PT,Question,de,Frage
+pt-PT,Submit question successfully,de,Frage erfolgreich abschicken
+pt-PT,Submit question failed,de,Das Senden der Frage ist fehlgeschlagen
+pt-PT,Submit,de,Einreichen
+pt-PT,"Taxes, discounts and <a href=""{{ link }}"">shipping</a> calculated at checkout",de,"Steuern, Rabatte und <a href=""{{ link }}"">Versand</a> werden beim Bezahlvorgang berechnet"
+pt-PT,Tax included and shipping and discounts calculated at checkout,de,Inklusive Steuern; Versand und Rabatte werden an der Kasse berechnet
+pt-PT,"Tax included. <a href=""{{ link }}"">shipping</a> and discounts calculated at checkout.",de,"Steuer inbegriffen. <a href=""{{ link }}"">Versand</a> und Rabatte werden an der Kasse berechnet."
+pt-PT,"Taxes, discounts and shipping calculated at checkout",de,"Steuern, Rabatte und Versandkosten werden an der Kasse berechnet"
+pt-PT,Save,de,Speichern
+pt-PT,Cancel,de,Stornieren
+pt-PT,Note field is required,de,Hinweisfeld ist erforderlich
+pt-PT,"An error occurred, please check the information and resubmit",de,Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Informationen und übermitteln Sie sie erneut
+pt-PT,Product,de,Produkt
+pt-PT,Quantity,de,Menge
+pt-PT,Total,de,Gesamt
+pt-PT,Your cart is empty,de,Ihr Warenkorb ist leer
+pt-PT,Your cart is currently empty. Discover exciting products on our Shop page,de,Ihr Warenkorb ist derzeit leer. Entdecken Sie spannende Produkte auf unserer Shop-Seite
+pt-PT,Back to shopping,de,Zurück zum Einkaufen
+pt-PT,Your cart is empty,de,Ihr Warenkorb ist leer
+pt-PT,Your cart,de,Ihre Karte
+pt-PT,Continue shopping,de,Shoppen Sie weiter
+pt-PT,Your cart is currently empty. Discover exciting products on our Shop page,de,Ihr Warenkorb ist derzeit leer. Entdecken Sie spannende Produkte auf unserer Shop-Seite
+pt-PT,Have an account?,de,Haben Sie ein Konto?
+pt-PT,"<a href=""{{ link }}"" class=""link underlined-link"">Log in</a> to check out faster.",de,"<a href=""{{ link }}"" class=""link underlined-link"">Melden Sie sich an</a>, um schneller zur Kasse zu gehen."
+pt-PT,Decrease quantity for,de,Menge verringern für
+pt-PT,Increase quantity for,de,Menge erhöhen für
+pt-PT,Quantity for,de,Menge für
+pt-PT,Regular price,de,Regulärer Preis
+pt-PT,Sale price,de,Verkaufspreis
+pt-PT,Sale price,de,Verkaufspreis
+pt-PT,Add order note,de,Bestellnotiz hinzufügen
+pt-PT,Estimated total,de,Geschätzte Gesamtsumme
+pt-PT,Estimate shipping,de,Kostenvoranschlag für den Versand
+pt-PT,"Taxes, discounts and shipping calculated at checkout",de,"Steuern, Rabatte und Versandkosten werden an der Kasse berechnet"
+pt-PT,Remove {{ title }},de,{{ title }} entfernen
+pt-PT,Estimate Shipping,de,Kostenvoranschlag für den Versand
+pt-PT,Country,de,Land
+pt-PT,Choose Country,de,Wählen Sie Land
+pt-PT,Province,de,Provinz
+pt-PT,Choose Province,de,Wählen Sie Provinz
+pt-PT,Enter a ZIP code,de,Geben Sie eine Postleitzahl ein
+pt-PT,Estimate,de,Schätzen
+pt-PT,We found several shipping rates available for your address:,de,Wir haben für Ihre Adresse mehrere verfügbare Versandtarife gefunden:
+pt-PT,There are several shipping rates for your address:,de,Für Ihre Adresse gelten verschiedene Versandkosten:
+pt-PT,There are no shipping rates for your address.,de,Für Ihre Adresse gibt es keine Versandkosten.
+pt-PT,There are some errors:,de,Es gibt einige Fehler:
+pt-PT,FREE,de,FREI
+pt-PT,Dashboard,de,Armaturenbrett
+pt-PT,Address,de,Adresse
+pt-PT,Wishlist,de,Wunschliste
+pt-PT,Compare,de,Vergleichen
+pt-PT,Order history,de,Bestellhistorie
+pt-PT,Order,de,Befehl
+pt-PT,Date,de,Datum
+pt-PT,Payment status,de,Zahlungsstatus
+pt-PT,Fulfillment status,de,Erfüllungsstatus
+pt-PT,Total,de,Gesamt
+pt-PT,Account details,de,Kontodaten
+pt-PT,default address,de,Standardadresse
+pt-PT,Cancel,de,Stornieren
+pt-PT,Sign up,de,Melden Sie sich an
+pt-PT,Email,de,E-Mail
+pt-PT,Forgot your password?,de,Passwort vergessen?
+pt-PT,Continue,de,Weitermachen
+pt-PT,Continue as a guest,de,Weiter als Gast
+pt-PT,Password,de,Passwort
+pt-PT,Sign in,de,anmelden
+pt-PT,Submit,de,Einreichen
+pt-PT,Order {{ name }},de,Bestellen Sie {{ name }}
+pt-PT,Placed on {{ date }},de,Gepostet am {{ date }}
+pt-PT,Order Cancelled on {{ date }},de,Bestellung storniert am {{ date }}
+pt-PT,Reason: {{ reason }},de,Grund: {{ reason }}
+pt-PT,Billing Address,de,Rechnungsadresse
+pt-PT,Payment Status,de,Zahlungsstatus
+pt-PT,Shipping Address,de,Lieferadresse
+pt-PT,Fulfillment Status,de,Erfüllungsstatus
+pt-PT,Discount,de,Rabatt
+pt-PT,Tax,de,Steuer
+pt-PT,Product,de,Produkt
+pt-PT,SKU,de,Artikelnummer
+pt-PT,Price,de,Preis
+pt-PT,Quantity,de,Menge
+pt-PT,Total,de,Gesamt
+pt-PT,Refunded,de,Erstattet
+pt-PT,Fulfilled {{ date }},de,Erfüllt am {{ date }}
+pt-PT,Track shipment,de,Sendung verfolgen
+pt-PT,Tracking link,de,Tracking-Link
+pt-PT,Carrier,de,Träger
+pt-PT,Tracking number,de,Tracking-Nummer
+pt-PT,Subtotal,de,Zwischensumme
+pt-PT,Duties,de,Aufgaben
+pt-PT,Your address,de,Ihre Adresse
+pt-PT,Your addresses,de,Ihre Adressen
+pt-PT,default adderss,de,Standardaddierer
+pt-PT,Add a new address,de,Fügen Sie eine neue Adresse hinzu
+pt-PT,Edit address,de,Adresse bearbeiten
+pt-PT,First name,de,Vorname
+pt-PT,Last name,de,Nachname
+pt-PT,Company,de,Unternehmen
+pt-PT,Address 1,de,Adresse 1
+pt-PT,Address 2,de,Adresse 2
+pt-PT,City,de,Stadt
+pt-PT,Country/region,de,Land/Region
+pt-PT,Province,de,Provinz
+pt-PT,Postal/ZIP code,de,Postleitzahl
+pt-PT,Phone,de,Telefon
+pt-PT,Set as default address,de,Als Standardadresse festlegen
+pt-PT,Add address,de,Adresse hinzufügen
+pt-PT,Update address,de,Adresse aktualisieren
+pt-PT,Cancel,de,Stornieren
+pt-PT,Edit,de,Bearbeiten
+pt-PT,Delete,de,Löschen
+pt-PT,Are you sure you wish to delete this address?,de,"Sind Sie sicher, dass Sie diese Adresse löschen möchten?"
+pt-PT,Error,de,Fehler
+pt-PT,Wrong password!,de,Falsches Passwort!
+pt-PT,Enter using password,de,Geben Sie mit dem Passwort ein
+pt-PT,Close,de,Schließen
+pt-PT,Enter store using password:,de,Betreten Sie den Shop mit dem Passwort:
+pt-PT,Your password,de,Ihr Passwort
+pt-PT,Enter,de,Eingeben
+pt-PT,"<span>Are you the store owner?</span> <a href=""/admin"" class=""link underlined-link"">Log in here</a>",de,"<span>Sind Sie der Ladenbesitzer?</span> <a href=""/admin"" class=""link underlined-link"">Melden Sie sich hier an</a>"
+pt-PT,Notify me,de,Benachrichtigen Sie mich
+pt-PT,Add wishlist,de,Wunschliste hinzufügen
+pt-PT,Remove from wishlist,de,Von der Wunschliste entfernen
+pt-PT,Visit wishlist page,de,Besuchen Sie die Seite mit der Wunschliste
+pt-PT,Add compare,de,Vergleich hinzufügen
+pt-PT,Remove from compare,de,Aus Vergleich entfernen
+pt-PT,Visit compare page,de,Besuchen Sie die Vergleichsseite
+pt-PT,Page not found,de,Seite nicht gefunden
+pt-PT,Captcha,de,Captcha
+pt-PT,Cart,de,Karte
+pt-PT,List collections,de,Sammlungen auflisten
+pt-PT,Account,de,Konto
+pt-PT,Active accout,de,Aktives Konto
+pt-PT,Address,de,Adresse
+pt-PT,Order,de,Befehl
+pt-PT,Register,de,Registrieren
+pt-PT,Reset password,de,Passwort zurücksetzen
+pt-PT,Gift card,de,Geschenkkarte
+pt-PT,Metaobject,de,Metaobjekt
+pt-PT,Password,de,Passwort
+pt-PT,Policy,de,Politik
+pt-PT,Wishlist is empty,de,Die Wunschliste ist leer
+pt-PT,No items in your wishlist yet. Discover exciting products on our Shop page,de,Noch keine Artikel auf Ihrer Wunschliste. Entdecken Sie spannende Produkte auf unserer Shop-Seite
+pt-PT,Compare is empty,de,Vergleichen ist leer
+pt-PT,Quick add,de,Schnell hinzufügen
+pt-PT,No items in your compare yet. Discover exciting products on our Shop page,de,Noch keine Artikel in Ihrem Vergleich. Entdecken Sie spannende Produkte auf unserer Shop-Seite
+pt-PT,View all,de,Alle anzeigen
+pt-PT,Load more,de,Mehr laden
+pt-PT,READ MORE,de,MEHR LESEN
+pt-PT,Copy link,de,Link kopieren
+pt-PT,Copied,de,Kopiert
+pt-PT,Facebook,de,Facebook
+pt-PT,Twitter,de,Twitter
+pt-PT,Pinterest,de,Pinterest
+pt-PT,Tumblr,de,Tumblr
+pt-PT,{{ field }} is required,de,{{ field }} ist erforderlich
+pt-PT,{{ field }} is invalid,de,{{ field }} ist ungültig
+pt-PT,is required,de,ist erforderlich
+pt-PT,is invalid,de,ist ungültig
+pt-PT,"An error occurred, please check the information and resubmit.",de,Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Informationen und übermitteln Sie sie erneut.
+pt-PT,Thanks for contacting us. We'll get back to you as soon as possible.,de,"Vielen Dank, dass Sie uns kontaktiert haben. Wir werden uns so schnell wie möglich bei Ihnen melden."
+pt-PT,Subscribe failed,de,Das Abonnieren ist fehlgeschlagen
+pt-PT,Subscribe successes,de,Erfolge abonnieren
+pt-PT,Your name,de,Ihr Name
+pt-PT,Your email,de,Ihre E-Mail
+pt-PT,Your phone,de,Dein Telefon
+pt-PT,Your message,de,Ihre Nachricht
+pt-PT,Example product title,de,Beispiel für einen Produkttitel
+pt-PT,Add to cart,de,In den Warenkorb legen
+pt-PT,Cart added!,de,Warenkorb hinzugefügt!
+pt-PT,Add cart failed,de,Das Hinzufügen der Karte ist fehlgeschlagen
+pt-PT,Sold out,de,Ausverkauft
+pt-PT,Save {{ price }},de,Sparen Sie {{ price }}
+pt-PT,No products,de,Keine Produkte
+pt-PT,From {{ price }},de,Ab {{ price }}
+pt-PT,Unit price,de,Stückpreis
+pt-PT,per,de,pro
+pt-PT,Unavailable,de,Nicht verfügbar
+pt-PT,{{ option_value }} - Unavailable,de,{{ option_value }} – Nicht verfügbar
+pt-PT,Zero,de,Null
+pt-PT,{{ count }} review,de,{{ count }} Rezension
+pt-PT,{{ count }} reviews,de,{{ count }} Bewertungen
+pt-PT,Quantity,de,Menge
+pt-PT,Quantity Input,de,Mengeneingabe
+pt-PT,SKU,de,Artikelnummer
+pt-PT,In stock,de,Auf Lager
+pt-PT,{{ quantity }} in stock,de,{{ quantity }} auf Lager
+pt-PT,Low stock,de,Geringer Lagerbestand
+pt-PT,Low stock: {{ quantity }} left,de,Geringer Lagerbestand: {{ quantity }} übrig
+pt-PT,Out of stock,de,Ausverkauft
+pt-PT,In stock,de,Auf Lager
+pt-PT,Please adjust the following:,de,Bitte passen Sie Folgendes an:
+pt-PT,I want to send this as a gift,de,Ich möchte das als Geschenk verschicken
+pt-PT,Gift card recipient form expanded,de,Formular für Geschenkkartenempfänger erweitert
+pt-PT,Gift card recipient form collapsed,de,Das Formular für den Empfänger der Geschenkkarte ist ausgeblendet
+pt-PT,Recipient email,de,E-Mail-Empfänger
+pt-PT,Recipient email (optional),de,Empfänger-E-Mail (optional)
+pt-PT,Email,de,E-Mail
+pt-PT,Recipient name (optional),de,Empfängername (optional)
+pt-PT,Message (optional),de,Nachricht (optional)
+pt-PT,Message,de,Nachricht
+pt-PT,{{ max_chars }} characters max,de,{{ max_chars }} Zeichen max
+pt-PT,YYYY-MM-DD,de,JJJJ-MM-TT
+pt-PT,Send on (optional),de,Senden an (optional)

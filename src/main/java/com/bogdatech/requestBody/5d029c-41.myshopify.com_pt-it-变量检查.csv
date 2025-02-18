@@ -1,0 +1,1312 @@
+source_code,source_text,target_code,target_text
+pt-PT,View all,it,Visualizza tutto
+pt-PT,Load more,it,Carica di più
+pt-PT,Verified buyer,it,Acquirente verificato
+pt-PT,Show more,it,Mostra di più
+pt-PT,Search,it,Ricerca
+pt-PT,Recent searches,it,Ricerche recenti
+pt-PT,Popular searches,it,Ricerche popolari
+pt-PT,Popular items,it,Articoli popolari
+pt-PT,Suggestions,it,Suggerimenti
+pt-PT,Products,it,Prodotti
+pt-PT,Pages,it,Pagine
+pt-PT,Search for “{{ terms }}”,it,"Cerca ""{{ terms }}"""
+pt-PT,Your cart is empty,it,Il tuo carrello è vuoto
+pt-PT,Continue shopping,it,Continua a fare acquisti
+pt-PT,Cart,it,Carrello
+pt-PT,Estimated total,it,Totale stimato
+pt-PT,Check out,it,Guardare
+pt-PT,View cart,it,Visualizza carrello
+pt-PT,View product,it,Visualizza il prodotto
+pt-PT,On,it,SU
+pt-PT,By,it,Di
+pt-PT,View more,it,Visualizza altro
+pt-PT,Clear all,it,Cancella tutto
+pt-PT,To,it,A
+pt-PT,Sort by:,it,Ordina per:
+pt-PT,{{ product_count }} product found,it,{{ product_count }} prodotto trovato
+pt-PT,{{ product_count }} products found,it,{{ product_count }} prodotti trovati
+pt-PT,{{ product_count }} product,it,{{ product_count }} prodotto
+pt-PT,{{ product_count }} products,it,{{ product_count }} prodotti
+pt-PT,Load more,it,Carica di più
+pt-PT,Search results,it,Risultati della ricerca
+pt-PT,Search,it,Ricerca
+pt-PT,"Found {{ count }} result for ""{{ terms }}""",it,"Trovato {{ count }} risultato per ""{{ terms }}"""
+pt-PT,"Found {{ count }} results for ""{{ terms }}""",it,"Trovato {{ count }} risultati per ""{{ terms }}"""
+pt-PT,Sort by:,it,Ordina per:
+pt-PT,No results could be found. Please try again with a different query.,it,Nessun risultato trovato. Riprova con una query diversa.
+pt-PT,Blog,it,Blog
+pt-PT,Page,it,Pagina
+pt-PT,Next,it,Prossimo
+pt-PT,Previous,it,Precedente
+pt-PT,{{ count }} comment,it,{{ count }} commento
+pt-PT,{{ count }} comments,it,{{ count }} commenti
+pt-PT,Leave a comment,it,Lascia un commento
+pt-PT,Your email address will not be published,it,Il tuo indirizzo email non verrà pubblicato
+pt-PT,"Please note, comments need to be approved before they are published.",it,Tieni presente che i commenti devono essere approvati prima di essere pubblicati.
+pt-PT,Name,it,Nome
+pt-PT,Email,it,E-mail
+pt-PT,Message,it,Messaggio
+pt-PT,Post comment,it,Pubblica un commento
+pt-PT,Error: An issue has occurred!,it,Errore: si è verificato un problema!
+pt-PT,Your comment was posted successfully! Thank you!,it,Il tuo commento è stato pubblicato con successo! Grazie!
+pt-PT,"Your comment was posted successfully. We will publish it in a little while, as our blog is moderated.",it,"Il tuo commento è stato pubblicato con successo. Lo pubblicheremo tra poco, poiché il nostro blog è moderato."
+pt-PT,Subscribe,it,Iscriviti
+pt-PT,Copy,it,Copia
+pt-PT,Copy Discount,it,Sconto copia
+pt-PT,Copied Discount,it,Sconto copiato
+pt-PT,Send message,it,Invia messaggio
+pt-PT,Name,it,Nome
+pt-PT,Message,it,Messaggio
+pt-PT,Enter your email,it,Inserisci la tua email
+pt-PT,Your email,it,La tua email
+pt-PT,{{ field }} is required,it,{{ field }} è obbligatorio
+pt-PT,{{ field }} is invalid,it,{{ field }} non è valido
+pt-PT,"An error occurred, please check the information and resubmit.",it,"Si è verificato un errore, controlla le informazioni e invia nuovamente."
+pt-PT,Thanks for contacting us. We'll get back to you as soon as possible.,it,Grazie per averci contattato. Ti risponderemo il prima possibile.
+pt-PT,Thanks for subscribing,it,Grazie per esserti iscritto
+pt-PT,Email,it,E-mail
+pt-PT,Password,it,Password
+pt-PT,Login,it,Login
+pt-PT,Forgot your password?,it,Hai dimenticato la password?
+pt-PT,Sign in,it,Registrazione
+pt-PT,Don't have account?,it,Non hai un account?
+pt-PT,Sign up,it,Iscrizione
+pt-PT,Reset your password,it,Reimposta la tua password
+pt-PT,We will send you an email to reset your password,it,Ti invieremo un'e-mail per reimpostare la password
+pt-PT,Submit,it,Invia
+pt-PT,We've sent you an email with a link to update your password.,it,Ti abbiamo inviato un'e-mail con un collegamento per aggiornare la tua password.
+pt-PT,No account found with that email.,it,Nessun account trovato con quell'e-mail.
+pt-PT,First name,it,Nome di battesimo
+pt-PT,Last name,it,Cognome
+pt-PT,Create account,it,Creare un account
+pt-PT,Already has an account?,it,Hai già un account?
+pt-PT,Add to cart,it,Aggiungi al carrello
+pt-PT,Buy it now,it,Compralo Subito
+pt-PT,Quantity,it,Quantità
+pt-PT,Product type,it,Tipo di prodotto
+pt-PT,Vendor,it,Venditore
+pt-PT,Collections,it,Collezioni
+pt-PT,Tags,it,Tag
+pt-PT,I want to send this as a gift,it,Voglio inviarlo come regalo
+pt-PT,200 characters max,it,200 caratteri massimo
+pt-PT,Send on(optional),it,Invia (facoltativo)
+pt-PT,in cart,it,nel carrello
+pt-PT,{{ cart_qty }} in cart,it,{{ cart_qty }} nel carrello
+pt-PT,All,it,Tutto
+pt-PT,item is already added to cart!,it,l'articolo è già aggiunto al carrello!
+pt-PT,items are already added to cart!,it,gli articoli sono già aggiunti al carrello!
+pt-PT,item is in cart!,it,l'articolo è nel carrello!
+pt-PT,items are in cart!,it,gli articoli sono nel carrello!
+pt-PT,You can't add more,it,Non puoi aggiungere altro
+pt-PT,to the cart,it,al carrello
+pt-PT,Cart added,it,Carrello aggiunto
+pt-PT,Add cart failed,it,Aggiunta del carrello non riuscita
+pt-PT,Sold out,it,Esaurito
+pt-PT,Sale {{ sale_percent }},it,Saldi {{ sale_percent }}
+pt-PT,Sale,it,Vendita
+pt-PT,No products,it,Nessun prodotto
+pt-PT,From {{ price }},it,A partire da {{ price }}
+pt-PT,Unit price,it,Prezzo unitario
+pt-PT,per,it,per
+pt-PT,Select options,it,Seleziona le opzioni
+pt-PT,Total price,it,Prezzo totale
+pt-PT,Add (<span class='item-bunble-selected'></span>) items to cart,it,Aggiungi (<span class='item-bunble-selected'></span>) articoli al carrello
+pt-PT,Add all items to cart,it,Aggiungi tutti gli articoli al carrello
+pt-PT,This item,it,Questo articolo
+pt-PT,In stock,it,In magazzino
+pt-PT,Low stock,it,Scorte basse
+pt-PT,left,it,Sinistra
+pt-PT,Low stock {{ quantity }} left,it,Stock rimanente di {{ quantity }} in esaurimento
+pt-PT,Out of stock,it,Esaurito
+pt-PT,Product link,it,Collegamento del prodotto
+pt-PT,Name,it,Nome
+pt-PT,Email,it,E-mail
+pt-PT,Phone number,it,Numero di telefono
+pt-PT,Question,it,Domanda
+pt-PT,Submit question successfully,it,Invia la domanda con successo
+pt-PT,Submit question failed,it,Invio della domanda non riuscito
+pt-PT,Submit,it,Invia
+pt-PT,"Taxes, discounts and <a href=""{{ link }}"">shipping</a> calculated at checkout",it,"Tasse, sconti e <a href=""{{ link }}"">spedizione</a> calcolati al momento del pagamento"
+pt-PT,Tax included and shipping and discounts calculated at checkout,it,"Tasse incluse, spedizione e sconti calcolati al momento del pagamento"
+pt-PT,"Tax included. <a href=""{{ link }}"">shipping</a> and discounts calculated at checkout.",it,"Tasse incluse. <a href=""{{ link }}"">spedizione</a> e sconti calcolati al momento del pagamento."
+pt-PT,"Taxes, discounts and shipping calculated at checkout",it,"Tasse, sconti e spese di spedizione calcolati al momento del pagamento"
+pt-PT,Save,it,Salva
+pt-PT,Cancel,it,Cancellare
+pt-PT,Note field is required,it,Il campo nota è obbligatorio
+pt-PT,"An error occurred, please check the information and resubmit",it,"Si è verificato un errore, controlla le informazioni e invia nuovamente"
+pt-PT,Product,it,Prodotto
+pt-PT,Quantity,it,Quantità
+pt-PT,Total,it,Totale
+pt-PT,Your cart is empty,it,Il tuo carrello è vuoto
+pt-PT,Your cart is currently empty. Discover exciting products on our Shop page,it,Il tuo carrello è attualmente vuoto. Scopri prodotti entusiasmanti sulla nostra pagina Shop
+pt-PT,Back to shopping,it,Torniamo allo shopping
+pt-PT,Your cart is empty,it,Il tuo carrello è vuoto
+pt-PT,Your cart,it,Il tuo carrello
+pt-PT,Continue shopping,it,Continua a fare acquisti
+pt-PT,Your cart is currently empty. Discover exciting products on our Shop page,it,Il tuo carrello è attualmente vuoto. Scopri prodotti entusiasmanti sulla nostra pagina Shop
+pt-PT,Have an account?,it,Hai un account?
+pt-PT,"<a href=""{{ link }}"" class=""link underlined-link"">Log in</a> to check out faster.",it,"<a href=""{{ link }}"" class=""link underlined-link"">Accedi</a> per effettuare il pagamento più velocemente."
+pt-PT,Decrease quantity for,it,Diminuire la quantità per
+pt-PT,Increase quantity for,it,Aumenta la quantità per
+pt-PT,Quantity for,it,Quantità per
+pt-PT,Regular price,it,Prezzo normale
+pt-PT,Sale price,it,Prezzo di vendita
+pt-PT,Sale price,it,Prezzo di vendita
+pt-PT,Add order note,it,Aggiungi nota sull'ordine
+pt-PT,Estimated total,it,Totale stimato
+pt-PT,Estimate shipping,it,Spedizione stimata
+pt-PT,"Taxes, discounts and shipping calculated at checkout",it,"Tasse, sconti e spese di spedizione calcolati al momento del pagamento"
+pt-PT,Remove {{ title }},it,Rimuovi {{ title }}
+pt-PT,Estimate Shipping,it,Spedizione stimata
+pt-PT,Country,it,Paese
+pt-PT,Choose Country,it,Scegli Paese
+pt-PT,Province,it,Provincia
+pt-PT,Choose Province,it,Scegli Provincia
+pt-PT,Enter a ZIP code,it,Inserisci un codice postale
+pt-PT,Estimate,it,Stima
+pt-PT,We found several shipping rates available for your address:,it,Abbiamo trovato diverse tariffe di spedizione disponibili per il tuo indirizzo:
+pt-PT,There are several shipping rates for your address:,it,Esistono diverse tariffe di spedizione per il tuo indirizzo:
+pt-PT,There are no shipping rates for your address.,it,Non sono previste tariffe di spedizione per il tuo indirizzo.
+pt-PT,There are some errors:,it,Ci sono alcuni errori:
+pt-PT,FREE,it,GRATUITO
+pt-PT,Dashboard,it,Pannello di controllo
+pt-PT,Address,it,Indirizzo
+pt-PT,Wishlist,it,Lista dei desideri
+pt-PT,Compare,it,Confrontare
+pt-PT,Log out,it,Esci
+pt-PT,Order history,it,Cronologia degli ordini
+pt-PT,Order,it,Ordine
+pt-PT,Date,it,Data
+pt-PT,Payment status,it,Stato del pagamento
+pt-PT,Fulfillment status,it,Stato di adempimento
+pt-PT,Total,it,Totale
+pt-PT,Account details,it,Dettagli del conto
+pt-PT,default address,it,indirizzo predefinito
+pt-PT,Cancel,it,Cancellare
+pt-PT,Sign up,it,Iscrizione
+pt-PT,Email,it,E-mail
+pt-PT,Forgot your password?,it,Hai dimenticato la password?
+pt-PT,Continue,it,Continuare
+pt-PT,Continue as a guest,it,Continua come ospite
+pt-PT,Password,it,Password
+pt-PT,Login,it,Login
+pt-PT,Sign in,it,Registrazione
+pt-PT,Submit,it,Invia
+pt-PT,Order {{ name }},it,Ordina {{ name }}
+pt-PT,Placed on {{ date }},it,Inserito il {{ date }}
+pt-PT,Order Cancelled on {{ date }},it,Ordine annullato il {{ date }}
+pt-PT,Reason: {{ reason }},it,Motivo: {{ reason }}
+pt-PT,Billing Address,it,Indirizzo di fatturazione
+pt-PT,Payment Status,it,Stato del pagamento
+pt-PT,Shipping Address,it,Indirizzo di spedizione
+pt-PT,Fulfillment Status,it,Stato di adempimento
+pt-PT,Discount,it,Sconto
+pt-PT,Shipping,it,Spedizione
+pt-PT,Tax,it,Tassare
+pt-PT,Product,it,Prodotto
+pt-PT,SKU,it,SKU
+pt-PT,Price,it,Prezzo
+pt-PT,Quantity,it,Quantità
+pt-PT,Total,it,Totale
+pt-PT,Refunded,it,Rimborsato
+pt-PT,Fulfilled {{ date }},it,Eseguito il {{ date }}
+pt-PT,Track shipment,it,Traccia la spedizione
+pt-PT,Tracking link,it,Collegamento di monitoraggio
+pt-PT,Carrier,it,Vettore
+pt-PT,Tracking number,it,Numero di identificazione
+pt-PT,Subtotal,it,Totale parziale
+pt-PT,Duties,it,Doveri
+pt-PT,Your address,it,Il tuo indirizzo
+pt-PT,Your addresses,it,I tuoi indirizzi
+pt-PT,default adderss,it,indirizzo predefinito
+pt-PT,Add a new address,it,Aggiungi un nuovo indirizzo
+pt-PT,Edit address,it,Modifica indirizzo
+pt-PT,First name,it,Nome di battesimo
+pt-PT,Last name,it,Cognome
+pt-PT,Company,it,Azienda
+pt-PT,Address 1,it,Indirizzo 1
+pt-PT,Address 2,it,Indirizzo 2
+pt-PT,City,it,Città
+pt-PT,Country/region,it,Paese/regione
+pt-PT,Province,it,Provincia
+pt-PT,Postal/ZIP code,it,Codice postale/CAP
+pt-PT,Phone,it,Telefono
+pt-PT,Set as default address,it,Imposta come indirizzo predefinito
+pt-PT,Add address,it,Aggiungi indirizzo
+pt-PT,Update address,it,Aggiorna indirizzo
+pt-PT,Cancel,it,Cancellare
+pt-PT,Edit,it,Modificare
+pt-PT,Delete,it,Eliminare
+pt-PT,Are you sure you wish to delete this address?,it,Sei sicuro di voler eliminare questo indirizzo?
+pt-PT,Error,it,Errore
+pt-PT,Wrong password!,it,Password sbagliata!
+pt-PT,Enter using password,it,Accedi utilizzando la password
+pt-PT,Close,it,Vicino
+pt-PT,Enter store using password:,it,Accedi al negozio utilizzando la password:
+pt-PT,Your password,it,La tua password
+pt-PT,Enter,it,Entra
+pt-PT,"<span>Are you the store owner?</span> <a href=""/admin"" class=""link underlined-link"">Log in here</a>",it,"<span>Sei il proprietario del negozio?</span> <a href=""/admin"" class=""link underlined-link"">Accedi qui</a>"
+pt-PT,Notify me,it,Avvisami
+pt-PT,Add wishlist,it,Aggiungi lista dei desideri
+pt-PT,Remove from wishlist,it,Rimuovi dalla lista dei desideri
+pt-PT,Visit wishlist page,it,Visita la pagina della lista dei desideri
+pt-PT,Add compare,it,Aggiungi confronta
+pt-PT,Remove from compare,it,Rimuovi dal confronto
+pt-PT,Visit compare page,it,Visita la pagina di confronto
+pt-PT,Page not found,it,Pagina non trovata
+pt-PT,Captcha,it,Captcha
+pt-PT,Cart,it,Carrello
+pt-PT,List collections,it,Elenca le raccolte
+pt-PT,Account,it,Account
+pt-PT,Active accout,it,Conto attivo
+pt-PT,Address,it,Indirizzo
+pt-PT,Login,it,Login
+pt-PT,Order,it,Ordine
+pt-PT,Register,it,Registro
+pt-PT,Reset password,it,Reimposta la password
+pt-PT,Gift card,it,Carta regalo
+pt-PT,Metaobject,it,Metaoggetto
+pt-PT,Password,it,Password
+pt-PT,Policy,it,Politica
+pt-PT,Search,it,Ricerca
+pt-PT,Wishlist is empty,it,La lista dei desideri è vuota
+pt-PT,No items in your wishlist yet. Discover exciting products on our Shop page,it,Nessun articolo nella tua lista dei desideri ancora. Scopri prodotti entusiasmanti sulla nostra pagina Shop
+pt-PT,Compare is empty,it,Il confronto è vuoto
+pt-PT,Quick add,it,Aggiunta rapida
+pt-PT,No items in your compare yet. Discover exciting products on our Shop page,it,Nessun articolo nel tuo confronto ancora. Scopri prodotti entusiasmanti sulla nostra pagina Shop
+pt-PT,View all,it,Visualizza tutto
+pt-PT,Load more,it,Carica di più
+pt-PT,READ MORE,it,PER SAPERNE DI PIÙ
+pt-PT,Copy link,it,Copia collegamento
+pt-PT,Copied,it,Copiato
+pt-PT,Facebook,it,Facebook
+pt-PT,Twitter,it,Twitter
+pt-PT,Pinterest,it,Pinterest
+pt-PT,Tumblr,it,Tumblr
+pt-PT,{{ field }} is required,it,{{ field }} è obbligatorio
+pt-PT,{{ field }} is invalid,it,{{ field }} non è valido
+pt-PT,is required,it,è obbligatorio
+pt-PT,is invalid,it,non è valido
+pt-PT,"An error occurred, please check the information and resubmit.",it,"Si è verificato un errore, controlla le informazioni e invia nuovamente."
+pt-PT,Thanks for contacting us. We'll get back to you as soon as possible.,it,Grazie per averci contattato. Ti risponderemo il prima possibile.
+pt-PT,Subscribe failed,it,Iscrizione non riuscita
+pt-PT,Subscribe successes,it,Sottoscrivi i successi
+pt-PT,Your name,it,Il tuo nome
+pt-PT,Your email,it,La tua email
+pt-PT,Your phone,it,Il tuo telefono
+pt-PT,Your message,it,Il tuo messaggio
+pt-PT,Example product title,it,Titolo del prodotto di esempio
+pt-PT,Add to cart,it,Aggiungi al carrello
+pt-PT,Cart added!,it,Carrello aggiunto!
+pt-PT,Add cart failed,it,Aggiunta del carrello non riuscita
+pt-PT,Sold out,it,Esaurito
+pt-PT,Save {{ price }},it,Risparmia {{ price }}
+pt-PT,No products,it,Nessun prodotto
+pt-PT,From {{ price }},it,A partire da {{ price }}
+pt-PT,Unit price,it,Prezzo unitario
+pt-PT,per,it,per
+pt-PT,Unavailable,it,Non disponibile
+pt-PT,{{ option_value }} - Unavailable,it,{{ option_value }} - Non disponibile
+pt-PT,Zero,it,Zero
+pt-PT,{{ count }} review,it,{{ count }} recensione
+pt-PT,{{ count }} reviews,it,{{ count }} recensioni
+pt-PT,Quantity,it,Quantità
+pt-PT,Quantity Input,it,Immissione della quantità
+pt-PT,SKU,it,SKU
+pt-PT,In stock,it,In magazzino
+pt-PT,{{ quantity }} in stock,it,{{ quantity }} in magazzino
+pt-PT,Low stock,it,Scorte basse
+pt-PT,Low stock: {{ quantity }} left,it,Stock in esaurimento: {{ quantity }} rimanenti
+pt-PT,Out of stock,it,Esaurito
+pt-PT,In stock,it,In magazzino
+pt-PT,Please adjust the following:,it,Si prega di modificare quanto segue:
+pt-PT,I want to send this as a gift,it,Voglio inviarlo come regalo
+pt-PT,Gift card recipient form expanded,it,Modulo del destinatario della carta regalo ampliato
+pt-PT,Gift card recipient form collapsed,it,Il modulo del destinatario della carta regalo è compresso
+pt-PT,Recipient email,it,E-mail del destinatario
+pt-PT,Recipient email (optional),it,E-mail del destinatario (facoltativo)
+pt-PT,Email,it,E-mail
+pt-PT,Recipient name (optional),it,Nome del destinatario (facoltativo)
+pt-PT,Name,it,Nome
+pt-PT,Message (optional),it,Messaggio (facoltativo)
+pt-PT,Message,it,Messaggio
+pt-PT,{{ max_chars }} characters max,it,{{ max_chars }} caratteri max
+pt-PT,YYYY-MM-DD,it,AAAA-MM-GG
+pt-PT,Send on (optional),it,Invia (facoltativo)
+pt-PT,All rights reserved.,it,Tutti i diritti riservati.
+pt-PT,Welcome to our store,it,Benvenuti nel nostro negozio
+pt-PT,https://facebook.com/betterwithalmonds,it,https://facebook.com/betterwithalmonds
+pt-PT,https://instagram.com/betterwithalmonds,it,https://instagram.com/betterwithalmonds
+pt-PT,https://youtube.com/betterwithalmonds,it,https://youtube.com/betterwithalmonds
+pt-PT,"<p>Utilizamos cookies para melhorar a sua experiência no nosso site. Ao continuar navegando, você concorda com o uso de cookies. <a href=""/policies/privacy-policy"" target=""_blank"" title=""Privacy Policy"">Política de privacidade.</a></p>",it,"<p>Utilizziamo i cookie per migliorare la tua esperienza sul nostro sito web. Continuando la navigazione acconsenti all'utilizzo dei cookie. <a href=""/policies/privacy-policy"" target=""_blank"" title=""Informativa sulla privacy"">Informativa sulla privacy.</a></p>"
+pt-PT,30,it,30
+pt-PT,Portugal,it,Portogallo
+pt-PT,Winter Fairy by Sheeran,it,Fata d'inverno di Sheeran
+pt-PT,"Perfect for hours of family fun, it’s a gift he’ll never forget.",it,"Perfetto per ore di divertimento in famiglia, è un regalo che non dimenticherà mai."
+pt-PT,Add to cart - $28.50,it,"Aggiungi al carrello: $ 28,50"
+pt-PT,Red Liquids by Huston,it,Liquidi rossi di Huston
+pt-PT,Add descriptive text for your slide here.,it,Aggiungi qui il testo descrittivo per la tua diapositiva.
+pt-PT,Add to cart - $12.20,it,"Aggiungi al carrello: $ 12,20"
+pt-PT,Triangles by Kulpreet,it,Triangoli di Kulpreet
+pt-PT,Add descriptive text for your slide here.,it,Aggiungi qui il testo descrittivo per la tua diapositiva.
+pt-PT,Add to cart - $18.00,it,"Aggiungi al carrello: $ 18,00"
+pt-PT,Beautiful Books At Affordable Prices & An Unforgettable Experience,it,Bellissimi libri a prezzi convenienti e un'esperienza indimenticabile
+pt-PT,<p>The only place you can afford to get lost is inside a book.</p>,it,<p>L'unico posto in cui puoi permetterti di perderti è all'interno di un libro.</p>
+pt-PT,"<p>A few years ago, Bainbridge set off on a road trip across America to interview bartenders, drink experts and chefs and to discover unusual and delicious alcohol-free mixed beverages.</p>",it,"<p>Qualche anno fa, Bainbridge partì per un viaggio attraverso l'America per intervistare baristi, esperti di bevande e chef e per scoprire bevande miste analcoliche insolite e deliziose.</p>"
+pt-PT,<p>RECYCLED PAPERS</p>,it,<p>CARTA RICICLATA</p>
+pt-PT,<p>SHIP WORLDWIDE</p>,it,<p>SPEDISCI IN TUTTO IL MONDO</p>
+pt-PT,<p>ADD GIFT WRAP</p>,it,<p>AGGIUNGI CONFEZIONE REGALO</p>
+pt-PT,<p>PERSONALIZED BOOKS</p>,it,<p>LIBRI PERSONALIZZATI</p>
+pt-PT,Night Light,it,Luce notturna
+pt-PT,"<p>Chatting and joking around outside her apartment building, they lost track of time. The next thing she knew, it was too late. Too late to get home unnoticed. Too late to avoid being told off by her parents. So she formed a plan, although you could hardly call it that, to leave everything behind—her family, her home and life as she’d known it in a housing project on the outskirts of Lyon.1</p>",it,"<p>Chiacchierando e scherzando fuori dal suo condominio, hanno perso la cognizione del tempo. La cosa successiva che capì fu che era troppo tardi. Troppo tardi per tornare a casa senza essere notato. Troppo tardi per evitare di essere rimproverata dai suoi genitori. Così ha elaborato un piano, anche se difficilmente si potrebbe chiamarlo così, di lasciarsi tutto alle spalle: la sua famiglia, la sua casa e la vita come l'aveva conosciuta in un complesso residenziale alla periferia di Lione.1</p>"
+pt-PT,Add to cart - $34.30,it,"Aggiungi al carrello: $ 34,30"
+pt-PT,"<p>“Why did you do all this for me?’ he asked. ‘I don’t deserve it. I’ve never done anything for you.’ ‘You have been my friend,’ replied Charlotte. ‘That in itself is a tremendous thing.”</p>",it,"<p>“Perché hai fatto tutto questo per me?”, chiese. «Non lo merito. Non ho mai fatto niente per te.» «Sei stato mio amico» rispose Charlotte. ""Questo di per sé è una cosa straordinaria.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,"<p>“From that time on, the world was hers for the reading. She would never be lonely again, never miss the lack of intimate friends. Books became her friends and there was one for every mood.”</p>",it,"<p>""Da quel momento in poi, il mondo fu suo da leggere. Non si sarebbe mai più sentita sola, non le sarebbe mai mancata la mancanza di amici intimi. I libri divennero suoi amici e ce n'era uno per ogni stato d'animo.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,"<p>“The same substance composes us — the tree overhead, the stone beneath us, the bird, the beast, the star — we are all one, all moving to the same end.”</p>",it,"<p>""La stessa sostanza ci compone: l'albero in alto, la pietra sotto di noi, l'uccello, la bestia, la stella: siamo tutti uno, tutti ci muoviamo verso la stessa fine.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,From The Blog,it,Dal blog
+pt-PT,<p>Add a short description on your brand news</p>,it,<p>Aggiungi una breve descrizione alle novità del tuo marchio</p>
+pt-PT,Signup for Our Newsletter,it,Iscriviti alla nostra newsletter
+pt-PT,<p>Invite customers to join your mailing list.</p>,it,<p>Invita i clienti a iscriversi alla tua mailing list.</p>
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Kimmy Guletta. </p>",it,"<p>Scopri la nostra <em>Collezione estiva</em>, disegnata da Kimmy Guletta. </p>"
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,Independent Styles,it,Stili indipendenti
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",it,"<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire, ma ero più che disposto a correre il rischio tra persone modellate secondo il mio stampo piuttosto che rimanere più a lungo tra gli orribili e sanguinari uomini verdi di Marte.</p>"
+pt-PT,LEARN MORE,it,SAPERNE DI PIÙ
+pt-PT,Featured Products,it,Prodotti in evidenza
+pt-PT,Premium Life Products,it,Prodotti vita premium
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people.</p>",it,"<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire, ma ero più che disposto a correre il rischio tra la gente.</p>"
+pt-PT,Latest News,it,Ultime notizie
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,it,<p>Ricevi le <em>ultime notizie sulle tendenze della moda e della bellezza.</em></p>
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,<p>“Quick and easy service from North. Would recommend this company to everyone looking for a premium products at a good price.”</p>,it,"<p>“Servizio semplice e veloce dal Nord. Consiglierei questa azienda a tutti coloro che cercano prodotti premium a buon prezzo.""</p>"
+pt-PT,"<p>“An exceptional theme, strong structural quality and the ability to create anything your imagination can dream of!”</p>",it,"<p>""Un tema eccezionale, una forte qualità strutturale e la capacità di creare qualsiasi cosa la tua immaginazione possa sognare!""</p>"
+pt-PT,Ralph Lauren,it,Ralph Lauren
+pt-PT,<p>“This is the best theme I have ever buyed with great support! They help me in a very short time every time I asked.”</p>,it,"<p>""Questo è il miglior tema che abbia mai acquistato con un grande supporto! Mi hanno aiutato in brevissimo tempo ogni volta che ho chiesto.""</p>"
+pt-PT,Guess,it,Indovinare
+pt-PT,Conhece,it,Sai
+pt-PT,Compra,it,Acquistare
+pt-PT,Conhece,it,Sai
+pt-PT,Compra,it,Acquistare
+pt-PT,Conhece,it,Sai
+pt-PT,Compra,it,Acquistare
+pt-PT,PRODUTOS,it,PRODOTTI
+pt-PT,COMPRA AQUI,it,ACQUISTA QUI
+pt-PT,Tudo fica melhor com amêndoas,it,Tutto è più buono con le mandorle
+pt-PT,<p></p><p>A<strong> Better With</strong> é fruto da ideia de que a vida tem muito mais sabor em boa companhia. Gostamos de procurar o extraordinário no comum e de misturar o óbvio com o inesperado. Acreditamos que a magia que acontece nesses encontros é o sal e a pimenta do dia-a-dia. <br/></p>,it,<p></p><p><strong>Better With</strong> è il risultato dell'idea che la vita ha molto più sapore in buona compagnia. Ci piace cercare lo straordinario nell'ordinario e mescolare l'ovvio con l'inaspettato. Crediamo che la magia che avviene in questi incontri sia il sale e il pepe della vita quotidiana. <br/></p>
+pt-PT,Sabores,it,Sapori
+pt-PT,<p>Descobre aqui todos os nossos sabores e os seus ingredientes e informações nutricionais. </p>,it,"<p>Scopri tutti i nostri gusti, i loro ingredienti e le informazioni nutrizionali qui. </p>"
+pt-PT,Conhece os sabores,it,Conosci i sapori
+pt-PT,As nossas Boxes,it,Le nostre scatole
+pt-PT,"<p>As nossas boxes Better With são a escolha perfeita para quem procura lanches saudáveis e deliciosos. Disponíveis tanto para compra única como por subscrição mensal, oferecem uma seleção variada de amêndoas premium com sabores únicos e irresistíveis.</p>",it,"<p>Le nostre scatole Better With sono la scelta perfetta per chi cerca snack sani e deliziosi. Disponibili sia per l'acquisto una tantum che per l'abbonamento mensile, offrono una vasta selezione di mandorle premium dai sapori unici e irresistibili.</p>"
+pt-PT,LITTLE FÃ,it,PICCOLA Fà
+pt-PT,A subscrição perfeita para começar.,it,L'abbonamento perfetto per iniziare.
+pt-PT,7 Sabores de 140g     ,it,7 Gusti da 140g     
+pt-PT,4 Sabores de 30g,it,4 gusti da 30g
+pt-PT,Recebe Mensalmente,it,Ricevi mensilmente
+pt-PT,10% Desconto,it,Sconto del 10%.
+pt-PT,Cancela quando quiseres,it,Annulla quando vuoi
+pt-PT,Portes Grátis em todas as subscrições,it,Spedizione gratuita su tutti gli abbonamenti
+pt-PT,Subscrever,it,Iscriviti
+pt-PT,ALMOND LOVER,it,AMANTE DELLE MANDORLE
+pt-PT,A subscrição para os que sabem como é delicioso.,it,Un abbonamento per chi sa quanto è buono.
+pt-PT, 10 Sabores de 140g,it, 10 Gusti da 140g
+pt-PT,6 Sabores de 30g,it,6 gusti da 30g
+pt-PT,Recebe Mensalmente ,it,Ricevi mensilmente 
+pt-PT,10% Desconto,it,Sconto del 10%.
+pt-PT,Recebe uma Bolsa Personalizada,it,Ricevi una borsa personalizzata
+pt-PT,Cancela quando quiseres,it,Annulla quando vuoi
+pt-PT,Portes Grátis em todas as subscrições,it,Spedizione gratuita su tutti gli abbonamenti
+pt-PT,Subscrever,it,Iscriviti
+pt-PT,CRAZY FÃ,it,CRAZY Fà
+pt-PT,Para os que já estão completamente rendidos aos nossos sabores! ,it,Per chi si è già completamente arreso ai nostri sapori! 
+pt-PT,15 Sabores de 140g,it,15 Gusti da 140g
+pt-PT,8 Sabores de 30g,it,8 gusti da 30g
+pt-PT,Recebe Mensalmente ,it,Ricevi mensilmente 
+pt-PT,10% Desconto,it,Sconto del 10%.
+pt-PT,Recebe uma Bolsa Personalizada,it,Ricevi una borsa personalizzata
+pt-PT,Recebe a nossa Gift Box,it,Ricevi la nostra confezione regalo
+pt-PT,Cancela quando quiseres!,it,Cancella quando vuoi!
+pt-PT,Portes Grátis Portes Grátis em todas as subscrições,it,Spedizione gratuita Spedizione gratuita su tutti gli abbonamenti
+pt-PT,Subscrever,it,Iscriviti
+pt-PT,"Do campo à mesa, hoje e amanhã.",it,"Dal campo alla tavola, oggi e domani."
+pt-PT,"<p>Como agricultores responsáveis, estamos totalmente conscientes da importância de reduzir a nossa pegada de carbono. O nosso objetivo é promover um ecossistema equilibrado, minimizando o impacto ambiental. Tomamos medidas proativas, como a implementação de cobertura vegetal permanente e o apoio à captura de carbono através da plantação de 1,5 milhões de árvores. Estas ações refletem o nosso compromisso em construir um futuro sustentável para as nossas plantações e, consequentemente, para o nosso planeta. </p>",it,"<p>In qualità di agricoltori responsabili, siamo pienamente consapevoli dell'importanza di ridurre la nostra impronta di carbonio. Il nostro obiettivo è promuovere un ecosistema equilibrato, riducendo al minimo l’impatto ambientale. Adottiamo misure proattive, come l’implementazione di una copertura vegetale permanente e il sostegno alla cattura del carbonio attraverso la piantumazione di 1,5 milioni di alberi. Queste azioni riflettono il nostro impegno nella costruzione di un futuro sostenibile per le nostre piantagioni e, di conseguenza, per il nostro pianeta. </p>"
+pt-PT,SABE MAIS SOBRE NÓS,it,SCOPRI DI PIÙ SU DI NOI
+pt-PT,A melhores amêndoas que já provei. São simplesmente deliciosas e super diferentes.,it,Le migliori mandorle che abbia mai assaggiato. Sono semplicemente deliziosi e super diversi.
+pt-PT,Catarina Barata,it,Catarina Barata
+pt-PT,Muito boas e crocantes. Diferente de tudo que já provei. Gostei imenso.,it,Molto buono e croccante. A differenza di qualsiasi cosa abbia mai assaggiato. Mi è davvero piaciuto.
+pt-PT,João Pedro,it,Giovanni Pedro
+pt-PT,"Gosto de várias, mas as minhas favoritas são a Mel e Sal Marinho.",it,"Me ne piacciono diversi, ma i miei preferiti sono Miele e Sale marino."
+pt-PT,Pedro Sousa,it,Pedro Sousa
+pt-PT,Alecrim e sal tem tudo a ver com amêndoa. Descobri isso ao provar a Better With.,it,Il rosmarino e il sale sono tutti legati alle mandorle. L'ho scoperto provando Better With.
+pt-PT,Rute Pereira,it,Ruth Pereira
+pt-PT,As Nossas Herdades,it,Le nostre tenute
+pt-PT,"<p>Espalhadas por 1.300 hectares, em 6 propriedades, nos concelhos do Fundão e Idanha-a-Nova, em Portugal.</p>",it,"<p>Si estende su 1.300 ettari, su 6 proprietà, nei comuni di Fundão e Idanha-a-Nova, in Portogallo.</p>"
+pt-PT,Agricultura Regenerativa,it,Agricoltura rigenerativa
+pt-PT,"<p>A nossa paixão pela sustentabilidade levou-nos a adotar práticas de agricultura sustentáveis no cultivo das nossas amêndoas, colhidas e tratadas nas nossas herdades. </p>",it,"<p>La nostra passione per la sostenibilità ci ha portato ad adottare pratiche agricole sostenibili nella coltivazione delle nostre mandorle, raccolte e trattate nelle nostre aziende agricole. </p>"
+pt-PT,Produtos,it,Prodotti
+pt-PT,"<p>Disponíveis em embalagens de 30g e 140g, estamos prontos para te acompanhar no dia-a-dia e em momentos especiais. </p>",it,"<p>Disponibili nelle confezioni da 30g e 140g, siamo pronti ad accompagnarvi quotidianamente e nei momenti speciali. </p>"
+pt-PT,Loucos por Amêndoas,it,Pazzi per le mandorle
+pt-PT,<p>Somos a combinação irresistível de uma alimentação saudável com uma experiência gastronómica irresistível: a fusão de amêndoas premium com um mix de 15 sabores artesanais. </p>,it,<p>Siamo l'irresistibile combinazione tra un'alimentazione sana e un'irresistibile esperienza gastronomica: la fusione di mandorle premium con un mix di 15 sapori artigianali. </p>
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,Comprar,it,Acquistare
+pt-PT,#INSTAGRAM,it,#INSTAGRAM
+pt-PT,<p>#betterwithalmonds #Amendoasincriveis #AmendoasPortuguesas #Regenerativas #sustentaveis #suaproteinadiaria #amoamendoas</p>,it,<p>#betterwithalmonds #Amendoasincriveis #AmendoasPortuguesas #Regenerativas #sustentaveis #suaproteinadiaria #amoamendoas</p>
+pt-PT,Ug739536477,it,Ug739536477
+pt-PT,100% CERTIFIED PRODUCTS,it,PRODOTTI CERTIFICATI AL 100%.
+pt-PT,Detox the body. Look fabulous.,it,Disintossicare il corpo. Sembra favoloso.
+pt-PT,Whether you crave a total reset or a nutrient boost.,it,Che tu desideri un ripristino totale o un aumento di nutrienti.
+pt-PT,Shop our flavors,it,Acquista i nostri gusti
+pt-PT,Add a tagline,it,Aggiungi uno slogan
+pt-PT,Being energetic is the new you,it,Essere energici è il nuovo te
+pt-PT,Add descriptive text for your slide here.,it,Aggiungi qui il testo descrittivo per la tua diapositiva.
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,What Makes Us Different?,it,Cosa ci rende diversi?
+pt-PT,"<p>Share information about your brand with your customers. Describe a product, make announcements, or welcome customers to your store. </p>",it,"<p>Condividi le informazioni sul tuo brand con i tuoi clienti. Descrivi un prodotto, fai annunci o dai il benvenuto ai clienti nel tuo negozio. </p>"
+pt-PT,<p>Sugar Friendly</p>,it,<p>Amichevole con lo zucchero</p>
+pt-PT,<p>Probiotics</p>,it,<p>Probiotici</p>
+pt-PT,<p>100% Vegan</p>,it,<p>100% vegano</p>
+pt-PT,<p>Gluten-free</p>,it,<p>Senza glutine</p>
+pt-PT,<p>18 Cals</p>,it,<p>18 Cal</p>
+pt-PT,<p>Zero Waste</p>,it,<p>Zero rifiuti</p>
+pt-PT,Meet Our Products,it,Scopri i nostri prodotti
+pt-PT,<p>This half-day fast eases you in with 3 of our lower sugar juices from each category.</p>,it,<p>Questo digiuno di mezza giornata ti facilita con 3 dei nostri succhi a basso contenuto di zucchero di ciascuna categoria.</p>
+pt-PT,The Daily Wellness Bundle,it,Il pacchetto benessere quotidiano
+pt-PT,<p>This half-day fast eases you in with 3 of our lower sugar juices from each category.</p>,it,<p>Questo digiuno di mezza giornata ti facilita con 3 dei nostri succhi a basso contenuto di zucchero di ciascuna categoria.</p>
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,Save 20%,it,Risparmia il 20%
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",it,<p>Questo detergente contiene una miscela esclusiva a base di mandorle per fornire ulteriori grassi sani e proteine ​​che ti fanno sentire sazio. Cleanse 1 include anche alcuni dei nostri succhi più popolari e deliziosi per renderlo un gioco da ragazzi.</p>
+pt-PT,Money Back Guarantee,it,Garanzia di rimborso
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",it,<p>Questo detergente contiene una miscela esclusiva a base di mandorle per fornire ulteriori grassi sani e proteine ​​che ti fanno sentire sazio. Cleanse 1 include anche alcuni dei nostri succhi più popolari e deliziosi per renderlo un gioco da ragazzi.</p>
+pt-PT,Certified Organic,it,Certificato biologico
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",it,<p>Questo detergente contiene una miscela esclusiva a base di mandorle per fornire ulteriori grassi sani e proteine ​​che ti fanno sentire sazio. Cleanse 1 include anche alcuni dei nostri succhi più popolari e deliziosi per renderlo un gioco da ragazzi.</p>
+pt-PT,Restore Your Vitality In 30 Days,it,Ripristina la tua vitalità in 30 giorni
+pt-PT,"<p>It's a blend of cucumber, celery, spinach, lemon, kale and parsley. Simple, clean, and full of green goodness.</p>",it,"<p>È una miscela di cetriolo, sedano, spinaci, limone, cavolo riccio e prezzemolo. Semplice, pulito e pieno di bontà verde.</p>"
+pt-PT,In the Press,it,Nella stampa
+pt-PT,"<p>“Loved the juice and soup cleanse, was my first time doing a cleanse. Found the juices very satisfying.”</p>",it,"<p>""Mi sono piaciuti i succhi e le zuppe depurative. Era la prima volta che facevo una depurazione. Ho trovato i succhi molto soddisfacenti.""</p>"
+pt-PT,"<p>""I will start by saying their juice is fantastic. I love it and I have purchased several times.""</p>",it,"<p>""Inizierò dicendo che il loro succo è fantastico. Lo adoro e l'ho acquistato diverse volte.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,"<p>""They taste great and are full of everything you need to start your journey towards better overall health.""</p>",it,"<p>""Hanno un ottimo sapore e sono pieni di tutto il necessario per iniziare il tuo viaggio verso una migliore salute generale.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,Blog posts,it,Post del blog
+pt-PT,<p>Add a short description on your brand news</p>,it,<p>Aggiungi una breve descrizione alle novità del tuo marchio</p>
+pt-PT,Summer Collection,it,Collezione estiva
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Sarah Taylor.<br/>Free shipping in the US for any purchase over $60.</p>",it,"<p>Scopri la nostra <em>Collezione estiva</em>, disegnata da Sarah Taylor.<br/>Spedizione gratuita negli Stati Uniti per qualsiasi acquisto superiore a $ 60.</p>"
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,Free Delivery,it,Consegna gratuita
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,30-Day Returns,it,Resi entro 30 giorni
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,International Warranty,it,Garanzia Internazionale
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,New & Stylish Collections,it,Collezioni nuove ed eleganti
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",it,"<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire, ma ero più che disposto a correre il rischio tra persone modellate secondo il mio stampo piuttosto che rimanere più a lungo tra gli orribili e sanguinari uomini verdi di Marte.</p>"
+pt-PT,Flash Sale: 50-70% Accessories,it,Saldi flash: 50-70% Accessori
+pt-PT,Shop Sale,it,Vendita in negozio
+pt-PT,Recent Arrivals,it,Arrivi recenti
+pt-PT,<p>Add some <em>new</em> pieces to your wardrobe by shopping our goodies.</p>,it,<p>Aggiungi alcuni <em>nuovi</em> pezzi al tuo guardaroba acquistando i nostri gadget.</p>
+pt-PT,Summer Collection,it,Collezione estiva
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Sarah Taylor.<br/>Free shipping in the US for any purchase over $60.</p>",it,"<p>Scopri la nostra <em>Collezione estiva</em>, disegnata da Sarah Taylor.<br/>Spedizione gratuita negli Stati Uniti per qualsiasi acquisto superiore a $ 60.</p>"
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,Latest News,it,Ultime notizie
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,it,<p>Ricevi le <em>ultime notizie sulle tendenze della moda e della bellezza.</em></p>
+pt-PT,"Signup for our newsletter to receive special offers, news, &amp; events.",it,"Iscriviti alla nostra newsletter per ricevere offerte speciali, novità e aggiornamenti. eventi."
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,it,<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire.</p>
+pt-PT,Discover Our Collection,it,Scopri la nostra collezione
+pt-PT,"<p>Slowly she drifted to the southeast, rising higher and higher as the flames ateaway her wooden parts and diminished the weight upon her. </p>",it,"<p>Lentamente andò alla deriva verso sud-est, sollevandosi sempre più in alto mentre le fiamme divoravano le sue parti di legno e diminuivano il peso su di lei. </p>"
+pt-PT,Recent Arrivals,it,Arrivi recenti
+pt-PT,<p>Add some <em>new</em> pieces to your wardrobe by shopping our goodies.</p>,it,<p>Aggiungi alcuni <em>nuovi</em> pezzi al tuo guardaroba acquistando i nostri gadget.</p>
+pt-PT,"<p>Slowly she drifted to the southeast, rising higher and higher as the flames ateaway her wooden parts and diminished the weight upon her. Ascending to the roof of the building I watched her for hours until she was lost in the dim finally.</p>",it,"<p>Lentamente andò alla deriva verso sud-est, sollevandosi sempre più in alto mentre le fiamme divoravano le sue parti di legno e diminuivano il peso su di lei. Salendo sul tetto dell'edificio l'ho osservata per ore finché non si è persa nell'oscurità.</p>"
+pt-PT,Shop now,it,Acquista ora
+pt-PT,Best Sellers,it,I più venduti
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,it,<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire.</p>
+pt-PT,Signup for our newsletter,it,Iscriviti alla nostra newsletter
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,it,<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire.</p>
+pt-PT,Designed in San Francisco. Handcrafted responsibly in Paris.,it,Progettato a San Francisco. Prodotto artigianalmente in modo responsabile a Parigi.
+pt-PT,Shop now,it,Acquista ora
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",it,"<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire, ma ero più che disposto a correre il rischio tra persone modellate secondo il mio stampo piuttosto che rimanere più a lungo tra gli orribili e sanguinari uomini verdi di Marte.</p>"
+pt-PT,Learn More,it,Saperne di più
+pt-PT,"<p>Discover our <em>Luxury Collection</em>, designed by Ann Maya.<br/>Free shipping in the US for any purchase over $60.</p>",it,"<p>Scopri la nostra <em>Collezione di lusso</em>, disegnata da Ann Maya.<br/>Spedizione gratuita negli Stati Uniti per qualsiasi acquisto superiore a $ 60.</p>"
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,Latest News,it,Ultime notizie
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,it,<p>Ricevi le <em>ultime notizie sulle tendenze della moda e della bellezza.</em></p>
+pt-PT,Free Delivery,it,Consegna gratuita
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,30-Day Returns,it,Resi entro 30 giorni
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,International Warranty,it,Garanzia Internazionale
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,Gift Package,it,Pacchetto regalo
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,Heading,it,Intestazione
+pt-PT,"<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>",it,"<p>Abbina il testo a un'immagine per concentrarti sul prodotto, sulla collezione o sul post del blog che hai scelto. Aggiungi dettagli su disponibilità, stile o fornisci anche una recensione.</p>"
+pt-PT,<p>Add your store address or<br/>your store hours</p>,it,<p>Aggiungi l'indirizzo del tuo negozio o<br/>gli orari del negozio</p>
+pt-PT,Our Stores,it,I nostri negozi
+pt-PT,Store location,it,Posizione del negozio
+pt-PT,<p>Add your store address or<br/>your store hours</p>,it,<p>Aggiungi l'indirizzo del tuo negozio o<br/>gli orari del negozio</p>
+pt-PT,Get Directions,it,Ottieni indicazioni stradali
+pt-PT,Store location,it,Posizione del negozio
+pt-PT,<p>Add your store address or<br/>your store hours</p>,it,<p>Aggiungi l'indirizzo del tuo negozio o<br/>gli orari del negozio</p>
+pt-PT,Get Directions,it,Ottieni indicazioni stradali
+pt-PT,Store location,it,Posizione del negozio
+pt-PT,<p>Add your store address or<br/>your store hours</p>,it,<p>Aggiungi l'indirizzo del tuo negozio o<br/>gli orari del negozio</p>
+pt-PT,Get Directions,it,Ottieni indicazioni stradali
+pt-PT,Heading,it,Intestazione
+pt-PT,"<p>Focus on your upcoming sales. Add details on availability, style, or even provide a review.</p>",it,"<p>Concentrati sulle tue prossime vendite. Aggiungi dettagli su disponibilità, stile o fornisci anche una recensione.</p>"
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,Heading,it,Intestazione
+pt-PT,"<p>Focus on your upcoming sales. Add details on availability, style, or even provide a review.</p>",it,"<p>Concentrati sulle tue prossime vendite. Aggiungi dettagli su disponibilità, stile o fornisci anche una recensione.</p>"
+pt-PT,Say Hello,it,Salutami
+pt-PT,Entra em Contacto,it,Mettiti in contatto
+pt-PT,<p>Através do formulário ou por e-mail. <strong>Estamos aqui!</strong></p>,it,<p>Tramite il modulo o via email. <strong>Siamo qui!</strong></p>
+pt-PT,<h3>Better With Us</h3>,it,<h3>Meglio con noi</h3>
+pt-PT,"<p>Rua Filarmónica Idanhense, 68</p><p>6060-188 Idanha-a-Nova</p><p>hello@betterwithalmonds.com</p>",it,"<p>Rua Filarmonica Idanhense, 68</p><p>6060-188 Idanha-a-Nova</p><p>hello@betterwithalmonds.com</p>"
+pt-PT,<p></p><h3><strong>Fala connosco!</strong></h3>,it,<p></p><h3><strong>Fala connosco!</strong></h3>
+pt-PT,"<p>Envia-nos as tuas dúvidas, críticas e elogios. :)</p>",it,"<p>Inviaci domande, critiche e complimenti. :)</p>"
+pt-PT,"<p>A nossa dedicação à<strong> agricultura sustentável</strong> levou-nos a especializar-nos em <strong>amêndoas mediterrânicas</strong> de primeira qualidade provenientes de <strong>agricultura regenerativa</strong>, colhidas e tratadas com o máximo cuidado. A <strong>Better With</strong> é uma marca da <strong>Veracruz Almonds</strong>, a empresa produtora.</p>",it,"<p>La nostra dedizione all'<strong>agricoltura sostenibile</strong> ci ha portato a specializzarci in <strong>mandorle mediterranee</strong> di alta qualità provenienti da <strong>agricoltura rigenerativa</strong>, raccolte e trattate con la massima cura. <strong>Better With</strong> è un marchio di <strong>Veracruz Almonds</strong>, l'azienda produttrice.</p>"
+pt-PT,Conhece a Veracruz,it,Conosci Veracruz
+pt-PT,conhece a nossa origem,it,Conosci la nostra origine
+pt-PT,"<p>A melhor amêndoa mediterrânica nasce do contacto entre o sol e a terra, do respeito e do amor, da incorporação de tecnologia na agricultura. Destas e de outras combinações nasce uma marca com presença: no sofá ou na praia, no verão ou no inverno, em qualquer dia, a qualquer hora. </p>",it,"<p>Le migliori mandorle del Mediterraneo nascono dal contatto tra il sole e la terra, dal rispetto e dall'amore, dall'incorporazione della tecnologia nell'agricoltura. Da questi e altri accostamenti nasce un brand presente: sul divano o in spiaggia, d'estate o d'inverno, in ogni giorno, a ogni ora. </p>"
+pt-PT,"<p>Em<strong> 1.300 hectares</strong>, distribuídos por seis propriedades nos concelhos do Fundão e Idanha-a-Nova, utilizamos<strong> as mais avançadas técnicas de agricultura de precisão</strong>, juntamente com <strong>práticas de responsabilidade social</strong>. Adotamos uma abordagem verdadeiramente holística que beneficia todos os envolvidos!</p>",it,"<p>Su<strong>1.300 ettari</strong>, distribuiti in sei proprietà nei comuni di Fundão e Idanha-a-Nova, utilizziamo<strong>le più avanzate tecniche di agricoltura di precisione</strong>, insieme a <strong>pratiche di responsabilità sociale</strong>. Adottiamo un approccio veramente olistico a vantaggio di tutti i soggetti coinvolti!</p>"
+pt-PT,"<p>Nas nossas herdades, praticamos uma <strong>agricultura regenerativa</strong>, focada na preservação de recursos preciosos como o <strong>solo</strong>, a <strong>água</strong>, a <strong>vida selvagem</strong> e a <strong>flora </strong>para as gerações futuras. Orgulhamo-nos de lutar por uma maior <strong>biodiversidade</strong>, a fim de proteger o equilíbrio da natureza!</p>",it,"<p>Nelle nostre aziende agricole pratichiamo l'<strong>agricoltura rigenerativa</strong>, incentrata sulla conservazione di risorse preziose come il <strong>suolo</strong>, l'<strong>acqua</strong>, la <strong>fauna selvatica</strong> e la <strong>flora</strong> per le generazioni future. Siamo orgogliosi di lottare per una maggiore <strong>biodiversità</strong> al fine di proteggere l'equilibrio della natura!</p>"
+pt-PT,As nossas herdades,it,I nostri allevamenti
+pt-PT,NOSSAS CERTIFICAÇÕES,it,LE NOSTRE CERTIFICAZIONI
+pt-PT,É melhor com confiança. Do campo à mesa. Hoje e amanhã.,it,È meglio con fiducia. Dal campo alla tavola. Oggi e domani.
+pt-PT,Torrada com Sal,it,Pane tostato con sale
+pt-PT,Natural,it,Naturale
+pt-PT,Torrada,it,Pane abbrustolito
+pt-PT,Mel e Sal Marinho,it,Miele e sale marino
+pt-PT,Fudge Caramelo Inglês,it,Fudge al caramello inglese
+pt-PT,Alecrim e Sal,it,Rosmarino e Sale
+pt-PT,Caril,it,Curry
+pt-PT,Regenerativas e sustentáveis,it,Rigenerativo e sostenibile
+pt-PT,"<p>Nossa paixão pela <strong>agricultura sustentável</strong> nos levou a focar em <strong>amêndoas premium regenerativas</strong>, que são colhidas e processadas com muito carinho e cuidado em <strong>nossas próprias fazendas.</strong></p>",it,"<p>La nostra passione per l'<strong>agricoltura sostenibile</strong> ci ha portato a concentrarci sulle <strong>mandorle rigenerative premium</strong>, che vengono raccolte e lavorate con grande cura e cura nelle <strong>nostre fattorie.</strong></p>"
+pt-PT,Produzidas em Portugal,it,Prodotto in Portogallo
+pt-PT,"<p>Espalhadas por <strong>1.300 hectares </strong>de terra em <strong>6 propriedades</strong> nos municípios de Fundão e Idanha-a-Nova, em <strong>Portugal</strong>, utilizamos técnicas avançadas de <strong>agricultura de precisão</strong>, juntamente com práticas de <strong>responsabilidade social</strong>, para garantir que todos se beneficiem!</p>",it,"<p>Distribuiti su <strong>1.300 ettari</strong> di terreno in <strong>6 proprietà</strong> nei comuni di Fundão e Idanha-a-Nova, in <strong>Portogallo</strong>, utilizziamo tecniche avanzate di <strong>agricoltura di precisione</strong>, insieme a pratiche di <strong>responsabilità sociale</strong>, per garantire a tutti benefici!</p>"
+pt-PT,O seu snack perfeito,it,Il tuo spuntino perfetto
+pt-PT,"<p>Queremos levar a experiência de saborear amêndoas a novos patamares com a nossa marca <strong>BETTER WITH. </strong>Apresentamos uma combinação irresistível de nutrição saudável e satisfação pura, utilizando amêndoas premium do Mediterrâneo e uma variedade incrível de sabores artesanais que são verdadeiramente tentadores.</p>",it,"<p>Vogliamo portare l'esperienza di gustare le mandorle a nuovi livelli con il nostro marchio <strong>BETTER WITH. </strong>Presentiamo un'irresistibile combinazione di alimentazione sana e pura soddisfazione, utilizzando mandorle mediterranee di prima qualità e un'incredibile varietà di sapori artigianali davvero allettanti.</p>"
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,➜ Ingredientes,it,➜ Ingredienti
+pt-PT,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>,it,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>
+pt-PT,★ Informação Nutricional,it,★ Informazioni nutrizionali
+pt-PT,{{ product.metafields.custom.informacao_nutricional | metafield_tag }},it,{{ product.metafields.custom.informacao_nutricional | metafield_tag }}
+pt-PT,♥ Origem e variedade,it,♥ Origine e varietà
+pt-PT,"<p>Origem: Beira Interior, Portugal<br/>Variedade: Soleta</p>",it,"<p>Origine: Beira Interior, Portogallo<br/>Varietà: Soleta</p>"
+pt-PT,❗ Alergénios e Informações Importantes,it,❗Allergeni e informazioni importanti
+pt-PT,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }},it,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }}
+pt-PT,⛟ Entrega e Portes,it,⛟ Consegna e Spedizione
+pt-PT,<p>Envio em 2 dias úteis. Portes gratuitos em compras acima de 25€.</p>,it,<p>Spedizione entro 2 giorni lavorativi. Spedizione gratuita per acquisti superiori a € 25.</p>
+pt-PT,Combina com,it,Si combina con
+pt-PT,Também pode gostar,it,Potrebbe piacerti anche
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,Pode gostar também,it,Potrebbe piacerti anche
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,➜ Ingredientes,it,➜ Ingredienti
+pt-PT,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>,it,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>
+pt-PT,★ Informação Nutricional,it,★ Informazioni nutrizionali
+pt-PT,{{ product.metafields.custom.informacao_nutricional | metafield_tag }},it,{{ product.metafields.custom.informacao_nutricional | metafield_tag }}
+pt-PT,♥ Origem e variedade,it,♥ Origine e varietà
+pt-PT,"<p>Origem: Beira Interior, Portugal<br/>Variedade: Amêndoa Mediterrânica</p>",it,"<p>Origine: Beira Interior, Portogallo<br/>Varietà: mandorla mediterranea</p>"
+pt-PT,❗ Alergénios e Informações Importantes,it,❗Allergeni e informazioni importanti
+pt-PT,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }},it,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }}
+pt-PT,⛟ Entrega e Portes,it,⛟ Consegna e Spedizione
+pt-PT,<p>Envio em 2 dias úteis. Portes gratuitos em compras acima de 25€.</p>,it,<p>Spedizione entro 2 giorni lavorativi. Spedizione gratuita per acquisti superiori a € 25.</p>
+pt-PT,Combina com,it,Si combina con
+pt-PT,Também pode gostar,it,Potrebbe piacerti anche
+pt-PT,Fica a par de todas as novidades e promoções,it,Rimani aggiornato su tutte le novità e promozioni
+pt-PT,<p>Sê o primeiro a saber!</p>,it,<p>Sii il primo a saperlo!</p>
+pt-PT,Portugal.,it,Portogallo.
+pt-PT,Inscreva-se e receba novidades e promoções:,it,Iscriviti e ricevi novità e promozioni:
+pt-PT,BETTER WITH ALMONDS,it,MEGLIO CON LE MANDORLE
+pt-PT,"<p>Rua Filarmónica Idanhense, 68, 6060-188 </p><p>Idanha-a-Nova,  Portugal</p>",it,"<p>Rua Filarmonica Idanhense, 68, 6060-188 </p><p>Idanha-a-Nova, Portogallo</p>"
+pt-PT,Contacto,it,Contatto
+pt-PT,<p>hello@betterwithalmonds.com</p>,it,<p>ciao@betterwithalmonds.com</p>
+pt-PT,Formulário de Contacto,it,Modulo di contatto
+pt-PT,PRODUTOS,it,PRODOTTI
+pt-PT,Livro de Reclamações,it,Libro dei reclami
+pt-PT,Livro de Reclamações Eletrónico,it,Libro elettronico dei reclami
+pt-PT,Portes grátis em todas as subscrições e em compras únicas acima de 30€,it,Spedizione gratuita su tutti gli abbonamenti e acquisti singoli superiori a 30€
+pt-PT,Please select an option,it,Seleziona un'opzione
+pt-PT,"[data-simple-bundles-options] select { 
+    padding-top: 0px;
+    padding-right: 8px;
+    padding-bottom: 0px;
+    padding-left: 8px;
+}",it,"[data-simple-bundles-options] select { 
+    padding-top: 0px;
+    padding-right: 8px;
+    padding-bottom: 0px;
+    padding-left: 8px;
+}"
+pt-PT,Portugal,it,Portogallo
+pt-PT,Conhece,it,Sai
+pt-PT,Compra,it,Acquistare
+pt-PT,Conhece,it,Sai
+pt-PT,Compra,it,Acquistare
+pt-PT,Conhece,it,Sai
+pt-PT,Compra,it,Acquistare
+pt-PT,PRODUTOS,it,PRODOTTI
+pt-PT,COMPRA AQUI,it,ACQUISTA QUI
+pt-PT,Tudo fica melhor com amêndoas,it,Tutto è più buono con le mandorle
+pt-PT,<p></p><p>A<strong> Better With</strong> é fruto da ideia de que a vida tem muito mais sabor em boa companhia. Gostamos de procurar o extraordinário no comum e de misturar o óbvio com o inesperado. Acreditamos que a magia que acontece nesses encontros é o sal e a pimenta do dia-a-dia. <br/></p>,it,<p></p><p><strong>Better With</strong> è il risultato dell'idea che la vita ha molto più sapore in buona compagnia. Ci piace cercare lo straordinario nell'ordinario e mescolare l'ovvio con l'inaspettato. Crediamo che la magia che avviene in questi incontri sia il sale e il pepe della vita quotidiana. <br/></p>
+pt-PT,Sabores,it,Sapori
+pt-PT,<p>Descobre aqui todos os nossos sabores e os seus ingredientes e informações nutricionais. </p>,it,"<p>Scopri tutti i nostri gusti, i loro ingredienti e le informazioni nutrizionali qui. </p>"
+pt-PT,Conhece os sabores,it,Conosci i sapori
+pt-PT,As nossas Boxes,it,Le nostre scatole
+pt-PT,"<p>As nossas boxes Better With são a escolha perfeita para quem procura lanches saudáveis e deliciosos. Disponíveis tanto para compra única como por subscrição mensal, oferecem uma seleção variada de amêndoas premium com sabores únicos e irresistíveis.</p>",it,"<p>Le nostre scatole Better With sono la scelta perfetta per chi cerca snack sani e deliziosi. Disponibili sia per l'acquisto una tantum che per l'abbonamento mensile, offrono una vasta selezione di mandorle premium dai sapori unici e irresistibili.</p>"
+pt-PT,LITTLE FÃ,it,PICCOLA Fà
+pt-PT,A subscrição perfeita para começar.,it,L'abbonamento perfetto per iniziare.
+pt-PT,7 Sabores de 140g     ,it,7 Gusti da 140g     
+pt-PT,4 Sabores de 30g,it,4 gusti da 30g
+pt-PT,Recebe Mensalmente,it,Ricevi mensilmente
+pt-PT,10% Desconto,it,Sconto del 10%.
+pt-PT,Cancela quando quiseres,it,Annulla quando vuoi
+pt-PT,Portes Grátis em todas as subscrições,it,Spedizione gratuita su tutti gli abbonamenti
+pt-PT,Subscrever,it,Iscriviti
+pt-PT,ALMOND LOVER,it,AMANTE DELLE MANDORLE
+pt-PT,A subscrição para os que sabem como é delicioso.,it,Un abbonamento per chi sa quanto è buono.
+pt-PT, 10 Sabores de 140g,it, 10 Gusti da 140g
+pt-PT,6 Sabores de 30g,it,6 gusti da 30g
+pt-PT,Recebe Mensalmente ,it,Ricevi mensilmente 
+pt-PT,10% Desconto,it,Sconto del 10%.
+pt-PT,Recebe uma Bolsa Personalizada,it,Ricevi una borsa personalizzata
+pt-PT,Cancela quando quiseres,it,Annulla quando vuoi
+pt-PT,Portes Grátis em todas as subscrições,it,Spedizione gratuita su tutti gli abbonamenti
+pt-PT,Subscrever,it,Iscriviti
+pt-PT,CRAZY FÃ,it,CRAZY Fà
+pt-PT,Para os que já estão completamente rendidos aos nossos sabores! ,it,Per chi si è già completamente arreso ai nostri sapori! 
+pt-PT,15 Sabores de 140g,it,15 Gusti da 140g
+pt-PT,8 Sabores de 30g,it,8 gusti da 30g
+pt-PT,Recebe Mensalmente ,it,Ricevi mensilmente 
+pt-PT,10% Desconto,it,Sconto del 10%.
+pt-PT,Recebe uma Bolsa Personalizada,it,Ricevi una borsa personalizzata
+pt-PT,Recebe a nossa Gift Box,it,Ricevi la nostra confezione regalo
+pt-PT,Cancela quando quiseres!,it,Cancella quando vuoi!
+pt-PT,Portes Grátis Portes Grátis em todas as subscrições,it,Spedizione gratuita Spedizione gratuita su tutti gli abbonamenti
+pt-PT,Subscrever,it,Iscriviti
+pt-PT,"Do campo à mesa, hoje e amanhã.",it,"Dal campo alla tavola, oggi e domani."
+pt-PT,"<p>Como agricultores responsáveis, estamos totalmente conscientes da importância de reduzir a nossa pegada de carbono. O nosso objetivo é promover um ecossistema equilibrado, minimizando o impacto ambiental. Tomamos medidas proativas, como a implementação de cobertura vegetal permanente e o apoio à captura de carbono através da plantação de 1,5 milhões de árvores. Estas ações refletem o nosso compromisso em construir um futuro sustentável para as nossas plantações e, consequentemente, para o nosso planeta. </p>",it,"<p>In qualità di agricoltori responsabili, siamo pienamente consapevoli dell'importanza di ridurre la nostra impronta di carbonio. Il nostro obiettivo è promuovere un ecosistema equilibrato, riducendo al minimo l’impatto ambientale. Adottiamo misure proattive, come l’implementazione di una copertura vegetale permanente e il sostegno alla cattura del carbonio attraverso la piantumazione di 1,5 milioni di alberi. Queste azioni riflettono il nostro impegno nella costruzione di un futuro sostenibile per le nostre piantagioni e, di conseguenza, per il nostro pianeta. </p>"
+pt-PT,SABE MAIS SOBRE NÓS,it,SCOPRI DI PIÙ SU DI NOI
+pt-PT,A melhores amêndoas que já provei. São simplesmente deliciosas e super diferentes.,it,Le migliori mandorle che abbia mai assaggiato. Sono semplicemente deliziosi e super diversi.
+pt-PT,Catarina Barata,it,Catarina Barata
+pt-PT,Muito boas e crocantes. Diferente de tudo que já provei. Gostei imenso.,it,Molto buono e croccante. A differenza di qualsiasi cosa abbia mai assaggiato. Mi è davvero piaciuto.
+pt-PT,João Pedro,it,Giovanni Pedro
+pt-PT,"Gosto de várias, mas as minhas favoritas são a Mel e Sal Marinho.",it,"Me ne piacciono diversi, ma i miei preferiti sono Miele e Sale marino."
+pt-PT,Pedro Sousa,it,Pedro Sousa
+pt-PT,Alecrim e sal tem tudo a ver com amêndoa. Descobri isso ao provar a Better With.,it,Il rosmarino e il sale sono tutti legati alle mandorle. L'ho scoperto provando Better With.
+pt-PT,Rute Pereira,it,Ruth Pereira
+pt-PT,As Nossas Herdades,it,Le nostre tenute
+pt-PT,"<p>Espalhadas por 1.300 hectares, em 6 propriedades, nos concelhos do Fundão e Idanha-a-Nova, em Portugal.</p>",it,"<p>Si estende su 1.300 ettari, su 6 proprietà, nei comuni di Fundão e Idanha-a-Nova, in Portogallo.</p>"
+pt-PT,Agricultura Regenerativa,it,Agricoltura rigenerativa
+pt-PT,"<p>A nossa paixão pela sustentabilidade levou-nos a adotar práticas de agricultura sustentáveis no cultivo das nossas amêndoas, colhidas e tratadas nas nossas herdades. </p>",it,"<p>La nostra passione per la sostenibilità ci ha portato ad adottare pratiche agricole sostenibili nella coltivazione delle nostre mandorle, raccolte e trattate nelle nostre aziende agricole. </p>"
+pt-PT,Produtos,it,Prodotti
+pt-PT,"<p>Disponíveis em embalagens de 30g e 140g, estamos prontos para te acompanhar no dia-a-dia e em momentos especiais. </p>",it,"<p>Disponibili nelle confezioni da 30g e 140g, siamo pronti ad accompagnarvi quotidianamente e nei momenti speciali. </p>"
+pt-PT,Loucos por Amêndoas,it,Pazzi per le mandorle
+pt-PT,<p>Somos a combinação irresistível de uma alimentação saudável com uma experiência gastronómica irresistível: a fusão de amêndoas premium com um mix de 15 sabores artesanais. </p>,it,<p>Siamo l'irresistibile combinazione tra un'alimentazione sana e un'irresistibile esperienza gastronomica: la fusione di mandorle premium con un mix di 15 sapori artigianali. </p>
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,Comprar,it,Acquistare
+pt-PT,#INSTAGRAM,it,#INSTAGRAM
+pt-PT,<p>#betterwithalmonds #Amendoasincriveis #AmendoasPortuguesas #Regenerativas #sustentaveis #suaproteinadiaria #amoamendoas</p>,it,<p>#betterwithalmonds #Amendoasincriveis #AmendoasPortuguesas #Regenerativas #sustentaveis #suaproteinadiaria #amoamendoas</p>
+pt-PT,Ug739536477,it,Ug739536477
+pt-PT,Winter Fairy by Sheeran,it,Fata d'inverno di Sheeran
+pt-PT,"Perfect for hours of family fun, it’s a gift he’ll never forget.",it,"Perfetto per ore di divertimento in famiglia, è un regalo che non dimenticherà mai."
+pt-PT,Add to cart - $28.50,it,"Aggiungi al carrello: $ 28,50"
+pt-PT,Red Liquids by Huston,it,Liquidi rossi di Huston
+pt-PT,Add descriptive text for your slide here.,it,Aggiungi qui il testo descrittivo per la tua diapositiva.
+pt-PT,Add to cart - $12.20,it,"Aggiungi al carrello: $ 12,20"
+pt-PT,Triangles by Kulpreet,it,Triangoli di Kulpreet
+pt-PT,Add descriptive text for your slide here.,it,Aggiungi qui il testo descrittivo per la tua diapositiva.
+pt-PT,Add to cart - $18.00,it,"Aggiungi al carrello: $ 18,00"
+pt-PT,Beautiful Books At Affordable Prices & An Unforgettable Experience,it,Bellissimi libri a prezzi convenienti e un'esperienza indimenticabile
+pt-PT,<p>The only place you can afford to get lost is inside a book.</p>,it,<p>L'unico posto in cui puoi permetterti di perderti è all'interno di un libro.</p>
+pt-PT,"<p>A few years ago, Bainbridge set off on a road trip across America to interview bartenders, drink experts and chefs and to discover unusual and delicious alcohol-free mixed beverages.</p>",it,"<p>Qualche anno fa, Bainbridge partì per un viaggio attraverso l'America per intervistare baristi, esperti di bevande e chef e per scoprire bevande miste analcoliche insolite e deliziose.</p>"
+pt-PT,<p>RECYCLED PAPERS</p>,it,<p>CARTA RICICLATA</p>
+pt-PT,<p>SHIP WORLDWIDE</p>,it,<p>SPEDISCI IN TUTTO IL MONDO</p>
+pt-PT,<p>ADD GIFT WRAP</p>,it,<p>AGGIUNGI CONFEZIONE REGALO</p>
+pt-PT,<p>PERSONALIZED BOOKS</p>,it,<p>LIBRI PERSONALIZZATI</p>
+pt-PT,Night Light,it,Luce notturna
+pt-PT,"<p>Chatting and joking around outside her apartment building, they lost track of time. The next thing she knew, it was too late. Too late to get home unnoticed. Too late to avoid being told off by her parents. So she formed a plan, although you could hardly call it that, to leave everything behind—her family, her home and life as she’d known it in a housing project on the outskirts of Lyon.1</p>",it,"<p>Chiacchierando e scherzando fuori dal suo condominio, hanno perso la cognizione del tempo. La cosa successiva che capì fu che era troppo tardi. Troppo tardi per tornare a casa senza essere notato. Troppo tardi per evitare di essere rimproverata dai suoi genitori. Così ha elaborato un piano, anche se difficilmente si potrebbe chiamarlo così, di lasciarsi tutto alle spalle: la sua famiglia, la sua casa e la vita come l'aveva conosciuta in un complesso residenziale alla periferia di Lione.1</p>"
+pt-PT,Add to cart - $34.30,it,"Aggiungi al carrello: $ 34,30"
+pt-PT,"<p>“Why did you do all this for me?’ he asked. ‘I don’t deserve it. I’ve never done anything for you.’ ‘You have been my friend,’ replied Charlotte. ‘That in itself is a tremendous thing.”</p>",it,"<p>“Perché hai fatto tutto questo per me?”, chiese. «Non lo merito. Non ho mai fatto niente per te.» «Sei stato mio amico» rispose Charlotte. ""Questo di per sé è una cosa straordinaria.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,"<p>“From that time on, the world was hers for the reading. She would never be lonely again, never miss the lack of intimate friends. Books became her friends and there was one for every mood.”</p>",it,"<p>""Da quel momento in poi, il mondo fu suo da leggere. Non si sarebbe mai più sentita sola, non le sarebbe mai mancata la mancanza di amici intimi. I libri divennero suoi amici e ce n'era uno per ogni stato d'animo.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,"<p>“The same substance composes us — the tree overhead, the stone beneath us, the bird, the beast, the star — we are all one, all moving to the same end.”</p>",it,"<p>""La stessa sostanza ci compone: l'albero in alto, la pietra sotto di noi, l'uccello, la bestia, la stella: siamo tutti uno, tutti ci muoviamo verso la stessa fine.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,From The Blog,it,Dal blog
+pt-PT,<p>Add a short description on your brand news</p>,it,<p>Aggiungi una breve descrizione alle novità del tuo marchio</p>
+pt-PT,Signup for Our Newsletter,it,Iscriviti alla nostra newsletter
+pt-PT,<p>Invite customers to join your mailing list.</p>,it,<p>Invita i clienti a iscriversi alla tua mailing list.</p>
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Kimmy Guletta. </p>",it,"<p>Scopri la nostra <em>Collezione estiva</em>, disegnata da Kimmy Guletta. </p>"
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,Independent Styles,it,Stili indipendenti
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",it,"<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire, ma ero più che disposto a correre il rischio tra persone modellate secondo il mio stampo piuttosto che rimanere più a lungo tra gli orribili e sanguinari uomini verdi di Marte.</p>"
+pt-PT,LEARN MORE,it,SAPERNE DI PIÙ
+pt-PT,Featured Products,it,Prodotti in evidenza
+pt-PT,Premium Life Products,it,Prodotti vita premium
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people.</p>",it,"<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire, ma ero più che disposto a correre il rischio tra la gente.</p>"
+pt-PT,Latest News,it,Ultime notizie
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,it,<p>Ricevi le <em>ultime notizie sulle tendenze della moda e della bellezza.</em></p>
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,<p>“Quick and easy service from North. Would recommend this company to everyone looking for a premium products at a good price.”</p>,it,"<p>“Servizio semplice e veloce dal Nord. Consiglierei questa azienda a tutti coloro che cercano prodotti premium a buon prezzo.""</p>"
+pt-PT,"<p>“An exceptional theme, strong structural quality and the ability to create anything your imagination can dream of!”</p>",it,"<p>""Un tema eccezionale, una forte qualità strutturale e la capacità di creare qualsiasi cosa la tua immaginazione possa sognare!""</p>"
+pt-PT,Ralph Lauren,it,Ralph Lauren
+pt-PT,<p>“This is the best theme I have ever buyed with great support! They help me in a very short time every time I asked.”</p>,it,"<p>""Questo è il miglior tema che abbia mai acquistato con un grande supporto! Mi hanno aiutato in brevissimo tempo ogni volta che ho chiesto.""</p>"
+pt-PT,Guess,it,Indovinare
+pt-PT,100% CERTIFIED PRODUCTS,it,PRODOTTI CERTIFICATI AL 100%.
+pt-PT,Detox the body. Look fabulous.,it,Disintossicare il corpo. Sembra favoloso.
+pt-PT,Whether you crave a total reset or a nutrient boost.,it,Che tu desideri un ripristino totale o un aumento di nutrienti.
+pt-PT,Shop our flavors,it,Acquista i nostri gusti
+pt-PT,Add a tagline,it,Aggiungi uno slogan
+pt-PT,Being energetic is the new you,it,Essere energici è il nuovo te
+pt-PT,Add descriptive text for your slide here.,it,Aggiungi qui il testo descrittivo per la tua diapositiva.
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,What Makes Us Different?,it,Cosa ci rende diversi?
+pt-PT,"<p>Share information about your brand with your customers. Describe a product, make announcements, or welcome customers to your store. </p>",it,"<p>Condividi le informazioni sul tuo brand con i tuoi clienti. Descrivi un prodotto, fai annunci o dai il benvenuto ai clienti nel tuo negozio. </p>"
+pt-PT,<p>Sugar Friendly</p>,it,<p>Amichevole con lo zucchero</p>
+pt-PT,<p>Probiotics</p>,it,<p>Probiotici</p>
+pt-PT,<p>100% Vegan</p>,it,<p>100% vegano</p>
+pt-PT,<p>Gluten-free</p>,it,<p>Senza glutine</p>
+pt-PT,<p>18 Cals</p>,it,<p>18 Cal</p>
+pt-PT,<p>Zero Waste</p>,it,<p>Zero rifiuti</p>
+pt-PT,Meet Our Products,it,Scopri i nostri prodotti
+pt-PT,<p>This half-day fast eases you in with 3 of our lower sugar juices from each category.</p>,it,<p>Questo digiuno di mezza giornata ti facilita con 3 dei nostri succhi a basso contenuto di zucchero di ciascuna categoria.</p>
+pt-PT,The Daily Wellness Bundle,it,Il pacchetto benessere quotidiano
+pt-PT,<p>This half-day fast eases you in with 3 of our lower sugar juices from each category.</p>,it,<p>Questo digiuno di mezza giornata ti facilita con 3 dei nostri succhi a basso contenuto di zucchero di ciascuna categoria.</p>
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,Save 20%,it,Risparmia il 20%
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",it,<p>Questo detergente contiene una miscela esclusiva a base di mandorle per fornire ulteriori grassi sani e proteine ​​che ti fanno sentire sazio. Cleanse 1 include anche alcuni dei nostri succhi più popolari e deliziosi per renderlo un gioco da ragazzi.</p>
+pt-PT,Money Back Guarantee,it,Garanzia di rimborso
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",it,<p>Questo detergente contiene una miscela esclusiva a base di mandorle per fornire ulteriori grassi sani e proteine ​​che ti fanno sentire sazio. Cleanse 1 include anche alcuni dei nostri succhi più popolari e deliziosi per renderlo un gioco da ragazzi.</p>
+pt-PT,Certified Organic,it,Certificato biologico
+pt-PT,"<p>This cleanse has an extra signature blend made with almonds to provide additional healthy fats & protein that keep you feeling satiated. Cleanse 1 also includes some of our most popular, delicious juices to make it easy-peasy.</p>",it,<p>Questo detergente contiene una miscela esclusiva a base di mandorle per fornire ulteriori grassi sani e proteine ​​che ti fanno sentire sazio. Cleanse 1 include anche alcuni dei nostri succhi più popolari e deliziosi per renderlo un gioco da ragazzi.</p>
+pt-PT,Restore Your Vitality In 30 Days,it,Ripristina la tua vitalità in 30 giorni
+pt-PT,"<p>It's a blend of cucumber, celery, spinach, lemon, kale and parsley. Simple, clean, and full of green goodness.</p>",it,"<p>È una miscela di cetriolo, sedano, spinaci, limone, cavolo riccio e prezzemolo. Semplice, pulito e pieno di bontà verde.</p>"
+pt-PT,In the Press,it,Nella stampa
+pt-PT,"<p>“Loved the juice and soup cleanse, was my first time doing a cleanse. Found the juices very satisfying.”</p>",it,"<p>""Mi sono piaciuti i succhi e le zuppe depurative. Era la prima volta che facevo una depurazione. Ho trovato i succhi molto soddisfacenti.""</p>"
+pt-PT,"<p>""I will start by saying their juice is fantastic. I love it and I have purchased several times.""</p>",it,"<p>""Inizierò dicendo che il loro succo è fantastico. Lo adoro e l'ho acquistato diverse volte.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,"<p>""They taste great and are full of everything you need to start your journey towards better overall health.""</p>",it,"<p>""Hanno un ottimo sapore e sono pieni di tutto il necessario per iniziare il tuo viaggio verso una migliore salute generale.""</p>"
+pt-PT,Review author,it,Autore della recensione
+pt-PT,Blog posts,it,Post del blog
+pt-PT,<p>Add a short description on your brand news</p>,it,<p>Aggiungi una breve descrizione alle novità del tuo marchio</p>
+pt-PT,Summer Collection,it,Collezione estiva
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Sarah Taylor.<br/>Free shipping in the US for any purchase over $60.</p>",it,"<p>Scopri la nostra <em>Collezione estiva</em>, disegnata da Sarah Taylor.<br/>Spedizione gratuita negli Stati Uniti per qualsiasi acquisto superiore a $ 60.</p>"
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,Free Delivery,it,Consegna gratuita
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,30-Day Returns,it,Resi entro 30 giorni
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,International Warranty,it,Garanzia Internazionale
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,New & Stylish Collections,it,Collezioni nuove ed eleganti
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",it,"<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire, ma ero più che disposto a correre il rischio tra persone modellate secondo il mio stampo piuttosto che rimanere più a lungo tra gli orribili e sanguinari uomini verdi di Marte.</p>"
+pt-PT,Flash Sale: 50-70% Accessories,it,Saldi flash: 50-70% Accessori
+pt-PT,Shop Sale,it,Vendita in negozio
+pt-PT,Recent Arrivals,it,Arrivi recenti
+pt-PT,<p>Add some <em>new</em> pieces to your wardrobe by shopping our goodies.</p>,it,<p>Aggiungi alcuni <em>nuovi</em> pezzi al tuo guardaroba acquistando i nostri gadget.</p>
+pt-PT,Summer Collection,it,Collezione estiva
+pt-PT,"<p>Discover our <em>Summer Collection</em>, designed by Sarah Taylor.<br/>Free shipping in the US for any purchase over $60.</p>",it,"<p>Scopri la nostra <em>Collezione estiva</em>, disegnata da Sarah Taylor.<br/>Spedizione gratuita negli Stati Uniti per qualsiasi acquisto superiore a $ 60.</p>"
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,Latest News,it,Ultime notizie
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,it,<p>Ricevi le <em>ultime notizie sulle tendenze della moda e della bellezza.</em></p>
+pt-PT,"Signup for our newsletter to receive special offers, news, &amp; events.",it,"Iscriviti alla nostra newsletter per ricevere offerte speciali, novità e aggiornamenti. eventi."
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,it,<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire.</p>
+pt-PT,Discover Our Collection,it,Scopri la nostra collezione
+pt-PT,"<p>Slowly she drifted to the southeast, rising higher and higher as the flames ateaway her wooden parts and diminished the weight upon her. </p>",it,"<p>Lentamente andò alla deriva verso sud-est, sollevandosi sempre più in alto mentre le fiamme divoravano le sue parti di legno e diminuivano il peso su di lei. </p>"
+pt-PT,Recent Arrivals,it,Arrivi recenti
+pt-PT,<p>Add some <em>new</em> pieces to your wardrobe by shopping our goodies.</p>,it,<p>Aggiungi alcuni <em>nuovi</em> pezzi al tuo guardaroba acquistando i nostri gadget.</p>
+pt-PT,"<p>Slowly she drifted to the southeast, rising higher and higher as the flames ateaway her wooden parts and diminished the weight upon her. Ascending to the roof of the building I watched her for hours until she was lost in the dim finally.</p>",it,"<p>Lentamente andò alla deriva verso sud-est, sollevandosi sempre più in alto mentre le fiamme divoravano le sue parti di legno e diminuivano il peso su di lei. Salendo sul tetto dell'edificio l'ho osservata per ore finché non si è persa nell'oscurità.</p>"
+pt-PT,Shop now,it,Acquista ora
+pt-PT,Best Sellers,it,I più venduti
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,it,<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire.</p>
+pt-PT,Signup for our newsletter,it,Iscriviti alla nostra newsletter
+pt-PT,<p>I did not even know that there were any better conditions to escape to.</p>,it,<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire.</p>
+pt-PT,Designed in San Francisco. Handcrafted responsibly in Paris.,it,Progettato a San Francisco. Prodotto artigianalmente in modo responsabile a Parigi.
+pt-PT,Shop now,it,Acquista ora
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,SHOP NOW,it,ACQUISTA ORA
+pt-PT,"<p>I did not even know that there were any better conditions to escape to, but I was more than willing to take my chances among people fashioned after my own mold rather than to remain longer among the hideous and bloodthirsty green men of Mars.</p>",it,"<p>Non sapevo nemmeno che esistessero condizioni migliori in cui fuggire, ma ero più che disposto a correre il rischio tra persone modellate secondo il mio stampo piuttosto che rimanere più a lungo tra gli orribili e sanguinari uomini verdi di Marte.</p>"
+pt-PT,Learn More,it,Saperne di più
+pt-PT,"<p>Discover our <em>Luxury Collection</em>, designed by Ann Maya.<br/>Free shipping in the US for any purchase over $60.</p>",it,"<p>Scopri la nostra <em>Collezione di lusso</em>, disegnata da Ann Maya.<br/>Spedizione gratuita negli Stati Uniti per qualsiasi acquisto superiore a $ 60.</p>"
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,Latest News,it,Ultime notizie
+pt-PT,<p>Get the <em>latest fashion and beauty trends news.</em></p>,it,<p>Ricevi le <em>ultime notizie sulle tendenze della moda e della bellezza.</em></p>
+pt-PT,Free Delivery,it,Consegna gratuita
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,30-Day Returns,it,Resi entro 30 giorni
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,International Warranty,it,Garanzia Internazionale
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,Gift Package,it,Pacchetto regalo
+pt-PT,"<p>Time and time again I won the applause of the bloodthirsty multitude, and toward the end there were cries.</p>",it,<p>Più e più volte ho vinto gli applausi della moltitudine assetata di sangue e verso la fine ci sono state delle grida.</p>
+pt-PT,"<p>A nossa dedicação à<strong> agricultura sustentável</strong> levou-nos a especializar-nos em <strong>amêndoas mediterrânicas</strong> de primeira qualidade provenientes de <strong>agricultura regenerativa</strong>, colhidas e tratadas com o máximo cuidado. A <strong>Better With</strong> é uma marca da <strong>Veracruz Almonds</strong>, a empresa produtora.</p>",it,"<p>La nostra dedizione all'<strong>agricoltura sostenibile</strong> ci ha portato a specializzarci in <strong>mandorle mediterranee</strong> di alta qualità provenienti da <strong>agricoltura rigenerativa</strong>, raccolte e trattate con la massima cura. <strong>Better With</strong> è un marchio di <strong>Veracruz Almonds</strong>, l'azienda produttrice.</p>"
+pt-PT,Conhece a Veracruz,it,Conosci Veracruz
+pt-PT,conhece a nossa origem,it,Conosci la nostra origine
+pt-PT,"<p>A melhor amêndoa mediterrânica nasce do contacto entre o sol e a terra, do respeito e do amor, da incorporação de tecnologia na agricultura. Destas e de outras combinações nasce uma marca com presença: no sofá ou na praia, no verão ou no inverno, em qualquer dia, a qualquer hora. </p>",it,"<p>Le migliori mandorle del Mediterraneo nascono dal contatto tra il sole e la terra, dal rispetto e dall'amore, dall'incorporazione della tecnologia nell'agricoltura. Da questi e altri accostamenti nasce un brand presente: sul divano o in spiaggia, d'estate o d'inverno, in ogni giorno, a ogni ora. </p>"
+pt-PT,"<p>Em<strong> 1.300 hectares</strong>, distribuídos por seis propriedades nos concelhos do Fundão e Idanha-a-Nova, utilizamos<strong> as mais avançadas técnicas de agricultura de precisão</strong>, juntamente com <strong>práticas de responsabilidade social</strong>. Adotamos uma abordagem verdadeiramente holística que beneficia todos os envolvidos!</p>",it,"<p>Su<strong>1.300 ettari</strong>, distribuiti in sei proprietà nei comuni di Fundão e Idanha-a-Nova, utilizziamo<strong>le più avanzate tecniche di agricoltura di precisione</strong>, insieme a <strong>pratiche di responsabilità sociale</strong>. Adottiamo un approccio veramente olistico a vantaggio di tutti i soggetti coinvolti!</p>"
+pt-PT,"<p>Nas nossas herdades, praticamos uma <strong>agricultura regenerativa</strong>, focada na preservação de recursos preciosos como o <strong>solo</strong>, a <strong>água</strong>, a <strong>vida selvagem</strong> e a <strong>flora </strong>para as gerações futuras. Orgulhamo-nos de lutar por uma maior <strong>biodiversidade</strong>, a fim de proteger o equilíbrio da natureza!</p>",it,"<p>Nelle nostre aziende agricole pratichiamo l'<strong>agricoltura rigenerativa</strong>, incentrata sulla conservazione di risorse preziose come il <strong>suolo</strong>, l'<strong>acqua</strong>, la <strong>fauna selvatica</strong> e la <strong>flora</strong> per le generazioni future. Siamo orgogliosi di lottare per una maggiore <strong>biodiversità</strong> al fine di proteggere l'equilibrio della natura!</p>"
+pt-PT,As nossas herdades,it,I nostri allevamenti
+pt-PT,NOSSAS CERTIFICAÇÕES,it,LE NOSTRE CERTIFICAZIONI
+pt-PT,É melhor com confiança. Do campo à mesa. Hoje e amanhã.,it,È meglio con fiducia. Dal campo alla tavola. Oggi e domani.
+pt-PT,Heading,it,Intestazione
+pt-PT,"<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>",it,"<p>Abbina il testo a un'immagine per concentrarti sul prodotto, sulla collezione o sul post del blog che hai scelto. Aggiungi dettagli su disponibilità, stile o fornisci anche una recensione.</p>"
+pt-PT,<p>Add your store address or<br/>your store hours</p>,it,<p>Aggiungi l'indirizzo del tuo negozio o<br/>gli orari del negozio</p>
+pt-PT,Our Stores,it,I nostri negozi
+pt-PT,Store location,it,Posizione del negozio
+pt-PT,<p>Add your store address or<br/>your store hours</p>,it,<p>Aggiungi l'indirizzo del tuo negozio o<br/>gli orari del negozio</p>
+pt-PT,Get Directions,it,Ottieni indicazioni stradali
+pt-PT,Store location,it,Posizione del negozio
+pt-PT,<p>Add your store address or<br/>your store hours</p>,it,<p>Aggiungi l'indirizzo del tuo negozio o<br/>gli orari del negozio</p>
+pt-PT,Get Directions,it,Ottieni indicazioni stradali
+pt-PT,Store location,it,Posizione del negozio
+pt-PT,<p>Add your store address or<br/>your store hours</p>,it,<p>Aggiungi l'indirizzo del tuo negozio o<br/>gli orari del negozio</p>
+pt-PT,Get Directions,it,Ottieni indicazioni stradali
+pt-PT,Heading,it,Intestazione
+pt-PT,"<p>Focus on your upcoming sales. Add details on availability, style, or even provide a review.</p>",it,"<p>Concentrati sulle tue prossime vendite. Aggiungi dettagli su disponibilità, stile o fornisci anche una recensione.</p>"
+pt-PT,Shop Now,it,Acquista ora
+pt-PT,Heading,it,Intestazione
+pt-PT,"<p>Focus on your upcoming sales. Add details on availability, style, or even provide a review.</p>",it,"<p>Concentrati sulle tue prossime vendite. Aggiungi dettagli su disponibilità, stile o fornisci anche una recensione.</p>"
+pt-PT,Say Hello,it,Salutami
+pt-PT,Entra em Contacto,it,Mettiti in contatto
+pt-PT,<p>Através do formulário ou por e-mail. <strong>Estamos aqui!</strong></p>,it,<p>Tramite il modulo o via email. <strong>Siamo qui!</strong></p>
+pt-PT,<h3>Better With Us</h3>,it,<h3>Meglio con noi</h3>
+pt-PT,"<p>Rua Filarmónica Idanhense, 68</p><p>6060-188 Idanha-a-Nova</p><p>hello@betterwithalmonds.com</p>",it,"<p>Rua Filarmonica Idanhense, 68</p><p>6060-188 Idanha-a-Nova</p><p>hello@betterwithalmonds.com</p>"
+pt-PT,<p></p><h3><strong>Fala connosco!</strong></h3>,it,<p></p><h3><strong>Fala connosco!</strong></h3>
+pt-PT,"<p>Envia-nos as tuas dúvidas, críticas e elogios. :)</p>",it,"<p>Inviaci domande, critiche e complimenti. :)</p>"
+pt-PT,Torrada com Sal,it,Pane tostato con sale
+pt-PT,Natural,it,Naturale
+pt-PT,Torrada,it,Pane abbrustolito
+pt-PT,Mel e Sal Marinho,it,Miele e sale marino
+pt-PT,Fudge Caramelo Inglês,it,Fudge al caramello inglese
+pt-PT,Alecrim e Sal,it,Rosmarino e Sale
+pt-PT,Caril,it,Curry
+pt-PT,Regenerativas e sustentáveis,it,Rigenerativo e sostenibile
+pt-PT,"<p>Nossa paixão pela <strong>agricultura sustentável</strong> nos levou a focar em <strong>amêndoas premium regenerativas</strong>, que são colhidas e processadas com muito carinho e cuidado em <strong>nossas próprias fazendas.</strong></p>",it,"<p>La nostra passione per l'<strong>agricoltura sostenibile</strong> ci ha portato a concentrarci sulle <strong>mandorle rigenerative premium</strong>, che vengono raccolte e lavorate con grande cura e cura nelle <strong>nostre fattorie.</strong></p>"
+pt-PT,Produzidas em Portugal,it,Prodotto in Portogallo
+pt-PT,"<p>Espalhadas por <strong>1.300 hectares </strong>de terra em <strong>6 propriedades</strong> nos municípios de Fundão e Idanha-a-Nova, em <strong>Portugal</strong>, utilizamos técnicas avançadas de <strong>agricultura de precisão</strong>, juntamente com práticas de <strong>responsabilidade social</strong>, para garantir que todos se beneficiem!</p>",it,"<p>Distribuiti su <strong>1.300 ettari</strong> di terreno in <strong>6 proprietà</strong> nei comuni di Fundão e Idanha-a-Nova, in <strong>Portogallo</strong>, utilizziamo tecniche avanzate di <strong>agricoltura di precisione</strong>, insieme a pratiche di <strong>responsabilità sociale</strong>, per garantire a tutti benefici!</p>"
+pt-PT,O seu snack perfeito,it,Il tuo spuntino perfetto
+pt-PT,"<p>Queremos levar a experiência de saborear amêndoas a novos patamares com a nossa marca <strong>BETTER WITH. </strong>Apresentamos uma combinação irresistível de nutrição saudável e satisfação pura, utilizando amêndoas premium do Mediterrâneo e uma variedade incrível de sabores artesanais que são verdadeiramente tentadores.</p>",it,"<p>Vogliamo portare l'esperienza di gustare le mandorle a nuovi livelli con il nostro marchio <strong>BETTER WITH. </strong>Presentiamo un'irresistibile combinazione di alimentazione sana e pura soddisfazione, utilizzando mandorle mediterranee di prima qualità e un'incredibile varietà di sapori artigianali davvero allettanti.</p>"
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,➜ Ingredientes,it,➜ Ingredienti
+pt-PT,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>,it,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>
+pt-PT,★ Informação Nutricional,it,★ Informazioni nutrizionali
+pt-PT,{{ product.metafields.custom.informacao_nutricional | metafield_tag }},it,{{ product.metafields.custom.informacao_nutricional | metafield_tag }}
+pt-PT,♥ Origem e variedade,it,♥ Origine e varietà
+pt-PT,"<p>Origem: Beira Interior, Portugal<br/>Variedade: Soleta</p>",it,"<p>Origine: Beira Interior, Portogallo<br/>Varietà: Soleta</p>"
+pt-PT,❗ Alergénios e Informações Importantes,it,❗Allergeni e informazioni importanti
+pt-PT,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }},it,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }}
+pt-PT,⛟ Entrega e Portes,it,⛟ Consegna e Spedizione
+pt-PT,<p>Envio em 2 dias úteis. Portes gratuitos em compras acima de 25€.</p>,it,<p>Spedizione entro 2 giorni lavorativi. Spedizione gratuita per acquisti superiori a € 25.</p>
+pt-PT,Combina com,it,Si combina con
+pt-PT,Também pode gostar,it,Potrebbe piacerti anche
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,Pode gostar também,it,Potrebbe piacerti anche
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,Size,it,Misurare
+pt-PT,Sizing guide,it,Guida alle taglie
+pt-PT,➜ Ingredientes,it,➜ Ingredienti
+pt-PT,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>,it,<p>{{ product.metafields.custom.ingredientes | metafield_tag }}</p>
+pt-PT,★ Informação Nutricional,it,★ Informazioni nutrizionali
+pt-PT,{{ product.metafields.custom.informacao_nutricional | metafield_tag }},it,{{ product.metafields.custom.informacao_nutricional | metafield_tag }}
+pt-PT,♥ Origem e variedade,it,♥ Origine e varietà
+pt-PT,"<p>Origem: Beira Interior, Portugal<br/>Variedade: Amêndoa Mediterrânica</p>",it,"<p>Origine: Beira Interior, Portogallo<br/>Varietà: mandorla mediterranea</p>"
+pt-PT,❗ Alergénios e Informações Importantes,it,❗Allergeni e informazioni importanti
+pt-PT,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }},it,{{ product.metafields.custom.alergenios_e_outras_informacoes | metafield_tag }}
+pt-PT,⛟ Entrega e Portes,it,⛟ Consegna e Spedizione
+pt-PT,<p>Envio em 2 dias úteis. Portes gratuitos em compras acima de 25€.</p>,it,<p>Spedizione entro 2 giorni lavorativi. Spedizione gratuita per acquisti superiori a € 25.</p>
+pt-PT,Combina com,it,Si combina con
+pt-PT,Também pode gostar,it,Potrebbe piacerti anche
+pt-PT,Fica a par de todas as novidades e promoções,it,Rimani aggiornato su tutte le novità e promozioni
+pt-PT,<p>Sê o primeiro a saber!</p>,it,<p>Sii il primo a saperlo!</p>
+pt-PT,Portugal.,it,Portogallo.
+pt-PT,Inscreva-se e receba novidades e promoções:,it,Iscriviti e ricevi novità e promozioni:
+pt-PT,BETTER WITH ALMONDS,it,MEGLIO CON LE MANDORLE
+pt-PT,"<p>Rua Filarmónica Idanhense, 68, 6060-188 </p><p>Idanha-a-Nova,  Portugal</p>",it,"<p>Rua Filarmonica Idanhense, 68, 6060-188 </p><p>Idanha-a-Nova, Portogallo</p>"
+pt-PT,Contacto,it,Contatto
+pt-PT,<p>hello@betterwithalmonds.com</p>,it,<p>ciao@betterwithalmonds.com</p>
+pt-PT,Formulário de Contacto,it,Modulo di contatto
+pt-PT,PRODUTOS,it,PRODOTTI
+pt-PT,Livro de Reclamações,it,Libro dei reclami
+pt-PT,Livro de Reclamações Eletrónico,it,Libro elettronico dei reclami
+pt-PT,Portes grátis em todas as subscrições e em compras únicas acima de 30€,it,Spedizione gratuita su tutti gli abbonamenti e acquisti singoli superiori a 30€
+pt-PT,30,it,30
+pt-PT,"<p>Utilizamos cookies para melhorar a sua experiência no nosso site. Ao continuar navegando, você concorda com o uso de cookies. <a href=""/policies/privacy-policy"" target=""_blank"" title=""Privacy Policy"">Política de privacidade.</a></p>",it,"<p>Utilizziamo i cookie per migliorare la tua esperienza sul nostro sito web. Continuando la navigazione acconsenti all'utilizzo dei cookie. <a href=""/policies/privacy-policy"" target=""_blank"" title=""Informativa sulla privacy"">Informativa sulla privacy.</a></p>"
+pt-PT,https://facebook.com/betterwithalmonds,it,https://facebook.com/betterwithalmonds
+pt-PT,https://instagram.com/betterwithalmonds,it,https://instagram.com/betterwithalmonds
+pt-PT,https://youtube.com/betterwithalmonds,it,https://youtube.com/betterwithalmonds
+pt-PT,All rights reserved.,it,Tutti i diritti riservati.
+pt-PT,Welcome to our store,it,Benvenuti nel nostro negozio
+pt-PT,View all,it,Visualizza tutto
+pt-PT,Load more,it,Carica di più
+pt-PT,Verified buyer,it,Acquirente verificato
+pt-PT,Show more,it,Mostra di più
+pt-PT,Search,it,Ricerca
+pt-PT,Recent searches,it,Ricerche recenti
+pt-PT,Popular searches,it,Ricerche popolari
+pt-PT,Popular items,it,Articoli popolari
+pt-PT,Suggestions,it,Suggerimenti
+pt-PT,Products,it,Prodotti
+pt-PT,Pages,it,Pagine
+pt-PT,Search for “{{ terms }}”,it,"Cerca ""{{ terms }}"""
+pt-PT,Your cart is empty,it,Il tuo carrello è vuoto
+pt-PT,Continue shopping,it,Continua a fare acquisti
+pt-PT,Cart,it,Carrello
+pt-PT,Estimated total,it,Totale stimato
+pt-PT,Check out,it,Guardare
+pt-PT,View cart,it,Visualizza carrello
+pt-PT,View product,it,Visualizza il prodotto
+pt-PT,On,it,SU
+pt-PT,By,it,Di
+pt-PT,View more,it,Visualizza altro
+pt-PT,Clear all,it,Cancella tutto
+pt-PT,To,it,A
+pt-PT,Sort by:,it,Ordina per:
+pt-PT,{{ product_count }} product found,it,{{ product_count }} prodotto trovato
+pt-PT,{{ product_count }} products found,it,{{ product_count }} prodotti trovati
+pt-PT,{{ product_count }} product,it,{{ product_count }} prodotto
+pt-PT,{{ product_count }} products,it,{{ product_count }} prodotti
+pt-PT,Load more,it,Carica di più
+pt-PT,Search results,it,Risultati della ricerca
+pt-PT,Search,it,Ricerca
+pt-PT,"Found {{ count }} result for ""{{ terms }}""",it,"Trovato {{ count }} risultato per ""{{ terms }}"""
+pt-PT,"Found {{ count }} results for ""{{ terms }}""",it,"Trovato {{ count }} risultati per ""{{ terms }}"""
+pt-PT,Sort by:,it,Ordina per:
+pt-PT,No results could be found. Please try again with a different query.,it,Nessun risultato trovato. Riprova con una query diversa.
+pt-PT,Blog,it,Blog
+pt-PT,Page,it,Pagina
+pt-PT,Next,it,Prossimo
+pt-PT,Previous,it,Precedente
+pt-PT,{{ count }} comment,it,{{ count }} commento
+pt-PT,{{ count }} comments,it,{{ count }} commenti
+pt-PT,Leave a comment,it,Lascia un commento
+pt-PT,Your email address will not be published,it,Il tuo indirizzo email non verrà pubblicato
+pt-PT,"Please note, comments need to be approved before they are published.",it,Tieni presente che i commenti devono essere approvati prima di essere pubblicati.
+pt-PT,Name,it,Nome
+pt-PT,Email,it,E-mail
+pt-PT,Message,it,Messaggio
+pt-PT,Post comment,it,Pubblica un commento
+pt-PT,Error: An issue has occurred!,it,Errore: si è verificato un problema!
+pt-PT,Your comment was posted successfully! Thank you!,it,Il tuo commento è stato pubblicato con successo! Grazie!
+pt-PT,"Your comment was posted successfully. We will publish it in a little while, as our blog is moderated.",it,"Il tuo commento è stato pubblicato con successo. Lo pubblicheremo tra poco, poiché il nostro blog è moderato."
+pt-PT,Subscribe,it,Iscriviti
+pt-PT,Copy,it,Copia
+pt-PT,Copy Discount,it,Sconto copia
+pt-PT,Copied Discount,it,Sconto copiato
+pt-PT,Send message,it,Invia messaggio
+pt-PT,Name,it,Nome
+pt-PT,Message,it,Messaggio
+pt-PT,Enter your email,it,Inserisci la tua email
+pt-PT,Your email,it,La tua email
+pt-PT,{{ field }} is required,it,{{ field }} è obbligatorio
+pt-PT,{{ field }} is invalid,it,{{ field }} non è valido
+pt-PT,"An error occurred, please check the information and resubmit.",it,"Si è verificato un errore, controlla le informazioni e invia nuovamente."
+pt-PT,Thanks for contacting us. We'll get back to you as soon as possible.,it,Grazie per averci contattato. Ti risponderemo il prima possibile.
+pt-PT,Thanks for subscribing,it,Grazie per esserti iscritto
+pt-PT,Email,it,E-mail
+pt-PT,Password,it,Password
+pt-PT,Login,it,Login
+pt-PT,Forgot your password?,it,Hai dimenticato la password?
+pt-PT,Sign in,it,Registrazione
+pt-PT,Don't have account?,it,Non hai un account?
+pt-PT,Sign up,it,Iscrizione
+pt-PT,Reset your password,it,Reimposta la tua password
+pt-PT,We will send you an email to reset your password,it,Ti invieremo un'e-mail per reimpostare la password
+pt-PT,Submit,it,Invia
+pt-PT,We've sent you an email with a link to update your password.,it,Ti abbiamo inviato un'e-mail con un collegamento per aggiornare la tua password.
+pt-PT,No account found with that email.,it,Nessun account trovato con quell'e-mail.
+pt-PT,First name,it,Nome di battesimo
+pt-PT,Last name,it,Cognome
+pt-PT,Create account,it,Creare un account
+pt-PT,Already has an account?,it,Hai già un account?
+pt-PT,Add to cart,it,Aggiungi al carrello
+pt-PT,Buy it now,it,Compralo Subito
+pt-PT,Quantity,it,Quantità
+pt-PT,Product type,it,Tipo di prodotto
+pt-PT,Vendor,it,Venditore
+pt-PT,Collections,it,Collezioni
+pt-PT,Tags,it,Tag
+pt-PT,I want to send this as a gift,it,Voglio inviarlo come regalo
+pt-PT,200 characters max,it,200 caratteri massimo
+pt-PT,Send on(optional),it,Invia (facoltativo)
+pt-PT,in cart,it,nel carrello
+pt-PT,{{ cart_qty }} in cart,it,{{ cart_qty }} nel carrello
+pt-PT,All,it,Tutto
+pt-PT,item is already added to cart!,it,l'articolo è già aggiunto al carrello!
+pt-PT,items are already added to cart!,it,gli articoli sono già aggiunti al carrello!
+pt-PT,item is in cart!,it,l'articolo è nel carrello!
+pt-PT,items are in cart!,it,gli articoli sono nel carrello!
+pt-PT,You can't add more,it,Non puoi aggiungere altro
+pt-PT,to the cart,it,al carrello
+pt-PT,Cart added,it,Carrello aggiunto
+pt-PT,Add cart failed,it,Aggiunta del carrello non riuscita
+pt-PT,Sold out,it,Esaurito
+pt-PT,Sale {{ sale_percent }},it,Saldi {{ sale_percent }}
+pt-PT,Sale,it,Vendita
+pt-PT,No products,it,Nessun prodotto
+pt-PT,From {{ price }},it,A partire da {{ price }}
+pt-PT,Unit price,it,Prezzo unitario
+pt-PT,per,it,per
+pt-PT,Select options,it,Seleziona le opzioni
+pt-PT,Total price,it,Prezzo totale
+pt-PT,Add (<span class='item-bunble-selected'></span>) items to cart,it,Aggiungi (<span class='item-bunble-selected'></span>) articoli al carrello
+pt-PT,Add all items to cart,it,Aggiungi tutti gli articoli al carrello
+pt-PT,This item,it,Questo articolo
+pt-PT,In stock,it,In magazzino
+pt-PT,Low stock,it,Scorte basse
+pt-PT,left,it,Sinistra
+pt-PT,Low stock {{ quantity }} left,it,Stock rimanente di {{ quantity }} in esaurimento
+pt-PT,Out of stock,it,Esaurito
+pt-PT,Product link,it,Collegamento del prodotto
+pt-PT,Name,it,Nome
+pt-PT,Email,it,E-mail
+pt-PT,Phone number,it,Numero di telefono
+pt-PT,Question,it,Domanda
+pt-PT,Submit question successfully,it,Invia la domanda con successo
+pt-PT,Submit question failed,it,Invio della domanda non riuscito
+pt-PT,Submit,it,Invia
+pt-PT,"Taxes, discounts and <a href=""{{ link }}"">shipping</a> calculated at checkout",it,"Tasse, sconti e <a href=""{{ link }}"">spedizione</a> calcolati al momento del pagamento"
+pt-PT,Tax included and shipping and discounts calculated at checkout,it,"Tasse incluse, spedizione e sconti calcolati al momento del pagamento"
+pt-PT,"Tax included. <a href=""{{ link }}"">shipping</a> and discounts calculated at checkout.",it,"Tasse incluse. <a href=""{{ link }}"">spedizione</a> e sconti calcolati al momento del pagamento."
+pt-PT,"Taxes, discounts and shipping calculated at checkout",it,"Tasse, sconti e spese di spedizione calcolati al momento del pagamento"
+pt-PT,Save,it,Salva
+pt-PT,Cancel,it,Cancellare
+pt-PT,Note field is required,it,Il campo nota è obbligatorio
+pt-PT,"An error occurred, please check the information and resubmit",it,"Si è verificato un errore, controlla le informazioni e invia nuovamente"
+pt-PT,Product,it,Prodotto
+pt-PT,Quantity,it,Quantità
+pt-PT,Total,it,Totale
+pt-PT,Your cart is empty,it,Il tuo carrello è vuoto
+pt-PT,Your cart is currently empty. Discover exciting products on our Shop page,it,Il tuo carrello è attualmente vuoto. Scopri prodotti entusiasmanti sulla nostra pagina Shop
+pt-PT,Back to shopping,it,Torniamo allo shopping
+pt-PT,Your cart is empty,it,Il tuo carrello è vuoto
+pt-PT,Your cart,it,Il tuo carrello
+pt-PT,Continue shopping,it,Continua a fare acquisti
+pt-PT,Your cart is currently empty. Discover exciting products on our Shop page,it,Il tuo carrello è attualmente vuoto. Scopri prodotti entusiasmanti sulla nostra pagina Shop
+pt-PT,Have an account?,it,Hai un account?
+pt-PT,"<a href=""{{ link }}"" class=""link underlined-link"">Log in</a> to check out faster.",it,"<a href=""{{ link }}"" class=""link underlined-link"">Accedi</a> per effettuare il pagamento più velocemente."
+pt-PT,Decrease quantity for,it,Diminuire la quantità per
+pt-PT,Increase quantity for,it,Aumenta la quantità per
+pt-PT,Quantity for,it,Quantità per
+pt-PT,Regular price,it,Prezzo normale
+pt-PT,Sale price,it,Prezzo di vendita
+pt-PT,Sale price,it,Prezzo di vendita
+pt-PT,Add order note,it,Aggiungi nota sull'ordine
+pt-PT,Estimated total,it,Totale stimato
+pt-PT,Estimate shipping,it,Spedizione stimata
+pt-PT,"Taxes, discounts and shipping calculated at checkout",it,"Tasse, sconti e spese di spedizione calcolati al momento del pagamento"
+pt-PT,Remove {{ title }},it,Rimuovi {{ title }}
+pt-PT,Estimate Shipping,it,Spedizione stimata
+pt-PT,Country,it,Paese
+pt-PT,Choose Country,it,Scegli Paese
+pt-PT,Province,it,Provincia
+pt-PT,Choose Province,it,Scegli Provincia
+pt-PT,Enter a ZIP code,it,Inserisci un codice postale
+pt-PT,Estimate,it,Stima
+pt-PT,We found several shipping rates available for your address:,it,Abbiamo trovato diverse tariffe di spedizione disponibili per il tuo indirizzo:
+pt-PT,There are several shipping rates for your address:,it,Esistono diverse tariffe di spedizione per il tuo indirizzo:
+pt-PT,There are no shipping rates for your address.,it,Non sono previste tariffe di spedizione per il tuo indirizzo.
+pt-PT,There are some errors:,it,Ci sono alcuni errori:
+pt-PT,FREE,it,GRATUITO
+pt-PT,Dashboard,it,Pannello di controllo
+pt-PT,Address,it,Indirizzo
+pt-PT,Wishlist,it,Lista dei desideri
+pt-PT,Compare,it,Confrontare
+pt-PT,Log out,it,Esci
+pt-PT,Order history,it,Cronologia degli ordini
+pt-PT,Order,it,Ordine
+pt-PT,Date,it,Data
+pt-PT,Payment status,it,Stato del pagamento
+pt-PT,Fulfillment status,it,Stato di adempimento
+pt-PT,Total,it,Totale
+pt-PT,Account details,it,Dettagli del conto
+pt-PT,default address,it,indirizzo predefinito
+pt-PT,Cancel,it,Cancellare
+pt-PT,Sign up,it,Iscrizione
+pt-PT,Email,it,E-mail
+pt-PT,Forgot your password?,it,Hai dimenticato la password?
+pt-PT,Continue,it,Continuare
+pt-PT,Continue as a guest,it,Continua come ospite
+pt-PT,Password,it,Password
+pt-PT,Login,it,Login
+pt-PT,Sign in,it,Registrazione
+pt-PT,Submit,it,Invia
+pt-PT,Order {{ name }},it,Ordina {{ name }}
+pt-PT,Placed on {{ date }},it,Inserito il {{ date }}
+pt-PT,Order Cancelled on {{ date }},it,Ordine annullato il {{ date }}
+pt-PT,Reason: {{ reason }},it,Motivo: {{ reason }}
+pt-PT,Billing Address,it,Indirizzo di fatturazione
+pt-PT,Payment Status,it,Stato del pagamento
+pt-PT,Shipping Address,it,Indirizzo di spedizione
+pt-PT,Fulfillment Status,it,Stato di adempimento
+pt-PT,Discount,it,Sconto
+pt-PT,Shipping,it,Spedizione
+pt-PT,Tax,it,Tassare
+pt-PT,Product,it,Prodotto
+pt-PT,SKU,it,SKU
+pt-PT,Price,it,Prezzo
+pt-PT,Quantity,it,Quantità
+pt-PT,Total,it,Totale
+pt-PT,Refunded,it,Rimborsato
+pt-PT,Fulfilled {{ date }},it,Eseguito il {{ date }}
+pt-PT,Track shipment,it,Traccia la spedizione
+pt-PT,Tracking link,it,Collegamento di monitoraggio
+pt-PT,Carrier,it,Vettore
+pt-PT,Tracking number,it,Numero di identificazione
+pt-PT,Subtotal,it,Totale parziale
+pt-PT,Duties,it,Doveri
+pt-PT,Your address,it,Il tuo indirizzo
+pt-PT,Your addresses,it,I tuoi indirizzi
+pt-PT,default adderss,it,indirizzo predefinito
+pt-PT,Add a new address,it,Aggiungi un nuovo indirizzo
+pt-PT,Edit address,it,Modifica indirizzo
+pt-PT,First name,it,Nome di battesimo
+pt-PT,Last name,it,Cognome
+pt-PT,Company,it,Azienda
+pt-PT,Address 1,it,Indirizzo 1
+pt-PT,Address 2,it,Indirizzo 2
+pt-PT,City,it,Città
+pt-PT,Country/region,it,Paese/regione
+pt-PT,Province,it,Provincia
+pt-PT,Postal/ZIP code,it,Codice postale/CAP
+pt-PT,Phone,it,Telefono
+pt-PT,Set as default address,it,Imposta come indirizzo predefinito
+pt-PT,Add address,it,Aggiungi indirizzo
+pt-PT,Update address,it,Aggiorna indirizzo
+pt-PT,Cancel,it,Cancellare
+pt-PT,Edit,it,Modificare
+pt-PT,Delete,it,Eliminare
+pt-PT,Are you sure you wish to delete this address?,it,Sei sicuro di voler eliminare questo indirizzo?
+pt-PT,Error,it,Errore
+pt-PT,Wrong password!,it,Password sbagliata!
+pt-PT,Enter using password,it,Accedi utilizzando la password
+pt-PT,Close,it,Vicino
+pt-PT,Enter store using password:,it,Accedi al negozio utilizzando la password:
+pt-PT,Your password,it,La tua password
+pt-PT,Enter,it,Entra
+pt-PT,"<span>Are you the store owner?</span> <a href=""/admin"" class=""link underlined-link"">Log in here</a>",it,"<span>Sei il proprietario del negozio?</span> <a href=""/admin"" class=""link underlined-link"">Accedi qui</a>"
+pt-PT,Notify me,it,Avvisami
+pt-PT,Add wishlist,it,Aggiungi lista dei desideri
+pt-PT,Remove from wishlist,it,Rimuovi dalla lista dei desideri
+pt-PT,Visit wishlist page,it,Visita la pagina della lista dei desideri
+pt-PT,Add compare,it,Aggiungi confronta
+pt-PT,Remove from compare,it,Rimuovi dal confronto
+pt-PT,Visit compare page,it,Visita la pagina di confronto
+pt-PT,Page not found,it,Pagina non trovata
+pt-PT,Captcha,it,Captcha
+pt-PT,Cart,it,Carrello
+pt-PT,List collections,it,Elenca le raccolte
+pt-PT,Account,it,Account
+pt-PT,Active accout,it,Conto attivo
+pt-PT,Address,it,Indirizzo
+pt-PT,Login,it,Login
+pt-PT,Order,it,Ordine
+pt-PT,Register,it,Registro
+pt-PT,Reset password,it,Reimposta la password
+pt-PT,Gift card,it,Carta regalo
+pt-PT,Metaobject,it,Metaoggetto
+pt-PT,Password,it,Password
+pt-PT,Policy,it,Politica
+pt-PT,Search,it,Ricerca
+pt-PT,Wishlist is empty,it,La lista dei desideri è vuota
+pt-PT,No items in your wishlist yet. Discover exciting products on our Shop page,it,Nessun articolo nella tua lista dei desideri ancora. Scopri prodotti entusiasmanti sulla nostra pagina Shop
+pt-PT,Compare is empty,it,Il confronto è vuoto
+pt-PT,Quick add,it,Aggiunta rapida
+pt-PT,No items in your compare yet. Discover exciting products on our Shop page,it,Nessun articolo nel tuo confronto ancora. Scopri prodotti entusiasmanti sulla nostra pagina Shop
+pt-PT,View all,it,Visualizza tutto
+pt-PT,Load more,it,Carica di più
+pt-PT,READ MORE,it,PER SAPERNE DI PIÙ
+pt-PT,Copy link,it,Copia collegamento
+pt-PT,Copied,it,Copiato
+pt-PT,Facebook,it,Facebook
+pt-PT,Twitter,it,Twitter
+pt-PT,Pinterest,it,Pinterest
+pt-PT,Tumblr,it,Tumblr
+pt-PT,{{ field }} is required,it,{{ field }} è obbligatorio
+pt-PT,{{ field }} is invalid,it,{{ field }} non è valido
+pt-PT,is required,it,è obbligatorio
+pt-PT,is invalid,it,non è valido
+pt-PT,"An error occurred, please check the information and resubmit.",it,"Si è verificato un errore, controlla le informazioni e invia nuovamente."
+pt-PT,Thanks for contacting us. We'll get back to you as soon as possible.,it,Grazie per averci contattato. Ti risponderemo il prima possibile.
+pt-PT,Subscribe failed,it,Iscrizione non riuscita
+pt-PT,Subscribe successes,it,Sottoscrivi i successi
+pt-PT,Your name,it,Il tuo nome
+pt-PT,Your email,it,La tua email
+pt-PT,Your phone,it,Il tuo telefono
+pt-PT,Your message,it,Il tuo messaggio
+pt-PT,Example product title,it,Titolo del prodotto di esempio
+pt-PT,Add to cart,it,Aggiungi al carrello
+pt-PT,Cart added!,it,Carrello aggiunto!
+pt-PT,Add cart failed,it,Aggiunta del carrello non riuscita
+pt-PT,Sold out,it,Esaurito
+pt-PT,Save {{ price }},it,Risparmia {{ price }}
+pt-PT,No products,it,Nessun prodotto
+pt-PT,From {{ price }},it,A partire da {{ price }}
+pt-PT,Unit price,it,Prezzo unitario
+pt-PT,per,it,per
+pt-PT,Unavailable,it,Non disponibile
+pt-PT,{{ option_value }} - Unavailable,it,{{ option_value }} - Non disponibile
+pt-PT,Zero,it,Zero
+pt-PT,{{ count }} review,it,{{ count }} recensione
+pt-PT,{{ count }} reviews,it,{{ count }} recensioni
+pt-PT,Quantity,it,Quantità
+pt-PT,Quantity Input,it,Immissione della quantità
+pt-PT,SKU,it,SKU
+pt-PT,In stock,it,In magazzino
+pt-PT,{{ quantity }} in stock,it,{{ quantity }} in magazzino
+pt-PT,Low stock,it,Scorte basse
+pt-PT,Low stock: {{ quantity }} left,it,Stock in esaurimento: {{ quantity }} rimanenti
+pt-PT,Out of stock,it,Esaurito
+pt-PT,In stock,it,In magazzino
+pt-PT,Please adjust the following:,it,Si prega di modificare quanto segue:
+pt-PT,I want to send this as a gift,it,Voglio inviarlo come regalo
+pt-PT,Gift card recipient form expanded,it,Modulo del destinatario della carta regalo ampliato
+pt-PT,Gift card recipient form collapsed,it,Il modulo del destinatario della carta regalo è compresso
+pt-PT,Recipient email,it,E-mail del destinatario
+pt-PT,Recipient email (optional),it,E-mail del destinatario (facoltativo)
+pt-PT,Email,it,E-mail
+pt-PT,Recipient name (optional),it,Nome del destinatario (facoltativo)
+pt-PT,Name,it,Nome
+pt-PT,Message (optional),it,Messaggio (facoltativo)
+pt-PT,Message,it,Messaggio
+pt-PT,{{ max_chars }} characters max,it,{{ max_chars }} caratteri max
+pt-PT,YYYY-MM-DD,it,AAAA-MM-GG
+pt-PT,Send on (optional),it,Invia (facoltativo)
+pt-PT,Menu principal,it,Menù principale
+pt-PT,Menu de rodapé,it,Menù a piè di pagina
+pt-PT,Rodapé 2,it,Piè di pagina 2
+pt-PT,Menu principal da conta de cliente,it,Menu principale dell'account cliente
+pt-PT,Contacto,it,Contatto
+pt-PT,Sabores,it,Sapori
+pt-PT,Loja,it,Negozio
+pt-PT,Sobre Nós,it,Chi siamo
+pt-PT,Aviso Legal,it,Avviso legale
+pt-PT,Política de Privacidade,it,politica sulla riservatezza
+pt-PT,Política de Reembolso,it,Politica di rimborso
+pt-PT,Política de Entrega,it,Politica di consegna
+pt-PT,Home,it,Casa
+pt-PT,Produtos,it,Prodotti
+pt-PT,Subscrições,it,Abbonamenti
+pt-PT,Orders,it,Ordini
+pt-PT,Loja,it,Negozio
