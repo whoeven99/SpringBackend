@@ -95,7 +95,6 @@ public class JsoupUtils {
                         translatedTexts.add(text);
                         if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
                             //终止翻译，并返回状态4
-                            System.out.println("翻译异常，终止翻译");
                             throw new ClientException(TRANSLATION_EXCEPTION);
                         }
                         continue;
