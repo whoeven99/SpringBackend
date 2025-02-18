@@ -1,0 +1,9 @@
+source_code,source_text,target_code,target_text
+zh-CN,未找到 Shop Cash。,ja,ショップキャッシュが見つかりません。
+zh-CN,<p></p>,ja,<p></p>
+zh-CN,Submit,ja,提出する
+zh-CN,{{ product.vendor }},ja,{{ product.vendor }}
+zh-CN,Submit,ja,提出する
+zh-CN,{{ product.vendor }},ja,{{ product.vendor }}
+zh-CN,<p></p>,ja,<p></p>
+zh-CN,未找到 Shop Cash。,ja,ショップキャッシュが見つかりません。

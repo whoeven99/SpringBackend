@@ -128,7 +128,7 @@ public class ShopifyService {
         System.out.println("开始： " + method + " 方法");
         if (method.equals("translate")){
             //读csv文件并转化为List<CsvRequest>
-            csvMap = readCsvToCsvRequest("src/main/java/com/bogdatech/requestBody/" + request.getAccessToken() + ".csv");
+            csvMap = readCsvToCsvRequest("src/main/java/com/bogdatech/requestBody/" + request.getApiVersion() + ".csv");
 //            System.out.println("csvMap: " + csvMap.toString());
         }
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
