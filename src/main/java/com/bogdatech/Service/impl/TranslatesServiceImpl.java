@@ -76,5 +76,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
          baseMapper.updateTranslatesResourceType(shopName, target, source, resourceType);
     }
 
+    @Override
+    public int getStatusByShopNameAndTargetAndSource(String shopName, String target, String source) {
+        return baseMapper.getStatusByShopNameAndTargetAndSource(shopName, target, source);
+    }
+
 
 }

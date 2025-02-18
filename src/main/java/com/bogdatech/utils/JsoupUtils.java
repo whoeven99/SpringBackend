@@ -93,7 +93,7 @@ public class JsoupUtils {
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         translatedTexts.add(text);
-                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
                             //终止翻译，并返回状态4
                             System.out.println("翻译异常，终止翻译");
                             throw new ClientException(TRANSLATION_EXCEPTION);
@@ -126,7 +126,7 @@ public class JsoupUtils {
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         translatedAlts.add(altText);
-                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)){
+                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
                             //终止翻译，并返回状态4
                             throw new ClientException(TRANSLATION_EXCEPTION);
                         }
@@ -137,6 +137,11 @@ public class JsoupUtils {
                 }
             }
 
+        } catch (ClientException e) {
+            if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
+                //终止翻译，并返回状态4
+                throw new ClientException(TRANSLATION_EXCEPTION);
+            }
         } catch (Exception e) {
             appInsights.trackTrace("HTML" + e.getMessage());
         }
