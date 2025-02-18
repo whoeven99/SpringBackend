@@ -5,9 +5,9 @@ import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationParam;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.Role;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.*;
+import com.alibaba.dashscope.tokenizers.Tokenizer;
+import com.alibaba.dashscope.tokenizers.TokenizerFactory;
 import com.aliyun.alimt20181012.models.TranslateGeneralResponse;
 import com.aliyun.tea.TeaException;
 import com.bogdatech.model.controller.request.TranslateRequest;
@@ -171,5 +171,17 @@ public class ALiYunTranslateIntegration {
             System.out.println(item);
         }
         return list;
+    }
+
+    public static Integer calculateBaiLianToken(String text){
+        Tokenizer tokenizer = TokenizerFactory.qwen();
+        try {
+            List<Integer> ids = tokenizer.encode(text, "all");
+            String decodedString = tokenizer.decode(ids);
+            System.out.println(decodedString);
+            return tokenizer.encode(text, "all").size();
+        } catch (NoSpecialTokenExists | UnSupportedSpecialTokenMode e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -29,8 +29,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessages;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.*;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.StringUtils.countWords;
@@ -190,5 +189,17 @@ public class TestController {
             throw new RuntimeException(e);
         }
         return generationResult;
+    }
+
+    @PostMapping("/calculateBaiLianToken")
+    public Integer calculateBaiLianTokens(@RequestBody String text) {
+        Integer i = null;
+        try {
+            i = calculateBaiLianToken(text);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("token: " + i);
+        return i;
     }
 }
