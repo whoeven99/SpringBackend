@@ -104,7 +104,6 @@ public class TranslateService {
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
 
     //判断是否可以终止翻译流程
-
     private Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
     private Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
     private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
@@ -298,13 +297,10 @@ public class TranslateService {
 
     private boolean checkIsStopped(String shopName, CharacterCountUtils counter, String target, String source) {
         if (userStopFlags.get(shopName).get()) {
-            //从数据库中获取当前状态 2，改成正在翻译，4，改成翻译异常
-            int status = translatesService.getStatusByShopNameAndTargetAndSource(shopName, target, source);
             //                更新数据库中的已使用字符数
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”//
             translatesService.updateStatusByShopNameAnd2(shopName);
-//            userStopFlags.get(shopName).set(false);
             return true;
         }
         return false;
@@ -337,7 +333,7 @@ public class TranslateService {
         String resourceType = translateContext.getTranslateResource().getResourceType();
         ShopifyRequest request = translateContext.getShopifyRequest();
         System.out.println("现在翻译到： " + resourceType);
-        //将目前的状态，添加到数据库中
+        //将目前的状态，添加到数据库中，前端要用这个数据做进度条功能
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), translateContext.getSource(), resourceType);
 
         if (translateContext.getShopifyData() == null) {
@@ -375,7 +371,7 @@ public class TranslateService {
     }
 
     //递归遍历JSON树：使用 translateSingleLineTe
-    // xtFieldsRecursively 方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
+    //方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
     private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
 
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();
@@ -498,7 +494,6 @@ public class TranslateService {
                     break;
                 default:
                     appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
-//                    System.out.println("未知的翻译文本： " + entry.getValue());
                     break;
             }
         }
@@ -596,7 +591,6 @@ public class TranslateService {
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
         if (stopFlag != null) {
             translatesService.updateTranslateStatus(shopName, 4, request.getTarget(), source, request.getAccessToken());
-            int status = translatesService.getStatusByShopNameAndTargetAndSource(shopName, request.getTarget(), source);
             stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
@@ -1107,7 +1101,6 @@ public class TranslateService {
         } else {
             infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
         }
-//        String infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
@@ -1358,14 +1351,5 @@ public class TranslateService {
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }
 
-
-    //插入翻译状态
-//    @Async
-//    public void insertTranslateStatus(TranslateRequest request) {
-//        Integer status = translatesService.readStatus(request);
-//        if (status == null) {
-//            translatesService.insertShopTranslateInfo(request, 0);
-//        }
-//    }
 }
 

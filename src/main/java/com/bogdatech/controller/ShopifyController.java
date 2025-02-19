@@ -139,7 +139,6 @@ public class ShopifyController {
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
                 appInsights.trackTrace("Error while getUserLimitChars for shop " + e.getMessage());
-//                logger.error("Error while querying translation counter for shop " + shopName, e);
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
