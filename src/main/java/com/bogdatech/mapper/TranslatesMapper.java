@@ -28,7 +28,7 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
     @Select("SELECT status FROM Translates WHERE shop_name = #{shopName}")
     List<Integer> readStatusInTranslatesByShopName(String shopName);
 
-    @Select("SELECT source,target,shop_name,status FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
+    @Select("SELECT source,target,shop_name,status,resource_type FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
     TranslatesDO readTranslatesDOByArray(String shopName, String source, String target);
 
     @Select("SELECT shop_name FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
@@ -45,4 +45,10 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
             "WHERE shop_name = #{shopName} -- 替换为目标 shop_name\n" +
             "  AND status > 0;")
     List<TranslatesDO> getLanguageListCounter(String shopName);
+
+    @Update("UPDATE Translates SET resource_type = #{resourceType} WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
+    void updateTranslatesResourceType(String shopName, String target, String source, String resourceType);
+
+    @Select("SELECT status FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
+    int getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
 }

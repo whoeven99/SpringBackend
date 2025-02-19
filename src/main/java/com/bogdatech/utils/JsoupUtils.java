@@ -1,5 +1,6 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ChatGptIntegration;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+import static com.bogdatech.constants.TranslateConstants.TRANSLATION_EXCEPTION;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
@@ -28,12 +30,14 @@ public class JsoupUtils {
 
     private final TranslateApiIntegration translateApiIntegration;
     private final ChatGptIntegration chatGptIntegration;
+    private final ITranslatesService translatesService;
     TelemetryClient appInsights = new TelemetryClient();
 
     @Autowired
-    public JsoupUtils(TranslateApiIntegration translateApiIntegration, ChatGptIntegration chatGptIntegration) {
+    public JsoupUtils(TranslateApiIntegration translateApiIntegration, ChatGptIntegration chatGptIntegration, ITranslatesService translatesService) {
         this.translateApiIntegration = translateApiIntegration;
         this.chatGptIntegration = chatGptIntegration;
+        this.translatesService = translatesService;
     }
 
     public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO) {
@@ -72,7 +76,7 @@ public class JsoupUtils {
 
                 String targetString;
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);
@@ -85,17 +89,14 @@ public class JsoupUtils {
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
                             targetString = translateAndCount(request, counter, aiLanguagePacksDO);
-//                            counter.addChars(calculateToken(text, 1));
-//                            targetString = translateApiIntegration.googleTranslate(request);
-//                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
-                    } catch (Exception e) {
+                    } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-//                        counter.addChars(calculateToken(text, 1));
-//                        targetString = translateApiIntegration.googleTranslate(request);
-////                        targetString = translateApiIntegration.microsoftTranslate(request);
-//                        addData(target, text, targetString);
                         translatedTexts.add(text);
+                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
+                            //终止翻译，并返回状态4
+                            throw new ClientException(TRANSLATION_EXCEPTION);
+                        }
                         continue;
                     }
                     addData(target, text, targetString);
@@ -120,16 +121,14 @@ public class JsoupUtils {
                             counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
                         } else {
                             targetString = translateAndCount(request, counter, aiLanguagePacksDO);
-//                            counter.addChars(calculateToken(altText, 1));
-//                            targetString = translateApiIntegration.googleTranslate(request);
-//                            targetString = translateApiIntegration.microsoftTranslate(request);
                         }
-                    } catch (Exception e) {
+                    } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-//                        targetString = translateApiIntegration.googleTranslate(request);
-////                         targetString = translateApiIntegration.microsoftTranslate(request);
-//                        addData(target, altText, targetString);
                         translatedAlts.add(altText);
+                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
+                            //终止翻译，并返回状态4
+                            throw new ClientException(TRANSLATION_EXCEPTION);
+                        }
                         continue;
                     }
                     addData(target, altText, targetString);
@@ -137,6 +136,11 @@ public class JsoupUtils {
                 }
             }
 
+        } catch (ClientException e) {
+            if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
+                //终止翻译，并返回状态4
+                throw new ClientException(TRANSLATION_EXCEPTION);
+            }
         } catch (Exception e) {
             appInsights.trackTrace("HTML" + e.getMessage());
         }
@@ -172,7 +176,7 @@ public class JsoupUtils {
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     //目前没有翻译html的提示词，用的是谷歌翻译
@@ -204,7 +208,7 @@ public class JsoupUtils {
             for (String text : texts) {
                 String translated = translateSingleLine(text, request.getTarget());
                 if (translated != null) {
-                    counter.addChars(calculateToken(text, 1));
+//                    counter.addChars(calculateToken(text, 1));
                     translatedTexts.add(translated);
                 } else {
                     request.setContent(text);

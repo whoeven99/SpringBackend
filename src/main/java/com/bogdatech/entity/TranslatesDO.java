@@ -19,6 +19,7 @@ public class TranslatesDO {
     private String target;
     private String shopName;
     private Integer status;
+    private String resourceType;
 //    private Timestamp createAt;
 //    private Timestamp updateAt;
 }

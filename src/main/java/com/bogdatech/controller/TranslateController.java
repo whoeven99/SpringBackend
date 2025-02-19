@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
+import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 
@@ -147,6 +148,13 @@ public class TranslateController {
 //        if (translatesService.getLanguageListCounter(request.getShopName()).size() > 2) {
 //            return new BaseResponse<>().CreateErrorResponse(DATA_IS_LIMIT);
 //        }
+        //一个用户当前只能翻译一条语言，根据用户的status判断
+        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
+        for (Integer integer : integers) {
+            if (integer == 2) {
+                return new BaseResponse<>().CreateSuccessResponse(HAS_TRANSLATED);
+            }
+        }
 
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
@@ -229,6 +237,5 @@ public class TranslateController {
             translateService.insertLanguageStatus(request1);
         }
     }
-
 
 }
