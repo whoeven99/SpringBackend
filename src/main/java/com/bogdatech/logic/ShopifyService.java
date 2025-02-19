@@ -740,7 +740,7 @@ public class ShopifyService {
     }
 
     //修改shopify本地单条数据 和 更新本地数据库相应数据
-    public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
+    public BaseResponse<Object>     updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
         String string = updateShopifyData(registerTransactionRequest);
         if (string == null) {
             throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
