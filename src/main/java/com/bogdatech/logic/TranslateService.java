@@ -275,10 +275,7 @@ public class TranslateService {
             cloudServiceRequest.setBody(query);
             String shopifyData;
             try {
-                //TODO：判断当前的使用环境，本地用封装的接口；test和prod直接调用
                 String env = System.getenv("ApplicationEnv");
-//                System.out.println("当前环境为：" + env);
-//                appInsights.trackTrace("当前环境为：" + env);
                 if ("prod".equals(env) || "dev".equals(env)) {
                     shopifyData = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
                 } else {
