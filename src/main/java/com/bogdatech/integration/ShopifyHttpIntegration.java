@@ -48,7 +48,7 @@ public class ShopifyHttpIntegration {
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity, "UTF-8");
-//            appInsights.trackTrace("Shopify response: " + responseContent);
+            appInsights.trackTrace("Shopify response: " + responseContent);
             response.close();
             httpClient.close();
         } catch (IOException e) {
@@ -74,6 +74,7 @@ public class ShopifyHttpIntegration {
             try {
                 String responseString = sendShopifyPost(request, shopifyRequestBody.registerTransactionQuery(), variables);
                 System.out.println("registerTransaction response: " + responseString);
+                appInsights.trackTrace("registerTransaction response: " + responseString);
                 jsonObject = JSONObject.parseObject(responseString);
                 if (jsonObject != null && jsonObject.containsKey("data")) {
                     appInsights.trackTrace("registerTransaction success: " + jsonObject.getString("data"));
