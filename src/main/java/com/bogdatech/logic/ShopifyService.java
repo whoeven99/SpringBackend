@@ -516,7 +516,24 @@ public class ShopifyService {
         return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
     }
 
-    //将修改所需要的数据封装成Map格式
+    //修改多个文本数据
+    public String updateShopifyManyData(ShopifyRequest shopifyRequest, List<RegisterTransactionRequest> registerTransactionRequests) {
+       // 将List<RegisterTransactionRequest>处理成variables数据
+        Map<String, Object> variables = toVariables(registerTransactionRequests);
+        return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
+    }
+
+    //一次修改多条shopify本地数据
+    public String updateShopifyDataByTranslateTextRequests(List<RegisterTransactionRequest> registerTransactionRequests) {
+        appInsights.trackTrace("传入的值： " + registerTransactionRequests.toString());
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(registerTransactionRequests.get(0).getShopName());
+        request.setAccessToken(registerTransactionRequests.get(0).getAccessToken());
+        request.setTarget(registerTransactionRequests.get(0).getTarget());
+        return updateShopifyManyData(request, registerTransactionRequests);
+    }
+
+    //将一条数据所需要的数据封装成Map格式
     static Map<String, Object> getVariables(RegisterTransactionRequest registerTransactionRequest) {
         Map<String, Object> variables = new HashMap<>();
         Map<String, Object> translation = new HashMap<>();
@@ -531,6 +548,26 @@ public class ShopifyService {
         variables.put("translations", translations);
         return variables;
     }
+
+    //将多条数据所需要的数据封装成Map格式
+    static Map<String, Object> toVariables(List<RegisterTransactionRequest> registerTransactionRequest) {
+        Map<String, Object> variables = new HashMap<>();
+        List<Map<String, Object>> translations = new ArrayList<>();
+        for (RegisterTransactionRequest request : registerTransactionRequest) {
+            Map<String, Object> translation = new HashMap<>();
+            translation.put("locale", request.getTarget());
+            translation.put("key", request.getKey());
+            translation.put("translatableContentDigest", request.getTranslatableContentDigest());
+            translation.put("value", request.getValue());
+            translations.add(translation);
+        }
+
+        variables.put("resourceId", registerTransactionRequest.get(0).getResourceId());
+        variables.put("translations", translations);
+        return variables;
+    }
+
+
 
     //在UserSubscription表里面添加一个购买了免费订阅计划的用户（商家）
     public BaseResponse<Object> addUserFreeSubscription(UserSubscriptionsRequest request) {
@@ -555,7 +592,7 @@ public class ShopifyService {
         }
     }
 
-    //修改shopify本地单条数据 和 更新本地数据库相应数据
+    //修改shopify本地单条数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
         appInsights.trackTrace("传入的值： " + registerTransactionRequest.toString());
         String string = updateShopifySingleData(registerTransactionRequest);
