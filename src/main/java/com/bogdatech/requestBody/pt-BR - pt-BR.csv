@@ -1,0 +1,51 @@
+source_code,source_text,target_code,target_text
+en,You no longer have permission to place B2B orders. %{logout_url} to place a personal order instead.,pt-BR,Você não tem mais permissão para fazer pedidos B2B. %{logout_url} para fazer um pedido pessoal.
+en,Log out,pt-BR,Sair
+en,Exclusive offers from Shop,pt-BR,Ofertas exclusivas da Loja
+en,<p></p>,pt-BR,<p></p>
+en,Share,pt-BR,Compartilhar
+en,Browse our latest products,pt-BR,Navegue pelos nossos produtos mais recentes
+en,Shop all,pt-BR,Compre tudo
+en,Featured products,pt-BR,Produtos em destaque
+en,Collections,pt-BR,Coleções
+en,Opening soon,pt-BR,Abrindo em breve
+en,<p>Be the first to know when we launch.</p>,pt-BR,<p>Seja o primeiro a saber quando lançarmos.</p>
+en,{{ product.vendor }},pt-BR,{{ product.vendor }}
+en,Share,pt-BR,Compartilhar
+en,You may also like,pt-BR,Você também pode gostar
+en,Review Box,pt-BR,Caixa de revisão
+en,Subscribe to our emails,pt-BR,Assine nossos e-mails
+en,Welcome to our store,pt-BR,Bem-vindo à nossa loja
+en,"55,20,20,20",pt-BR,"55,20,20,20"
+en,50px,pt-BR,50px
+en,auto,pt-BR,auto
+en,auto,pt-BR,auto
+en,80px,pt-BR,80px
+en,Share,pt-BR,Compartilhar
+en,Browse our latest products,pt-BR,Navegue pelos nossos produtos mais recentes
+en,Shop all,pt-BR,Compre tudo
+en,Featured products,pt-BR,Produtos em destaque
+en,Collections,pt-BR,Coleções
+en,Opening soon,pt-BR,Abrindo em breve
+en,<p>Be the first to know when we launch.</p>,pt-BR,<p>Seja o primeiro a saber quando lançarmos.</p>
+en,{{ product.vendor }},pt-BR,{{ product.vendor }}
+en,Share,pt-BR,Compartilhar
+en,You may also like,pt-BR,Você também pode gostar
+en,Review Box,pt-BR,Caixa de revisão
+en,Subscribe to our emails,pt-BR,Assine nossos e-mails
+en,Welcome to our store,pt-BR,Bem-vindo à nossa loja
+en,<p></p>,pt-BR,<p></p>
+en,You no longer have permission to place B2B orders. %{logout_url} to place a personal order instead.,pt-BR,Você não tem mais permissão para fazer pedidos B2B. %{logout_url} para fazer um pedido pessoal.
+en,Log out,pt-BR,Sair
+en,Exclusive offers from Shop,pt-BR,Ofertas exclusivas da Loja
+en,Main menu,pt-BR,Menu principal
+en,Footer menu,pt-BR,Menu de rodapé
+en,Customer account main menu,pt-BR,Menu principal da conta do cliente
+en,Home,pt-BR,Lar
+en,Catalog,pt-BR,Catálogo
+en,Contact,pt-BR,Contato
+en,Search,pt-BR,Procurar
+en,Shop,pt-BR,Comprar
+en,Orders,pt-BR,Pedidos
+en,Do not sell or share my personal information,pt-BR,Não venda ou compartilhe minhas informações pessoais
+en,Home,pt-BR,Lar
