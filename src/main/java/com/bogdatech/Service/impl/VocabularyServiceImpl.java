@@ -225,6 +225,10 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
     // 首字母大写，用于构建 set 方法名
     private String capitalize(String str) {
         if (str == null || str.isEmpty()) return str;
+        if (str.equals("pt_BR") || str.equals("pt_PT") || str.equals("zh_CN") || str.equals("zh_TW")) {
+            str = str.replaceAll("_", "");
+            return str.substring(0, 1).toUpperCase() + str.substring(1);
+        }
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 

@@ -11,7 +11,6 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,8 +46,6 @@ public class TranslateController {
 
         this.jsoupUtils = jsoupUtils;
     }
-
-    private TelemetryClient appInsights = new TelemetryClient();
 
 
     /*
@@ -187,6 +184,12 @@ public class TranslateController {
     @PostMapping("/translateSingleText")
     public BaseResponse<Object> translateSingleText(@RequestBody RegisterTransactionRequest request) {
         return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
+    }
+
+    //手动停止用户的翻译任务
+    @PutMapping("/stopTranslation")
+    public String stopTranslation(@RequestBody TranslateRequest request) {
+        return translateService.stopTranslationManually(request.getShopName());
     }
 
     /*
