@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -74,8 +75,7 @@ public class ShopifyService {
         this.translatesService = translatesService;
     }
 
-    //    private final TelemetryClient appInsights = new TelemetryClient();
-    public static String env = System.getenv("ApplicationEnv");
+    private TelemetryClient appInsights = new TelemetryClient();
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
     private final int length = 32;
 
@@ -557,12 +557,9 @@ public class ShopifyService {
 
     //修改shopify本地单条数据 和 更新本地数据库相应数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        String string = null;
-        if ("prod".equals(env) || "test".equals(env)) {
-            string = updateShopifySingleData(registerTransactionRequest);
-        } else {
-            string = updateShopifyData(registerTransactionRequest);
-        }
+        appInsights.trackTrace("传入的值： " + registerTransactionRequest.toString());
+        String string = updateShopifySingleData(registerTransactionRequest);
+        appInsights.trackTrace("返回的值： " + string);
         if (string.equals(registerTransactionRequest.getValue())) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
