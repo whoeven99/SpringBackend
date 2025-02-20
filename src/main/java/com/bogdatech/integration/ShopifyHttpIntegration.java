@@ -75,6 +75,7 @@ public class ShopifyHttpIntegration {
                 String responseString = sendShopifyPost(request, shopifyRequestBody.registerTransactionQuery(), variables);
                 jsonObject = JSONObject.parseObject(responseString);
                 if (jsonObject != null && jsonObject.containsKey("data")) {
+                    appInsights.trackTrace("registerTransaction success: " + jsonObject.getString("data"));
                     return jsonObject.getString("data");
                 }
             } catch (Exception e) {
