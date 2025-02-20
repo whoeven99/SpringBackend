@@ -185,6 +185,22 @@ public class TranslateService {
         }
     }
 
+    // 手动停止用户的翻译任务
+    public String stopTranslationManually(String shopName) {
+        AtomicBoolean stopFlag = userStopFlags.get(shopName);
+        if (stopFlag != null) {
+            stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
+            Future<?> future = userTasks.get(shopName);
+            if (future != null && !future.isDone()) {
+                future.cancel(true);  // 中断正在执行的任务
+                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
+//                 将翻译状态改为“部分翻译” shopName, status=3
+                translatesService.updateStatusByShopNameAnd2(shopName);
+                return "翻译任务已停止";
+            }
+        }
+        return "无法停止翻译任务";
+    }
 
     //百度翻译接口
     public String baiDuTranslate(TranslateRequest request) {
@@ -576,6 +592,7 @@ public class TranslateService {
             } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
                 if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
+                    appInsights.trackTrace("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
                     ChatgptException(request, registerTransactionRequest.getLocale());
                 }
                 return true;
@@ -932,12 +949,20 @@ public class TranslateService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             // 跳过 value 为空的项
 
+            if (contentItemNode == null) {
+                continue;
+            }
+
             String value = null;
             String locale = null;
             String translatableContentDigest = null;
             String key = null;
             String type = null;
             try {
+                JsonNode valueNode = contentItemNode.path("value");
+                if(valueNode == null){
+                    continue;
+                }
                 value = contentItemNode.path("value").asText(null);
                 locale = contentItemNode.path("locale").asText(null);
                 translatableContentDigest = contentItemNode.path("digest").asText(null);
@@ -1146,6 +1171,9 @@ public class TranslateService {
         Map<String, TranslateTextDO> translatableContentMap = null;
 //        List<TranslateTextDO> depositContents = new ArrayList<>();
         for (JsonNode node : translatableResourcesNode) {
+            if (node == null) {
+                continue;
+            }
             String resourceId = node.path("resourceId").asText(null);
             if (resourceId == null) {
                 continue;
@@ -1179,7 +1207,10 @@ public class TranslateService {
         JsonNode translationsNode = node.path("translations");
         if (translationsNode.isArray() && !translationsNode.isEmpty()) {
             translationsNode.forEach(translation -> {
-                if (translation.path("value").asText(null).isEmpty() || translation.path("key").asText(null).isEmpty()) {
+                if (translation == null){
+                    return;
+                }
+                if (translation.path("value").asText(null) == null || translation.path("key").asText(null) == null) {
                     return;
                 }
                 //当用户修改数据后，outdated的状态为true，将该数据放入要翻译的集合中
@@ -1201,6 +1232,9 @@ public class TranslateService {
         JsonNode contentNode = node.path("translatableContent");
         if (contentNode.isArray() && !contentNode.isEmpty()) {
             contentNode.forEach(content -> {
+                if (translations == null){
+                    return;
+                }
                 TranslateTextDO keys = translations.get(content.path("key").asText(null));
                 if (translations.get(content.path("key").asText(null)) != null) {
                     keys.setSourceCode(content.path("locale").asText(null));

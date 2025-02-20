@@ -10,7 +10,6 @@ import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.ItemsDO;
 import com.bogdatech.entity.TranslateResourceDTO;
-import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -76,8 +75,10 @@ public class ShopifyService {
     }
 
     //    private final TelemetryClient appInsights = new TelemetryClient();
+    public static String env = System.getenv("ApplicationEnv");
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
     private final int length = 32;
+
     //封装调用云服务器实现获取shopify数据的方法
     public String getShopifyData(CloudServiceRequest cloudServiceRequest) {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
@@ -159,7 +160,7 @@ public class ShopifyService {
 
     //对node节点进行判断，是否调用方法
     @Async
-    public void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter,TranslateResourceDTO translateResource, String method) {
+    public void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter, TranslateResourceDTO translateResource, String method) {
         AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
         JsonNode translatableResourcesNode = objectNode.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
@@ -198,7 +199,7 @@ public class ShopifyService {
         List<String> translatedContent = new ArrayList<>();
         for (JsonNode contentItem : node) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
-            translatedContent.add(contentItemNode.get("key").asText());
+            translatedContent.add(contentItemNode.path("key").asText(null));
         }
         return translatedContent;
     }
@@ -227,7 +228,7 @@ public class ShopifyService {
         }
 //            counter.addChars(calculateToken(value, 1));
 
-//            if (translatedContent.contains(contentItemNode.get("key").asText())) {
+//            if (translatedContent.contains(contentItemNode.get("key").asText(null))) {
 //                translatedCounter.addChars(value.length());
 //            }
     }
@@ -237,14 +238,14 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText())
-                    || "JSON".equals(contentItemNode.get("type").asText())
-                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
+            if ("handle".equals(contentItemNode.get("key").asText(null))
+                    || "JSON".equals(contentItemNode.get("type").asText(null))
+                    || "JSON_STRING".equals(contentItemNode.get("type").asText(null))
             ) {
                 continue;  // 跳过当前项
             }
 
-            String value = contentItemNode.get("value").asText();
+            String value = contentItemNode.get("value").asText(null);
 
             //如果value为空跳过
             if (value.isEmpty()) {
@@ -260,8 +261,8 @@ public class ShopifyService {
                     || ARTICLE.equals(resourceType)) {
 
                 //处理html数据
-                if ("HTML".equals(contentItemNode.get("type").asText())) {
-                    Document doc = Jsoup.parse(contentItemNode.get("value").asText());
+                if ("HTML".equals(contentItemNode.get("type").asText(null))) {
+                    Document doc = Jsoup.parse(contentItemNode.get("value").asText(null));
                     extractTextsToCount(doc, counter);
                     continue;
                 }
@@ -276,8 +277,8 @@ public class ShopifyService {
             }
 //             获取 value
             //处理html的数据
-            if ("HTML".equals(contentItemNode.get("type").asText())) {
-                Document doc = Jsoup.parse(contentItemNode.get("value").asText());
+            if ("HTML".equals(contentItemNode.get("type").asText(null))) {
+                Document doc = Jsoup.parse(contentItemNode.get("value").asText(null));
                 extractTextsToCount(doc, counter);
                 continue;
             }
@@ -291,14 +292,14 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText())
-                    || "JSON".equals(contentItemNode.get("type").asText())
-                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
+            if ("handle".equals(contentItemNode.get("key").asText(null))
+                    || "JSON".equals(contentItemNode.get("type").asText(null))
+                    || "JSON_STRING".equals(contentItemNode.get("type").asText(null))
             ) {
                 continue;  // 跳过当前项
             }
 
-            String value = contentItemNode.get("value").asText();
+            String value = contentItemNode.get("value").asText(null);
 
             //如果value为空跳过
             if (value.isEmpty()) {
@@ -313,8 +314,8 @@ public class ShopifyService {
                     || BLOG.equals(resourceType)
                     || ARTICLE.equals(resourceType)) {
                 //处理html数据
-                if ("HTML".equals(contentItemNode.get("type").asText())) {
-                    Document doc = Jsoup.parse(contentItemNode.get("value").asText());
+                if ("HTML".equals(contentItemNode.get("type").asText(null))) {
+                    Document doc = Jsoup.parse(contentItemNode.get("value").asText(null));
                     extractTextsToTranslate(doc, counter);
                     continue;
                 }
@@ -329,8 +330,8 @@ public class ShopifyService {
             }
 //             获取 value
             //处理html的数据
-            if ("HTML".equals(contentItemNode.get("type").asText())) {
-                Document doc = Jsoup.parse(contentItemNode.get("value").asText());
+            if ("HTML".equals(contentItemNode.get("type").asText(null))) {
+                Document doc = Jsoup.parse(contentItemNode.get("value").asText(null));
                 extractTextsToTranslate(doc, counter);
                 continue;
             }
@@ -339,6 +340,7 @@ public class ShopifyService {
             counter.addChars(value.length());
         }
     }
+
     // 提取需要翻译的文本（包括文本和alt属性）
     public void extractTextsToTranslate(Document doc, CharacterCountUtils counter) {
         for (Element element : doc.getAllElements()) {
@@ -349,11 +351,11 @@ public class ShopifyService {
                 String text = element.ownText().trim();
                 if (!text.isEmpty()) {
                     texts.add(text);
-                    if (text.length() >length){
+                    if (text.length() > length) {
                         String s = text + " Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: ";
-                        counter.addChars(calculateToken(s,1));
+                        counter.addChars(calculateToken(s, 1));
                         counter.addChars(values().length);
-                    }else {
+                    } else {
                         counter.addChars(text.length());
                     }
                 }
@@ -363,11 +365,11 @@ public class ShopifyService {
                     String altText = element.attr("alt").trim();
                     if (!altText.isEmpty()) {
                         texts.add(altText);
-                        if (text.length() >length){
+                        if (text.length() > length) {
                             String s = text + " Accurately translate the {{product}} data of the e-commerce website into {{Chinese}}. No additional text is required.Please keep the text format unchanged.Punctuation should be consistent with the original text.Translate: ";
-                            counter.addChars(calculateToken(s,1));
+                            counter.addChars(calculateToken(s, 1));
                             counter.addChars(values().length);
-                        }else {
+                        } else {
                             counter.addChars(text.length());
                         }
                     }
@@ -420,7 +422,7 @@ public class ShopifyService {
 
     @Async
     public void translateTexts(Map<Element, List<String>> elementTextMap,
-                                                     CharacterCountUtils counter) {
+                               CharacterCountUtils counter) {
         Map<Element, List<String>> translatedTextMap = new HashMap<>();
         for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
             List<String> texts = entry.getValue();
@@ -439,7 +441,7 @@ public class ShopifyService {
 
         // 检查是否存在非空的hasNextPage和endCursor
         boolean hasNextPage = pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean();
-        String endCursor = pageInfoNode.hasNonNull("endCursor") ? pageInfoNode.get("endCursor").asText() : null;
+        String endCursor = pageInfoNode.hasNonNull("endCursor") ? pageInfoNode.get("endCursor").asText(null) : null;
 
         // 如果有下一页，则更新translateResourceDTO并请求下一页
         if (hasNextPage && endCursor != null) {
@@ -476,7 +478,7 @@ public class ShopifyService {
     private String getEndCursor(JsonNode translatedNextPage) {
         JsonNode translatableResourcesNode = translatedNextPage.path("translatableResources");
         JsonNode pageInfo = translatableResourcesNode.path("pageInfo");
-        return pageInfo.path("endCursor").asText();
+        return pageInfo.path("endCursor").asText(null);
     }
 
 
@@ -555,23 +557,16 @@ public class ShopifyService {
 
     //修改shopify本地单条数据 和 更新本地数据库相应数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        String string = updateShopifyData(registerTransactionRequest);
-        if (string == null) {
-            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
-        }
-        TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
-        TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
-        TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
-        int i;
-        if (translateTextRequests == null) {
-            i = translateTextService.insertTranslateText(translateTextDO);
+        String string = null;
+        if ("prod".equals(env) || "test".equals(env)) {
+            string = updateShopifySingleData(registerTransactionRequest);
         } else {
-            i = translateTextService.updateTranslateText(request);
+            string = updateShopifyData(registerTransactionRequest);
         }
-        if (i > 0 && string.equals(registerTransactionRequest.getValue())) {
+        if (string.equals(registerTransactionRequest.getValue())) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
-            return new BaseResponse<>().CreateErrorResponse("insert or update error");
+            return new BaseResponse<>().CreateErrorResponse("insert error");
         }
     }
 
@@ -727,7 +722,7 @@ public class ShopifyService {
 
         // 检查是否存在非空的hasNextPage和endCursor
         boolean hasNextPage = pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean();
-        String endCursor = pageInfoNode.hasNonNull("endCursor") ? pageInfoNode.get("endCursor").asText() : null;
+        String endCursor = pageInfoNode.hasNonNull("endCursor") ? pageInfoNode.get("endCursor").asText(null) : null;
 
         // 如果有下一页，则更新translateResourceDTO并请求下一页
         if (hasNextPage && endCursor != null) {

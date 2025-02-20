@@ -189,6 +189,12 @@ public class TranslateController {
         return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
     }
 
+    //手动停止用户的翻译任务
+    @PutMapping("/stopTranslation")
+    public String stopTranslation(@RequestBody TranslateRequest request) {
+        return translateService.stopTranslationManually(request.getShopName());
+    }
+
     /*
      *  将一条数据存shopify本地
      */
