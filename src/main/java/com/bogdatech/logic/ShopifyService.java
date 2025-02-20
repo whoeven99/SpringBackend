@@ -186,6 +186,7 @@ public class ShopifyService {
                                     CharacterCountUtils translateCounter, TranslateResourceDTO translateResource,
                                     String method, List<CsvRequest> csvRequestList, Map<String, String> csvMap) {
         AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
+        Map<String, String> translateResourceMap = new HashMap<>();
         String resourceId = null;
         JsonNode translatableResourcesNode = objectNode.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
@@ -208,14 +209,15 @@ public class ShopifyService {
                 JsonNode fieldValue = field.getValue();
                 //当translates里面有数据时
                 if ("translations".equals(fieldName)) {
-                    strings.set(counterTranslatedContent((ArrayNode) fieldValue));
+                    strings.set(counterTranslatedContent((ArrayNode) fieldValue, translateResourceMap));
+
                 }
                 if (fieldValue == null){
                     break;
                 }
                 resourceId = fieldValue.asText(null);
                 if ("translatableContent".equals(fieldName)) {
-                    translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, translateCounter, strings.get(), translateResource, method, csvRequestList, csvMap, resourceId);
+                    translateSingleLineTextFields((ArrayNode) fieldValue, request, counter, translateCounter, strings.get(), translateResource, method, csvRequestList, csvMap, resourceId, translateResourceMap);
                 }
 
             }
@@ -224,11 +226,12 @@ public class ShopifyService {
     }
 
     //将已翻译value的key放到list集合中
-    private List<String> counterTranslatedContent(ArrayNode node) {
+    private List<String> counterTranslatedContent(ArrayNode node, Map<String, String> translateResourceMap) {
         List<String> translatedContent = new ArrayList<>();
         for (JsonNode contentItem : node) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
-            translatedContent.add(contentItemNode.get("key").asText());
+            translatedContent.add(contentItemNode.path("key").asText(null));
+            translateResourceMap.put(contentItemNode.path("key").asText(null), contentItemNode.path("value").asText(null));
         }
         return translatedContent;
     }
@@ -247,7 +250,9 @@ public class ShopifyService {
     @Async
     public void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter,
                                               CharacterCountUtils translatedCounter, List<String> translatedContent,
-                                              TranslateResourceDTO translateResourceDTO, String method, List<CsvRequest> csvRequestList, Map<String, String> csvMap, String resourceId) {
+                                              TranslateResourceDTO translateResourceDTO, String method, List<CsvRequest> csvRequestList,
+                                              Map<String, String> csvMap, String resourceId,
+                                              Map<String, String> translateResourceMap) {
         switch (method) {
             case "tokens":
                 calculateExactToken(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO);
@@ -256,7 +261,7 @@ public class ShopifyService {
                 estimatedTranslationWords(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO);
                 break;
             case "csv":
-                getDataAndStoreScv(contentNode, translatedContent, translateResourceDTO, csvRequestList, request);
+                getDataAndStoreScv(contentNode, translatedContent, translateResourceDTO, csvRequestList, request, translateResourceMap);
                 break;
             case "translate":
 //                System.out.println("进入translate");
@@ -356,7 +361,9 @@ public class ShopifyService {
 
     //获取数据并存储
     private void getDataAndStoreScv(ArrayNode contentNode, List<String> translatedContent,
-                                    TranslateResourceDTO translateResourceDTO, List<CsvRequest> csvRequestList, ShopifyRequest request) {
+                                    TranslateResourceDTO translateResourceDTO,
+                                    List<CsvRequest> csvRequestList, ShopifyRequest request,
+                                    Map<String, String> translateResourceMap) {
         String resourceType = translateResourceDTO.getResourceType();
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
@@ -369,9 +376,9 @@ public class ShopifyService {
             }
 
             String key = contentItemNode.path("key").asText(null);
-            if (translatedContent.contains(key)){
-                continue;
-            }
+//            if (translatedContent.contains(key)){
+//                continue;
+//            }
 
             String type = contentItemNode.path("type").asText(null);
             String locale = contentItemNode.path("locale").asText(null);
@@ -384,12 +391,13 @@ public class ShopifyService {
             }
 
             //对从数据库中获取的数据单独处理
-            if (isDatabaseResourceType(resourceType)) {
+            if (isDatabaseResourceType(resourceType) && translatedContent.contains(key)) {
                 //先将type存在target里面
                 CsvRequest csvRequest = new CsvRequest();
                 csvRequest.setSource_text(value);
                 csvRequest.setSource_code(locale);
                 csvRequest.setTarget_code(request.getTarget());
+                csvRequest.setTarget_text(translateResourceMap.get(key));
                 csvRequestList.add(csvRequest);
             }
         }
