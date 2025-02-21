@@ -914,6 +914,7 @@ public class TranslateService {
         }
         String targetString = strings.get(0);
         if (targetString == null){
+            appInsights.trackTrace("翻译失败后的字符： " + registerTransactionRequest);
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
         }
