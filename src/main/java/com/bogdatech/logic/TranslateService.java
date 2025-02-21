@@ -548,7 +548,7 @@ public class TranslateService {
                 continue;
             }
 
-            if (value.isEmpty()) {
+            if (value == null) {
                 continue;
             }
 
@@ -913,7 +913,7 @@ public class TranslateService {
             return;
         }
         String targetString = strings.get(0);
-        if (targetString.isEmpty()) {
+        if (targetString == null){
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
         }
