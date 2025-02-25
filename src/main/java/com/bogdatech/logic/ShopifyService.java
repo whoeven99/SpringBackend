@@ -498,7 +498,13 @@ public class ShopifyService {
         ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
         String query = shopifyRequestBody.getAfterQuery(translateResource);
         cloudServiceRequest.setBody(query);
-        String infoByShopify = getShopifyData(cloudServiceRequest);
+        String infoByShopify = null;
+        String env = System.getenv("ApplicationEnv");
+        if ("prod".equals(env) || "dev".equals(env)) {
+            infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(request, query));
+        } else {
+            infoByShopify = getShopifyData(cloudServiceRequest);
+        }
         if (infoByShopify == null) {
             throw new IllegalArgumentException(String.valueOf(NETWORK_ERROR));
         }
@@ -637,8 +643,16 @@ public class ShopifyService {
             resource.setTarget(request.getTarget());
             String query = shopifyRequestBody.getFirstQuery(resource);
             cloudServiceRequest.setBody(query);
-
-            String infoByShopify = getShopifyData(cloudServiceRequest);
+            String env = System.getenv("ApplicationEnv");
+            String infoByShopify = null;
+            if ("prod".equals(env) || "dev".equals(env)) {
+                infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
+            } else {
+                infoByShopify = getShopifyData(cloudServiceRequest);
+            }
+            if (infoByShopify == null) {
+                throw new IllegalArgumentException(String.valueOf(NETWORK_ERROR));
+            }
             countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
             if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
                 translatedCounter.reset();
