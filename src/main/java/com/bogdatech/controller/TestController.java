@@ -1,8 +1,6 @@
 package com.bogdatech.controller;
 
 
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.TranslatesDO;
@@ -16,23 +14,14 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessages;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.stringToList;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
-import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.StringUtils.countWords;
 
 @RestController
@@ -123,72 +112,11 @@ public class TestController {
 
     //测试siliconflow的返回值，是否可以用json解析
     @PostMapping("/testJson")
-    public void testJson(@RequestBody String jsonString) {
-        // 使用 Fastjson 将 JSON 字符串转换为 List
-//        List<String> list = JSON.parseArray(jsonString, String.class);
-        //对返回的数据做处理，只要[]里面的数据
-        String regex = "\\[(.*?)\\]";
-        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL); // 使用 Pattern.DOTALL 让点号匹配换行符
-        Matcher matcher = pattern.matcher(jsonString);
-
-        List<String> list = null;
-        if (matcher.find()) {
-            // 提取并输出方括号中的内容
-            String extractedData = matcher.group(1);
-            extractedData = extractedData.replaceAll("\\\\n\\\\\\\\", "");
-            extractedData = extractedData.replaceAll("\\\\", "");
-            // 使用 Jackson 来解析 JSON 数组为 List<String>
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                // 解析提取出来的 JSON 数组字符串为 List<String>
-                list = objectMapper.readValue("[" + extractedData + "]", List.class);
-
-                // 输出 List<String>
-                System.out.println("Extracted List: " + list);
-            } catch (JsonMappingException e) {
-                throw new RuntimeException(e);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        // 打印 List 内容
-        for (String item : list) {
-            System.out.println(item);
-        }
+    public static void testJson(String[] args) {
+        // 测试用例
+        String context = "[\"特點:\n, 比原燈亮 300%，\"超亮輸出\"，低功耗。\n, 即插即用，直接安裝，無需修改，無需額外的電阻器或繼電器。\"]";
+        System.out.println("Test Result: " + stringToList(context));
     }
 
-    //测试token计数的差距
-    @PostMapping("/testToken")
-    public void testToken(@RequestBody String text) {
-        int rate = 1;
-        int i = calculateToken(text, rate);
-        System.out.println("token: " + i);
-    }
 
-    @GetMapping("/tongyitest")
-    public String tongyitest(String cueWord, String translate, String model) {
-
-        String generationResult;
-        try {
-            generationResult = callWithMessage(model, translate, cueWord);
-        } catch (NoApiKeyException | InputRequiredException e) {
-            throw new RuntimeException(e);
-        }
-        return generationResult;
-    }
-
-    @GetMapping("/tongyitests")
-    public List<String> tongyitests(String cueWord, String model) {
-        List<String> list = new ArrayList<String>();
-        list.add("ANONER Convertible Chair Bed Sleeper with Memory Foam %26 Pillow Fold Out Chair Bed Couch Lounge Chaise for Living Room Bedroom Guest Room Home Office, Dark Green");
-        list.add("Casual Pink Mountain Landscape Printed White Pullover With Round Neckline And Long Sleeves");
-        list.add("Casual-Fitting For Women, Suitable For Autumn/Winter,ROYLAMP Womens Oversized Hoodies Pullover Fleece Long Sleeve Hooded Sweatshirts Casual Fall Winter Outfits Tops");
-        List<String> generationResult ;
-        try {
-            generationResult = callWithMessages(model, list, cueWord);
-        } catch (NoApiKeyException | InputRequiredException e) {
-            throw new RuntimeException(e);
-        }
-        return generationResult;
-    }
 }

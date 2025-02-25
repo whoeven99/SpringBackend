@@ -80,4 +80,11 @@ public class TypeConversionUtils {
         return userSubscriptionsDO;
     }
 
+    public static ShopifyRequest RegisterTransactionRequestToShopifyRequest(RegisterTransactionRequest transaction){
+        ShopifyRequest shopifyRequest = new ShopifyRequest();
+        shopifyRequest.setShopName(transaction.getShopName());
+        shopifyRequest.setAccessToken(transaction.getAccessToken());
+        shopifyRequest.setTarget(transaction.getTarget());
+        return shopifyRequest;
+    }
 }
