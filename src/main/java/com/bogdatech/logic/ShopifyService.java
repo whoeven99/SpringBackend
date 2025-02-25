@@ -525,7 +525,6 @@ public class ShopifyService {
 
     //一次修改多条shopify本地数据
     public String updateShopifyDataByTranslateTextRequests(List<RegisterTransactionRequest> registerTransactionRequests) {
-        appInsights.trackTrace("传入的值： " + registerTransactionRequests.toString());
         ShopifyRequest request = new ShopifyRequest();
         request.setShopName(registerTransactionRequests.get(0).getShopName());
         request.setAccessToken(registerTransactionRequests.get(0).getAccessToken());

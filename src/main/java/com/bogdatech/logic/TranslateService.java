@@ -340,7 +340,6 @@ public class TranslateService {
     private boolean checkIsStopped(String shopName, CharacterCountUtils counter, String target, String source) {
         if (userStopFlags.get(shopName).get()) {
             //从数据库中获取当前状态 2，改成正在翻译，4，改成翻译异常
-            int status = translatesService.getStatusByShopNameAndTargetAndSource(shopName, target, source);
             //更新数据库中的已使用字符数
             //                更新数据库中的已使用字符数
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
@@ -1322,7 +1321,8 @@ public class TranslateService {
             return;
         }
         String targetString = strings.get(0);
-        if (targetString.isEmpty()) {
+        if (targetString == null){
+            appInsights.trackTrace("翻译失败后的字符： " + registerTransactionRequest);
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
         }
