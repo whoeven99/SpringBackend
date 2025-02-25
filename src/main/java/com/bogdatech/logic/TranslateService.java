@@ -41,6 +41,7 @@ import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
 
 @Component
 @EnableAsync
@@ -1034,7 +1035,7 @@ public class TranslateService {
             }
 
             //对value进行判断 plainText
-            if ("HTML".equals(type)) {
+            if ("HTML".equals(type) || isHtml(value)) {
                 //存放在html的list集合里面
                 judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
             } else {
