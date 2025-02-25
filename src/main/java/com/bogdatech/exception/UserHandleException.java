@@ -25,7 +25,7 @@ public class UserHandleException {
         //判断拦截的异常是我们自定义的异常
         if (ex instanceof ClientException){
             System.out.println("-----------ClientException异常错误信息---------");
-//            log.error("AppException failed by  {}",((ClientException) ex).getErrorMessage());
+            log.error("AppException failed by  {}",((ClientException) ex).getErrorMessage());
             appInsights.trackTrace("AppException failed by " + ((ClientException) ex).getErrorMessage());
             return new BaseResponse().CreateErrorResponse(((ClientException) ex).getErrorMessage());
         }

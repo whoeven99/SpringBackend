@@ -22,8 +22,9 @@ public class RateHttpIntegration {
     public static Map<String, Double> rateMap = new HashMap<String, Double>();
 
     private final TelemetryClient appInsights = new TelemetryClient();
+
     public void getFixerRate() {
-        String url = "https://api.apilayer.com/fixer/latest?base=EUR"+
+        String url = "https://api.apilayer.com/fixer/latest?base=EUR" +
                 "&symbols=AFN,ALL,ARS,AOA,AMD,AWG,AUD,AZN,BDT,BSD,BHD,BBD,BIF,BYN,BZD,BMD,BTN,BAM,BRL,GBP,BOB,BWP,BND,BGN,DZD,MMK,KHR," +
                 "CAD,CVE,KYD,XAF,CLP,CNY,COP,KMF,CDF,CRC,HRK,CZK,DKK,DJF,DOP,XCD,EGP,ERN,ETB,EUR,FKP,XPF,FJD,GIP,GMD,GHS" +
                 ",GTQ,GYD,GEL,GNF,HTG,HNL,HKD,HUF,ISK,INR,IDR,ILS,IQD,JMD,JPY,JEP,JOD,KZT,KES,KID,KWD,KGS,LAK,LVL,LBP,LSL" +
@@ -35,7 +36,6 @@ public class RateHttpIntegration {
             response = baseHttpIntegration.sendHttpGet(url, apiKey);
         } catch (IOException e) {
             appInsights.trackTrace("获取汇率失败");
-//            throw new RuntimeException(e);
             return;
         }
 
