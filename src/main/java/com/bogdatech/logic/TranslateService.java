@@ -548,7 +548,7 @@ public class TranslateService {
                 continue;
             }
 
-            if (value.isEmpty()) {
+            if (value == null) {
                 continue;
             }
 
@@ -913,7 +913,8 @@ public class TranslateService {
             return;
         }
         String targetString = strings.get(0);
-        if (targetString.isEmpty()) {
+        if (targetString == null){
+            appInsights.trackTrace("翻译失败后的字符： " + registerTransactionRequest);
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
         }

@@ -117,11 +117,17 @@ public class ShopifyService {
         CharacterCountUtils counter = new CharacterCountUtils();
         CharacterCountUtils translateCounter = new CharacterCountUtils();
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
+        String env = System.getenv("ApplicationEnv");
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             translateResource.setTarget(request.getTarget());
             String query = shopifyRequestBody.getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
-            String infoByShopify = getShopifyData(cloudServiceRequest);
+            String infoByShopify = null;
+            if ("prod".equals(env) || "dev".equals(env)) {
+                infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(request, query));
+            } else {
+                infoByShopify = getShopifyData(cloudServiceRequest);
+            }
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
             System.out.println("目前统计total的总数是： " + counter.getTotalChars());
         }
@@ -631,6 +637,7 @@ public class ShopifyService {
             resource.setTarget(request.getTarget());
             String query = shopifyRequestBody.getFirstQuery(resource);
             cloudServiceRequest.setBody(query);
+
             String infoByShopify = getShopifyData(cloudServiceRequest);
             countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
             if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
