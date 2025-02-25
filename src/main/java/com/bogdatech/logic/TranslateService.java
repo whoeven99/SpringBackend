@@ -1107,6 +1107,9 @@ public class TranslateService {
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
             String value = registerTransactionRequest.getValue();
+            if (value.isEmpty()){
+                continue;
+            }
             String resourceId = registerTransactionRequest.getResourceId();
 
             Map<String, Object> translation = createTranslationMap(target, registerTransactionRequest);
@@ -1140,11 +1143,7 @@ public class TranslateService {
 
     //对needTranslateData里面的数据用百炼翻译（后面可能接入其他模型翻译）
     public void translateByModel(TranslateContext translateContext, List<RegisterTransactionRequest> needTranslateData) {
-        String cueWord = translateContext.getCueWord();
-//        System.out.println("cueWord: " + cueWord);
         List<RegisterTransactionRequest> registerTransactionRequests = translateBatch(needTranslateData, translateContext);
-//        System.out.println("registerTransactionRequests: " + registerTransactionRequests);
-
     }
 
     /**
@@ -1282,9 +1281,13 @@ public class TranslateService {
                 pendingRequests.remove(batchRequests.get(i));
             }
         } catch (Exception e) {
-            System.out.println("翻译失败: " + e.getMessage());
+            System.out.println("文本翻译失败的原因: " + e.getMessage());
             appInsights.trackTrace("文本翻译失败的原因: " + e.getMessage());
-            throw new RuntimeException(e);
+            for (RegisterTransactionRequest request : batchRequests) {
+                // 设置翻译后的文本
+                String s = singleTranslate(translateContext.getModelType(), request.getValue(), translateContext.getTranslateResource().getResourceType(), characterCountUtils, translateContext.getShopifyRequest().getTarget());
+                request.setValue(s);
+            }
         }
 
         // 更新当前分钟的TPM和QPM计数

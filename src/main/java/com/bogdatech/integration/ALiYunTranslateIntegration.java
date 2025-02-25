@@ -32,7 +32,7 @@ import static com.bogdatech.constants.TranslateConstants.TOTAL_TOKEN;
 
 @Component
 public class ALiYunTranslateIntegration {
-    TelemetryClient appInsights = new TelemetryClient();
+    static TelemetryClient appInsights = new TelemetryClient();
 
     public com.aliyun.alimt20181012.Client createClient() {
         // 工程代码泄露可能会导致 AccessKey 泄露，并威胁账号下所有资源的安全性。以下代码示例仅供参考。
@@ -95,7 +95,7 @@ public class ALiYunTranslateIntegration {
 
     //设定好提示词
     public static String cueWord(String target, String type) {
-        return "Translate "+ type + " data from e-commerce websites accurately into language code: " + target + ". Return the results as a List<String> where each translated text field is enclosed in double quotes \"\", containing only the translated text without additional text.";
+        return "Translate "+ type + " data from e-commerce websites accurately into language code: " + target + ". Return the results as a List<String> where each translated text field is enclosed in double quotes \"\", containing only the translated text without additional text; if translation is not possible, output the original value unchanged";
     }
 
     //单文本翻译的提示词
@@ -128,13 +128,12 @@ public class ALiYunTranslateIntegration {
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            System.out.println("content: " + content);
+            System.out.println("single_content: " + content);
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
-            System.out.println("totalToken: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
-            System.out.println("error: " + e.getMessage());
-            //TODO： 需要做一个尝试机制 3次
+            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
+            System.out.println("百炼翻译报错信息： " + e.getMessage());
 //            throw new RuntimeException(e);
         }
         //获得该list的size
@@ -222,8 +221,8 @@ public class ALiYunTranslateIntegration {
             countUtils.addChars(totalToken);
             System.out.println("totalToken: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
-            System.out.println("error: " + e.getMessage());
-            //TODO： 需要做一个尝试机制 3次
+            System.out.println("百炼翻译报错信息： " + e.getMessage());
+            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
 //            throw new RuntimeException(e);
         }
         //获得该list的size
