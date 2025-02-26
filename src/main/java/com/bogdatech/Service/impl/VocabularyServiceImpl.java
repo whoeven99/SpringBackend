@@ -150,10 +150,8 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
 
         // 获取目标语言的翻译
         List<VocabularyDO> results = baseMapper.selectList(queryWrapper);
-//        System.out.println("results: " + results.toString());
         if (results != null && !results.isEmpty()) {
             VocabularyDO vocabulary = results.get(0);  // 假设取第一个结果
-//            System.out.println("vocabulary: " + vocabulary.getJa());
             return getTargetLanguageText(vocabulary, target);
         }
 

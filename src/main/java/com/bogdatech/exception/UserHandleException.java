@@ -2,7 +2,6 @@ package com.bogdatech.exception;
 
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.microsoft.applicationinsights.TelemetryClient;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,7 +14,6 @@ import static com.bogdatech.enums.ErrorEnum.SERVER_ERROR;
 
 
 @RestControllerAdvice
-@Slf4j
 public class UserHandleException {
     //全局异常处理器
 
