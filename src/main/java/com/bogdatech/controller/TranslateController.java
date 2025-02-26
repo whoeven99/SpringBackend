@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
@@ -137,7 +136,7 @@ public class TranslateController {
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+            return new BaseResponse<>().CreateErrorResponse(request);
         }
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
