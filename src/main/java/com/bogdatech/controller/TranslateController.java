@@ -9,7 +9,6 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,22 +27,19 @@ public class TranslateController {
     private final ITranslatesService translatesService;
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final ITranslationCounterService translationCounterService;
-    private final JsoupUtils jsoupUtils;
+
 
     @Autowired
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
             ShopifyHttpIntegration shopifyApiIntegration,
-            ITranslationCounterService translationCounterService,
-
-            JsoupUtils jsoupUtils) {
+            ITranslationCounterService translationCounterService
+            ) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.translationCounterService = translationCounterService;
-
-        this.jsoupUtils = jsoupUtils;
     }
 
 

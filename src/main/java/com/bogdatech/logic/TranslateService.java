@@ -128,17 +128,17 @@ public class TranslateService {
             } catch (ClientException e) {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-//                    translateFailEmail(shopName, e.getErrorMessage());
+                    translateFailEmail(shopName, e.getErrorMessage());
                     appInsights.trackTrace("翻译失败的原因： " + e.getErrorMessage());
                     return;
                 }
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
 //                //发送报错邮件
-//                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
-//                if (emailSent.compareAndSet(false, true)) {
-//                    translateFailEmail(shopName, CHARACTER_LIMIT);
-//                }
+                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
+                if (emailSent.compareAndSet(false, true)) {
+                    translateFailEmail(shopName, CHARACTER_LIMIT);
+                }
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 return;
             } catch (CannotCreateTransactionException e) {
@@ -155,7 +155,7 @@ public class TranslateService {
             // 将翻译状态改为“已翻译”//
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
-//            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
         });
 
         userTasks.put(shopName, future);  // 存储用户的任务
