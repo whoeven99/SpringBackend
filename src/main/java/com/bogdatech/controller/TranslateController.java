@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -26,19 +27,20 @@ public class TranslateController {
     private final ITranslatesService translatesService;
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final ITranslationCounterService translationCounterService;
-
+    private final IUserTypeTokenService userTypeTokenService;
 
     @Autowired
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
             ShopifyHttpIntegration shopifyApiIntegration,
-            ITranslationCounterService translationCounterService
-            ) {
+            ITranslationCounterService translationCounterService,
+            IUserTypeTokenService userTypeTokenService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.translationCounterService = translationCounterService;
+        this.userTypeTokenService = userTypeTokenService;
     }
 
 
@@ -217,8 +219,17 @@ public class TranslateController {
         for (String target : targetList
         ) {
             TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), request.getSource(), target, null);
+            //插入语言状态
             translateService.insertLanguageStatus(request1);
+            //获取translates表中shopName和target对应的id
+            int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request1.getShopName(), request1.getTarget(), request1.getSource());
+            //初始化用户对应token表
+            userTypeTokenService.insertTypeInfo(request1, idByShopNameAndTarget);
+            //开始token的计数各个类型的token计数
+            translateService.startTokenCount(request1, idByShopNameAndTarget);
         }
+
+
     }
 
 }

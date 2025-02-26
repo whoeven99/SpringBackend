@@ -17,8 +17,12 @@ import static com.bogdatech.utils.CsvUtils.readCsv;
 @RequestMapping("/vocabulary")
 public class VocabularyController {
     //将数据库当前有的数据存储到新的表格
+    private final VocabularyService vocabularyService;
+
     @Autowired
-    private VocabularyService vocabularyService;
+    public VocabularyController(VocabularyService vocabularyService) {
+        this.vocabularyService = vocabularyService;
+    }
 
     @PostMapping("/convertData")
     public BaseResponse<Object> convertData() {

@@ -51,4 +51,7 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
 
     @Select("SELECT status FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
     int getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
+
+    @Select("SELECT id FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
+    int getIdByShopNameAndTarget(String shopName, String target, String source);
 }

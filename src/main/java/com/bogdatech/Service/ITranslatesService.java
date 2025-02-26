@@ -26,4 +26,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     void updateTranslatesResourceType(String shopName, String target, String source, String resourceType);
 
     int getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
+
+    int getIdByShopNameAndTargetAndSource(String shopName, String target, String source);
 }

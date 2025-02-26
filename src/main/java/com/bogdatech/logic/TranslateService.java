@@ -63,7 +63,7 @@ public class TranslateService {
     private final EmailIntegration emailIntegration;
     private final IEmailService emailService;
     private final IVocabularyService vocabularyService;
-    private final TencentEmailService tencentEmailService;
+    private final IUserTypeTokenService userTypeTokenService;
 
     @Autowired
     public TranslateService(
@@ -80,7 +80,7 @@ public class TranslateService {
             IAILanguagePacksService aiLanguagePacksService,
             IUsersService usersService,
             EmailIntegration emailIntegration,
-            IEmailService emailService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService) {
+            IEmailService emailService, IVocabularyService vocabularyService, IUserTypeTokenService userTypeTokenService) {
         this.translateApiIntegration = translateApiIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
@@ -96,7 +96,7 @@ public class TranslateService {
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
         this.vocabularyService = vocabularyService;
-        this.tencentEmailService = tencentEmailService;
+        this.userTypeTokenService = userTypeTokenService;
     }
 
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
@@ -907,7 +907,7 @@ public class TranslateService {
             return;
         }
         String targetString = strings.get(0);
-        if (targetString == null){
+        if (targetString == null) {
             appInsights.trackTrace("翻译失败后的字符： " + registerTransactionRequest);
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
@@ -953,7 +953,7 @@ public class TranslateService {
             String type = null;
             try {
                 JsonNode valueNode = contentItemNode.path("value");
-                if(valueNode == null){
+                if (valueNode == null) {
                     continue;
                 }
                 value = contentItemNode.path("value").asText(null);
@@ -1200,7 +1200,7 @@ public class TranslateService {
         JsonNode translationsNode = node.path("translations");
         if (translationsNode.isArray() && !translationsNode.isEmpty()) {
             translationsNode.forEach(translation -> {
-                if (translation == null){
+                if (translation == null) {
                     return;
                 }
                 if (translation.path("value").asText(null) == null || translation.path("key").asText(null) == null) {
@@ -1225,7 +1225,7 @@ public class TranslateService {
         JsonNode contentNode = node.path("translatableContent");
         if (contentNode.isArray() && !contentNode.isEmpty()) {
             contentNode.forEach(content -> {
-                if (translations == null){
+                if (translations == null) {
                     return;
                 }
                 TranslateTextDO keys = translations.get(content.path("key").asText(null));
@@ -1308,7 +1308,6 @@ public class TranslateService {
     }
 
     //插入语言状态
-    @Async
     public void insertLanguageStatus(TranslateRequest request) {
         Integer status = translatesService.readStatus(request);
         if (status == null) {
@@ -1323,10 +1322,7 @@ public class TranslateService {
         List<TranslateTextDO> list = new ArrayList<>();
         SINGLE_LINE_TEXT.forEach((outerKey, innerMap) -> {
             // 使用流来遍历内部的 Map
-//            System.out.println("outerKey: " + outerKey);
             innerMap.forEach((innerKey, value) -> {
-//                appInsights.trackTrace("Key: " + outerKey + ", Inner Key: " + innerKey + ", Value: " + value);
-//                translateTextService.insertTranslateText(new TranslateTextDO(null,null, null, null, null, innerKey, value, null, outerKey));
                 list.add(new TranslateTextDO(null, null, null, null, null, innerKey, value, null, outerKey));
             });
         });
@@ -1390,5 +1386,35 @@ public class TranslateService {
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }
 
+    /**
+     * 根据店铺名称和target获取对应的 ID。
+     *
+     * <p>此方法通过调用 translatesService 服务层方法，根据传入的店铺名称和target查询并返回一个唯一的 ID。</p>
+     *
+     * @param shopName 店铺名称，用于标识特定的店铺，通常是一个非空的字符串
+     * @param target   目标值，语言代码，通常是一个非空的字符串
+     * @return int 返回与店铺名称和目标值匹配的 ID，如果未找到匹配记录，通常返回 null
+     */
+    public int getIdByShopNameAndTargetAndSource(String shopName, String target, String source) {
+        // 调用 translatesService 的 getIdByShopNameAndTarget 方法，传入店铺名称和目标值
+        // 该方法负责实际的逻辑处理（如数据库查询），并返回对应的 ID
+        return translatesService.getIdByShopNameAndTargetAndSource(shopName, target, source);
+    }
+
+    /**
+     * 根据request和translationId获取对应模块的token。
+     *
+     * @param request       请求对象，包含shopName、target、source，accessToken等信息
+     * @param translationId shopName和target对应的ID
+     */
+    @Async
+    public void startTokenCount(TranslateRequest request, int translationId) {
+        //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
+        int status = userTypeTokenService.getStatusByTranslationId(translationId);
+        if (status != 2) {
+            //获取token
+
+        }
+    }
 }
 

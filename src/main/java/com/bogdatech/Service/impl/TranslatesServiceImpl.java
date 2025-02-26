@@ -81,5 +81,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.getStatusByShopNameAndTargetAndSource(shopName, target, source);
     }
 
+    @Override
+    public int getIdByShopNameAndTargetAndSource(String shopName, String target, String source) {
+        return baseMapper.getIdByShopNameAndTarget(shopName, target, source);
+    }
+
 
 }
