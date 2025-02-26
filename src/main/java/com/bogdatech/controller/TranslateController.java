@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
@@ -35,7 +34,7 @@ public class TranslateController {
             ITranslatesService translatesService,
             ShopifyHttpIntegration shopifyApiIntegration,
             ITranslationCounterService translationCounterService
-            ) {
+    ) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.shopifyApiIntegration = shopifyApiIntegration;
@@ -122,10 +121,6 @@ public class TranslateController {
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
 
-        //经翻译的语言数量，超过 2 种，则返回
-//        if (translatesService.getLanguageListCounter(request.getShopName()).size() > 2) {
-//            return new BaseResponse<>().CreateErrorResponse(DATA_IS_LIMIT);
-//        }
         //一个用户当前只能翻译一条语言，根据用户的status判断
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
         for (Integer integer : integers) {
@@ -137,7 +132,7 @@ public class TranslateController {
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+            return new BaseResponse<>().CreateErrorResponse(request);
         }
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();

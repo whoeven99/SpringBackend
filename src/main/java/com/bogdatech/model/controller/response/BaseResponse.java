@@ -30,4 +30,11 @@ public class BaseResponse<T> {
         this.errorCode = errorEnum.getErrCode();
         return this;
     }
+
+    public BaseResponse<T> CreateErrorResponse(T response) {
+        this.success = false;
+        this.response = response;
+        return this;
+    }
+
 }
