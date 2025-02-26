@@ -240,13 +240,13 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
                 return vocabulary.getFr();
             case "de":
                 return vocabulary.getDe();
-            case "pt_BR":
+            case "pt-BR":
                 return vocabulary.getPtBR();
-            case "pt_PT":
+            case "pt-PT":
                 return vocabulary.getPtPT();
-            case "zh_CN":
+            case "zh-CN":
                 return vocabulary.getZhCN();
-            case "zh_TW":
+            case "zh-TW":
                 return vocabulary.getZhTW();
             case "ja":
                 return vocabulary.getJa();

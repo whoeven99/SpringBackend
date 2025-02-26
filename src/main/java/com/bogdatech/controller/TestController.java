@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.stringToList;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
+import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.StringUtils.countWords;
 
 @RestController
@@ -110,13 +110,13 @@ public class TestController {
         System.out.println("rateMap: " + rateMap.toString());
     }
 
-    //测试siliconflow的返回值，是否可以用json解析
-    @PostMapping("/testJson")
-    public static void testJson(String[] args) {
-        // 测试用例
-        String context = "[\"特點:\n, 比原燈亮 300%，\"超亮輸出\"，低功耗。\n, 即插即用，直接安裝，無需修改，無需額外的電阻器或繼電器。\"]";
-        System.out.println("Test Result: " + stringToList(context));
-    }
 
+    //测试token计数的差距
+    @PostMapping("/testToken")
+    public void testToken(@RequestBody String text) {
+        int rate = 1;
+        int i = calculateToken(text, rate);
+        System.out.println("token: " + i);
+    }
 
 }
