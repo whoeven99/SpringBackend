@@ -579,7 +579,7 @@ public class TranslateService {
             return true;
         }
 
-        if ("HTML".equals(type)) {
+        if ("HTML".equals(type) || isHtml(value)) {
             try {
                 //TODO：重新实现一个方法用于用新提示词进行长文本翻译。
                 String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, request.getShopName(), request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, translateContext.getAiLanguagePacksDO(), translateContext.getTranslateResource().getResourceType());
