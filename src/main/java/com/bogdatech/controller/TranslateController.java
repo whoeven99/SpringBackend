@@ -2,7 +2,6 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -65,20 +64,6 @@ public class TranslateController {
 
     }
 
-    /*
-     * 调用判断语言的翻译接口
-     */
-    @PostMapping("/judgeLanguage")
-    public List<String> judgeLanguage(@RequestBody GoogleAndAIRequest request) {
-        TranslateRequest translateRequest = new TranslateRequest();
-        translateRequest.setContent(request.getContent());
-        translateRequest.setSource(request.getSource());
-        translateRequest.setTarget(request.getTarget());
-        AILanguagePacksDO aiLanguagePacksDO = new AILanguagePacksDO();
-        aiLanguagePacksDO.setPromotWord(request.getPromotWord());
-        aiLanguagePacksDO.setDeductionRate(request.getDeductionRate());
-        return jsoupUtils.googleTranslateJudgeCode(translateRequest, aiLanguagePacksDO);
-    }
 
     /*
      * 调用百度翻译的API接口
