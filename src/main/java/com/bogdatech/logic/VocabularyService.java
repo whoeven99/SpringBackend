@@ -32,6 +32,7 @@ public class VocabularyService {
         return vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
     }
 
+    //测试单条插入文本
     public void testInsert(String target, String value, String source) {
         vocabularyService.testInsert(target, value, source);
     }
