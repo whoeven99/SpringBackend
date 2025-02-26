@@ -41,6 +41,7 @@ import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
 
 @Component
 @EnableAsync
@@ -982,7 +983,7 @@ public class TranslateService {
             }
 
             //对从数据库中获取的数据单独处理
-            if (isDatabaseResourceType(resourceType)) {
+            if (isDatabaseResourceType(resourceType) || isHtml(value)) {
                 //先将type存在target里面
                 judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
