@@ -983,7 +983,7 @@ public class TranslateService {
             }
 
             //对从数据库中获取的数据单独处理
-            if (isDatabaseResourceType(resourceType) || isHtml(value)) {
+            if (isDatabaseResourceType(resourceType)) {
                 //先将type存在target里面
                 judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
@@ -1026,7 +1026,7 @@ public class TranslateService {
             }
 
             //对value进行判断 plainText
-            if ("HTML".equals(type)) {
+            if ("HTML".equals(type) || isHtml(value)) {
                 //存放在html的list集合里面
                 judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
             } else {
