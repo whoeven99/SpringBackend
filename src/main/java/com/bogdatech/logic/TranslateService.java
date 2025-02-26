@@ -1253,7 +1253,19 @@ public class TranslateService {
             translateResource.setTarget(shopifyRequest.getTarget());
             String query = shopifyRequestBody.getFirstQuery(translateResource);
             cloudServiceRequest.setBody(query);
-            String string = shopifyService.getShopifyData(cloudServiceRequest);
+            String string;
+            try {
+                String env = System.getenv("ApplicationEnv");
+                if ("prod".equals(env) || "dev".equals(env)) {
+                    string = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
+                } else {
+                    string = shopifyService.getShopifyData(cloudServiceRequest);
+                }
+            } catch (Exception e) {
+                //如果出现异常，则跳过, 翻译其他的内容
+                appInsights.trackTrace("saveTranslateText error: " + e.getMessage());
+                continue;
+            }
             saveTranslatedData(string, shopifyRequest, translateResource);
         }
         System.out.println("内存存储成功");
