@@ -146,6 +146,10 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         QueryWrapper<VocabularyDO> queryWrapper = new QueryWrapper<>();
 
         // 设置查询条件：sourceCode 和 sourceText
+        //修改source，当出现pt-BR，pt-PT，zh-CN，zh-TW这四个source时，修改source
+        if (source.equals("pt-BR") || source.equals("pt-PT") || source.equals("zh-CN") || source.equals("zh-TW")) {
+            source = source.replace("-", "_");
+        }
         queryWrapper.eq(source, value);
 
         // 获取目标语言的翻译
