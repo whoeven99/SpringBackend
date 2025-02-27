@@ -30,4 +30,7 @@ public interface UsersMapper extends BaseMapper<UsersDO> {
 
     @Delete("DELETE FROM Translates WHERE shop_name = #{shopName}")
     void deleteTranslatesData(String shopName);
+
+    @Update("UPDATE Users SET access_token = #{accessToken} WHERE shop_name = #{shopName}")
+    void updateUserTokenByShopName(String shopName, String accessToken);
 }

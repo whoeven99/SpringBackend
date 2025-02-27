@@ -166,11 +166,8 @@ public class UserService {
     public Map<String, Boolean> InitializationDetection(String shopName) {
         Map<String, Boolean> map = new HashMap<>();
         //查询用户是否初始化
-        if (usersService.getUserByName(shopName) != null) {
-            map.put("add", true);
-        } else {
-            map.put("add", false);
-        }
+        map.put("add", false);
+
 
         //查询是否添加免费额度
         if (translationCounterService.getMaxCharsByShopName(shopName) != null) {
@@ -194,5 +191,9 @@ public class UserService {
         }
 
         return map;
+    }
+
+    public void updateUserTokenByShopName(String shopName, String accessToken) {
+        usersService.updateUserTokenByShopName(shopName, accessToken);
     }
 }

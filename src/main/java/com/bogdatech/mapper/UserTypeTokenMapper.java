@@ -14,7 +14,7 @@ public interface UserTypeTokenMapper extends BaseMapper<UserTypeTokenDO> {
     void insertTypeInfo(int translateId);
 
     @Select("SELECT status FROM userTypeToken WHERE translation_id = #{translationId}")
-    int getStatusByTranslationId(int translationId);
+    Integer getStatusByTranslationId(int translationId);
 
     @Update("UPDATE userTypeToken SET #{key} =  #{tokens} WHERE translation_id = #{translationId} ")
     void updateTokenByTranslationId(int translationId, int tokens, String key);
