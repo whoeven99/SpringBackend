@@ -15,6 +15,7 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -193,15 +194,15 @@ public class ShopifyController {
     }
 
     //计算被翻译项的总数和已翻译的个数
-    @PostMapping("/getTranslationItemsInfo")
-    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
-        Map<String, Map<String, Object>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
-        if (translationItemsInfo == null) {
-            return new BaseResponse<>().CreateErrorResponse("Get items failed");
-        } else {
-            return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
-        }
-    }
+//    @PostMapping("/getTranslationItemsInfo")
+//    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
+//        Map<String, Map<String, Object>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
+//        if (translationItemsInfo == null) {
+//            return new BaseResponse<>().CreateErrorResponse("Get items failed");
+//        } else {
+//            return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
+//        }
+//    }
 
     //修改翻译状态
     @PutMapping("/updateTranslationStatus")
@@ -237,4 +238,20 @@ public class ShopifyController {
         }
     }
 
+
+    //测试计算被翻译项的总数和已翻译的个数
+    @PostMapping("/getTranslationItemsInfoTest")
+    public BaseResponse<Object> getTranslationItemsInfoTest(@RequestBody ResourceTypeRequest request) {
+        System.out.println("nows: " + LocalDateTime.now());
+        for (String key : TOKEN_MAP.keySet()
+        ) {
+            System.out.println("key = " + key);
+            request.setResourceType(key);
+            System.out.println("request123 = " + request);
+            shopifyService.getTranslationItemsInfo(request);
+//            System.out.println("translationItemsInfo = " + translationItemsInfo);
+        }
+
+       return new BaseResponse<>().CreateSuccessResponse(200);
+    }
 }
