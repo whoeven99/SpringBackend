@@ -262,13 +262,13 @@ public class TranslateService {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
 
-        //一个用户当前只能翻译一条语言，根据用户的status判断
-        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
-        for (Integer integer : integers) {
-            if (integer == 2) {
-                throw new ClientException(HAS_TRANSLATED);
-            }
-        }
+//        //一个用户当前只能翻译一条语言，根据用户的status判断
+//        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
+//        for (Integer integer : integers) {
+//            if (integer == 2) {
+//                throw new ClientException(HAS_TRANSLATED);
+//            }
+//        }
 
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
