@@ -11,4 +11,8 @@ public interface IUserTypeTokenService extends IService<UserTypeTokenDO> {
     void insertTypeInfo(TranslateRequest request1, int idByShopNameAndTarget);
 
     int getStatusByTranslationId(int translationId);
+
+    void updateTokenByTranslationId(int translationId, int tokens, String key);
+
+    void updateStatusByTranslationIdAndStatus(int translationId, int i);
 }

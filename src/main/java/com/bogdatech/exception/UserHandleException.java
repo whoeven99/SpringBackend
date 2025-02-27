@@ -24,6 +24,7 @@ public class UserHandleException {
         if (ex instanceof ClientException){
             System.out.println("-----------ClientException异常错误信息---------");
 //            log.error("AppException failed by  {}",((ClientException) ex).getErrorMessage());
+            System.out.println("AppException failed by " + ((ClientException) ex).getErrorMessage());
             appInsights.trackTrace("AppException failed by " + ((ClientException) ex).getErrorMessage());
             return new BaseResponse().CreateErrorResponse(((ClientException) ex).getErrorMessage());
         }
@@ -31,6 +32,7 @@ public class UserHandleException {
         //如果拦截的异常不是我们自定义的异常
         System.out.println("-----------异常错误信息---------");
 //        log.error("Exception failed by {}",ex);
+        System.out.println("Exception failed by " + ex.getMessage());
         appInsights.trackTrace("Exception failed by " + ex.getMessage());
         return new BaseResponse().CreateErrorResponse(SERVER_ERROR);
     }
@@ -42,6 +44,7 @@ public class UserHandleException {
         String message = errors.stream().map(ObjectError::getDefaultMessage).collect(Collectors.joining(","));
         System.out.println("-----------校验数据错误信息---------");
 //        log.error("Valid参数错误信息: {}", message);
+        System.out.println("Valid参数错误信息: " + message);
         appInsights.trackTrace("Valid参数错误信息: " + message);
         return new BaseResponse().CreateErrorResponse(message);
     }

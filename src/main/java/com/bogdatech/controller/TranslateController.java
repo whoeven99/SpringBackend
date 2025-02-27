@@ -140,6 +140,8 @@ public class TranslateController {
         if (usedChars >= remainingChars) {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
+        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);

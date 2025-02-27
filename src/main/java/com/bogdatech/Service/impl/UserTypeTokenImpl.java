@@ -24,4 +24,16 @@ public class UserTypeTokenImpl extends ServiceImpl<UserTypeTokenMapper, UserType
     public int getStatusByTranslationId(int translationId) {
         return baseMapper.getStatusByTranslationId(translationId);
     }
+
+    @Override
+    public void updateTokenByTranslationId(int translationId, int tokens, String key) {
+        System.out.println("key: " + key + " tokens: " + tokens + " translationId: " + translationId);
+        baseMapper.updateTokenByTranslationId(translationId, tokens, key);
+    }
+
+    @Override
+    public void updateStatusByTranslationIdAndStatus(int translationId, int i) {
+        baseMapper.updateStatusByTranslationIdAndStatus(translationId,i);
+    }
+
 }

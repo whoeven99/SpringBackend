@@ -231,84 +231,46 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
     }
 
     private String getTargetLanguageText(VocabularyDO vocabulary, String targetCode) {
-        switch (targetCode) {
-            case "en":
-                return vocabulary.getEn();
-            case "es":
-                return vocabulary.getEs();
-            case "fr":
-                return vocabulary.getFr();
-            case "de":
-                return vocabulary.getDe();
-            case "pt-BR":
-                return vocabulary.getPtBR();
-            case "pt-PT":
-                return vocabulary.getPtPT();
-            case "zh-CN":
-                return vocabulary.getZhCN();
-            case "zh-TW":
-                return vocabulary.getZhTW();
-            case "ja":
-                return vocabulary.getJa();
-            case "it":
-                return vocabulary.getIt();
-            case "ru":
-                return vocabulary.getRu();
-            case "ko":
-                return vocabulary.getKo();
-            case "nl":
-                return vocabulary.getNl();
-            case "da":
-                return vocabulary.getDa();
-            case "hi":
-                return vocabulary.getHi();
-            case "bg":
-                return vocabulary.getBg();
-            case "cs":
-                return vocabulary.getCs();
-            case "el":
-                return vocabulary.getEl();
-            case "fi":
-                return vocabulary.getFi();
-            case "hr":
-                return vocabulary.getHr();
-            case "hu":
-                return vocabulary.getHu();
-            case "id":
-                return vocabulary.getId();
-            case "lt":
-                return vocabulary.getLt();
-            case "nb":
-                return vocabulary.getNb();
-            case "pl":
-                return vocabulary.getPl();
-            case "ro":
-                return vocabulary.getRo();
-            case "sk":
-                return vocabulary.getSk();
-            case "sl":
-                return vocabulary.getSl();
-            case "sv":
-                return vocabulary.getSv();
-            case "th":
-                return vocabulary.getTh();
-            case "tr":
-                return vocabulary.getTr();
-            case "vi":
-                return vocabulary.getVi();
-            case "ar":
-                return vocabulary.getAr();
-            case "no":
-                return vocabulary.getNo();
-            case "uk":
-                return vocabulary.getUk();
-            case "lv":
-                return vocabulary.getLv();
-            case "et":
-                return vocabulary.getEt();
-            default:
-                return null;
-        }
+        return switch (targetCode) {
+            case "en" -> vocabulary.getEn();
+            case "es" -> vocabulary.getEs();
+            case "fr" -> vocabulary.getFr();
+            case "de" -> vocabulary.getDe();
+            case "pt-BR" -> vocabulary.getPtBR();
+            case "pt-PT" -> vocabulary.getPtPT();
+            case "zh-CN" -> vocabulary.getZhCN();
+            case "zh-TW" -> vocabulary.getZhTW();
+            case "ja" -> vocabulary.getJa();
+            case "it" -> vocabulary.getIt();
+            case "ru" -> vocabulary.getRu();
+            case "ko" -> vocabulary.getKo();
+            case "nl" -> vocabulary.getNl();
+            case "da" -> vocabulary.getDa();
+            case "hi" -> vocabulary.getHi();
+            case "bg" -> vocabulary.getBg();
+            case "cs" -> vocabulary.getCs();
+            case "el" -> vocabulary.getEl();
+            case "fi" -> vocabulary.getFi();
+            case "hr" -> vocabulary.getHr();
+            case "hu" -> vocabulary.getHu();
+            case "id" -> vocabulary.getId();
+            case "lt" -> vocabulary.getLt();
+            case "nb" -> vocabulary.getNb();
+            case "pl" -> vocabulary.getPl();
+            case "ro" -> vocabulary.getRo();
+            case "sk" -> vocabulary.getSk();
+            case "sl" -> vocabulary.getSl();
+            case "sv" -> vocabulary.getSv();
+            case "th" -> vocabulary.getTh();
+            case "tr" -> vocabulary.getTr();
+            case "vi" -> vocabulary.getVi();
+            case "ar" -> vocabulary.getAr();
+            case "no" -> vocabulary.getNo();
+            case "uk" -> vocabulary.getUk();
+            case "lv" -> vocabulary.getLv();
+            case "et" -> vocabulary.getEt();
+            default -> null;
+        };
     }
 }
 

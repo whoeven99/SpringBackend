@@ -10,19 +10,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @TableName("UserTypeToken")
 public class UserTypeTokenDO {
-    private int id;
-    private int translationId;
-    private int collection;
-    private int notifications;
-    private int theme;
-    private int article;
-    private int blogTitles;
-    private int filters;
-    private int metaobjects;
-    private int pages;
-    private int products;
-    private int navigation;
-    private int shop;
-    private int shipping;
-    private int delivery;
+    private Integer  id;
+    private Integer  translationId;
+    private Integer  collection;
+    private Integer  notifications;
+    private Integer  theme;
+    private Integer  article;
+    private Integer  blogTitles;
+    private Integer  filters;
+    private Integer  metaobjects;
+    private Integer  pages;
+    private Integer  products;
+    private Integer  navigation;
+    private Integer  shop;
+    private Integer  shipping;
+    private Integer  delivery;
 }

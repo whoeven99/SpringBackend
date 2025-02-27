@@ -1,11 +1,15 @@
 package com.bogdatech.logic;
 
 
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.*;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.*;
+import com.bogdatech.integration.EmailIntegration;
+import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.integration.TestingEnvironmentIntegration;
+import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -35,13 +39,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
-import static com.bogdatech.entity.TranslateResourceDTO.DATABASE_RESOURCES;
-import static com.bogdatech.enums.ErrorEnum.*;
+import static com.bogdatech.entity.TranslateResourceDTO.*;
+import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
+import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
+import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
 @EnableAsync
@@ -254,7 +259,7 @@ public class TranslateService {
 
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
     public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars) {
-        ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
+        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
 
         //一个用户当前只能翻译一条语言，根据用户的status判断
@@ -273,8 +278,6 @@ public class TranslateService {
         Integer packId = aiLanguagePacksService.getPackIdByShopName(request.getShopName());
         AILanguagePacksDO aiLanguagePacksDO = aiLanguagePacksService.getPromotByPackId(packId);
 
-        // 如果没有超限，则开始翻译流程
-        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //TRANSLATION_RESOURCES
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             // 定期检查是否停止
@@ -1278,7 +1281,7 @@ public class TranslateService {
         request.setValue(translateApiIntegration.getGoogleTranslationWithRetry(translateRequest));
         //保存翻译后的数据到shopify本地
         Map<String, Object> variables = getVariables(request);
-        ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(translateRequest);
+        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(translateRequest);
         return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
     }
 
@@ -1412,8 +1415,38 @@ public class TranslateService {
         //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
         int status = userTypeTokenService.getStatusByTranslationId(translationId);
         if (status != 2) {
-            //获取token
+            //TODO: 这只是大致流程，还需要做异常处理
+            //将UserTypeToken的status修改为2
+            userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 2);
+            ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
+            //循环type获取token
+            for (String key: TOKEN_MAP.keySet()
+                 ) {
+                int tokens = 0;
 
+                for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)){
+                    int token = shopifyService.getTotalWords(shopifyRequest, "tokens", translateResourceDTO);
+                    tokens += token;
+                }
+
+                //将tokens存储到UserTypeToken对应的列里面
+                userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
+                if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
+                || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
+                || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
+                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) ){
+                    UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
+                    updateWrapper.eq("translation_id", translationId);
+
+                    // 根据传入的列名动态设置更新的字段
+                    updateWrapper.set(key, tokens);
+                    userTypeTokenService.update(null, updateWrapper);
+                } else {
+                    throw new IllegalArgumentException("Invalid column name");
+                }
+            }
+            //token全部获取完之后修改，UserTypeToken的status==1
+            userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
         }
     }
 }
