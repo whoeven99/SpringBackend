@@ -5,7 +5,6 @@ import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
-import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,7 +23,6 @@ import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
 import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
 
 @Component
-@Slf4j
 public class JsoupUtils {
 
     private final TranslateApiIntegration translateApiIntegration;
@@ -262,7 +260,7 @@ public class JsoupUtils {
     }
 
     //判断String类型是否是html数据
-    public boolean isHtml(String content) {
+    public static boolean isHtml(String content) {
         Document doc = Jsoup.parse(content);
         return !doc.body().text().equals(content);
     }

@@ -38,7 +38,7 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
     Boolean deleteFromTranslates(String shopName, String source, String target);
 
     @Update("UPDATE Translates SET status = 3 WHERE shop_name = #{shopName} and status = 2")
-    int updateStatusByShopNameAnd2(String shopName);
+    Integer updateStatusByShopNameAnd2(String shopName);
 
     @Select("SELECT *\n" +
             "FROM Translates\n" +
@@ -50,5 +50,8 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
     void updateTranslatesResourceType(String shopName, String target, String source, String resourceType);
 
     @Select("SELECT status FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
-    int getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
+    Integer getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
+
+    @Select("SELECT id FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
+    Integer getIdByShopNameAndTarget(String shopName, String target, String source);
 }

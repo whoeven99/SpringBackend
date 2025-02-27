@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -9,14 +10,12 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
@@ -28,7 +27,7 @@ public class TranslateController {
     private final ITranslatesService translatesService;
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final ITranslationCounterService translationCounterService;
-    private final JsoupUtils jsoupUtils;
+    private final IUserTypeTokenService userTypeTokenService;
 
     @Autowired
     public TranslateController(
@@ -36,14 +35,12 @@ public class TranslateController {
             ITranslatesService translatesService,
             ShopifyHttpIntegration shopifyApiIntegration,
             ITranslationCounterService translationCounterService,
-
-            JsoupUtils jsoupUtils) {
+            IUserTypeTokenService userTypeTokenService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.translationCounterService = translationCounterService;
-
-        this.jsoupUtils = jsoupUtils;
+        this.userTypeTokenService = userTypeTokenService;
     }
 
 
@@ -141,8 +138,10 @@ public class TranslateController {
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+            return new BaseResponse<>().CreateErrorResponse(request);
         }
+        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
@@ -222,8 +221,17 @@ public class TranslateController {
         for (String target : targetList
         ) {
             TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), request.getSource(), target, null);
+            //插入语言状态
             translateService.insertLanguageStatus(request1);
+            //获取translates表中shopName和target对应的id
+            int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request1.getShopName(), request1.getTarget(), request1.getSource());
+            //初始化用户对应token表
+            userTypeTokenService.insertTypeInfo(request1, idByShopNameAndTarget);
+            //开始token的计数各个类型的token计数
+            translateService.startTokenCount(request1, idByShopNameAndTarget);
         }
+
+
     }
 
 }
