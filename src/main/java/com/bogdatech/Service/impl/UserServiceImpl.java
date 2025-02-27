@@ -49,4 +49,9 @@ public class UserServiceImpl extends ServiceImpl<UsersMapper, UsersDO> implement
     public void deleteTranslatesData(String shopName) {
         baseMapper.deleteTranslatesData(shopName);
     }
+
+    @Override
+    public void updateUserTokenByShopName(String shopName, String accessToken) {
+        baseMapper.updateUserTokenByShopName(shopName, accessToken);
+    }
 }

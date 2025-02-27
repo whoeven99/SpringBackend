@@ -262,13 +262,13 @@ public class TranslateService {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
 
-        //一个用户当前只能翻译一条语言，根据用户的status判断
-        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
-        for (Integer integer : integers) {
-            if (integer == 2) {
-                throw new ClientException(HAS_TRANSLATED);
-            }
-        }
+//        //一个用户当前只能翻译一条语言，根据用户的status判断
+//        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
+//        for (Integer integer : integers) {
+//            if (integer == 2) {
+//                throw new ClientException(HAS_TRANSLATED);
+//            }
+//        }
 
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
@@ -1413,7 +1413,7 @@ public class TranslateService {
     @Async
     public void startTokenCount(TranslateRequest request, int translationId) {
         //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
-        int status = userTypeTokenService.getStatusByTranslationId(translationId);
+        Integer status = userTypeTokenService.getStatusByTranslationId(translationId);
         if (status != 2) {
             //TODO: 这只是大致流程，还需要做异常处理
             //将UserTypeToken的status修改为2

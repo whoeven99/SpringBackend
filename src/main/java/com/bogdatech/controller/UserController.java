@@ -33,6 +33,8 @@ public class UserController {
         if (userService.getUser(userRequest) == null) {
             return userService.addUser(userRequest);
         }else {
+            //更新user表里面的token
+            userService.updateUserTokenByShopName(userRequest.getShopName(), userRequest.getAccessToken());
             return new BaseResponse<>().CreateErrorResponse("User already exists");
         }
 //        userService.addUserAsync(userRequest);
