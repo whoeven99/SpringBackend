@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 
@@ -112,8 +113,19 @@ public class ShopifyController {
     //查询需要翻译的总字数-已翻译字符数. 计算翻译的项数
     @PostMapping("/getTotalWords")
     public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String method) {
-        TranslateResourceDTO resourceType = new TranslateResourceDTO("PRODUCT","250","","");
-        return new BaseResponse<>().CreateSuccessResponse(shopifyService.getTotalWords(shopifyRequest, method, resourceType));
+//        TranslateResourceDTO resourceType = new TranslateResourceDTO("PRODUCT","250","","");
+        for (String key : TOKEN_MAP.keySet()
+             ) {
+            List<TranslateResourceDTO> lists = TOKEN_MAP.get(key);
+            int tokens = 0;
+            for (TranslateResourceDTO resourceDTO: lists
+                 ) {
+                int totalWords = shopifyService.getTotalWords(shopifyRequest, method, resourceDTO);
+                tokens += totalWords;
+            }
+            System.out.println("key: " + key + " tokens: " + tokens);
+        }
+        return new BaseResponse<>().CreateSuccessResponse("success");
     }
 
     //根据前端的传值,更新shopify后台和数据库

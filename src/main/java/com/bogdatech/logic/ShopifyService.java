@@ -335,7 +335,7 @@ public class ShopifyService {
                     counter.addChars(calculateBaiLianToken(s));
                     counter.addChars(calculateBaiLianToken(value));
                 } else {
-                    counter.addChars(value.length());
+                    counter.addChars(calculateBaiLianToken(value));
                 }
                 continue;
             }
@@ -348,7 +348,7 @@ public class ShopifyService {
             }
 
 
-            counter.addChars(value.length());
+            counter.addChars(calculateBaiLianToken(value));
         }
     }
 
@@ -365,9 +365,9 @@ public class ShopifyService {
                     if (text.length() > length) {
                         String s = cueWordSingle(request.getTarget(), type) + text ;
                         counter.addChars(calculateBaiLianToken(s));
-                        counter.addChars(values().length);
+                        counter.addChars(calculateBaiLianToken(text));
                     } else {
-                        counter.addChars(text.length());
+                        counter.addChars(calculateBaiLianToken(text));
                     }
                 }
 
@@ -377,11 +377,11 @@ public class ShopifyService {
                     if (!altText.isEmpty()) {
 
                         if (text.length() > length) {
-                            String s = cueWordSingle(request.getTarget(), type) + text;
+                            String s = cueWordSingle(request.getTarget(), type) + altText;
                             counter.addChars(calculateBaiLianToken(s));
-                            counter.addChars(values().length);
+                            counter.addChars(calculateBaiLianToken(altText));
                         } else {
-                            counter.addChars(text.length());
+                            counter.addChars(calculateBaiLianToken(altText));
                         }
                     }
                 }
