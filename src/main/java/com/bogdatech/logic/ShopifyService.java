@@ -369,7 +369,6 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             // 跳过 value 为空的项
 
-
             String value = contentItemNode.path("value").asText(null);
             if (value == null || value.isEmpty()) {
                 continue;  // 跳过当前项
@@ -386,18 +385,19 @@ public class ShopifyService {
             if (type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD)  || resourceType.equals(SHOP_POLICY)) {
-                System.out.println("FileReference: " + value);
+//                System.out.println("FileReference: " + value);
                 continue;
             }
 
             //对从数据库中获取的数据单独处理
-            if (isDatabaseResourceType(resourceType) && translatedContent.contains(key)) {
+//            if (isDatabaseResourceType(resourceType) && translatedContent.contains(key)) {
+            if (value.contains("Hawksling") || value.contains("HawkSling")){
                 //先将type存在target里面
                 CsvRequest csvRequest = new CsvRequest();
                 csvRequest.setSource_text(value);
                 csvRequest.setSource_code(locale);
                 csvRequest.setTarget_code(request.getTarget());
-                csvRequest.setTarget_text(translateResourceMap.get(key));
+//                csvRequest.setTarget_text(translateResourceMap.get(key));
                 csvRequestList.add(csvRequest);
             }
         }
