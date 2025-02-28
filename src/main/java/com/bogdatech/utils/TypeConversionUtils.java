@@ -96,4 +96,12 @@ public class TypeConversionUtils {
         translateRequest.setShopName(request.getShopName());
         return translateRequest;
     }
+
+    public static TranslateRequest TargetListRequestToTranslateRequest(TargetListRequest targetListRequest){
+        TranslateRequest translateRequest = new TranslateRequest();
+        translateRequest.setAccessToken(targetListRequest.getAccessToken());
+        translateRequest.setShopName(targetListRequest.getShopName());
+        translateRequest.setSource(targetListRequest.getSource());
+        return translateRequest;
+    }
 }

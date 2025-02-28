@@ -1454,8 +1454,6 @@ public class TranslateService {
             int token = shopifyService.getTotalWords(shopifyRequest, method, translateResourceDTO);
             tokens += token;
         }
-        System.out.println("tokens: " + tokens);
-
 
         if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
                 || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
@@ -1470,7 +1468,7 @@ public class TranslateService {
         } else {
             throw new IllegalArgumentException("Invalid column name");
         }
-        System.out.println("second: " + LocalDateTime.now());
+
     }
 
     /**
