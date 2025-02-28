@@ -36,4 +36,9 @@ public class UserTypeTokenImpl extends ServiceImpl<UserTypeTokenMapper, UserType
         baseMapper.updateStatusByTranslationIdAndStatus(translationId,i);
     }
 
+    @Override
+    public void insertInitial(String shopName) {
+        baseMapper.insertTypeInfoByShopName(shopName);
+    }
+
 }

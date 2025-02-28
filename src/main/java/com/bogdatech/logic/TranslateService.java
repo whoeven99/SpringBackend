@@ -167,6 +167,13 @@ public class TranslateService {
         userTasks.put(shopName, future);  // 存储用户的任务
         userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
         userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
+
+        //更新初始值
+        try {
+            startTokenCount(request);
+        } catch (Exception e) {
+            appInsights.trackTrace("重新更新token值失败！！！");
+        }
     }
 
 
@@ -1407,11 +1414,74 @@ public class TranslateService {
     /**
      * 根据request和translationId获取对应模块的token。
      *
-     * @param request       请求对象，包含shopName、target、source，accessToken等信息
+     * @param shopifyRequest       请求对象，包含shopName、target、source，accessToken等信息
+     * @param key  请求对象的类型
      * @param translationId shopName和target对应的ID
      */
     @Async
-    public void startTokenCount(TranslateRequest request, int translationId) {
+    public void updateStatusByTranslation(ShopifyRequest shopifyRequest, String key, int translationId, String method){
+        int tokens = 0;
+
+        for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)){
+            int token = shopifyService.getTotalWords(shopifyRequest, method, translateResourceDTO);
+//            System.out.println("token: " + token);
+            tokens += token;
+        }
+        System.out.println("tokens: " + tokens);
+        //将tokens存储到UserTypeToken对应的列里面
+        userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
+        if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
+                || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
+                || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
+                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) ){
+            UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("translation_id", translationId);
+
+            // 根据传入的列名动态设置更新的字段
+            updateWrapper.set(key, tokens);
+            userTypeTokenService.update(null, updateWrapper);
+        } else {
+            throw new IllegalArgumentException("Invalid column name");
+        }
+        System.out.println("second: " + LocalDateTime.now());
+    }
+
+    @Async
+    public void insertInitialByTranslation(ShopifyRequest shopifyRequest, String key, String method){
+        int tokens = 0;
+
+        for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)){
+            int token = shopifyService.getTotalWords(shopifyRequest, method, translateResourceDTO);
+            tokens += token;
+        }
+        System.out.println("tokens: " + tokens);
+
+
+        if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
+                || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
+                || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
+                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) ){
+            UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("shop_name", shopifyRequest.getShopName());
+
+            // 根据传入的列名动态设置更新的字段
+            updateWrapper.set(key, tokens);
+            userTypeTokenService.update(null, updateWrapper);
+        } else {
+            throw new IllegalArgumentException("Invalid column name");
+        }
+        System.out.println("second: " + LocalDateTime.now());
+    }
+
+    /**
+     * 根据request和translationId获取对应模块的token。
+     *
+     * @param request       请求对象，包含shopName、target、source，accessToken等信息
+     */
+    public void startTokenCount(TranslateRequest request) {
+        //获取translationId
+        Integer translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+
         //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
         Integer status = userTypeTokenService.getStatusByTranslationId(translationId);
         if (status != 2) {
@@ -1421,7 +1491,7 @@ public class TranslateService {
             ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
             //循环type获取token
             for (String key: TOKEN_MAP.keySet()
-                 ) {
+            ) {
                 int tokens = 0;
 
                 for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)){
@@ -1432,9 +1502,9 @@ public class TranslateService {
                 //将tokens存储到UserTypeToken对应的列里面
                 userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
                 if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
-                || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
-                || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) ){
+                        || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
+                        || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
+                        || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) ){
                     UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
                     updateWrapper.eq("translation_id", translationId);
 

@@ -166,7 +166,8 @@ public class ShopifyService {
     }
 
     //对node节点进行判断，是否调用方法
-    public void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter, TranslateResourceDTO translateResource, String method) {
+    public void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter,
+                                    CharacterCountUtils translateCounter, TranslateResourceDTO translateResource, String method) {
         AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
         JsonNode translatableResourcesNode = objectNode.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
@@ -188,7 +189,7 @@ public class ShopifyService {
                 String fieldName = field.getKey();
                 JsonNode fieldValue = field.getValue();
                 //当translates里面有数据时
-                if ("translations".equals(fieldName)) {
+                if ("translations".equals(fieldName) && !method.equals("initial") ){
                     strings.set(counterTranslatedContent((ArrayNode) fieldValue));
                 }
                 if ("translatableContent".equals(fieldName)) {
@@ -224,7 +225,9 @@ public class ShopifyService {
     @Async
     public void translateSingleLineTextFields(ArrayNode contentNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translatedCounter, List<String> translatedContent, TranslateResourceDTO translateResourceDTO, String method) {
         switch (method) {
-
+            case "initial":
+                calculateInitialToken(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO, request);
+                break;
             case "tokens":
                 calculateExactToken(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO, request);
                 break;
@@ -237,6 +240,65 @@ public class ShopifyService {
 //            if (translatedContent.contains(contentItemNode.path("key").asText(null))) {
 //                translatedCounter.addChars(value.length());
 //            }
+    }
+
+    //计算剩余精确值
+    public void calculateInitialToken(ArrayNode contentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter,
+                                    List<String> translatedContent, TranslateResourceDTO translateResourceDTO, ShopifyRequest request) {
+        for (JsonNode contentItem : contentNode) {
+            ObjectNode contentItemNode = (ObjectNode) contentItem;
+            //当在contentItemNode的key在translatedContent里面，则跳过
+            if(contentItemNode == null ){
+                continue;
+            }
+            JsonNode valueNode = contentItemNode.path("value");
+            if (valueNode == null) {
+                continue;
+            }
+            // 跳过 key 为 "handle" 的项
+            if ("handle".equals(contentItemNode.path("key").asText(null))
+                    || "JSON".equals(contentItemNode.path("type").asText(null))
+                    || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
+                    || translateResourceDTO.getResourceType().equals(METAFIELD) || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
+            ) {
+                continue;  // 跳过当前项
+            }
+
+            String value = contentItemNode.path("value").asText(null);
+
+            //处理用AI翻译包翻译的类型
+            String resourceType = translateResourceDTO.getResourceType();
+            if (PRODUCT.equals(resourceType)
+                    || PRODUCT_OPTION.equals(resourceType)
+                    || PRODUCT_OPTION_VALUE.equals(resourceType)
+                    || BLOG.equals(resourceType)
+                    || ARTICLE.equals(resourceType)) {
+                //处理html数据
+                if ("HTML".equals(contentItemNode.path("type").asText(null)) || isHtml(value)) {
+                    Document doc = Jsoup.parse(value);
+                    extractTextsToTranslate(doc, counter, resourceType, request);
+                    continue;
+                }
+                if (value.length() > length) {
+                    String s = cueWordSingle(request.getTarget(), resourceType) + value;
+                    int token = calculateBaiLianToken(s);
+                    counter.addChars(token * 2);
+//                    counter.addChars(calculateBaiLianToken(value));
+                } else {
+                    counter.addChars(calculateBaiLianToken(value));
+                }
+                continue;
+            }
+//             获取 value
+            //处理html的数据
+            if ("HTML".equals(contentItemNode.path("type").asText(null)) || isHtml(value)) {
+                Document doc = Jsoup.parse(contentItemNode.path("value").asText(null));
+                extractTextsToTranslate(doc, counter, resourceType, request);
+                continue;
+            }
+
+            counter.addChars(calculateBaiLianToken(value));
+        }
     }
 
     private void estimatedTranslationWords(ArrayNode contentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter, List<String> translatedContent, TranslateResourceDTO translateResourceDTO) {
@@ -292,7 +354,7 @@ public class ShopifyService {
         }
     }
 
-    //计算精确值
+    //计算剩余精确值
     public void calculateExactToken(ArrayNode contentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter,
                                     List<String> translatedContent, TranslateResourceDTO translateResourceDTO, ShopifyRequest request) {
         for (JsonNode contentItem : contentNode) {
@@ -332,10 +394,11 @@ public class ShopifyService {
                 }
                 if (value.length() > length) {
                     String s = cueWordSingle(request.getTarget(), resourceType) + value;
-                    counter.addChars(calculateBaiLianToken(s));
-                    counter.addChars(calculateBaiLianToken(value));
+                    int token = calculateBaiLianToken(s);
+                    counter.addChars(token * 2);
+//                    counter.addChars(calculateBaiLianToken(value));
                 } else {
-                    counter.addChars(value.length());
+                    counter.addChars(calculateBaiLianToken(value));
                 }
                 continue;
             }
@@ -348,7 +411,7 @@ public class ShopifyService {
             }
 
 
-            counter.addChars(value.length());
+            counter.addChars(calculateBaiLianToken(value));
         }
     }
 
@@ -364,10 +427,10 @@ public class ShopifyService {
 
                     if (text.length() > length) {
                         String s = cueWordSingle(request.getTarget(), type) + text ;
-                        counter.addChars(calculateBaiLianToken(s));
-                        counter.addChars(values().length);
+                        int token = calculateBaiLianToken(s);
+                        counter.addChars(token * 2);
                     } else {
-                        counter.addChars(text.length());
+                        counter.addChars(calculateBaiLianToken(text));
                     }
                 }
 
@@ -377,11 +440,11 @@ public class ShopifyService {
                     if (!altText.isEmpty()) {
 
                         if (text.length() > length) {
-                            String s = cueWordSingle(request.getTarget(), type) + text;
-                            counter.addChars(calculateBaiLianToken(s));
-                            counter.addChars(values().length);
+                            String s = cueWordSingle(request.getTarget(), type) + altText;
+                            int token = calculateBaiLianToken(s);
+                            counter.addChars(token * 2);
                         } else {
-                            counter.addChars(text.length());
+                            counter.addChars(calculateBaiLianToken(altText));
                         }
                     }
                 }
@@ -635,6 +698,7 @@ public class ShopifyService {
 
     //计算被翻译项的总数和已翻译的个数
     public Map<String, Map<String, Object>> getTranslationItemsInfo(ResourceTypeRequest request) {
+//        System.out.println("request: " + request);
         ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
         Map<String, Map<String, Object>> result = new HashMap<>();
@@ -671,6 +735,7 @@ public class ShopifyService {
             singleResult.put("status", 1);
             result.put(request.getResourceType(), singleResult);
         }
+        System.out.println("second: " + LocalDateTime.now());
         return result;
     }
 
@@ -852,6 +917,15 @@ public class ShopifyService {
     public void readAllTypeToken(ResourceTypeRequest request) {
         //从数据库中获取status数据并判断 当为2时，返回值； 当为1或3时，继续执行
 //        int status = userTypeTokenService.getStatusByShopNameAndTarget(request.getShopName(), request.getTarget());
+    }
+
+    //异步调用getTranslationItemsInfo
+    @Async
+    public void getTranslationItemsInfoTest(ResourceTypeRequest request) {
+        System.out.println("request1: " + request.getResourceType());
+        Map<String, Map<String, Object>> translationItemsInfo = getTranslationItemsInfo(request);
+        System.out.println("translationItemsInfo" + translationItemsInfo);
+
     }
 }
 

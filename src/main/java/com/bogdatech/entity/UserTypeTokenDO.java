@@ -24,5 +24,5 @@ public class UserTypeTokenDO {
     private Integer  navigation;
     private Integer  shop;
     private Integer  shipping;
-    private Integer  delivery;
+    private String shopName;
 }

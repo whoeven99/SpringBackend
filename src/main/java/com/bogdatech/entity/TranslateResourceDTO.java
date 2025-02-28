@@ -134,7 +134,8 @@ public class TranslateResourceDTO {
         TOKEN_MAP.put("collection", List.of(new TranslateResourceDTO(COLLECTION, "250", "", "")));
         TOKEN_MAP.put("notifications", List.of(new TranslateResourceDTO(EMAIL_TEMPLATE, "250", "", "")));
         TOKEN_MAP.put("theme", Arrays.asList(
-                new TranslateResourceDTO(ONLINE_STORE_THEME, "250", "", ""),
+                new TranslateResourceDTO(ONLINE_STORE_THEME, "250", "", "")
+                ,
                 new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, "250", "", ""),
                 new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, "250", "", ""),
                 new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, "250", "", ""),
@@ -148,7 +149,8 @@ public class TranslateResourceDTO {
         TOKEN_MAP.put("metaobjects", List.of(new TranslateResourceDTO(METAOBJECT, "250", "", "")));
         TOKEN_MAP.put("pages", List.of(new TranslateResourceDTO(PAGE, "250", "", "")));
         TOKEN_MAP.put("products", Arrays.asList(
-                new TranslateResourceDTO(PRODUCT, "250", "", ""),
+                new TranslateResourceDTO(PRODUCT, "250", "", "")
+                ,
                 new TranslateResourceDTO(PRODUCT_OPTION, "250", "", ""),
                 new TranslateResourceDTO(PRODUCT_OPTION_VALUE, "250", "", "")
         ));

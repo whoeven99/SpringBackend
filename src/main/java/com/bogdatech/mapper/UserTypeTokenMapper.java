@@ -21,4 +21,7 @@ public interface UserTypeTokenMapper extends BaseMapper<UserTypeTokenDO> {
 
     @Update("UPDATE userTypeToken SET status = #{i} WHERE translation_id = #{translationId} ")
     void updateStatusByTranslationIdAndStatus(int translationId, int i);
+
+    @Insert("INSERT INTO userTypeToken(shop_name) VALUES (#{shopName})")
+    void insertTypeInfoByShopName(String shopName);
 }

@@ -87,4 +87,13 @@ public class TypeConversionUtils {
         shopifyRequest.setTarget(transaction.getTarget());
         return shopifyRequest;
     }
+
+    public static TranslateRequest ClickTranslateRequestToTranslateRequest(ClickTranslateRequest request){
+        TranslateRequest translateRequest = new TranslateRequest();
+        translateRequest.setSource(request.getSource());
+        translateRequest.setTarget(request.getTarget());
+        translateRequest.setAccessToken(request.getAccessToken());
+        translateRequest.setShopName(request.getShopName());
+        return translateRequest;
+    }
 }

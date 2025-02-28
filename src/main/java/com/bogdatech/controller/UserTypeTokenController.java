@@ -29,4 +29,28 @@ public class UserTypeTokenController {
             return new BaseResponse<>().CreateSuccessResponse(userTypeToken);
         }
     }
-}
+
+    //获取用户的初始token
+    @PostMapping("/getUserInitToken")
+    public BaseResponse<Object> getUserInitToken(@RequestBody TranslateRequest request){
+        //查询数据库是否要
+        UserTypeTokenDO userTypeToken = userTypeTokenService.getUserInitToken(request);
+
+        if (userTypeToken != null) {
+            return new BaseResponse<>().CreateSuccessResponse(userTypeToken);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(request);
+
+        }
+    }
+
+    @PostMapping("/getUserInitTokenByShopName")
+    public BaseResponse<Object> getUserInitTokenByShopName(@RequestBody TranslateRequest request){
+        UserTypeTokenDO userTypeToken = userTypeTokenService.getUserInitTokenByShopName(request.getShopName());
+        if (userTypeToken != null) {
+            return new BaseResponse<>().CreateSuccessResponse(userTypeToken);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(request);
+        }
+    }
+ }
