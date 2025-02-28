@@ -260,7 +260,7 @@ public class JsoupUtils {
     }
 
     //判断String类型是否是html数据
-    public boolean isHtml(String content) {
+    public static boolean isHtml(String content) {
         Document doc = Jsoup.parse(content);
         return !doc.body().text().equals(content);
     }

@@ -2,10 +2,12 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
+import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -15,10 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
+import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @RestController
 @RequestMapping("/translate")
@@ -27,19 +30,22 @@ public class TranslateController {
     private final ITranslatesService translatesService;
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final ITranslationCounterService translationCounterService;
-
+    private final IUserTypeTokenService userTypeTokenService;
+    private final UserTypeTokenService userTypeTokensService;
 
     @Autowired
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
             ShopifyHttpIntegration shopifyApiIntegration,
-            ITranslationCounterService translationCounterService
-            ) {
+            ITranslationCounterService translationCounterService,
+            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.translationCounterService = translationCounterService;
+        this.userTypeTokenService = userTypeTokenService;
+        this.userTypeTokensService = userTypeTokensService;
     }
 
 
@@ -116,17 +122,16 @@ public class TranslateController {
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @PutMapping("/clickTranslation")
-    public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
+    public BaseResponse<Object> clickTranslation(@RequestBody ClickTranslateRequest clickTranslateRequest) {
+
+        //将ClickTranslateRequest转换为TranslateRequest
+        TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
 
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
 
-        //经翻译的语言数量，超过 2 种，则返回
-//        if (translatesService.getLanguageListCounter(request.getShopName()).size() > 2) {
-//            return new BaseResponse<>().CreateErrorResponse(DATA_IS_LIMIT);
-//        }
-        //一个用户当前只能翻译一条语言，根据用户的status判断
+//        一个用户当前只能翻译一条语言，根据用户的status判断
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
         for (Integer integer : integers) {
             if (integer == 2) {
@@ -137,14 +142,16 @@ public class TranslateController {
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+            return new BaseResponse<>().CreateErrorResponse(request);
         }
+        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
 //      翻译
         translateService.startTranslation(request, remainingChars, counter, usedChars);
-        return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
+        return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
     //暂停翻译
@@ -215,11 +222,60 @@ public class TranslateController {
     @PostMapping("/insertTargets")
     public void insertTargets(@RequestBody TargetListRequest request) {
         List<String> targetList = request.getTargetList();
-        for (String target : targetList
-        ) {
-            TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), request.getSource(), target, null);
-            translateService.insertLanguageStatus(request1);
+        TranslateRequest translateRequest = TargetListRequestToTranslateRequest(request);
+        if (!targetList.isEmpty()){
+            translateRequest.setTarget(targetList.get(0));
+            userTypeTokensService.getUserInitToken(translateRequest);
+            for (String target : targetList
+            ) {
+                TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), request.getSource(), target, null);
+                //插入语言状态
+                translateService.insertLanguageStatus(request1);
+                //获取translates表中shopName和target对应的id
+                int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request1.getShopName(), request1.getTarget(), request1.getSource());
+                //初始化用户对应token表
+                userTypeTokenService.insertTypeInfo(request1, idByShopNameAndTarget);
+            }
+        }else {
+            translateRequest.setTarget("zh-CN");
+            userTypeTokensService.getUserInitToken(translateRequest);
+            for (String target : targetList
+            ) {
+                TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), request.getSource(), target, null);
+                //插入语言状态
+                translateService.insertLanguageStatus(request1);
+                //获取translates表中shopName和target对应的id
+                int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request1.getShopName(), request1.getTarget(), request1.getSource());
+                //初始化用户对应token表
+                userTypeTokenService.insertTypeInfo(request1, idByShopNameAndTarget);
+            }
         }
+
+
     }
 
+    //异步调用startTokenCount方法获取所有的数据信息
+    @PostMapping("/startTokenCount")
+    public BaseResponse<Object> startTokenCount(@RequestBody TranslateRequest request) {
+        //获取translates表中shopName和target对应的id
+        int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+        //开始token的计数各个类型的token计数
+        //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
+        Integer status = userTypeTokenService.getStatusByTranslationId(idByShopNameAndTarget);
+        if (status != 2) {
+            //TODO: 这只是大致流程，还需要做异常处理
+            //将UserTypeToken的status修改为2
+            userTypeTokenService.updateStatusByTranslationIdAndStatus(idByShopNameAndTarget, 2);
+            ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
+            //循环type获取token
+            for (String key : TOKEN_MAP.keySet()
+            ) {
+                translateService.updateStatusByTranslation(shopifyRequest, key, idByShopNameAndTarget, "token");
+            }
+            //token全部获取完之后修改，UserTypeToken的status==1
+            userTypeTokenService.updateStatusByTranslationIdAndStatus(idByShopNameAndTarget, 1);
+
+        }
+        return null;
+    }
 }

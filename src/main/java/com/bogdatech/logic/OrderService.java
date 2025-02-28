@@ -61,9 +61,9 @@ public class OrderService {
 
         //获取用户现在总共的值
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(purchaseSuccessRequest.getShopName());
-        String formattedNumber2 = formatter.format(remainingChars);
+        String formattedNumber2 = formatter.format(remainingChars + purchaseSuccessRequest.getCredit());
         templateData.put("total_credits_count", formattedNumber2 + " Credits");
-
+//        return true;
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133302L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 }

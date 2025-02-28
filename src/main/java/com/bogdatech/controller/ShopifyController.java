@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserSubscriptionsService;
+import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -14,10 +15,13 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
+import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 
@@ -40,6 +44,7 @@ public class ShopifyController {
         this.userSubscriptionsService = userSubscriptionsService;
 
     }
+
     private final TelemetryClient appInsights = new TelemetryClient();
 
     //通过测试环境调shopify的API
@@ -111,7 +116,21 @@ public class ShopifyController {
     //查询需要翻译的总字数-已翻译字符数. 计算翻译的项数
     @PostMapping("/getTotalWords")
     public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String method) {
-        return new BaseResponse<>().CreateSuccessResponse(shopifyService.getTotalWords(shopifyRequest, method));
+//        TranslateResourceDTO resourceType = new TranslateResourceDTO("PRODUCT","250","","");
+        System.out.println("first: " + LocalDateTime.now());
+        for (String key : TOKEN_MAP.keySet()
+        ) {
+            List<TranslateResourceDTO> lists = TOKEN_MAP.get(key);
+            int tokens = 0;
+            for (TranslateResourceDTO resourceDTO : lists
+            ) {
+                int totalWords = shopifyService.getTotalWords(shopifyRequest, method, resourceDTO);
+                tokens += totalWords;
+            }
+            System.out.println("key: " + key + " tokens: " + tokens);
+        }
+        System.out.println("second: " + LocalDateTime.now());
+        return new BaseResponse<>().CreateSuccessResponse("success");
     }
 
     //根据前端的传值,更新shopify后台和数据库
@@ -216,11 +235,28 @@ public class ShopifyController {
     @PostMapping("/updateItems")
     public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
         String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
-        if (s.contains("value")){
+        if (s.contains("value")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(s);
         }
     }
+
+    @PostMapping("/getTranslationItemsInfoTest")
+    public void getTranslationItemsInfoTest(@RequestBody ResourceTypeRequest request) {
+        System.out.println("first: " + LocalDateTime.now());
+        for (String key : RESOURCE_MAP.keySet()
+        ) {
+            System.out.println("key: " + key);
+            ResourceTypeRequest resourceTypeRequest = new ResourceTypeRequest();
+            resourceTypeRequest.setResourceType(key);
+            resourceTypeRequest.setTarget(request.getTarget());
+            resourceTypeRequest.setAccessToken(request.getAccessToken());
+            resourceTypeRequest.setShopName(request.getShopName());
+            shopifyService.getTranslationItemsInfoTest(resourceTypeRequest);
+        }
+    }
+
+
 
 }
