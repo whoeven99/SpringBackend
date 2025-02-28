@@ -40,7 +40,11 @@ public class UserTypeTokenService {
         return null;
     }
 
-
+    /**
+     * 调用方法向数据库UserTypeToken的插入初始化数据，根据shopName向UserTypeToken表插入对应的数据
+     * @param request 用户数据对象，包含用户信息（如shopName、target、source, accessToken）
+     *
+     */
     public void getUserInitToken(TranslateRequest request) {
         UserTypeTokenDO userTypeTokenDO = userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq("shop_name", request.getShopName()));
         if (userTypeTokenDO == null){
@@ -62,7 +66,11 @@ public class UserTypeTokenService {
         }
     }
 
-    //根据shopName获取该用户初始值
+    /**
+     * 调用方法向数据库UserTypeToken的插入初始化数据，根据shopName向UserTypeToken表插入对应的数据
+     * @param shopName 用户的商店名
+     * @return UserTypeTokenDO  UserTypeTokenDO数据类型
+     */
     public UserTypeTokenDO getUserInitTokenByShopName(String shopName) {
         return userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq("shop_name", shopName));
     }

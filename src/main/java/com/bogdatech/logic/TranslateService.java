@@ -136,6 +136,12 @@ public class TranslateService {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                     translateFailEmail(shopName, e.getErrorMessage());
                     appInsights.trackTrace("翻译失败的原因： " + e.getErrorMessage());
+                    //更新初始值
+                    try {
+                        startTokenCount(request);
+                    } catch (Exception e2) {
+                        appInsights.trackTrace("重新更新token值失败！！！");
+                    }
                     return;
                 }
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
@@ -146,12 +152,30 @@ public class TranslateService {
                     translateFailEmail(shopName, CHARACTER_LIMIT);
                 }
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
+                //更新初始值
+                try {
+                    startTokenCount(request);
+                } catch (Exception e3) {
+                    appInsights.trackTrace("重新更新token值失败！！！");
+                }
                 return;
             } catch (CannotCreateTransactionException e) {
                 appInsights.trackTrace("Translation task failed: " + e);
+                //更新初始值
+                try {
+                    startTokenCount(request);
+                } catch (Exception e4) {
+                    appInsights.trackTrace("重新更新token值失败！！！");
+                }
                 return;
             } catch (Exception e) {
                 appInsights.trackTrace("Translation task failed: " + e);
+                //更新初始值
+                try {
+                    startTokenCount(request);
+                } catch (Exception e5) {
+                    appInsights.trackTrace("重新更新token值失败！！！");
+                }
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 return;
@@ -162,18 +186,19 @@ public class TranslateService {
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
             translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+            //更新初始值
+            try {
+                startTokenCount(request);
+            } catch (Exception e) {
+                appInsights.trackTrace("重新更新token值失败！！！");
+            }
         });
 
         userTasks.put(shopName, future);  // 存储用户的任务
         userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
         userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
 
-        //更新初始值
-        try {
-            startTokenCount(request);
-        } catch (Exception e) {
-            appInsights.trackTrace("重新更新token值失败！！！");
-        }
+
     }
 
 
@@ -1427,7 +1452,7 @@ public class TranslateService {
 //            System.out.println("token: " + token);
             tokens += token;
         }
-        System.out.println("tokens: " + tokens);
+//        System.out.println("tokens: " + tokens);
         //将tokens存储到UserTypeToken对应的列里面
         userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
         if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
@@ -1443,7 +1468,7 @@ public class TranslateService {
         } else {
             throw new IllegalArgumentException("Invalid column name");
         }
-        System.out.println("second: " + LocalDateTime.now());
+//        System.out.println("second: " + LocalDateTime.now());
     }
 
     /**
