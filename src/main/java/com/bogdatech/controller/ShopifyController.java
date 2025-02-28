@@ -117,6 +117,7 @@ public class ShopifyController {
     @PostMapping("/getTotalWords")
     public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String method) {
 //        TranslateResourceDTO resourceType = new TranslateResourceDTO("PRODUCT","250","","");
+        System.out.println("first: " + LocalDateTime.now());
         for (String key : TOKEN_MAP.keySet()
         ) {
             List<TranslateResourceDTO> lists = TOKEN_MAP.get(key);
@@ -128,6 +129,7 @@ public class ShopifyController {
             }
             System.out.println("key: " + key + " tokens: " + tokens);
         }
+        System.out.println("second: " + LocalDateTime.now());
         return new BaseResponse<>().CreateSuccessResponse("success");
     }
 
@@ -247,10 +249,14 @@ public class ShopifyController {
         ) {
             System.out.println("key: " + key);
             ResourceTypeRequest resourceTypeRequest = new ResourceTypeRequest();
-            request.setResourceType(key);
-
-            shopifyService.getTranslationItemsInfoTest(request);
+            resourceTypeRequest.setResourceType(key);
+            resourceTypeRequest.setTarget(request.getTarget());
+            resourceTypeRequest.setAccessToken(request.getAccessToken());
+            resourceTypeRequest.setShopName(request.getShopName());
+            shopifyService.getTranslationItemsInfoTest(resourceTypeRequest);
         }
-
     }
+
+
+
 }
