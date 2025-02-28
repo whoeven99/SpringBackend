@@ -7,7 +7,6 @@ import com.bogdatech.entity.CharsOrdersDO;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
-import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,9 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import static com.bogdatech.constants.MailChimpConstants.CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT;
-import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
 
 @Component
 public class OrderService {
@@ -61,9 +57,10 @@ public class OrderService {
 
         //获取用户现在总共的值
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(purchaseSuccessRequest.getShopName());
-        String formattedNumber2 = formatter.format(remainingChars);
+        String formattedNumber2 = formatter.format(remainingChars + purchaseSuccessRequest.getCredit());
         templateData.put("total_credits_count", formattedNumber2 + " Credits");
-
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133302L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        System.out.println("template: " + templateData);
+        return true;
+//        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133302L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 }

@@ -294,14 +294,6 @@ public class TranslateService {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
 
-//        //一个用户当前只能翻译一条语言，根据用户的status判断
-//        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
-//        for (Integer integer : integers) {
-//            if (integer == 2) {
-//                throw new ClientException(HAS_TRANSLATED);
-//            }
-//        }
-
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -1017,6 +1009,23 @@ public class TranslateService {
                 continue;
             }
 
+            //对词汇表数据做判断
+            //判断词汇表里面是否有数据
+            if (!glossaryMap.isEmpty()) {
+                boolean success = false;
+                for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
+                    String glossaryKey = entry.getKey();
+                    if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
+                        judgeData.get(GLOSSARY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+                        success = true;
+                        break;
+                    }
+                }
+                if (success) {
+                    continue;
+                }
+            }
+
             //对从数据库中获取的数据单独处理
             if (isDatabaseResourceType(resourceType) || isHtml(value)) {
                 //先将type存在target里面
@@ -1041,23 +1050,6 @@ public class TranslateService {
                 //存放在json的集合里面
                 judgeData.get(JSON_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                 continue;
-            }
-
-            //对词汇表数据做判断
-            //判断词汇表里面是否有数据
-            if (!glossaryMap.isEmpty()) {
-                boolean success = false;
-                for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
-                    String glossaryKey = entry.getKey();
-                    if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
-                        judgeData.get(GLOSSARY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
-                        success = true;
-                        break;
-                    }
-                }
-                if (success) {
-                    continue;
-                }
             }
 
             //对value进行判断 plainText
@@ -1398,7 +1390,7 @@ public class TranslateService {
             String formattedNumber2 = formatter.format(remaining);
             templateData.put("remaining_credits", formattedNumber2);
         }
-
+        appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133301L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
