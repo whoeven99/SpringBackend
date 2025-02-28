@@ -1446,6 +1446,13 @@ public class TranslateService {
         System.out.println("second: " + LocalDateTime.now());
     }
 
+    /**
+     * 根据shopifyRequest，key和method获取对应模块的token。
+     *
+     * @param shopifyRequest       请求对象，包含shopName、target、source，accessToken等信息
+     * @param key  模块类型
+     * @param method 调用方式
+     */
     @Async
     public void insertInitialByTranslation(ShopifyRequest shopifyRequest, String key, String method){
         int tokens = 0;
@@ -1472,7 +1479,7 @@ public class TranslateService {
     }
 
     /**
-     * 根据request和translationId获取对应模块的token。
+     * 根据request获取对应模块的token。如果status为2就不计数，如果为其他就开始计数
      *
      * @param request       请求对象，包含shopName、target、source，accessToken等信息
      */
