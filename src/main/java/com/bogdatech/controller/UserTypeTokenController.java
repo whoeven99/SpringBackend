@@ -31,7 +31,6 @@ public class UserTypeTokenController {
     }
 
     //获取用户的初始token
-    //TODO
     @PostMapping("/getUserInitToken")
     public BaseResponse<Object> getUserInitToken(@RequestBody TranslateRequest request){
         //查询数据库是否要
@@ -42,6 +41,16 @@ public class UserTypeTokenController {
         }else {
             return new BaseResponse<>().CreateErrorResponse(request);
 
+        }
+    }
+
+    @PostMapping("/getUserInitTokenByShopName")
+    public BaseResponse<Object> getUserInitTokenByShopName(@RequestBody TranslateRequest request){
+        UserTypeTokenDO userTypeToken = userTypeTokenService.getUserInitTokenByShopName(request.getShopName());
+        if (userTypeToken != null) {
+            return new BaseResponse<>().CreateSuccessResponse(userTypeToken);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(request);
         }
     }
  }

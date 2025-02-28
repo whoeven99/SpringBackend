@@ -21,6 +21,7 @@ import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @RestController
@@ -120,17 +121,20 @@ public class TranslateController {
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @PutMapping("/clickTranslation")
-    public BaseResponse<Object> clickTranslation(@RequestBody TranslateRequest request) {
+    public BaseResponse<Object> clickTranslation(@RequestBody ClickTranslateRequest clickTranslateRequest) {
+
+        //将ClickTranslateRequest转换为TranslateRequest
+        TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
 
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
 
         //经翻译的语言数量，超过 2 种，则返回
-//        if (translatesService.getLanguageListCounter(request.getShopName()).size() > 2) {
-//            return new BaseResponse<>().CreateErrorResponse(DATA_IS_LIMIT);
-//        }
-        //一个用户当前只能翻译一条语言，根据用户的status判断
+        if (translatesService.getLanguageListCounter(request.getShopName()).size() > 2) {
+            return new BaseResponse<>().CreateErrorResponse(DATA_IS_LIMIT);
+        }
+//        一个用户当前只能翻译一条语言，根据用户的status判断
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
         for (Integer integer : integers) {
             if (integer == 2) {
@@ -150,7 +154,7 @@ public class TranslateController {
         counter.addChars(usedChars);
 //      翻译
         translateService.startTranslation(request, remainingChars, counter, usedChars);
-        return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
+        return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
     //暂停翻译
@@ -230,8 +234,6 @@ public class TranslateController {
             int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request1.getShopName(), request1.getTarget(), request1.getSource());
             //初始化用户对应token表
             userTypeTokenService.insertTypeInfo(request1, idByShopNameAndTarget);
-            //开始token的计数各个类型的token计数
-//            translateService.startTokenCount(request1, idByShopNameAndTarget);
         }
     }
 

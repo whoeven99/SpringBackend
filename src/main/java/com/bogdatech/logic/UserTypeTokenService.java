@@ -45,6 +45,9 @@ public class UserTypeTokenService {
         if (userTypeTokenDO == null){
 
             ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
+            //将shopName初始值存储到数据库中
+            userTypeTokenService.insertInitial(shopifyRequest.getShopName());
+
             //循环type获取token
             for (String key : TOKEN_MAP.keySet()
             ) {
@@ -55,5 +58,10 @@ public class UserTypeTokenService {
         }else {
             return null;
         }
+    }
+
+    //根据shopName获取该用户初始值
+    public UserTypeTokenDO getUserInitTokenByShopName(String shopName) {
+        return userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq("shop_name", shopName));
     }
 }
