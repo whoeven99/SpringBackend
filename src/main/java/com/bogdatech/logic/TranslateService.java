@@ -1392,7 +1392,7 @@ public class TranslateService {
         }
         appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133297L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133535L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
 
