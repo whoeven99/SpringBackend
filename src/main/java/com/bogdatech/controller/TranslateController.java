@@ -131,10 +131,6 @@ public class TranslateController {
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
 
-        //经翻译的语言数量，超过 2 种，则返回
-        if (translatesService.getLanguageListCounter(request.getShopName()).size() > 2) {
-            return new BaseResponse<>().CreateErrorResponse(DATA_IS_LIMIT);
-        }
 //        一个用户当前只能翻译一条语言，根据用户的status判断
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
         for (Integer integer : integers) {
