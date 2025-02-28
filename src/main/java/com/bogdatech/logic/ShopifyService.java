@@ -635,6 +635,7 @@ public class ShopifyService {
 
     //计算被翻译项的总数和已翻译的个数
     public Map<String, Map<String, Object>> getTranslationItemsInfo(ResourceTypeRequest request) {
+        System.out.println("request: " + request);
         ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
         Map<String, Map<String, Object>> result = new HashMap<>();
@@ -647,29 +648,29 @@ public class ShopifyService {
             resource.setTarget(request.getTarget());
             String query = shopifyRequestBody.getFirstQuery(resource);
             cloudServiceRequest.setBody(query);
-            String infoByShopify;
-            try {
-                String env = System.getenv("ApplicationEnv");
-                if ("prod".equals(env) || "dev".equals(env)) {
-                    infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
-                } else {
-                    infoByShopify = getShopifyData(cloudServiceRequest);
-                }
-            } catch (Exception e) {
-                //如果出现异常，则跳过, 翻译其他的内容
-                appInsights.trackTrace("getTranslationItemsInfo error: " + e.getMessage());
-                continue;
-            }
-            countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
-            if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
-                translatedCounter.reset();
-                translatedCounter.addChars(allCounter.getTotalChars());
-            }
-            singleResult.put("totalNumber", allCounter.getTotalChars());
-            singleResult.put("translatedNumber", translatedCounter.getTotalChars());
-            singleResult.put("target", request.getTarget());
-            singleResult.put("status", 1);
-            result.put(request.getResourceType(), singleResult);
+//            String infoByShopify;
+//            try {
+//                String env = System.getenv("ApplicationEnv");
+//                if ("prod".equals(env) || "dev".equals(env)) {
+//                    infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
+//                } else {
+//                    infoByShopify = getShopifyData(cloudServiceRequest);
+//                }
+//            } catch (Exception e) {
+//                //如果出现异常，则跳过, 翻译其他的内容
+//                appInsights.trackTrace("getTranslationItemsInfo error: " + e.getMessage());
+//                continue;
+//            }
+//            countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
+//            if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
+//                translatedCounter.reset();
+//                translatedCounter.addChars(allCounter.getTotalChars());
+//            }
+//            singleResult.put("totalNumber", allCounter.getTotalChars());
+//            singleResult.put("translatedNumber", translatedCounter.getTotalChars());
+//            singleResult.put("target", request.getTarget());
+//            singleResult.put("status", 1);
+//            result.put(request.getResourceType(), singleResult);
         }
         return result;
     }
@@ -852,6 +853,15 @@ public class ShopifyService {
     public void readAllTypeToken(ResourceTypeRequest request) {
         //从数据库中获取status数据并判断 当为2时，返回值； 当为1或3时，继续执行
 //        int status = userTypeTokenService.getStatusByShopNameAndTarget(request.getShopName(), request.getTarget());
+    }
+
+    //异步调用getTranslationItemsInfo
+    @Async
+    public void getTranslationItemsInfoTest(ResourceTypeRequest request) {
+        System.out.println("request1: " + request.getResourceType());
+//        Map<String, Map<String, Object>> translationItemsInfo = getTranslationItemsInfo(request);
+//        System.out.println("translationItemsInfo" + translationItemsInfo);
+        System.out.println("second: " + LocalDateTime.now());
     }
 }
 

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
@@ -43,6 +44,7 @@ public class ShopifyController {
         this.userSubscriptionsService = userSubscriptionsService;
 
     }
+
     private final TelemetryClient appInsights = new TelemetryClient();
 
     //通过测试环境调shopify的API
@@ -116,11 +118,11 @@ public class ShopifyController {
     public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String method) {
 //        TranslateResourceDTO resourceType = new TranslateResourceDTO("PRODUCT","250","","");
         for (String key : TOKEN_MAP.keySet()
-             ) {
+        ) {
             List<TranslateResourceDTO> lists = TOKEN_MAP.get(key);
             int tokens = 0;
-            for (TranslateResourceDTO resourceDTO: lists
-                 ) {
+            for (TranslateResourceDTO resourceDTO : lists
+            ) {
                 int totalWords = shopifyService.getTotalWords(shopifyRequest, method, resourceDTO);
                 tokens += totalWords;
             }
@@ -194,15 +196,15 @@ public class ShopifyController {
     }
 
     //计算被翻译项的总数和已翻译的个数
-//    @PostMapping("/getTranslationItemsInfo")
-//    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
-//        Map<String, Map<String, Object>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
-//        if (translationItemsInfo == null) {
-//            return new BaseResponse<>().CreateErrorResponse("Get items failed");
-//        } else {
-//            return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
-//        }
-//    }
+    @PostMapping("/getTranslationItemsInfo")
+    public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
+        Map<String, Map<String, Object>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
+        if (translationItemsInfo == null) {
+            return new BaseResponse<>().CreateErrorResponse("Get items failed");
+        } else {
+            return new BaseResponse<>().CreateSuccessResponse(translationItemsInfo);
+        }
+    }
 
     //修改翻译状态
     @PutMapping("/updateTranslationStatus")
@@ -231,27 +233,24 @@ public class ShopifyController {
     @PostMapping("/updateItems")
     public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
         String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
-        if (s.contains("value")){
+        if (s.contains("value")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(s);
         }
     }
 
-
-    //测试计算被翻译项的总数和已翻译的个数
     @PostMapping("/getTranslationItemsInfoTest")
-    public BaseResponse<Object> getTranslationItemsInfoTest(@RequestBody ResourceTypeRequest request) {
-        System.out.println("nows: " + LocalDateTime.now());
-        for (String key : TOKEN_MAP.keySet()
+    public void getTranslationItemsInfoTest(@RequestBody ResourceTypeRequest request) {
+        System.out.println("first: " + LocalDateTime.now());
+        for (String key : RESOURCE_MAP.keySet()
         ) {
-            System.out.println("key = " + key);
+            System.out.println("key: " + key);
+            ResourceTypeRequest resourceTypeRequest = new ResourceTypeRequest();
             request.setResourceType(key);
-            System.out.println("request123 = " + request);
-            shopifyService.getTranslationItemsInfo(request);
-//            System.out.println("translationItemsInfo = " + translationItemsInfo);
+
+            shopifyService.getTranslationItemsInfoTest(request);
         }
 
-       return new BaseResponse<>().CreateSuccessResponse(200);
     }
 }
