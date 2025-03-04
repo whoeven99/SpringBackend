@@ -9,8 +9,8 @@ import java.util.List;
 @Mapper
 public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
 
-    @Select("SELECT status FROM Translates WHERE shop_name = #{shopName} and target = #{target}")
-    Integer getStatusInTranslates(String shopName, String target);
+    @Select("SELECT status FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
+    Integer getStatusInTranslates(String shopName, String target, String source);
 
     @Insert("INSERT INTO Translates (source, access_token, target, shop_name, status) VALUES (#{source}, " +
             "#{accessToken}, #{target}, #{shopName}, #{status})")

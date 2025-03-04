@@ -173,6 +173,14 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         System.out.println("updateResult: " + updateResult);
     }
 
+    @Override
+    public Integer testInsertOne(String target, String targetValue, String source, String sourceValue) {
+        VocabularyDO vocabularyDO = new VocabularyDO();
+        vocabularyDO.setPtBR(sourceValue);  // 假设 PtBR 作为 sourceCode
+        vocabularyDO.setZhCN(targetValue);  // 假设 zhCN 作为 targetCode
+        return baseMapper.insert(vocabularyDO);
+    }
+
 
     // 设置对应语言字段
     private void setLanguageField(VocabularyDO vocabulary, String languageCode, String sourceText) {
