@@ -77,7 +77,7 @@ public class ShopifyController {
     // 用户消耗的字符数
     @GetMapping("/getConsumedWords")
     public BaseResponse<Object> getConsumedWords(String shopName) {
-        TranslationCounterDO translationCounterRequests = null;
+        TranslationCounterDO translationCounterRequests;
         int retryCount = 3; // 最大重试次数
         int retryDelay = 1000; // 重试间隔时间，单位毫秒
 
@@ -90,7 +90,6 @@ public class ShopifyController {
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
                 appInsights.trackTrace("Error while getConsumedWords for shop " + e.getMessage());
-//                logger.error("Error while querying translation counter for shop " + shopName, e);
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -117,7 +116,6 @@ public class ShopifyController {
     @PostMapping("/getTotalWords")
     public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String method) {
 //        TranslateResourceDTO resourceType = new TranslateResourceDTO("PRODUCT","250","","");
-        System.out.println("first: " + LocalDateTime.now());
         for (String key : TOKEN_MAP.keySet()
         ) {
             List<TranslateResourceDTO> lists = TOKEN_MAP.get(key);
@@ -129,7 +127,6 @@ public class ShopifyController {
             }
             System.out.println("key: " + key + " tokens: " + tokens);
         }
-        System.out.println("second: " + LocalDateTime.now());
         return new BaseResponse<>().CreateSuccessResponse("success");
     }
 
@@ -142,7 +139,7 @@ public class ShopifyController {
     //获取用户的额度字符数 和 已使用的字符
     @GetMapping("/getUserLimitChars")
     public BaseResponse<Object> getUserLimitChars(String shopName) {
-        TranslationCounterDO translationCounterRequests = null;
+        TranslationCounterDO translationCounterRequests;
         int retryCount = 3; // 最大重试次数
         int retryDelay = 1000; // 重试间隔时间，单位毫秒
         Map<String, Object> map = new HashMap<>();

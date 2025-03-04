@@ -35,4 +35,35 @@ public class ApiCodeUtils {
             default -> code;
         };
     }
+
+    //千问mt语言代码处理
+    public static String qwenMtCode(String code){
+        return switch (code) {
+            case "zh-CN" -> "Chinese"; // 简体中文
+            case "en" -> "English"; // 英文
+            case "ja" -> "Japanese"; // 日语
+            case "ko" -> "Korean"; // 韩语
+            case "th" -> "Thai"; // 泰语
+            case "fr" -> "French"; // 法语
+            case "de" -> "German"; // 德语
+            case "es" -> "Spanish"; // 西班牙语
+            case "ar" -> "Arabic"; // 阿拉伯语
+            case "id" -> "Indonesian"; // 印度尼西亚语
+            case "vi" -> "Vietnamese"; // 越南语
+            case "pt-BR" -> "Portuguese"; // 巴西葡萄牙语
+            case "it" -> "Italian"; // 意大利语
+            case "nl" -> "Dutch"; // 荷兰语
+            case "ru" -> "Russian"; // 俄语
+            case "km" -> "Khmer"; // 高棉语
+            case "cs" -> "Czech"; // 捷克语
+            case "pl" -> "Polish"; // 波兰语
+            case "fa" -> "Persian"; // 波斯语
+            case "he" -> "Hebrew"; // 希伯来语
+            case "tr" -> "Turkish"; // 土er其语
+            case "hi" -> "Hindi"; // 印地语
+            case "bn" -> "Bengali"; // 孟加拉语
+            case "ur" -> "Urdu"; // 乌尔都语
+            default -> code;
+        };
+    }
 }

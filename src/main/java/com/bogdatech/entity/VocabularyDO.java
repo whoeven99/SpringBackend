@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @TableName("Vocabulary")
 public class VocabularyDO {
-//    @TableId(value = "vid", type = IdType.NONE)
+    @TableId(value = "vid", type = IdType.AUTO)
     private Long vid;
     private String en;
     private String es;
@@ -37,7 +37,6 @@ public class VocabularyDO {
     private String fi;
     private String hr;
     private String hu;
-    @TableId(value = "id", type = IdType.NONE)
     @TableField(value = "id",insertStrategy = FieldStrategy.IGNORED)
     private String id;
     @TableField(value = "lt",insertStrategy = FieldStrategy.IGNORED)

@@ -45,8 +45,7 @@ public class TranslateConstants {
     public static final String TRANSLATING_STOPPED = "Your translation task has stopped due to uninstallation";
     public static final String TRANSLATION_EXCEPTION = "Translation exception";
 
-    public static final String QWEN_PLUS = "qwen-plus";
-    public static final String QWEN_TURBO = "qwen-turbo";
+    public static final String QWEN_MT = "qwen-mt-turbo";
 
     public static final String CONTENTS = "contents";
     public static final String TOTAL_TOKEN = "totalToken";

@@ -17,7 +17,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public Integer readStatus(TranslateRequest request) {
-        return baseMapper.getStatusInTranslates(request.getShopName(), request.getTarget());
+        return baseMapper.getStatusInTranslates(request.getShopName(), request.getTarget(), request.getSource());
     }
 
     @Override
