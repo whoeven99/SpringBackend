@@ -1,5 +1,6 @@
 package com.bogdatech.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
+import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
@@ -91,15 +93,12 @@ public class TranslateController {
      * 根据传入的数组获取对应的数据
      */
     @PostMapping("/readTranslateDOByArray")
-    public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO[] translatesDOS) {
-        if (translatesDOS != null && translatesDOS.length > 0) {
-            TranslatesDO[] translatesDOResult = new TranslatesDO[translatesDOS.length];
-            int i = 0;
-            for (TranslatesDO translatesDO : translatesDOS
-            ) {
-                translatesDOResult[i] = translatesService.readTranslateDOByArray(translatesDO);
-                i++;
-            }
+    public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO translatesDO) {
+        if (translatesDO != null) {
+            List<TranslatesDO> translatesDOResult = translatesService.list(
+                    new QueryWrapper<TranslatesDO>().eq(SHOP_NAME, translatesDO.getShopName())
+                            .eq("source", translatesDO.getSource())
+                            .eq("status", 2));
             return new BaseResponse<>().CreateSuccessResponse(translatesDOResult);
         } else {
             return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
@@ -223,7 +222,7 @@ public class TranslateController {
     public void insertTargets(@RequestBody TargetListRequest request) {
         List<String> targetList = request.getTargetList();
         TranslateRequest translateRequest = TargetListRequestToTranslateRequest(request);
-        if (!targetList.isEmpty()){
+        if (!targetList.isEmpty()) {
             translateRequest.setTarget(targetList.get(0));
             userTypeTokensService.getUserInitToken(translateRequest);
             for (String target : targetList
@@ -236,7 +235,7 @@ public class TranslateController {
                 //初始化用户对应token表
                 userTypeTokenService.insertTypeInfo(request1, idByShopNameAndTarget);
             }
-        }else {
+        } else {
             translateRequest.setTarget("zh-CN");
             userTypeTokensService.getUserInitToken(translateRequest);
             for (String target : targetList

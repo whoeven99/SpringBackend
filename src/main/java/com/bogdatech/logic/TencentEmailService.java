@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
+import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 
 @Component
 public class TencentEmailService {
@@ -27,7 +28,7 @@ public class TencentEmailService {
     //发生主题未翻译的邮件
     public Boolean sendEmailByOnline(String shopName, String source, String target) {
         Map<String, String> templateData = new HashMap<>();
-        templateData.put("shop_name", shopName);
+        templateData.put(SHOP_NAME, shopName);
         templateData.put("source_language", source);
         templateData.put("target_language", target);
         return emailIntegration.sendEmailByTencent(

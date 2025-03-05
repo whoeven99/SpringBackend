@@ -37,9 +37,9 @@ public class VocabularyService {
         vocabularyService.testInsert(target, value, source);
     }
 
+    //测试单条插入文本
     public Integer testInsertOne(String target, String targetValue, String source, String sourceValue) {
         return vocabularyService.testInsertOne(target, targetValue, source, sourceValue);
     }
-
 
 }

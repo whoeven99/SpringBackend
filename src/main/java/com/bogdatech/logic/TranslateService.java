@@ -934,6 +934,8 @@ public class TranslateService {
         }
         addData(request.getTarget(), value, targetString);
         saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
+        //存到数据库中
+
     }
 
     //创建存储翻译项的Map
@@ -1336,7 +1338,8 @@ public class TranslateService {
             innerMap.forEach((innerKey, value) -> list.add(new TranslateTextDO(null,null, null, null, null, null, innerKey, value, null, outerKey)));
         });
         if (!list.isEmpty()) {
-            translateTextService.getExistTranslateTextList(list);
+//            translateTextService.getExistTranslateTextList(list);
+            vocabularyService.storeTranslationsInVocabulary(list);
         }
     }
 
@@ -1466,7 +1469,7 @@ public class TranslateService {
                 || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
                 || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) ){
             UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
-            updateWrapper.eq("shop_name", shopifyRequest.getShopName());
+            updateWrapper.eq(SHOP_NAME, shopifyRequest.getShopName());
 
             // 根据传入的列名动态设置更新的字段
             updateWrapper.set(key, tokens);

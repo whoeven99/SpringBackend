@@ -10,6 +10,7 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
@@ -46,7 +47,7 @@ public class UserTypeTokenService {
      *
      */
     public void getUserInitToken(TranslateRequest request) {
-        UserTypeTokenDO userTypeTokenDO = userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq("shop_name", request.getShopName()));
+        UserTypeTokenDO userTypeTokenDO = userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(SHOP_NAME, request.getShopName()));
         if (userTypeTokenDO == null){
 
             ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
@@ -72,6 +73,6 @@ public class UserTypeTokenService {
      * @return UserTypeTokenDO  UserTypeTokenDO数据类型
      */
     public UserTypeTokenDO getUserInitTokenByShopName(String shopName) {
-        return userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq("shop_name", shopName));
+        return userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(SHOP_NAME, shopName));
     }
 }

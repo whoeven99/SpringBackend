@@ -49,4 +49,5 @@ public class TranslateConstants {
 
     public static final String CONTENTS = "contents";
     public static final String TOTAL_TOKEN = "totalToken";
+    public static final String SHOP_NAME = "shop_name";
 }
