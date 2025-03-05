@@ -65,13 +65,18 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(PRODUCT_OPTION, "250", "", ""),
             new TranslateResourceDTO(PRODUCT_OPTION_VALUE, "250", "", "")
             ,
-            new TranslateResourceDTO(COLLECTION, "250", "", ""),
+            new TranslateResourceDTO(COLLECTION, "250", "", "")
+            ,
             new TranslateResourceDTO(ONLINE_STORE_THEME, "250", "", "")
             ,
-            new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, "250", "", ""),
-            new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, "250", "", ""),
-            new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, "250", "", ""),
-            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, "250", "", ""),
+            new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, "250", "", "")
+            ,
+            new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, "250", "", "")
+            ,
+            new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, "250", "", "")
+            ,
+            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, "250", "", "")
+            ,
             new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, "250", "", "")
             ,
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, "250", "", ""),

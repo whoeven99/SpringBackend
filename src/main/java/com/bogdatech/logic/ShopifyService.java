@@ -283,16 +283,18 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             // 跳过 value 为空的项
 
-            String value = contentItemNode.path("value").asText(null);
+            String value = null;
+            try {
+                value = contentItemNode.path("value").asText(null);
 
-            if (value == null || value.isEmpty()) {
-                continue;  // 跳过当前项
+                if (value == null) {
+                    continue;  // 跳过当前项
+                }
+            } catch (Exception e) {
+                continue;
             }
 
             String key = contentItemNode.path("key").asText(null);
-//            if (translatedContent.contains(key)) {
-//                continue;
-//            }
 
             String type = contentItemNode.path("type").asText(null);
             String locale = contentItemNode.path("locale").asText(null);
@@ -309,18 +311,18 @@ public class ShopifyService {
 //                    System.out.println("value: " + value);
             //对从数据库中获取的数据单独处理
 //                    if (isDatabaseResourceType(resourceType)) {
-            if (value.contains("Hawksling") || value.contains("HawkSling")) {
-                //从读csv的数据的List中获取对应的数据
+//            if (value.contains("Hawksling") || value.contains("HawkSling")) {
+            //从读csv的数据的List中获取对应的数据
 //                if (csvMap.containsKey(value) && !translatedContent.contains(key)) {
-                if (csvMap.containsKey(value)) {
-                    //翻译对应的数据
-                    Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
-                    String targetText = csvMap.get(value);
-                    System.out.println("value: " + value + " targetText: " + targetText);
-                    saveToShopify(value, translation, resourceId, request);
-                }
-
+            if (csvMap.containsKey(value)) {
+                //翻译对应的数据
+                Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
+                String targetText = csvMap.get(value);
+                System.out.println("value: " + value + " targetText: " + targetText);
+                saveToShopify(value, translation, resourceId, request);
             }
+
+//            }
         }
     }
 
@@ -393,13 +395,19 @@ public class ShopifyService {
 
             //对从数据库中获取的数据单独处理
 //            if (isDatabaseResourceType(resourceType) && translatedContent.contains(key)) {
-            if (value.contains("Hawksling") || value.contains("HawkSling")) {
+            if (isDatabaseResourceType(resourceType) ) {
+//                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale);
+
+
+//            if (value.contains("Hawksling") || value.contains("HawkSling")) {
                 //先将type存在target里面
                 CsvRequest csvRequest = new CsvRequest();
                 csvRequest.setSource_text(value);
                 csvRequest.setSource_code(locale);
                 csvRequest.setTarget_code(request.getTarget());
-//                csvRequest.setTarget_text(translateResourceMap.get(key));
+                csvRequest.setTarget_text(translateResourceMap.get(key));
+                csvRequest.setKey(key);
+                System.out.println("csvRequest: " + csvRequest);
                 csvRequestList.add(csvRequest);
             }
         }
