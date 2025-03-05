@@ -311,6 +311,13 @@ public class JsoupUtils {
         String source = request.getSource();
         //如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
         if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
+            //TODO：目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.2s. 后面请求解决限制后，删掉这段代码。
+            try {
+                Thread.sleep(200);
+            }catch (Exception e){
+                appInsights.trackTrace("sleep错误： " + e.getMessage());
+            }
+
             if (hasPlaceholders(request.getContent())){
                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()));
             }

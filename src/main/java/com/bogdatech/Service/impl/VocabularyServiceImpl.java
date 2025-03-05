@@ -2,12 +2,10 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.Service.IVocabularyService;
 import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.entity.VocabularyDO;
 import com.bogdatech.mapper.VocabularyMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
@@ -18,8 +16,6 @@ import java.util.Map;
 @Service
 public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, VocabularyDO> implements IVocabularyService {
 
-    @Autowired
-    private ITranslateTextService translateTextService;
     // 语言代码到字段名的映射
     private static final Map<String, String> LANGUAGE_CODE_TO_FIELD = new HashMap<>();
 
@@ -62,7 +58,6 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         LANGUAGE_CODE_TO_FIELD.put("lv", "lv");
         LANGUAGE_CODE_TO_FIELD.put("et", "et");
     }
-
 
     // 用于存储翻译到 VocabularyDO 表
     @Override
@@ -135,7 +130,6 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
                 }
             } catch (Exception e) {
                 System.err.println("处理翻译文本时发生错误: " + e.getMessage());
-                e.printStackTrace();
             }
         }
     }
@@ -176,8 +170,8 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
     @Override
     public Integer testInsertOne(String target, String targetValue, String source, String sourceValue) {
         VocabularyDO vocabularyDO = new VocabularyDO();
-        vocabularyDO.setPtBR(sourceValue);  // 假设 PtBR 作为 sourceCode
-        vocabularyDO.setZhCN(targetValue);  // 假设 zhCN 作为 targetCode
+        setTargetLanguageText(vocabularyDO, source, sourceValue);
+        setTargetLanguageText(vocabularyDO, target, targetValue);
         return baseMapper.insert(vocabularyDO);
     }
 
@@ -283,6 +277,124 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
             case "et" -> vocabulary.getEt();
             default -> null;
         };
+    }
+
+    private static void setTargetLanguageText(VocabularyDO vocabulary, String targetCode, String targetValue) {
+        switch (targetCode) {
+            case "en":
+                vocabulary.setEn(targetValue);
+                break;
+            case "es":
+                vocabulary.setEs(targetValue);
+                break;
+            case "fr":
+                vocabulary.setFr(targetValue);
+                break;
+            case "de":
+                vocabulary.setDe(targetValue);
+                break;
+            case "pt-BR":
+                vocabulary.setPtBR(targetValue);
+                break;
+            case "pt-PT":
+                vocabulary.setPtPT(targetValue);
+                break;
+            case "zh-CN":
+                vocabulary.setZhCN(targetValue);
+                break;
+            case "zh-TW":
+                vocabulary.setZhTW(targetValue);
+                break;
+            case "ja":
+                vocabulary.setJa(targetValue);
+                break;
+            case "it":
+                vocabulary.setIt(targetValue);
+                break;
+            case "ru":
+                vocabulary.setRu(targetValue);
+                break;
+            case "ko":
+                vocabulary.setKo(targetValue);
+                break;
+            case "nl":
+                vocabulary.setNl(targetValue);
+                break;
+            case "da":
+                vocabulary.setDa(targetValue);
+                break;
+            case "hi":
+                vocabulary.setHi(targetValue);
+                break;
+            case "bg":
+                vocabulary.setBg(targetValue);
+                break;
+            case "cs":
+                vocabulary.setCs(targetValue);
+                break;
+            case "el":
+                vocabulary.setEl(targetValue);
+                break;
+            case "fi":
+                vocabulary.setFi(targetValue);
+                break;
+            case "hr":
+                vocabulary.setHr(targetValue);
+                break;
+            case "hu":
+                vocabulary.setHu(targetValue);
+                break;
+            case "id":
+                vocabulary.setId(targetValue);
+                break;
+            case "lt":
+                vocabulary.setLt(targetValue);
+                break;
+            case "nb":
+                vocabulary.setNb(targetValue);
+                break;
+            case "pl":
+                vocabulary.setPl(targetValue);
+                break;
+            case "ro":
+                vocabulary.setRo(targetValue);
+                break;
+            case "sk":
+                vocabulary.setSk(targetValue);
+                break;
+            case "sl":
+                vocabulary.setSl(targetValue);
+                break;
+            case "sv":
+                vocabulary.setSv(targetValue);
+                break;
+            case "th":
+                vocabulary.setTh(targetValue);
+                break;
+            case "tr":
+                vocabulary.setTr(targetValue);
+                break;
+            case "vi":
+                vocabulary.setVi(targetValue);
+                break;
+            case "ar":
+                vocabulary.setAr(targetValue);
+                break;
+            case "no":
+                vocabulary.setNo(targetValue);
+                break;
+            case "uk":
+                vocabulary.setUk(targetValue);
+                break;
+            case "lv":
+                vocabulary.setLv(targetValue);
+                break;
+            case "et":
+                vocabulary.setEt(targetValue);
+                break;
+            default:
+                System.out.println("Unexpected value: " + targetCode);
+        }
     }
 }
 
