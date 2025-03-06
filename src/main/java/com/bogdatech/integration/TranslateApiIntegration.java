@@ -47,15 +47,6 @@ public class TranslateApiIntegration {
     @Value("${microsoft.translation.endpoint}")
     private String microsoftEndpoint;
 
-    public String translateText(String text) {
-        try {
-//            var ans = baseHttpIntegration.sendHttpGet("/google/translate");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
     //百度翻译API
     public String baiDuTranslate(TranslateRequest request) {
         //创建URL

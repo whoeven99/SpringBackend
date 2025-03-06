@@ -719,8 +719,6 @@ public class TranslateService {
         String target = request.getTarget();
         Map<String, Object> translation = new HashMap<>();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
-                return;
             //判断是否停止翻译
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
