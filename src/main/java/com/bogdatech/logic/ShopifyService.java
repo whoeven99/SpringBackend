@@ -143,6 +143,7 @@ public class ShopifyService {
             writeCsv(csvRequestList, "src/main/java/com/bogdatech/requestBody/translation.csv");
             System.out.println("写入完成");
         }
+        System.out.println("结束流程！！！");
         return counter.getTotalChars();
     }
 
@@ -307,6 +308,7 @@ public class ShopifyService {
 //                System.out.println("FileReference: " + value);
                 continue;
             }
+
 
 //                    System.out.println("value: " + value);
             //对从数据库中获取的数据单独处理

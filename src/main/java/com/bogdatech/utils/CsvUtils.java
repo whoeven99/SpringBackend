@@ -79,19 +79,21 @@ public class CsvUtils {
         try {
             try (FileWriter writer = new FileWriter(filePath);
                  // 创建 CSVPrinter 对象
-                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("source_code", "source_text", "target_code", "target_text"))) {
+                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("code", "text"))) {
 
                 // 遍历 List 并写入每一行
                 for (CsvRequest csvRequest : csvRequestList) {
                     csvPrinter.printRecord(
                             csvRequest.getSource_code(),
-                            csvRequest.getSource_text(),
+                            csvRequest.getSource_text()
+                            ,
                             csvRequest.getTarget_code(),
                             csvRequest.getTarget_text()
                     );
                 }
                 // 刷新和关闭打印流
                 csvPrinter.flush();
+                System.out.println("csv 存储成功");
             }
         } catch (IOException e) {
             System.out.println("错误原因： " + e.getMessage());
