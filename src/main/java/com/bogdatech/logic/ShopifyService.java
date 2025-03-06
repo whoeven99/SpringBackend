@@ -318,12 +318,18 @@ public class ShopifyService {
 //                if (csvMap.containsKey(value) && !translatedContent.contains(key)) {
             if (csvMap.containsKey(value)) {
                 //翻译对应的数据
-                Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
                 String targetText = csvMap.get(value);
+                Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, targetText, translatableContentDigest, resourceId, target));
+
                 System.out.println("value: " + value + " targetText: " + targetText);
+                saveToShopify(targetText, translation, resourceId, request);
+                continue;
+            }
+            if (isHtml(value)){
+                Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
+                System.out.println("value: " + value);
                 saveToShopify(value, translation, resourceId, request);
             }
-
 //            }
         }
     }
@@ -405,6 +411,7 @@ public class ShopifyService {
 //            if (value.contains("://")) {
 //                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale);
 //            if (value.contains("Hawksling") || value.contains("HawkSling")) {
+//            if (!isHtml(value)){
                 //先将type存在target里面
                 CsvRequest csvRequest = new CsvRequest();
                 csvRequest.setSource_text(value);
