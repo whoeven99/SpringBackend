@@ -373,9 +373,14 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             // 跳过 value 为空的项
 
-            String value = contentItemNode.path("value").asText(null);
-            if (value == null || value.isEmpty()) {
-                continue;  // 跳过当前项
+            String value = null;
+            try {
+                value = contentItemNode.path("value").asText(null);
+                if (value == null ) {
+                    continue;  // 跳过当前项
+                }
+            } catch (Exception e) {
+                continue;
             }
 
             String key = contentItemNode.path("key").asText(null);
@@ -395,10 +400,8 @@ public class ShopifyService {
 
             //对从数据库中获取的数据单独处理
 //            if (isDatabaseResourceType(resourceType) && translatedContent.contains(key)) {
-            if (isDatabaseResourceType(resourceType) ) {
+//            if (value.contains("://")) {
 //                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale);
-
-
 //            if (value.contains("Hawksling") || value.contains("HawkSling")) {
                 //先将type存在target里面
                 CsvRequest csvRequest = new CsvRequest();
@@ -407,9 +410,9 @@ public class ShopifyService {
                 csvRequest.setTarget_code(request.getTarget());
                 csvRequest.setTarget_text(translateResourceMap.get(key));
                 csvRequest.setKey(key);
-                System.out.println("csvRequest: " + csvRequest);
+//                System.out.println("csvRequest: " + csvRequest);
                 csvRequestList.add(csvRequest);
-            }
+//            }
         }
 
     }
@@ -990,5 +993,9 @@ public class ShopifyService {
         return i1;
     }
 
+    public static boolean isHtml(String content) {
+        Document doc = Jsoup.parse(content);
+        return !doc.body().text().equals(content);
+    }
 }
 
