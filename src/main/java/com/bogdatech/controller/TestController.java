@@ -14,7 +14,6 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
-import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -131,100 +130,11 @@ public class TestController {
 
     @GetMapping("/testIsHTML")
     public void testIsHTML() {
-        LiquidHtmlTranslatorUtils translator = new LiquidHtmlTranslatorUtils();
         String html = """
-                <div class="avada-sitemap-row">
-                                                             <h3>Pages</h3>
-                                                             <ul>
-                                                             <li><a href="https://innerbloomca.com/pages/rapid-search-results">Search Results</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/innerbloom-relief-efforts">Innerbloom Relief Efforts</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/ib-rewards">IB Rewards</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/copy-of-terms-of-service">Copy of Terms Of Service</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/coa">Certificate of Analysis</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/ccpa-opt-out">Do Not Sell Or Share My Personal Information</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/wholesale-application">Wholesale Application</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/shipping-policy">Shipping Policy</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/frequently-asked-questions">Frequently Asked Questions</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/privacy-policy">Privacy Policy</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/return-policy">Return Policy</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/terms-of-service">Terms Of Service</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/about-us">About Us</a></li>
-                                                             <li><a href="https://innerbloomca.com/pages/contact">Contact</a></li>
-                                                             </ul>
-                                                             </div><style>
-                                                             .avada-sitemap-row {
-                                                               margin-bottom: 2rem;
-                                                             }
-                                                             
-                                                             .avada-sitemap-row a {
-                                                               color: inherit;
-                                                             }
-                                                             
-                                                             .avada-sitemap-row > h3 {
-                                                               margin-bottom: 10px;
-                                                             }
-                                                             
-                                                             .avada-sitemap-row > ul {
-                                                               margin-left: 0;
-                                                               margin-bottom: 5px;
-                                                               columns: 3;
-                                                               -webkit-columns: 3;
-                                                               -moz-columns: 3;
-                                                             }
-                                                             
-                                                             .avada-sitemap-row > ul > li {
-                                                               margin: 0;
-                                                               line-height: 2.4;
-                                                               max-width: 250px;
-                                                               white-space: nowrap;
-                                                               overflow: hidden;
-                                                               text-overflow: ellipsis;
-                                                               list-style: inside;
-                                                               font-size: 1rem;
-                                                               color: #7c7c7c;
-                                                             }
-                                                             
-                                                             .avada-sitemap-powered-by {
-                                                               margin-top: 3rem;
-                                                               font-family: Arial,sans-serif;
-                                                               text-align: right;
-                                                               color: #7c7c7c !important;
-                                                               font-size: 11px !important;
-                                                             }
-                                                             
-                                                             .avada-sitemap-row + .avada-sitemap-powered-by > a {
-                                                               text-decoration: none;
-                                                               border-bottom: unset;
-                                                               color: #7c7c7c;
-                                                             }
-                                                             
-                                                             .rte .avada-sitemap-row > ul > li > a, .rte .avada-sitemap-row > li > a {
-                                                               border-bottom: unset;
-                                                             }
-                                                             
-                                                             @media only screen and (max-width: 600px) {
-                                                               .avada-sitemap-row > ul {
-                                                                 columns: 2;
-                                                                 -webkit-columns: 2;
-                                                                 -moz-columns: 2;
-                                                               }
-                                                             
-                                                               .avada-sitemap-row > ul > li {
-                                                                 font-size: 16px;
-                                                               }
-                                                             }
-                                                             
-                                                             @media only screen and (max-width: 360px) {
-                                                                 .avada-sitemap-row > ul {
-                                                                   columns: 1;
-                                                                   -webkit-columns: 1;
-                                                                   -moz-columns: 1;
-                                                                 }
-                                                             }
-                                                             </style>
+                Use fewer filters or <a class="{{ class }}" href="{{ link }}">clear all</a>
                 """;
 
-        String result = translateNewHtml(html, new TranslateRequest(), new CharacterCountUtils(), "product");
+        String result = translateNewHtml(html, new TranslateRequest(0,"fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
         System.out.println("翻译的结果： " + result);
     }
 
