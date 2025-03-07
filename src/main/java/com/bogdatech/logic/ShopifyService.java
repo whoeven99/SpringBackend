@@ -132,13 +132,13 @@ public class ShopifyService {
 //            System.out.println("csvMap: " + csvMap.toString());
         }
 //        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-            TranslateResourceDTO translateResource = ALL_RESOURCES.get(i);
-            translateResource.setTarget(request.getTarget());
-            String query = shopifyRequestBody.getFirstQuery(translateResource);
-            cloudServiceRequest.setBody(query);
-            String infoByShopify = getShopifyData(cloudServiceRequest);
-            countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method, csvRequestList, csvMap);
-            System.out.println("目前统计total的总数是： " + counter.getTotalChars());
+        TranslateResourceDTO translateResource = ALL_RESOURCES.get(i);
+        translateResource.setTarget(request.getTarget());
+        String query = shopifyRequestBody.getFirstQuery(translateResource);
+        cloudServiceRequest.setBody(query);
+        String infoByShopify = getShopifyData(cloudServiceRequest);
+        countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method, csvRequestList, csvMap);
+        System.out.println("目前统计total的总数是： " + counter.getTotalChars());
 //        }
         if (method.equals("csv")) {
             writeCsv(csvRequestList, "src/main/java/com/bogdatech/requestBody/translation.csv");
@@ -215,7 +215,7 @@ public class ShopifyService {
                     // 根据字段名称进行处理
                     switch (fieldName) {
                         case "resourceId":
-                            if (fieldValue == null){
+                            if (fieldValue == null) {
                                 break;
                             }
                             resourceId = fieldValue.asText(null);
@@ -276,11 +276,11 @@ public class ShopifyService {
 //                estimatedTranslationWords(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO);
                 break;
             case "csv":
-                getDataAndStoreScv(contentNode, translatedContent, translateResourceDTO, csvRequestList, request, translateResourceMap,resourceId);
+                getDataAndStoreScv(contentNode, translatedContent, translateResourceDTO, csvRequestList, request, translateResourceMap, resourceId);
                 break;
             case "translate":
 //                System.out.println("进入translate");
-//                readCsvAndTranslate(contentNode, translatedContent, translateResourceDTO, csvRequestList, request, csvMap, resourceId);
+                readCsvAndTranslate(contentNode, translatedContent, translateResourceDTO, csvRequestList, request, csvMap, resourceId);
                 break;
 
         }
@@ -291,7 +291,7 @@ public class ShopifyService {
 //            }
     }
 
-    private void readCsvAndTranslate(ArrayNode contentNode, List<String> translatedContent, TranslateResourceDTO translateResourceDTO,
+    private void readCsvAndTranslate(ArrayNode contentNode, Map<String, TranslateTextDO> translatedContent, TranslateResourceDTO translateResourceDTO,
                                      List<CsvRequest> csvRequestList, ShopifyRequest request, Map<String, String> csvMap, String resourceId) {
         String resourceType = translateResourceDTO.getResourceType();
         for (JsonNode contentItem : contentNode) {
@@ -316,7 +316,8 @@ public class ShopifyService {
             String translatableContentDigest = contentItemNode.path("digest").asText(null);
             String target = request.getTarget();
             //如果包含相对路径则跳过
-            if (type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+            if ("JSON".equals(type) || "JSON_STRING".equals(type) || "handle".equals(key)
+                    || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD) || resourceType.equals(SHOP_POLICY)) {
 //                System.out.println("FileReference: " + value);
@@ -330,12 +331,11 @@ public class ShopifyService {
 //            if (value.contains("Hawksling") || value.contains("HawkSling")) {
             //从读csv的数据的List中获取对应的数据
 //                if (csvMap.containsKey(value) && !translatedContent.contains(key)) {
-            if (isHtml(value)) {
+            if (csvMap.containsKey(value)) {
                 //翻译对应的数据
 //                String targetText = csvMap.get(value);
                 Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
-
-                System.out.println("value: " + value  + " key: " + key + " type: " + type + " locale: " + locale + " translatableContentDigest: " + translatableContentDigest + " resourceId: " + resourceId);
+                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale + " translatableContentDigest: " + translatableContentDigest + " resourceId: " + resourceId);
                 saveToShopify(value, translation, resourceId, request);
             }
 //            if (isHtml(value)){
