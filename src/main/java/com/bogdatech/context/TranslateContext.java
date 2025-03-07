@@ -19,5 +19,6 @@ public class TranslateContext {
     private CharacterCountUtils characterCountUtils;
     private Integer remainingChars;
     private Map<String, Object> glossaryMap;
+    private String source;
     private AILanguagePacksDO aiLanguagePacksDO;
 }

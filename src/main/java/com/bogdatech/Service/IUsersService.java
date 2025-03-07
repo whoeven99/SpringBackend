@@ -19,4 +19,6 @@ public interface IUsersService extends IService<UsersDO> {
     void deleteCurrenciesData(String shopName);
 
     void deleteTranslatesData(String shopName);
+
+    void updateUserTokenByShopName(String shopName, String accessToken);
 }

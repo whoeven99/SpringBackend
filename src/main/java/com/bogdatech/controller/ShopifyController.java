@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserSubscriptionsService;
+import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -14,10 +15,13 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
+import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 
@@ -85,7 +89,6 @@ public class ShopifyController {
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
                 appInsights.trackTrace("Error while getConsumedWords for shop " + e.getMessage());
-//                logger.error("Error while querying translation counter for shop " + shopName, e);
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -103,8 +106,8 @@ public class ShopifyController {
 
     //获取用户的状态
     @GetMapping("/getUserStatus")
-    public BaseResponse<Object> getUserStatus(String shopName) {
-        List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(shopName);
+    public BaseResponse<Object> getUserStatus(String shopName, String source) {
+        List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(shopName, source);
         return new BaseResponse<>().CreateSuccessResponse(translatesDos);
     }
 
@@ -123,7 +126,7 @@ public class ShopifyController {
     //获取用户的额度字符数 和 已使用的字符
     @GetMapping("/getUserLimitChars")
     public BaseResponse<Object> getUserLimitChars(String shopName) {
-        TranslationCounterDO translationCounterRequests = null;
+        TranslationCounterDO translationCounterRequests;
         int retryCount = 3; // 最大重试次数
         int retryDelay = 1000; // 重试间隔时间，单位毫秒
         Map<String, Object> map = new HashMap<>();
@@ -139,7 +142,6 @@ public class ShopifyController {
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
                 appInsights.trackTrace("Error while getUserLimitChars for shop " + e.getMessage());
-//                logger.error("Error while querying translation counter for shop " + shopName, e);
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -182,7 +184,8 @@ public class ShopifyController {
     //计算被翻译项的总数和已翻译的个数
     @PostMapping("/getTranslationItemsInfo")
     public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
-        Map<String, Map<String, Object>> translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
+        Map<String, Map<String, Object>> translationItemsInfo = null;
+        translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
         if (translationItemsInfo == null) {
             return new BaseResponse<>().CreateErrorResponse("Get items failed");
         } else {
@@ -212,4 +215,32 @@ public class ShopifyController {
     public String updateItem(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
         return shopifyService.updateShopifySingleData(registerTransactionRequest);
     }
+
+    //修改多条文本
+    @PostMapping("/updateItems")
+    public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
+        String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
+        if (s.contains("value")) {
+            return new BaseResponse<>().CreateSuccessResponse(200);
+        } else {
+            return new BaseResponse<>().CreateErrorResponse(s);
+        }
+    }
+
+    @PostMapping("/getTranslationItemsInfoTest")
+    public void getTranslationItemsInfoTest(@RequestBody ResourceTypeRequest request) {
+        System.out.println("first: " + LocalDateTime.now());
+        for (String key : RESOURCE_MAP.keySet()
+        ) {
+            System.out.println("key: " + key);
+            ResourceTypeRequest resourceTypeRequest = new ResourceTypeRequest();
+            resourceTypeRequest.setResourceType(key);
+            resourceTypeRequest.setTarget(request.getTarget());
+            resourceTypeRequest.setAccessToken(request.getAccessToken());
+            resourceTypeRequest.setShopName(request.getShopName());
+            shopifyService.getTranslationItemsInfoTest(resourceTypeRequest);
+        }
+    }
+
+
 }

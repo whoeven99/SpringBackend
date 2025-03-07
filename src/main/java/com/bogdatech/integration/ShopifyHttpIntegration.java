@@ -21,7 +21,7 @@ import static com.bogdatech.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
 
 @Component
 public class ShopifyHttpIntegration {
-    private TelemetryClient appInsights = new TelemetryClient();
+    private final TelemetryClient appInsights = new TelemetryClient();
 
     // 设置头部信息
     //查询数据
@@ -54,7 +54,6 @@ public class ShopifyHttpIntegration {
         } catch (IOException e) {
             throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
-
         return responseContent;
     }
 
@@ -64,6 +63,7 @@ public class ShopifyHttpIntegration {
         return jsonObject.getJSONObject("data");
     }
 
+    //一次存储shopify数据
     public String registerTransaction(ShopifyRequest request, Map<String, Object> variables) {
         ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
         JSONObject jsonObject = null;
@@ -73,8 +73,10 @@ public class ShopifyHttpIntegration {
         for (int i = 0; i < retryCount; i++) {
             try {
                 String responseString = sendShopifyPost(request, shopifyRequestBody.registerTransactionQuery(), variables);
+//                appInsights.trackTrace("registerTransaction response: " + responseString);
                 jsonObject = JSONObject.parseObject(responseString);
                 if (jsonObject != null && jsonObject.containsKey("data")) {
+//                    appInsights.trackTrace("registerTransaction success: " + jsonObject.getString("data"));
                     return jsonObject.getString("data");
                 }
             } catch (Exception e) {

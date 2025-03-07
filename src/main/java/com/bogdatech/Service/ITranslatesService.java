@@ -11,7 +11,7 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     public Integer insertShopTranslateInfo(TranslateRequest request, int status);
     public List<TranslatesDO> readTranslateInfo(Integer status);
     public int updateTranslateStatus(String shopName, int status, String target, String source, String accessToken);
-    public List<TranslatesDO> readInfoByShopName(String shopName);
+    public List<TranslatesDO> readInfoByShopName(String shopName, String source);
     public List<Integer> readStatusInTranslatesByShopName(TranslateRequest request);
 
     TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO);
@@ -22,4 +22,12 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     Boolean deleteFromTranslates(TranslateRequest request);
 
     List<TranslatesDO> getLanguageListCounter(String shopName);
+
+    void updateTranslatesResourceType(String shopName, String target, String source, String resourceType);
+
+    Integer getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
+
+    Integer getIdByShopNameAndTargetAndSource(String shopName, String target, String source);
+
+    TranslatesDO selectLatestOne(TranslateRequest request);
 }

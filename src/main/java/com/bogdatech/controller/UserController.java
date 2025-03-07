@@ -33,6 +33,8 @@ public class UserController {
         if (userService.getUser(userRequest) == null) {
             return userService.addUser(userRequest);
         }else {
+            //更新user表里面的token
+            userService.updateUserTokenByShopName(userRequest.getShopName(), userRequest.getAccessToken());
             return new BaseResponse<>().CreateErrorResponse("User already exists");
         }
 //        userService.addUserAsync(userRequest);
@@ -50,7 +52,6 @@ public class UserController {
     //用户卸载应用后48小时后清除数据
     @DeleteMapping("/cleanData")
     public BaseResponse<Object> cleanData(@RequestBody UsersDO userRequest) {
-//        userService.cleanData(userRequest);
         return new BaseResponse<>().CreateSuccessResponse(200);
     }
 

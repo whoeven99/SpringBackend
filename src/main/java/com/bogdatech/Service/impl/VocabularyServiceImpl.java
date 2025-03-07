@@ -2,12 +2,10 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.Service.IVocabularyService;
 import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.entity.VocabularyDO;
 import com.bogdatech.mapper.VocabularyMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
@@ -18,8 +16,6 @@ import java.util.Map;
 @Service
 public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, VocabularyDO> implements IVocabularyService {
 
-    @Autowired
-    private ITranslateTextService translateTextService;
     // 语言代码到字段名的映射
     private static final Map<String, String> LANGUAGE_CODE_TO_FIELD = new HashMap<>();
 
@@ -62,7 +58,6 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         LANGUAGE_CODE_TO_FIELD.put("lv", "lv");
         LANGUAGE_CODE_TO_FIELD.put("et", "et");
     }
-
 
     // 用于存储翻译到 VocabularyDO 表
     @Override
@@ -135,7 +130,6 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
                 }
             } catch (Exception e) {
                 System.err.println("处理翻译文本时发生错误: " + e.getMessage());
-                e.printStackTrace();
             }
         }
     }
@@ -146,14 +140,16 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         QueryWrapper<VocabularyDO> queryWrapper = new QueryWrapper<>();
 
         // 设置查询条件：sourceCode 和 sourceText
+        //修改source，当出现pt-BR，pt-PT，zh-CN，zh-TW这四个source时，修改source
+        if (source.equals("pt-BR") || source.equals("pt-PT") || source.equals("zh-CN") || source.equals("zh-TW")) {
+            source = source.replace("-", "_");
+        }
         queryWrapper.eq(source, value);
 
         // 获取目标语言的翻译
         List<VocabularyDO> results = baseMapper.selectList(queryWrapper);
-//        System.out.println("results: " + results.toString());
         if (results != null && !results.isEmpty()) {
             VocabularyDO vocabulary = results.get(0);  // 假设取第一个结果
-//            System.out.println("vocabulary: " + vocabulary.getJa());
             return getTargetLanguageText(vocabulary, target);
         }
 
@@ -169,6 +165,33 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         int updateResult = baseMapper.update(vocabularyDO, new QueryWrapper<VocabularyDO>()
                 .eq(LANGUAGE_CODE_TO_FIELD.get(source), value));
         System.out.println("updateResult: " + updateResult);
+    }
+
+    @Override
+    public Integer InsertOne(String target, String targetValue, String source, String sourceValue) {
+        String oldSource = source;
+        if (source.equals("pt-BR") || source.equals("pt-PT") || source.equals("zh-CN") || source.equals("zh-TW")) {
+            source = source.replace("-", "_");
+        }
+        System.out.println("source: " + source + " sourceValue: " + sourceValue + " target: " + target + " targetValue: " + targetValue);
+        //TODO: 等下测试一下
+        VocabularyDO existingVocabulary = baseMapper.selectOne(new QueryWrapper<VocabularyDO>()
+                .select("TOP 1 vid, en, es, fr, de, pt_BR, pt_PT, zh_CN, zh_TW, ja, it, ru, ko, nl, da, hi, bg, cs, el, fi, hr, hu, id, lt, nb, pl, ro, sk, sl, sv, th, tr, vi, ar, no, uk, lv, et")
+                .eq(source, sourceValue)
+        );
+        System.out.println("existingVocabulary: " + existingVocabulary);
+        if (existingVocabulary == null) {
+            VocabularyDO newVocabulary = new VocabularyDO();
+            setTargetLanguageText(newVocabulary, oldSource, sourceValue);
+            setTargetLanguageText(newVocabulary, target, targetValue);
+            System.out.println("newVocabulary: " + newVocabulary);
+            return baseMapper.insert(newVocabulary);
+        } else {
+            setTargetLanguageText(existingVocabulary, target, targetValue);
+            System.out.println("existingVocabulary: " + existingVocabulary);
+            return baseMapper.update(existingVocabulary, new QueryWrapper<VocabularyDO>()
+                    .eq(source, sourceValue));
+        }
     }
 
 
@@ -233,83 +256,163 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
     }
 
     private String getTargetLanguageText(VocabularyDO vocabulary, String targetCode) {
+        return switch (targetCode) {
+            case "en" -> vocabulary.getEn();
+            case "es" -> vocabulary.getEs();
+            case "fr" -> vocabulary.getFr();
+            case "de" -> vocabulary.getDe();
+            case "pt-BR" -> vocabulary.getPtBR();
+            case "pt-PT" -> vocabulary.getPtPT();
+            case "zh-CN" -> vocabulary.getZhCN();
+            case "zh-TW" -> vocabulary.getZhTW();
+            case "ja" -> vocabulary.getJa();
+            case "it" -> vocabulary.getIt();
+            case "ru" -> vocabulary.getRu();
+            case "ko" -> vocabulary.getKo();
+            case "nl" -> vocabulary.getNl();
+            case "da" -> vocabulary.getDa();
+            case "hi" -> vocabulary.getHi();
+            case "bg" -> vocabulary.getBg();
+            case "cs" -> vocabulary.getCs();
+            case "el" -> vocabulary.getEl();
+            case "fi" -> vocabulary.getFi();
+            case "hr" -> vocabulary.getHr();
+            case "hu" -> vocabulary.getHu();
+            case "id" -> vocabulary.getId();
+            case "lt" -> vocabulary.getLt();
+            case "nb" -> vocabulary.getNb();
+            case "pl" -> vocabulary.getPl();
+            case "ro" -> vocabulary.getRo();
+            case "sk" -> vocabulary.getSk();
+            case "sl" -> vocabulary.getSl();
+            case "sv" -> vocabulary.getSv();
+            case "th" -> vocabulary.getTh();
+            case "tr" -> vocabulary.getTr();
+            case "vi" -> vocabulary.getVi();
+            case "ar" -> vocabulary.getAr();
+            case "no" -> vocabulary.getNo();
+            case "uk" -> vocabulary.getUk();
+            case "lv" -> vocabulary.getLv();
+            case "et" -> vocabulary.getEt();
+            default -> null;
+        };
+    }
+
+    private static void setTargetLanguageText(VocabularyDO vocabulary, String targetCode, String targetValue) {
         switch (targetCode) {
             case "en":
-                return vocabulary.getEn();
+                vocabulary.setEn(targetValue);
+                break;
             case "es":
-                return vocabulary.getEs();
+                vocabulary.setEs(targetValue);
+                break;
             case "fr":
-                return vocabulary.getFr();
+                vocabulary.setFr(targetValue);
+                break;
             case "de":
-                return vocabulary.getDe();
-            case "pt_BR":
-                return vocabulary.getPtBR();
-            case "pt_PT":
-                return vocabulary.getPtPT();
-            case "zh_CN":
-                return vocabulary.getZhCN();
-            case "zh_TW":
-                return vocabulary.getZhTW();
+                vocabulary.setDe(targetValue);
+                break;
+            case "pt-BR":
+                vocabulary.setPtBR(targetValue);
+                break;
+            case "pt-PT":
+                vocabulary.setPtPT(targetValue);
+                break;
+            case "zh-CN":
+                vocabulary.setZhCN(targetValue);
+                break;
+            case "zh-TW":
+                vocabulary.setZhTW(targetValue);
+                break;
             case "ja":
-                return vocabulary.getJa();
+                vocabulary.setJa(targetValue);
+                break;
             case "it":
-                return vocabulary.getIt();
+                vocabulary.setIt(targetValue);
+                break;
             case "ru":
-                return vocabulary.getRu();
+                vocabulary.setRu(targetValue);
+                break;
             case "ko":
-                return vocabulary.getKo();
+                vocabulary.setKo(targetValue);
+                break;
             case "nl":
-                return vocabulary.getNl();
+                vocabulary.setNl(targetValue);
+                break;
             case "da":
-                return vocabulary.getDa();
+                vocabulary.setDa(targetValue);
+                break;
             case "hi":
-                return vocabulary.getHi();
+                vocabulary.setHi(targetValue);
+                break;
             case "bg":
-                return vocabulary.getBg();
+                vocabulary.setBg(targetValue);
+                break;
             case "cs":
-                return vocabulary.getCs();
+                vocabulary.setCs(targetValue);
+                break;
             case "el":
-                return vocabulary.getEl();
+                vocabulary.setEl(targetValue);
+                break;
             case "fi":
-                return vocabulary.getFi();
+                vocabulary.setFi(targetValue);
+                break;
             case "hr":
-                return vocabulary.getHr();
+                vocabulary.setHr(targetValue);
+                break;
             case "hu":
-                return vocabulary.getHu();
+                vocabulary.setHu(targetValue);
+                break;
             case "id":
-                return vocabulary.getId();
+                vocabulary.setId(targetValue);
+                break;
             case "lt":
-                return vocabulary.getLt();
+                vocabulary.setLt(targetValue);
+                break;
             case "nb":
-                return vocabulary.getNb();
+                vocabulary.setNb(targetValue);
+                break;
             case "pl":
-                return vocabulary.getPl();
+                vocabulary.setPl(targetValue);
+                break;
             case "ro":
-                return vocabulary.getRo();
+                vocabulary.setRo(targetValue);
+                break;
             case "sk":
-                return vocabulary.getSk();
+                vocabulary.setSk(targetValue);
+                break;
             case "sl":
-                return vocabulary.getSl();
+                vocabulary.setSl(targetValue);
+                break;
             case "sv":
-                return vocabulary.getSv();
+                vocabulary.setSv(targetValue);
+                break;
             case "th":
-                return vocabulary.getTh();
+                vocabulary.setTh(targetValue);
+                break;
             case "tr":
-                return vocabulary.getTr();
+                vocabulary.setTr(targetValue);
+                break;
             case "vi":
-                return vocabulary.getVi();
+                vocabulary.setVi(targetValue);
+                break;
             case "ar":
-                return vocabulary.getAr();
+                vocabulary.setAr(targetValue);
+                break;
             case "no":
-                return vocabulary.getNo();
+                vocabulary.setNo(targetValue);
+                break;
             case "uk":
-                return vocabulary.getUk();
+                vocabulary.setUk(targetValue);
+                break;
             case "lv":
-                return vocabulary.getLv();
+                vocabulary.setLv(targetValue);
+                break;
             case "et":
-                return vocabulary.getEt();
+                vocabulary.setEt(targetValue);
+                break;
             default:
-                return null;
+                System.out.println("Unexpected value: " + targetCode);
         }
     }
 }

@@ -14,6 +14,7 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
+import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,12 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
+import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
+import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
+import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
+import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
+import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
 import static com.bogdatech.utils.StringUtils.countWords;
 
 @RestController
@@ -43,10 +50,6 @@ public class TestController {
         this.jsoupUtils = jsoupUtils;
         this.rateHttpIntegration = rateHttpIntegration;
     }
-//	@GetMapping("/test")
-//	public List<JdbcTestModel> test() {
-//		return jdbcTestRepository.sqlTest();
-//	}
 
     @GetMapping("/ping")
     public String ping() {
@@ -109,5 +112,141 @@ public class TestController {
         System.out.println("rateMap: " + rateMap.toString());
     }
 
+
+    //测试token计数的差距
+    @PostMapping("/testToken")
+    public void testToken(@RequestBody String text) {
+        int i = googleCalculateToken(text);
+        System.out.println("token: " + i);
+    }
+
+    @PostMapping("/testMT")
+    public void testMT(String model, String translateText, String source, String target) {
+        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
+            System.out.println("mt翻译");
+        } else {
+            System.out.println("google翻译");
+        }
+    }
+
+    @GetMapping("/testIsHTML")
+    public void testIsHTML() {
+        LiquidHtmlTranslatorUtils translator = new LiquidHtmlTranslatorUtils();
+        String html = """
+                <div class="avada-sitemap-row">
+                                                             <h3>Pages</h3>
+                                                             <ul>
+                                                             <li><a href="https://innerbloomca.com/pages/rapid-search-results">Search Results</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/innerbloom-relief-efforts">Innerbloom Relief Efforts</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/ib-rewards">IB Rewards</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/copy-of-terms-of-service">Copy of Terms Of Service</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/coa">Certificate of Analysis</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/ccpa-opt-out">Do Not Sell Or Share My Personal Information</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/wholesale-application">Wholesale Application</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/shipping-policy">Shipping Policy</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/frequently-asked-questions">Frequently Asked Questions</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/privacy-policy">Privacy Policy</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/return-policy">Return Policy</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/terms-of-service">Terms Of Service</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/about-us">About Us</a></li>
+                                                             <li><a href="https://innerbloomca.com/pages/contact">Contact</a></li>
+                                                             </ul>
+                                                             </div><style>
+                                                             .avada-sitemap-row {
+                                                               margin-bottom: 2rem;
+                                                             }
+                                                             
+                                                             .avada-sitemap-row a {
+                                                               color: inherit;
+                                                             }
+                                                             
+                                                             .avada-sitemap-row > h3 {
+                                                               margin-bottom: 10px;
+                                                             }
+                                                             
+                                                             .avada-sitemap-row > ul {
+                                                               margin-left: 0;
+                                                               margin-bottom: 5px;
+                                                               columns: 3;
+                                                               -webkit-columns: 3;
+                                                               -moz-columns: 3;
+                                                             }
+                                                             
+                                                             .avada-sitemap-row > ul > li {
+                                                               margin: 0;
+                                                               line-height: 2.4;
+                                                               max-width: 250px;
+                                                               white-space: nowrap;
+                                                               overflow: hidden;
+                                                               text-overflow: ellipsis;
+                                                               list-style: inside;
+                                                               font-size: 1rem;
+                                                               color: #7c7c7c;
+                                                             }
+                                                             
+                                                             .avada-sitemap-powered-by {
+                                                               margin-top: 3rem;
+                                                               font-family: Arial,sans-serif;
+                                                               text-align: right;
+                                                               color: #7c7c7c !important;
+                                                               font-size: 11px !important;
+                                                             }
+                                                             
+                                                             .avada-sitemap-row + .avada-sitemap-powered-by > a {
+                                                               text-decoration: none;
+                                                               border-bottom: unset;
+                                                               color: #7c7c7c;
+                                                             }
+                                                             
+                                                             .rte .avada-sitemap-row > ul > li > a, .rte .avada-sitemap-row > li > a {
+                                                               border-bottom: unset;
+                                                             }
+                                                             
+                                                             @media only screen and (max-width: 600px) {
+                                                               .avada-sitemap-row > ul {
+                                                                 columns: 2;
+                                                                 -webkit-columns: 2;
+                                                                 -moz-columns: 2;
+                                                               }
+                                                             
+                                                               .avada-sitemap-row > ul > li {
+                                                                 font-size: 16px;
+                                                               }
+                                                             }
+                                                             
+                                                             @media only screen and (max-width: 360px) {
+                                                                 .avada-sitemap-row > ul {
+                                                                   columns: 1;
+                                                                   -webkit-columns: 1;
+                                                                   -moz-columns: 1;
+                                                                 }
+                                                             }
+                                                             </style>
+                """;
+
+        String result = translateNewHtml(html, new TranslateRequest(), new CharacterCountUtils(), "product");
+        System.out.println("翻译的结果： " + result);
+    }
+
+    @GetMapping("/testPlaceholder")
+    public void testPlaceholder() {
+        // 测试用例
+        String[] testCases = {
+                "这是一个 {{ product.value }} 测试",               // 包含 {{ product.value }}
+                "包含 %{product.value} 的文本",                    // 包含 %{product.value}
+                "嵌套 {{xx[x].xx}} 数据",                         // 包含 {{xx[x].xx}}
+                "特殊 {%product.value%} 格式",                    // 包含 {%product.value%}
+                "普通文本没有占位符",                             // 不包含任何占位符
+                "",                                             // 空字符串
+                null                                            // null
+        };
+
+        for (String test : testCases) {
+            boolean result = hasPlaceholders(test);
+            String s = processTextWithPlaceholders(test, new CharacterCountUtils(), qwenMtCode("zh-CN"), qwenMtCode("en"));
+            System.out.println("翻译后的文本： " + s);
+            System.out.println("文本: \" + test + \" -> 包含占位符: " + result);
+        }
+    }
 
 }

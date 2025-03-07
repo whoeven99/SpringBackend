@@ -80,4 +80,28 @@ public class TypeConversionUtils {
         return userSubscriptionsDO;
     }
 
+    public static ShopifyRequest RegisterTransactionRequestToShopifyRequest(RegisterTransactionRequest transaction){
+        ShopifyRequest shopifyRequest = new ShopifyRequest();
+        shopifyRequest.setShopName(transaction.getShopName());
+        shopifyRequest.setAccessToken(transaction.getAccessToken());
+        shopifyRequest.setTarget(transaction.getTarget());
+        return shopifyRequest;
+    }
+
+    public static TranslateRequest ClickTranslateRequestToTranslateRequest(ClickTranslateRequest request){
+        TranslateRequest translateRequest = new TranslateRequest();
+        translateRequest.setSource(request.getSource());
+        translateRequest.setTarget(request.getTarget());
+        translateRequest.setAccessToken(request.getAccessToken());
+        translateRequest.setShopName(request.getShopName());
+        return translateRequest;
+    }
+
+    public static TranslateRequest TargetListRequestToTranslateRequest(TargetListRequest targetListRequest){
+        TranslateRequest translateRequest = new TranslateRequest();
+        translateRequest.setAccessToken(targetListRequest.getAccessToken());
+        translateRequest.setShopName(targetListRequest.getShopName());
+        translateRequest.setSource(targetListRequest.getSource());
+        return translateRequest;
+    }
 }

@@ -11,7 +11,8 @@ public class UserIPSwitchServiceImpl extends ServiceImpl<UserIPSwitchMapper, Use
     @Override
     public int insertSwitch(UserIPSwitchDO userIPSwitchDO) {
         if (baseMapper.getShopName(userIPSwitchDO.getShopName()) != null) {
-            return 3;
+            //则更新数据
+            return baseMapper.updateSwitchId(userIPSwitchDO.getShopName(), userIPSwitchDO.getSwitchId());
         }
         return baseMapper.insertSwitch(userIPSwitchDO.getShopName(), userIPSwitchDO.getSwitchId());
     }

@@ -43,4 +43,11 @@ public class TranslateConstants {
     public static final String HAS_TRANSLATED = "The translation task is in progress. Please try translating again later.";
     public static final String CHARACTER_LIMIT = "Character Limit Reached";
     public static final String TRANSLATING_STOPPED = "Your translation task has stopped due to uninstallation";
+    public static final String TRANSLATION_EXCEPTION = "Translation exception";
+
+    public static final String QWEN_MT = "qwen-mt-turbo";
+
+    public static final String CONTENTS = "contents";
+    public static final String TOTAL_TOKEN = "totalToken";
+    public static final String SHOP_NAME = "shop_name";
 }

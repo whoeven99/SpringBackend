@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.TranslatesDO;
@@ -10,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
+
 @Service
 @Transactional
 public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, TranslatesDO> implements ITranslatesService {
@@ -17,7 +20,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public Integer readStatus(TranslateRequest request) {
-        return baseMapper.getStatusInTranslates(request.getShopName(), request.getTarget());
+        return baseMapper.getStatusInTranslates(request.getShopName(), request.getTarget(), request.getSource());
     }
 
     @Override
@@ -37,8 +40,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public List<TranslatesDO> readInfoByShopName(String shopName) {
-        return baseMapper.readInfoByShopName(shopName);
+    public List<TranslatesDO> readInfoByShopName(String shopName, String source) {
+        return baseMapper.readInfoByShopName(shopName, source);
     }
 
     @Override
@@ -69,6 +72,34 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public List<TranslatesDO> getLanguageListCounter(String shopName) {
         return baseMapper.getLanguageListCounter(shopName);
+    }
+
+    @Override
+    public void updateTranslatesResourceType(String shopName, String target, String source, String resourceType) {
+         baseMapper.updateTranslatesResourceType(shopName, target, source, resourceType);
+    }
+
+    @Override
+    public Integer getStatusByShopNameAndTargetAndSource(String shopName, String target, String source) {
+        return baseMapper.getStatusByShopNameAndTargetAndSource(shopName, target, source);
+    }
+
+    @Override
+    public Integer getIdByShopNameAndTargetAndSource(String shopName, String target, String source) {
+        return baseMapper.getIdByShopNameAndTarget(shopName, target, source);
+    }
+
+    @Override
+    public TranslatesDO selectLatestOne(TranslateRequest request) {
+        QueryWrapper<TranslatesDO> wrapper = new QueryWrapper<>();
+        wrapper.select(
+                "TOP 1 id, source, access_token, target, shop_name, status, resource_type"
+        );
+        wrapper.eq(SHOP_NAME, request.getShopName()); // shopName 是参数
+        wrapper.eq("source", request.getSource());       // source 是参数
+        wrapper.orderByDesc("update_at");
+
+        return baseMapper.selectOne(wrapper);
     }
 
 

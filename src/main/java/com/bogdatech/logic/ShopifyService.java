@@ -4,13 +4,12 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IItemsService;
-import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserSubscriptionsService;
+import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.ItemsDO;
 import com.bogdatech.entity.TranslateResourceDTO;
-import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -42,13 +41,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.CsvUtils.readCsvToCsvRequest;
 import static com.bogdatech.utils.CsvUtils.writeCsv;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.StringUtils.countWords;
 
 @Component
@@ -57,7 +58,7 @@ public class ShopifyService {
 
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final TestingEnvironmentIntegration testingEnvironmentIntegration;
-    private final ITranslateTextService translateTextService;
+    private final IUserTypeTokenService userTypeTokenService;
     private final IUserSubscriptionsService userSubscriptionsService;
     private final IItemsService itemsService;
     private final ITranslatesService translatesService;
@@ -67,20 +68,20 @@ public class ShopifyService {
     public ShopifyService(
             ShopifyHttpIntegration shopifyApiIntegration,
             TestingEnvironmentIntegration testingEnvironmentIntegration,
-            ITranslateTextService translateTextService,
+            IUserTypeTokenService userTypeTokenService,
             IUserSubscriptionsService userSubscriptionsService,
             IItemsService itemsService,
             ITranslatesService translatesService
     ) {
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.testingEnvironmentIntegration = testingEnvironmentIntegration;
-        this.translateTextService = translateTextService;
+        this.userTypeTokenService = userTypeTokenService;
         this.userSubscriptionsService = userSubscriptionsService;
         this.itemsService = itemsService;
         this.translatesService = translatesService;
     }
 
-    //    private final TelemetryClient appInsights = new TelemetryClient();
+    private final TelemetryClient appInsights = new TelemetryClient();
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
     private final int length = 32;
 
@@ -158,7 +159,6 @@ public class ShopifyService {
         // 递归处理下一页数据
         handlePagination(rootNode, request, counter, translateResource, translateCounter, method, csvRequestList, csvMap);
         //打印最后使用的值
-
     }
 
     //将String数据转化为JsonNode数据
@@ -475,14 +475,14 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.get("key").asText())
-                    || "JSON".equals(contentItemNode.get("type").asText())
-                    || "JSON_STRING".equals(contentItemNode.get("type").asText())
+            if ("handle".equals(contentItemNode.path("key").asText(null))
+                    || "JSON".equals(contentItemNode.path("type").asText(null))
+                    || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
             ) {
                 continue;  // 跳过当前项
             }
 
-            String value = contentItemNode.get("value").asText();
+            String value = contentItemNode.path("value").asText(null);
 
             //如果value为空跳过
             if (value.isEmpty()) {
