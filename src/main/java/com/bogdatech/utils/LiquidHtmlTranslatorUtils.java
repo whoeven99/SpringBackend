@@ -219,7 +219,6 @@ public class LiquidHtmlTranslatorUtils {
                         }
                         continue;
                     }
-                    result.append(cleanedText);
                 } else {
                     result.append(toTranslate); // 保留原始空白
                 }
@@ -253,7 +252,6 @@ public class LiquidHtmlTranslatorUtils {
                         throw new ClientException(TRANSLATION_EXCEPTION);
                     }
                 }
-                result.append(targetString);
             } else {
                 result.append(remaining);
             }

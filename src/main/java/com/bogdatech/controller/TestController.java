@@ -134,7 +134,7 @@ public class TestController {
                 Use fewer filters or <a class="{{ class }}" href="{{ link }}">clear all</a>
                 """;
 
-        String result = translateNewHtml(html, new TranslateRequest(0,"fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
+        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
         System.out.println("翻译的结果： " + result);
     }
 
