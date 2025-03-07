@@ -1,7 +1,6 @@
 package com.bogdatech.utils;
 
 
-import com.bogdatech.Service.IVocabularyService;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -25,7 +24,6 @@ import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 @Component
 public class LiquidHtmlTranslatorUtils {
 
-    static IVocabularyService vocabularyService;
     static TelemetryClient appInsights = new TelemetryClient();
     // 不翻译的URL模式
     private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
@@ -43,6 +41,9 @@ public class LiquidHtmlTranslatorUtils {
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
     private final static Set<String> noTranslateTags = new HashSet<>(Arrays.asList("style", "img", "script"));
+
+    public LiquidHtmlTranslatorUtils() {
+    }
 
     /**
      * 主翻译方法
@@ -152,15 +153,6 @@ public class LiquidHtmlTranslatorUtils {
             return translated;
         }
 
-        //从数据库中获取数据
-        String targetText = null;
-        try {
-            targetText = vocabularyService.getTranslateTextDataInVocabulary(request.getTarget(), text, request.getSource());
-            return targetText;
-        } catch (Exception e) {
-            //打印错误信息
-            appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());
-        }
         // 处理文本中的变量和URL
         String translatedText = translateTextWithProtection(text, request, counter, resourceType);
 
@@ -226,7 +218,6 @@ public class LiquidHtmlTranslatorUtils {
                         }
                         continue;
                     }
-                    vocabularyService.InsertOne(request.getTarget(), targetString, request.getSource(), cleanedText);
                     result.append(cleanedText);
                 } else {
                     result.append(toTranslate); // 保留原始空白
@@ -261,7 +252,6 @@ public class LiquidHtmlTranslatorUtils {
                     }
                 }
                 result.append(targetString);
-                vocabularyService.InsertOne(request.getTarget(), targetString, request.getSource(), cleanedText);
             } else {
                 result.append(remaining);
             }
