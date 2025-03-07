@@ -69,6 +69,7 @@ public class TranslateResourceDTO {
             ,
             new TranslateResourceDTO(ONLINE_STORE_THEME, "250", "", "")
             ,
+            //5
             new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, "250", "", "")
             ,
             new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, "250", "", "")

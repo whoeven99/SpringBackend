@@ -1112,13 +1112,17 @@ public class TranslateService {
     }
 
     //获取一个页面所有Translations集合数据
-    private static Map<String, TranslateTextDO> extractTranslations(JsonNode node, String resourceId, ShopifyRequest shopifyRequest) {
+    public static Map<String, TranslateTextDO> extractTranslations(JsonNode node, String resourceId, ShopifyRequest shopifyRequest) {
         Map<String, TranslateTextDO> translations = new HashMap<>();
         JsonNode translationsNode = node.path("translations");
         if (translationsNode.isArray() && !translationsNode.isEmpty()) {
             translationsNode.forEach(translation -> {
-                if (translation.path("value").asText(null).isEmpty() || translation.path("key").asText(null).isEmpty()) {
-                    return;
+                try {
+                    if (translation.path("value").asText(null).isEmpty() || translation.path("key").asText(null).isEmpty()) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
                 }
                 //当用户修改数据后，outdated的状态为true，将该数据放入要翻译的集合中
                 TranslateTextDO translateTextDO = new TranslateTextDO();
@@ -1135,7 +1139,7 @@ public class TranslateService {
     }
 
     //获取一个页面所有TranslatableContent集合数据
-    private static Map<String, TranslateTextDO> extractTranslatableContent(JsonNode node, Map<String, TranslateTextDO> translations) {
+    public static Map<String, TranslateTextDO> extractTranslatableContent(JsonNode node, Map<String, TranslateTextDO> translations) {
         JsonNode contentNode = node.path("translatableContent");
         if (contentNode.isArray() && !contentNode.isEmpty()) {
             contentNode.forEach(content -> {
