@@ -2,14 +2,12 @@ package com.bogdatech.utils;
 
 import com.bogdatech.entity.AILanguagePacksDO;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -18,6 +16,7 @@ import static com.bogdatech.constants.TranslateConstants.QWEN_MT;
 import static com.bogdatech.constants.TranslateConstants.TRANSLATION_EXCEPTION;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.singleTranslate;
+import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
@@ -26,17 +25,13 @@ import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
 import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
+import static java.lang.Thread.sleep;
 
 @Component
 public class JsoupUtils {
 
-    private final TranslateApiIntegration translateApiIntegration;
-    TelemetryClient appInsights = new TelemetryClient();
 
-    @Autowired
-    public JsoupUtils(TranslateApiIntegration translateApiIntegration) {
-        this.translateApiIntegration = translateApiIntegration;
-    }
+    static TelemetryClient appInsights = new TelemetryClient();
 
     public String translateHtml(String html, TranslateRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO, String resourceType) {
         Document doc = Jsoup.parse(html);
@@ -272,7 +267,7 @@ public class JsoupUtils {
         return !doc.body().text().equals(content);
     }
 
-    public String translateSingleLine(String sourceText, String target) {
+    public static String translateSingleLine(String sourceText, String target) {
         if (SINGLE_LINE_TEXT.get(target) != null) {
             return SINGLE_LINE_TEXT.get(target).get(sourceText);
         }
@@ -287,7 +282,7 @@ public class JsoupUtils {
      * @param resourceType 模块类型
      * return String 翻译后的文本
      */
-    public String googleTranslateJudgeCode(TranslateRequest request, CharacterCountUtils counter, String resourceType) {
+    public static String googleTranslateJudgeCode(TranslateRequest request, CharacterCountUtils counter, String resourceType) {
         String target = request.getTarget();
         String source = request.getSource();
 
@@ -306,14 +301,14 @@ public class JsoupUtils {
      * @param counter 计数器
      * return String 翻译后的文本
      */
-    public String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter) {
+    public static String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter) {
         String target = request.getTarget();
         String source = request.getSource();
         //如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
         if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
             //TODO：目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.2s. 后面请求解决限制后，删掉这段代码。
             try {
-                Thread.sleep(200);
+                sleep(200);
             }catch (Exception e){
                 appInsights.trackTrace("sleep错误： " + e.getMessage());
             }
@@ -325,7 +320,7 @@ public class JsoupUtils {
         } else {
             //TODO： 添加token字数和计数规则
             counter.addChars(googleCalculateToken(request.getContent()));
-            return translateApiIntegration.getGoogleTranslationWithRetry(request);
+            return getGoogleTranslationWithRetry(request);
         }
     }
 
@@ -333,11 +328,20 @@ public class JsoupUtils {
     public static String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils) {
         String changeSource = qwenMtCode(source);
         String changeTarget = qwenMtCode(target);
-        return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
+        try {
+            return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
+        } catch (Exception e) {
+            try {
+                sleep(1000);
+            } catch (InterruptedException ex) {
+                appInsights.trackTrace("sleep错误： " + ex.getMessage());
+            }
+            return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
+        }
     }
 
     //在调用googleTranslateJudgeCode的基础上添加计数功能,并添加到翻译后的文本
-    public String translateAndCount(TranslateRequest request,
+    public static String translateAndCount(TranslateRequest request,
                                     CharacterCountUtils counter, String resourceType) {
         String text = request.getContent();
         String targetString = googleTranslateJudgeCode(request, counter, resourceType);

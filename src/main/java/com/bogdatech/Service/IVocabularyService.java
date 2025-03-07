@@ -18,6 +18,6 @@ public interface IVocabularyService extends IService<VocabularyDO> {
 
     void testInsert(String target, String value, String source);
 
-    Integer testInsertOne(String target, String targetValue, String source, String sourceValue);
+    Integer InsertOne(String target, String targetValue, String source, String sourceValue);
 
 }
