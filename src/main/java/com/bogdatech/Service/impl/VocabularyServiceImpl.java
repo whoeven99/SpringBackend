@@ -176,9 +176,8 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         System.out.println("source: " + source + " sourceValue: " + sourceValue + " target: " + target + " targetValue: " + targetValue);
         //TODO: 等下测试一下
         VocabularyDO existingVocabulary = baseMapper.selectOne(new QueryWrapper<VocabularyDO>()
-                .select("TOP 1 SELECT vid,en,es,fr,de,pt_BR,pt_PT,zh_CN,zh_TW,ja,it,ru,ko,nl,da,hi,bg,cs,el,fi,hr,hu,id,lt,nb,pl,ro,sk,sl,sv,th,tr,vi,ar,no,uk,lv,et")
+                .select("TOP 1 vid, en, es, fr, de, pt_BR, pt_PT, zh_CN, zh_TW, ja, it, ru, ko, nl, da, hi, bg, cs, el, fi, hr, hu, id, lt, nb, pl, ro, sk, sl, sv, th, tr, vi, ar, no, uk, lv, et")
                 .eq(source, sourceValue)
-                .orderByAsc("create_time")  // 按创建时间升序
         );
         System.out.println("existingVocabulary: " + existingVocabulary);
         if (existingVocabulary == null) {

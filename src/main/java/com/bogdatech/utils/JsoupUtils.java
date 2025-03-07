@@ -25,6 +25,7 @@ import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
 import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
+import static java.lang.Thread.sleep;
 
 @Component
 public class JsoupUtils {
@@ -307,7 +308,7 @@ public class JsoupUtils {
         if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
             //TODO：目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.2s. 后面请求解决限制后，删掉这段代码。
             try {
-                Thread.sleep(200);
+                sleep(200);
             }catch (Exception e){
                 appInsights.trackTrace("sleep错误： " + e.getMessage());
             }
@@ -327,7 +328,16 @@ public class JsoupUtils {
     public static String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils) {
         String changeSource = qwenMtCode(source);
         String changeTarget = qwenMtCode(target);
-        return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
+        try {
+            return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
+        } catch (Exception e) {
+            try {
+                sleep(1000);
+            } catch (InterruptedException ex) {
+                appInsights.trackTrace("sleep错误： " + ex.getMessage());
+            }
+            return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
+        }
     }
 
     //在调用googleTranslateJudgeCode的基础上添加计数功能,并添加到翻译后的文本

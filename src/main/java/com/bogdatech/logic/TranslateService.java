@@ -914,7 +914,7 @@ public class TranslateService {
         addData(request.getTarget(), value, targetString);
         saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
         //存到数据库中
-
+        vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
     }
 
     //创建存储翻译项的Map

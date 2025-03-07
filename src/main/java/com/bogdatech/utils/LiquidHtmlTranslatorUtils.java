@@ -1,6 +1,7 @@
 package com.bogdatech.utils;
 
 
+import com.bogdatech.Service.IVocabularyService;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -16,16 +17,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.TRANSLATION_EXCEPTION;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.singleTranslate;
 import static com.bogdatech.logic.TranslateService.addData;
-import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 
 @Component
 public class LiquidHtmlTranslatorUtils {
 
+    static IVocabularyService vocabularyService;
     static TelemetryClient appInsights = new TelemetryClient();
     // 不翻译的URL模式
     private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
@@ -152,6 +152,15 @@ public class LiquidHtmlTranslatorUtils {
             return translated;
         }
 
+        //从数据库中获取数据
+        String targetText = null;
+        try {
+            targetText = vocabularyService.getTranslateTextDataInVocabulary(request.getTarget(), text, request.getSource());
+            return targetText;
+        } catch (Exception e) {
+            //打印错误信息
+            appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());
+        }
         // 处理文本中的变量和URL
         String translatedText = translateTextWithProtection(text, request, counter, resourceType);
 
@@ -217,6 +226,7 @@ public class LiquidHtmlTranslatorUtils {
                         }
                         continue;
                     }
+                    vocabularyService.InsertOne(request.getTarget(), targetString, request.getSource(), cleanedText);
                     result.append(cleanedText);
                 } else {
                     result.append(toTranslate); // 保留原始空白
@@ -232,13 +242,30 @@ public class LiquidHtmlTranslatorUtils {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
             if (!cleanedText.trim().isEmpty()) {
-                System.out.println("cleanedText: " + cleanedText);
-                cleanedText = callWithMessage("qwen-mt-turbo", cleanedText, qwenMtCode("en"), qwenMtCode("zh-CN"), new CharacterCountUtils());
-                System.out.println("TranslateText: " + cleanedText);
-                result.append(cleanedText);
+                String targetString = null;
+                try {
+                    if (cleanedText.length() > 32) {
+                        //AI翻译
+                        targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
+                        result.append(targetString);
+                    } else {
+                        targetString = translateAndCount(request, counter, resourceType);
+                        result.append(targetString);
+                    }
+                } catch (ClientException e) {
+                    // 如果AI翻译失败，则使用谷歌翻译
+                    result.append(cleanedText);
+                    if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
+                        //终止翻译，并返回状态4
+                        throw new ClientException(TRANSLATION_EXCEPTION);
+                    }
+                }
+                result.append(targetString);
+                vocabularyService.InsertOne(request.getTarget(), targetString, request.getSource(), cleanedText);
             } else {
                 result.append(remaining);
             }
+
         }
 
         return result.toString();
