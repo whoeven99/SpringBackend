@@ -206,6 +206,7 @@ public class LiquidHtmlTranslatorUtils {
                             targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                             result.append(targetString);
                         } else {
+                            request.setContent(cleanedText);
                             targetString = translateAndCount(request, counter, resourceType);
                             result.append(targetString);
                         }
@@ -240,6 +241,7 @@ public class LiquidHtmlTranslatorUtils {
                         targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                         result.append(targetString);
                     } else {
+                        request.setContent(cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
                         result.append(targetString);
                     }
