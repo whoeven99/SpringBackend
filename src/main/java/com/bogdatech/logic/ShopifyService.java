@@ -697,37 +697,40 @@ public class ShopifyService {
         // 遍历List中的每个TranslateResourceDTO对象
         CharacterCountUtils allCounter = new CharacterCountUtils();
         CharacterCountUtils translatedCounter = new CharacterCountUtils();
-        for (TranslateResourceDTO resource : RESOURCE_MAP.get(request.getResourceType())) {
-            Map<String, Object> singleResult = new HashMap<>();
-            singleResult.put("itemName", resource.getResourceType());
-            resource.setTarget(request.getTarget());
-            String query = shopifyRequestBody.getFirstQuery(resource);
-            cloudServiceRequest.setBody(query);
-            String infoByShopify;
-            try {
-                String env = System.getenv("ApplicationEnv");
-                if ("prod".equals(env) || "dev".equals(env)) {
-                    infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
-                } else {
-                    infoByShopify = getShopifyData(cloudServiceRequest);
+        try {
+            for (TranslateResourceDTO resource : RESOURCE_MAP.get(request.getResourceType())) {
+                Map<String, Object> singleResult = new HashMap<>();
+                singleResult.put("itemName", resource.getResourceType());
+                resource.setTarget(request.getTarget());
+                String query = shopifyRequestBody.getFirstQuery(resource);
+                cloudServiceRequest.setBody(query);
+                String infoByShopify;
+                try {
+                    String env = System.getenv("ApplicationEnv");
+                    if ("prod".equals(env) || "dev".equals(env)) {
+                        infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
+                    } else {
+                        infoByShopify = getShopifyData(cloudServiceRequest);
+                    }
+                } catch (Exception e) {
+                    //如果出现异常，则跳过, 翻译其他的内容
+                    appInsights.trackTrace("getTranslationItemsInfo error: " + e.getMessage());
+                    continue;
                 }
-            } catch (Exception e) {
-                //如果出现异常，则跳过, 翻译其他的内容
-                appInsights.trackTrace("getTranslationItemsInfo error: " + e.getMessage());
-                continue;
+                countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
+                if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
+                    translatedCounter.reset();
+                    translatedCounter.addChars(allCounter.getTotalChars());
+                }
+                singleResult.put("totalNumber", allCounter.getTotalChars());
+                singleResult.put("translatedNumber", translatedCounter.getTotalChars());
+                singleResult.put("target", request.getTarget());
+                singleResult.put("status", 1);
+                result.put(request.getResourceType(), singleResult);
             }
-            countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
-            if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
-                translatedCounter.reset();
-                translatedCounter.addChars(allCounter.getTotalChars());
-            }
-            singleResult.put("totalNumber", allCounter.getTotalChars());
-            singleResult.put("translatedNumber", translatedCounter.getTotalChars());
-            singleResult.put("target", request.getTarget());
-            singleResult.put("status", 1);
-            result.put(request.getResourceType(), singleResult);
+        } catch (Exception e) {
+            appInsights.trackTrace("getTranslationItemsInfoAll error: " + e.getMessage());
         }
-        System.out.println("second: " + LocalDateTime.now());
         return result;
     }
 
@@ -905,18 +908,12 @@ public class ShopifyService {
      *
      * @param request 用户数据对象，包含用户信息（如shopName、accessToken、target）
      */
-    @Async
-    public void readAllTypeToken(ResourceTypeRequest request) {
-        //从数据库中获取status数据并判断 当为2时，返回值； 当为1或3时，继续执行
-//        int status = userTypeTokenService.getStatusByShopNameAndTarget(request.getShopName(), request.getTarget());
-    }
-
     //异步调用getTranslationItemsInfo
     @Async
     public void getTranslationItemsInfoTest(ResourceTypeRequest request) {
-        System.out.println("request1: " + request.getResourceType());
+//        System.out.println("request1: " + request.getResourceType());
         Map<String, Map<String, Object>> translationItemsInfo = getTranslationItemsInfo(request);
-        System.out.println("translationItemsInfo" + translationItemsInfo);
+//        System.out.println("translationItemsInfo" + translationItemsInfo);
 
     }
 }

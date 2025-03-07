@@ -30,7 +30,7 @@ import java.util.Random;
 @Component
 public class TranslateApiIntegration {
 
-    private TelemetryClient appInsights = new TelemetryClient();
+    private static TelemetryClient appInsights = new TelemetryClient();
 
     @Value("${baidu.api.key}")
     private String apiUrl;
@@ -39,7 +39,7 @@ public class TranslateApiIntegration {
     private String secret;
 
     @Value("${google.api.key}")
-    private String apiKey;
+    private static String apiKey;
 
     @Value("${microsoft.translation.key}")
     private String microsoftKey;
@@ -82,7 +82,7 @@ public class TranslateApiIntegration {
     }
 
     //谷歌翻译API
-    public String googleTranslate(TranslateRequest request) {
+    public static String googleTranslate(TranslateRequest request) {
         String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
         String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
                 "&q=" + encodedQuery +
@@ -112,7 +112,7 @@ public class TranslateApiIntegration {
     }
 
     //对谷歌翻译API做重试机制
-    public String getGoogleTranslationWithRetry(TranslateRequest request) {
+    public static String getGoogleTranslationWithRetry(TranslateRequest request) {
         int maxRetries = 3; // 最大重试次数
         int retryCount = 0; // 当前重试次数
         int baseDelay = 1000; // 初始等待时间（1秒）
