@@ -91,7 +91,6 @@ public class TranslateApiIntegration {
                 "&target=" + request.getTarget() +
                 "&model=base";
         String result = null;
-        appInsights.trackTrace("url: " + url);
         // 创建HttpGet请求
         HttpPost httpPost = new HttpPost(url);
         // 执行请求
