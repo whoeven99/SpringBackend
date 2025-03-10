@@ -57,6 +57,7 @@ public class LiquidHtmlTranslatorUtils {
             return html;
         }
 
+        appInsights.trackTrace("现在正在翻译： "  + html);
         try {
             // 判断输入是否包含 <html> 标签
             boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
@@ -203,10 +204,12 @@ public class LiquidHtmlTranslatorUtils {
                         if (cleanedText.length() > 32) {
                             //AI翻译
 //                            System.out.println("要翻译的文本AI： " + cleanedText);
+                            appInsights.trackTrace("要翻译的文本AI： " + cleanedText);
                             targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                             result.append(targetString);
                         } else {
                             request.setContent(cleanedText);
+                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本： " + cleanedText);
                             targetString = translateAndCount(request, counter, resourceType);
                             result.append(targetString);
@@ -238,11 +241,13 @@ public class LiquidHtmlTranslatorUtils {
                 try {
                     if (cleanedText.length() > 32) {
                         //AI翻译
+                        appInsights.trackTrace("处理剩余文本AI： " + cleanedText);
 //                        System.out.println("要翻译的文本AI： " + cleanedText);
                         targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                         result.append(targetString);
                     } else {
                         request.setContent(cleanedText);
+                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
                         result.append(targetString);
