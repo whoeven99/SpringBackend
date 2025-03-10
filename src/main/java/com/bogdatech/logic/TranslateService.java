@@ -914,7 +914,11 @@ public class TranslateService {
         addData(request.getTarget(), value, targetString);
         saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
         //存到数据库中
-        vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
+        try {
+            vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
+        } catch (Exception e) {
+            appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
+        }
     }
 
     //创建存储翻译项的Map
@@ -1314,7 +1318,11 @@ public class TranslateService {
         });
         if (!list.isEmpty()) {
 //            translateTextService.getExistTranslateTextList(list);
-            vocabularyService.storeTranslationsInVocabulary(list);
+            try {
+                vocabularyService.storeTranslationsInVocabulary(list);
+            } catch (Exception e) {
+                appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
+            }
         }
     }
 
