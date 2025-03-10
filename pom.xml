@@ -185,6 +185,12 @@
 			</exclusions>
 			<version>2.16.2</version>
 		</dependency>
+		<!-- 接openAi的SDK-->
+		<dependency>
+			<groupId>com.openai</groupId>
+			<artifactId>openai-java</artifactId>
+			<version>0.33.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

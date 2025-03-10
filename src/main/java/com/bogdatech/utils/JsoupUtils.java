@@ -291,7 +291,7 @@ public class JsoupUtils {
         }
 
         //如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
-        return checkTranslationApi(request, counter);
+        return checkTranslationApi(request, counter, resourceType);
     }
 
     /**
@@ -301,14 +301,14 @@ public class JsoupUtils {
      * @param counter 计数器
      * return String 翻译后的文本
      */
-    public static String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter) {
+    public static String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, String resourceType) {
         String target = request.getTarget();
         String source = request.getSource();
         //如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
         if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
-            //TODO：目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.2s. 后面请求解决限制后，删掉这段代码。
+            //TODO：目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.3s. 后面请求解决限制后，删掉这段代码。
             try {
-                sleep(200);
+                sleep(300);
             }catch (Exception e){
                 appInsights.trackTrace("sleep错误： " + e.getMessage());
             }
@@ -316,7 +316,15 @@ public class JsoupUtils {
             if (hasPlaceholders(request.getContent())){
                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()));
             }
-            return translateByQwenMt(request.getContent(), source, target, counter);
+
+            String resultTranslation = null;
+            try {
+                resultTranslation = translateByQwenMt(request.getContent(), source, target, counter);
+            } catch (Exception e) {
+                //TODO：mt翻译失败的话，用百炼 API翻译
+                resultTranslation = singleTranslate(request.getContent(), resourceType, counter, target);
+            }
+            return resultTranslation;
         } else {
             //TODO： 添加token字数和计数规则
             counter.addChars(googleCalculateToken(request.getContent()));
