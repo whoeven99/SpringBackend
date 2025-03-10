@@ -10,6 +10,7 @@ import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.ItemsDO;
 import com.bogdatech.entity.TranslateResourceDTO;
+import com.bogdatech.entity.TranslateTextDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -41,15 +42,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
 import static com.bogdatech.utils.CsvUtils.readCsvToCsvRequest;
 import static com.bogdatech.utils.CsvUtils.writeCsv;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
-import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.StringUtils.countWords;
 
 @Component
@@ -81,7 +80,6 @@ public class ShopifyService {
         this.translatesService = translatesService;
     }
 
-    private final TelemetryClient appInsights = new TelemetryClient();
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
     private final int length = 32;
 
@@ -797,27 +795,6 @@ public class ShopifyService {
         }
     }
 
-    //修改shopify本地单条数据 和 更新本地数据库相应数据
-    public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        String string = updateShopifyData(registerTransactionRequest);
-        if (string == null) {
-            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
-        }
-        TranslateTextRequest request = TypeConversionUtils.registerTransactionRequestToTranslateTextRequest(registerTransactionRequest);
-        TranslateTextDO translateTextDO = TypeConversionUtils.registerTransactionRequestToTranslateTextDO(registerTransactionRequest);
-        TranslateTextDO translateTextRequests = translateTextService.getTranslateTextInfo(request);
-        int i;
-        if (translateTextRequests == null) {
-            i = translateTextService.insertTranslateText(translateTextDO);
-        } else {
-            i = translateTextService.updateTranslateText(request);
-        }
-        if (i > 0 && string.equals(registerTransactionRequest.getValue())) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
-        } else {
-            return new BaseResponse<>().CreateErrorResponse("insert or update error");
-        }
-    }
 
     //根据前端传来的值，返回对应的图片信息
     public Map<String, Object> getImageInfo(String[] strings) {

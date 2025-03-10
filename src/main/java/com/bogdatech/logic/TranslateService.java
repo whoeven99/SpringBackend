@@ -286,7 +286,7 @@ public class TranslateService {
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                 continue;
             }
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, aiLanguagePacksDO);
+            TranslateContext translateContext = null;
             translateJson(translateContext);
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter)) return;
@@ -556,17 +556,7 @@ public class TranslateService {
             return true;
         }
 
-        if ("HTML".equals(type)) {
-            try {
-                //TODO：重新实现一个方法用于用新提示词进行长文本翻译。
-                String targetText = jsoupUtils.translateHtml(value, new TranslateRequest(0, null, null, registerTransactionRequest.getLocale(), request.getTarget(), value), counter, translateContext.getAiLanguagePacksDO());
-                saveToShopify(targetText, translation, resourceId, request);
-                return true;
-            } catch (Exception e) {
-                saveToShopify(value, translation, resourceId, request);
-                return true;
-            }
-        }
+
         return false;
     }
 
@@ -790,9 +780,7 @@ public class TranslateService {
                 // 提取需要翻译的文本
                 Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
                 // 翻译文本
-                Map<Element, List<String>> translatedTextMap = jsoupUtils.translateTexts(elementTextMap, translateRequest, counter, aiLanguagePacksDO);
                 // 替换原始文本为翻译后的文本
-                jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
             } catch (Exception e) {
                 saveToShopify(doc.toString(), translation, resourceId, request);
                 continue;
@@ -845,24 +833,7 @@ public class TranslateService {
 
     //首选谷歌翻译，翻译不了用AI翻译
     public void translateByGoogleOrAI(ShopifyRequest request, CharacterCountUtils counter, AILanguagePacksDO aiLanguagePacksDO, RegisterTransactionRequest registerTransactionRequest, Map<String, Object> translation) {
-        String value = registerTransactionRequest.getValue();
-        List<String> strings = jsoupUtils.googleTranslateJudgeCode(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), aiLanguagePacksDO);
-        String targetString = strings.get(0);
-        if (targetString.isEmpty()) {
-            saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
-            return;
-        }
-        String flag = strings.get(1);
-        if ("0".equals(flag)) {
-            counter.addChars(calculateToken(aiLanguagePacksDO.getPromotWord() + value, aiLanguagePacksDO.getDeductionRate()));
-            counter.addChars(calculateToken(targetString, aiLanguagePacksDO.getDeductionRate()));
-            addData(request.getTarget(), value, targetString);
-            saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
-            return;
-        }
-        counter.addChars(calculateToken(value, 1));
-        addData(request.getTarget(), value, targetString);
-        saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
+
     }
 
     //创建存储翻译项的Map
@@ -1194,9 +1165,9 @@ public class TranslateService {
         // 提取需要翻译的文本
         Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
         // 翻译文本
-        Map<Element, List<String>> translatedTextMap = jsoupUtils.translateGlossaryTexts(elementTextMap, request, counter, keyMap, keyMap0, aiLanguagePacksDO);
+
         // 替换原始文本为翻译后的文本
-        jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
+
         return doc.toString();
     }
 
@@ -1221,21 +1192,7 @@ public class TranslateService {
 
     //将缓存的数据存到数据库中
     public void saveToTranslates() {
-        //添加数据
-        // 遍历外层的 Map
-        List<TranslateTextDO> list = new ArrayList<>();
-        SINGLE_LINE_TEXT.forEach((outerKey, innerMap) -> {
-            // 使用流来遍历内部的 Map
-//            System.out.println("outerKey: " + outerKey);
-            innerMap.forEach((innerKey, value) -> {
-//                appInsights.trackTrace("Key: " + outerKey + ", Inner Key: " + innerKey + ", Value: " + value);
-//                translateTextService.insertTranslateText(new TranslateTextDO(null,null, null, null, null, innerKey, value, null, outerKey));
-                list.add(new TranslateTextDO(null, null, null, null, null, innerKey, value, null, outerKey));
-            });
-        });
-        if (!list.isEmpty()) {
-            translateTextService.getExistTranslateTextList(list);
-        }
+
     }
 
     //翻译成功后发送邮件

@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
-import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -55,14 +54,7 @@ public class UserTypeTokenService {
             userTypeTokenService.insertInitial(shopifyRequest.getShopName());
 
             //循环type获取token
-            for (String key : TOKEN_MAP.keySet()
-            ) {
-                try {
-                    translateService.insertInitialByTranslation(shopifyRequest, key, "initial");
-                } catch (Exception e) {
-                    appInsights.trackTrace(key + "模块获取失败： " + request);
-                }
-            }
+
 
         }
     }

@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserSubscriptionsService;
-import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -15,13 +14,10 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
-import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 
@@ -117,11 +113,6 @@ public class ShopifyController {
         return new BaseResponse<>().CreateSuccessResponse(shopifyService.getTotalWords(shopifyRequest, method, i));
     }
 
-    //根据前端的传值,更新shopify后台和数据库
-    @PostMapping("/updateShopifyDataByTranslateTextRequest")
-    public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
-        return shopifyService.updateShopifyDataByTranslateTextRequest(registerTransactionRequest);
-    }
 
     //获取用户的额度字符数 和 已使用的字符
     @GetMapping("/getUserLimitChars")
@@ -216,31 +207,6 @@ public class ShopifyController {
         return shopifyService.updateShopifySingleData(registerTransactionRequest);
     }
 
-    //修改多条文本
-    @PostMapping("/updateItems")
-    public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
-        String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
-        if (s.contains("value")) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
-        } else {
-            return new BaseResponse<>().CreateErrorResponse(s);
-        }
-    }
-
-    @PostMapping("/getTranslationItemsInfoTest")
-    public void getTranslationItemsInfoTest(@RequestBody ResourceTypeRequest request) {
-        System.out.println("first: " + LocalDateTime.now());
-        for (String key : RESOURCE_MAP.keySet()
-        ) {
-            System.out.println("key: " + key);
-            ResourceTypeRequest resourceTypeRequest = new ResourceTypeRequest();
-            resourceTypeRequest.setResourceType(key);
-            resourceTypeRequest.setTarget(request.getTarget());
-            resourceTypeRequest.setAccessToken(request.getAccessToken());
-            resourceTypeRequest.setShopName(request.getShopName());
-            shopifyService.getTranslationItemsInfoTest(resourceTypeRequest);
-        }
-    }
 
 
 }
