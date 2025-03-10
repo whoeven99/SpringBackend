@@ -136,7 +136,6 @@ public class TranslateService {
             } catch (ClientException e) {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                    translateFailEmail(shopName, e.getErrorMessage());
                     appInsights.trackTrace("翻译失败的原因： " + e.getErrorMessage());
                     //更新初始值
                     try {
@@ -575,7 +574,11 @@ public class TranslateService {
             }
 
             // TODO: 判断用AI和谷歌翻译
-            translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+            try {
+                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+            } catch (Exception e) {
+                appInsights.trackTrace("翻译错误原因： " + e.getMessage());
+            }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -609,11 +612,7 @@ public class TranslateService {
                 return true;
             } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
-                if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
-                    appInsights.trackTrace("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
-                    ChatgptException(request, registerTransactionRequest.getLocale());
-                }
-                return true;
+                appInsights.trackTrace("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
             }
         }
         return false;
@@ -696,7 +695,12 @@ public class TranslateService {
             String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0);
             translateRequest.setContent(updateText);
             //TODO: 修改翻译调用
-            String translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+            String translatedText = null;
+            try {
+                translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+            } catch (Exception e) {
+                appInsights.trackTrace("翻译问题： " + e.getMessage());
+            }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
@@ -785,7 +789,11 @@ public class TranslateService {
             }
 
             //TODO: 改为判断语言代码方法
-            translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+            try {
+                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+            } catch (Exception e) {
+                appInsights.trackTrace("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
+            }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -896,14 +904,11 @@ public class TranslateService {
                                       RegisterTransactionRequest registerTransactionRequest,
                                       Map<String, Object> translation, String resourceType) {
         String value = registerTransactionRequest.getValue();
-        String targetString;
+        String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
         } catch (ClientException e) {
-            if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
-                ChatgptException(request, registerTransactionRequest.getLocale());
-            }
-            return;
+           appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
 
         if (targetString == null) {
@@ -914,7 +919,11 @@ public class TranslateService {
         addData(request.getTarget(), value, targetString);
         saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
         //存到数据库中
-        vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
+        try {
+            vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
+        } catch (Exception e) {
+            appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
+        }
     }
 
     //创建存储翻译项的Map
@@ -1314,7 +1323,11 @@ public class TranslateService {
         });
         if (!list.isEmpty()) {
 //            translateTextService.getExistTranslateTextList(list);
-            vocabularyService.storeTranslationsInVocabulary(list);
+            try {
+                vocabularyService.storeTranslationsInVocabulary(list);
+            } catch (Exception e) {
+                appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
+            }
         }
     }
 

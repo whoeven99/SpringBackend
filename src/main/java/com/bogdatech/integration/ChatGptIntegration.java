@@ -85,4 +85,17 @@ public class ChatGptIntegration {
         }
         return content;
     }
+
+    /**
+     * 调用 OpenAI ChatGPT 接口进行对话，并返回 GPT 的回复文本
+     *
+     * @param prompt 用户输入的对话内容
+     * @param model GPT 模型名称
+     * @param apiKey OpenAI API 密钥
+     * @return GPT 回复的文本
+     */
+//    public static String translateByGpt(String prompt, String model, String apiKey) {
+//
+//        return null;
+//    }
 }
