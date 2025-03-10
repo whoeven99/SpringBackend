@@ -84,7 +84,7 @@ public class TranslateApiIntegration {
     //谷歌翻译API
     public static String googleTranslate(TranslateRequest request) {
         String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
-        String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
+        String url = "https://translation.googleapis.com/language/translate/v2?key=" + System.getenv("GOOGLE_API_KEY") +
                 "&q=" + encodedQuery +
                 "&source=" + request.getSource() +
                 "&target=" + request.getTarget() +
