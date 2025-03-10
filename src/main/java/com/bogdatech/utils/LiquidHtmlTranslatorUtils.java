@@ -69,7 +69,7 @@ public class LiquidHtmlTranslatorUtils {
                 }
 
                 processNode(doc.body(), request, counter, resourceType);
-                String result = doc.html(); // 返回完整的HTML结构
+                String result = doc.outerHtml(); // 返回完整的HTML结构
                 return result;
             } else {
                 // 如果没有 <html> 标签，作为片段处理
@@ -110,10 +110,9 @@ public class LiquidHtmlTranslatorUtils {
                     return;
                 }
 
-                // 处理属性（保护alt属性）
-                if (element.hasAttr("alt")) {
-                    // 不翻译alt属性，保持原样
-                }
+                // 属性不翻译，保持原样
+                element.attributes().forEach(attr -> {
+                });
 
                 // 递归处理子节点
                 for (Node child : element.childNodes()) {
@@ -131,7 +130,7 @@ public class LiquidHtmlTranslatorUtils {
                 }
 
                 // 使用缓存处理文本
-//                System.out.println("要翻译的文本： " + text);
+
                 String translatedText = translateTextWithCache(text, request, counter, resourceType);
                 textNode.text(translatedText);
             }
@@ -203,10 +202,12 @@ public class LiquidHtmlTranslatorUtils {
                     try {
                         if (cleanedText.length() > 32) {
                             //AI翻译
+//                            System.out.println("要翻译的文本AI： " + cleanedText);
                             targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                             result.append(targetString);
                         } else {
                             request.setContent(cleanedText);
+//                            System.out.println("要翻译的文本： " + cleanedText);
                             targetString = translateAndCount(request, counter, resourceType);
                             result.append(targetString);
                         }
@@ -237,10 +238,12 @@ public class LiquidHtmlTranslatorUtils {
                 try {
                     if (cleanedText.length() > 32) {
                         //AI翻译
+//                        System.out.println("要翻译的文本AI： " + cleanedText);
                         targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                         result.append(targetString);
                     } else {
                         request.setContent(cleanedText);
+//                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
                         result.append(targetString);
                     }
