@@ -84,13 +84,14 @@ public class TranslateApiIntegration {
     //谷歌翻译API
     public static String googleTranslate(TranslateRequest request) {
         String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
-        String url = "https://translation.googleapis.com/language/translate/v2?key=" + System.getenv("GOOGLE_API_KEY") +
+        String apikey = System.getenv("GOOGLE_API_KEY");
+        String url = "https://translation.googleapis.com/language/translate/v2?key=" + apikey +
                 "&q=" + encodedQuery +
                 "&source=" + request.getSource() +
                 "&target=" + request.getTarget() +
                 "&model=base";
         String result = null;
-
+        appInsights.trackTrace("url: " + url);
         // 创建HttpGet请求
         HttpPost httpPost = new HttpPost(url);
         // 执行请求
