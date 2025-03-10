@@ -575,7 +575,11 @@ public class TranslateService {
             }
 
             // TODO: 判断用AI和谷歌翻译
-            translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+            try {
+                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+            } catch (Exception e) {
+                appInsights.trackTrace("翻译错误原因： " + e.getMessage());
+            }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -696,7 +700,12 @@ public class TranslateService {
             String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0);
             translateRequest.setContent(updateText);
             //TODO: 修改翻译调用
-            String translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+            String translatedText = null;
+            try {
+                translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+            } catch (Exception e) {
+                appInsights.trackTrace("翻译问题： " + e.getMessage());
+            }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
