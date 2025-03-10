@@ -404,9 +404,9 @@ public class ShopifyService {
             }
 
             String key = contentItemNode.path("key").asText(null);
-            if (translatedContent.get(key) == null) {
-                continue;
-            }
+//            if (translatedContent.get(key) == null) {
+//                continue;
+//            }
 
             String type = contentItemNode.path("type").asText(null);
             String locale = contentItemNode.path("locale").asText(null);
