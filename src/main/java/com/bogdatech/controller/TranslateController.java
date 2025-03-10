@@ -107,6 +107,18 @@ public class TranslateController {
     }
 
     /*
+     * 根据传入的shopName和source，返回一个最新时间的翻译项数据，status为1-3
+     */
+    @PostMapping("/getTranslateDOByShopNameAndSource")
+    public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
+        if (request != null) {
+            TranslatesDO translatesDO = translatesService.selectLatestOne(request);
+            return new BaseResponse<>().CreateSuccessResponse(translatesDO);
+        }
+        return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
+    }
+
+    /*
      * 读取shopName的所有翻译状态信息
      */
     @GetMapping("/readInfoByShopName")
@@ -223,7 +235,7 @@ public class TranslateController {
     public void insertTargets(@RequestBody TargetListRequest request) {
         List<String> targetList = request.getTargetList();
         TranslateRequest translateRequest = TargetListRequestToTranslateRequest(request);
-        if (!targetList.isEmpty()){
+        if (!targetList.isEmpty()) {
             translateRequest.setTarget(targetList.get(0));
             userTypeTokensService.getUserInitToken(translateRequest);
             for (String target : targetList
@@ -236,7 +248,7 @@ public class TranslateController {
                 //初始化用户对应token表
                 userTypeTokenService.insertTypeInfo(request1, idByShopNameAndTarget);
             }
-        }else {
+        } else {
             translateRequest.setTarget("zh-CN");
             userTypeTokensService.getUserInitToken(translateRequest);
             for (String target : targetList

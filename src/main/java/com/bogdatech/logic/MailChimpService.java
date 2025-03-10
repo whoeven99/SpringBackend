@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
+import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
 
 @Component
@@ -123,7 +124,7 @@ public class MailChimpService {
         //存放USER变量
         Map<String, String> userName = Map.of("name", "EMAIL", "content", sendEmailRequest.getUser());
         //存放shopName
-        Map<String, String> shopName = Map.of("name", "shop_name", "content", sendEmailRequest.getUser());
+        Map<String, String> shopName = Map.of("name", SHOP_NAME, "content", sendEmailRequest.getUser());
         //存放sourceLanguage
         Map<String, String> source = Map.of("name", "source_language", "content", sendEmailRequest.getUser());
         //存放targetLanguage

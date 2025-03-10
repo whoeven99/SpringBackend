@@ -17,18 +17,18 @@ import com.aliyun.tea.TeaException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.ValueWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.bogdatech.constants.TranslateConstants.CONTENTS;
-import static com.bogdatech.constants.TranslateConstants.TOTAL_TOKEN;
 import static com.bogdatech.utils.SwitchModelUtils.switchModel;
 
 @Component
@@ -101,11 +101,17 @@ public class ALiYunTranslateIntegration {
 
     //单文本翻译的提示词
     public static String cueWordSingle(String target, String type) {
-        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + " . Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content.";
+        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + ".  Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
     }
 
-    //单文本翻译
-
+    /**
+     * 用qwen-MT的部分代替google翻译。
+     * @param text 要翻译的文本
+     * @param type 文本模块类型
+     * @param target 目标语言代码
+     * @param countUtils 计数器
+     * @return 翻译后的文本
+     */
     public static String singleTranslate(String text, String type, CharacterCountUtils countUtils, String target) {
         String model = switchModel(target);
         Generation gen = new Generation();
@@ -129,12 +135,12 @@ public class ALiYunTranslateIntegration {
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            System.out.println("single_content: " + content);
+//            System.out.println("single_content: " + content);
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
-            System.out.println("百炼翻译报错信息： " + e.getMessage());
+//            System.out.println("百炼翻译报错信息： " + e.getMessage());
 //            throw new RuntimeException(e);
         }
         //获得该list的size
@@ -143,94 +149,47 @@ public class ALiYunTranslateIntegration {
         return content;
     }
 
-    //多文本翻译
-    public static Map<String, ValueWrapper> callWithMessages(String model, List<String> translateTexts, String cueWord) {
-        Generation gen = new Generation();
-        List<Message> list = new ArrayList<Message>();
-
-        Message systemMsg = Message.builder()
-                .role(Role.SYSTEM.getValue())
-                .content(cueWord)
-                .build();
-        list.add(systemMsg);
-        for (String text : translateTexts
-        ) {
-            System.out.println("text : " + text);
-            Message userMsg = Message.builder()
-                    .role(Role.USER.getValue())
-                    .content(text)
-                    .build();
-            list.add(userMsg);
-        }
-
-        GenerationParam param = GenerationParam.builder()
-                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
-                .model(model)
-                .messages(list)
-                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
-                .build();
-        String content = null;
-        Integer totalToken = null;
-        try {
-            GenerationResult call = gen.call(param);
-            content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            System.out.println("content: " + content);
-            totalToken = call.getUsage().getTotalTokens();
-            System.out.println("totalToken: " + totalToken);
-        } catch (NoApiKeyException | InputRequiredException e) {
-            System.out.println("error: " + e.getMessage());
-            //TODO： 需要做一个尝试机制 3次
-//            throw new RuntimeException(e);
-        }
-        //获得该list的size
-        //将content进行处理，转换为List<String>返回。
-        List<String> strings = stringToList(content);
-        Map<String, ValueWrapper> map = new HashMap<>();
-        map.put(CONTENTS, new ValueWrapper(strings));
-        map.put(TOTAL_TOKEN, new ValueWrapper(totalToken));
-        return map;
-    }
-
-    //多文本翻译
-    public static List<String> callWithMessage(String model, String translateText, String cueWord, CharacterCountUtils countUtils) {
-        System.out.println("打印是否是集合[]: " + translateText);
+    /**
+     * 用qwen-MT的部分代替google翻译。
+     * @param model 模型的类型 turbo和plus
+     * @param translateText 要翻译的文本
+     * @param source 源语言代码
+     * @param target 目标语言代码
+     * @param countUtils 计数器
+     * @return 翻译后的文本
+     */
+    public static String callWithMessage(String model, String translateText, String source, String target, CharacterCountUtils countUtils) {
+//        System.out.println("翻译源文本: " + translateText);
 
         Generation gen = new Generation();
-        Message systemMsg = Message.builder()
-                .role(Role.SYSTEM.getValue())
-                .content(cueWord)
-                .build();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
                 .content(translateText)
                 .build();
+        //TODO: 根据目标语言
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
                 .apiKey(System.getenv("BAILIAN_API_KEY"))
                 .model(model)
-                .messages(Arrays.asList(systemMsg, userMsg))
+                .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .parameter("translation_options","{\"source_lang\":\"" + source + "\",\"target_lang\":\"" + target + "\"}")
                 .build();
         String content = null;
-        Integer totalToken = null;
+        Integer totalToken;
         try {
             GenerationResult call = gen.call(param);
+//            System.out.println("call: " + call);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            System.out.println("content: " + content);
+//            System.out.println("content: " + content);
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
-            System.out.println("totalToken: " + totalToken);
+//            System.out.println("totalToken: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
-            System.out.println("百炼翻译报错信息： " + e.getMessage());
+//            System.out.println("百炼翻译报错信息： " + e.getMessage());
             appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
-//            throw new RuntimeException(e);
         }
-        //获得该list的size
-        //将content进行处理，转换为List<String>返回。
-
-        return stringToList(content);
-
+        return content;
     }
 
     //单文本翻译
@@ -240,7 +199,6 @@ public class ALiYunTranslateIntegration {
      *
      * @param context 输入字符串，预期包含方括号包裹的内容
      * @return 解析后的字符串列表
-     * @throws RuntimeException 如果解析失败，抛出运行时异常
      */
     public static List<String> stringToList(String context) {
         // 如果输入为空，直接返回空列表

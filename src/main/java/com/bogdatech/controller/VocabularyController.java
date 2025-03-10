@@ -57,10 +57,17 @@ public class VocabularyController {
         return new BaseResponse<>().CreateSuccessResponse(translateTextDataInVocabulary);
     }
 
-    //测试单条插入数据
+    //测试单条更新数据
     @PostMapping("/testInsert")
     public BaseResponse<Object> testInsert(String target, String value, String source) {
         vocabularyService.testInsert(target, value, source);
         return new BaseResponse<>().CreateSuccessResponse(null);
+    }
+
+    //测试插入单条数据
+    @PostMapping("/testInsertOne")
+    public BaseResponse<Object> testInsertOne(String target, String targetValue, String source, String sourceValue) {
+        Integer i = vocabularyService.testInsertOne(target, targetValue, source, sourceValue);
+        return new BaseResponse<>().CreateSuccessResponse(i);
     }
 }

@@ -37,7 +37,9 @@ public class VocabularyService {
         vocabularyService.testInsert(target, value, source);
     }
 
-    //单独翻译online数据
-
+    //测试单条插入文本
+    public Integer testInsertOne(String target, String targetValue, String source, String sourceValue) {
+        return vocabularyService.InsertOne(target, targetValue, source, sourceValue);
+    }
 
 }

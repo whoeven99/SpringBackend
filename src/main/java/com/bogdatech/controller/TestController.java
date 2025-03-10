@@ -21,7 +21,12 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
-import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
+import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
+import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
+import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
+import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
+import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
 import static com.bogdatech.utils.StringUtils.countWords;
 
 @RestController
@@ -44,10 +49,6 @@ public class TestController {
         this.jsoupUtils = jsoupUtils;
         this.rateHttpIntegration = rateHttpIntegration;
     }
-//	@GetMapping("/test")
-//	public List<JdbcTestModel> test() {
-//		return jdbcTestRepository.sqlTest();
-//	}
 
     @GetMapping("/ping")
     public String ping() {
@@ -114,9 +115,47 @@ public class TestController {
     //测试token计数的差距
     @PostMapping("/testToken")
     public void testToken(@RequestBody String text) {
-        int rate = 1;
-        int i = calculateToken(text, rate);
+        int i = googleCalculateToken(text);
         System.out.println("token: " + i);
+    }
+
+    @PostMapping("/testMT")
+    public void testMT(String model, String translateText, String source, String target) {
+        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
+            System.out.println("mt翻译");
+        } else {
+            System.out.println("google翻译");
+        }
+    }
+
+    @GetMapping("/testIsHTML")
+    public void testIsHTML() {
+        String html = """
+                """;
+
+        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
+        System.out.println("翻译的结果： " + result);
+    }
+
+    @GetMapping("/testPlaceholder")
+    public void testPlaceholder() {
+        // 测试用例
+        String[] testCases = {
+                "这是一个 {{ product.value }} 测试",               // 包含 {{ product.value }}
+                "包含 %{product.value} 的文本",                    // 包含 %{product.value}
+                "嵌套 {{xx[x].xx}} 数据",                         // 包含 {{xx[x].xx}}
+                "特殊 {%product.value%} 格式",                    // 包含 {%product.value%}
+                "普通文本没有占位符",                             // 不包含任何占位符
+                "",                                             // 空字符串
+                null                                            // null
+        };
+
+        for (String test : testCases) {
+            boolean result = hasPlaceholders(test);
+            String s = processTextWithPlaceholders(test, new CharacterCountUtils(), qwenMtCode("zh-CN"), qwenMtCode("en"));
+            System.out.println("翻译后的文本： " + s);
+            System.out.println("文本: \" + test + \" -> 包含占位符: " + result);
+        }
     }
 
 }
