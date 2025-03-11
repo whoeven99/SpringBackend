@@ -15,7 +15,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.bogdatech.constants.TranslateConstants.TRANSLATION_EXCEPTION;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.singleTranslate;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
@@ -225,10 +224,6 @@ public class LiquidHtmlTranslatorUtils {
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         result.append(cleanedText);
-                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
-                            //终止翻译，并返回状态4
-                            throw new ClientException(TRANSLATION_EXCEPTION);
-                        }
                         continue;
                     }
                 } else {
@@ -266,12 +261,7 @@ public class LiquidHtmlTranslatorUtils {
                         result.append(targetString);
                     }
                 } catch (ClientException e) {
-                    // 如果AI翻译失败，则使用谷歌翻译
                     result.append(cleanedText);
-                    if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
-                        //终止翻译，并返回状态4
-                        throw new ClientException(TRANSLATION_EXCEPTION);
-                    }
                 }
             } else {
                 result.append(remaining);
