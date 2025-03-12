@@ -109,12 +109,12 @@ public class TranslateService {
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
 
     //判断是否可以终止翻译流程
-    private Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
-    private Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
+    public Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
+    public Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
     private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
-    private final ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
-    private ExecutorService executorService = new ThreadPoolExecutor(
+    public ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
+    public ExecutorService executorService = new ThreadPoolExecutor(
             2,  // 核心线程数（CPU 密集型：1+1）
             10, // 最大线程数（IO 密集型：1 * (1 + 9)）
             60L, TimeUnit.SECONDS, // 空闲线程存活时间
@@ -1414,9 +1414,9 @@ public class TranslateService {
 
         for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
             int token = shopifyService.getTotalWords(shopifyRequest, method, translateResourceDTO);
-//            System.out.println("token: " + token);
             tokens += token;
         }
+        System.out.println("tokens: " + tokens + " key: " + key);
 //        System.out.println("tokens: " + tokens);
         //将tokens存储到UserTypeToken对应的列里面
         userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
