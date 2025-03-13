@@ -885,10 +885,12 @@ public class TranslateService {
             saveToShopify(targetCache, translation, resourceId, request);
             return;
         }
-        //TODO: 从数据库中获取数据
+        //TODO: 255字符以内才从数据库中获取数据
         String targetText = null;
         try {
-            targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
+            if (value.length() <= 255){
+                targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
+            }
         } catch (Exception e) {
             //打印错误信息
             appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());
@@ -920,7 +922,9 @@ public class TranslateService {
         saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
         //存到数据库中
         try {
-            vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
+            if (targetString.length() <= 255){
+                vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
+            }
         } catch (Exception e) {
             appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
         }
