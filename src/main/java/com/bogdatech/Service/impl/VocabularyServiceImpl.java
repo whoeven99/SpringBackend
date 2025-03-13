@@ -175,7 +175,8 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
 
     @Override
     public Integer InsertOne(String target, String targetValue, String source, String sourceValue) {
-        if (targetValue.length() <= 255 && isDatabaseLanguage(target) && isDatabaseLanguage(source) && sourceValue.length() <= 255) {
+        if (targetValue.length() > 255 || !isDatabaseLanguage(target) || !isDatabaseLanguage(source) || sourceValue.length() > 255) {
+//            System.out.println("targetValue: " + targetValue + " sourceValue: " + sourceValue + " source" + source + " target: " + target);
             return null;
         }
         String oldSource = source;
