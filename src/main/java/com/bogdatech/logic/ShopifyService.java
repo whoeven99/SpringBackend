@@ -393,7 +393,7 @@ public class ShopifyService {
             if (translatableContentDigest.equals("7e5666f38db3d8e152d083536c342e88c0e3101443b010b7b9f6ba94429a060f")) {
                 //翻译对应的数据
                 Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
-                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale + " translatableContentDigest: " + translatableContentDigest + " resourceId: " + resourceId + " targetValue: " + targetText );
+                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale + " translatableContentDigest: " + translatableContentDigest + " resourceId: " + resourceId + " targetValue: " + targetText);
                 saveToShopify(targetText, translation, resourceId, request);
             }
 //            if (isHtml(value)){
@@ -464,9 +464,9 @@ public class ShopifyService {
             }
 
             String key = contentItemNode.path("key").asText(null);
-//            if (translatedContent.get(key) == null) {
-//                continue;
-//            }
+            if (translatedContent.get(key) == null) {
+                continue;
+            }
 
             String type = contentItemNode.path("type").asText(null);
             String locale = contentItemNode.path("locale").asText(null);
@@ -497,17 +497,18 @@ public class ShopifyService {
 //            }
 
 //            if (!isHtml(value)) {
-                CsvRequest csvRequest = new CsvRequest();
-                csvRequest.setSource_text(value);
-                csvRequest.setSource_code(locale);
-                csvRequest.setTarget_code(request.getTarget());
-                csvRequest.setTarget_text(translateResourceMap.get(key));
-                csvRequest.setDigest(translatableContentDigest);
-                csvRequest.setResourceId(resourceId);
-                csvRequest.setKey(key);
+            CsvRequest csvRequest = new CsvRequest();
+            csvRequest.setSource_text(value);
+            csvRequest.setSource_code(locale);
+            csvRequest.setTarget_code(request.getTarget());
+            csvRequest.setTarget_text(translatedContent.get(key).getTargetText());
+//            System.out.println(translatedContent.get(key).getTargetText());
+            csvRequest.setDigest(translatableContentDigest);
+            csvRequest.setResourceId(resourceId);
+            csvRequest.setKey(key);
 //                csvRequest.setKey(key);
 //                System.out.println("setTarget_text: " + translateResourceMap.get(key));
-                csvRequestList.add(csvRequest);
+            csvRequestList.add(csvRequest);
 //            }
 
 
