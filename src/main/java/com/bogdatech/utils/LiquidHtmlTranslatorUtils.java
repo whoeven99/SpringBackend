@@ -71,6 +71,7 @@ public class LiquidHtmlTranslatorUtils {
                 processNode(doc.body(), request, counter, resourceType);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
 //                appInsights.trackTrace("有html标签： "  + result);
+                System.out.println("有html标签： "  + result);
                 return result;
             } else {
                 // 如果没有 <html> 标签，作为片段处理
@@ -87,6 +88,7 @@ public class LiquidHtmlTranslatorUtils {
 
                 String output = result.toString();
 //                appInsights.trackTrace("没有html标签： "  + output);
+                System.out.println("没有html标签： "  + output);
                 return output;
             }
 
@@ -201,7 +203,7 @@ public class LiquidHtmlTranslatorUtils {
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
                 //对特殊符号进行处理
                 if (cleanedText.matches("\\p{Zs}")){
-//                    System.out.println("要翻译的空白： " + cleanedText);
+                    System.out.println("要翻译的空白： " + cleanedText);
                     result.append(cleanedText);
                     continue;
                 }
@@ -210,14 +212,14 @@ public class LiquidHtmlTranslatorUtils {
                     try {
                         if (cleanedText.length() > 32) {
                             //AI翻译
-//                            System.out.println("要翻译的文本AI： " + cleanedText);
+                            System.out.println("要翻译的文本AI： " + cleanedText);
 //                            appInsights.trackTrace("要翻译的文本AI： " + cleanedText);
                             targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                             result.append(targetString);
                         } else {
                             request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
-//                            System.out.println("要翻译的文本： " + cleanedText);
+                            System.out.println("要翻译的文本： " + cleanedText);
                             targetString = translateAndCount(request, counter, resourceType);
                             result.append(targetString);
                         }
@@ -240,7 +242,7 @@ public class LiquidHtmlTranslatorUtils {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
             if (cleanedText.matches("\\p{Zs}")){
-//                System.out.println("要翻译的剩余空白： " + cleanedText);
+                System.out.println("要翻译的剩余空白： " + cleanedText);
                 result.append(cleanedText);
                 return result.toString();
             }
@@ -250,13 +252,13 @@ public class LiquidHtmlTranslatorUtils {
                     if (cleanedText.length() > 32) {
                         //AI翻译
 //                        appInsights.trackTrace("处理剩余文本AI： " + cleanedText);
-//                        System.out.println("要翻译的文本AI： " + cleanedText);
+                        System.out.println("要翻译的文本AI： " + cleanedText);
                         targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                         result.append(targetString);
                     } else {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                        System.out.println("要翻译的文本： " + cleanedText);
+                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
                         result.append(targetString);
                     }
