@@ -66,4 +66,12 @@ public class ApiCodeUtils {
             default -> code;
         };
     }
+
+    public static boolean isDatabaseLanguage(String languageCode) {
+        return switch (languageCode) {
+            case "en", "es", "fr", "de", "pt-BR", "pt-PT", "zh-CN", "zh-TW", "ja", "it", "ru", "ko", "nl", "da", "hi", "bg", "cs", "el", "fi", "hr", "hu", "id", "lt", "nb", "pl", "ro", "sk", "sl", "sv", "th", "tr", "vi", "ar", "no", "uk", "lv", "et" ->
+                    true;  // 语言代码有效
+            default -> false; // 语言代码无效
+        };
+    }
 }

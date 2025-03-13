@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
+import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
 import static com.bogdatech.utils.StringUtils.countWords;
@@ -129,11 +129,12 @@ public class TestController {
     }
 
     @GetMapping("/testIsHTML")
-    public void testIsHTML() {
+    public void testIsHTML(String target) {
         String html = """
+                
                 """;
-
-        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
+        boolean result = isDatabaseLanguage(target);
+//        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
         System.out.println("翻译的结果： " + result);
     }
 
@@ -146,7 +147,6 @@ public class TestController {
                 "嵌套 {{xx[x].xx}} 数据",                         // 包含 {{xx[x].xx}}
                 "特殊 {%product.value%} 格式",                    // 包含 {%product.value%}
                 "普通文本没有占位符",                             // 不包含任何占位符
-                "",                                             // 空字符串
                 null                                            // null
         };
 
