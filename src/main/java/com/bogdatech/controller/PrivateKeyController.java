@@ -37,4 +37,6 @@ public class PrivateKeyController {
     public BaseResponse<Object> translate(@RequestBody ClickTranslateRequest clickTranslateRequest) {
         return privateKeyService.judgePrivateKey(clickTranslateRequest);
     }
+
+
 }

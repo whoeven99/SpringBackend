@@ -21,15 +21,28 @@ public class UserPrivateService {
     }
 
     public BaseResponse<Object> saveOrUpdateUserData(UserPrivateRequest userPrivateRequest) {
+        String model = userPrivateRequest.getModel();
+        if (model == null) {
+            return new BaseResponse<>().CreateErrorResponse("model 不能为空");
+        }
         //如果user的googleKey或openaiKey 有值，判断对应的value有没有值，没有的话报错
-        if (userPrivateRequest.getGoogleKey() != null && userPrivateRequest.getGoogleSecret() == null) {
-            return new BaseResponse<>().CreateErrorResponse("googleSecret 不能为空");
+        if (userPrivateRequest.getSecret() == null) {
+            return new BaseResponse<>().CreateErrorResponse("Secret 不能为空");
         }
-        if (userPrivateRequest.getOpenaiKey() != null && userPrivateRequest.getOpenaiSecret() == null) {
-            return new BaseResponse<>().CreateErrorResponse("openaiSecret 不能为空");
-        }
-        //将userPrivateRequest转为userPrivateDO
-        UserPrivateDO userPrivateDO = new UserPrivateDO(null, userPrivateRequest.getShopName(), userPrivateRequest.getAmount(), null, userPrivateRequest.getOpenaiKey(), userPrivateRequest.getGoogleKey());
+
+        UserPrivateDO userPrivateDO;
+       //根据传入的model，将userPrivateRequest转为对应的userPrivateDO
+       switch (model) {
+           case "google":
+                userPrivateDO = new UserPrivateDO(null, userPrivateRequest.getShopName(), userPrivateRequest.getAmount(), null, null, userPrivateRequest.getSecret());
+               break;
+           case "openai":
+                userPrivateDO = new UserPrivateDO(null, userPrivateRequest.getShopName(), userPrivateRequest.getAmount(), null, userPrivateRequest.getSecret(), null);
+               break;
+           default:
+               return new BaseResponse<>().CreateErrorResponse(model + " 暂时不支持！");
+       }
+
 
         //存到数据库中
         //先判断userPrivateDO是否已经存在，如果存在则更新，如果不存在则插入
@@ -59,6 +72,7 @@ public class UserPrivateService {
         return new BaseResponse<>().CreateSuccessResponse("保存用户数据成功");
     }
 
+    //获取用户数据
     public BaseResponse<Object> getUserData(UserPrivateRequest userPrivateRequest) {
         UserPrivateDO userPrivateDO;
         int retries = 3;
@@ -86,5 +100,13 @@ public class UserPrivateService {
             }
         }
         return new BaseResponse<>().CreateErrorResponse("查询用户数据失败");
+    }
+
+    //更新用户已使用字符数
+    public void updateUsedCharsByShopName(String shopName, Integer usedChars) {
+        //更新用户
+        UserPrivateDO userPrivateDO = new UserPrivateDO();
+        userPrivateDO.setUsedAmount(usedChars);
+        userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(SHOP_NAME, shopName));
     }
 }

@@ -29,4 +29,9 @@ public class UserPrivateController {
     public BaseResponse<Object> getUserData(@RequestBody UserPrivateRequest userPrivateRequest) {
         return userPrivateService.getUserData(userPrivateRequest);
     }
+
+    @PostMapping("updateUsedData")
+    public void updateUsedCharsByShopName(@RequestBody UserPrivateRequest userPrivateRequest) {
+        userPrivateService.updateUsedCharsByShopName(userPrivateRequest.getShopName(), userPrivateRequest.getAmount());
+    }
 }

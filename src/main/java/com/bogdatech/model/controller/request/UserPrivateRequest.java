@@ -11,9 +11,7 @@ import lombok.NoArgsConstructor;
 public class UserPrivateRequest {
     @NotBlank(message = "店铺名不能为空")
     private String shopName;
-    private String openaiKey;
-    private String openaiSecret;
-    private String googleKey;
-    private String googleSecret;
+    private String model;
+    private String secret;
     private Integer amount;
 }
