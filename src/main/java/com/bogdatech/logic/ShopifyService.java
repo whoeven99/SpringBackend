@@ -464,9 +464,9 @@ public class ShopifyService {
             }
 
             String key = contentItemNode.path("key").asText(null);
-            if (translatedContent.get(key) == null) {
-                continue;
-            }
+//            if (translatedContent.get(key) == null) {
+//                continue;
+//            }
 
             String type = contentItemNode.path("type").asText(null);
             String locale = contentItemNode.path("locale").asText(null);
@@ -474,7 +474,10 @@ public class ShopifyService {
             //如果包含相对路径则跳过
             if ("handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
-                    || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD) || resourceType.equals(SHOP_POLICY)) {
+                    || type.equals(("LIST_URL"))
+//                    || resourceType.equals(METAFIELD)
+                    || resourceType.equals(SHOP_POLICY)) {
+
 //                System.out.println("FileReference: " + value);
                 continue;
             }
@@ -501,11 +504,12 @@ public class ShopifyService {
             csvRequest.setSource_text(value);
             csvRequest.setSource_code(locale);
             csvRequest.setTarget_code(request.getTarget());
-            csvRequest.setTarget_text(translatedContent.get(key).getTargetText());
+//            csvRequest.setTarget_text(translatedContent.get(key).getTargetText());
 //            System.out.println(translatedContent.get(key).getTargetText());
             csvRequest.setDigest(translatableContentDigest);
             csvRequest.setResourceId(resourceId);
             csvRequest.setKey(key);
+            csvRequest.setType(type);
 //                csvRequest.setKey(key);
 //                System.out.println("setTarget_text: " + translateResourceMap.get(key));
             csvRequestList.add(csvRequest);

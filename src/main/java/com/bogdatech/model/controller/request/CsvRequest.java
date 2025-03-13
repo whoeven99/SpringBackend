@@ -16,4 +16,5 @@ public class CsvRequest {
     private String key;
     private String digest;
     private String resourceId;
+    private String type;
 }
