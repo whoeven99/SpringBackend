@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
 import static com.bogdatech.utils.CsvUtils.readCsv;
 
 @RestController
@@ -67,7 +68,13 @@ public class VocabularyController {
     //测试插入单条数据
     @PostMapping("/testInsertOne")
     public BaseResponse<Object> testInsertOne(String target, String targetValue, String source, String sourceValue) {
-        Integer i = vocabularyService.testInsertOne(target, targetValue, source, sourceValue);
-        return new BaseResponse<>().CreateSuccessResponse(i);
+        Integer i = null;
+        if (targetValue.length() <= 255 && isDatabaseLanguage(target) && isDatabaseLanguage(source) && sourceValue.length() <= 255) {
+            i = vocabularyService.testInsertOne(target, targetValue, source, sourceValue);
+            return new BaseResponse<>().CreateSuccessResponse(i);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(i);
+        }
+
     }
 }
