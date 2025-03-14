@@ -115,10 +115,10 @@ public class TranslateService {
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     private final ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
     private ExecutorService executorService = new ThreadPoolExecutor(
-            2,  // 核心线程数（CPU 密集型：1+1）
-            10, // 最大线程数（IO 密集型：1 * (1 + 9)）
+            8,   // 核心线程数（比 vCPU 多一点）
+            16,  // 最大线程数（vCPU * 4）
             60L, TimeUnit.SECONDS, // 空闲线程存活时间
-            new LinkedBlockingQueue<>(50), // 任务队列（避免内存过载）
+            new LinkedBlockingQueue<>(100), // 任务队列（避免内存过载）
             new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
     );
 
