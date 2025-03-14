@@ -314,7 +314,8 @@ public class ShopifyService {
             String translatableContentDigest = contentItemNode.path("digest").asText(null);
             String target = request.getTarget();
             //如果包含相对路径则跳过
-            if ("JSON".equals(type) || "JSON_STRING".equals(type) || "handle".equals(key)
+            if ("JSON".equals(type) || "JSON_STRING".equals(type)
+//                    || "handle".equals(key)
                     || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD) || resourceType.equals(SHOP_POLICY)) {
@@ -338,11 +339,19 @@ public class ShopifyService {
 //                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale + " translatableContentDigest: " + translatableContentDigest + " resourceId: " + resourceId + " targetValue: " + targetText);
 //                saveToShopify(targetText, translation, resourceId, request);
 //            }
-            if (key.contains("icon:")){
+
+            if (key.equals("handle")){
                 Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
                 saveToShopify(value, translation, resourceId, request);
                 System.out.println("key: " + key + " value: " + value);
             }
+
+            //TODO:ICON
+//            if (key.contains("icon:")){
+//                Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
+//                saveToShopify(value, translation, resourceId, request);
+//                System.out.println("key: " + key + " value: " + value);
+//            }
 //            if (isHtml(value)){
 //                Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
 //                System.out.println("value: " + value);
@@ -446,7 +455,7 @@ public class ShopifyService {
 //                csvRequestList.add(csvRequest);
 //            }
 
-            if (!isHtml(value)) {
+//            if (!isHtml(value)) {
             CsvRequest csvRequest = new CsvRequest();
             csvRequest.setSource_text(value);
             csvRequest.setSource_code(locale);
@@ -460,7 +469,7 @@ public class ShopifyService {
 //                csvRequest.setKey(key);
 //                System.out.println("setTarget_text: " + translateResourceMap.get(key));
             csvRequestList.add(csvRequest);
-            }
+//            }
 
 
         }
