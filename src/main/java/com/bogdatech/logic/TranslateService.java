@@ -130,53 +130,36 @@ public class TranslateService {
         String target = request.getTarget();
         Future<?> future = executorService.submit(() -> {
             LocalDateTime begin = LocalDateTime.now();
-            appInsights.trackTrace("Task submitted at: " + begin + " for shop: " + shopName);
+            System.out.println("Task submitted at: " + begin + " for shop: " + shopName);
             try {
                 translating(request, remainingChars, counter, usedChars);  // 执行翻译任务
             } catch (ClientException e) {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                    appInsights.trackTrace("翻译失败的原因： " + e.getErrorMessage());
+                    System.out.println("翻译失败的原因： " + e.getErrorMessage());
                     //更新初始值
                     try {
                         startTokenCount(request);
                     } catch (Exception e2) {
-                        appInsights.trackTrace("重新更新token值失败！！！");
+                        System.out.println("重新更新token值失败！！！");
                     }
                     return;
                 }
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
 //                //发送报错邮件
-                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
-                if (emailSent.compareAndSet(false, true)) {
-                    translateFailEmail(shopName, CHARACTER_LIMIT);
-                }
-                appInsights.trackTrace("startTranslation " + e.getErrorMessage());
-                //更新初始值
-                try {
-                    startTokenCount(request);
-                } catch (Exception e3) {
-                    appInsights.trackTrace("重新更新token值失败！！！");
-                }
+//                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
+//                if (emailSent.compareAndSet(false, true)) {
+//                    translateFailEmail(shopName, CHARACTER_LIMIT);
+//                }
+                System.out.println("startTranslation " + e.getErrorMessage());
                 return;
             } catch (CannotCreateTransactionException e) {
-                appInsights.trackTrace("Translation task failed: " + e);
+                System.out.println("Translation task failed: " + e);
                 //更新初始值
-                try {
-                    startTokenCount(request);
-                } catch (Exception e4) {
-                    appInsights.trackTrace("重新更新token值失败！！！");
-                }
                 return;
             } catch (Exception e) {
-                appInsights.trackTrace("Translation task failed: " + e);
-                //更新初始值
-                try {
-                    startTokenCount(request);
-                } catch (Exception e5) {
-                    appInsights.trackTrace("重新更新token值失败！！！");
-                }
+                System.out.println("Translation task failed: " + e);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 return;
@@ -186,13 +169,8 @@ public class TranslateService {
             // 将翻译状态改为“已翻译”//
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
-            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
-            //更新初始值
-            try {
-                startTokenCount(request);
-            } catch (Exception e) {
-                appInsights.trackTrace("重新更新token值失败！！！");
-            }
+//            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+
         });
 
         userTasks.put(shopName, future);  // 存储用户的任务
@@ -211,7 +189,7 @@ public class TranslateService {
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
-                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
+                System.out.println("用户 " + shopName + " 的翻译任务已停止");
 //                 将翻译状态改为“部分翻译” shopName, status=3
                 translatesService.updateStatusByShopNameAnd2(shopName);
                 translateFailEmail(shopName, TRANSLATING_STOPPED);
@@ -227,7 +205,7 @@ public class TranslateService {
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
-                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
+                System.out.println("用户 " + shopName + " 的翻译任务已停止");
 //                 将翻译状态改为“部分翻译” shopName, status=3
                 translatesService.updateStatusByShopNameAnd2(shopName);
                 return "翻译任务已停止";
@@ -260,7 +238,7 @@ public class TranslateService {
             string = testingEnvironmentIntegration.sendShopifyPost("translate/googleTranslate", requestBody);
         } catch (Exception e) {
 //            throw new RuntimeException(e);
-            appInsights.trackTrace("Failed to get Google Translate data: " + e.getMessage());
+            System.out.println("Failed to get Google Translate data: " + e.getMessage());
             return request.getContent();
         }
         return string;
@@ -285,7 +263,7 @@ public class TranslateService {
             }
 
         } catch (JsonProcessingException | ClientException e) {
-            appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
+            System.out.println("Failed to save to Shopify: " + e.getMessage());
         }
     }
 
@@ -385,7 +363,7 @@ public class TranslateService {
         try {
             rootNode = objectMapper.readTree(translateContext.getShopifyData());
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("rootNode错误： " + e.getMessage());
+            System.out.println("rootNode错误： " + e.getMessage());
             return null;
         }
         translateSingleLineTextFieldsRecursively(rootNode, translateContext);
@@ -445,7 +423,7 @@ public class TranslateService {
         try {
             translateAndSaveData(judgeData, translateContext);
         } catch (ClientException e) {
-            appInsights.trackTrace("翻译过程中抛出的异常" + e.getErrorMessage());
+            System.out.println("翻译过程中抛出的异常" + e.getErrorMessage());
             throw e;
         }
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopifyRequest.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));
@@ -532,7 +510,7 @@ public class TranslateService {
                     translateDataByOPENAI(entry.getValue(), translateContext);
                     break;
                 default:
-                    appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
+                    System.out.println("未知的翻译文本： " + entry.getValue());
                     break;
             }
         }
@@ -579,7 +557,7 @@ public class TranslateService {
             try {
                 translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
-                appInsights.trackTrace("翻译错误原因： " + e.getMessage());
+                System.out.println("翻译错误原因： " + e.getMessage());
             }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
@@ -614,7 +592,7 @@ public class TranslateService {
                 return true;
             } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
-                appInsights.trackTrace("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
+                System.out.println("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
             }
         }
         return false;
@@ -631,7 +609,7 @@ public class TranslateService {
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
-                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
+                System.out.println("用户 " + shopName + " 的翻译任务已停止");
             }
         }
     }
@@ -701,7 +679,7 @@ public class TranslateService {
             try {
                 translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
-                appInsights.trackTrace("翻译问题： " + e.getMessage());
+                System.out.println("翻译问题： " + e.getMessage());
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
@@ -796,7 +774,7 @@ public class TranslateService {
             try {
                 translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
-                appInsights.trackTrace("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
+                System.out.println("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
             }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
@@ -867,7 +845,7 @@ public class TranslateService {
             try {
                 translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
-                appInsights.trackTrace("翻译失败后的字符数： " + counter.getTotalChars());
+                System.out.println("翻译失败后的字符数： " + counter.getTotalChars());
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                 saveToShopify(value, translation, resourceId, request);
             }
@@ -890,7 +868,7 @@ public class TranslateService {
             targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
         } catch (Exception e) {
             //打印错误信息
-            appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());
+            System.out.println("translateDataByDatabase error: " + e.getMessage());
         }
         if (targetText != null) {
             addData(target, value, targetText);
@@ -909,11 +887,11 @@ public class TranslateService {
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
         } catch (ClientException e) {
-            appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
+            System.out.println("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
 
         if (targetString == null) {
-            appInsights.trackTrace("翻译失败后的字符： " + registerTransactionRequest);
+            System.out.println("翻译失败后的字符： " + registerTransactionRequest);
             saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
         }
@@ -925,7 +903,7 @@ public class TranslateService {
             vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
 
         } catch (Exception e) {
-            appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
+            System.out.println("存储失败： " + e.getMessage() + " ，继续翻译");
         }
     }
 
@@ -974,14 +952,14 @@ public class TranslateService {
                     continue;
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("失败的原因： " + e.getMessage());
+                System.out.println("失败的原因： " + e.getMessage());
                 continue;
             }
 
             //如果translatableContentMap里面有该key则不翻译，没有则翻译
-            if (translatableContentMap.containsKey(key)) {
-                continue;
-            }
+//            if (translatableContentMap.containsKey(key)) {
+//                continue;
+//            }
 
             //如果包含相对路径则跳过
             if ("handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
@@ -1268,7 +1246,7 @@ public class TranslateService {
                 }
             } catch (Exception e) {
                 //如果出现异常，则跳过, 翻译其他的内容
-                appInsights.trackTrace("saveTranslateText error: " + e.getMessage());
+                System.out.println("saveTranslateText error: " + e.getMessage());
                 continue;
             }
             saveTranslatedData(string, shopifyRequest, translateResource);
@@ -1332,7 +1310,7 @@ public class TranslateService {
             try {
                 vocabularyService.storeTranslationsInVocabulary(list);
             } catch (Exception e) {
-                appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
+                System.out.println("存储失败： " + e.getMessage() + " ，继续翻译");
             }
         }
     }
@@ -1369,7 +1347,7 @@ public class TranslateService {
             String formattedNumber2 = formatter.format(remaining);
             templateData.put("remaining_credits", formattedNumber2);
         }
-        appInsights.trackTrace("templateData" + templateData);
+        System.out.println("templateData" + templateData);
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133535L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
@@ -1513,14 +1491,14 @@ public class TranslateService {
                         updateWrapper.set(key, tokens);
                         userTypeTokenService.update(null, updateWrapper);
                     } else {
-                        appInsights.trackTrace("Invalid column name");
+                        System.out.println("Invalid column name");
                     }
                 }
                 //token全部获取完之后修改，UserTypeToken的status==1
                 userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
             }
         } catch (IllegalArgumentException e) {
-            appInsights.trackTrace("错误原因： " + e.getMessage());
+            System.out.println("错误原因： " + e.getMessage());
         }
     }
 }
