@@ -203,7 +203,7 @@ public class LiquidHtmlTranslatorUtils {
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
                 //对特殊符号进行处理
                 if (cleanedText.matches("\\p{Zs}")){
-                    System.out.println("要翻译的空白： " + cleanedText);
+//                    System.out.println("要翻译的空白： " + cleanedText);
                     result.append(cleanedText);
                     continue;
                 }
@@ -212,14 +212,14 @@ public class LiquidHtmlTranslatorUtils {
                     try {
                         if (cleanedText.length() > 32) {
                             //AI翻译
-                            System.out.println("要翻译的文本AI： " + cleanedText);
+//                            System.out.println("要翻译的文本AI： " + cleanedText);
 //                            appInsights.trackTrace("要翻译的文本AI： " + cleanedText);
                             targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
                             result.append(targetString);
                         } else {
                             request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
-                            System.out.println("要翻译的文本： " + cleanedText);
+//                            System.out.println("要翻译的文本： " + cleanedText);
                             targetString = translateAndCount(request, counter, resourceType);
                             result.append(targetString);
                         }
