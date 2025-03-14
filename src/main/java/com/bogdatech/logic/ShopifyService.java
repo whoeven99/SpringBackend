@@ -47,7 +47,6 @@ import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CalculateTokenUtils.calculateToken;
-import static com.bogdatech.utils.CsvUtils.readCsvToCsvRequest;
 import static com.bogdatech.utils.CsvUtils.writeCsv;
 import static com.bogdatech.utils.StringUtils.countWords;
 
@@ -125,12 +124,12 @@ public class ShopifyService {
         List<CsvRequest> csvRequestList = new ArrayList<>();
         Map<String, String> csvMap = new HashMap<>();
         System.out.println("开始： " + method + " 方法");
-        if (method.equals("translate")) {
-            //读csv文件并转化为List<CsvRequest>
-            csvMap = readCsvToCsvRequest("src/main/java/com/bogdatech/requestBody/" + request.getApiVersion() + ".csv");
-            System.out.println("csvMap: " + csvMap);
-//            System.out.println("csvMap: " + csvMap.toString());
-        }
+//        if (method.equals("translate")) {
+//            //读csv文件并转化为List<CsvRequest>
+//            csvMap = readCsvToCsvRequest("src/main/java/com/bogdatech/requestBody/" + request.getApiVersion() + ".csv");
+////            System.out.println("csvMap: " + csvMap);
+////            System.out.println("csvMap: " + csvMap.toString());
+//        }
 //        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
         TranslateResourceDTO translateResource = ALL_RESOURCES.get(i);
         translateResource.setTarget(request.getTarget());
@@ -332,69 +331,17 @@ public class ShopifyService {
 //                if (csvMap.containsKey(value) && !translatedContent.contains(key)) {
 //            System.out.println("digest:" + translatableContentDigest);
 //            System.out.println("csvMap:" + csvMap.toString());
-            String targetText = "<div data-line=\"true\" data-line-index=\"0\" data-zone-id=\"0\"><span>產品名稱： 多功能汽車扶手逃生錘</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"1\" data-zone-id=\"0\"><span>產品材質： 鋁合金+ABS+橡膠</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"2\" data-zone-id=\"0\"><span>產品尺寸： 18*11*7CM</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\"><span>產品重量： 裸機170g</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\">\n" +
-                    "<span></span><br>\n" +
-                    "</div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\"><span><img src=\"https://cdn.shopify.com/s/files/1/0722/5055/6670/files/10_a46068d1-432f-4c37-800f-a6c56f568ee3.png?v=1741591814\" alt=\"\"></span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\">\n" +
-                    "<div data-line=\"true\" data-line-index=\"1\" data-zone-id=\"0\"><span>照明功能：配備 LED 燈，可在光線不足的環境下提供照明 。</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"2\" data-zone-id=\"0\"><span>破窗功能：安全錘可在緊急情況下擊碎車窗玻璃，用於逃生。</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\"><span>切割功能：安全帶切割器能夠割斷安全帶，在緊急時刻幫助乘客脫離束縛。</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"4\" data-zone-id=\"0\"><span>輔助上下車功能：安全上下車扶手承載力達 350 斤，方便乘客借力上下車 。</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"4\" data-zone-id=\"0\">\n" +
-                    "<span></span><br>\n" +
-                    "</div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"4\" data-zone-id=\"0\"><span><img src=\"https://cdn.shopify.com/s/files/1/0722/5055/6670/files/11_37959534-d3bf-43fd-b34a-c184b85ae323.png?v=1741591858\" alt=\"\"></span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"4\" data-zone-id=\"0\">\n" +
-                    "<div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"0\" data-zone-id=\"0\">\n" +
-                    "<span>握手紋路設計，增加握持時的摩擦力 ，方便抓握；</span><span>底部的圓孔可用於掛置，便於收納。</span>\n" +
-                    "</div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"0\" data-zone-id=\"0\">\n" +
-                    "<span></span><br>\n" +
-                    "</div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"1\" data-zone-id=\"0\"><br></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"1\" data-zone-id=\"0\"><span><img src=\"https://cdn.shopify.com/s/files/1/0722/5055/6670/files/12_cf516828-a255-46d6-8b0f-5e14aa51d5ec.png?v=1741591930\" alt=\"\"></span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"1\" data-zone-id=\"0\">\n" +
-                    "<div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"0\" data-zone-id=\"0\"><span>用於車輛應急逃生等場景：</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"1\" data-zone-id=\"0\"><span>銀色金屬部分是安全錘，可在緊急時破窗；</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"2\" data-zone-id=\"0\"><span>手柄末端隱藏著安全帶切割器，能割斷安全帶；</span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\">\n" +
-                    "<span>手柄處有紅色防滑設計，便於握持；</span><span>頂部裝有 LED 燈。</span>\n" +
-                    "</div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\">\n" +
-                    "<span></span><br>\n" +
-                    "</div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\"><br></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\"><span><img src=\"https://cdn.shopify.com/s/files/1/0722/5055/6670/files/13_743b6c90-4bc6-4227-a6bb-dfcc9f1ed465.png?v=1741591965\" alt=\"\"></span></div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"3\" data-zone-id=\"0\">\n" +
-                    "<div>\n" +
-                    "<div data-zone-id=\"0\" data-line-index=\"0\" data-line=\"true\"><span>具體用途：</span></div>\n" +
-                    "<div data-zone-id=\"0\" data-line-index=\"1\" data-line=\"true\"><span>作為車載扶手 ，幫助人們輕鬆上下車；</span></div>\n" +
-                    "<div data-zone-id=\"0\" data-line-index=\"2\" data-line=\"true\"><span>配備LED手電筒，可在需要時照明； </span></div>\n" +
-                    "<div data-zone-id=\"0\" data-line-index=\"3\" data-line=\"true\"><span>設有安全帶切割器，緊急時刻能割斷安全帶；</span></div>\n" +
-                    "<div data-zone-id=\"0\" data-line-index=\"4\" data-line=\"true\"><span>具備破窗器功能，可在危急情況下擊碎車窗逃生。 </span></div>\n" +
-                    "<div data-zone-id=\"0\" data-line-index=\"4\" data-line=\"true\"><span><img alt=\"\" src=\"https://cdn.shopify.com/s/files/1/0722/5055/6670/files/14_88e7a5f5-5541-4b0d-8c70-d969b6b9a132.png?v=1741591992\"></span></div>\n" +
-                    "</div>\n" +
-                    "</div>\n" +
-                    "</div>\n" +
-                    "</div>\n" +
-                    "<div data-line=\"true\" data-line-index=\"1\" data-zone-id=\"0\">\n" +
-                    "<span></span><br>\n" +
-                    "</div>\n" +
-                    "</div>\n" +
-                    "</div>\n" +
-                    "</div>";
-            if (translatableContentDigest.equals("7e5666f38db3d8e152d083536c342e88c0e3101443b010b7b9f6ba94429a060f")) {
-                //翻译对应的数据
+            String targetText = "";
+//            if (translatableContentDigest.equals("7e5666f38db3d8e152d083536c342e88c0e3101443b010b7b9f6ba94429a060f")) {
+//                //翻译对应的数据
+//                Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
+//                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale + " translatableContentDigest: " + translatableContentDigest + " resourceId: " + resourceId + " targetValue: " + targetText);
+//                saveToShopify(targetText, translation, resourceId, request);
+//            }
+            if (key.contains("icon:")){
                 Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
-                System.out.println("value: " + value + " key: " + key + " type: " + type + " locale: " + locale + " translatableContentDigest: " + translatableContentDigest + " resourceId: " + resourceId + " targetValue: " + targetText);
-                saveToShopify(targetText, translation, resourceId, request);
+                saveToShopify(value, translation, resourceId, request);
+                System.out.println("key: " + key + " value: " + value);
             }
 //            if (isHtml(value)){
 //                Map<String, Object> translation = createTranslationMap(target, new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, target));
@@ -499,7 +446,7 @@ public class ShopifyService {
 //                csvRequestList.add(csvRequest);
 //            }
 
-//            if (!isHtml(value)) {
+            if (!isHtml(value)) {
             CsvRequest csvRequest = new CsvRequest();
             csvRequest.setSource_text(value);
             csvRequest.setSource_code(locale);
@@ -513,7 +460,7 @@ public class ShopifyService {
 //                csvRequest.setKey(key);
 //                System.out.println("setTarget_text: " + translateResourceMap.get(key));
             csvRequestList.add(csvRequest);
-//            }
+            }
 
 
         }
