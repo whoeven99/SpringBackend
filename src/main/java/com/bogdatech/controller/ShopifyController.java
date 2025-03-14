@@ -60,7 +60,7 @@ public class ShopifyController {
             infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
         } catch (Exception e) {
 //            throw new RuntimeException(e);
-            appInsights.trackTrace("无法获取shopify数据");
+            System.out.println("无法获取shopify数据");
         }
         if (infoByShopify == null) {
             return null;
@@ -89,7 +89,7 @@ public class ShopifyController {
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                appInsights.trackTrace("Error while getConsumedWords for shop " + e.getMessage());
+                System.out.println("Error while getConsumedWords for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -154,7 +154,7 @@ public class ShopifyController {
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                appInsights.trackTrace("Error while getUserLimitChars for shop " + e.getMessage());
+                System.out.println("Error while getUserLimitChars for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试

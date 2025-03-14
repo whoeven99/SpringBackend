@@ -131,7 +131,7 @@ public class JsoupUtils {
                 throw new ClientException(TRANSLATION_EXCEPTION);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("HTML" + e.getMessage());
+            System.out.println("HTML" + e.getMessage());
         }
 
         // Replace original texts and alt attributes with translated ones
@@ -310,7 +310,7 @@ public class JsoupUtils {
             try {
                 sleep(300);
             }catch (Exception e){
-                appInsights.trackTrace("sleep错误： " + e.getMessage());
+                System.out.println("sleep错误： " + e.getMessage());
             }
 
             if (hasPlaceholders(request.getContent())){
@@ -342,7 +342,7 @@ public class JsoupUtils {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
-                appInsights.trackTrace("sleep错误： " + ex.getMessage());
+                System.out.println("sleep错误： " + ex.getMessage());
             }
             return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
         }

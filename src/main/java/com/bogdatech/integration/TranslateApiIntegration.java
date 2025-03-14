@@ -106,7 +106,7 @@ public class TranslateApiIntegration {
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
         } catch (Exception e) {
-            appInsights.trackTrace("信息：" + e.getMessage());
+            System.out.println("信息：" + e.getMessage());
         }
         return result;
     }
@@ -125,7 +125,7 @@ public class TranslateApiIntegration {
                     return translatedText; // 成功获取翻译，直接返回
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("翻译 API 调用失败，重试次数：" + retryCount + "，错误信息：" + e.getMessage());
+                System.out.println("翻译 API 调用失败，重试次数：" + retryCount + "，错误信息：" + e.getMessage());
             }
 
             try {
@@ -167,7 +167,7 @@ public class TranslateApiIntegration {
             HttpEntity responseEntity = response.getEntity();
             responseContent = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             // 获取翻译结果
-            appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
+            System.out.println("翻译错误信息：" + JSON.parseArray(responseContent));
 //            System.out.println("翻译错误信息：" + responseContent);
             JSONArray jsonArray = JSON.parseArray(responseContent);
             for (int i = 0; i < jsonArray.size(); i++) {
@@ -226,7 +226,7 @@ public class TranslateApiIntegration {
                 System.out.println("Translation list is empty or not present.");
             }
         } catch (Exception e) {
-            appInsights.trackTrace("huoShanTranslate " + e.getMessage());
+            System.out.println("huoShanTranslate " + e.getMessage());
         }
         return translation;
     }

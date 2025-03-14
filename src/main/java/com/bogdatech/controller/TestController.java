@@ -53,7 +53,7 @@ public class TestController {
     @GetMapping("/ping")
     public String ping() {
         TelemetryClient appInsights = new TelemetryClient();
-        appInsights.trackTrace("SpringBackend Ping Successful");
+        System.out.println("SpringBackend Ping Successful");
         return "Ping Successful!";
     }
 

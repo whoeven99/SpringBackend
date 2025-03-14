@@ -35,7 +35,7 @@ public class RateHttpIntegration {
         try {
             response = baseHttpIntegration.sendHttpGet(url, apiKey);
         } catch (IOException e) {
-            appInsights.trackTrace("获取汇率失败");
+            System.out.println("获取汇率失败");
             return;
         }
 

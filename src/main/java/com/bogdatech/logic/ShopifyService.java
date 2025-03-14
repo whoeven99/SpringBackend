@@ -254,7 +254,7 @@ public class ShopifyService {
                     continue;  // 跳过当前项
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("失败的原因： " + e.getMessage());
+                System.out.println("失败的原因： " + e.getMessage());
                 continue;
             }
 
@@ -384,7 +384,7 @@ public class ShopifyService {
                     continue;  // 跳过当前项
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("失败的原因： " + e.getMessage());
+                System.out.println("失败的原因： " + e.getMessage());
                 continue;
             }
 
@@ -563,7 +563,7 @@ public class ShopifyService {
             }
         } catch (Exception e) {
             //如果出现异常，则跳过, 翻译其他的内容
-            appInsights.trackTrace("fetchNextPage error: " + e.getMessage());
+            System.out.println("fetchNextPage error: " + e.getMessage());
         }
         if (infoByShopify == null) {
             throw new IllegalArgumentException(String.valueOf(NETWORK_ERROR));
@@ -664,9 +664,9 @@ public class ShopifyService {
 
     //修改shopify本地单条数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        appInsights.trackTrace("传入的值： " + registerTransactionRequest.toString());
+        System.out.println("传入的值： " + registerTransactionRequest.toString());
         String string = updateShopifySingleData(registerTransactionRequest);
-        appInsights.trackTrace("返回的值： " + string);
+        System.out.println("返回的值： " + string);
         if (string.equals(registerTransactionRequest.getValue())) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
@@ -714,7 +714,7 @@ public class ShopifyService {
                     }
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
-                    appInsights.trackTrace("getTranslationItemsInfo error: " + e.getMessage());
+                    System.out.println("getTranslationItemsInfo error: " + e.getMessage());
                     continue;
                 }
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
@@ -729,7 +729,7 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("getTranslationItemsInfoAll error: " + e.getMessage());
+            System.out.println("getTranslationItemsInfoAll error: " + e.getMessage());
         }
         return result;
     }

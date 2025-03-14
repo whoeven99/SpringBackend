@@ -534,10 +534,12 @@ public class TranslateService {
             String key = registerTransactionRequest.getKey();
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
+            System.out.println("正在翻译： " + value + " resourceId: " + resourceId + " key: " + registerTransactionRequest.getKey() + " type: " + registerTransactionRequest.getTarget() + " degist: " + registerTransactionRequest.getTranslatableContentDigest());
+
             Map<String, Object> translation = createTranslationMap(target, key, translatableContentDigest);
 
             // 判断是否会超限制
-            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
+//            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
 
             //获取缓存数据和数据库数据
             if (translateDataByCacheAndDatabase(request, value, translation, resourceId, target, source)) {
@@ -702,6 +704,7 @@ public class TranslateService {
             //判断是否停止翻译
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
+
             translation.put("locale", target);
             translation.put("key", registerTransactionRequest.getKey());
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
@@ -733,8 +736,10 @@ public class TranslateService {
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
             String type = registerTransactionRequest.getTarget();
+            System.out.println("正在翻译： " + value + " resourceId: " + resourceId + " key: " + registerTransactionRequest.getKey() + " type: " + registerTransactionRequest.getTarget() + " degist: " + registerTransactionRequest.getTranslatableContentDigest());
+
             translation = createTranslationMap(target, registerTransactionRequest);
-            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
+//            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
             //从数据库中获取数据，如果不为空，存入shopify本地；如果为空翻译
             //获取缓存数据和数据库数据
             if (translateDataByCacheAndDatabase(request, value, translation, resourceId, target, source)) {
@@ -797,9 +802,11 @@ public class TranslateService {
             String value = registerTransactionRequest.getValue();
             String resourceId = registerTransactionRequest.getResourceId();
             String source = registerTransactionRequest.getLocale();
+            System.out.println("正在翻译： " + value + " resourceId: " + resourceId + " key: " + registerTransactionRequest.getKey() + " type: " + registerTransactionRequest.getTarget() + " degist: " + registerTransactionRequest.getTranslatableContentDigest());
+
             Map<String, Object> translation = createTranslationMap(target, registerTransactionRequest);
             //判断是否超限
-            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
+//            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
 
             //存放在html的list集合里面
             // 解析HTML文档
@@ -827,6 +834,7 @@ public class TranslateService {
         String target = request.getTarget();
         if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource())) return;
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
+
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
             String value = registerTransactionRequest.getValue();
@@ -834,8 +842,8 @@ public class TranslateService {
             String source = registerTransactionRequest.getLocale();
             Map<String, Object> translation = createTranslationMap(target, registerTransactionRequest);
             //判断是否超限
-            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), target, null));
-
+//            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), target, null));
+            System.out.println("正在翻译： " + value + " resourceId: " + resourceId + " key: " + registerTransactionRequest.getKey() + " type: " + registerTransactionRequest.getTarget() + " degist: " + registerTransactionRequest.getTranslatableContentDigest());
             //获取缓存数据和数据库数据
             if (translateDataByCacheAndDatabase(request, value, translation, resourceId, target, source)) {
                 continue;

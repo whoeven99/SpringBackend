@@ -48,7 +48,7 @@ public class ShopifyHttpIntegration {
             CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             responseContent = EntityUtils.toString(entity, "UTF-8");
-//            appInsights.trackTrace("Shopify response: " + responseContent);
+//            System.out.println("Shopify response: " + responseContent);
             response.close();
             httpClient.close();
         } catch (IOException e) {
@@ -73,21 +73,21 @@ public class ShopifyHttpIntegration {
         for (int i = 0; i < retryCount; i++) {
             try {
                 String responseString = sendShopifyPost(request, shopifyRequestBody.registerTransactionQuery(), variables);
-//                appInsights.trackTrace("registerTransaction response: " + responseString);
+//                System.out.println("registerTransaction response: " + responseString);
                 jsonObject = JSONObject.parseObject(responseString);
                 if (jsonObject != null && jsonObject.containsKey("data")) {
-//                    appInsights.trackTrace("registerTransaction success: " + jsonObject.getString("data"));
+//                    System.out.println("registerTransaction success: " + jsonObject.getString("data"));
                     return jsonObject.getString("data");
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("registerTransaction error: " + e.getMessage());
+                System.out.println("registerTransaction error: " + e.getMessage());
             }
 
             // 如果没有成功，等待一段时间再重试
             try {
                 Thread.sleep(retryInterval);  // 延迟后进行下一次重试
             } catch (InterruptedException e) {
-                appInsights.trackTrace("Thread sleep interrupted: " + e.getMessage());
+                System.out.println("Thread sleep interrupted: " + e.getMessage());
             }
         }
 

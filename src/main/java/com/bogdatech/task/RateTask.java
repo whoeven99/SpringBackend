@@ -30,7 +30,7 @@ public class RateTask {
         try {
             rateHttpIntegration.getFixerRate();
         } catch (Exception e) {
-            appInsights.trackTrace("获取汇率失败: " + e.getMessage());
+            System.out.println("获取汇率失败: " + e.getMessage());
         }
         System.out.println("rateMap: " + rateMap.toString());
     }

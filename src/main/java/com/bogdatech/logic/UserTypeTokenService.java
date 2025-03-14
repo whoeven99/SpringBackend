@@ -60,7 +60,7 @@ public class UserTypeTokenService {
                 try {
                     translateService.insertInitialByTranslation(shopifyRequest, key, "initial");
                 } catch (Exception e) {
-                    appInsights.trackTrace(key + "模块获取失败： " + request);
+                    System.out.println(key + "模块获取失败： " + request);
                 }
             }
 

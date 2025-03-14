@@ -120,7 +120,7 @@ public class EmailIntegration {
             // 输出json格式的字符串回包
             jsonString = AbstractModel.toJsonString(resp);
         } catch (TencentCloudSDKException e) {
-            appInsights.trackTrace(e.toString());
+            System.out.println(e.toString());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

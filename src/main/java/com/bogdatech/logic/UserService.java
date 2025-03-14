@@ -100,7 +100,7 @@ public class UserService {
                 usersService.unInstallApp(userRequest);
                 success = true;  // 如果没有抛出异常，则表示执行成功，退出循环
             } catch (Exception e) {
-            appInsights.trackTrace("Uninstallation failed, retrying...");
+            System.out.println("Uninstallation failed, retrying...");
             }
         }
         return true;
@@ -146,11 +146,11 @@ public class UserService {
     }
 
     public void deleteUserData(String shopName) {
-        appInsights.trackTrace("删除数据: " + shopName);
+        System.out.println("删除数据: " + shopName);
 //        usersService.deleteUserGlossaryData(shopName);
 //        usersService.deleteCurrenciesData(shopName);
 //        usersService.deleteTranslatesData(shopName);
-//        appInsights.trackTrace("删除数据完成: " + shopName);
+//        System.out.println("删除数据完成: " + shopName);
 
     }
 
