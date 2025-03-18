@@ -53,8 +53,8 @@ public class PrivateKeyController {
         //存用户的shopName到数据库中
         //根据模型切换存储方法
         Integer i = null;
-        String googleKey = userPrivateRequest.getShopName() + "_" + GOOGLE;
-        if (userPrivateRequest.getModel().equals("google")) {
+        String googleKey = userPrivateRequest.getShopName() + "-" + GOOGLE;
+        if (userPrivateRequest.getModel().equals("google") && userPrivateRequest.getAmount()!=null && userPrivateRequest.getSecret() != null) {
             //新增或修改google相关方法
             i = userPrivateService.addOrUpdateGoogleUserData(userPrivateRequest.getShopName(), googleKey, userPrivateRequest.getAmount());
         }
@@ -63,12 +63,13 @@ public class PrivateKeyController {
         if (i != null && i == 1) {
             KeyVaultSecret keyVaultSecret = secretClient.setSecret(googleKey, userPrivateRequest.getSecret());
             if (keyVaultSecret != null) {
-                return new BaseResponse<>().CreateSuccessResponse("save_success");
+                return new BaseResponse<>().CreateSuccessResponse(userPrivateRequest);
             }
         }
 
         return new BaseResponse<>().CreateErrorResponse("save_error");
     }
+
 
     
 }
