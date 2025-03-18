@@ -7,6 +7,7 @@ import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.integration.PrivateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -55,10 +56,12 @@ public class PrivateKeyService {
     private final IEmailService emailService;
     private final IGlossaryService glossaryService;
     private final ShopifyService shopifyService;
+    private final ITranslatesService translatesService;
+    private final TestingEnvironmentIntegration testingEnvironmentIntegration;
     private final ShopifyHttpIntegration shopifyApiIntegration;
 
     @Autowired
-    public PrivateKeyService(PrivateIntegration privateIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, IGlossaryService glossaryService, ShopifyService shopifyService, ShopifyHttpIntegration shopifyApiIntegration) {
+    public PrivateKeyService(PrivateIntegration privateIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration) {
         this.privateIntegration = privateIntegration;
         this.userPrivateService = userPrivateService;
         this.iUserPrivateService = iUserPrivateService;
@@ -68,6 +71,8 @@ public class PrivateKeyService {
         this.emailService = emailService;
         this.glossaryService = glossaryService;
         this.shopifyService = shopifyService;
+        this.translatesService = translatesService;
+        this.testingEnvironmentIntegration = testingEnvironmentIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
     }
 
@@ -316,7 +321,7 @@ public class PrivateKeyService {
 
     private void translateAndSaveData(Map<String, List<RegisterTransactionRequest>> judgeData, TranslateContext translateContext) {
         for (Map.Entry<String, List<RegisterTransactionRequest>> entry : judgeData.entrySet()) {
-            if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils(), translateContext.getShopifyRequest().getTarget(), translateContext.getSource()))
+            if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils()))
                 return;
             switch (entry.getKey()) {
                 case PLAIN_TEXT:
@@ -346,7 +351,7 @@ public class PrivateKeyService {
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
 
         //判断是否停止翻译
-        if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource())) return;
+        if (checkIsStopped(request.getShopName(), counter)) return;
         int remainingChars = translateContext.getRemainingChars();
         Map<String, Object> glossaryMap = translateContext.getGlossaryMap();
         String target = request.getTarget();
@@ -370,7 +375,7 @@ public class PrivateKeyService {
         //对caseSensitiveMap集合中的数据进行翻译
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+            if (checkIsStopped(request.getShopName(), counter))
                 return;
             String value = registerTransactionRequest.getValue();
             String source = registerTransactionRequest.getLocale();
@@ -408,8 +413,20 @@ public class PrivateKeyService {
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+            if (checkIsStopped(request.getShopName(), counter))
                 return;
+        }
+    }
+
+    //达到字符限制，更新用户剩余字符数，终止循环
+    public void updateCharsWhenExceedLimit(CharacterCountUtils counter, String shopName, int remainingChars, TranslateRequest translateRequest) {
+        TranslationCounterRequest request = new TranslationCounterRequest();
+        request.setShopName(shopName);
+
+        if (counter.getTotalChars() >= remainingChars) {
+            translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
+            userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
+            throw new ClientException(CHARACTER_LIMIT);
         }
     }
 
@@ -418,18 +435,20 @@ public class PrivateKeyService {
         ShopifyRequest request = translateContext.getShopifyRequest();
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
         //判断是否停止翻译
-        if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource())) return;
+        if (checkIsStopped(request.getShopName(), counter)) return;
 
         int remainingChars = translateContext.getRemainingChars();
         String target = request.getTarget();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+            if (checkIsStopped(request.getShopName(), counter))
                 return;
             String value = registerTransactionRequest.getValue();
             String resourceId = registerTransactionRequest.getResourceId();
             String source = registerTransactionRequest.getLocale();
-            Map<String, Object> translation = createTranslationMap(target, registerTransactionRequest);
+            String key = registerTransactionRequest.getKey();
+            String digest = registerTransactionRequest.getTranslatableContentDigest();
+            Map<String, Object> translation = createTranslationMap(target, key, digest);
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
 
@@ -444,7 +463,7 @@ public class PrivateKeyService {
                 continue;
             }
             saveToShopify(htmlTranslation, translation, resourceId, request);
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+            if (checkIsStopped(request.getShopName(), counter))
                 return;
         }
     }
@@ -458,14 +477,16 @@ public class PrivateKeyService {
 
         int remainingChars = translateContext.getRemainingChars();
         String target = request.getTarget();
-        if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource())) return;
+        if (checkIsStopped(request.getShopName(), counter)) return;
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+            if (checkIsStopped(request.getShopName(), counter))
                 return;
             String value = registerTransactionRequest.getValue();
             String resourceId = registerTransactionRequest.getResourceId();
             String source = registerTransactionRequest.getLocale();
-            Map<String, Object> translation = createTranslationMap(target, registerTransactionRequest);
+            String key = registerTransactionRequest.getKey();
+            String digest = registerTransactionRequest.getTranslatableContentDigest();
+            Map<String, Object> translation = createTranslationMap(target, key, digest);
             //判断是否超限
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), target, null));
 
@@ -479,13 +500,50 @@ public class PrivateKeyService {
                 translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
                 appInsights.trackTrace("翻译失败后的字符数： " + counter.getTotalChars());
-                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+                userPrivateService.updateUsedCharsByShopName(request.getShopName(), counter.getTotalChars());
                 saveToShopify(value, translation, resourceId, request);
             }
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+            if (checkIsStopped(request.getShopName(), counter))
                 return;
         }
     }
+
+    //将翻译后的数据存shopify本地中
+    public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("resourceId", resourceId);
+        translation.put("value", translatedValue);
+        Object[] translations = new Object[]{
+                translation // 将HashMap添加到数组中
+        };
+        variables.put("translations", translations);
+        //将翻译后的内容通过ShopifyAPI记录到shopify本地
+        saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
+    }
+
+    //封装调用云服务器实现将数据存入shopify本地的方法
+    public void saveToShopify(CloudInsertRequest cloudServiceRequest) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(cloudServiceRequest.getShopName());
+        request.setAccessToken(cloudServiceRequest.getAccessToken());
+        request.setTarget(cloudServiceRequest.getTarget());
+        Map<String, Object> body = cloudServiceRequest.getBody();
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            String env = System.getenv("ApplicationEnv");
+            if ("prod".equals(env) || "dev".equals(env)) {
+                shopifyApiIntegration.registerTransaction(request, body);
+            } else {
+                testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
+            }
+
+        } catch (JsonProcessingException | ClientException e) {
+            appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
+        }
+    }
+
 
     //处理JSON_TEXT类型的数据
     private void translateJsonText(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
@@ -493,19 +551,19 @@ public class PrivateKeyService {
         ShopifyRequest request = translateContext.getShopifyRequest();
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
         //判断是否停止翻译
-        if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource())) return;
+        if (checkIsStopped(request.getShopName(), counter)) return;
         String target = request.getTarget();
         Map<String, Object> translation = new HashMap<>();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+            if (checkIsStopped(request.getShopName(), counter))
                 return;
             translation.put("locale", target);
             translation.put("key", registerTransactionRequest.getKey());
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
             //直接存放到shopify本地
             saveToShopify(registerTransactionRequest.getValue(), translation, registerTransactionRequest.getResourceId(), request);
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+            if (checkIsStopped(request.getShopName(), counter))
                 return;
         }
     }

@@ -586,7 +586,7 @@ public class TranslateService {
         }
     }
 
-    private Map<String, Object> createTranslationMap(String target, String key, String translatableContentDigest) {
+    public static Map<String, Object> createTranslationMap(String target, String key, String translatableContentDigest) {
         Map<String, Object> translation = new HashMap<>();
         translation.put("locale", target);
         translation.put("key", key);
