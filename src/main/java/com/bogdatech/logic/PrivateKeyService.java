@@ -19,6 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.applicationinsights.TelemetryClient;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.CannotCreateTransactionException;
@@ -468,6 +471,20 @@ public class PrivateKeyService {
         }
     }
 
+    //翻译词汇表的html文本
+    public String translateGlossaryHtmlText(TranslateRequest request, CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String resourceType) {
+        String html = request.getContent();
+        // 解析HTML文档
+        Document doc = Jsoup.parse(html);
+
+        // 提取需要翻译的文本
+        Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
+        // 翻译文本
+        Map<Element, List<String>> translatedTextMap = jsoupUtils.translateGlossaryTexts(elementTextMap, request, counter, keyMap, keyMap0, resourceType);
+        // 替换原始文本为翻译后的文本
+        jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
+        return doc.body().html();
+    }
 
     //对不同的数据使用不同的翻译api
     private void translateDataByAPI(List<RegisterTransactionRequest> registerTransactionRequests,
