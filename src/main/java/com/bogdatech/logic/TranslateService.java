@@ -115,10 +115,10 @@ public class TranslateService {
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     private final ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
     private ExecutorService executorService = new ThreadPoolExecutor(
-            2,  // 核心线程数（CPU 密集型：1+1）
-            10, // 最大线程数（IO 密集型：1 * (1 + 9)）
+            8,   // 核心线程数（比 vCPU 多一点）
+            16,  // 最大线程数（vCPU * 4）
             60L, TimeUnit.SECONDS, // 空闲线程存活时间
-            new LinkedBlockingQueue<>(50), // 任务队列（避免内存过载）
+            new LinkedBlockingQueue<>(100), // 任务队列（避免内存过载）
             new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
     );
 
@@ -198,7 +198,6 @@ public class TranslateService {
         userTasks.put(shopName, future);  // 存储用户的任务
         userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
         userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
-
 
     }
 
@@ -502,6 +501,7 @@ public class TranslateService {
             put(JSON_TEXT, new ArrayList<>());
             put(GLOSSARY, new ArrayList<>());
             put(OPENAI, new ArrayList<>());
+            put(METAFIELD, new ArrayList<>());
         }};
     }
 
@@ -531,10 +531,62 @@ public class TranslateService {
                 case OPENAI:
                     translateDataByOPENAI(entry.getValue(), translateContext);
                     break;
+//                case METAFIELD:
+//                    translateMetafield(entry.getValue(), translateContext);
+//                    break;
                 default:
                     appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
                     break;
             }
+        }
+    }
+
+    private void translateMetafield(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
+        ShopifyRequest request = translateContext.getShopifyRequest();
+        CharacterCountUtils counter = translateContext.getCharacterCountUtils();
+        //判断是否停止翻译
+        if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource())) return;
+
+        int remainingChars = translateContext.getRemainingChars();
+        String target = request.getTarget();
+        for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
+            //判断是否停止翻译
+            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+                return;
+            String value = registerTransactionRequest.getValue();
+            String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
+            String key = registerTransactionRequest.getKey();
+            String source = registerTransactionRequest.getLocale();
+            String resourceId = registerTransactionRequest.getResourceId();
+            String type = registerTransactionRequest.getTarget();
+            Map<String, Object> translation = createTranslationMap(target, key, translatableContentDigest);
+
+            // 判断是否会超限制
+            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
+
+//            //获取缓存数据和数据库数据
+//            if (translateDataByCacheAndDatabase(request, value, translation, resourceId, target, source)) {
+//                continue;
+//            }
+
+            if (value == null) {
+                continue;
+            }
+
+            if ("handle".equals(key) || "JSON".equals(type) || "JSON_STRING".equals(type)) {
+                saveToShopify(value, translation, resourceId, request);
+               continue;
+            }
+
+
+            // TODO: 判断用AI和谷歌翻译
+            try {
+                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+            } catch (Exception e) {
+                appInsights.trackTrace("翻译错误原因： " + e.getMessage());
+            }
+            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
+                return;
         }
     }
 
@@ -758,12 +810,6 @@ public class TranslateService {
             translation = createTranslationMap(target, registerTransactionRequest);
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
             //从数据库中获取数据，如果不为空，存入shopify本地；如果为空翻译
-            //获取缓存数据和数据库数据
-            if (translateDataByCacheAndDatabase(request, value, translation, resourceId, target, source)) {
-                continue;
-            }
-
-            //数据库为空的逻辑
             //判断数据类型
             if ("handle".equals(key)
             ) {
@@ -777,6 +823,12 @@ public class TranslateService {
                 saveToShopify(value, translation, resourceId, request);
                 continue;
             }
+            //获取缓存数据和数据库数据
+            if (translateDataByCacheAndDatabase(request, value, translation, resourceId, target, source)) {
+                continue;
+            }
+
+            //数据库为空的逻辑
             if ("HTML".equals(type) || isHtml(value)) {
                 //存放在html的list集合里面
                 // 解析HTML文档
@@ -978,18 +1030,29 @@ public class TranslateService {
                 continue;
             }
 
+
             //如果translatableContentMap里面有该key则不翻译，没有则翻译
-            if (translatableContentMap.containsKey(key)) {
+            if (translatableContentMap.containsKey(key) && !translatableContentMap.get(key).getOutdated()) {
                 continue;
             }
 
             //如果包含相对路径则跳过
-            if ("handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+            if (key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
-                    || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD) || resourceType.equals(SHOP_POLICY)) {
+                    || type.equals(("LIST_URL"))
+                    || resourceType.equals(METAFIELD)
+                    || resourceType.equals(SHOP_POLICY)) {
                 continue;
             }
 
+            //对METAFIELD字段翻译
+//            if (resourceType.equals(METAFIELD)) {
+//                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+//                continue;
+//            }
+
+
+//            System.out.println("value: " + value + " ,flag: " + translatableContentMap.get(key).getOutdated());
             //对于json和json_string的数据直接存原文
             if ("JSON".equals(type)
                     || "JSON_STRING".equals(type)) {
@@ -1215,6 +1278,7 @@ public class TranslateService {
                 translateTextDO.setTextKey(translation.path("key").asText(null));
                 translateTextDO.setTargetText(translation.path("value").asText(null));
                 translateTextDO.setTargetCode(translation.path("locale").asText(null));
+                translateTextDO.setOutdated(translation.path("outdated").asBoolean(false));
                 translateTextDO.setResourceId(resourceId);
                 translateTextDO.setShopName(shopifyRequest.getShopName());
                 translations.put(translation.path("key").asText(null), translateTextDO);
@@ -1325,7 +1389,7 @@ public class TranslateService {
         List<TranslateTextDO> list = new ArrayList<>();
         SINGLE_LINE_TEXT.forEach((outerKey, innerMap) -> {
             // 使用流来遍历内部的 Map
-            innerMap.forEach((innerKey, value) -> list.add(new TranslateTextDO(null, null, null, null, null, null, innerKey, value, null, outerKey)));
+            innerMap.forEach((innerKey, value) -> list.add(new TranslateTextDO(null, null, null, null, null, null, innerKey, value, null, outerKey, false)));
         });
         if (!list.isEmpty()) {
 //            translateTextService.getExistTranslateTextList(list);
