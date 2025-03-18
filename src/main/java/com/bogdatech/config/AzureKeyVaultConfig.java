@@ -2,6 +2,8 @@ package com.bogdatech.config;
 
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.identity.DefaultAzureCredential;
+import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import org.springframework.context.annotation.Bean;
@@ -18,9 +20,11 @@ public class AzureKeyVaultConfig {
                 .tenantId("7e4cb437-91a6-4a28-88e5-6549623374c5")
                 .build();
 
+        // 使用 DefaultAzureCredential 自动检测身份
+        DefaultAzureCredential defaultAzureCredential = new DefaultAzureCredentialBuilder().build();
         return new SecretClientBuilder()
                 .vaultUrl("https://springbackendvault.vault.azure.net/")
-                .credential(credential)
+                .credential(defaultAzureCredential)
                 .buildClient();
     }
 
