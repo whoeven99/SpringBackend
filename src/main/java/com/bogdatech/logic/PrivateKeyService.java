@@ -39,6 +39,7 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.constants.TranslateConstants.OPENAI;
 import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
+import static com.bogdatech.integration.PrivateIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
@@ -87,7 +88,7 @@ public class PrivateKeyService {
 
     //测试google调用
     public void test(String text, String source, String apiKey, String target) {
-        String s = privateIntegration.translateByGoogle(text, source, apiKey, target);
+        String s = getGoogleTranslationWithRetry(text, source, apiKey, target);
         System.out.println("s = " + s);
     }
 
@@ -518,7 +519,13 @@ public class PrivateKeyService {
 
 //            首选谷歌翻译，翻译不了用AI翻译
             try {
-//                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+                //TODO:根据shopName获取对应的google apiKey
+                //计算用户的token数
+                counter.addChars(value.length());
+                //对文本进行翻译
+                String targetValue = getGoogleTranslationWithRetry(value, source, "", target);
+                //翻译成功后，将翻译后的数据存shopify本地中
+                saveToShopify(targetValue, translation, resourceId, request);
             } catch (Exception e) {
                 appInsights.trackTrace("翻译失败后的字符数： " + counter.getTotalChars());
                 userPrivateService.updateUsedCharsByShopName(request.getShopName(), counter.getTotalChars());
@@ -528,6 +535,18 @@ public class PrivateKeyService {
                 return;
         }
     }
+
+    //根据用户的翻译模型选择翻译
+//    private void translateByUser(CharacterCountUtils counter, String value, ){
+//        //TODO:根据shopName获取对应的google apiKey
+//        //计算用户的token数
+//        counter.addChars(value.length());
+//        //对文本进行翻译
+//        String targetValue = getGoogleTranslationWithRetry(value, source, "", target);
+//        //翻译成功后，将翻译后的数据存shopify本地中
+//        saveToShopify(targetValue, translation, resourceId, request);
+//    }
+
 
     //将翻译后的数据存shopify本地中
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {

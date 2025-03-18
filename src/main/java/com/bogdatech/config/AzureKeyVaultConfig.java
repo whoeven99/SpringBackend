@@ -19,7 +19,7 @@ public class AzureKeyVaultConfig {
                 .build();
 
         return new SecretClientBuilder()
-                .vaultUrl("https://SpringBackendVault.vault.azure.net/")
+                .vaultUrl("https://springbackendvault.vault.azure.net/")
                 .credential(credential)
                 .buildClient();
     }

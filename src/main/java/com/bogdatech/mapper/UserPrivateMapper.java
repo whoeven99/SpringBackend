@@ -7,6 +7,6 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface UserPrivateMapper extends BaseMapper<UserPrivateDO> {
-    @Insert("INSERT INTO UserPrivate(shop_name,google_key) VALUES(#{shopName},#{googleKey})")
-    Integer saveGoogleUserData(String shopName, String googleKey);
+    @Insert("INSERT INTO UserPrivate(shop_name,google_key,amount) VALUES(#{shopName},#{googleKey},#{amount})")
+    Integer saveGoogleUserData(String shopName, String googleKey, Integer amount);
 }

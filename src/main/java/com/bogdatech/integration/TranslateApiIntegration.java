@@ -30,16 +30,13 @@ import java.util.Random;
 @Component
 public class TranslateApiIntegration {
 
-    private static TelemetryClient appInsights = new TelemetryClient();
+    private static final TelemetryClient appInsights = new TelemetryClient();
 
     @Value("${baidu.api.key}")
     private String apiUrl;
 
     @Value("${baidu.api.secret}")
     private String secret;
-
-    @Value("${google.api.key}")
-    private static String apiKey;
 
     @Value("${microsoft.translation.key}")
     private String microsoftKey;
