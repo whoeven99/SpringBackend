@@ -12,6 +12,7 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,8 +43,7 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
-import static com.bogdatech.utils.JsoupUtils.isHtml;
-import static com.bogdatech.utils.JsoupUtils.translateAndCount;
+import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -57,14 +57,16 @@ public class PrivateKeyService {
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
     private final IEmailService emailService;
+    private final JsoupUtils jsoupUtils;
     private final IGlossaryService glossaryService;
     private final ShopifyService shopifyService;
     private final ITranslatesService translatesService;
     private final TestingEnvironmentIntegration testingEnvironmentIntegration;
     private final ShopifyHttpIntegration shopifyApiIntegration;
+    private final IVocabularyService vocabularyService;
 
     @Autowired
-    public PrivateKeyService(PrivateIntegration privateIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration) {
+    public PrivateKeyService(PrivateIntegration privateIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService) {
         this.privateIntegration = privateIntegration;
         this.userPrivateService = userPrivateService;
         this.iUserPrivateService = iUserPrivateService;
@@ -72,11 +74,13 @@ public class PrivateKeyService {
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
+        this.jsoupUtils = jsoupUtils;
         this.glossaryService = glossaryService;
         this.shopifyService = shopifyService;
         this.translatesService = translatesService;
         this.testingEnvironmentIntegration = testingEnvironmentIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
+        this.vocabularyService = vocabularyService;
     }
 
     TelemetryClient appInsights = new TelemetryClient();
@@ -514,7 +518,7 @@ public class PrivateKeyService {
 
 //            首选谷歌翻译，翻译不了用AI翻译
             try {
-                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
+//                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
                 appInsights.trackTrace("翻译失败后的字符数： " + counter.getTotalChars());
                 userPrivateService.updateUsedCharsByShopName(request.getShopName(), counter.getTotalChars());
@@ -561,6 +565,29 @@ public class PrivateKeyService {
         }
     }
 
+    //从缓存和数据库中获取数据
+    public boolean translateDataByCacheAndDatabase(ShopifyRequest request, String value, Map<String, Object> translation, String resourceId, String target, String source) {
+        //获取缓存数据
+        String targetCache = translateSingleLine(value, request.getTarget());
+        if (targetCache != null) {
+            saveToShopify(targetCache, translation, resourceId, request);
+            return true;
+        }
+        //TODO: 255字符以内才从数据库中获取数据
+        String targetText = null;
+        try {
+            targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
+        } catch (Exception e) {
+            //打印错误信息
+            appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());
+        }
+        if (targetText != null) {
+            addData(target, value, targetText);
+            saveToShopify(targetText, translation, resourceId, request);
+            return true;
+        }
+        return false;
+    }
 
     //处理JSON_TEXT类型的数据
     private void translateJsonText(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
