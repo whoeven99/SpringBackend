@@ -21,4 +21,5 @@ public class TranslateContext {
     private Map<String, Object> glossaryMap;
     private String source;
     private AILanguagePacksDO aiLanguagePacksDO;
+    private String apiKey;
 }

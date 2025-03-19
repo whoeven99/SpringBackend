@@ -42,6 +42,7 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.TranslateResourceDTO.*;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
 import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
+import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
@@ -109,12 +110,12 @@ public class TranslateService {
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
 
     //判断是否可以终止翻译流程
-    private Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
-    private Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
+    public static Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
+    public static Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
     private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
-    private final ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
-    private ExecutorService executorService = new ThreadPoolExecutor(
+    public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
+    public static ExecutorService executorService = new ThreadPoolExecutor(
             8,   // 核心线程数（比 vCPU 多一点）
             16,  // 最大线程数（vCPU * 4）
             60L, TimeUnit.SECONDS, // 空闲线程存活时间
@@ -246,7 +247,7 @@ public class TranslateService {
 
     //google翻译接口
     public String googleTranslate(TranslateRequest request) {
-        return translateApiIntegration.getGoogleTranslationWithRetry(request);
+        return getGoogleTranslationWithRetry(request);
     }
 
     //封装调用云服务器实现获取谷歌翻译数据的方法
@@ -325,7 +326,7 @@ public class TranslateService {
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
                 continue;
             }
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), aiLanguagePacksDO);
+            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), aiLanguagePacksDO, null);
             translateJson(translateContext);
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
@@ -638,7 +639,7 @@ public class TranslateService {
         }
     }
 
-    private Map<String, Object> createTranslationMap(String target, String key, String translatableContentDigest) {
+    public static Map<String, Object> createTranslationMap(String target, String key, String translatableContentDigest) {
         Map<String, Object> translation = new HashMap<>();
         translation.put("locale", target);
         translation.put("key", key);
@@ -1262,7 +1263,7 @@ public class TranslateService {
     }
 
     //获取一个页面所有Translations集合数据
-    private static Map<String, TranslateTextDO> extractTranslations(JsonNode node, String resourceId, ShopifyRequest shopifyRequest) {
+    public static Map<String, TranslateTextDO> extractTranslations(JsonNode node, String resourceId, ShopifyRequest shopifyRequest) {
         Map<String, TranslateTextDO> translations = new HashMap<>();
         JsonNode translationsNode = node.path("translations");
         if (translationsNode.isArray() && !translationsNode.isEmpty()) {
@@ -1289,7 +1290,7 @@ public class TranslateService {
     }
 
     //获取一个页面所有TranslatableContent集合数据
-    private static Map<String, TranslateTextDO> extractTranslatableContent(JsonNode node, Map<String, TranslateTextDO> translations) {
+    public static Map<String, TranslateTextDO> extractTranslatableContent(JsonNode node, Map<String, TranslateTextDO> translations) {
         JsonNode contentNode = node.path("translatableContent");
         if (contentNode.isArray() && !contentNode.isEmpty()) {
             contentNode.forEach(content -> {
@@ -1343,7 +1344,7 @@ public class TranslateService {
     //翻译单个文本数据
     public String translateSingleText(RegisterTransactionRequest request) {
         TranslateRequest translateRequest = TypeConversionUtils.registerTransactionRequestToTranslateRequest(request);
-        request.setValue(translateApiIntegration.getGoogleTranslationWithRetry(translateRequest));
+        request.setValue(getGoogleTranslationWithRetry(translateRequest));
         //保存翻译后的数据到shopify本地
         Map<String, Object> variables = getVariables(request);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(translateRequest);
@@ -1484,7 +1485,6 @@ public class TranslateService {
 
         for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
             int token = shopifyService.getTotalWords(shopifyRequest, method, translateResourceDTO);
-//            System.out.println("token: " + token);
             tokens += token;
         }
 //        System.out.println("tokens: " + tokens);

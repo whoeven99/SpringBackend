@@ -76,7 +76,12 @@
 			<artifactId>azure-ai-openai</artifactId>
 			<version>1.0.0-beta.1</version>
 		</dependency>
-
+		<!--Azure 存放key value-->
+		<dependency>
+			<groupId>com.azure.spring</groupId>
+			<artifactId>spring-cloud-azure-starter-keyvault</artifactId>
+			<version>5.16.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -184,12 +189,6 @@
 				</exclusion>
 			</exclusions>
 			<version>2.16.2</version>
-		</dependency>
-		<!-- 接openAi的SDK-->
-		<dependency>
-			<groupId>com.openai</groupId>
-			<artifactId>openai-java</artifactId>
-			<version>0.33.0</version>
 		</dependency>
 	</dependencies>
 

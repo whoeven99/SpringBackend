@@ -84,14 +84,6 @@ public class UserService {
         return usersService.getUserByName(request.getShopName());
     }
 
-    //添加User
-    @Async
-    public void addUserAsync(UsersDO userRequest) {
-        if (getUser(userRequest) == null) {
-            addUser(userRequest);
-        }
-    }
-
     //用户卸载应用
     public Boolean unInstallApp(UsersDO userRequest) {
         boolean success = false;

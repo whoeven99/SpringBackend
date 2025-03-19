@@ -214,7 +214,7 @@ public class JsoupUtils {
     public Map<Element, List<String>> extractTextsToTranslate(Document doc) {
         Map<Element, List<String>> elementTextMap = new HashMap<>();
         for (Element element : doc.getAllElements()) {
-            if (!element.is("script, style")) { // 忽略script和style标签
+            if (!element.is("script, style, img")) { // 忽略script,style,img标签
                 List<String> texts = new ArrayList<>();
 
                 // 提取文本
