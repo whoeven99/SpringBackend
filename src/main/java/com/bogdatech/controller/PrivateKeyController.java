@@ -3,7 +3,6 @@ package com.bogdatech.controller;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserPrivateService;
 import com.bogdatech.logic.PrivateKeyService;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
@@ -13,20 +12,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
+import static com.bogdatech.integration.PrivateIntegration.googleTranslate;
+import static com.bogdatech.utils.StringUtils.replaceDot;
 
 @RestController
 @RequestMapping("/privateKey")
 public class PrivateKeyController {
     private final PrivateKeyService privateKeyService;
-    private final ITranslationCounterService translationCounterService;
     private final ITranslatesService translatesService;
     private final SecretClient secretClient;
     private final IUserPrivateService userPrivateService;
 
     @Autowired
-    public PrivateKeyController(PrivateKeyService privateKeyService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, SecretClient secretClient, IUserPrivateService userPrivateService) {
+    public PrivateKeyController(PrivateKeyService privateKeyService, ITranslatesService translatesService, SecretClient secretClient, IUserPrivateService userPrivateService) {
         this.privateKeyService = privateKeyService;
-        this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
         this.secretClient = secretClient;
         this.userPrivateService = userPrivateService;
@@ -41,7 +40,7 @@ public class PrivateKeyController {
     }
 
     //用户通过私有key翻译
-    @PostMapping("/translate")
+    @PutMapping("/translate")
     public BaseResponse<Object> translate(@RequestBody ClickTranslateRequest clickTranslateRequest) {
         return privateKeyService.judgePrivateKey(clickTranslateRequest);
     }
@@ -50,11 +49,21 @@ public class PrivateKeyController {
     //存用户的Google的apikey
     @PutMapping("/saveGoogleKey")
     public BaseResponse<Object> saveGoogleKey(@RequestBody UserPrivateRequest userPrivateRequest) {
+        //调一次google接口， 用于判断key值是否有效
+        try {
+            googleTranslate("a", "en", userPrivateRequest.getSecret(), "zh-CN");
+        } catch (Exception e) {
+            return new BaseResponse<>().CreateErrorResponse("key_error");
+        }
+
+        String shopName = replaceDot(userPrivateRequest.getShopName());
+
         //存用户的shopName到数据库中
         //根据模型切换存储方法
         Integer i = null;
-        String googleKey = userPrivateRequest.getShopName() + "-" + GOOGLE;
-        if (userPrivateRequest.getModel().equals("google") && userPrivateRequest.getAmount()!=null && userPrivateRequest.getSecret() != null) {
+        String googleKey = shopName + "-" + GOOGLE;
+//        System.out.println("shopName: " + shopName);
+        if (userPrivateRequest.getModel().equals(GOOGLE) && userPrivateRequest.getAmount()!=null && userPrivateRequest.getSecret() != null) {
             //新增或修改google相关方法
             i = userPrivateService.addOrUpdateGoogleUserData(userPrivateRequest.getShopName(), googleKey, userPrivateRequest.getAmount());
         }

@@ -1,10 +1,13 @@
 package com.bogdatech.logic;
 
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IUserPrivateService;
 import com.bogdatech.entity.UserPrivateDO;
 import com.bogdatech.model.controller.request.UserPrivateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +17,13 @@ import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 public class UserPrivateService {
 
     private final IUserPrivateService userPrivateService;
-
+    private final SecretClient secretClient;
     @Autowired
-    public UserPrivateService(IUserPrivateService userPrivateService) {
+    public UserPrivateService(IUserPrivateService userPrivateService, SecretClient secretClient) {
         this.userPrivateService = userPrivateService;
+        this.secretClient = secretClient;
     }
-
+    TelemetryClient appInsights = new TelemetryClient();
     public BaseResponse<Object> saveOrUpdateUserData(UserPrivateRequest userPrivateRequest) {
         String model = userPrivateRequest.getModel();
         if (model == null) {
@@ -42,30 +46,25 @@ public class UserPrivateService {
            default:
                return new BaseResponse<>().CreateErrorResponse(model + " 暂时不支持！");
        }
-
-
         //存到数据库中
         //先判断userPrivateDO是否已经存在，如果存在则更新，如果不存在则插入
         //存到Azure的keyVault中
         try {
-            System.out.println("查询数据库: " + userPrivateDO.getShopName());
             UserPrivateDO user = userPrivateService.selectOneByShopName(userPrivateDO.getShopName());
             if (user != null) {
                 //更新
                 //openaiKey和googleKey为空则不更新
-                System.out.println("用户存在，执行更新");
                 userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(SHOP_NAME, userPrivateDO.getShopName()));
                 //TODO: 更新Azure的keyVault
 
             } else {
                 //存入
-                System.out.println("用户不存在，执行插入");
                 userPrivateService.save(userPrivateDO);
                 //存入Azure的keyVault
 
             }
         } catch (Exception e) {
-            System.out.println("保存用户数据失败：" + e.getMessage());
+            appInsights.trackTrace("保存用户数据失败：" + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse("保存用户数据失败");
         }
 
@@ -80,15 +79,20 @@ public class UserPrivateService {
         while (retries > 0) {
             try {
                 userPrivateDO = userPrivateService.selectOneByShopName(userPrivateRequest.getShopName());
-                if (userPrivateDO != null) {
-                    return new BaseResponse<>().CreateSuccessResponse(userPrivateDO);
-                }else {
+                if (userPrivateDO == null) {
                     return new BaseResponse<>().CreateErrorResponse("用户不存在");
                 }
+                KeyVaultSecret keyVaultSecret = secretClient.getSecret(userPrivateDO.getGoogleKey());
+                //对用户的key做处理， 只传前4位和后4位，中间用x代替
+                String key = keyVaultSecret.getValue().substring(0, 4) + "xxxxxxxx" + keyVaultSecret.getValue().substring(keyVaultSecret.getValue().length() - 4);
+                userPrivateDO.setGoogleKey(key);
+                userPrivateDO.setUsedAmount(null);
+                userPrivateDO.setId(null);
+                return new BaseResponse<>().CreateSuccessResponse(userPrivateDO);
             } catch (Exception e) {
                 retries--;
                 if (retries == 0) {
-                    System.out.println("failed: " + e.getMessage());
+                    appInsights.trackTrace("failed: " + e.getMessage());
                 } else {
                     try {
                         Thread.sleep(delay);  // 延迟重试

@@ -17,7 +17,7 @@ public class ClickTranslateRequest {
     private String target; //目标语言
     private String content; //要翻译的文本
 
-    private String translateSettings1;
+    private String translateSettings1; //模型 前端定的参数
     private String translateSettings2;
     private List<String> translateSettings3;
 }

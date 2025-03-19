@@ -41,9 +41,6 @@ public class LiquidHtmlTranslatorUtils {
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
     private final static Set<String> noTranslateTags = new HashSet<>(Arrays.asList("style", "img", "script"));
 
-    public LiquidHtmlTranslatorUtils() {
-    }
-
     /**
      * 主翻译方法
      *

@@ -1,5 +1,8 @@
 package com.bogdatech.logic;
 
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.*;
@@ -36,16 +39,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.constants.TranslateConstants.OPENAI;
+import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
+import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
 import static com.bogdatech.integration.PrivateIntegration.getGoogleTranslationWithRetry;
+import static com.bogdatech.integration.PrivateIntegration.translatePrivateNewHtml;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
-import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
 import static com.bogdatech.utils.JsoupUtils.*;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
+import static com.bogdatech.utils.StringUtils.replaceDot;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
@@ -65,9 +69,11 @@ public class PrivateKeyService {
     private final TestingEnvironmentIntegration testingEnvironmentIntegration;
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final IVocabularyService vocabularyService;
+    private final SecretClient secretClient;
+    private final IUserTypeTokenService userTypeTokenService;
 
     @Autowired
-    public PrivateKeyService(PrivateIntegration privateIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService) {
+    public PrivateKeyService(PrivateIntegration privateIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService) {
         this.privateIntegration = privateIntegration;
         this.userPrivateService = userPrivateService;
         this.iUserPrivateService = iUserPrivateService;
@@ -82,6 +88,8 @@ public class PrivateKeyService {
         this.testingEnvironmentIntegration = testingEnvironmentIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.vocabularyService = vocabularyService;
+        this.secretClient = secretClient;
+        this.userTypeTokenService = userTypeTokenService;
     }
 
     TelemetryClient appInsights = new TelemetryClient();
@@ -102,6 +110,17 @@ public class PrivateKeyService {
 //        将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
 
+        //根据模型判断是否获取到用户的翻译APIkey
+        String apiKey = null;
+        if (clickTranslateRequest.getTranslateSettings1().equals(GOOGLE)) {
+            //获取用户的google key
+            String googleKey = replaceDot(clickTranslateRequest.getShopName());
+            KeyVaultSecret secret = secretClient.getSecret(googleKey + "-" + GOOGLE);
+            apiKey = secret.getValue();
+        }
+        if (apiKey == null) {
+            return new BaseResponse<>().CreateErrorResponse(request);
+        }
         //判断字符是否超限
         UserPrivateDO userPrivateDO = iUserPrivateService.selectOneByShopName(request.getShopName());
         Integer remainingChars = userPrivateDO.getAmount();
@@ -125,7 +144,7 @@ public class PrivateKeyService {
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
         //私有key翻译
-        startPrivateTranslation(request, remainingChars, counter, usedChars);
+        startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
@@ -137,7 +156,7 @@ public class PrivateKeyService {
      * @param counter        字符计数器
      * @param usedChars      已使用字符数
      */
-    public void startPrivateTranslation(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars) {
+    public void startPrivateTranslation(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, String apiKey) {
         // 创建并启动翻译任务
         String shopName = request.getShopName();
         String source = request.getSource();
@@ -146,7 +165,7 @@ public class PrivateKeyService {
             LocalDateTime begin = LocalDateTime.now();
             appInsights.trackTrace("Task submitted at: " + begin + " for shop: " + shopName);
             try {
-                translating(request, remainingChars, counter, usedChars);  // 执行翻译任务
+                translating(request, remainingChars, counter, apiKey);  // 执行翻译任务
             } catch (ClientException e) {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
                     userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
@@ -158,12 +177,11 @@ public class PrivateKeyService {
                 iTranslatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
 //                //发送报错邮件
-                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
-                if (emailSent.compareAndSet(false, true)) {
-                    translateFailEmail(shopName, CHARACTER_LIMIT);
-                }
+//                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
+//                if (emailSent.compareAndSet(false, true)) {
+//                    translateFailEmail(shopName, CHARACTER_LIMIT);
+//                }
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
-                //更新初始值
                 //更新初始值
                 updateInitialValue(request);
                 return;
@@ -185,7 +203,7 @@ public class PrivateKeyService {
             // 将翻译状态改为“已翻译”//
             iTranslatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
-            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+//            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
             //更新初始值
             updateInitialValue(request);
         });
@@ -193,11 +211,9 @@ public class PrivateKeyService {
         userTasks.put(shopName, future);  // 存储用户的任务
         userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
         userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
-
-
     }
 
-    private void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars) {
+    private void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, String apiKey) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
 
@@ -226,7 +242,7 @@ public class PrivateKeyService {
                 userPrivateService.updateUsedCharsByShopName(request.getShopName(), counter.getTotalChars());
                 continue;
             }
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), null);
+            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), null, apiKey);
             translateJson(translateContext);
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter)) return;
@@ -238,9 +254,59 @@ public class PrivateKeyService {
     //更新初始值
     public void updateInitialValue(TranslateRequest request) {
         try {
-//            startTokenCount(request);
+            startTokenCount(request);
         } catch (Exception e) {
             appInsights.trackTrace("重新更新token值失败！！！");
+        }
+    }
+
+    /**
+     * 根据request获取对应模块的token。如果status为2就不计数，如果为其他就开始计数
+     *
+     * @param request 请求对象，包含shopName、target、source，accessToken等信息
+     */
+    public void startTokenCount(TranslateRequest request) {
+        try {
+            //获取translationId
+            Integer translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+
+            //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
+            Integer status = userTypeTokenService.getStatusByTranslationId(translationId);
+            if (status != 2) {
+                //将UserTypeToken的status修改为2
+                userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 2);
+                ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
+                //循环type获取token
+                for (String key : TOKEN_MAP.keySet()
+                ) {
+                    int tokens = 0;
+
+                    for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
+                        int token = shopifyService.getTotalWords(shopifyRequest, "tokens", translateResourceDTO);
+                        tokens += token;
+                    }
+
+                    //将tokens存储到UserTypeToken对应的列里面
+                    userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
+                    if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
+                            || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
+                            || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
+                            || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key)) {
+                        UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
+                        updateWrapper.eq("translation_id", translationId);
+
+                        // 根据传入的列名动态设置更新的字段
+                        updateWrapper.set(key, tokens);
+                        userTypeTokenService.update(null, updateWrapper);
+                    } else {
+                        appInsights.trackTrace("Invalid column name");
+                    }
+                }
+                //token全部获取完之后修改，UserTypeToken的status==1
+                userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
+            }
+        } catch (IllegalArgumentException e) {
+            appInsights.trackTrace("错误原因： " + e.getMessage());
         }
     }
 
@@ -291,7 +357,6 @@ public class PrivateKeyService {
     private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
 
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();
-        String source = translateContext.getSource();
         if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils()))
             return;
         //定义HashMap存放判断后的对应数据
@@ -415,7 +480,9 @@ public class PrivateKeyService {
             //TODO: 修改翻译调用
             String translatedText = null;
             try {
-                translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+                counter.addChars(value.length());
+                //对文本进行翻译
+                translatedText = getGoogleTranslationWithRetry(value, source, translateContext.getApiKey(), request.getTarget());
             } catch (Exception e) {
                 appInsights.trackTrace("翻译问题： " + e.getMessage());
             }
@@ -462,10 +529,10 @@ public class PrivateKeyService {
 
             //存放在html的list集合里面
             // 解析HTML文档
-            String htmlTranslation = null;
+            String htmlTranslation;
             try {
                 TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
-                htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+                htmlTranslation = translatePrivateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType(), translateContext.getApiKey());
             } catch (Exception e) {
                 saveToShopify(value, translation, resourceId, request);
                 continue;
@@ -520,12 +587,7 @@ public class PrivateKeyService {
 //            首选谷歌翻译，翻译不了用AI翻译
             try {
                 //TODO:根据shopName获取对应的google apiKey
-                //计算用户的token数
-                counter.addChars(value.length());
-                //对文本进行翻译
-                String targetValue = getGoogleTranslationWithRetry(value, source, "", target);
-                //翻译成功后，将翻译后的数据存shopify本地中
-                saveToShopify(targetValue, translation, resourceId, request);
+                translateByUser(counter, value, source, request, resourceId, translation, translateContext.getApiKey());
             } catch (Exception e) {
                 appInsights.trackTrace("翻译失败后的字符数： " + counter.getTotalChars());
                 userPrivateService.updateUsedCharsByShopName(request.getShopName(), counter.getTotalChars());
@@ -537,15 +599,15 @@ public class PrivateKeyService {
     }
 
     //根据用户的翻译模型选择翻译
-//    private void translateByUser(CharacterCountUtils counter, String value, ){
-//        //TODO:根据shopName获取对应的google apiKey
-//        //计算用户的token数
-//        counter.addChars(value.length());
-//        //对文本进行翻译
-//        String targetValue = getGoogleTranslationWithRetry(value, source, "", target);
-//        //翻译成功后，将翻译后的数据存shopify本地中
-//        saveToShopify(targetValue, translation, resourceId, request);
-//    }
+    private void translateByUser(CharacterCountUtils counter, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey){
+        //TODO:根据shopName获取对应的google apiKey
+        //计算用户的token数
+        counter.addChars(value.length());
+        //对文本进行翻译
+        String targetValue = getGoogleTranslationWithRetry(value, source, apiKey, request.getTarget());
+        //翻译成功后，将翻译后的数据存shopify本地中
+        saveToShopify(targetValue, translation, resourceId, request);
+    }
 
 
     //将翻译后的数据存shopify本地中

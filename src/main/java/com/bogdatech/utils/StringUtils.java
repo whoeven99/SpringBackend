@@ -67,4 +67,9 @@ public class StringUtils {
 //        System.out.println("words: " + Arrays.toString(words));
         return words.length;
     }
+
+    //将传入的文本的.替换成-
+     public static String replaceDot(String text) {
+        return text.replace(".", "-");
+     }
 }

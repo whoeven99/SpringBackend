@@ -28,6 +28,7 @@ public class UserPrivateServiceImpl extends ServiceImpl<UserPrivateMapper, UserP
         }else {
             UserPrivateDO userPrivate = new UserPrivateDO();
             userPrivate.setAmount(amount);
+            userPrivate.setGoogleKey(googleKey);
             return baseMapper.update(userPrivate, new QueryWrapper<UserPrivateDO>()
                     .eq(SHOP_NAME,shopName));
         }
