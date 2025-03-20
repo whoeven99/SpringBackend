@@ -323,6 +323,7 @@ public class PrivateIntegration {
                     try {
                         targetString = getGoogleTranslationWithRetry(cleanedText, resourceType, apiKey, request.getTarget());
                         result.append(targetString);
+                        addData(request.getTarget(), cleanedText, targetString);
 //                        System.out.println("cleanedText: " + cleanedText);
 //                        result.append(cleanedText);
                     } catch (ClientException e) {
@@ -353,6 +354,7 @@ public class PrivateIntegration {
                     //AI翻译
                     targetString = getGoogleTranslationWithRetry(cleanedText, resourceType, apiKey, request.getTarget());
                     result.append(targetString);
+                    addData(request.getTarget(), cleanedText, targetString);
 //                    System.out.println("cleanedText: " + cleanedText);
 //                    result.append(cleanedText);
                 } catch (ClientException e) {

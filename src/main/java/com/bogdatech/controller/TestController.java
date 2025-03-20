@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
+import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
-import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
-import static com.bogdatech.utils.StringUtils.countWords;
 
 @RestController
 public class TestController {
@@ -89,11 +89,7 @@ public class TestController {
         testService.stopTask();
     }
 
-    @GetMapping("/countWords")
-    public int countWord(@RequestParam String text) {
-//        System.out.println("要计数的文本：" + text);
-        return countWords(text);
-    }
+
 
     //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
@@ -111,12 +107,15 @@ public class TestController {
         System.out.println("rateMap: " + rateMap.toString());
     }
 
+    //测试缓存功能
+    @GetMapping("/testCache")
+    public String testCache() {
+        return SINGLE_LINE_TEXT.toString();
+    }
 
-    //测试token计数的差距
-    @PostMapping("/testToken")
-    public void testToken(@RequestBody String text) {
-        int i = googleCalculateToken(text);
-        System.out.println("token: " + i);
+    @GetMapping("/testAddCache")
+    public void testAddCache(String target, String value, String targetText) {
+        addData(target, value, targetText);
     }
 
     @PostMapping("/testMT")

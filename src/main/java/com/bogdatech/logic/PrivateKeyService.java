@@ -482,6 +482,7 @@ public class PrivateKeyService {
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
+            addData(request.getTarget(), value, translatedText);
             if (checkIsStopped(request.getShopName(), counter))
                 return;
         }
@@ -571,11 +572,11 @@ public class PrivateKeyService {
                     String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
                     request.setContent(updateText);
 //                    String targetString = translateApiIntegration.microsoftTranslate(request);
-
                     String targetString = getGoogleTranslationWithRetry(updateText, request.getSource(), apiKey, request.getTarget());
                     String finalText = restoreKeywords(targetString, placeholderMap);
                     addData(request.getTarget(), text, finalText);
                     translatedTexts.add(finalText);
+                    addData(request.getTarget(), updateText, targetString);
                 }
             }
             translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
@@ -630,6 +631,7 @@ public class PrivateKeyService {
         counter.addChars(value.length());
         //对文本进行翻译
         String targetValue = getGoogleTranslationWithRetry(value, source, apiKey, request.getTarget());
+        addData(request.getTarget(), value, targetValue);
 //        String targetValue = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, request.getTarget(), value));
         //翻译成功后，将翻译后的数据存shopify本地中
         saveToShopify(targetValue, translation, resourceId, request);
