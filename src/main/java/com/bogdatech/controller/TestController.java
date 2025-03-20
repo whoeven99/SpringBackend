@@ -15,7 +15,6 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
-import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +26,7 @@ import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
 
@@ -162,7 +162,7 @@ public class TestController {
     public String testText(@RequestParam String text) {
             // 使用 StringEscapeUtils 解码，但只针对 ' 生效
         System.out.println("text: " + text);
-            return StringEscapeUtils.unescapeHtml4(text);
+        return isHtmlEntity(text);
         }
 
 }

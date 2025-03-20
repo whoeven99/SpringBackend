@@ -200,7 +200,7 @@ public class LiquidHtmlTranslatorUtils {
                 String toTranslate = text.substring(lastEnd, match.start);
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
                 //对特殊符号进行处理
-                if (cleanedText.matches("\\p{Zs}")){
+                if (cleanedText.matches("\\p{Zs}")) {
 //                    System.out.println("要翻译的空白： " + cleanedText);
                     result.append(cleanedText);
                     continue;
@@ -213,14 +213,14 @@ public class LiquidHtmlTranslatorUtils {
 //                            System.out.println("要翻译的文本AI： " + cleanedText);
 //                            appInsights.trackTrace("要翻译的文本AI： " + cleanedText);
                             targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
-                            targetString = StringEscapeUtils.unescapeHtml4(targetString);
+                            targetString = isHtmlEntity(targetString);
                             result.append(targetString);
                         } else {
                             request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本： " + cleanedText);
                             targetString = translateAndCount(request, counter, resourceType);
-                            targetString = StringEscapeUtils.unescapeHtml4(targetString);
+                            targetString = isHtmlEntity(targetString);;
                             result.append(targetString);
                         }
                     } catch (ClientException e) {
@@ -241,7 +241,7 @@ public class LiquidHtmlTranslatorUtils {
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
-            if (cleanedText.matches("\\p{Zs}")){
+            if (cleanedText.matches("\\p{Zs}")) {
 //                System.out.println("要翻译的剩余空白： " + cleanedText);
                 result.append(cleanedText);
                 return result.toString();
@@ -254,14 +254,14 @@ public class LiquidHtmlTranslatorUtils {
 //                        appInsights.trackTrace("处理剩余文本AI： " + cleanedText);
 //                        System.out.println("要翻译的文本AI： " + cleanedText);
                         targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
-                        targetString = StringEscapeUtils.unescapeHtml4(targetString);
+                        targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     } else {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
-                        targetString = StringEscapeUtils.unescapeHtml4(targetString);
+                        targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     }
                 } catch (ClientException e) {
@@ -298,5 +298,21 @@ public class LiquidHtmlTranslatorUtils {
             this.end = end;
             this.content = content;
         }
+    }
+
+    //判断是否含有HTML实体
+    public static String isHtmlEntity(String text) {
+        int i = 0;
+        while (!text.equals(StringEscapeUtils.unescapeHtml4(text))) {
+            // 如果有 HTML 实体，则解码
+            text = StringEscapeUtils.unescapeHtml4(text);
+            i++;
+            if (i > 3){
+                return text;
+            }
+        }
+
+        // 最终结果（无 HTML 实体后直接输出）
+        return text;
     }
 }
