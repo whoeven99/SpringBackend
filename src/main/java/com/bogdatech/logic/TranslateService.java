@@ -976,7 +976,6 @@ public class TranslateService {
         try {
             // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
             vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
-
         } catch (Exception e) {
             appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1137,11 +1136,12 @@ public class TranslateService {
     public static void addData(String outerKey, String innerKey, String value) {
         // 获取外层键对应的内层 Map
         Map<String, String> innerMap = SINGLE_LINE_TEXT.get(outerKey);
-
+//        System.out.println("outerKey: " + outerKey + " innerKey: " + innerKey + " value: " + value);
         // 如果外层键不存在，则创建一个新的内层 Map
         if (innerMap == null) {
             innerMap = new HashMap<>();
             SINGLE_LINE_TEXT.put(outerKey, innerMap);
+//            System.out.println("创建新的内层 Map: " + innerKey);
         }
 
         // 将新的键值对添加到内层 Map 中

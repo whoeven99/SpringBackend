@@ -7,10 +7,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.*;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.EmailIntegration;
-import com.bogdatech.integration.PrivateIntegration;
-import com.bogdatech.integration.ShopifyHttpIntegration;
-import com.bogdatech.integration.TestingEnvironmentIntegration;
+import com.bogdatech.integration.*;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -48,7 +45,8 @@ import static com.bogdatech.integration.PrivateIntegration.translatePrivateNewHt
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
-import static com.bogdatech.utils.JsoupUtils.*;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
+import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 import static com.bogdatech.utils.StringUtils.replaceDot;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -56,6 +54,7 @@ import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToS
 @Component
 public class PrivateKeyService {
     private final PrivateIntegration privateIntegration;
+    private final TranslateApiIntegration translateApiIntegration;
     private final UserPrivateService userPrivateService;
     private final IUserPrivateService iUserPrivateService;
     private final ITranslatesService iTranslatesService;
@@ -73,8 +72,9 @@ public class PrivateKeyService {
     private final IUserTypeTokenService userTypeTokenService;
 
     @Autowired
-    public PrivateKeyService(PrivateIntegration privateIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService) {
+    public PrivateKeyService(PrivateIntegration privateIntegration, TranslateApiIntegration translateApiIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService) {
         this.privateIntegration = privateIntegration;
+        this.translateApiIntegration = translateApiIntegration;
         this.userPrivateService = userPrivateService;
         this.iUserPrivateService = iUserPrivateService;
         this.iTranslatesService = iTranslatesService;
@@ -93,13 +93,6 @@ public class PrivateKeyService {
     }
 
     TelemetryClient appInsights = new TelemetryClient();
-
-    //测试google调用
-    public void test(String text, String source, String apiKey, String target) {
-        String s = getGoogleTranslationWithRetry(text, source, apiKey, target);
-        System.out.println("s = " + s);
-    }
-
 
     /**
      * 私有key翻译前的判断
@@ -176,11 +169,11 @@ public class PrivateKeyService {
                 }
                 iTranslatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                 userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
-//                //发送报错邮件
-//                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
-//                if (emailSent.compareAndSet(false, true)) {
-//                    translateFailEmail(shopName, CHARACTER_LIMIT);
-//                }
+                //发送报错邮件
+                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
+                if (emailSent.compareAndSet(false, true)) {
+                    translateFailEmail(shopName, CHARACTER_LIMIT);
+                }
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 //更新初始值
                 updateInitialValue(request);
@@ -203,7 +196,7 @@ public class PrivateKeyService {
             // 将翻译状态改为“已翻译”//
             iTranslatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
-//            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
             //更新初始值
             updateInitialValue(request);
         });
@@ -464,7 +457,7 @@ public class PrivateKeyService {
             //判断是否为HTML
             if (registerTransactionRequest.getTarget().equals(HTML) || isHtml(value)) {
                 try {
-                    targetText = translateGlossaryHtmlText(translateRequest, counter, keyMap1, keyMap0, translateContext.getTranslateResource().getResourceType());
+                    targetText = translateGlossaryHtmlText(translateRequest, counter, keyMap1, keyMap0, translateContext.getApiKey());
                 } catch (Exception e) {
                     saveToShopify(value, translation, resourceId, request);
                     continue;
@@ -483,11 +476,13 @@ public class PrivateKeyService {
                 counter.addChars(value.length());
                 //对文本进行翻译
                 translatedText = getGoogleTranslationWithRetry(value, source, translateContext.getApiKey(), request.getTarget());
+//                translatedText = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, request.getTarget(), value));
             } catch (Exception e) {
                 appInsights.trackTrace("翻译问题： " + e.getMessage());
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
+            addData(request.getTarget(), value, translatedText);
             if (checkIsStopped(request.getShopName(), counter))
                 return;
         }
@@ -544,7 +539,7 @@ public class PrivateKeyService {
     }
 
     //翻译词汇表的html文本
-    public String translateGlossaryHtmlText(TranslateRequest request, CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String resourceType) {
+    public String translateGlossaryHtmlText(TranslateRequest request, CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String apiKey) {
         String html = request.getContent();
         // 解析HTML文档
         Document doc = Jsoup.parse(html);
@@ -552,10 +547,41 @@ public class PrivateKeyService {
         // 提取需要翻译的文本
         Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
         // 翻译文本
-        Map<Element, List<String>> translatedTextMap = jsoupUtils.translateGlossaryTexts(elementTextMap, request, counter, keyMap, keyMap0, resourceType);
+        Map<Element, List<String>> translatedTextMap = translateGlossaryTexts(elementTextMap, request, counter, keyMap, keyMap0, apiKey);
         // 替换原始文本为翻译后的文本
         jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
         return doc.body().html();
+    }
+
+    // 对文本进行翻译（词汇表）
+    public Map<Element, List<String>> translateGlossaryTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
+                                                             CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String apiKey) {
+        Map<Element, List<String>> translatedTextMap = new HashMap<>();
+        for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
+            Element element = entry.getKey();
+            List<String> texts = entry.getValue();
+            List<String> translatedTexts = new ArrayList<>();
+            for (String text : texts) {
+                String translated = translateSingleLine(text, request.getTarget());
+                if (translated != null) {
+                    translatedTexts.add(translated);
+                } else {
+                    //目前没有翻译html的提示词，用的是谷歌翻译
+                    counter.addChars(googleCalculateToken(text));
+                    Map<String, String> placeholderMap = new HashMap<>();
+                    String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
+                    request.setContent(updateText);
+//                    String targetString = translateApiIntegration.microsoftTranslate(request);
+                    String targetString = getGoogleTranslationWithRetry(updateText, request.getSource(), apiKey, request.getTarget());
+                    String finalText = restoreKeywords(targetString, placeholderMap);
+                    addData(request.getTarget(), text, finalText);
+                    translatedTexts.add(finalText);
+                    addData(request.getTarget(), updateText, targetString);
+                }
+            }
+            translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
+        }
+        return translatedTextMap;
     }
 
     //对不同的数据使用不同的翻译api
@@ -599,12 +625,14 @@ public class PrivateKeyService {
     }
 
     //根据用户的翻译模型选择翻译
-    private void translateByUser(CharacterCountUtils counter, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey){
+    private void translateByUser(CharacterCountUtils counter, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey) {
         //TODO:根据shopName获取对应的google apiKey
         //计算用户的token数
         counter.addChars(value.length());
         //对文本进行翻译
         String targetValue = getGoogleTranslationWithRetry(value, source, apiKey, request.getTarget());
+        addData(request.getTarget(), value, targetValue);
+//        String targetValue = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, request.getTarget(), value));
         //翻译成功后，将翻译后的数据存shopify本地中
         saveToShopify(targetValue, translation, resourceId, request);
     }
