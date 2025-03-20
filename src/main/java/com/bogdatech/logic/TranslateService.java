@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.applicationinsights.TelemetryClient;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -116,10 +117,10 @@ public class TranslateService {
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
     public static ExecutorService executorService = new ThreadPoolExecutor(
-            8,   // 核心线程数（比 vCPU 多一点）
-            16,  // 最大线程数（vCPU * 4）
+            6,   // 核心线程数（比 vCPU 多一点）
+            12,  // 最大线程数（vCPU * 4）
             60L, TimeUnit.SECONDS, // 空闲线程存活时间
-            new LinkedBlockingQueue<>(100), // 任务队列（避免内存过载）
+            new LinkedBlockingQueue<>(50), // 任务队列（避免内存过载）
             new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
     );
 
@@ -737,6 +738,7 @@ public class TranslateService {
             if (registerTransactionRequest.getTarget().equals(HTML) || isHtml(value)) {
                 try {
                     targetText = translateGlossaryHtmlText(translateRequest, counter, keyMap1, keyMap0, translateContext.getTranslateResource().getResourceType());
+                    targetText = StringEscapeUtils.unescapeHtml4(targetText);
                 } catch (Exception e) {
                     saveToShopify(value, translation, resourceId, request);
                     continue;
@@ -941,6 +943,7 @@ public class TranslateService {
         String targetText = null;
         try {
             targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
+            targetText = StringEscapeUtils.unescapeHtml4(targetText);
         } catch (Exception e) {
             //打印错误信息
             appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());
@@ -961,6 +964,7 @@ public class TranslateService {
         String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
+            targetString = StringEscapeUtils.unescapeHtml4(targetString);
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }

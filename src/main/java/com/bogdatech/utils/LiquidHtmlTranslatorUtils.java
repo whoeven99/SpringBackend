@@ -4,6 +4,7 @@ package com.bogdatech.utils;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -68,7 +69,7 @@ public class LiquidHtmlTranslatorUtils {
                 processNode(doc.body(), request, counter, resourceType);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
 //                appInsights.trackTrace("有html标签： "  + result);
-                System.out.println("有html标签： "  + result);
+//                System.out.println("有html标签： "  + result);
                 return result;
             } else {
                 // 如果没有 <html> 标签，作为片段处理
@@ -85,7 +86,7 @@ public class LiquidHtmlTranslatorUtils {
 
                 String output = result.toString();
 //                appInsights.trackTrace("没有html标签： "  + output);
-                System.out.println("没有html标签： "  + output);
+//                System.out.println("没有html标签： "  + output);
                 return output;
             }
 
@@ -212,12 +213,14 @@ public class LiquidHtmlTranslatorUtils {
 //                            System.out.println("要翻译的文本AI： " + cleanedText);
 //                            appInsights.trackTrace("要翻译的文本AI： " + cleanedText);
                             targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
+                            targetString = StringEscapeUtils.unescapeHtml4(targetString);
                             result.append(targetString);
                         } else {
                             request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本： " + cleanedText);
                             targetString = translateAndCount(request, counter, resourceType);
+                            targetString = StringEscapeUtils.unescapeHtml4(targetString);
                             result.append(targetString);
                         }
                     } catch (ClientException e) {
@@ -239,7 +242,7 @@ public class LiquidHtmlTranslatorUtils {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
             if (cleanedText.matches("\\p{Zs}")){
-                System.out.println("要翻译的剩余空白： " + cleanedText);
+//                System.out.println("要翻译的剩余空白： " + cleanedText);
                 result.append(cleanedText);
                 return result.toString();
             }
@@ -249,14 +252,16 @@ public class LiquidHtmlTranslatorUtils {
                     if (cleanedText.length() > 32) {
                         //AI翻译
 //                        appInsights.trackTrace("处理剩余文本AI： " + cleanedText);
-                        System.out.println("要翻译的文本AI： " + cleanedText);
+//                        System.out.println("要翻译的文本AI： " + cleanedText);
                         targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
+                        targetString = StringEscapeUtils.unescapeHtml4(targetString);
                         result.append(targetString);
                     } else {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-                        System.out.println("要翻译的文本： " + cleanedText);
+//                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
+                        targetString = StringEscapeUtils.unescapeHtml4(targetString);
                         result.append(targetString);
                     }
                 } catch (ClientException e) {

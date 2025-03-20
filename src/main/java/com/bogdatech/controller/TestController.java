@@ -15,6 +15,7 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -156,5 +157,12 @@ public class TestController {
             System.out.println("文本: \" + test + \" -> 包含占位符: " + result);
         }
     }
+
+    @GetMapping("/testText")
+    public String testText(@RequestParam String text) {
+            // 使用 StringEscapeUtils 解码，但只针对 ' 生效
+        System.out.println("text: " + text);
+            return StringEscapeUtils.unescapeHtml4(text);
+        }
 
 }
