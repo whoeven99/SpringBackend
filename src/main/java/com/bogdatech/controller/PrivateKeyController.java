@@ -31,14 +31,6 @@ public class PrivateKeyController {
         this.userPrivateService = userPrivateService;
     }
 
-
-    //用于测试google是否可以调用
-    //后面再加上对openai的调用
-    @PostMapping("/test")
-    public void test(String text, String source, String apiKey, String target) {
-        privateKeyService.test(text, source, apiKey, target);
-    }
-
     //用户通过私有key翻译
     @PutMapping("/translate")
     public BaseResponse<Object> translate(@RequestBody ClickTranslateRequest clickTranslateRequest) {

@@ -84,7 +84,7 @@ public class UserPrivateService {
                 }
                 KeyVaultSecret keyVaultSecret = secretClient.getSecret(userPrivateDO.getGoogleKey());
                 //对用户的key做处理， 只传前4位和后4位，中间用x代替
-                String key = keyVaultSecret.getValue().substring(0, 4) + "xxxxxxxx" + keyVaultSecret.getValue().substring(keyVaultSecret.getValue().length() - 4);
+                String key = keyVaultSecret.getValue().substring(0, 4) + "**********" + keyVaultSecret.getValue().substring(keyVaultSecret.getValue().length() - 4);
                 userPrivateDO.setGoogleKey(key);
                 userPrivateDO.setUsedAmount(null);
                 userPrivateDO.setId(null);

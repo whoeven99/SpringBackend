@@ -35,10 +35,12 @@ import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 @Component
 public class PrivateIntegration {
     private final RestTemplate restTemplate;
+    private final TranslateApiIntegration translateApiIntegration;
     static TelemetryClient appInsights = new TelemetryClient();
 
-    public PrivateIntegration(RestTemplate restTemplate) {
+    public PrivateIntegration(RestTemplate restTemplate, TranslateApiIntegration translateApiIntegration) {
         this.restTemplate = restTemplate;
+        this.translateApiIntegration = translateApiIntegration;
     }
 
     /**
@@ -181,7 +183,7 @@ public class PrivateIntegration {
                 processNode(doc.body(), request, counter, resourceType, apiKey);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
 //                appInsights.trackTrace("有html标签： "  + result);
-                System.out.println("有html标签： " + result);
+//                System.out.println("有html标签： " + result);
                 return result;
             } else {
                 // 如果没有 <html> 标签，作为片段处理
@@ -198,7 +200,7 @@ public class PrivateIntegration {
 
                 String output = result.toString();
 //                appInsights.trackTrace("没有html标签： "  + output);
-                System.out.println("没有html标签： " + output);
+//                System.out.println("没有html标签： " + output);
                 return output;
             }
 
@@ -321,6 +323,8 @@ public class PrivateIntegration {
                     try {
                         targetString = getGoogleTranslationWithRetry(cleanedText, resourceType, apiKey, request.getTarget());
                         result.append(targetString);
+//                        System.out.println("cleanedText: " + cleanedText);
+//                        result.append(cleanedText);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         result.append(cleanedText);
@@ -349,6 +353,8 @@ public class PrivateIntegration {
                     //AI翻译
                     targetString = getGoogleTranslationWithRetry(cleanedText, resourceType, apiKey, request.getTarget());
                     result.append(targetString);
+//                    System.out.println("cleanedText: " + cleanedText);
+//                    result.append(cleanedText);
                 } catch (ClientException e) {
                     result.append(cleanedText);
                 }
