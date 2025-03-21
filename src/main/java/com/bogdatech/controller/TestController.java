@@ -40,6 +40,7 @@ public class TestController {
     private final JsoupUtils jsoupUtils;
     private final RateHttpIntegration rateHttpIntegration;
 
+
     @Autowired
     public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
@@ -131,7 +132,6 @@ public class TestController {
     @GetMapping("/testIsHTML")
     public void testIsHTML(String target) {
         String html = """
-                
                 """;
         boolean result = isDatabaseLanguage(target);
 //        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
