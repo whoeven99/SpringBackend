@@ -87,7 +87,7 @@ public class UserPrivateService {
 
                 //如果数据中没有key 就 输出空
                 if (userPrivateDO == null) {
-                    return new BaseResponse<>().CreateErrorResponse("用户不存在");
+                    return new BaseResponse<>().CreateSuccessResponse(new UserPrivateDO());
                 }
                 KeyVaultSecret keyVaultSecret = secretClient.getSecret(userPrivateDO.getGoogleKey());
                 //对用户的key做处理， 只传前4位和后4位，中间用x代替
@@ -125,18 +125,16 @@ public class UserPrivateService {
     public Boolean deleteUserData(String shopName) {
         //只删除 amount 和 key数据
         UserPrivateDO user = userPrivateService.selectOneByShopName(shopName);
-        String googleKey = user.getGoogleKey();
         //删除用户在keyVault里面的数据
         try {
             shopName = replaceDot(shopName);
             secretClient.getDeletedSecret(shopName + "-" + GOOGLE);
         } catch (Exception e) {
-            System.out.println("删除用户在keyVault里面的数据失败：" + e.getMessage());
+//            System.out.println("删除用户在keyVault里面的数据失败：" + e.getMessage());
             appInsights.trackTrace("删除用户在keyVault里面的数据失败：" + e.getMessage());
         }
 
         //将数据库中的数据的amount和key清空
-//        return userPrivateService.update(new QueryWrapper<>().);
-        return null;
+        return userPrivateService.updateAmountAndGoogleKey(user.getShopName());
     }
 }

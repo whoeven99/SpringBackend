@@ -944,7 +944,6 @@ public class TranslateService {
         String targetText = null;
         try {
             targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
-            targetText = isHtmlEntity(targetText);
         } catch (Exception e) {
             //打印错误信息
             appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());

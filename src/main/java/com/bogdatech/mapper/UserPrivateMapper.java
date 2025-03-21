@@ -5,6 +5,7 @@ import com.bogdatech.entity.UserPrivateDO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface UserPrivateMapper extends BaseMapper<UserPrivateDO> {
@@ -13,4 +14,7 @@ public interface UserPrivateMapper extends BaseMapper<UserPrivateDO> {
 
     @Select("SELECT id FROM UserPrivate WHERE shop_name = #{shopName}")
     Integer getUserIdByShopName(String shopName);
+
+    @Update("UPDATE UserPrivate SET amount = #{amount},google_key = #{googleKey}, used_amount  = #{usedAmount} WHERE shop_name = #{shopName}")
+    Boolean updateAmountAndGoogleKey(Integer amount, String googleKey, Integer usedAmount, String shopName);
 }
