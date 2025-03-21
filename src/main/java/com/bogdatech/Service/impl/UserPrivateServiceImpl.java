@@ -33,4 +33,14 @@ public class UserPrivateServiceImpl extends ServiceImpl<UserPrivateMapper, UserP
                     .eq(SHOP_NAME,shopName));
         }
     }
+
+    @Override
+    public Integer getUserId(String shopName) {
+        return baseMapper.getUserIdByShopName(shopName);
+    }
+
+    @Override
+    public Boolean updateAmountAndGoogleKey(String shopName) {
+        return baseMapper.updateAmountAndGoogleKey(0, null, 0, shopName);
+    }
 }

@@ -7,4 +7,8 @@ public interface IUserPrivateService extends IService<UserPrivateDO> {
     UserPrivateDO selectOneByShopName(String shopName);
 
     Integer addOrUpdateGoogleUserData(String shopName, String googleKey, Integer amount);
+
+    Integer getUserId(String shopName);
+
+    Boolean updateAmountAndGoogleKey(String shopName);
 }
