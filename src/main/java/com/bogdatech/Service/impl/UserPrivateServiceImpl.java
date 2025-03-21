@@ -33,4 +33,9 @@ public class UserPrivateServiceImpl extends ServiceImpl<UserPrivateMapper, UserP
                     .eq(SHOP_NAME,shopName));
         }
     }
+
+    @Override
+    public Integer getUserId(String shopName) {
+        return baseMapper.getUserIdByShopName(shopName);
+    }
 }

@@ -12,18 +12,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
+import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
+import static com.bogdatech.utils.StringUtils.replaceDot;
 
 @Component
 public class UserPrivateService {
 
     private final IUserPrivateService userPrivateService;
     private final SecretClient secretClient;
+
     @Autowired
     public UserPrivateService(IUserPrivateService userPrivateService, SecretClient secretClient) {
         this.userPrivateService = userPrivateService;
         this.secretClient = secretClient;
     }
+
     TelemetryClient appInsights = new TelemetryClient();
+
     public BaseResponse<Object> saveOrUpdateUserData(UserPrivateRequest userPrivateRequest) {
         String model = userPrivateRequest.getModel();
         if (model == null) {
@@ -35,17 +40,17 @@ public class UserPrivateService {
         }
 
         UserPrivateDO userPrivateDO;
-       //根据传入的model，将userPrivateRequest转为对应的userPrivateDO
-       switch (model) {
-           case "google":
+        //根据传入的model，将userPrivateRequest转为对应的userPrivateDO
+        switch (model) {
+            case "google":
                 userPrivateDO = new UserPrivateDO(null, userPrivateRequest.getShopName(), userPrivateRequest.getAmount(), null, null, userPrivateRequest.getSecret());
-               break;
-           case "openai":
+                break;
+            case "openai":
                 userPrivateDO = new UserPrivateDO(null, userPrivateRequest.getShopName(), userPrivateRequest.getAmount(), null, userPrivateRequest.getSecret(), null);
-               break;
-           default:
-               return new BaseResponse<>().CreateErrorResponse(model + " 暂时不支持！");
-       }
+                break;
+            default:
+                return new BaseResponse<>().CreateErrorResponse(model + " 暂时不支持！");
+        }
         //存到数据库中
         //先判断userPrivateDO是否已经存在，如果存在则更新，如果不存在则插入
         //存到Azure的keyVault中
@@ -79,6 +84,8 @@ public class UserPrivateService {
         while (retries > 0) {
             try {
                 userPrivateDO = userPrivateService.selectOneByShopName(userPrivateRequest.getShopName());
+
+                //如果数据中没有key 就 输出空
                 if (userPrivateDO == null) {
                     return new BaseResponse<>().CreateErrorResponse("用户不存在");
                 }
@@ -112,5 +119,23 @@ public class UserPrivateService {
         UserPrivateDO userPrivateDO = new UserPrivateDO();
         userPrivateDO.setUsedAmount(usedChars);
         userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(SHOP_NAME, shopName));
+    }
+
+    //删除用户数据
+    public Boolean deleteUserData(String shopName) {
+        //只删除 amount 和 key数据
+        Integer userId = userPrivateService.getUserId(shopName);
+
+        //删除用户在keyVault里面的数据
+        try {
+            shopName = replaceDot(shopName);
+            secretClient.getDeletedSecret(shopName + "-" + GOOGLE);
+        } catch (Exception e) {
+            System.out.println("删除用户在keyVault里面的数据失败：" + e.getMessage());
+            appInsights.trackTrace("删除用户在keyVault里面的数据失败：" + e.getMessage());
+        }
+
+        return userPrivateService.update(userId);
+
     }
 }
