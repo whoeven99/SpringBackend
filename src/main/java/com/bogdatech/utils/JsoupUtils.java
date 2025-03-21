@@ -23,6 +23,7 @@ import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
 import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
 import static java.lang.Thread.sleep;
@@ -353,6 +354,7 @@ public class JsoupUtils {
                                     CharacterCountUtils counter, String resourceType) {
         String text = request.getContent();
         String targetString = googleTranslateJudgeCode(request, counter, resourceType);
+        targetString = isHtmlEntity(targetString);
         addData(request.getTarget(), text, targetString);
         return targetString;
     }

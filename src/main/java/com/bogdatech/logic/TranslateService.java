@@ -755,6 +755,7 @@ public class TranslateService {
             String translatedText = null;
             try {
                 translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+                translatedText = isHtmlEntity(translatedText);
             } catch (Exception e) {
                 appInsights.trackTrace("翻译问题： " + e.getMessage());
             }
@@ -964,7 +965,7 @@ public class TranslateService {
         String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
-            targetString = isHtmlEntity(targetString);
+
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1156,6 +1157,7 @@ public class TranslateService {
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", resourceId);
+        translatedValue = isHtmlEntity(translatedValue);
         translation.put("value", translatedValue);
         Object[] translations = new Object[]{
                 translation // 将HashMap添加到数组中

@@ -923,7 +923,11 @@ public class PrivateKeyService {
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
         templateData.put("language", request.getTarget());
-
+        // 定义要移除的后缀
+        String suffix = ".myshopify.com";
+        String TargetShop;
+        TargetShop = request.getShopName().substring(0, request.getShopName().length() - suffix.length());
+        templateData.put("shop_name", TargetShop);
         //获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
 
@@ -949,7 +953,7 @@ public class PrivateKeyService {
         }
         appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133535L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(136836L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
 
