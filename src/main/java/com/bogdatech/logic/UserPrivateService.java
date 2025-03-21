@@ -124,8 +124,8 @@ public class UserPrivateService {
     //删除用户数据
     public Boolean deleteUserData(String shopName) {
         //只删除 amount 和 key数据
-        Integer userId = userPrivateService.getUserId(shopName);
-
+        UserPrivateDO user = userPrivateService.selectOneByShopName(shopName);
+        String googleKey = user.getGoogleKey();
         //删除用户在keyVault里面的数据
         try {
             shopName = replaceDot(shopName);
@@ -135,7 +135,8 @@ public class UserPrivateService {
             appInsights.trackTrace("删除用户在keyVault里面的数据失败：" + e.getMessage());
         }
 
-        return userPrivateService.update(userId);
-
+        //将数据库中的数据的amount和key清空
+//        return userPrivateService.update(new QueryWrapper<>().);
+        return null;
     }
 }
