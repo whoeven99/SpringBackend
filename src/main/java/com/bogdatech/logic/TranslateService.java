@@ -193,7 +193,7 @@ public class TranslateService {
 
             //更新初始值
             try {
-                //            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                //translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
                 startTokenCount(request);
             } catch (Exception e) {
                 appInsights.trackTrace("重新更新token值失败！！！");
@@ -580,9 +580,9 @@ public class TranslateService {
                 }
 
                 //走翻译流程
-               String translated = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, type);
-               addData(request.getTarget(), value, translated);
+               String translated = translateSingleText(request, value, type, counter, source);
                saveToShopify(translated, translation, resourceId, request);
+               continue;
            }
 
            if ("LIST_SINGLE_LINE_TEXT_FIELD".equals(type)){
@@ -634,9 +634,7 @@ public class TranslateService {
         }
 
         //普通翻译
-        String translated = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
-        addData(request.getTarget(), value, translated);
-        return translated;
+        return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
     }
 
     private void translateDataByOPENAI(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {

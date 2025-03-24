@@ -354,6 +354,9 @@ public class JsoupUtils {
                                     CharacterCountUtils counter, String resourceType) {
         String text = request.getContent();
         String targetString = googleTranslateJudgeCode(request, counter, resourceType);
+        if (targetString == null) {
+            return text;
+        }
         targetString = isHtmlEntity(targetString);
         addData(request.getTarget(), text, targetString);
         return targetString;
