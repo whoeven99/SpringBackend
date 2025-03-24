@@ -86,8 +86,13 @@ public class UserPrivateService {
                 userPrivateDO = userPrivateService.selectOneByShopName(userPrivateRequest.getShopName());
 
                 //如果数据中没有key 就 输出空
-                if (userPrivateDO == null || userPrivateDO.getGoogleKey() == null) {
+                if (userPrivateDO == null) {
                     return new BaseResponse<>().CreateSuccessResponse(new UserPrivateDO());
+                }
+                if (userPrivateDO.getGoogleKey() == null){
+                    userPrivateDO.setUsedAmount(null);
+                    userPrivateDO.setId(null);
+                    return new BaseResponse<>().CreateSuccessResponse(userPrivateDO);
                 }
                 KeyVaultSecret keyVaultSecret = secretClient.getSecret(userPrivateDO.getGoogleKey());
                 //对用户的key做处理， 只传前4位和后4位，中间用x代替
