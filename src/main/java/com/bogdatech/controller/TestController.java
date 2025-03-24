@@ -29,6 +29,7 @@ import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
+import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 
 @RestController
 public class TestController {
@@ -165,4 +166,25 @@ public class TestController {
         return isHtmlEntity(text);
         }
 
+
+    @GetMapping("/testRegular")
+    public void testRegular(@RequestParam String text) {
+        // 测试用例
+        String[] testCases = {
+                "Unisex",        // 只有1个标点符号
+                "Apparel & Accessories > Clothing Accessories > Hair Accessories > Hair Extensions",       // 2个标点符号
+                "BU18",  // 2个标点符号
+                "approved",        // 4个标点符号
+                "{\"pending\":0,\"failed\":0,\"approved\":7}",        // 包含空格，不符合
+                "74eb6025-072a-4e00-b952-f7cc816f7b9d",            // 2个标点符号
+                "\"TRUE\"",          // 无标点符号
+                "Feather Crochet Hair",       // 5个标点符号
+                "<p><lite-youtube videoid=\"dbDDT8s3y3k\" params=\"controls=1&amp;modestbranding=1&amp;rel=0&amp;showinfo=0&amp;enablejsapi=1+\" addnoscript></lite-youtube></p>"         // 包含#，但不是问题中的“标点符号”仍算有效
+        };
+
+        for (String test : testCases) {
+            System.out.println("测试字符串: " + test + " -> " + isValidString(test));
+        }
+
+    }
 }
