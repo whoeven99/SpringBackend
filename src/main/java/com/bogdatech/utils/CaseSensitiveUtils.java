@@ -38,7 +38,7 @@ public class CaseSensitiveUtils {
             // 使用 (?i) 标志来进行不区分大小写的替换
             text = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
         }
-//        System.out.println("text: " + text);
+        System.out.println("text: " + text);
         return text;
     }
 
@@ -46,6 +46,7 @@ public class CaseSensitiveUtils {
     public static String restoreKeywords(String translatedText, Map<String, String> placeholders) {
         for (Map.Entry<String, String> entry : placeholders.entrySet()) {
             translatedText = translatedText.replace(entry.getKey(), entry.getValue());
+            System.out.println("translatedText: " + translatedText);
         }
         return translatedText;
     }

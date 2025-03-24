@@ -125,7 +125,8 @@ public class ALiYunTranslateIntegration {
                 .build();
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+//                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey("sk-8321caeb10b1423494b1522976848979")
                 .model(model)
                 .messages(Arrays.asList(systemMsg, userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
@@ -169,7 +170,8 @@ public class ALiYunTranslateIntegration {
         //TODO: 根据目标语言
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+//                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey("sk-8321caeb10b1423494b1522976848979")
                 .model(model)
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
