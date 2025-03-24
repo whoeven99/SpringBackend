@@ -147,16 +147,16 @@ public class TranslateService {
                     }
                     return;
                 }
-                translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
-                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                appInsights.trackTrace("startTranslation " + e.getErrorMessage());
+                //更新初始值
+                try {
+                    translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
+                    translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
 //                //发送报错邮件
 //                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
 //                if (emailSent.compareAndSet(false, true)) {
 //                    translateFailEmail(shopName, CHARACTER_LIMIT);
 //                }
-                appInsights.trackTrace("startTranslation " + e.getErrorMessage());
-                //更新初始值
-                try {
                     startTokenCount(request);
                 } catch (Exception e3) {
                     appInsights.trackTrace("重新更新token值失败！！！");
@@ -188,9 +188,10 @@ public class TranslateService {
             // 将翻译状态改为“已翻译”//
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             //翻译成功后发送翻译成功的邮件
-//            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+
             //更新初始值
             try {
+                //            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
                 startTokenCount(request);
             } catch (Exception e) {
                 appInsights.trackTrace("重新更新token值失败！！！");
