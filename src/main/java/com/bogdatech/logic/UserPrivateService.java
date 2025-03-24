@@ -86,7 +86,7 @@ public class UserPrivateService {
                 userPrivateDO = userPrivateService.selectOneByShopName(userPrivateRequest.getShopName());
 
                 //如果数据中没有key 就 输出空
-                if (userPrivateDO == null) {
+                if (userPrivateDO == null || userPrivateDO.getGoogleKey() == null) {
                     return new BaseResponse<>().CreateSuccessResponse(new UserPrivateDO());
                 }
                 KeyVaultSecret keyVaultSecret = secretClient.getSecret(userPrivateDO.getGoogleKey());
