@@ -1205,6 +1205,7 @@ public class TranslateService {
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", resourceId);
+        translatedValue = isHtmlEntity(translatedValue);
         translation.put("value", translatedValue);
         Object[] translations = new Object[]{
                 translation // 将HashMap添加到数组中
