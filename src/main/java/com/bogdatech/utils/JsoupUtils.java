@@ -23,6 +23,7 @@ import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
 import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
 import static java.lang.Thread.sleep;
@@ -214,7 +215,7 @@ public class JsoupUtils {
     public Map<Element, List<String>> extractTextsToTranslate(Document doc) {
         Map<Element, List<String>> elementTextMap = new HashMap<>();
         for (Element element : doc.getAllElements()) {
-            if (!element.is("script, style")) { // 忽略script和style标签
+            if (!element.is("script, style, img")) { // 忽略script,style,img标签
                 List<String> texts = new ArrayList<>();
 
                 // 提取文本
@@ -353,6 +354,10 @@ public class JsoupUtils {
                                     CharacterCountUtils counter, String resourceType) {
         String text = request.getContent();
         String targetString = googleTranslateJudgeCode(request, counter, resourceType);
+        if (targetString == null) {
+            return text;
+        }
+        targetString = isHtmlEntity(targetString);
         addData(request.getTarget(), text, targetString);
         return targetString;
     }
