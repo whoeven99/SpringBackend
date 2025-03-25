@@ -638,8 +638,7 @@ public class TranslateService {
         }
 
         //普通翻译
-//        return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
-        return value + "-1";
+        return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
     }
 
     private void translateDataByOPENAI(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
@@ -932,7 +931,7 @@ public class TranslateService {
 
             //存放在html的list集合里面
             // 解析HTML文档
-            String htmlTranslation = null;
+            String htmlTranslation;
             try {
                 TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
                 htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
@@ -1497,16 +1496,43 @@ public class TranslateService {
     }
 
     //翻译失败后发送邮件
-    public void translateFailEmail(String shopName, String errorReason) {
+    public void translateFailEmail(String shopName, CharacterCountUtils counter, LocalDateTime begin, int beginChars, Integer remainingChars, String target, String source) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
+        templateData.put("language", target);
         templateData.put("user", usersDO.getFirstName());
+        // 定义要移除的后缀
+        String suffix = ".myshopify.com";
+        String TargetShop;
+        TargetShop = shopName.substring(0, shopName.length() - suffix.length());
+        templateData.put("shop_name", TargetShop);
+        //获取用户已翻译的和未翻译的文本
+        //通过shopName获取翻译到那个文本
+        String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
+        TypeSplitResponse typeSplitResponse = splitByType(resourceType);
+        templateData.put("translated_content", typeSplitResponse.getBefore().toString());
+        templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
+        //获取更新前后的时间
+        //睡眠1分钟
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            System.out.println("error: " + e.getMessage());
+        }
+        LocalDateTime end = LocalDateTime.now();
 
-        //错误原因
-        templateData.put("reason", errorReason);
+        Duration duration = Duration.between(begin, end);
+        long costTime = duration.toMinutes();
+        templateData.put("time", costTime + " minutes");
 
+        //共消耗的字符数
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        int endChars = counter.getTotalChars();
+        int costChars = endChars - beginChars;
+        String formattedNumber = formatter.format(costChars);
+        templateData.put("credit_count", formattedNumber);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133321L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }
