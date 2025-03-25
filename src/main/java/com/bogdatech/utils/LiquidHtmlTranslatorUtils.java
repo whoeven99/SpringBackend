@@ -26,21 +26,21 @@ public class LiquidHtmlTranslatorUtils {
 
     static TelemetryClient appInsights = new TelemetryClient();
     // 不翻译的URL模式
-    private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
+    public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
     // 不翻译的Liquid变量模式
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
+    public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
     // 自定义变量模式：%{ order.name } 等
-    private static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("%\\{[^}]+\\}");
+    public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("%\\{[^}]+\\}");
     // Liquid条件语句模式：{% if order.po_number != blank %} 等
-    private static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
+    public static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
     // 数组变量模式：[ product[1]] 等
-    private static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
+    public static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
     // 纯符号模式：匹配单独的 -、×、+、= 等符号（不含字母数字）
-    private static final Pattern SYMBOL_PATTERN = Pattern.compile("^[\\-×\\+=×*/|!@#$%^&()_]+$", Pattern.MULTILINE);
+    public static final Pattern SYMBOL_PATTERN = Pattern.compile("^[\\-×\\+=×*/|!@#$%^&()_]+$", Pattern.MULTILINE);
     // 判断是否有 <html> 标签的模式
-    private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
+    public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
-    private final static Set<String> noTranslateTags = new HashSet<>(Arrays.asList("style", "img", "script"));
+    public final static Set<String> noTranslateTags = new HashSet<>(Arrays.asList("style", "img", "script"));
 
     public LiquidHtmlTranslatorUtils() {
     }
@@ -288,13 +288,13 @@ public class LiquidHtmlTranslatorUtils {
      * @param text 输入文本
      * @return 清理后的文本
      */
-    private static String cleanTextFormat(String text) {
+    public static String cleanTextFormat(String text) {
         // 去除首尾的换行符和多余空格，保留内部有效内容
         return text.trim().replaceAll("[\\r\\n]+", "").replaceAll("\\s+", " ");
     }
 
     // 辅助类用于保存匹配范围
-    private static class MatchRange {
+    public static class MatchRange {
         int start;
         int end;
         String content;

@@ -9,6 +9,9 @@ import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.QWEN_MT;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
@@ -20,6 +23,7 @@ import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
 import static com.bogdatech.utils.CaseSensitiveUtils.restoreKeywords;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
 import static java.lang.Thread.sleep;
@@ -39,48 +43,114 @@ public class JsoupUtils {
             List<String> texts = entry.getValue();
             List<String> translatedTexts = new ArrayList<>();
             for (String text : texts) {
-                String translated = translateSingleLine(text, request.getTarget());
-                if (translated != null) {
-                    translatedTexts.add(translated);
-                } else {
-                    //目前没有翻译html的提示词，用的是谷歌翻译
-                    counter.addChars(googleCalculateToken(text));
-                    Map<String, String> placeholderMap = new HashMap<>();
-                    String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
-                    request.setContent(updateText);
-                    String targetString = translateAndCount(request, counter, resourceType);
-//                    String targetString = translateApiIntegration.getGoogleTranslationWithRetry(request);
-//                    String targetString = translateApiIntegration.microsoftTranslate(request);
-                    String finalText = restoreKeywords(targetString, placeholderMap);
-                    addData(request.getTarget(), text, finalText);
-                    translatedTexts.add(finalText);
-                }
+                String translated = translateSingleLineWithProtection(text, request, counter, keyMap, keyMap0, resourceType);
+                translatedTexts.add(translated);
             }
             translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
         }
         return translatedTextMap;
     }
 
+    /**
+     * 翻译单行文本，保护变量、URL和符号
+     */
+    private String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
+                                                     Map<String, String> keyMap, Map<String, String> keyMap0, String resourceType) {
+        // 检查缓存
+        String translatedCache = translateSingleLine(text, request.getTarget());
+        if (translatedCache != null) {
+            return translatedCache;
+        }
+
+        // 处理文本，保护不翻译的部分
+        String translatedText = processTextWithProtection(text, (cleanedText) -> {
+            String translated = translateSingleLine(cleanedText, request.getTarget());
+            if (translated != null) {
+                return translated;
+            }
+
+            // 使用谷歌翻译
+            counter.addChars(googleCalculateToken(cleanedText));
+            Map<String, String> placeholderMap = new HashMap<>();
+            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap, keyMap0);
+            request.setContent(updateText);
+            String targetString = translateAndCount(request,counter, resourceType);
+            String finalText = restoreKeywords(targetString, placeholderMap);
+            addData(request.getTarget(), cleanedText, finalText);
+            return finalText;
+        });
+
+        addData(request.getTarget(), text, translatedText);
+        return translatedText;
+    }
+
+    /**
+     * 处理文本，保护不翻译的变量、URL和符号
+     */
+    private String processTextWithProtection(String text, Function<String, String> translator) {
+        StringBuilder result = new StringBuilder();
+        int lastEnd = 0;
+
+        List<Pattern> patterns = Arrays.asList(
+                URL_PATTERN,
+                VARIABLE_PATTERN,
+                CUSTOM_VAR_PATTERN,
+                LIQUID_CONDITION_PATTERN,
+                ARRAY_VAR_PATTERN
+        );
+
+        List<MatchRange> matches = new ArrayList<>();
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                matches.add(new MatchRange(matcher.start(), matcher.end(), matcher.group()));
+            }
+        }
+
+        matches.sort(Comparator.comparingInt(m -> m.start));
+
+        for (MatchRange match : matches) {
+            if (match.start > lastEnd) {
+                String toTranslate = text.substring(lastEnd, match.start);
+                String cleanedText = cleanTextFormat(toTranslate);
+                if (!cleanedText.isEmpty()) {
+                    if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
+                        result.append(cleanedText); // 纯符号不翻译
+                    } else {
+                        result.append(translator.apply(cleanedText)); // 普通文本翻译
+                    }
+                }
+            }
+            result.append(match.content); // 保留变量或URL
+            lastEnd = match.end;
+        }
+
+        if (lastEnd < text.length()) {
+            String remaining = text.substring(lastEnd);
+            String cleanedText = cleanTextFormat(remaining);
+            if (!cleanedText.isEmpty()) {
+                if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
+                    result.append(cleanedText);
+                } else {
+                    result.append(translator.apply(cleanedText));
+                }
+            }
+        }
+
+        return result.toString();
+    }
 
     // 提取需要翻译的文本（包括文本和alt属性）
     public Map<Element, List<String>> extractTextsToTranslate(Document doc) {
         Map<Element, List<String>> elementTextMap = new HashMap<>();
         for (Element element : doc.getAllElements()) {
-            if (!element.is("script, style, img")) { // 忽略script和style标签
+            if (!noTranslateTags.contains(element.tagName().toLowerCase())) { // 忽略script和style标签
                 List<String> texts = new ArrayList<>();
 
                 // 提取文本
                 String text = element.ownText().trim();
                 if (!text.isEmpty()) {
                     texts.add(text);
-                }
-
-                // 提取 alt 属性
-                if (element.hasAttr("alt")) {
-                    String altText = element.attr("alt").trim();
-                    if (!altText.isEmpty()) {
-                        texts.add(altText);
-                    }
                 }
 
                 if (!texts.isEmpty()) {
@@ -100,10 +170,6 @@ public class JsoupUtils {
                 // 替换文本内容
                 if (!translatedTexts.isEmpty()) {
                     element.text(translatedTexts.get(0)); // 第一个是文本
-                }
-                // 替换 alt 属性（如果有）
-                if (translatedTexts.size() > 1 && element.hasAttr("alt")) {
-                    element.attr("alt", translatedTexts.get(1)); // 第二个是 alt 属性
                 }
             }
 
@@ -129,10 +195,11 @@ public class JsoupUtils {
     /**
      * 调用google翻译前需要先判断 是否是google支持的语言 如果不支持改用AI翻译
      * 根据语言代码切换API翻译
-     * @param request 翻译所需要的数据
-     * @param counter 计数器
+     *
+     * @param request      翻译所需要的数据
+     * @param counter      计数器
      * @param resourceType 模块类型
-     * return String 翻译后的文本
+     *                     return String 翻译后的文本
      */
     public static String googleTranslateJudgeCode(TranslateRequest request, CharacterCountUtils counter, String resourceType) {
         String target = request.getTarget();
@@ -149,9 +216,10 @@ public class JsoupUtils {
     /**
      * 如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
      * 在翻译的同时计数字符数
+     *
      * @param request 翻译所需要的数据
      * @param counter 计数器
-     * return String 翻译后的文本
+     *                return String 翻译后的文本
      */
     public static String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, String resourceType) {
         String target = request.getTarget();
@@ -161,12 +229,12 @@ public class JsoupUtils {
             //TODO：目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.3s. 后面请求解决限制后，删掉这段代码。
             try {
                 sleep(300);
-            }catch (Exception e){
+            } catch (Exception e) {
                 appInsights.trackTrace("sleep错误： " + e.getMessage());
             }
 
-            if (hasPlaceholders(request.getContent())){
-               return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()));
+            if (hasPlaceholders(request.getContent())) {
+                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()));
             }
 
             String resultTranslation = null;
@@ -202,7 +270,7 @@ public class JsoupUtils {
 
     //在调用googleTranslateJudgeCode的基础上添加计数功能,并添加到翻译后的文本
     public static String translateAndCount(TranslateRequest request,
-                                    CharacterCountUtils counter, String resourceType) {
+                                           CharacterCountUtils counter, String resourceType) {
         String text = request.getContent();
         String targetString = googleTranslateJudgeCode(request, counter, resourceType);
         addData(request.getTarget(), text, targetString);
