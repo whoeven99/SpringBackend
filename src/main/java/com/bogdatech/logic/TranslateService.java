@@ -508,7 +508,7 @@ public class TranslateService {
             put(JSON_TEXT, new ArrayList<>());
             put(GLOSSARY, new ArrayList<>());
             put(OPENAI, new ArrayList<>());
-            put(METAFIELD, new ArrayList<>());
+//            put(METAFIELD, new ArrayList<>());
         }};
     }
 
