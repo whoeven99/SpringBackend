@@ -30,4 +30,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     Integer getIdByShopNameAndTargetAndSource(String shopName, String target, String source);
 
     TranslatesDO selectLatestOne(TranslateRequest request);
+
+    String getResourceTypeByshopNameAndTargetAndSource(String shopName, String target, String source);
 }

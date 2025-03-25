@@ -39,6 +39,7 @@ public class TranslateConstants {
     public static final String ARTICLE = "ARTICLE";
     public static final String BLOG = "BLOG";
     public static final String PAGE = "PAGE";
+    public static final String MAX_LENGTH = "250";
 
     public static final String HAS_TRANSLATED = "The translation task is in progress. Please try translating again later.";
     public static final String CHARACTER_LIMIT = "Character Limit Reached";
