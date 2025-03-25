@@ -11,7 +11,7 @@ import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
@@ -30,6 +31,7 @@ import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
 import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
+import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 
 @RestController
 public class TestController {
@@ -40,7 +42,6 @@ public class TestController {
     private final TranslateService translateService;
     private final JsoupUtils jsoupUtils;
     private final RateHttpIntegration rateHttpIntegration;
-
 
     @Autowired
     public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
@@ -98,9 +99,9 @@ public class TestController {
     @GetMapping("/sendEmail")
     public void sendEmail() {
         CharacterCountUtils characterCount = new CharacterCountUtils();
-        characterCount.addChars(10000);
+        characterCount.addChars(100);
         LocalDateTime localDateTime = LocalDateTime.now();
-        translateService.translateSuccessEmail(new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", null), characterCount, localDateTime, 0, 12311);
+        translateService.translateFailEmail("ciwishop.myshopify.com",characterCount, localDateTime, 0, 1000, "zh-CN", "en");
     }
 
     //获取汇率
@@ -187,4 +188,24 @@ public class TestController {
         }
 
     }
+
+    @GetMapping("/testType")
+    public void testType() {
+        // 测试用例
+        String[] testTypes = {
+                FILTER,                    // 正常情况
+                ONLINE_STORE_THEME,        // 列表开头
+                PAGE,                    // 列表结尾
+                "NON_EXISTENT_TYPE"        // 不存在的 type
+        };
+
+        for (String testType : testTypes) {
+            System.out.println("测试 type: " + testType);
+            TypeSplitResponse result = splitByType(testType);
+            System.out.println("Before: " + result.getBefore());
+            System.out.println("After: " + result.getAfter());
+            System.out.println("-------------------");
+        }
+    }
+
 }

@@ -11,6 +11,7 @@ import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
@@ -52,6 +53,7 @@ import static com.bogdatech.utils.JsoupUtils.translateAndCount;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
+import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -155,10 +157,10 @@ public class TranslateService {
                     translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
 //                //发送报错邮件
-//                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
-//                if (emailSent.compareAndSet(false, true)) {
-//                    translateFailEmail(shopName, CHARACTER_LIMIT);
-//                }
+                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
+                if (emailSent.compareAndSet(false, true)) {
+                    translateFailEmail(shopName,counter,begin, usedChars, remainingChars, target, source);
+                }
                     startTokenCount(request);
                 } catch (Exception e3) {
                     appInsights.trackTrace("重新更新token值失败！！！");
@@ -193,7 +195,7 @@ public class TranslateService {
 
             //更新初始值
             try {
-                //translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
                 startTokenCount(request);
             } catch (Exception e) {
                 appInsights.trackTrace("重新更新token值失败！！！");
@@ -218,7 +220,7 @@ public class TranslateService {
                 appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
 //                 将翻译状态改为“部分翻译” shopName, status=3
                 translatesService.updateStatusByShopNameAnd2(shopName);
-                translateFailEmail(shopName, TRANSLATING_STOPPED);
+//                translateFailEmail(shopName, TRANSLATING_STOPPED);
             }
         }
     }
@@ -516,26 +518,26 @@ public class TranslateService {
             if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils(), translateContext.getShopifyRequest().getTarget(), translateContext.getSource()))
                 return;
             switch (entry.getKey()) {
-                case PLAIN_TEXT:
-                    translateDataByAPI(entry.getValue(), translateContext);
-                    break;
-                case HTML:
-                    translateHtml(entry.getValue(), translateContext);
-                    break;
-                case JSON_TEXT:
-                    translateJsonText(entry.getValue(), translateContext);
-                    break;
-                case DATABASE:
-                    //处理database数据
-                    translateDataByDatabase(entry.getValue(), translateContext);
-                    break;
-                case GLOSSARY:
-                    //区分大小写
-                    translateDataByGlossary(entry.getValue(), translateContext);
-                    break;
-                case OPENAI:
-                    translateDataByOPENAI(entry.getValue(), translateContext);
-                    break;
+//                case PLAIN_TEXT:
+//                    translateDataByAPI(entry.getValue(), translateContext);
+//                    break;
+//                case HTML:
+//                    translateHtml(entry.getValue(), translateContext);
+//                    break;
+//                case JSON_TEXT:
+//                    translateJsonText(entry.getValue(), translateContext);
+//                    break;
+//                case DATABASE:
+//                    //处理database数据
+//                    translateDataByDatabase(entry.getValue(), translateContext);
+//                    break;
+//                case GLOSSARY:
+//                    //区分大小写
+//                    translateDataByGlossary(entry.getValue(), translateContext);
+//                    break;
+//                case OPENAI:
+//                    translateDataByOPENAI(entry.getValue(), translateContext);
+//                    break;
                 case METAFIELD:
                     translateMetafield(entry.getValue(), translateContext);
                     break;
@@ -581,7 +583,8 @@ public class TranslateService {
 
                 //走翻译流程
                String translated = translateSingleText(request, value, type, counter, source);
-               saveToShopify(translated, translation, resourceId, request);
+               System.out.println("翻译后的文本： " + translated);
+//               saveToShopify(translated, translation, resourceId, request);
                continue;
            }
 
@@ -601,10 +604,11 @@ public class TranslateService {
                    }
                    //将list数据转为String 再存储到shopify本地
                    String translatedValue = objectMapper.writeValueAsString(resultList);
-                   saveToShopify(translatedValue, translation, resourceId, request);
+                   System.out.println("翻译后的文本： " + translatedValue);
+//                   saveToShopify(translatedValue, translation, resourceId, request);
                } catch (Exception e) {
                    //存原数据到shopify本地
-                   saveToShopify(value, translation, resourceId, request);
+//                   saveToShopify(value, translation, resourceId, request);
                    appInsights.trackTrace("LIST错误原因： " + e.getMessage());
                }
            }
@@ -634,7 +638,8 @@ public class TranslateService {
         }
 
         //普通翻译
-        return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
+//        return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
+        return value + "-1";
     }
 
     private void translateDataByOPENAI(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
@@ -1089,16 +1094,16 @@ public class TranslateService {
             if (key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL"))
-                    || resourceType.equals(METAFIELD)
+//                    || resourceType.equals(METAFIELD)
                     || resourceType.equals(SHOP_POLICY)) {
                 continue;
             }
 
             //对METAFIELD字段翻译
-//            if (resourceType.equals(METAFIELD)) {
-//                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
-//                continue;
-//            }
+            if (resourceType.equals(METAFIELD)) {
+                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+                continue;
+            }
 
 
 //            System.out.println("value: " + value + " ,flag: " + translatableContentMap.get(key).getOutdated());
@@ -1497,16 +1502,43 @@ public class TranslateService {
     }
 
     //翻译失败后发送邮件
-    public void translateFailEmail(String shopName, String errorReason) {
+    public void translateFailEmail(String shopName, CharacterCountUtils counter, LocalDateTime begin, int beginChars, Integer remainingChars, String target, String source) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
+        templateData.put("language", target);
         templateData.put("user", usersDO.getFirstName());
+        // 定义要移除的后缀
+        String suffix = ".myshopify.com";
+        String TargetShop;
+        TargetShop = shopName.substring(0, shopName.length() - suffix.length());
+        templateData.put("shop_name", TargetShop);
+        //获取用户已翻译的和未翻译的文本
+        //通过shopName获取翻译到那个文本
+        String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
+        TypeSplitResponse typeSplitResponse = splitByType(resourceType);
+        templateData.put("translated_content", typeSplitResponse.getBefore().toString());
+        templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
+        //获取更新前后的时间
+        //睡眠1分钟
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            System.out.println("error: " + e.getMessage());
+        }
+        LocalDateTime end = LocalDateTime.now();
 
-        //错误原因
-        templateData.put("reason", errorReason);
+        Duration duration = Duration.between(begin, end);
+        long costTime = duration.toMinutes();
+        templateData.put("time", costTime + " minutes");
 
+        //共消耗的字符数
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        int endChars = counter.getTotalChars();
+        int costChars = endChars - beginChars;
+        String formattedNumber = formatter.format(costChars);
+        templateData.put("credit_count", formattedNumber);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133321L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }

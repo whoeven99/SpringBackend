@@ -102,5 +102,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.selectOne(wrapper);
     }
 
+    @Override
+    public String getResourceTypeByshopNameAndTargetAndSource(String shopName, String target, String source) {
+        return baseMapper.getResourceTypeByshopNameAndTarget(shopName, target, source);
+    }
+
 
 }

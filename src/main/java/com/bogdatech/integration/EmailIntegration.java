@@ -119,6 +119,7 @@ public class EmailIntegration {
             SendEmailResponse resp = client.SendEmail(req);
             // 输出json格式的字符串回包
             jsonString = AbstractModel.toJsonString(resp);
+            System.out.println("jsonString: " + jsonString);
         } catch (TencentCloudSDKException e) {
             appInsights.trackTrace(e.toString());
         } catch (JsonProcessingException e) {
