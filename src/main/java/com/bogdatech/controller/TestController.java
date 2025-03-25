@@ -193,7 +193,7 @@ public class TestController {
     public void testType() {
         // 测试用例
         String[] testTypes = {
-                FILTER,                    // 正常情况
+                ONLINE_STORE_THEME_APP_EMBED,                    // 正常情况
                 ONLINE_STORE_THEME,        // 列表开头
                 PAGE,                    // 列表结尾
                 "NON_EXISTENT_TYPE"        // 不存在的 type
