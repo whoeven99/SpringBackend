@@ -282,9 +282,9 @@ public class TranslateController {
             //循环type获取token
             for (String key : TOKEN_MAP.keySet()
             ) {
-                translateService.updateStatusByTranslation(shopifyRequest, key, idByShopNameAndTarget, "token");
+                translateService.updateStatusByTranslation(shopifyRequest, key, idByShopNameAndTarget, "tokens");
             }
-            //token全部获取完之后修改，UserTypeToken的status==1
+//            token全部获取完之后修改，UserTypeToken的status==1
             userTypeTokenService.updateStatusByTranslationIdAndStatus(idByShopNameAndTarget, 1);
 
         }

@@ -4,6 +4,7 @@ package com.bogdatech.utils;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.microsoft.applicationinsights.TelemetryClient;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -15,7 +16,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.bogdatech.constants.TranslateConstants.TRANSLATION_EXCEPTION;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.singleTranslate;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
@@ -41,9 +41,6 @@ public class LiquidHtmlTranslatorUtils {
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
     public final static Set<String> noTranslateTags = new HashSet<>(Arrays.asList("style", "img", "script"));
-
-    public LiquidHtmlTranslatorUtils() {
-    }
 
     /**
      * 主翻译方法
@@ -72,6 +69,7 @@ public class LiquidHtmlTranslatorUtils {
                 processNode(doc.body(), request, counter, resourceType);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
 //                appInsights.trackTrace("有html标签： "  + result);
+//                System.out.println("有html标签： "  + result);
                 return result;
             } else {
                 // 如果没有 <html> 标签，作为片段处理
@@ -88,6 +86,7 @@ public class LiquidHtmlTranslatorUtils {
 
                 String output = result.toString();
 //                appInsights.trackTrace("没有html标签： "  + output);
+//                System.out.println("没有html标签： "  + output);
                 return output;
             }
 
@@ -201,7 +200,7 @@ public class LiquidHtmlTranslatorUtils {
                 String toTranslate = text.substring(lastEnd, match.start);
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
                 //对特殊符号进行处理
-                if (cleanedText.matches("\\p{Zs}")){
+                if (cleanedText.matches("\\p{Zs}")) {
 //                    System.out.println("要翻译的空白： " + cleanedText);
                     result.append(cleanedText);
                     continue;
@@ -214,21 +213,19 @@ public class LiquidHtmlTranslatorUtils {
 //                            System.out.println("要翻译的文本AI： " + cleanedText);
 //                            appInsights.trackTrace("要翻译的文本AI： " + cleanedText);
                             targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
+                            targetString = isHtmlEntity(targetString);
                             result.append(targetString);
                         } else {
                             request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本： " + cleanedText);
                             targetString = translateAndCount(request, counter, resourceType);
+                            targetString = isHtmlEntity(targetString);;
                             result.append(targetString);
                         }
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         result.append(cleanedText);
-                        if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
-                            //终止翻译，并返回状态4
-                            throw new ClientException(TRANSLATION_EXCEPTION);
-                        }
                         continue;
                     }
                 } else {
@@ -244,7 +241,7 @@ public class LiquidHtmlTranslatorUtils {
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
-            if (cleanedText.matches("\\p{Zs}")){
+            if (cleanedText.matches("\\p{Zs}")) {
 //                System.out.println("要翻译的剩余空白： " + cleanedText);
                 result.append(cleanedText);
                 return result.toString();
@@ -257,21 +254,18 @@ public class LiquidHtmlTranslatorUtils {
 //                        appInsights.trackTrace("处理剩余文本AI： " + cleanedText);
 //                        System.out.println("要翻译的文本AI： " + cleanedText);
                         targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
+                        targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     } else {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
+                        targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     }
                 } catch (ClientException e) {
-                    // 如果AI翻译失败，则使用谷歌翻译
                     result.append(cleanedText);
-                    if (e.getErrorMessage().equals(TRANSLATION_EXCEPTION)) {
-                        //终止翻译，并返回状态4
-                        throw new ClientException(TRANSLATION_EXCEPTION);
-                    }
                 }
             } else {
                 result.append(remaining);
@@ -304,5 +298,21 @@ public class LiquidHtmlTranslatorUtils {
             this.end = end;
             this.content = content;
         }
+    }
+
+    //判断是否含有HTML实体
+    public static String isHtmlEntity(String text) {
+        int i = 0;
+        while (!text.equals(StringEscapeUtils.unescapeHtml4(text))) {
+            // 如果有 HTML 实体，则解码
+            text = StringEscapeUtils.unescapeHtml4(text);
+            i++;
+            if (i > 3){
+                return text;
+            }
+        }
+
+        // 最终结果（无 HTML 实体后直接输出）
+        return text;
     }
 }

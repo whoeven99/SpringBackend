@@ -129,8 +129,6 @@ public class ShopifyService {
             infoByShopify = getShopifyData(cloudServiceRequest);
         }
         countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
-
-
         return counter.getTotalChars();
     }
 
@@ -286,7 +284,7 @@ public class ShopifyService {
                     counter.addChars(token * 2);
 //                    counter.addChars(calculateBaiLianToken(value));
                 } else {
-                    counter.addChars(calculateBaiLianToken(value));
+                    counter.addChars(calculateBaiLianToken(value) * 2);
                 }
                 continue;
             }
@@ -406,7 +404,7 @@ public class ShopifyService {
                     int token = calculateBaiLianToken(s);
                     counter.addChars(token * 2);
                 } else {
-                    counter.addChars(calculateBaiLianToken(value));
+                    counter.addChars(calculateBaiLianToken(value) * 2);
                 }
                 continue;
             }
@@ -436,7 +434,7 @@ public class ShopifyService {
                         int token = calculateBaiLianToken(s);
                         counter.addChars(token * 2);
                     } else {
-                        counter.addChars(calculateBaiLianToken(text));
+                        counter.addChars(calculateBaiLianToken(text) * 2);
                     }
                 }
 
@@ -450,7 +448,7 @@ public class ShopifyService {
                             int token = calculateBaiLianToken(s);
                             counter.addChars(token * 2);
                         } else {
-                            counter.addChars(calculateBaiLianToken(altText));
+                            counter.addChars(calculateBaiLianToken(altText) * 2);
                         }
                     }
                 }
