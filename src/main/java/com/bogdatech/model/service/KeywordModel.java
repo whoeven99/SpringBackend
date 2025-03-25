@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class KeywordModel {
-    String keyword;
-    String translation;
-    boolean caseSensitive;
+    public String keyword;
+    public String translation;
+    public boolean caseSensitive;
 
 }
