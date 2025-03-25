@@ -1463,7 +1463,11 @@ public class TranslateService {
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
         templateData.put("language", request.getTarget());
-
+        // 定义要移除的后缀
+        String suffix = ".myshopify.com";
+        String TargetShop;
+        TargetShop = request.getShopName().substring(0, request.getShopName().length() - suffix.length());
+        templateData.put("shop_name", TargetShop);
         //获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
 
@@ -1489,7 +1493,7 @@ public class TranslateService {
         }
         appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133535L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
 
@@ -1532,7 +1536,7 @@ public class TranslateService {
         String formattedNumber = formatter.format(costChars);
         templateData.put("credit_count", formattedNumber);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }
