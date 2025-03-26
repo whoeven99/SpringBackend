@@ -190,8 +190,8 @@ public class TranslateService {
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态改为“已翻译”//
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
-            //翻译成功后发送翻译成功的邮件
 
+            //翻译成功后发送翻译成功的邮件,中断翻译不发送邮件
             //更新初始值
             try {
                 if (!userStopFlags.get(shopName).get()) {
