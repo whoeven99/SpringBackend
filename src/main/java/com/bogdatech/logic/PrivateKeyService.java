@@ -10,6 +10,7 @@ import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
@@ -33,6 +34,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
@@ -47,6 +51,8 @@ import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.replaceDot;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -172,7 +178,7 @@ public class PrivateKeyService {
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
                 if (emailSent.compareAndSet(false, true)) {
-                    translateFailEmail(shopName, CHARACTER_LIMIT);
+                    translateFailEmail(shopName,counter,begin, usedChars, remainingChars, target, source);
                 }
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 //更新初始值
@@ -562,26 +568,103 @@ public class PrivateKeyService {
             List<String> texts = entry.getValue();
             List<String> translatedTexts = new ArrayList<>();
             for (String text : texts) {
-                String translated = translateSingleLine(text, request.getTarget());
-                if (translated != null) {
-                    translatedTexts.add(translated);
-                } else {
-                    //目前没有翻译html的提示词，用的是谷歌翻译
-                    counter.addChars(googleCalculateToken(text));
-                    Map<String, String> placeholderMap = new HashMap<>();
-                    String updateText = extractKeywords(text, placeholderMap, keyMap, keyMap0);
-                    request.setContent(updateText);
-//                    String targetString = translateApiIntegration.microsoftTranslate(request);
-                    String targetString = getGoogleTranslationWithRetry(updateText, request.getSource(), apiKey, request.getTarget());
-                    String finalText = restoreKeywords(targetString, placeholderMap);
-                    addData(request.getTarget(), text, finalText);
-                    translatedTexts.add(finalText);
-                    addData(request.getTarget(), updateText, targetString);
-                }
+                String translated = translateSingleLineWithProtection(text, request, counter, keyMap, keyMap0, apiKey);
+                translatedTexts.add(translated);
             }
             translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
         }
         return translatedTextMap;
+    }
+
+    /**
+     * 翻译单行文本，保护变量、URL和符号
+     */
+    private String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
+                                                     Map<String, String> keyMap, Map<String, String> keyMap0, String apiKey) {
+        // 检查缓存
+        String translatedCache = translateSingleLine(text, request.getTarget());
+        if (translatedCache != null) {
+            return translatedCache;
+        }
+
+        // 处理文本，保护不翻译的部分
+        String translatedText = processTextWithProtection(text, (cleanedText) -> {
+            String translated = translateSingleLine(cleanedText, request.getTarget());
+            if (translated != null) {
+                return translated;
+            }
+
+            // 使用谷歌翻译
+            counter.addChars(googleCalculateToken(cleanedText));
+            Map<String, String> placeholderMap = new HashMap<>();
+            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap, keyMap0);
+            request.setContent(updateText);
+            //String targetString = translateApiIntegration.microsoftTranslate(request);
+            String targetString = getGoogleTranslationWithRetry(updateText, request.getSource(), apiKey, request.getTarget());
+//            String targetString = translateAndCount(request,counter, resourceType);
+            String finalText = restoreKeywords(targetString, placeholderMap);
+            addData(request.getTarget(), cleanedText, finalText);
+            return finalText;
+        });
+
+        addData(request.getTarget(), text, translatedText);
+        return translatedText;
+    }
+
+    /**
+     * 处理文本，保护不翻译的变量、URL和符号
+     */
+    private String processTextWithProtection(String text, Function<String, String> translator) {
+        StringBuilder result = new StringBuilder();
+        int lastEnd = 0;
+
+        List<Pattern> patterns = Arrays.asList(
+                URL_PATTERN,
+                VARIABLE_PATTERN,
+                CUSTOM_VAR_PATTERN,
+                LIQUID_CONDITION_PATTERN,
+                ARRAY_VAR_PATTERN
+        );
+
+        List<MatchRange> matches = new ArrayList<>();
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                matches.add(new MatchRange(matcher.start(), matcher.end(), matcher.group()));
+            }
+        }
+
+        matches.sort(Comparator.comparingInt(m -> m.start));
+
+        for (MatchRange match : matches) {
+            if (match.start > lastEnd) {
+                String toTranslate = text.substring(lastEnd, match.start);
+                String cleanedText = cleanTextFormat(toTranslate);
+                if (!cleanedText.isEmpty()) {
+                    if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
+                        result.append(cleanedText); // 纯符号不翻译
+                    } else {
+                        result.append(translator.apply(cleanedText)); // 普通文本翻译
+                    }
+                }
+            }
+            result.append(match.content); // 保留变量或URL
+            lastEnd = match.end;
+        }
+
+        if (lastEnd < text.length()) {
+            String remaining = text.substring(lastEnd);
+            String cleanedText = cleanTextFormat(remaining);
+            if (!cleanedText.isEmpty()) {
+                if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
+                    result.append(cleanedText);
+                } else {
+                    result.append(translator.apply(cleanedText));
+                }
+            }
+        }
+
+        return result.toString();
     }
 
     //对不同的数据使用不同的翻译api
@@ -902,16 +985,37 @@ public class PrivateKeyService {
         }
     }
 
-    public void translateFailEmail(String shopName, String errorReason) {
+    public void translateFailEmail(String shopName, CharacterCountUtils counter, LocalDateTime begin, int beginChars, Integer remainingChars, String target, String source) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
+        templateData.put("language", target);
         templateData.put("user", usersDO.getFirstName());
+        // 定义要移除的后缀
+        String suffix = ".myshopify.com";
+        String TargetShop;
+        TargetShop = shopName.substring(0, shopName.length() - suffix.length());
+        templateData.put("shop_name", TargetShop);
+        //获取用户已翻译的和未翻译的文本
+        //通过shopName获取翻译到那个文本
+        String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
+        TypeSplitResponse typeSplitResponse = splitByType(resourceType);
+        templateData.put("translated_content", typeSplitResponse.getBefore().toString());
+        templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
+        //获取更新前后的时间
+        LocalDateTime end = LocalDateTime.now();
 
-        //错误原因
-        templateData.put("reason", errorReason);
+        Duration duration = Duration.between(begin, end);
+        long costTime = duration.toMinutes();
+        templateData.put("time", costTime + " minutes");
 
+        //共消耗的字符数
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        int endChars = counter.getTotalChars();
+        int costChars = endChars - beginChars;
+        String formattedNumber = formatter.format(costChars);
+        templateData.put("credit_count", formattedNumber);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133321L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }
@@ -953,7 +1057,7 @@ public class PrivateKeyService {
         }
         appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(136836L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
 
