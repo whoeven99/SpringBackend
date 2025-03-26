@@ -201,10 +201,16 @@ public class PrivateKeyService {
             userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
             // 将翻译状态改为“已翻译”//
             iTranslatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
-            //翻译成功后发送翻译成功的邮件
-            translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
-            //更新初始值
-            updateInitialValue(request);
+            try {
+                //翻译成功后发送翻译成功的邮件
+                if (!userStopFlags.get(shopName).get()) {
+                    translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                }
+                //更新初始值
+                updateInitialValue(request);
+            } catch (Exception e) {
+                appInsights.trackTrace("重新更新token值失败！！！");
+            }
         });
 
         userTasks.put(shopName, future);  // 存储用户的任务
