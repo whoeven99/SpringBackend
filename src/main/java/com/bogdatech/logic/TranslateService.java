@@ -50,8 +50,7 @@ import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -195,7 +194,9 @@ public class TranslateService {
 
             //更新初始值
             try {
-                translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                if (!userStopFlags.get(shopName).get()) {
+                    translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                }
                 startTokenCount(request);
             } catch (Exception e) {
                 appInsights.trackTrace("重新更新token值失败！！！");
@@ -1079,6 +1080,10 @@ public class TranslateService {
                 if (value.matches("\\p{Zs}")) {
                     continue;
                 }
+                String clearValue = cleanTextFormat(value);
+                if (clearValue.isEmpty()){
+                    continue;
+                }
             } catch (Exception e) {
                 appInsights.trackTrace("失败的原因： " + e.getMessage());
                 continue;
@@ -1518,12 +1523,6 @@ public class TranslateService {
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
         //获取更新前后的时间
-        //睡眠1分钟
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            System.out.println("error: " + e.getMessage());
-        }
         LocalDateTime end = LocalDateTime.now();
 
         Duration duration = Duration.between(begin, end);
