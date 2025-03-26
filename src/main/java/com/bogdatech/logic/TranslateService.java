@@ -195,7 +195,9 @@ public class TranslateService {
 
             //更新初始值
             try {
-                translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                if (!userStopFlags.get(shopName).get()) {
+                    translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                }
                 startTokenCount(request);
             } catch (Exception e) {
                 appInsights.trackTrace("重新更新token值失败！！！");
