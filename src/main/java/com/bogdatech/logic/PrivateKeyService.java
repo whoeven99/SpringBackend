@@ -898,6 +898,10 @@ public class PrivateKeyService {
                 if (value.matches("\\p{Zs}")) {
                     continue;
                 }
+                String clearValue = cleanTextFormat(value);
+                if (clearValue.isEmpty()){
+                    continue;
+                }
             } catch (Exception e) {
                 appInsights.trackTrace("失败的原因： " + e.getMessage());
                 continue;
