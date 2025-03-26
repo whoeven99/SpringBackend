@@ -1205,6 +1205,7 @@ public class TranslateService {
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", resourceId);
+        translatedValue = isHtmlEntity(translatedValue);
         translation.put("value", translatedValue);
         Object[] translations = new Object[]{
                 translation // 将HashMap添加到数组中
@@ -1316,7 +1317,7 @@ public class TranslateService {
     }
 
     //获取一个页面所有Translations集合数据
-    private static Map<String, TranslateTextDO> extractTranslations(JsonNode node, String resourceId, ShopifyRequest shopifyRequest) {
+    public static Map<String, TranslateTextDO> extractTranslations(JsonNode node, String resourceId, ShopifyRequest shopifyRequest) {
         Map<String, TranslateTextDO> translations = new HashMap<>();
         JsonNode translationsNode = node.path("translations");
         if (translationsNode.isArray() && !translationsNode.isEmpty()) {
@@ -1343,7 +1344,7 @@ public class TranslateService {
     }
 
     //获取一个页面所有TranslatableContent集合数据
-    private static Map<String, TranslateTextDO> extractTranslatableContent(JsonNode node, Map<String, TranslateTextDO> translations) {
+    public static Map<String, TranslateTextDO> extractTranslatableContent(JsonNode node, Map<String, TranslateTextDO> translations) {
         JsonNode contentNode = node.path("translatableContent");
         if (contentNode.isArray() && !contentNode.isEmpty()) {
             contentNode.forEach(content -> {
@@ -1463,7 +1464,11 @@ public class TranslateService {
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
         templateData.put("language", request.getTarget());
-
+        // 定义要移除的后缀
+        String suffix = ".myshopify.com";
+        String TargetShop;
+        TargetShop = request.getShopName().substring(0, request.getShopName().length() - suffix.length());
+        templateData.put("shop_name", TargetShop);
         //获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
 
@@ -1489,7 +1494,7 @@ public class TranslateService {
         }
         appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133535L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
 
