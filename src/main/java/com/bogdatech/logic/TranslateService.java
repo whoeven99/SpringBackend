@@ -1518,12 +1518,6 @@ public class TranslateService {
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
         //获取更新前后的时间
-        //睡眠1分钟
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            System.out.println("error: " + e.getMessage());
-        }
         LocalDateTime end = LocalDateTime.now();
 
         Duration duration = Duration.between(begin, end);
