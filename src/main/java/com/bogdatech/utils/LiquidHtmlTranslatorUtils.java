@@ -289,11 +289,11 @@ public class LiquidHtmlTranslatorUtils {
 
     // 辅助类用于保存匹配范围
     public static class MatchRange {
-        int start;
-        int end;
-        String content;
+        public int start;
+        public int end;
+        public String content;
 
-        MatchRange(int start, int end, String content) {
+        public MatchRange(int start, int end, String content) {
             this.start = start;
             this.end = end;
             this.content = content;
