@@ -50,8 +50,7 @@ import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -1079,6 +1078,10 @@ public class TranslateService {
                     continue;  // 跳过当前项
                 }
                 if (value.matches("\\p{Zs}")) {
+                    continue;
+                }
+                String clearValue = cleanTextFormat(value);
+                if (clearValue.isEmpty()){
                     continue;
                 }
             } catch (Exception e) {
