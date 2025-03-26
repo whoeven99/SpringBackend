@@ -638,8 +638,7 @@ public class TranslateService {
         }
 
         //普通翻译
-//        return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
-        return value + "-1";
+        return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
     }
 
     private void translateDataByOPENAI(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
@@ -768,6 +767,7 @@ public class TranslateService {
                 keyMap0.put(glossaryDO.getSourceText(), glossaryDO.getTargetText());
             }
         }
+
         //对caseSensitiveMap集合中的数据进行翻译
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
@@ -931,7 +931,7 @@ public class TranslateService {
 
             //存放在html的list集合里面
             // 解析HTML文档
-            String htmlTranslation = null;
+            String htmlTranslation;
             try {
                 TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
                 htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
@@ -1014,7 +1014,6 @@ public class TranslateService {
         String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
-
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1030,6 +1029,7 @@ public class TranslateService {
         try {
             // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
             vocabularyService.InsertOne(request.getTarget(), targetString, registerTransactionRequest.getLocale(), value);
+
         } catch (Exception e) {
             appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1190,12 +1190,11 @@ public class TranslateService {
     public static void addData(String outerKey, String innerKey, String value) {
         // 获取外层键对应的内层 Map
         Map<String, String> innerMap = SINGLE_LINE_TEXT.get(outerKey);
-//        System.out.println("outerKey: " + outerKey + " innerKey: " + innerKey + " value: " + value);
+
         // 如果外层键不存在，则创建一个新的内层 Map
         if (innerMap == null) {
             innerMap = new HashMap<>();
             SINGLE_LINE_TEXT.put(outerKey, innerMap);
-//            System.out.println("创建新的内层 Map: " + innerKey);
         }
 
         // 将新的键值对添加到内层 Map 中
@@ -1410,7 +1409,7 @@ public class TranslateService {
     public String translateGlossaryHtmlText(TranslateRequest request, CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String resourceType) {
         String html = request.getContent();
         // 解析HTML文档
-        Document doc = Jsoup.parse(html);
+        Document doc = Jsoup.parseBodyFragment(html);
 
         // 提取需要翻译的文本
         Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
@@ -1571,6 +1570,7 @@ public class TranslateService {
 
         for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
             int token = shopifyService.getTotalWords(shopifyRequest, method, translateResourceDTO);
+//            System.out.println("token: " + token);
             tokens += token;
         }
 //        System.out.println("tokens: " + tokens);
