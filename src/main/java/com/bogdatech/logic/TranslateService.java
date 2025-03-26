@@ -191,11 +191,13 @@ public class TranslateService {
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态改为“已翻译”//
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
-            //翻译成功后发送翻译成功的邮件
 
+            //翻译成功后发送翻译成功的邮件,中断翻译不发送邮件
             //更新初始值
             try {
-                translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                if (!userStopFlags.get(shopName).get()) {
+                    translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                }
                 startTokenCount(request);
             } catch (Exception e) {
                 appInsights.trackTrace("重新更新token值失败！！！");
