@@ -775,7 +775,7 @@ public class PrivateKeyService {
         String targetCache = translateSingleLine(value, request.getTarget());
         if (targetCache != null) {
             saveToShopify(targetCache, translation, resourceId, request);
-            printTranslation(targetCache, value, translation, request.getShopName(), "cache");
+            printTranslation(targetCache, value, translation, request.getShopName() + PRIVATE_KEY, "cache");
             return true;
         }
         //TODO: 255字符以内才从数据库中获取数据
@@ -789,7 +789,7 @@ public class PrivateKeyService {
         if (targetText != null) {
             addData(target, value, targetText);
             saveToShopify(targetText, translation, resourceId, request);
-            printTranslation(targetText, value, translation, request.getShopName(), "database");
+            printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY, "database");
             return true;
         }
         return false;
