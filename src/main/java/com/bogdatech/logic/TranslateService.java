@@ -947,7 +947,7 @@ public class TranslateService {
                 continue;
             }
             saveToShopify(htmlTranslation, translation, resourceId, request);
-            printTranslation(value, htmlTranslation, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
+            printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -996,7 +996,7 @@ public class TranslateService {
         String targetCache = translateSingleLine(value, request.getTarget());
         if (targetCache != null) {
             saveToShopify(targetCache, translation, resourceId, request);
-            printTranslation(value, targetCache, translation, request.getShopName(), "Cache");
+            printTranslation(targetCache, value, translation, request.getShopName(), "Cache");
             return true;
         }
         //TODO: 255字符以内才从数据库中获取数据
@@ -1013,7 +1013,7 @@ public class TranslateService {
         if (targetText != null) {
             addData(target, value, targetText);
             saveToShopify(targetText, translation, resourceId, request);
-            printTranslation(value, targetText, translation, request.getShopName(), "Database");
+            printTranslation(targetText, value, translation, request.getShopName(), "Database");
             return true;
         }
         return false;

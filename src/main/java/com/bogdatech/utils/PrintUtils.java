@@ -7,7 +7,17 @@ import java.util.Map;
 
 public class PrintUtils {
     static TelemetryClient appInsights = new TelemetryClient();
-    public static void printTranslation(String targetText, String sourceText, Map<String, Object> translation, String shopName ,String resourceType) {
+
+    /**
+     * 自定义打印类型，用与打印用户翻译前后的数据
+     *
+     * @param targetText   用户翻译后的文本
+     * @param sourceText   用户翻译前的文本
+     * @param translation  用户翻译的其他数据
+     * @param shopName     用户店铺名称
+     * @param resourceType 用户翻译的模块类型
+     */
+    public static void printTranslation(String targetText, String sourceText, Map<String, Object> translation, String shopName, String resourceType) {
         //设置customDimensions为用户的翻译数据
         HashMap<String, String> properties = new HashMap<>();
         properties.put("targetText", targetText);
