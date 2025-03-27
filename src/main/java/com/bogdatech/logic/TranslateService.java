@@ -1093,8 +1093,7 @@ public class TranslateService {
                 if (value.matches("\\p{Zs}")) {
                     continue;
                 }
-                String clearValue = cleanTextFormat(value);
-                if (clearValue.isEmpty()) {
+                if (value.trim().isEmpty()) {
                     continue;
                 }
             } catch (Exception e) {
