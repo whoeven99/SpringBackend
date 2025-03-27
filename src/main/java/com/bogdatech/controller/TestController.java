@@ -131,33 +131,4 @@ public class TestController {
 //        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
         System.out.println("翻译的结果： " + result);
     }
-
-    @GetMapping("/testPrint1")
-    public void testPrint(@RequestParam(value = "text") String text) {
-        appInsights.trackEvent(text);
-        System.out.println("text: " + text);
-    }
-
-    @GetMapping("/testPrint2")
-    public void testPrint2(@RequestParam(value = "text") String text) {
-        // 定义一个自定义事件
-        System.out.println("Calling method to log custom event: " + text);
-
-        // 发送自定义事件到 Application Insights
-        appInsights.trackEvent(text);
-
-        // 可选：添加自定义属性和度量
-        java.util.HashMap<String, String> properties = new java.util.HashMap<>();
-        properties.put("Description", "This is a test custom event");
-        properties.put("User", "testUser");
-
-        java.util.HashMap<String, Double> metrics = new java.util.HashMap<>();
-        metrics.put("ExecutionTime", 123.45);
-
-        appInsights.trackEvent(text, properties, metrics);
-
-        System.out.println("Custom event logged with properties: " + properties + " and metrics: " + metrics);
-    }
-
-
 }
