@@ -51,6 +51,7 @@ import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -156,10 +157,10 @@ public class TranslateService {
                     translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
 //                //发送报错邮件
-                AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
-                if (emailSent.compareAndSet(false, true)) {
-                    translateFailEmail(shopName,counter,begin, usedChars, remainingChars, target, source);
-                }
+                    AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
+                    if (emailSent.compareAndSet(false, true)) {
+                        translateFailEmail(shopName, counter, begin, usedChars, remainingChars, target, source);
+                    }
                     startTokenCount(request);
                 } catch (Exception e3) {
                     appInsights.trackTrace("重新更新token值失败！！！");
@@ -190,8 +191,8 @@ public class TranslateService {
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态改为“已翻译”//
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
-            //翻译成功后发送翻译成功的邮件
 
+            //翻译成功后发送翻译成功的邮件,中断翻译不发送邮件
             //更新初始值
             try {
                 if (!userStopFlags.get(shopName).get()) {
@@ -576,43 +577,44 @@ public class TranslateService {
                 continue;
             }
 
-           if ("SINGLE_LINE_TEXT_FIELD".equals(type) ) {
-               //纯数字字母符号 且有两个  标点符号 不翻译
-                if (isValidString(value)){
+            if ("SINGLE_LINE_TEXT_FIELD".equals(type)) {
+                //纯数字字母符号 且有两个  标点符号 不翻译
+                if (isValidString(value)) {
                     continue;
                 }
 
                 //走翻译流程
-               String translated = translateSingleText(request, value, type, counter, source);
-               System.out.println("翻译后的文本： " + translated);
+                String translated = translateSingleText(request, value, type, counter, source);
+                System.out.println("翻译后的文本： " + translated);
 //               saveToShopify(translated, translation, resourceId, request);
-               continue;
-           }
+                continue;
+            }
 
-           if ("LIST_SINGLE_LINE_TEXT_FIELD".equals(type)){
-            //先将list数据由String转为List<String>，循环判断
-               try {
-                   //如果符合要求，则翻译，不符合要求则返回原值
-                   List<String> resultList = objectMapper.readValue(value, new TypeReference<List<String>>() {});
-                   for (int i = 0; i < resultList.size(); i++) {
-                       String original = resultList.get(i);
-                       if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
-                           //TODO:走翻译流程
-                           String translated = translateSingleText(request, value, type, counter, source);
-                           //将数据填回去
-                           resultList.set(i, translated);
-                       }
-                   }
-                   //将list数据转为String 再存储到shopify本地
-                   String translatedValue = objectMapper.writeValueAsString(resultList);
-                   System.out.println("翻译后的文本： " + translatedValue);
+            if ("LIST_SINGLE_LINE_TEXT_FIELD".equals(type)) {
+                //先将list数据由String转为List<String>，循环判断
+                try {
+                    //如果符合要求，则翻译，不符合要求则返回原值
+                    List<String> resultList = objectMapper.readValue(value, new TypeReference<List<String>>() {
+                    });
+                    for (int i = 0; i < resultList.size(); i++) {
+                        String original = resultList.get(i);
+                        if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
+                            //TODO:走翻译流程
+                            String translated = translateSingleText(request, value, type, counter, source);
+                            //将数据填回去
+                            resultList.set(i, translated);
+                        }
+                    }
+                    //将list数据转为String 再存储到shopify本地
+                    String translatedValue = objectMapper.writeValueAsString(resultList);
+                    System.out.println("翻译后的文本： " + translatedValue);
 //                   saveToShopify(translatedValue, translation, resourceId, request);
-               } catch (Exception e) {
-                   //存原数据到shopify本地
+                } catch (Exception e) {
+                    //存原数据到shopify本地
 //                   saveToShopify(value, translation, resourceId, request);
-                   appInsights.trackTrace("LIST错误原因： " + e.getMessage());
-               }
-           }
+                    appInsights.trackTrace("LIST错误原因： " + e.getMessage());
+                }
+            }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -715,6 +717,7 @@ public class TranslateService {
                 TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), translateContext.getSource(), request.getTarget(), value);
                 htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
                 saveToShopify(htmlTranslation, translation, resourceId, request);
+                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
                 return true;
             } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
@@ -794,6 +797,7 @@ public class TranslateService {
                     saveToShopify(value, translation, resourceId, request);
                     continue;
                 }
+                printTranslation(targetText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
                 saveToShopify(targetText, translation, resourceId, request);
                 continue;
             }
@@ -812,6 +816,7 @@ public class TranslateService {
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
+            printTranslation(finalText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -896,6 +901,7 @@ public class TranslateService {
                     continue;
                 }
                 saveToShopify(htmlTranslation, translation, resourceId, request);
+                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
                 continue;
             }
 
@@ -941,6 +947,7 @@ public class TranslateService {
                 continue;
             }
             saveToShopify(htmlTranslation, translation, resourceId, request);
+            printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -989,9 +996,13 @@ public class TranslateService {
         String targetCache = translateSingleLine(value, request.getTarget());
         if (targetCache != null) {
             saveToShopify(targetCache, translation, resourceId, request);
+            printTranslation(targetCache, value, translation, request.getShopName(), "Cache");
             return true;
         }
         //TODO: 255字符以内才从数据库中获取数据
+        if (value.length() > 255) {
+            return false;
+        }
         String targetText = null;
         try {
             targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
@@ -1002,6 +1013,7 @@ public class TranslateService {
         if (targetText != null) {
             addData(target, value, targetText);
             saveToShopify(targetText, translation, resourceId, request);
+            printTranslation(targetText, value, translation, request.getShopName(), "Database");
             return true;
         }
         return false;
@@ -1015,6 +1027,7 @@ public class TranslateService {
         String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
+            printTranslation(targetString, value, translation, request.getShopName(), resourceType);
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1080,8 +1093,7 @@ public class TranslateService {
                 if (value.matches("\\p{Zs}")) {
                     continue;
                 }
-                String clearValue = cleanTextFormat(value);
-                if (clearValue.isEmpty()){
+                if (value.trim().isEmpty()) {
                     continue;
                 }
             } catch (Exception e) {

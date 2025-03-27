@@ -11,7 +11,6 @@ import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -20,18 +19,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
-import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
-import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.PlaceholderUtils.hasPlaceholders;
-import static com.bogdatech.utils.PlaceholderUtils.processTextWithPlaceholders;
-import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
-import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 
 @RestController
 public class TestController {
@@ -42,7 +34,7 @@ public class TestController {
     private final TranslateService translateService;
     private final JsoupUtils jsoupUtils;
     private final RateHttpIntegration rateHttpIntegration;
-
+    TelemetryClient appInsights = new TelemetryClient();
     @Autowired
     public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
@@ -139,73 +131,4 @@ public class TestController {
 //        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
         System.out.println("翻译的结果： " + result);
     }
-
-    @GetMapping("/testPlaceholder")
-    public void testPlaceholder() {
-        // 测试用例
-        String[] testCases = {
-                "这是一个 {{ product.value }} 测试",               // 包含 {{ product.value }}
-                "包含 %{product.value} 的文本",                    // 包含 %{product.value}
-                "嵌套 {{xx[x].xx}} 数据",                         // 包含 {{xx[x].xx}}
-                "特殊 {%product.value%} 格式",                    // 包含 {%product.value%}
-                "普通文本没有占位符",                             // 不包含任何占位符
-                null                                            // null
-        };
-
-        for (String test : testCases) {
-            boolean result = hasPlaceholders(test);
-            String s = processTextWithPlaceholders(test, new CharacterCountUtils(), qwenMtCode("zh-CN"), qwenMtCode("en"));
-            System.out.println("翻译后的文本： " + s);
-            System.out.println("文本: \" + test + \" -> 包含占位符: " + result);
-        }
-    }
-
-    @GetMapping("/testText")
-    public String testText(@RequestParam String text) {
-            // 使用 StringEscapeUtils 解码，但只针对 ' 生效
-        System.out.println("text: " + text);
-        return isHtmlEntity(text);
-        }
-
-
-    @GetMapping("/testRegular")
-    public void testRegular(@RequestParam String text) {
-        // 测试用例
-        String[] testCases = {
-                "Unisex",        // 只有1个标点符号
-                "Apparel & Accessories > Clothing Accessories > Hair Accessories > Hair Extensions",       // 2个标点符号
-                "BU18",  // 2个标点符号
-                "approved",        // 4个标点符号
-                "{\"pending\":0,\"failed\":0,\"approved\":7}",        // 包含空格，不符合
-                "74eb6025-072a-4e00-b952-f7cc816f7b9d",            // 2个标点符号
-                "\"TRUE\"",          // 无标点符号
-                "Feather Crochet Hair",       // 5个标点符号
-                "<p><lite-youtube videoid=\"dbDDT8s3y3k\" params=\"controls=1&amp;modestbranding=1&amp;rel=0&amp;showinfo=0&amp;enablejsapi=1+\" addnoscript></lite-youtube></p>"         // 包含#，但不是问题中的“标点符号”仍算有效
-        };
-
-        for (String test : testCases) {
-            System.out.println("测试字符串: " + test + " -> " + isValidString(test));
-        }
-
-    }
-
-    @GetMapping("/testType")
-    public void testType() {
-        // 测试用例
-        String[] testTypes = {
-                ONLINE_STORE_THEME_APP_EMBED,                    // 正常情况
-                ONLINE_STORE_THEME,        // 列表开头
-                PAGE,                    // 列表结尾
-                "NON_EXISTENT_TYPE"        // 不存在的 type
-        };
-
-        for (String testType : testTypes) {
-            System.out.println("测试 type: " + testType);
-            TypeSplitResponse result = splitByType(testType);
-            System.out.println("Before: " + result.getBefore());
-            System.out.println("After: " + result.getAfter());
-            System.out.println("-------------------");
-        }
-    }
-
 }
