@@ -580,7 +580,7 @@ public class TranslateService {
                 continue;
             }
 
-            if ("SINGLE_LINE_TEXT_FIELD".equals(type)) {
+            if (SINGLE_LINE_TEXT_FIELD.equals(type)) {
                 //纯数字字母符号 且有两个  标点符号 不翻译
                 if (isValidString(value)) {
                     continue;
@@ -590,14 +590,13 @@ public class TranslateService {
                 System.out.println("翻译前的文本： " + value);
                 String translated = translateSingleText(request, value, type, counter, source);
                 System.out.println("翻译后的文本： " + translated);
-                addData(request.getTarget(), value, translated);
-                saveToDatabase(request.getTarget(), translated, registerTransactionRequest.getLocale(), value);
 
-//               saveToShopify(translated, translation, resourceId, request);
+
+
                 continue;
             }
 
-            if ("LIST_SINGLE_LINE_TEXT_FIELD".equals(type)) {
+            if (LIST_SINGLE_LINE_TEXT_FIELD.equals(type)) {
                 System.out.println("翻译前的文本： " + value);
                 //先将list数据由String转为List<String>，循环判断
                 try {
@@ -609,9 +608,6 @@ public class TranslateService {
                         if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
                             //TODO:走翻译流程
                             String translated = translateSingleText(request, original, type, counter, source);
-                            //添加到缓存和数据库中
-                            addData(request.getTarget(), value, translated);
-                            saveToDatabase(request.getTarget(), translated, registerTransactionRequest.getLocale(), value);
                             //将数据填回去
                             resultList.set(i, translated);
                         }
@@ -652,7 +648,9 @@ public class TranslateService {
         }
 
         //普通翻译
-//        return translateByGoogleOrAI(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
+//        String translatedText = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type);
+//        addData(request.getTarget(), value, translatedText);
+//        saveToDatabase(request.getTarget(), translatedText, source, value);
         return value + "-1";
     }
 
@@ -1099,7 +1097,7 @@ public class TranslateService {
                     continue;
                 }
                 String clearValue = cleanTextFormat(value);
-                if (clearValue.isEmpty()){
+                if (clearValue.isEmpty()) {
                     continue;
                 }
             } catch (Exception e) {
