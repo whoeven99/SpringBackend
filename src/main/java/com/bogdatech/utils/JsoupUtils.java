@@ -281,7 +281,7 @@ public class JsoupUtils {
         return targetString;
     }
 
-    // 定义语言代码集合
+    // 定义google翻译不了的语言代码集合
     private static final Set<String> LANGUAGE_CODES = new HashSet<>(Arrays.asList(
             "ce", "kw", "fo", "ia", "kl", "ks", "ki", "lu", "gv", "nd",
             "se", "nb", "nn", "os", "rm", "sc", "ii", "bo", "to", "wo", "ar-EG"
