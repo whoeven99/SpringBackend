@@ -51,6 +51,7 @@ import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -194,8 +195,8 @@ public class TranslateService {
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态改为“已翻译”//
             translatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
-            //翻译成功后发送翻译成功的邮件
 
+            //翻译成功后发送翻译成功的邮件,中断翻译不发送邮件
             //更新初始值
             try {
                 if (!userStopFlags.get(shopName).get()) {
@@ -727,6 +728,7 @@ public class TranslateService {
                 TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), translateContext.getSource(), request.getTarget(), value);
                 htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
                 saveToShopify(htmlTranslation, translation, resourceId, request);
+                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
                 return true;
             } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
@@ -806,6 +808,7 @@ public class TranslateService {
                     saveToShopify(value, translation, resourceId, request);
                     continue;
                 }
+                printTranslation(targetText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
                 saveToShopify(targetText, translation, resourceId, request);
                 continue;
             }
@@ -824,6 +827,7 @@ public class TranslateService {
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
+            printTranslation(finalText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -908,6 +912,7 @@ public class TranslateService {
                     continue;
                 }
                 saveToShopify(htmlTranslation, translation, resourceId, request);
+                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
                 continue;
             }
 
@@ -953,6 +958,7 @@ public class TranslateService {
                 continue;
             }
             saveToShopify(htmlTranslation, translation, resourceId, request);
+            printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType());
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -1001,9 +1007,13 @@ public class TranslateService {
         String targetCache = translateSingleLine(value, request.getTarget());
         if (targetCache != null) {
             saveToShopify(targetCache, translation, resourceId, request);
+            printTranslation(targetCache, value, translation, request.getShopName(), "Cache");
             return true;
         }
         //TODO: 255字符以内才从数据库中获取数据
+        if (value.length() > 255) {
+            return false;
+        }
         String targetText = null;
         try {
             targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
@@ -1014,6 +1024,7 @@ public class TranslateService {
         if (targetText != null) {
             addData(target, value, targetText);
             saveToShopify(targetText, translation, resourceId, request);
+            printTranslation(targetText, value, translation, request.getShopName(), "Database");
             return true;
         }
         return false;
@@ -1027,6 +1038,7 @@ public class TranslateService {
         String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
+            printTranslation(targetString, value, translation, request.getShopName(), resourceType);
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1096,8 +1108,7 @@ public class TranslateService {
                 if (value.matches("\\p{Zs}")) {
                     continue;
                 }
-                String clearValue = cleanTextFormat(value);
-                if (clearValue.isEmpty()) {
+                if (value.trim().isEmpty()) {
                     continue;
                 }
             } catch (Exception e) {

@@ -22,6 +22,9 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
+import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
+import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
 
 @RestController
 public class TestController {
@@ -32,7 +35,7 @@ public class TestController {
     private final TranslateService translateService;
     private final JsoupUtils jsoupUtils;
     private final RateHttpIntegration rateHttpIntegration;
-
+    TelemetryClient appInsights = new TelemetryClient();
     @Autowired
     public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
