@@ -618,6 +618,7 @@ public class TranslateService {
                     //存原数据到shopify本地
 //                   saveToShopify(value, translation, resourceId, request);
                     appInsights.trackTrace("LIST错误原因： " + e.getMessage());
+                    System.out.println("LIST错误原因： " + e.getMessage());
                 }
             }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
@@ -1115,15 +1116,14 @@ public class TranslateService {
 
 
             //如果translatableContentMap里面有该key则不翻译，没有则翻译
-//            if (translatableContentMap.containsKey(key) && !translatableContentMap.get(key).getOutdated()) {
-//                continue;
-//            }
+            if (translatableContentMap.containsKey(key) && !translatableContentMap.get(key).getOutdated()) {
+                continue;
+            }
 
             //如果包含相对路径则跳过
             if (key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL"))
-//                    || resourceType.equals(METAFIELD)
                     || resourceType.equals(SHOP_POLICY)) {
                 continue;
             }
@@ -1134,8 +1134,6 @@ public class TranslateService {
                 continue;
             }
 
-
-//            System.out.println("value: " + value + " ,flag: " + translatableContentMap.get(key).getOutdated());
             //对于json和json_string的数据直接存原文
             if ("JSON".equals(type)
                     || "JSON_STRING".equals(type)) {
