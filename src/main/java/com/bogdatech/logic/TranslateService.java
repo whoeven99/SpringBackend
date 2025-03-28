@@ -591,9 +591,6 @@ public class TranslateService {
                 System.out.println("翻译前的文本： " + value);
                 String translated = translateSingleText(request, value, type, counter, source);
                 System.out.println("翻译后的文本： " + translated);
-
-
-
                 continue;
             }
 
