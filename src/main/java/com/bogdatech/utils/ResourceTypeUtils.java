@@ -54,6 +54,7 @@ public class ResourceTypeUtils {
             }
         }
 
+        beforeSet.removeAll(afterSet);
         // 遍历before和after，只获取type字段，转为为String类型
         for (String resource : beforeSet) {
             beforeType.append(resource).append(",");

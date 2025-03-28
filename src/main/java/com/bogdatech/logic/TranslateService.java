@@ -50,8 +50,7 @@ import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -199,7 +198,9 @@ public class TranslateService {
 
             //更新初始值
             try {
-//                translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                if (!userStopFlags.get(shopName).get()) {
+//                    translateSuccessEmail(request, counter, begin, usedChars, remainingChars);
+                }
                 startTokenCount(request);
             } catch (Exception e) {
                 appInsights.trackTrace("重新更新token值失败！！！");
@@ -781,6 +782,7 @@ public class TranslateService {
                 keyMap0.put(glossaryDO.getSourceText(), glossaryDO.getTargetText());
             }
         }
+
         //对caseSensitiveMap集合中的数据进行翻译
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
@@ -944,7 +946,7 @@ public class TranslateService {
 
             //存放在html的list集合里面
             // 解析HTML文档
-            String htmlTranslation = null;
+            String htmlTranslation;
             try {
                 TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
                 htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
@@ -1027,7 +1029,6 @@ public class TranslateService {
         String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
-
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1095,6 +1096,10 @@ public class TranslateService {
                     continue;  // 跳过当前项
                 }
                 if (value.matches("\\p{Zs}")) {
+                    continue;
+                }
+                String clearValue = cleanTextFormat(value);
+                if (clearValue.isEmpty()){
                     continue;
                 }
             } catch (Exception e) {
@@ -1208,12 +1213,11 @@ public class TranslateService {
     public static void addData(String outerKey, String innerKey, String value) {
         // 获取外层键对应的内层 Map
         Map<String, String> innerMap = SINGLE_LINE_TEXT.get(outerKey);
-//        System.out.println("outerKey: " + outerKey + " innerKey: " + innerKey + " value: " + value);
+
         // 如果外层键不存在，则创建一个新的内层 Map
         if (innerMap == null) {
             innerMap = new HashMap<>();
             SINGLE_LINE_TEXT.put(outerKey, innerMap);
-//            System.out.println("创建新的内层 Map: " + innerKey);
         }
 
         // 将新的键值对添加到内层 Map 中
@@ -1428,7 +1432,7 @@ public class TranslateService {
     public String translateGlossaryHtmlText(TranslateRequest request, CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String resourceType) {
         String html = request.getContent();
         // 解析HTML文档
-        Document doc = Jsoup.parse(html);
+        Document doc = Jsoup.parseBodyFragment(html);
 
         // 提取需要翻译的文本
         Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
@@ -1513,7 +1517,7 @@ public class TranslateService {
         }
         appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(136836L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
 
@@ -1537,12 +1541,6 @@ public class TranslateService {
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
         //获取更新前后的时间
-        //睡眠1分钟
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            System.out.println("error: " + e.getMessage());
-        }
         LocalDateTime end = LocalDateTime.now();
 
         Duration duration = Duration.between(begin, end);
