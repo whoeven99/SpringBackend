@@ -5,6 +5,10 @@ import java.util.regex.Pattern;
 public class RegularJudgmentUtils {
     // 正则表达式：只包含字母、数字和标点符号
     private static final Pattern ALPHA_NUM_PUNCT_PATTERN = Pattern.compile("^[a-zA-Z0-9\\p{Punct}]+$");
+    // 正则表达式：只包含数字和标点符号
+    private static final Pattern NUM_PUNCT_PATTERN = Pattern.compile("^[0-9\\p{P}]+$");
+    // 正则表达式：纯数字
+    private static final Pattern NUM_PATTERN = Pattern.compile("^[0-9]+$");
     // 正则表达式：匹配标点符号
     private static final Pattern PUNCT_PATTERN = Pattern.compile("[\\p{Punct}]");
 
@@ -17,9 +21,15 @@ public class RegularJudgmentUtils {
         if (input == null) {
             return false;
         }
-        // 第一步：检查是否只包含字母、数字和标点符号
+        // 第一步：检查是否只包含字母、数字和标点符号. 数字和标点符号。 纯数字 。 纯标点符号
         if (!ALPHA_NUM_PUNCT_PATTERN.matcher(input).matches()) {
             return false;
+        }
+        if (NUM_PUNCT_PATTERN.matcher(input).matches()){
+            return true;
+        }
+        if(NUM_PATTERN.matcher(input).matches()) {
+            return true;
         }
         // 第二步：统计标点符号数量
         long punctCount = PUNCT_PATTERN.matcher(input).results().count();
