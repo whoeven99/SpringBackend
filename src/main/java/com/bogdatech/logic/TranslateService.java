@@ -113,7 +113,7 @@ public class TranslateService {
     }
 
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final ObjectMapper objectMapper = new ObjectMapper();
     //判断是否可以终止翻译流程
     public static Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
     public static Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
@@ -281,25 +281,25 @@ public class TranslateService {
 
     //封装调用云服务器实现将数据存入shopify本地的方法
     public void saveToShopify(CloudInsertRequest cloudServiceRequest) {
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        ShopifyRequest request = new ShopifyRequest();
-//        request.setShopName(cloudServiceRequest.getShopName());
-//        request.setAccessToken(cloudServiceRequest.getAccessToken());
-//        request.setTarget(cloudServiceRequest.getTarget());
-//        Map<String, Object> body = cloudServiceRequest.getBody();
-//
-//        try {
-//            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
-//            String env = System.getenv("ApplicationEnv");
-//            if ("prod".equals(env) || "dev".equals(env)) {
-//                shopifyApiIntegration.registerTransaction(request, body);
-//            } else {
-//                testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
-//            }
-//
-//        } catch (JsonProcessingException | ClientException e) {
-//            appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
-//        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(cloudServiceRequest.getShopName());
+        request.setAccessToken(cloudServiceRequest.getAccessToken());
+        request.setTarget(cloudServiceRequest.getTarget());
+        Map<String, Object> body = cloudServiceRequest.getBody();
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            String env = System.getenv("ApplicationEnv");
+            if ("prod".equals(env) || "dev".equals(env)) {
+                shopifyApiIntegration.registerTransaction(request, body);
+            } else {
+                testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
+            }
+
+        } catch (JsonProcessingException | ClientException e) {
+            appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
+        }
     }
 
 
@@ -507,7 +507,7 @@ public class TranslateService {
     }
 
     // 初始化 judgeData，用于存储不同类型的数据
-    private Map<String, List<RegisterTransactionRequest>> initializeJudgeData() {
+    public static Map<String, List<RegisterTransactionRequest>> initializeJudgeData() {
         return new HashMap<>() {{
             put(PLAIN_TEXT, new ArrayList<>());
             put(HTML, new ArrayList<>());
@@ -555,6 +555,7 @@ public class TranslateService {
         }
     }
 
+    //翻译元字段的数据
     private void translateMetafield(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
         ShopifyRequest request = translateContext.getShopifyRequest();
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
@@ -592,6 +593,7 @@ public class TranslateService {
                 String translatedText = translateSingleText(request, value, type, counter, source);
                 addData(request.getTarget(), value, translatedText);
                 saveToDatabase(request.getTarget(), translatedText, source, value);
+                saveToShopify(translatedText, translation, resourceId, request);
                 continue;
             }
 
@@ -1226,16 +1228,16 @@ public class TranslateService {
 
     //将翻译后的数据存shopify本地中
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
-//        Map<String, Object> variables = new HashMap<>();
-//        variables.put("resourceId", resourceId);
-//        translatedValue = isHtmlEntity(translatedValue);
-//        translation.put("value", translatedValue);
-//        Object[] translations = new Object[]{
-//                translation // 将HashMap添加到数组中
-//        };
-//        variables.put("translations", translations);
-//        //将翻译后的内容通过ShopifyAPI记录到shopify本地
-//        saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("resourceId", resourceId);
+        translatedValue = isHtmlEntity(translatedValue);
+        translation.put("value", translatedValue);
+        Object[] translations = new Object[]{
+                translation // 将HashMap添加到数组中
+        };
+        variables.put("translations", translations);
+        //将翻译后的内容通过ShopifyAPI记录到shopify本地
+        saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
     }
 
 
