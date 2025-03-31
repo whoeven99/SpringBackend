@@ -787,7 +787,7 @@ public class TranslateService {
 
             //其他数据类型，对数据做处理再翻译
             counter.addChars(googleCalculateToken(value));
-            String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0);
+            String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0, source);
             translateRequest.setContent(updateText);
             // 修改翻译调用
             String translatedText = null;
