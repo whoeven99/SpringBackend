@@ -46,7 +46,7 @@ public class CaseSensitiveUtils {
         int i = 0;
         for (KeywordModel entry : allKeywords) {
             String keyword = entry.keyword;
-            String placeholder = "[x" + i++ + "]";
+            String placeholder = "#_" + i++;
             placeholders.put(placeholder, entry.translation); // 存储翻译
 
             // 根据是否区分大小写选择替换方式

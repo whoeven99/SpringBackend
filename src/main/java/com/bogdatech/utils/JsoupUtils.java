@@ -59,9 +59,12 @@ public class JsoupUtils {
             counter.addChars(googleCalculateToken(cleanedText));
             Map<String, String> placeholderMap = new HashMap<>();
             String updateText = extractKeywords(cleanedText, placeholderMap, keyMap, keyMap0);
+            appInsights.trackTrace("updateText: " + updateText);
             request.setContent(updateText);
             String targetString = translateAndCount(request,counter, resourceType);
+            appInsights.trackTrace("targetString: " + targetString);
             String finalText = restoreKeywords(targetString, placeholderMap);
+            appInsights.trackTrace("finalText: " + finalText);
             addData(request.getTarget(), cleanedText, finalText);
             return finalText;
         });
@@ -436,7 +439,7 @@ public class JsoupUtils {
                     String targetString;
                     try {
                         request.setContent(cleanedText);
-//                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
+                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
                         targetString = isHtmlEntity(targetString);
