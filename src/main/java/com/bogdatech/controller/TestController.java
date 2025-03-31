@@ -22,9 +22,6 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
-import static com.bogdatech.logic.TranslateService.addData;
-import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
-import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
 
 @RestController
 public class TestController {
@@ -118,7 +115,9 @@ public class TestController {
                 , "6-50"
                 , "Adult"
                 , "W & C"
-                , "3 yrs old"
+                , """
+{"white":"background-color:#FFFFFF","silver":"background-color:#C0C0C0","gray":"background-color:#bfbfbf","black":"background-color:#000000","red":"background-color:#f63400","maroon":"background-color:#800000","yellow":"background-color:#dcdb79","olive":"background-color:#808000","lime":"background-color:#0f0","green":"background-color:#008000","aqua":"background-color:#66cdaa","teal":"background-color:#008080","blue":"background-color:#a8bcd4","navy":"background-color:#001f3f","fuchsia":background-color:#f0f}
+"""
                 };
         for (String test : tests) {
             System.out.println("测试 " + test + ": " + isValidString(test));
