@@ -1,5 +1,7 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.model.controller.request.TranslateRequest;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,7 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.QWEN_MT;
+import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
+import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 
 public class PlaceholderUtils {
 
@@ -18,6 +22,7 @@ public class PlaceholderUtils {
 
     /**
      * 判断文本中是否包含指定类型的占位符
+     *
      * @param text 输入的文本
      * @return 如果包含任意一种占位符返回 true，否则返回 false
      */
@@ -34,7 +39,7 @@ public class PlaceholderUtils {
     /**
      * 处理文本：提取占位符，翻译剩余文本，然后替换回占位符
      */
-    public static String processTextWithPlaceholders(String originalText, CharacterCountUtils countUtils, String source, String target) {
+    public static String processTextWithPlaceholders(String originalText, CharacterCountUtils countUtils, String source, String target, String mode) {
         if (originalText == null || originalText.trim().isEmpty()) {
             return originalText;
         }
@@ -62,7 +67,19 @@ public class PlaceholderUtils {
 
         // 调用翻译服务
         // 将占位符替换回去
-        String finalText = callWithMessage(QWEN_MT, textToTranslate, source, target, countUtils);
+        String finalText = null;
+        switch (mode) {
+            case QWEN_MT:
+                finalText = callWithMessage(QWEN_MT, textToTranslate, source, target, countUtils);
+                break;
+            case GOOGLE:
+                finalText = getGoogleTranslationWithRetry(new TranslateRequest(0, null, null, source, target, textToTranslate));
+                break;
+        }
+//        String finalText = callWithMessage(QWEN_MT, textToTranslate, source, target, countUtils);
+        if (finalText == null) {
+            return null;
+        }
         for (String tempMarker : placeholders) {
             String originalPlaceholder = placeholderMap.get(tempMarker);
             finalText = finalText.replace(tempMarker, originalPlaceholder);
