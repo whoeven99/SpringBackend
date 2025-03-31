@@ -41,7 +41,7 @@ public class JsoupUtils {
      * 翻译单行文本，保护变量、URL和符号
      */
     private static String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
-                                                            Map<String, String> keyMap, Map<String, String> keyMap0, String resourceType) {
+                                                            Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType) {
         // 检查缓存
         String translatedCache = translateSingleLine(text, request.getTarget());
         if (translatedCache != null) {
@@ -58,8 +58,8 @@ public class JsoupUtils {
             // 使用谷歌翻译
             counter.addChars(googleCalculateToken(cleanedText));
             Map<String, String> placeholderMap = new HashMap<>();
-            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap, keyMap0);
-            appInsights.trackTrace("updateText: " + updateText);
+            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap1, keyMap0);
+            appInsights.trackTrace("placeholderMap: " + placeholderMap + "，keyMap1: " + keyMap1 + "，keyMap0: " + keyMap0 + "，updateText: " + updateText);
             request.setContent(updateText);
             String targetString = translateAndCount(request,counter, resourceType);
             appInsights.trackTrace("targetString: " + targetString);
