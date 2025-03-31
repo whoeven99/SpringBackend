@@ -232,12 +232,11 @@ public class LiquidHtmlTranslatorUtils {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
             if (cleanedText.matches("\\p{Zs}")) {
-//                System.out.println("要翻译的剩余空白： " + cleanedText);
                 result.append(cleanedText);
                 return result.toString();
             }
             if (!cleanedText.trim().isEmpty() && !cleanedText.matches("\\s*")) {
-                String targetString = null;
+                String targetString;
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);

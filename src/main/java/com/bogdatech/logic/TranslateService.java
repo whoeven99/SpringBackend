@@ -23,9 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.applicationinsights.TelemetryClient;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -48,9 +45,9 @@ import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTransla
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
-import static com.bogdatech.utils.JsoupUtils.isHtml;
-import static com.bogdatech.utils.JsoupUtils.translateAndCount;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogdatech.utils.JsoupUtils.*;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
@@ -791,7 +788,7 @@ public class TranslateService {
             //判断是否为HTML
             if (registerTransactionRequest.getTarget().equals(HTML) || isHtml(value)) {
                 try {
-                    targetText = translateGlossaryHtmlText(translateRequest, counter, keyMap1, keyMap0, translateContext.getTranslateResource().getResourceType());
+                    targetText = translateGlossaryHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType(), keyMap0, keyMap1);
                     targetText = isHtmlEntity(targetText);
                 } catch (Exception e) {
                     saveToShopify(value, translation, resourceId, request);
@@ -806,7 +803,7 @@ public class TranslateService {
             counter.addChars(googleCalculateToken(value));
             String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0);
             translateRequest.setContent(updateText);
-            //TODO: 修改翻译调用
+            // 修改翻译调用
             String translatedText = null;
             try {
                 translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
@@ -1422,20 +1419,6 @@ public class TranslateService {
         return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
     }
 
-    //翻译词汇表的html文本
-    public String translateGlossaryHtmlText(TranslateRequest request, CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String resourceType) {
-        String html = request.getContent();
-        // 解析HTML文档
-        Document doc = Jsoup.parseBodyFragment(html);
-
-        // 提取需要翻译的文本
-        Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
-        // 翻译文本
-        Map<Element, List<String>> translatedTextMap = jsoupUtils.translateGlossaryTexts(elementTextMap, request, counter, keyMap, keyMap0, resourceType);
-        // 替换原始文本为翻译后的文本
-        jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
-        return doc.body().html();
-    }
 
     //将数据存入本地Map中
     //优化策略1： 利用翻译后的数据，对singleLine的数据全局匹配并翻译
@@ -1464,7 +1447,6 @@ public class TranslateService {
             innerMap.forEach((innerKey, value) -> list.add(new TranslateTextDO(null, null, null, null, null, null, innerKey, value, null, outerKey, false)));
         });
         if (!list.isEmpty()) {
-//            translateTextService.getExistTranslateTextList(list);
             try {
                 vocabularyService.storeTranslationsInVocabulary(list);
             } catch (Exception e) {
