@@ -2,6 +2,7 @@ package com.bogdatech.utils;
 
 
 import com.bogdatech.model.service.KeywordModel;
+import com.microsoft.applicationinsights.TelemetryClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class CaseSensitiveUtils {
-
+    public static TelemetryClient appInsights = new TelemetryClient();
     //区分大小写
     public static boolean containsValue(String text, String value) {
         if (text == null || value == null) {
@@ -45,6 +46,7 @@ public class CaseSensitiveUtils {
         // 依次替换关键词
         int i = 0;
         for (KeywordModel entry : allKeywords) {
+            appInsights.trackTrace("keyword: " + entry.keyword);
             String keyword = entry.keyword;
             String placeholder = "#_" + i++;
             placeholders.put(placeholder, entry.translation); // 存储翻译
@@ -58,6 +60,7 @@ public class CaseSensitiveUtils {
                 text = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
             }
         }
+        appInsights.trackTrace("text: " + text);
         return text;
     }
 
