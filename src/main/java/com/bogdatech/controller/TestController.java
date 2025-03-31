@@ -116,7 +116,14 @@ public class TestController {
                 , "Adult"
                 , "W & C"
                 , """
-{"white":"background-color:#FFFFFF","silver":"background-color:#C0C0C0","gray":"background-color:#bfbfbf","black":"background-color:#000000","red":"background-color:#f63400","maroon":"background-color:#800000","yellow":"background-color:#dcdb79","olive":"background-color:#808000","lime":"background-color:#0f0","green":"background-color:#008000","aqua":"background-color:#66cdaa","teal":"background-color:#008080","blue":"background-color:#a8bcd4","navy":"background-color:#001f3f","fuchsia":background-color:#f0f}
+                {"white":"background-color:#FFFFFF"}
+                """,
+                """
+{"tone":"expert","toneDescription":""}
+""",
+                """
+{"pending":0,"failed":0,"approved":3}
+
 """
                 };
         for (String test : tests) {

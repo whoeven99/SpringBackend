@@ -12,7 +12,7 @@ public class RegularJudgmentUtils {
     // 正则表达式：匹配标点符号
     private static final Pattern PUNCT_PATTERN = Pattern.compile("[\\p{Punct}]");
     // 正则表达式：JSON键值对
-    private static final Pattern JSON_KEY_VALUE_PATTERN = Pattern.compile("^[a-zA-Z]+\":\"[^\"]+$");
+    private static final String JSON_KEY_VALUE_PATTERN = "\":";
 
     /**
      * 判断文本中是否是纯数字字母符号且有两个标点符号
@@ -23,8 +23,8 @@ public class RegularJudgmentUtils {
         if (input == null) {
             return false;
         }
-        // 第一步：检查是否只包含字母、数字和标点符号. 数字和标点符号。 纯数字 。 纯标点符号
-        if (JSON_KEY_VALUE_PATTERN.matcher(input).matches()) {
+        // 第一步：检查是否是JSON， 只包含字母、数字和标点符号. 数字和标点符号。 纯数字 。 纯标点符号
+        if (input.contains("{\"") && input.contains("}")) {
             return true;
         }
         if (!ALPHA_NUM_PUNCT_PATTERN.matcher(input).matches()) {
@@ -39,7 +39,6 @@ public class RegularJudgmentUtils {
         }
         // 第二步：统计标点符号数量
         long punctCount = PUNCT_PATTERN.matcher(input).results().count();
-        System.out.println(input + ": " + punctCount);
         return punctCount >= 2;
     }
 }
