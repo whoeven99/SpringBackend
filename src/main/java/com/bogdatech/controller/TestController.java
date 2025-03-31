@@ -110,7 +110,7 @@ public class TestController {
     //测试正则匹配的功能
     @GetMapping("/testRegular")
     public void testRegular() {
-        String[] tests = {"98dc0d4d-79e6-4dd9-8c2e-bb9c74bb4489;"
+        String[] tests = {"98dc0d4d-79e6-4dd9-8c2e-bb9c74bb4489"
                 , "1732888804"
                 , "6-50"
                 , "Adult"
