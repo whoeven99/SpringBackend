@@ -58,7 +58,7 @@ public class JsoupUtils {
             // 使用谷歌翻译
             counter.addChars(googleCalculateToken(cleanedText));
             Map<String, String> placeholderMap = new HashMap<>();
-            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap1, keyMap0);
+            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap1, keyMap0, request.getSource());
             appInsights.trackTrace("placeholderMap: " + placeholderMap + "，keyMap1: " + keyMap1 + "，keyMap0: " + keyMap0 + "，updateText: " + updateText);
             request.setContent(updateText);
             String targetString = translateAndCount(request,counter, resourceType);

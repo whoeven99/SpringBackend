@@ -483,7 +483,7 @@ public class PrivateKeyService {
 
             //其他数据类型，对数据做处理再翻译
             counter.addChars(googleCalculateToken(value));
-            String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0);
+            String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0, source);
             translateRequest.setContent(updateText);
             //TODO: 修改翻译调用
             String translatedText = null;
@@ -608,7 +608,7 @@ public class PrivateKeyService {
             // 使用谷歌翻译
             counter.addChars(googleCalculateToken(cleanedText));
             Map<String, String> placeholderMap = new HashMap<>();
-            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap, keyMap0);
+            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap, keyMap0, request.getSource());
             request.setContent(updateText);
             //String targetString = translateApiIntegration.microsoftTranslate(request);
             String targetString = getGoogleTranslationWithRetry(updateText, request.getSource(), apiKey, request.getTarget());

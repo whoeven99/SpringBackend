@@ -28,7 +28,7 @@ public class CaseSensitiveUtils {
     }
 
     // 替换关键词为占位符
-    public static String extractKeywords(String text, Map<String, String> placeholders, Map<String, String> keywordTranslationMap, Map<String, String> keyMap0) {
+    public static String extractKeywords(String text, Map<String, String> placeholders, Map<String, String> keywordTranslationMap, Map<String, String> keyMap0, String source) {
         List<KeywordModel> allKeywords = new ArrayList<>();
         for (Map.Entry<String, String> entry : keywordTranslationMap.entrySet()) {
             allKeywords.add(new KeywordModel(entry.getKey(), entry.getValue(), true));
@@ -54,13 +54,25 @@ public class CaseSensitiveUtils {
             // 根据是否区分大小写选择替换方式
             if (entry.caseSensitive) {
                 // 区分大小写，使用原始关键词
-                text = text.replaceAll("\\b" + Pattern.quote(keyword) + "\\b", placeholder);
+                if (source.equals("en")){
+                    text = text.replaceAll("\\b" + Pattern.quote(keyword) + "\\b", placeholder);
+                }else {
+                    text = text.replaceAll(Pattern.quote(keyword), placeholder);
+                }
+
+                appInsights.trackTrace("text1: " + text);
             } else {
                 // 不区分大小写，使用 (?i) 标志
-                text = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
+                if (source.equals("en")){
+                    text = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
+                }else {
+                    text = text.replaceAll("(?i)" + Pattern.quote(keyword), placeholder);
+                }
+
+                appInsights.trackTrace("text0: " + text);
             }
         }
-        appInsights.trackTrace("text: " + text);
+
         return text;
     }
 
