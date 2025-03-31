@@ -303,6 +303,7 @@ public class TranslateService {
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         getGlossaryByShopName(shopifyRequest, glossaryMap);
+        appInsights.trackTrace("glossaryMap: " + glossaryMap);
 
         //获取目前所使用的AI语言包
         Integer packId = aiLanguagePacksService.getPackIdByShopName(request.getShopName());
@@ -724,21 +725,6 @@ public class TranslateService {
         return false;
     }
 
-    //对openAI翻译中报错做处理，两次以上直接结束翻译
-    public void ChatgptException(ShopifyRequest request, String source) {
-        String shopName = request.getShopName();
-        //终止翻译。
-        AtomicBoolean stopFlag = userStopFlags.get(shopName);
-        if (stopFlag != null) {
-            translatesService.updateTranslateStatus(shopName, 4, request.getTarget(), source, request.getAccessToken());
-            stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
-            Future<?> future = userTasks.get(shopName);
-            if (future != null && !future.isDone()) {
-                future.cancel(true);  // 中断正在执行的任务
-                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
-            }
-        }
-    }
 
     //对词汇表数据进行处理
     public void translateDataByGlossary(List<RegisterTransactionRequest> registerTransactionRequests,
