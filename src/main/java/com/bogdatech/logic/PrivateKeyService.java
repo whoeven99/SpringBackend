@@ -476,8 +476,8 @@ public class PrivateKeyService {
                     saveToShopify(value, translation, resourceId, request);
                     continue;
                 }
-                printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY , translateContext.getTranslateResource().getResourceType(), resourceId);
                 saveToShopify(targetText, translation, resourceId, request);
+                printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY , translateContext.getTranslateResource().getResourceType(), resourceId);
                 continue;
             }
 
@@ -496,8 +496,8 @@ public class PrivateKeyService {
                 appInsights.trackTrace("翻译问题： " + e.getMessage());
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
-            printTranslation(translatedText, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId);
             saveToShopify(finalText, translation, resourceId, request);
+            printTranslation(translatedText, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId);
             addData(request.getTarget(), value, translatedText);
 
             if (checkIsStopped(request.getShopName(), counter))
@@ -549,8 +549,8 @@ public class PrivateKeyService {
                 saveToShopify(value, translation, resourceId, request);
                 continue;
             }
-            printTranslation(htmlTranslation, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId);
             saveToShopify(htmlTranslation, translation, resourceId, request);
+            printTranslation(htmlTranslation, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId);
 
             if (checkIsStopped(request.getShopName(), counter))
                 return;
@@ -730,8 +730,8 @@ public class PrivateKeyService {
         addData(request.getTarget(), value, targetValue);
 //        String targetValue = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, request.getTarget(), value));
         //翻译成功后，将翻译后的数据存shopify本地中
-        printTranslation(targetValue, value, translation, request.getShopName() + PRIVATE_KEY, resourceType, resourceId);
         saveToShopify(targetValue, translation, resourceId, request);
+        printTranslation(targetValue, value, translation, request.getShopName() + PRIVATE_KEY, resourceType, resourceId);
 
     }
 
@@ -791,8 +791,8 @@ public class PrivateKeyService {
         }
         if (targetText != null) {
             addData(target, value, targetText);
-            printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY, "database", resourceId);
             saveToShopify(targetText, translation, resourceId, request);
+            printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY, "database", resourceId);
             return true;
         }
         return false;

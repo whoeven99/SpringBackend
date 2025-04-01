@@ -46,24 +46,20 @@ public class CaseSensitiveUtils {
 
         // 依次替换关键词
         int i = 0;
-        String targetText = text;
+        String targetText = text; // 初始化为原始 text
         for (KeywordModel entry : allKeywords) {
             String keyword = entry.keyword;
             String placeholder = "#_" + i++;
             placeholders.put(placeholder, entry.translation); // 存储翻译
-
-            // 根据是否区分大小写选择替换方式
             if (entry.caseSensitive) {
-                // 区分大小写，使用原始关键词
-                targetText = text.replaceAll("\\b" + Pattern.quote(keyword) + "\\b", placeholder);
-                if (targetText.equals(text)) {
-                    targetText = text.replaceAll(Pattern.quote(keyword), placeholder);
+                targetText = targetText.replaceAll("\\b" + Pattern.quote(keyword) + "\\b", placeholder); // 使用上一次的 targetText
+                if (targetText.equals(text)) { // 比较原始 text
+                    targetText = targetText.replaceAll(Pattern.quote(keyword), placeholder);
                 }
             } else {
-                // 不区分大小写，使用 (?i) 标志
-                targetText = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
-                if (targetText.equals(text)) {
-                    targetText = text.replaceAll(Pattern.quote(keyword), placeholder);
+                targetText = targetText.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder); // 使用上一次的 targetText
+                if (targetText.equals(text)) { // 比较原始 text
+                    targetText = targetText.replaceAll(Pattern.quote(keyword), placeholder);
                 }
             }
         }

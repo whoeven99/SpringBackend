@@ -714,8 +714,8 @@ public class TranslateService {
             try {
                 TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), translateContext.getSource(), request.getTarget(), value);
                 htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
-                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
                 saveToShopify(htmlTranslation, translation, resourceId, request);
+                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
                 return true;
             } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
@@ -762,7 +762,7 @@ public class TranslateService {
                 return;
             String value = registerTransactionRequest.getValue();
             String source = registerTransactionRequest.getLocale();
-            String resourceId = registerTransactionRequest.getResourceId();
+            String  resourceId = registerTransactionRequest.getResourceId();
             translation.put("locale", target);
             translation.put("key", registerTransactionRequest.getKey());
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
@@ -780,8 +780,8 @@ public class TranslateService {
                     saveToShopify(value, translation, resourceId, request);
                     continue;
                 }
-                printTranslation(targetText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
                 saveToShopify(targetText, translation, resourceId, request);
+                printTranslation(targetText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
                 continue;
             }
 
@@ -798,8 +798,8 @@ public class TranslateService {
                 appInsights.trackTrace("翻译问题： " + e.getMessage());
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
-            printTranslation(finalText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId);
             saveToShopify(finalText, translation, resourceId, request);
+            printTranslation(finalText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId);
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -883,8 +883,8 @@ public class TranslateService {
                     saveToShopify(value, translation, resourceId, request);
                     continue;
                 }
-                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
                 saveToShopify(htmlTranslation, translation, resourceId, request);
+                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
                 continue;
             }
 
@@ -929,8 +929,8 @@ public class TranslateService {
                 saveToShopify(value, translation, resourceId, request);
                 continue;
             }
-            printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId);
             saveToShopify(htmlTranslation, translation, resourceId, request);
+            printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId);
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
@@ -1010,7 +1010,6 @@ public class TranslateService {
         String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType);
-            printTranslation(targetString, value, translation, request.getShopName(), resourceType, resourceType);
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1022,6 +1021,7 @@ public class TranslateService {
         }
         addData(request.getTarget(), value, targetString);
         saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
+        printTranslation(targetString, value, translation, request.getShopName(), resourceType, resourceType);
         //存到数据库中
         try {
             // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
