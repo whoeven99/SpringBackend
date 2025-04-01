@@ -48,7 +48,6 @@ public class CaseSensitiveUtils {
         int i = 0;
         String targetText = text;
         for (KeywordModel entry : allKeywords) {
-            appInsights.trackTrace("keyword: " + entry.keyword);
             String keyword = entry.keyword;
             String placeholder = "#_" + i++;
             placeholders.put(placeholder, entry.translation); // 存储翻译
@@ -60,16 +59,12 @@ public class CaseSensitiveUtils {
                 if (targetText.equals(text)) {
                     targetText = text.replaceAll(Pattern.quote(keyword), placeholder);
                 }
-
-                appInsights.trackTrace("text1: " + text);
             } else {
                 // 不区分大小写，使用 (?i) 标志
                 targetText = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
                 if (targetText.equals(text)) {
                     targetText = text.replaceAll(Pattern.quote(keyword.toLowerCase()), placeholder);
                 }
-
-                appInsights.trackTrace("text0: " + targetText);
             }
         }
 

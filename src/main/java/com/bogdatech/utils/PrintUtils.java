@@ -17,9 +17,10 @@ public class PrintUtils {
      * @param shopName     用户店铺名称
      * @param resourceType 用户翻译的模块类型
      */
-    public static void printTranslation(String targetText, String sourceText, Map<String, Object> translation, String shopName, String resourceType) {
+    public static void printTranslation(String targetText, String sourceText, Map<String, Object> translation, String shopName, String resourceType, String resourceId) {
         //设置customDimensions为用户的翻译数据
         HashMap<String, String> properties = new HashMap<>();
+        translation.put("resourceId", resourceId);
         properties.put("targetText", targetText);
         properties.put("sourceText", sourceText);
         properties.put("translation", translation.toString());
