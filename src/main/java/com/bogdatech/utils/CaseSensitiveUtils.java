@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 public class CaseSensitiveUtils {
     public static TelemetryClient appInsights = new TelemetryClient();
+
     //区分大小写
     public static boolean containsValue(String text, String value) {
         if (text == null || value == null) {
@@ -45,6 +46,7 @@ public class CaseSensitiveUtils {
 
         // 依次替换关键词
         int i = 0;
+        String targetText = text;
         for (KeywordModel entry : allKeywords) {
             appInsights.trackTrace("keyword: " + entry.keyword);
             String keyword = entry.keyword;
@@ -54,26 +56,24 @@ public class CaseSensitiveUtils {
             // 根据是否区分大小写选择替换方式
             if (entry.caseSensitive) {
                 // 区分大小写，使用原始关键词
-                if (source.equals("en")){
-                    text = text.replaceAll("\\b" + Pattern.quote(keyword) + "\\b", placeholder);
-                }else {
-                    text = text.replaceAll(Pattern.quote(keyword), placeholder);
+                targetText = text.replaceAll("\\b" + Pattern.quote(keyword) + "\\b", placeholder);
+                if (targetText.equals(text)) {
+                    targetText = text.replaceAll(Pattern.quote(keyword), placeholder);
                 }
 
                 appInsights.trackTrace("text1: " + text);
             } else {
                 // 不区分大小写，使用 (?i) 标志
-                if (source.equals("en")){
-                    text = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
-                }else {
-                    text = text.replaceAll("(?i)" + Pattern.quote(keyword), placeholder);
+                targetText = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
+                if (targetText.equals(text)) {
+                    targetText = text.replaceAll(Pattern.quote(keyword.toLowerCase()), placeholder);
                 }
 
-                appInsights.trackTrace("text0: " + text);
+                appInsights.trackTrace("text0: " + targetText);
             }
         }
 
-        return text;
+        return targetText;
     }
 
     // 将占位符还原为关键词
@@ -83,7 +83,6 @@ public class CaseSensitiveUtils {
         }
         return translatedText;
     }
-
 
 
 }
