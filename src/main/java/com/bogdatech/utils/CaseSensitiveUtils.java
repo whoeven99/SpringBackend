@@ -63,7 +63,7 @@ public class CaseSensitiveUtils {
                 // 不区分大小写，使用 (?i) 标志
                 targetText = text.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder);
                 if (targetText.equals(text)) {
-                    targetText = text.replaceAll(Pattern.quote(keyword.toLowerCase()), placeholder);
+                    targetText = text.replaceAll(Pattern.quote(keyword), placeholder);
                 }
             }
         }
