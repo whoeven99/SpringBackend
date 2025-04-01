@@ -20,7 +20,6 @@ public class PrintUtils {
     public static void printTranslation(String targetText, String sourceText, Map<String, Object> translation, String shopName, String resourceType, String resourceId) {
         //设置customDimensions为用户的翻译数据
         HashMap<String, String> properties = new HashMap<>();
-        translation.put("resourceId", resourceId);
         properties.put("targetText", targetText);
         properties.put("sourceText", sourceText);
         properties.put("translation", translation.toString());
@@ -30,6 +29,6 @@ public class PrintUtils {
         metrics.put(resourceType, 1D);
 
         //设置打印name为用户的shopName
-        appInsights.trackEvent(shopName, properties, metrics);
+        appInsights.trackEvent(shopName + " " + resourceId + " ", properties, metrics);
     }
 }
