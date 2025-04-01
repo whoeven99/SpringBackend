@@ -65,7 +65,6 @@ public class JsoupUtils {
             addData(request.getTarget(), cleanedText, finalText);
             return finalText;
         });
-
         addData(request.getTarget(), text, translatedText);
         return translatedText;
     }
