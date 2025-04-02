@@ -39,7 +39,7 @@ public class PlaceholderUtils {
     /**
      * 处理文本：提取占位符，翻译剩余文本，然后替换回占位符
      */
-    public static String processTextWithPlaceholders(String originalText, CharacterCountUtils countUtils, String source, String target, String mode) {
+    public static String processTextWithPlaceholders(String originalText, CharacterCountUtils countUtils, String mtSource, String mtTarget, String mode, String source, String target) {
         if (originalText == null || originalText.trim().isEmpty()) {
             return originalText;
         }
@@ -70,7 +70,7 @@ public class PlaceholderUtils {
         String finalText = null;
         switch (mode) {
             case QWEN_MT:
-                finalText = callWithMessage(QWEN_MT, textToTranslate, source, target, countUtils);
+                finalText = callWithMessage(QWEN_MT, textToTranslate, mtSource, mtTarget, countUtils);
                 break;
             case GOOGLE:
                 finalText = getGoogleTranslationWithRetry(new TranslateRequest(0, null, null, source, target, textToTranslate));

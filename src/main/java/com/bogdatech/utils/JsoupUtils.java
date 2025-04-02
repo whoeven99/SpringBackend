@@ -220,7 +220,7 @@ public class JsoupUtils {
             }
 
             if (hasPlaceholders(request.getContent())) {
-                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), QWEN_MT);
+                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), QWEN_MT, request.getSource(), request.getTarget());
             }
 
             String resultTranslation;
@@ -235,7 +235,7 @@ public class JsoupUtils {
             // 添加token字数和计数规则
             counter.addChars(googleCalculateToken(request.getContent()));
             if (hasPlaceholders(request.getContent())) {
-                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), GOOGLE);
+                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), GOOGLE, request.getSource(), request.getTarget());
             }
             return getGoogleTranslationWithRetry(request);
         }
@@ -272,7 +272,7 @@ public class JsoupUtils {
 
     // 定义google翻译不了的语言代码集合
     private static final Set<String> LANGUAGE_CODES = new HashSet<>(Arrays.asList(
-            "ce", "kw", "fo", "ia", "kl", "ks", "ki", "lu", "gv", "nd",
+            "ce", "kw", "fo", "ia", "kl", "ks", "ki", "lu", "gv", "nd", "pt",
             "se", "nb", "nn", "os", "rm", "sc", "ii", "bo", "to", "wo", "ar-EG"
     ));
 
