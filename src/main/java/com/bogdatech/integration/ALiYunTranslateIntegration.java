@@ -101,7 +101,7 @@ public class ALiYunTranslateIntegration {
 
     //单文本翻译的提示词
     public static String cueWordSingle(String target, String type) {
-        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + ".  Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
+        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
     }
 
     /**
