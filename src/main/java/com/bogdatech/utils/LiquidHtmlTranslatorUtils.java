@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.singleTranslate;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
@@ -208,21 +207,12 @@ public class LiquidHtmlTranslatorUtils {
                 if (!cleanedText.trim().isEmpty()) { // 避免翻译空字符串
                     String targetString;
                     try {
-                        if (cleanedText.length() > 32) {
-                            //AI翻译
-//                            System.out.println("要翻译的文本AI： " + cleanedText);
-//                            appInsights.trackTrace("要翻译的文本AI： " + cleanedText);
-                            targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
-                            targetString = isHtmlEntity(targetString);
-                            result.append(targetString);
-                        } else {
-                            request.setContent(cleanedText);
+                        request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本： " + cleanedText);
-                            targetString = translateAndCount(request, counter, resourceType);
-                            targetString = isHtmlEntity(targetString);;
-                            result.append(targetString);
-                        }
+                        targetString = translateAndCount(request, counter, resourceType);
+                        targetString = isHtmlEntity(targetString);
+                        result.append(targetString);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
                         result.append(cleanedText);
@@ -242,37 +232,25 @@ public class LiquidHtmlTranslatorUtils {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
             if (cleanedText.matches("\\p{Zs}")) {
-//                System.out.println("要翻译的剩余空白： " + cleanedText);
                 result.append(cleanedText);
                 return result.toString();
             }
             if (!cleanedText.trim().isEmpty() && !cleanedText.matches("\\s*")) {
-                String targetString = null;
+                String targetString;
                 try {
-                    if (cleanedText.length() > 32) {
-                        //AI翻译
-//                        appInsights.trackTrace("处理剩余文本AI： " + cleanedText);
-//                        System.out.println("要翻译的文本AI： " + cleanedText);
-                        targetString = singleTranslate(cleanedText, resourceType, counter, request.getTarget());
-                        targetString = isHtmlEntity(targetString);
-                        result.append(targetString);
-                    } else {
-                        request.setContent(cleanedText);
+                    request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本： " + cleanedText);
-                        targetString = translateAndCount(request, counter, resourceType);
-                        targetString = isHtmlEntity(targetString);
-                        result.append(targetString);
-                    }
+                    targetString = translateAndCount(request, counter, resourceType);
+                    targetString = isHtmlEntity(targetString);
+                    result.append(targetString);
                 } catch (ClientException e) {
                     result.append(cleanedText);
                 }
             } else {
                 result.append(remaining);
             }
-
         }
-
         return result.toString();
     }
 
@@ -307,7 +285,7 @@ public class LiquidHtmlTranslatorUtils {
             // 如果有 HTML 实体，则解码
             text = StringEscapeUtils.unescapeHtml4(text);
             i++;
-            if (i > 3){
+            if (i > 3) {
                 return text;
             }
         }

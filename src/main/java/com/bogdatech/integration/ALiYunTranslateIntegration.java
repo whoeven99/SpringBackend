@@ -135,13 +135,12 @@ public class ALiYunTranslateIntegration {
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-//            System.out.println("single_content: " + content);
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
-//            throw new RuntimeException(e);
+
         }
         //获得该list的size
         //将content进行处理，转换为List<String>返回。

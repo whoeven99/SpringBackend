@@ -251,6 +251,12 @@ public class ShopifyService {
                 if (value == null) {
                     continue;  // 跳过当前项
                 }
+                if (value.matches("\\p{Zs}")) {
+                    continue;
+                }
+                if (value.trim().isEmpty()) {
+                    continue;
+                }
             } catch (Exception e) {
                 appInsights.trackTrace("失败的原因： " + e.getMessage());
                 continue;
@@ -312,10 +318,25 @@ public class ShopifyService {
                 continue;  // 跳过当前项
             }
 
-            String value = contentItemNode.path("value").asText(null);
-
             //如果value为空跳过
-            if (value.isEmpty()) {
+            String value;
+            try {
+                JsonNode valueNode = contentItemNode.path("value");
+                if (valueNode == null) {
+                    continue;
+                }
+                value = contentItemNode.path("value").asText(null);
+                if (value == null) {
+                    continue;  // 跳过当前项
+                }
+                if (value.matches("\\p{Zs}")) {
+                    continue;
+                }
+                if (value.trim().isEmpty()) {
+                    continue;
+                }
+            } catch (Exception e) {
+                appInsights.trackTrace("失败的原因： " + e.getMessage());
                 continue;
             }
 
@@ -380,6 +401,12 @@ public class ShopifyService {
                 value = contentItemNode.path("value").asText(null);
                 if (value == null) {
                     continue;  // 跳过当前项
+                }
+                if (value.matches("\\p{Zs}")) {
+                    continue;
+                }
+                if (value.trim().isEmpty()) {
+                    continue;
                 }
             } catch (Exception e) {
                 appInsights.trackTrace("失败的原因： " + e.getMessage());
