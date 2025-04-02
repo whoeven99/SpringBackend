@@ -220,7 +220,7 @@ public class JsoupUtils {
             }
 
             if (hasPlaceholders(request.getContent())) {
-                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), QWEN_MT);
+                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), QWEN_MT, request.getSource(), request.getTarget());
             }
 
             String resultTranslation;
@@ -235,7 +235,7 @@ public class JsoupUtils {
             // 添加token字数和计数规则
             counter.addChars(googleCalculateToken(request.getContent()));
             if (hasPlaceholders(request.getContent())) {
-                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), GOOGLE);
+                return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), GOOGLE, request.getSource(), request.getTarget());
             }
             return getGoogleTranslationWithRetry(request);
         }
