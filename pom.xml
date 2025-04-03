@@ -202,6 +202,12 @@
 			</exclusions>
 			<version>2.16.2</version>
 		</dependency>
+		<!-- 火山模型sdk-->
+		<dependency>
+			<groupId>com.volcengine</groupId>
+			<artifactId>volcengine-java-sdk-ark-runtime</artifactId>
+			<version>0.2.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
