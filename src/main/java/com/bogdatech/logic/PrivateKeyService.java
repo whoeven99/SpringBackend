@@ -924,7 +924,7 @@ public class PrivateKeyService {
             }
 
             //如果包含相对路径则跳过
-            if (key.contains("css:")|| key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+            if (key.contains("general.rtl") ||key.contains("css:")|| key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL")) || resourceType.equals(METAFIELD) || resourceType.equals(SHOP_POLICY)) {
                 continue;
