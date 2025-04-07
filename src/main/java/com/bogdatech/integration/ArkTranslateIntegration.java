@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.bogdatech.integration.ALiYunTranslateIntegration.appInsights;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
 
 public class ArkTranslateIntegration {
@@ -26,13 +27,19 @@ public class ArkTranslateIntegration {
     // 在 Spring 容器创建 Bean 时执行，用于初始化 ArkService
     public void init() {
         // 从环境变量中获取 API Key
-        String apiKey = System.getenv(DOUBAO_API_KEY);
-        // 检查 API Key 是否为空，若为空则抛出异常，避免服务启动失败
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new IllegalStateException("环境变量 ARK_API_KEY 未设置");
+        try {
+            String apiKey = System.getenv(DOUBAO_API_KEY);
+            // 检查 API Key 是否为空，若为空则抛出异常，避免服务启动失败
+            if (apiKey == null || apiKey.isEmpty()) {
+                appInsights.trackTrace("豆包API Key 未设置:  " + apiKey);
+    //            throw new IllegalStateException("环境变量 ARK_API_KEY 未设置");
+            }
+            // 使用建造者模式创建 ArkService 实例，并赋值给成员变量
+            arkService = ArkService.builder().apiKey(apiKey).timeout(Duration.ofSeconds(120)).retryTimes(2).build();
+        } catch (Exception e) {
+            System.out.println("豆包模型初始化失败！！！" + e.getMessage());
+            appInsights.trackTrace("豆包模型初始化失败！！！" + e.getMessage());
         }
-        // 使用建造者模式创建 ArkService 实例，并赋值给成员变量
-        arkService = ArkService.builder().apiKey(apiKey).timeout(Duration.ofSeconds(120)).retryTimes(2).build();
     }
 
     // 销毁方法，由 @Bean 的 destroyMethod 调用
