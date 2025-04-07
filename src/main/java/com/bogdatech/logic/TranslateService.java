@@ -978,6 +978,7 @@ public class TranslateService {
         //获取缓存数据
         String targetCache = translateSingleLine(value, request.getTarget());
         if (targetCache != null) {
+            targetCache = isHtmlEntity(targetCache);
             saveToShopify(targetCache, translation, resourceId, request);
             printTranslation(targetCache, value, translation, request.getShopName(), "Cache", resourceId);
             return true;
@@ -994,6 +995,7 @@ public class TranslateService {
             appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());
         }
         if (targetText != null) {
+            targetText = isHtmlEntity(targetText);
             addData(target, value, targetText);
             saveToShopify(targetText, translation, resourceId, request);
             printTranslation(targetText, value, translation, request.getShopName(), "Database", resourceId);

@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
-import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 
 @RestController
@@ -113,15 +112,6 @@ public class TestController {
     @GetMapping("/testAddCache")
     public void testAddCache(String target, String value, String targetText) {
         addData(target, value, targetText);
-    }
-
-    @PostMapping("/testMT")
-    public void testMT(String model, String translateText, String source, String target) {
-        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
-            System.out.println("mt翻译");
-        } else {
-            System.out.println("google翻译");
-        }
     }
 
     @GetMapping("/testIsHTML")

@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -182,8 +181,6 @@ public class UserService {
         } else {
             map.put("addUserSubscriptionPlan", false);
         }
-
-        appInsights.trackTrace("second: " + LocalDateTime.now());
         return map;
     }
 

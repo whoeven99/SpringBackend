@@ -8,10 +8,6 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-
 
 @RestController
 @RequestMapping("/user")
@@ -74,7 +70,6 @@ public class UserController {
     //用户初始化检测
     @GetMapping("/InitializationDetection")
     public BaseResponse<Object> InitializationDetection(String shopName) {
-        appInsights.trackTrace("first: " + LocalDateTime.now());
         return new BaseResponse<>().CreateSuccessResponse(userService.InitializationDetection(shopName));
     }
 }
