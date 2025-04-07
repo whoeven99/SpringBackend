@@ -211,7 +211,6 @@ public class LiquidHtmlTranslatorUtils {
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
-                        targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
@@ -242,7 +241,6 @@ public class LiquidHtmlTranslatorUtils {
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本： " + cleanedText);
                     targetString = translateAndCount(request, counter, resourceType);
-                    targetString = isHtmlEntity(targetString);
                     result.append(targetString);
                 } catch (ClientException e) {
                     result.append(cleanedText);

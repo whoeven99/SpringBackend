@@ -20,11 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
-import static com.bogdatech.integration.ArkTranslateIntegration.getChatResponse;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
-import static com.bogdatech.utils.JsoupUtils.QWEN_MT_CODES;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 
 @RestController
@@ -116,15 +114,6 @@ public class TestController {
         addData(target, value, targetText);
     }
 
-    @PostMapping("/testMT")
-    public void testMT(String model, String translateText, String source, String target) {
-        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
-            System.out.println("mt翻译");
-        } else {
-            System.out.println("google翻译");
-        }
-    }
-
     @GetMapping("/testIsHTML")
     public void testIsHTML(String target) {
         String html = """
@@ -133,11 +122,5 @@ public class TestController {
 //        boolean result = isDatabaseLanguage(target);
         String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
         System.out.println("翻译的结果： " + result);
-    }
-
-    @GetMapping("/testDouBao")
-    public void testDouBao(String target, String sourceText) {
-        String product = getChatResponse(target, "product", sourceText);
-        System.out.println("翻译的结果： " + product);
     }
 }
