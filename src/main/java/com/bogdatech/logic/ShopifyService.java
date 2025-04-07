@@ -671,7 +671,7 @@ public class ShopifyService {
     //在UserSubscription表里面添加一个购买了免费订阅计划的用户（商家）
     public BaseResponse<Object> addUserFreeSubscription(UserSubscriptionsRequest request) {
         request.setStatus(1);
-        request.setPlanId(1);
+        request.setPlanId(2);
         LocalDateTime localDate = LocalDateTime.now();
         String localDateFormat = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         LocalDateTime startDate = LocalDateTime.parse(localDateFormat, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
