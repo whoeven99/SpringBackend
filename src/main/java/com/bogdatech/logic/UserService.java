@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -60,7 +61,7 @@ public class UserService {
             Map<String, String> templateData = new HashMap<>();
             templateData.put("user", usersDO.getFirstName());
             Boolean flag1 = emailIntegration.sendEmailByTencent(
-                    new TencentSendEmailRequest(133300L, templateData, FIRST_INSTALL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+                    new TencentSendEmailRequest(137916L, templateData, FIRST_INSTALL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
 
             //存数据库中
             Integer flag2 = emailServicel.saveEmail(new EmailDO(0, usersDO.getShopName(), TENCENT_FROM_EMAIL, usersDO.getEmail(), FIRST_INSTALL_SUBJECT, flag1 ? 1 : 0));
@@ -182,6 +183,7 @@ public class UserService {
             map.put("addUserSubscriptionPlan", false);
         }
 
+        appInsights.trackTrace("second: " + LocalDateTime.now());
         return map;
     }
 

@@ -135,6 +135,9 @@ public class ShopifyService {
     //计数翻译前所需要的总共的字符数
     public void countBeforeTranslateChars(String infoByShopify, ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils counter, CharacterCountUtils translateCounter, String method) {
         JsonNode rootNode = ConvertStringToJsonNode(infoByShopify, translateResource);
+        if (rootNode == null) {
+            return;
+        }
         translateSingleLineTextFieldsRecursively(rootNode, request, counter, translateCounter, translateResource, method);
         // 递归处理下一页数据
         handlePagination(rootNode, request, counter, translateResource, translateCounter, method);
@@ -146,11 +149,12 @@ public class ShopifyService {
 //        System.out.println("现在统计到： " + translateResource.getResourceType());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode rootNode;
+        JsonNode rootNode = null;
         try {
             rootNode = objectMapper.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            System.out.println("解析JSON数据失败： " + translateResource);
+            appInsights.trackTrace("解析JSON数据失败： " + translateResource);
         }
         return rootNode;
     }
