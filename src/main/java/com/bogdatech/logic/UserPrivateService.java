@@ -90,7 +90,6 @@ public class UserPrivateService {
                     return new BaseResponse<>().CreateSuccessResponse(new UserPrivateDO());
                 }
                 if (userPrivateDO.getGoogleKey() == null){
-                    userPrivateDO.setUsedAmount(null);
                     userPrivateDO.setId(null);
                     return new BaseResponse<>().CreateSuccessResponse(userPrivateDO);
                 }
