@@ -246,6 +246,7 @@ public class JsoupUtils {
 
         //hi用doubao-1.5-pro-256k翻译
         if (target.equals("hi")) {
+            target = "Hindi";
             return douBaoTranslate(target, resourceType, source, counter);
         }
 
