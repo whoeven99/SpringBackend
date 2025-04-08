@@ -95,14 +95,16 @@ public class ALiYunTranslateIntegration {
 
     //单文本翻译的提示词
     public static String cueWordSingle(String target, String type) {
-        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
+//        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
+        return "Accurately translate the following text into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
     }
 
     /**
      * 用qwen-MT的部分代替google翻译。
-     * @param text 要翻译的文本
-     * @param type 文本模块类型
-     * @param target 目标语言代码
+     *
+     * @param text       要翻译的文本
+     * @param type       文本模块类型
+     * @param target     目标语言代码
      * @param countUtils 计数器
      * @return 翻译后的文本
      */
@@ -144,11 +146,12 @@ public class ALiYunTranslateIntegration {
 
     /**
      * 用qwen-MT的部分代替google翻译。
-     * @param model 模型的类型 turbo和plus
+     *
+     * @param model         模型的类型 turbo和plus
      * @param translateText 要翻译的文本
-     * @param source 源语言代码
-     * @param target 目标语言代码
-     * @param countUtils 计数器
+     * @param source        源语言代码
+     * @param target        目标语言代码
+     * @param countUtils    计数器
      * @return 翻译后的文本
      */
     public static String callWithMessage(String model, String translateText, String source, String target, CharacterCountUtils countUtils) {
@@ -166,7 +169,7 @@ public class ALiYunTranslateIntegration {
                 .model(model)
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
-                .parameter("translation_options","{\"source_lang\":\"" + source + "\",\"target_lang\":\"" + target + "\"}")
+                .parameter("translation_options", "{\"source_lang\":\"" + source + "\",\"target_lang\":\"" + target + "\"}")
                 .build();
         String content = null;
         Integer totalToken;
