@@ -244,11 +244,6 @@ public class JsoupUtils {
             return singleTranslate(request.getContent(), resourceType, counter, target);
         }
 
-        //th用hunyuan-turbo-latest翻译
-        if (target.equals("th")) {
-            return hunYuanTranslate(request.getContent(), resourceType, counter, target, "hunyuan-turbo-latest");
-        }
-
         //hi用doubao-1.5-pro-256k翻译
         if (target.equals("hi")) {
             return douBaoTranslate(target, resourceType, source, counter);

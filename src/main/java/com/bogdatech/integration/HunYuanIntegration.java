@@ -51,6 +51,7 @@ public class HunYuanIntegration {
         messages[0] = new Message();
         messages[0].setRole("system");
         messages[0].setContent(cueWordSingle(target, type));
+        System.out.println("messages[0]:" + messages[0].getContent());
         messages[1] = new Message();
         messages[1].setRole("user");
         messages[1].setContent(sourceText);
@@ -69,6 +70,7 @@ public class HunYuanIntegration {
         String targetText = null;
         if (resp.getChoices() != null && resp.getChoices().length > 0) {
             targetText = resp.getChoices()[0].getMessage().getContent();
+            System.out.println("targetText: " + targetText);
             int totalToken = resp.getUsage().getTotalTokens().intValue();
             countUtils.addChars(totalToken);
         }
