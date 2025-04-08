@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.QWEN_MT;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.singleTranslate;
 import static com.bogdatech.integration.ArkTranslateIntegration.douBaoTranslate;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
@@ -240,7 +241,7 @@ public class JsoupUtils {
 
         //目标语言是中文的，用qwen-max翻译
         if (target.equals("zh-CN")) {
-            return callWithMessage("qwen-max", request.getContent(), source, target, counter);
+            return singleTranslate(request.getContent(), resourceType, counter, target);
         }
 
         //th用hunyuan-turbo-latest翻译
