@@ -175,7 +175,7 @@ public class PrivateKeyService {
                     updateInitialValue(request);
                     return;
                 }
-                iTranslatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
+                iTranslatesService.updateTranslateStatus(shopName, 5, target, source, request.getAccessToken());
                 userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
@@ -196,7 +196,7 @@ public class PrivateKeyService {
                 //更新初始值
                 updateInitialValue(request);
                 userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
-                iTranslatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
+                iTranslatesService.updateTranslateStatus(shopName, 5, target, source, request.getAccessToken());
                 return;
             }
             //更新数据库中的已使用字符数
