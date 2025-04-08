@@ -102,7 +102,7 @@ public class TranslateResourceDTO {
 
     static {
         RESOURCE_MAP.put("Collection", List.of(new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", "")));
-        RESOURCE_MAP.put("Notifications", List.of(new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", "")));
+        RESOURCE_MAP.put("Notifications", List.of(new TranslateResourceDTO(EMAIL_TEMPLATE, "20", "", "")));
         RESOURCE_MAP.put("Theme", List.of(new TranslateResourceDTO(ONLINE_STORE_THEME, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Article", List.of(new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Blog titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, MAX_LENGTH, "")));
