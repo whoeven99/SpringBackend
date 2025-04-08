@@ -209,7 +209,7 @@ public class JsoupUtils {
             return googleTranslateByJudge(request, counter, resourceType);
         }
 
-        return checkTranslationApi(request, counter, resourceType);
+        return checkTranslationModel(request, counter, resourceType);
     }
 
     /**
@@ -237,8 +237,14 @@ public class JsoupUtils {
     public static String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String resourceType) {
         String target = request.getTarget();
         String source = request.getSource();
-        //ar用hunyuan-turbo-latest翻译
-        if (target.equals("ar")) {
+
+        //目标语言是中文的，用qwen-max翻译
+        if (target.equals("zh-CN")) {
+            return callWithMessage("qwen-max", request.getContent(), source, target, counter);
+        }
+
+        //th用hunyuan-turbo-latest翻译
+        if (target.equals("th")) {
             return hunYuanTranslate(request.getContent(), resourceType, counter, target, "hunyuan-turbo-latest");
         }
 
