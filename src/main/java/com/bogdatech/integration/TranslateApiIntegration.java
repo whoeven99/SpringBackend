@@ -84,9 +84,9 @@ public class TranslateApiIntegration {
         String apikey = System.getenv("GOOGLE_API_KEY");
         String url = "https://translation.googleapis.com/language/translate/v2?key=" + apikey +
                 "&q=" + encodedQuery +
-                "&source=" + request.getSource() +
                 "&target=" + request.getTarget() +
                 "&model=base";
+        //                "&source=" + request.getSource() +
         String result = null;
         // 创建HttpGet请求
         HttpPost httpPost = new HttpPost(url);
