@@ -76,7 +76,7 @@ public class ShopifyHttpIntegration {
 //                appInsights.trackTrace("registerTransaction response: " + responseString);
                 jsonObject = JSONObject.parseObject(responseString);
                 if (jsonObject != null && jsonObject.containsKey("data")) {
-//                    appInsights.trackTrace("registerTransaction success: " + jsonObject.getString("data"));
+                    appInsights.trackTrace("主题数据修改成功: " + jsonObject.getString("data"));
                     return jsonObject.getString("data");
                 }
             } catch (Exception e) {

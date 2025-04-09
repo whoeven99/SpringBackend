@@ -303,7 +303,6 @@ public class TranslateService {
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         getGlossaryByShopName(shopifyRequest, glossaryMap);
-        appInsights.trackTrace("glossaryMap: " + glossaryMap);
 
         //获取目前所使用的AI语言包
         Integer packId = aiLanguagePacksService.getPackIdByShopName(request.getShopName());
