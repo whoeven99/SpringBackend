@@ -589,8 +589,8 @@ public class TranslateService {
                 //走翻译流程
                 String translatedText = translateSingleText(request, value, type, counter, source);
                 addData(request.getTarget(), value, translatedText);
-                saveToDatabase(request.getTarget(), translatedText, source, value);
                 saveToShopify(translatedText, translation, resourceId, request);
+                printTranslation(translatedText, value, translation, request.getShopName(), type, resourceId);
                 continue;
             }
 
@@ -612,6 +612,7 @@ public class TranslateService {
                     //将list数据转为String 再存储到shopify本地
                     String translatedValue = objectMapper.writeValueAsString(resultList);
                     saveToShopify(translatedValue, translation, resourceId, request);
+                    printTranslation(translatedValue, value, translation, request.getShopName(), type, resourceId);
                 } catch (Exception e) {
                     //存原数据到shopify本地
                     saveToShopify(value, translation, resourceId, request);
