@@ -114,13 +114,4 @@ public class TestController {
         addData(target, value, targetText);
     }
 
-    @GetMapping("/testIsHTML")
-    public void testIsHTML(String target) {
-        String html = """
-                
-                """;
-//        boolean result = isDatabaseLanguage(target);
-        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
-        System.out.println("翻译的结果： " + result);
-    }
 }

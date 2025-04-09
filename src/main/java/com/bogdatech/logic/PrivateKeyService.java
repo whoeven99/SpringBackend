@@ -16,6 +16,7 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -38,6 +39,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.alibaba.dashscope.utils.Constants.apiKey;
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
@@ -53,6 +55,7 @@ import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
+import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.replaceDot;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
@@ -417,12 +420,87 @@ public class PrivateKeyService {
                     //区分大小写
                     translateDataByGlossary(entry.getValue(), translateContext);
                     break;
+                case METAFIELD:
+                    translateMetafield(entry.getValue(), translateContext);
+                    break;
                 default:
                     appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
                     break;
             }
         }
     }
+
+    //翻译元字段的数据
+    private void translateMetafield(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
+        ShopifyRequest request = translateContext.getShopifyRequest();
+        CharacterCountUtils counter = translateContext.getCharacterCountUtils();
+        //判断是否停止翻译
+        if (checkIsStopped(request.getShopName(), counter)) return;
+
+        int remainingChars = translateContext.getRemainingChars();
+        String target = request.getTarget();
+        for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
+            //判断是否停止翻译
+            if (checkIsStopped(request.getShopName(), counter))
+                return;
+            String value = registerTransactionRequest.getValue();
+            String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
+            String key = registerTransactionRequest.getKey();
+            String source = registerTransactionRequest.getLocale();
+            String resourceId = registerTransactionRequest.getResourceId();
+            String type = registerTransactionRequest.getTarget();
+            Map<String, Object> translation = createTranslationMap(target, key, translatableContentDigest);
+
+            // 判断是否会超限制
+            updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
+
+            if (value == null || value.trim().isEmpty()) {
+                continue;
+            }
+
+            if (SINGLE_LINE_TEXT_FIELD.equals(type)) {
+                //纯数字字母符号 且有两个  标点符号 不翻译
+                if (isValidString(value)) {
+                    continue;
+                }
+
+                //走翻译流程
+                String translatedText = getGoogleTranslationWithRetry(value, source, apiKey, request.getTarget());
+                addData(request.getTarget(), value, translatedText);
+                saveToShopify(translatedText, translation, resourceId, request);
+                continue;
+            }
+
+            if (LIST_SINGLE_LINE_TEXT_FIELD.equals(type)) {
+                //先将list数据由String转为List<String>，循环判断
+                try {
+                    //如果符合要求，则翻译，不符合要求则返回原值
+                    List<String> resultList = objectMapper.readValue(value, new TypeReference<List<String>>() {
+                    });
+                    for (int i = 0; i < resultList.size(); i++) {
+                        String original = resultList.get(i);
+                        if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
+                            //走翻译流程
+                            String translated = getGoogleTranslationWithRetry(original, source, apiKey, request.getTarget());
+                            //将数据填回去
+                            resultList.set(i, translated);
+                        }
+                    }
+                    //将list数据转为String 再存储到shopify本地
+                    String translatedValue = objectMapper.writeValueAsString(resultList);
+                    saveToShopify(translatedValue, translation, resourceId, request);
+                } catch (Exception e) {
+                    //存原数据到shopify本地
+                    saveToShopify(value, translation, resourceId, request);
+                    appInsights.trackTrace("LIST错误原因： " + e.getMessage());
+//                    System.out.println("LIST错误原因： " + e.getMessage());
+                }
+            }
+            if (checkIsStopped(request.getShopName(), counter))
+                return;
+        }
+    }
+
 
     //对词汇表数据进行处理
     public void translateDataByGlossary(List<RegisterTransactionRequest> registerTransactionRequests,
@@ -927,8 +1005,14 @@ public class PrivateKeyService {
             if (key.contains("metafield:") ||key.contains("formId:") ||key.contains("phone_text") ||key.contains("email_text") ||key.contains("carousel_easing") || key.contains("_link")|| key.contains("general.rtl") || key.contains("css:")|| key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL"))
-                    || resourceType.equals(METAFIELD)
-                    || resourceType.equals(SHOP_POLICY)) {
+                    || resourceType.equals(SHOP_POLICY)
+                  ) {
+                continue;
+            }
+
+            //对METAFIELD字段翻译
+            if (resourceType.equals(METAFIELD)) {
+                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
 
