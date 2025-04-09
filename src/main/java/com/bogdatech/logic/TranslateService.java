@@ -506,12 +506,12 @@ public class TranslateService {
     // 初始化 judgeData，用于存储不同类型的数据
     public static Map<String, List<RegisterTransactionRequest>> initializeJudgeData() {
         return new HashMap<>() {{
-            put(PLAIN_TEXT, new ArrayList<>());
-            put(HTML, new ArrayList<>());
-            put(DATABASE, new ArrayList<>());
-            put(JSON_TEXT, new ArrayList<>());
-            put(GLOSSARY, new ArrayList<>());
-            put(OPENAI, new ArrayList<>());
+//            put(PLAIN_TEXT, new ArrayList<>());
+//            put(HTML, new ArrayList<>());
+//            put(DATABASE, new ArrayList<>());
+//            put(JSON_TEXT, new ArrayList<>());
+//            put(GLOSSARY, new ArrayList<>());
+//            put(OPENAI, new ArrayList<>());
             put(METAFIELD, new ArrayList<>());
         }};
     }
@@ -522,26 +522,26 @@ public class TranslateService {
             if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils(), translateContext.getShopifyRequest().getTarget(), translateContext.getSource()))
                 return;
             switch (entry.getKey()) {
-                case PLAIN_TEXT:
-                    translateDataByAPI(entry.getValue(), translateContext);
-                    break;
-                case HTML:
-                    translateHtml(entry.getValue(), translateContext);
-                    break;
-                case JSON_TEXT:
-                    translateJsonText(entry.getValue(), translateContext);
-                    break;
-                case DATABASE:
-                    //处理database数据
-                    translateDataByDatabase(entry.getValue(), translateContext);
-                    break;
-                case GLOSSARY:
-                    //区分大小写
-                    translateDataByGlossary(entry.getValue(), translateContext);
-                    break;
-                case OPENAI:
-                    translateDataByOPENAI(entry.getValue(), translateContext);
-                    break;
+//                case PLAIN_TEXT:
+//                    translateDataByAPI(entry.getValue(), translateContext);
+//                    break;
+//                case HTML:
+//                    translateHtml(entry.getValue(), translateContext);
+//                    break;
+//                case JSON_TEXT:
+//                    translateJsonText(entry.getValue(), translateContext);
+//                    break;
+//                case DATABASE:
+//                    //处理database数据
+//                    translateDataByDatabase(entry.getValue(), translateContext);
+//                    break;
+//                case GLOSSARY:
+//                    //区分大小写
+//                    translateDataByGlossary(entry.getValue(), translateContext);
+//                    break;
+//                case OPENAI:
+//                    translateDataByOPENAI(entry.getValue(), translateContext);
+//                    break;
                 case METAFIELD:
                     translateMetafield(entry.getValue(), translateContext);
                     break;
@@ -1619,7 +1619,12 @@ public class TranslateService {
     public void startTokenCount(TranslateRequest request) {
         try {
             //获取translationId
-            Integer translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+            Integer translationId = null;
+            try {
+                translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+            } catch (Exception e) {
+                appInsights.trackTrace("无法获取用户的翻译项id： " + translationId);
+            }
 
             //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
             Integer status = userTypeTokenService.getStatusByTranslationId(translationId);
