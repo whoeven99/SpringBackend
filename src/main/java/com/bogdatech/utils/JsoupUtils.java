@@ -250,6 +250,9 @@ public class JsoupUtils {
             return douBaoTranslate(target, resourceType, request.getContent(), counter);
         }
 
+        if (source.equals("fr")){
+            return douBaoTranslate(target, resourceType, request.getContent(), counter);
+        }
         //其他都用hunyuan-large翻译
         return hunYuanTranslate(request.getContent(), resourceType, counter, target, "hunyuan-large");
     }
