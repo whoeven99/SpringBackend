@@ -251,6 +251,7 @@ public class JsoupUtils {
         }
 
         if (target.equals("th")){
+            target= "Thai";
             return douBaoTranslate(target, resourceType, request.getContent(), counter);
         }
 

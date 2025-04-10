@@ -61,10 +61,15 @@ public class ArkTranslateIntegration {
     public static String douBaoTranslate(String targetCode, String type, String sourceText, CharacterCountUtils countUtils) {
         try {
             List<ChatMessage> messages = new ArrayList<>();
+            ChatMessage systemMessage = ChatMessage.builder()
+                    .role(ChatMessageRole.SYSTEM)
+                    .content(cueWordSingle(targetCode, type))
+                    .build();
             ChatMessage userMessage = ChatMessage.builder()
                     .role(ChatMessageRole.USER)
-                    .content(cueWordSingle(targetCode, type) + " \n " + sourceText)
+                    .content(sourceText)
                     .build();
+            messages.add(systemMessage);
             messages.add(userMessage);
 
             ChatCompletionRequest request = ChatCompletionRequest.builder()
