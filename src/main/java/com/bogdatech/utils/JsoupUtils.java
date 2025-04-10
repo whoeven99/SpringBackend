@@ -250,11 +250,14 @@ public class JsoupUtils {
             return douBaoTranslate(target, resourceType, request.getContent(), counter);
         }
 
-        if (source.equals("fr")){
+        if (source.equals("fr") || target.equals("es") || source.equals("es")) {
             return douBaoTranslate(target, resourceType, request.getContent(), counter);
         }
-        //其他都用hunyuan-large翻译
-        return hunYuanTranslate(request.getContent(), resourceType, counter, target, "hunyuan-large");
+        //韩语，泰语， 阿拉伯语都用hunyuan-large翻译
+//        if (target.equals("ko") || target.equals("th") || target.equals("ar")   ) {
+            return hunYuanTranslate(request.getContent(), resourceType, counter, target, "hunyuan-large");
+//        }
+
     }
 
     /**
