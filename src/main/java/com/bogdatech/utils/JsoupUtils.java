@@ -250,6 +250,9 @@ public class JsoupUtils {
             return douBaoTranslate(target, resourceType, request.getContent(), counter);
         }
 
+        if (target.equals("th")){
+            return douBaoTranslate(target, resourceType, request.getContent(), counter);
+        }
 
         return hunYuanTranslate(request.getContent(), resourceType, counter, target, "hunyuan-large");
 
