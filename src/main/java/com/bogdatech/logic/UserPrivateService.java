@@ -90,7 +90,6 @@ public class UserPrivateService {
                     return new BaseResponse<>().CreateSuccessResponse(new UserPrivateDO());
                 }
                 if (userPrivateDO.getGoogleKey() == null){
-                    userPrivateDO.setUsedAmount(null);
                     userPrivateDO.setId(null);
                     return new BaseResponse<>().CreateSuccessResponse(userPrivateDO);
                 }
@@ -98,7 +97,6 @@ public class UserPrivateService {
                 //对用户的key做处理， 只传前4位和后4位，中间用x代替
                 String key = keyVaultSecret.getValue().substring(0, 4) + "**********" + keyVaultSecret.getValue().substring(keyVaultSecret.getValue().length() - 4);
                 userPrivateDO.setGoogleKey(key);
-                userPrivateDO.setUsedAmount(null);
                 userPrivateDO.setId(null);
                 return new BaseResponse<>().CreateSuccessResponse(userPrivateDO);
             } catch (Exception e) {

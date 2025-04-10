@@ -1092,7 +1092,7 @@ public class TranslateService {
             }
 
             //如果包含相对路径则跳过
-            if (key.contains("metafield:")
+            if (key.contains("metafield:") || key.contains("color")
                     ||key.contains("formId:") ||key.contains("phone_text") ||key.contains("email_text")
                     ||key.contains("carousel_easing") || key.contains("_link")|| key.contains("general.rtl") || key.contains("css:")
                     || key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
@@ -1615,8 +1615,18 @@ public class TranslateService {
     public void startTokenCount(TranslateRequest request) {
         try {
             //获取translationId
-            Integer translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+            Integer translationId = null;
+            try {
+                translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+            } catch (Exception e) {
+                appInsights.trackTrace("无法获取用户的翻译项id： " + translationId);
+            }
 
+            if (translationId == null) {
+                //添加这个翻译项
+                //插入语言状态
+                insertLanguageStatus(request);
+            }
             //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
             Integer status = userTypeTokenService.getStatusByTranslationId(translationId);
             if (status != 2) {
