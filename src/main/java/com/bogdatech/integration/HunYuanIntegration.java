@@ -47,19 +47,15 @@ public class HunYuanIntegration {
         // 设置模型名称（请确认具体名称，假设为 "hunyuan-turbo-s"）
         req.setModel(model);
         // 设置对话消息
-        Message[] messages = new Message[2];
+        Message[] messages = new Message[1];
         messages[0] = new Message();
-        messages[0].setRole("system");
-        messages[0].setContent(cueWordSingle(target, type));
-        System.out.println("messages[0]:" + messages[0].getContent());
-        messages[1] = new Message();
-        messages[1].setRole("user");
-        messages[1].setContent(sourceText);
+        messages[0].setRole("user");
+        messages[0].setContent(cueWordSingle(target, type) + " \n " + sourceText);
         req.setMessages(messages);
         req.setStream(false); // 非流式调用，设为 true 可启用流式返回
 
         // 4. 发送请求并获取响应
-        ChatCompletionsResponse resp = null;
+        ChatCompletionsResponse resp;
         try {
             resp = CLIENT.ChatCompletions(req);
         } catch (TencentCloudSDKException e) {
@@ -70,7 +66,7 @@ public class HunYuanIntegration {
         String targetText = null;
         if (resp.getChoices() != null && resp.getChoices().length > 0) {
             targetText = resp.getChoices()[0].getMessage().getContent();
-            System.out.println("targetText: " + targetText);
+//            System.out.println("targetText: " + targetText);
             int totalToken = resp.getUsage().getTotalTokens().intValue();
             countUtils.addChars(totalToken);
         }

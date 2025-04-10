@@ -11,7 +11,6 @@ import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -20,10 +19,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 
 @RestController
 public class TestController {
@@ -114,13 +113,8 @@ public class TestController {
         addData(target, value, targetText);
     }
 
-    @GetMapping("/testIsHTML")
-    public void testIsHTML(String target) {
-        String html = """
-                
-                """;
-//        boolean result = isDatabaseLanguage(target);
-        String result = translateNewHtml(html, new TranslateRequest(0, "fadsf", "asdf", "en", "zh-CN", html), new CharacterCountUtils(), "product");
-        System.out.println("翻译的结果： " + result);
-    }
+   @GetMapping("/testModel")
+    public String testModel(){
+        return hunYuanTranslate("2PC Retrofit LED Interior Cargo Area Light For 2015+ Ford Transit 150 250 350, etc.", "product", new CharacterCountUtils(), "zh-CN", "hunyuan-large");
+   }
 }
