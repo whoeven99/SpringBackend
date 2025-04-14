@@ -240,7 +240,7 @@ public class JsoupUtils {
         String source = request.getSource();
 
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN")) {
+        if (target.equals("zh-CN") || target.equals("hu")) {
             return singleTranslate(request.getContent(), resourceType, counter, target);
         }
 
