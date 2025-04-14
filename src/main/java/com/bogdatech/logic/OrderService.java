@@ -57,7 +57,7 @@ public class OrderService {
         String formattedNumber = formatter.format(purchaseSuccessRequest.getCredit());
         templateData.put("user", usersDO.getFirstName());
         templateData.put("number_of_credits", formattedNumber + " Credits");
-        templateData.put("amount", String.format("%.2f", purchaseSuccessRequest.getAmount()) + " $");
+        templateData.put("amount", "$" + String.format("%.2f", purchaseSuccessRequest.getAmount()));
         String suffix = ".myshopify.com";
         String TargetShop;
         TargetShop = purchaseSuccessRequest.getShopName().substring(0, purchaseSuccessRequest.getShopName().length() - suffix.length());

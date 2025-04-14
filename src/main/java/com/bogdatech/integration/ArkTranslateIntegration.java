@@ -11,8 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.appInsights;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.*;
 
 public class ArkTranslateIntegration {
 
@@ -63,7 +62,7 @@ public class ArkTranslateIntegration {
             List<ChatMessage> messages = new ArrayList<>();
             ChatMessage systemMessage = ChatMessage.builder()
                     .role(ChatMessageRole.SYSTEM)
-                    .content(cueWordSingle(targetCode, type))
+                    .content(cuwWordLanguage(targetCode, type))
                     .build();
             ChatMessage userMessage = ChatMessage.builder()
                     .role(ChatMessageRole.USER)

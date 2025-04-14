@@ -24,6 +24,7 @@ import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
@@ -240,7 +241,7 @@ public class JsoupUtils {
         String source = request.getSource();
 
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("hu") || target.equals("it")) {
+        if (target.equals("zh-CN") || target.equals("zh-TW")) {
             return singleTranslate(request.getContent(), resourceType, counter, target);
         }
 
@@ -255,7 +256,7 @@ public class JsoupUtils {
             return douBaoTranslate(target, resourceType, request.getContent(), counter);
         }
 
-        return hunYuanTranslate(request.getContent(), resourceType, counter, target, "hunyuan-large");
+        return hunYuanTranslate(request.getContent(), resourceType, counter, getLanguageName(target), "hunyuan-large");
 
     }
 
