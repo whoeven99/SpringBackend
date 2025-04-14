@@ -99,6 +99,12 @@ public class ALiYunTranslateIntegration {
         return "Accurately translate the following text into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
     }
 
+    //单文本翻译的提示词(用具体语言而不是语言代码)
+    public static String cuwWordLanguage(String target, String type) {
+//        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
+        return "Accurately translate the following text into : " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
+    }
+
     /**
      * 用qwen-MT的部分代替google翻译。
      *

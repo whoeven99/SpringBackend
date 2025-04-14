@@ -10,7 +10,7 @@ import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.stereotype.Component;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.cuwWordLanguage;
 
 @Component
 public class HunYuanIntegration {
@@ -50,7 +50,7 @@ public class HunYuanIntegration {
         Message[] messages = new Message[1];
         messages[0] = new Message();
         messages[0].setRole("user");
-        messages[0].setContent(cueWordSingle(target, type) + " \n " + sourceText);
+        messages[0].setContent(cuwWordLanguage(target, type) + " \n " + sourceText);
         req.setMessages(messages);
         req.setStream(false); // 非流式调用，设为 true 可启用流式返回
 
