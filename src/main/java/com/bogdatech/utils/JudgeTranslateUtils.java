@@ -12,9 +12,12 @@ public class JudgeTranslateUtils {
     static {
         NO_TRANSLATE_KEYS.add("general.rtl_languages");
         NO_TRANSLATE_KEYS.add("general.custom_css");
-        NO_TRANSLATE_KEYS.add("general.link_google_font");
         NO_TRANSLATE_KEYS.add("shopify.checkout.order_summary.shipping_pending_value");
         NO_TRANSLATE_KEYS.add("customer_accounts.order_details.no_data_provided");
+        NO_TRANSLATE_KEYS.add("checkout.contact");
+        NO_TRANSLATE_KEYS.add("_font");
+        NO_TRANSLATE_KEYS.add("spacing");
+        NO_TRANSLATE_KEYS.add("items_resp");
     }
 
     // 包含.json时不翻译的子字符串集合
@@ -33,6 +36,7 @@ public class JudgeTranslateUtils {
         JSON_NO_TRANSLATE_SUBSTRINGS.add("templates.404.subtext");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("date_formats");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("css");
+        JSON_NO_TRANSLATE_SUBSTRINGS.add("grid_");
     }
 
     // value包含px时不翻译的key子字符串集合
@@ -49,6 +53,9 @@ public class JudgeTranslateUtils {
         PX_NO_TRANSLATE_SUBSTRINGS.add("not_applicable");
         PX_NO_TRANSLATE_SUBSTRINGS.add("image.json");
         PX_NO_TRANSLATE_SUBSTRINGS.add("wborder");
+        PX_NO_TRANSLATE_SUBSTRINGS.add("fs");
+        PX_NO_TRANSLATE_SUBSTRINGS.add("lh");
+        PX_NO_TRANSLATE_SUBSTRINGS.add("mr");
     }
 
     //key中包含以下字符不翻译（原先的逻辑）
@@ -69,6 +76,7 @@ public class JudgeTranslateUtils {
 
     // URL前缀集合
     private static final Set<String> URL_PREFIXES = new HashSet<>();
+
     static {
         URL_PREFIXES.add("http://");
         URL_PREFIXES.add("https://");
@@ -78,11 +86,17 @@ public class JudgeTranslateUtils {
     // 正则表达式
     private static final Pattern PURE_NUMBER = Pattern.compile("^\\d+$"); // 纯数字
     private static final Pattern DASH_PATTERN = Pattern.compile(
-            "^[\\dA-Z+-.]+$" // 仅包含数字、全大写字母、标点符号（+、-、.）
+            "^[\\dA-Z+-.]+$" // 仅包含数字、全大写字母、标点符号（+、-、.()）
     );
     private static final Pattern DASH_WITH_HYPHEN = Pattern.compile(
             "^[\\dA-Z]*[-—][\\dA-Z]*$" // 包含至少一个-或—，前后为数字或全大写字母
     );
+    private static final Pattern PHONE_NUMBER_PATTERN = Pattern.compile(
+            "^[\\d\\s]*(\\(\\+\\d+\\))?[\\d\\s]*$"
+    );//包含电话号码
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+    );//包含邮箱
 
     // 长度限制常量
     private static final int HASH_PREFIX_MAX_LENGTH = 90;
@@ -98,11 +112,11 @@ public class JudgeTranslateUtils {
      * @return true表示需要翻译，false表示不需要翻译
      */
     public static boolean shouldTranslate(String key, String value) {
-        if (value == null || value.isEmpty()){
+        if (value == null || value.trim().isEmpty()) {
             return false;
         }
 
-        if (key.equals("handle")){
+        if (key.equals("handle")) {
             return false;
         }
 
@@ -121,11 +135,9 @@ public class JudgeTranslateUtils {
         }
 
         // 第三步：检查包含.json的key
-        if (key.contains(".json")) {
-            for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
-                if (key.contains(substring)) {
-                    return false;
-                }
+        for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
+            if (key.contains(substring)) {
+                return false;
             }
         }
 
@@ -172,13 +184,27 @@ public class JudgeTranslateUtils {
         // 第十步，包含-或—，检查特定模式
         if (value.contains("-") || value.contains("—")) {
             if (DASH_PATTERN.matcher(value).matches()) {
-                // 仅包含数字、全大写字母、标点符号，且有-或—
-                return !DASH_WITH_HYPHEN.matcher(value).matches();
+                return false;
+
+            }
+            // 仅包含数字、全大写字母、标点符号，且有-或—
+            if (DASH_WITH_HYPHEN.matcher(value).matches()) {
+                return false;
             }
         }
 
         // 第十一步，包含<svg>
         if (value.contains("<svg>")) {
+            return false;
+        }
+
+        // 第十二步，包含电话号码
+        if (PHONE_NUMBER_PATTERN.matcher(value).matches()) {
+            return false;
+        }
+
+        //第十三步，包含邮箱
+        if (EMAIL_PATTERN.matcher(value).matches()) {
             return false;
         }
 

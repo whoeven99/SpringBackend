@@ -377,7 +377,7 @@ public class TranslateService {
     public Future<Void> translateJson(TranslateContext translateContext) {
         String resourceType = translateContext.getTranslateResource().getResourceType();
         ShopifyRequest request = translateContext.getShopifyRequest();
-//        System.out.println("现在翻译到： " + resourceType);
+        System.out.println("现在翻译到： " + resourceType);
         //将目前的状态，添加到数据库中，前端要用这个数据做进度条功能
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), translateContext.getSource(), resourceType);
 
@@ -1102,6 +1102,12 @@ public class TranslateService {
                     || resourceType.equals(SHOP_POLICY)) {
                 continue;
             }
+
+            //如果包含对应key和value，则跳过
+//            if(!shouldTranslate(key,value) && !isHtml(value)){
+//                System.out.println("跳过翻译： " + key + " , " + value);
+//                continue;
+//            }
 
             //对METAFIELD字段翻译
 //            if (resourceType.equals(METAFIELD)) {
