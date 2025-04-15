@@ -30,19 +30,7 @@ public class CaseSensitiveUtils {
 
     // 替换关键词为占位符
     public static String extractKeywords(String text, Map<String, String> placeholders, Map<String, String> keywordTranslationMap, Map<String, String> keyMap0, String source) {
-        List<KeywordModel> allKeywords = new ArrayList<>();
-        for (Map.Entry<String, String> entry : keywordTranslationMap.entrySet()) {
-            allKeywords.add(new KeywordModel(entry.getKey(), entry.getValue(), true));
-        }
-        for (Map.Entry<String, String> entry : keyMap0.entrySet()) {
-            allKeywords.add(new KeywordModel(entry.getKey(), entry.getValue(), false));
-        }
-
-        // 按关键词长度从长到短排序，若长度相同则保持原有顺序
-        allKeywords.sort((a, b) -> {
-            int lenCompare = Integer.compare(b.keyword.length(), a.keyword.length());
-            return lenCompare != 0 ? lenCompare : 0; // 长度不同时，长者优先
-        });
+        List<KeywordModel> allKeywords = mergeKeywordMap(keyMap0, keywordTranslationMap);
 
         // 依次替换关键词
         int i = 0;
@@ -75,5 +63,24 @@ public class CaseSensitiveUtils {
         return translatedText;
     }
 
+    /**
+     * 将key0和key1的值放到一个集合里面，并按长度顺序排序
+     *
+     * */
+     public static List<KeywordModel> mergeKeywordMap(Map<String, String> keyMap0, Map<String, String> keyMap1) {
+         List<KeywordModel> allKeywords = new ArrayList<>();
+         for (Map.Entry<String, String> entry : keyMap1.entrySet()) {
+             allKeywords.add(new KeywordModel(entry.getKey(), entry.getValue(), true));
+         }
+         for (Map.Entry<String, String> entry : keyMap0.entrySet()) {
+             allKeywords.add(new KeywordModel(entry.getKey(), entry.getValue(), false));
+         }
 
+         // 按关键词长度从长到短排序，若长度相同则保持原有顺序
+         allKeywords.sort((a, b) -> {
+             int lenCompare = Integer.compare(b.keyword.length(), a.keyword.length());
+             return lenCompare != 0 ? lenCompare : 0; // 长度不同时，长者优先
+         });
+         return allKeywords;
+     }
 }
