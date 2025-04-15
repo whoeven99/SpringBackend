@@ -11,6 +11,7 @@ import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -18,10 +19,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.JsoupUtils.*;
 
 @RestController
 public class TestController {
@@ -112,4 +116,15 @@ public class TestController {
         addData(target, value, targetText);
     }
 
+    @GetMapping("/testString")
+    public String testString() {
+        String str = "<p>Choose a HawkSling slingshot and experience uncompromising reliability that outdoor enthusiasts count on for every adventure. Our meticulous manufacturing process delivers consistent performance and rock-solid durability, ensuring the same precise results whether you’re shot with a slingshot or testing innovative fishing slingshot techniques.</p>";
+        Map<String, String> keyMap1 = new HashMap<>();
+        Map<String, String> keyMap0 = new HashMap<>();
+        keyMap1.put("slingshot", "Schleuder");
+        keyMap0.put("牧原丘", "Pasture Hill");
+        String glossaryString = glossaryText(keyMap1, keyMap0, str);
+        return glossaryTranslationModel(new TranslateRequest(0, "123", "123", "en", "ko", str)
+                , new CharacterCountUtils(), glossaryString);
+    }
 }

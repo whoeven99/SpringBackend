@@ -10,8 +10,6 @@ import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.stereotype.Component;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.cuwWordLanguage;
-
 @Component
 public class HunYuanIntegration {
 
@@ -35,13 +33,13 @@ public class HunYuanIntegration {
     /**
      * 混元model翻译
      * @param sourceText 原文本
-     * @param type       类型
+     * @param prompt       提示词
      * @param countUtils 字符统计工具
      * @param target     目标
      * @param model      模型
      * @return 翻译后的文本
      **/
-    public static String hunYuanTranslate(String sourceText, String type, CharacterCountUtils countUtils, String target, String model) {
+    public static String hunYuanTranslate(String sourceText, String prompt, CharacterCountUtils countUtils, String target, String model) {
         // 1. 创建 ChatCompletions 请求
         ChatCompletionsRequest req = new ChatCompletionsRequest();
         // 设置模型名称（请确认具体名称，假设为 "hunyuan-turbo-s"）
@@ -50,7 +48,7 @@ public class HunYuanIntegration {
         Message[] messages = new Message[1];
         messages[0] = new Message();
         messages[0].setRole("user");
-        messages[0].setContent(cuwWordLanguage(target, type) + " \n " + sourceText);
+        messages[0].setContent(prompt + " \n " + sourceText);
         req.setMessages(messages);
         req.setStream(false); // 非流式调用，设为 true 可启用流式返回
 
