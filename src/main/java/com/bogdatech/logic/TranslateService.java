@@ -310,6 +310,10 @@ public class TranslateService {
 
         //TRANSLATION_RESOURCES
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
+            if (translateResource.getResourceType().equals(METAFIELD)
+                    || translateResource.getResourceType().equals(SHOP_POLICY)){
+                continue;
+            }
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
             String completePrompt = aiLanguagePackService.getCompletePrompt(aiLanguagePacksDO, translateResource.getResourceType(), request.getTarget());
@@ -714,7 +718,7 @@ public class TranslateService {
                 TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), translateContext.getSource(), request.getTarget(), value);
                 htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
                 saveToShopify(htmlTranslation, translation, resourceId, request);
-                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
+                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId);
                 return true;
             } catch (ClientException e) {
                 saveToShopify(value, translation, resourceId, request);
@@ -740,8 +744,6 @@ public class TranslateService {
         //关键词
         Map<String, String> keyMap1 = new HashMap<>();
         Map<String, String> keyMap0 = new HashMap<>();
-        //占位符
-        Map<String, String> placeholderMap = new HashMap<>();
         //将glossaryMap中所有caseSensitive为1的数据存到一个Map集合里面
         for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
             GlossaryDO glossaryDO = (GlossaryDO) entry.getValue();
@@ -761,7 +763,7 @@ public class TranslateService {
                 return;
             String value = registerTransactionRequest.getValue();
             String source = registerTransactionRequest.getLocale();
-            String  resourceId = registerTransactionRequest.getResourceId();
+            String resourceId = registerTransactionRequest.getResourceId();
             translation.put("locale", target);
             translation.put("key", registerTransactionRequest.getKey());
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
@@ -780,23 +782,27 @@ public class TranslateService {
                     continue;
                 }
                 saveToShopify(targetText, translation, resourceId, request);
-                printTranslation(targetText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
+                printTranslation(targetText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId);
                 continue;
             }
 
+            String finalText;
             //其他数据类型，对数据做处理再翻译
-            counter.addChars(googleCalculateToken(value));
-            String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0, source);
-            translateRequest.setContent(updateText);
-            // 修改翻译调用
-            String translatedText = null;
-            try {
-                translatedText = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
-                translatedText = isHtmlEntity(translatedText);
-            } catch (Exception e) {
-                appInsights.trackTrace("翻译问题： " + e.getMessage());
+            if (value.length() <= 100) {
+                counter.addChars(googleCalculateToken(value));
+                Map<String, String> placeholderMap = new HashMap<>();
+                String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0, source);
+                translateRequest.setContent(updateText);
+                String targetString = translateAndCount(translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+                finalText = restoreKeywords(targetString, placeholderMap);
+                addData(request.getTarget(), value, finalText);
+            } else {
+                //如果字符数大于100字符，用大模型翻译
+                String glossaryString = glossaryText(keyMap1, keyMap0, value);
+                //根据关键词生成对应的提示词
+                finalText = glossaryTranslationModel(translateRequest, counter, glossaryString);
+                addData(request.getTarget(), value, finalText);
             }
-            String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
             printTranslation(finalText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId);
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
@@ -883,7 +889,7 @@ public class TranslateService {
                     continue;
                 }
                 saveToShopify(htmlTranslation, translation, resourceId, request);
-                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(),resourceId);
+                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId);
                 continue;
             }
 
@@ -1093,8 +1099,8 @@ public class TranslateService {
 
             //如果包含相对路径则跳过
             if (key.contains("metafield:") || key.contains("color")
-                    ||key.contains("formId:") ||key.contains("phone_text") ||key.contains("email_text")
-                    ||key.contains("carousel_easing") || key.contains("_link")|| key.contains("general.rtl") || key.contains("css:")
+                    || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
+                    || key.contains("carousel_easing") || key.contains("_link") || key.contains("general.rtl") || key.contains("css:")
                     || key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL"))

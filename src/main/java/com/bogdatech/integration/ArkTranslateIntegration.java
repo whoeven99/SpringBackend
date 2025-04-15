@@ -56,13 +56,15 @@ public class ArkTranslateIntegration {
         return arkService;
     }
 
-    // 调用豆包API
-    public static String douBaoTranslate(String targetCode, String type, String sourceText, CharacterCountUtils countUtils) {
+    /**
+     *  调用豆包API
+     */
+    public static String douBaoTranslate(String targetCode, String prompt, String sourceText, CharacterCountUtils countUtils) {
         try {
             List<ChatMessage> messages = new ArrayList<>();
             ChatMessage systemMessage = ChatMessage.builder()
                     .role(ChatMessageRole.SYSTEM)
-                    .content(cuwWordLanguage(targetCode, type))
+                    .content(prompt)
                     .build();
             ChatMessage userMessage = ChatMessage.builder()
                     .role(ChatMessageRole.USER)

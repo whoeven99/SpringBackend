@@ -95,31 +95,27 @@ public class ALiYunTranslateIntegration {
 
     //单文本翻译的提示词
     public static String cueWordSingle(String target, String type) {
-//        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
         return "Accurately translate the following text into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
     }
 
     //单文本翻译的提示词(用具体语言而不是语言代码)
-    public static String cuwWordLanguage(String target, String type) {
-//        return "Translate " + type + " data from e-commerce websites accurately into language code: " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
-        return "Accurately translate the following text into : " + target + ". Do not translate variables. Return the results as a String containing only the translated text fields without additional text or punctuation, ensuring complete translation of all content except the variables.";
-    }
 
     /**
      * 用qwen-MT的部分代替google翻译。
      *
      * @param text       要翻译的文本
-     * @param type       文本模块类型
+     * @param prompt     提示词
      * @param target     目标语言代码
      * @param countUtils 计数器
      * @return 翻译后的文本
      */
-    public static String singleTranslate(String text, String type, CharacterCountUtils countUtils, String target) {
+    public static String singleTranslate(String text, String prompt, CharacterCountUtils countUtils, String target) {
         String model = switchModel(target);
         Generation gen = new Generation();
+
         Message systemMsg = Message.builder()
                 .role(Role.SYSTEM.getValue())
-                .content(cueWordSingle(target, type))
+                .content(prompt)
                 .build();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
@@ -142,11 +138,7 @@ public class ALiYunTranslateIntegration {
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
-
         }
-        //获得该list的size
-        //将content进行处理，转换为List<String>返回。
-
         return content;
     }
 
@@ -181,12 +173,9 @@ public class ALiYunTranslateIntegration {
         Integer totalToken;
         try {
             GenerationResult call = gen.call(param);
-//            System.out.println("call: " + call);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-//            System.out.println("content: " + content);
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
-//            System.out.println("totalToken: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
             appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
