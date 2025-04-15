@@ -1103,6 +1103,12 @@ public class TranslateService {
                 continue;
             }
 
+            //如果包含对应key和value，则跳过
+//            if(!shouldTranslate(key,value) && !isHtml(value)){
+//                System.out.println("跳过翻译： " + key + " , " + value);
+//                continue;
+//            }
+
             //对METAFIELD字段翻译
 //            if (resourceType.equals(METAFIELD)) {
 //                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));

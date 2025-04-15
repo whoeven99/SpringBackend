@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
-import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
@@ -34,6 +33,7 @@ public class TestController {
     private final JsoupUtils jsoupUtils;
     private final RateHttpIntegration rateHttpIntegration;
     TelemetryClient appInsights = new TelemetryClient();
+
     @Autowired
     public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
@@ -85,14 +85,13 @@ public class TestController {
     }
 
 
-
     //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
     public void sendEmail() {
         CharacterCountUtils characterCount = new CharacterCountUtils();
         characterCount.addChars(100);
         LocalDateTime localDateTime = LocalDateTime.now();
-        translateService.translateFailEmail("ciwishop.myshopify.com",characterCount, localDateTime, 0, 1000, "zh-CN", "en");
+        translateService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, 1000, "zh-CN", "en");
     }
 
     //获取汇率
@@ -113,8 +112,4 @@ public class TestController {
         addData(target, value, targetText);
     }
 
-   @GetMapping("/testModel")
-    public String testModel(){
-        return hunYuanTranslate("2PC Retrofit LED Interior Cargo Area Light For 2015+ Ford Transit 150 250 350, etc.", "product", new CharacterCountUtils(), "zh-CN", "hunyuan-large");
-   }
 }

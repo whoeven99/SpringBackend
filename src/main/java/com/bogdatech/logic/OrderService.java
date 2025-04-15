@@ -57,13 +57,17 @@ public class OrderService {
         String formattedNumber = formatter.format(purchaseSuccessRequest.getCredit());
         templateData.put("user", usersDO.getFirstName());
         templateData.put("number_of_credits", formattedNumber + " Credits");
-        templateData.put("amount", String.format("%.2f", purchaseSuccessRequest.getAmount()) + " $");
+        templateData.put("amount", "$" + String.format("%.2f", purchaseSuccessRequest.getAmount()));
+        String suffix = ".myshopify.com";
+        String TargetShop;
+        TargetShop = purchaseSuccessRequest.getShopName().substring(0, purchaseSuccessRequest.getShopName().length() - suffix.length());
+        templateData.put("shop_name", TargetShop);
 
         //获取用户现在总共的值
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(purchaseSuccessRequest.getShopName());
-        String formattedNumber2 = formatter.format(remainingChars + purchaseSuccessRequest.getCredit());
+        String formattedNumber2 = formatter.format(remainingChars);
         templateData.put("total_credits_count", formattedNumber2 + " Credits");
 //        return true;
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(133302L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(138372L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 }
