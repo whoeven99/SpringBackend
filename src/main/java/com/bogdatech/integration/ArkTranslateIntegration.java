@@ -11,8 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.appInsights;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.*;
 
 public class ArkTranslateIntegration {
 
@@ -57,13 +56,15 @@ public class ArkTranslateIntegration {
         return arkService;
     }
 
-    // 调用豆包API
-    public static String douBaoTranslate(String targetCode, String type, String sourceText, CharacterCountUtils countUtils) {
+    /**
+     *  调用豆包API
+     */
+    public static String douBaoTranslate(String targetCode, String prompt, String sourceText, CharacterCountUtils countUtils) {
         try {
             List<ChatMessage> messages = new ArrayList<>();
             ChatMessage systemMessage = ChatMessage.builder()
                     .role(ChatMessageRole.SYSTEM)
-                    .content(cueWordSingle(targetCode, type))
+                    .content(prompt)
                     .build();
             ChatMessage userMessage = ChatMessage.builder()
                     .role(ChatMessageRole.USER)

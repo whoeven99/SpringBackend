@@ -70,33 +70,33 @@ public class TranslateResourceDTO {
 //            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", "")
 //            ,
 //            new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(PRODUCT, MAX_LENGTH, "", "")
-//            ,
-//            new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", "")
-//            ,
-//            new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
-//
-//            new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(LINK, MAX_LENGTH, "", "")
-//            ,
-//            new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(FILTER, MAX_LENGTH, "", ""),
+
+            new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
+
+            new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(LINK, MAX_LENGTH, "", "")
+            ,
+            new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(FILTER, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")
-//            ,
-//            new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(SELLING_PLAN_GROUP, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(SHOP, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")
-//            ,
-//            new TranslateResourceDTO(BLOG, MAX_LENGTH, "", "")
-//            ,
-//            new TranslateResourceDTO(PAGE, MAX_LENGTH, "", "")
+            ,
+            new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(SELLING_PLAN_GROUP, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(SHOP, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")
+            ,
+            new TranslateResourceDTO(BLOG, MAX_LENGTH, "", "")
+            ,
+            new TranslateResourceDTO(PAGE, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(PRODUCT, MAX_LENGTH, "", "")
+            ,
+            new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", "")
     ));
     public static final Map<String, List<TranslateResourceDTO>> RESOURCE_MAP = new HashMap<>();
 

@@ -1,5 +1,8 @@
 package com.bogdatech.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ApiCodeUtils {
 
     //微软代码处理
@@ -73,5 +76,152 @@ public class ApiCodeUtils {
                     true;  // 语言代码有效
             default -> false; // 语言代码无效
         };
+    }
+
+    //根据语言代码获取语言的全称
+    private static final Map<String, String> languageMap = new HashMap<>();
+
+    static {
+        languageMap.put("af", "Afrikaans");
+        languageMap.put("ak", "Akan");
+        languageMap.put("sq", "Albanian");
+        languageMap.put("am", "Amharic");
+        languageMap.put("ar", "Arabic");
+        languageMap.put("hy", "Armenian");
+        languageMap.put("as", "Assamese");
+        languageMap.put("az", "Azerbaijani");
+        languageMap.put("bm", "Bambara");
+        languageMap.put("bn", "Bangla");
+        languageMap.put("eu", "Basque");
+        languageMap.put("be", "Belarusian");
+        languageMap.put("bs", "Bosnian");
+        languageMap.put("br", "Breton");
+        languageMap.put("bg", "Bulgarian");
+        languageMap.put("my", "Burmese");
+        languageMap.put("ca", "Catalan");
+        languageMap.put("ckb", "Central Kurdish");
+        languageMap.put("ce", "Chechen");
+        languageMap.put("zh-CN", "Chinese (Simplified)");
+        languageMap.put("zh-TW", "Chinese (Traditional)");
+        languageMap.put("kw", "Cornish");
+        languageMap.put("hr", "Croatian");
+        languageMap.put("cs", "Czech");
+        languageMap.put("da", "Danish");
+        languageMap.put("nl", "Dutch");
+        languageMap.put("dz", "Dzongkha");
+        languageMap.put("en", "English");
+        languageMap.put("eo", "Esperanto");
+        languageMap.put("et", "Estonian");
+        languageMap.put("ee", "Ewe");
+        languageMap.put("fo", "Faroese");
+        languageMap.put("fil", "Filipino");
+        languageMap.put("fi", "Finnish");
+        languageMap.put("fr", "French");
+        languageMap.put("ff", "Fulah");
+        languageMap.put("gl", "Galician");
+        languageMap.put("lg", "Ganda");
+        languageMap.put("ka", "Georgian");
+        languageMap.put("de", "German");
+        languageMap.put("el", "Greek");
+        languageMap.put("gu", "Gujarati");
+        languageMap.put("ha", "Hausa");
+        languageMap.put("he", "Hebrew");
+        languageMap.put("hi", "Hindi");
+        languageMap.put("hu", "Hungarian");
+        languageMap.put("is", "Icelandic");
+        languageMap.put("ig", "Igbo");
+        languageMap.put("id", "Indonesian");
+        languageMap.put("ia", "Interlingua");
+        languageMap.put("ga", "Irish");
+        languageMap.put("it", "Italian");
+        languageMap.put("ja", "Japanese");
+        languageMap.put("jv", "Javanese");
+        languageMap.put("kl", "Kalaallisut");
+        languageMap.put("kn", "Kannada");
+        languageMap.put("ks", "Kashmiri");
+        languageMap.put("kk", "Kazakh");
+        languageMap.put("km", "Khmer");
+        languageMap.put("ki", "Kikuyu");
+        languageMap.put("rw", "Kinyarwanda");
+        languageMap.put("ko", "Korean");
+        languageMap.put("ku", "Kurdish");
+        languageMap.put("ky", "Kyrgyz");
+        languageMap.put("lo", "Lao");
+        languageMap.put("lv", "Latvian");
+        languageMap.put("ln", "Lingala");
+        languageMap.put("lt", "Lithuanian");
+        languageMap.put("lu", "Luba-Katanga");
+        languageMap.put("lb", "Luxembourgish");
+        languageMap.put("mk", "Macedonian");
+        languageMap.put("mg", "Malagasy");
+        languageMap.put("ms", "Malay");
+        languageMap.put("ml", "Malayalam");
+        languageMap.put("mt", "Maltese");
+        languageMap.put("gv", "Manx");
+        languageMap.put("mi", "Maori");
+        languageMap.put("mr", "Marathi");
+        languageMap.put("mn", "Mongolian");
+        languageMap.put("ne", "Nepali");
+        languageMap.put("nd", "North Ndebele");
+        languageMap.put("se", "Northern Sami");
+        languageMap.put("no", "Norwegian");
+        languageMap.put("nb", "Norwegian (Bokmål)");
+        languageMap.put("nn", "Norwegian Nynorsk");
+        languageMap.put("or", "Odia");
+        languageMap.put("om", "Oromo");
+        languageMap.put("os", "Ossetic");
+        languageMap.put("ps", "Pashto");
+        languageMap.put("fa", "Persian");
+        languageMap.put("pl", "Polish");
+        languageMap.put("pt-BR", "Portuguese (Brazil)");
+        languageMap.put("pt-PT", "Portuguese (Portugal)");
+        languageMap.put("pa", "Punjabi");
+        languageMap.put("qu", "Quechua");
+        languageMap.put("ro", "Romanian");
+        languageMap.put("rm", "Romansh");
+        languageMap.put("rn", "Rundi");
+        languageMap.put("ru", "Russian");
+        languageMap.put("sg", "Sango");
+        languageMap.put("sa", "Sanskrit");
+        languageMap.put("sc", "Sardinian");
+        languageMap.put("gd", "Scottish Gaelic");
+        languageMap.put("sr", "Serbian");
+        languageMap.put("sn", "Shona");
+        languageMap.put("ii", "Sichuan Yi");
+        languageMap.put("sd", "Sindhi");
+        languageMap.put("si", "Sinhala");
+        languageMap.put("sk", "Slovak");
+        languageMap.put("sl", "Slovenian");
+        languageMap.put("so", "Somali");
+        languageMap.put("es", "Spanish");
+        languageMap.put("su", "Sundanese");
+        languageMap.put("sw", "Swahili");
+        languageMap.put("sv", "Swedish");
+        languageMap.put("tg", "Tajik");
+        languageMap.put("ta", "Tamil");
+        languageMap.put("tt", "Tatar");
+        languageMap.put("te", "Telugu");
+        languageMap.put("th", "Thai");
+        languageMap.put("bo", "Tibetan");
+        languageMap.put("ti", "Tigrinya");
+        languageMap.put("to", "Tonga");
+        languageMap.put("tr", "Turkish");
+        languageMap.put("tk", "Turkmen");
+        languageMap.put("uk", "Ukrainian");
+        languageMap.put("ur", "Urdu");
+        languageMap.put("ug", "Uyghur");
+        languageMap.put("uz", "Uzbek");
+        languageMap.put("vi", "Vietnamese");
+        languageMap.put("cy", "Welsh");
+        languageMap.put("fy", "Western Frisian");
+        languageMap.put("wo", "Wolof");
+        languageMap.put("xh", "Xhosa");
+        languageMap.put("yi", "Yiddish");
+        languageMap.put("yo", "Yoruba");
+        languageMap.put("zu", "Zulu");
+    }
+
+    public static String getLanguageName(String isoCode) {
+        return languageMap.getOrDefault(isoCode, isoCode);
     }
 }

@@ -86,14 +86,13 @@ public class TestController {
     }
 
 
-
     //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
     public void sendEmail() {
         CharacterCountUtils characterCount = new CharacterCountUtils();
         characterCount.addChars(100);
         LocalDateTime localDateTime = LocalDateTime.now();
-        translateService.translateFailEmail("ciwishop.myshopify.com",characterCount, localDateTime, 0, 1000, "zh-CN", "en");
+        translateService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, 1000, "zh-CN", "en");
     }
 
     //获取汇率
