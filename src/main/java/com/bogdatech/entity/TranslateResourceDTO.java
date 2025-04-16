@@ -61,15 +61,16 @@ public class TranslateResourceDTO {
     public static final List<TranslateResourceDTO> ALL_RESOURCES = new ArrayList<>(Arrays.asList(
 
 
-//            new TranslateResourceDTO(ONLINE_STORE_THEME, MAX_LENGTH, "", "")
-//            ,
-//            new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", "")
-//            ,
-//            new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(ONLINE_STORE_THEME, MAX_LENGTH, "", "")
+            ,
+            new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", "")
+            ,
+            new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", "")
+            ,
 
             new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
@@ -81,8 +82,8 @@ public class TranslateResourceDTO {
             ,
             new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(FILTER, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")
-            ,
+//            new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")
+//            ,
             new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
