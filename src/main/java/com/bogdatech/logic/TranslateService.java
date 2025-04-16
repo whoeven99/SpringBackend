@@ -315,8 +315,7 @@ public class TranslateService {
 
         //TRANSLATION_RESOURCES
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-            if (translateResource.getResourceType().equals(METAFIELD)
-                    || translateResource.getResourceType().equals(SHOP_POLICY)){
+            if (translateResource.getResourceType().equals(SHOP_POLICY)){
                 continue;
             }
             // 定期检查是否停止
@@ -1122,17 +1121,17 @@ public class TranslateService {
 //                continue;
 //            }
 
-            //对METAFIELD字段翻译
-            if (resourceType.equals(METAFIELD)) {
-                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
-                continue;
-            }
-
             //对于json和json_string的数据直接存原文
             if ("JSON".equals(type)
                     || "JSON_STRING".equals(type)) {
                 //存放在json的集合里面
                 judgeData.get(JSON_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                continue;
+            }
+
+            //对METAFIELD字段翻译
+            if (resourceType.equals(METAFIELD)) {
+                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
 
