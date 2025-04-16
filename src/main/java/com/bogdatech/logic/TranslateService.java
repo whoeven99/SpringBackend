@@ -46,6 +46,7 @@ import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
+import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
@@ -1100,7 +1101,7 @@ public class TranslateService {
             //如果包含相对路径则跳过
             if (key.contains("metafield:") || key.contains("color")
                     || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
-                    || key.contains("carousel_easing") || key.contains("_link") || key.contains("general.rtl") || key.contains("css:")
+                    || key.contains("carousel_easing") || key.contains("_link") || key.contains("general") || key.contains("css:")
                     || key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL"))
@@ -1109,11 +1110,20 @@ public class TranslateService {
                 continue;
             }
 
-            //如果包含对应key和value，则跳过
-//            if(!shouldTranslate(key,value) && !isHtml(value)){
-//                System.out.println("跳过翻译： " + key + " , " + value);
-//                continue;
-//            }
+            //如果是theme模块的数据
+            if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
+                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()){
+                    System.out.println("key值不匹配 跳过翻译： " + key + " , " + value);
+                   continue;
+                }
+                //如果包含对应key和value，则跳过
+                if(!shouldTranslate(key,value) && !isHtml(value)){
+                    System.out.println("key和value 不匹配 跳过翻译： " + key + " , " + value);
+                    continue;
+                }
+                System.out.println("翻译的数据: " + key + " , " + value);
+            }
+
 
             //对METAFIELD字段翻译
 //            if (resourceType.equals(METAFIELD)) {
