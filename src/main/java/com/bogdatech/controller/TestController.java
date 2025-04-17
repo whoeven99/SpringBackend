@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 
 @RestController
 public class TestController {

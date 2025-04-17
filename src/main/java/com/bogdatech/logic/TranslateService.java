@@ -509,12 +509,12 @@ public class TranslateService {
     // 初始化 judgeData，用于存储不同类型的数据
     public static Map<String, List<RegisterTransactionRequest>> initializeJudgeData() {
         return new HashMap<>() {{
-//            put(PLAIN_TEXT, new ArrayList<>());
-//            put(HTML, new ArrayList<>());
-//            put(DATABASE, new ArrayList<>());
-//            put(JSON_TEXT, new ArrayList<>());
-//            put(GLOSSARY, new ArrayList<>());
-//            put(OPENAI, new ArrayList<>());
+            put(PLAIN_TEXT, new ArrayList<>());
+            put(HTML, new ArrayList<>());
+            put(DATABASE, new ArrayList<>());
+            put(JSON_TEXT, new ArrayList<>());
+            put(GLOSSARY, new ArrayList<>());
+            put(OPENAI, new ArrayList<>());
             put(METAFIELD, new ArrayList<>());
         }};
     }
@@ -1577,7 +1577,7 @@ public class TranslateService {
         if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
                 || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
                 || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key)) {
+                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
             UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
             updateWrapper.eq("translation_id", translationId);
 
@@ -1609,7 +1609,7 @@ public class TranslateService {
         if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
                 || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
                 || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key)) {
+                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
             UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
             updateWrapper.eq(SHOP_NAME, shopifyRequest.getShopName());
 
@@ -1663,7 +1663,7 @@ public class TranslateService {
                     if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
                             || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
                             || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                            || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key)) {
+                            || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
                         UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
                         updateWrapper.eq("translation_id", translationId);
 
