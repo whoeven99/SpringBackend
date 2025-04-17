@@ -18,7 +18,7 @@ public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsM
     }
 
     @Override
-    public String getUserSubscriptionPlan(String shopName) {
+    public Integer getUserSubscriptionPlan(String shopName) {
         return baseMapper.getUserSubscriptionPlan(shopName);
     }
 
