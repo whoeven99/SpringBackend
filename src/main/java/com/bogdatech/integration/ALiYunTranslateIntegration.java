@@ -209,12 +209,10 @@ public class ALiYunTranslateIntegration {
 
             // 提取方括号中的内容
             String extractedData = matcher.group(1);
-            System.out.println("extractedData: " + extractedData);
 
             //先直接转换成list，如果不行，改为手动拆分
             try {
                 lists = objectMapper.readValue("[" + extractedData + "]", List.class);
-                System.out.println("first_list: " + lists);
             } catch (JsonProcessingException e) {
                 // 手动拆分，按逗号分隔并清理引号
                 String[] items = extractedData.split("\\n,\\s*");

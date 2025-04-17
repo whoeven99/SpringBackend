@@ -100,7 +100,7 @@ public class TranslateResourceDTO {
 
     static {
         RESOURCE_MAP.put("Collection", List.of(new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", "")));
-        RESOURCE_MAP.put("Notifications", List.of(new TranslateResourceDTO(EMAIL_TEMPLATE, "20", "", "")));
+        RESOURCE_MAP.put("Notifications", List.of(new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Theme", List.of(new TranslateResourceDTO(ONLINE_STORE_THEME, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Article", List.of(new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Blog titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, MAX_LENGTH, "")));
@@ -154,6 +154,7 @@ public class TranslateResourceDTO {
                 new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", "")
         ));
+        TOKEN_MAP.put("metadata", List.of(new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("navigation", Arrays.asList(
                 new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(LINK, MAX_LENGTH, "", "")

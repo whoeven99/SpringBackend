@@ -91,7 +91,6 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
         TranslateTextDO[] targetTextByDigest = baseMapper.getTargetTextByDigestAndCodeAndResourceId(translateTextDO.getDigest(), translateTextDO.getTargetCode(), translateTextDO.getResourceId(), translateTextDO.getSourceCode());
         if (targetTextByDigest.length > 0) {
             TranslateTextDO translateText = targetTextByDigest[0];
-            System.out.println("translateText:" + translateText.toString());
             return baseMapper.updateTranslateTextTable(translateText.getResourceId(), translateText.getDigest(), translateText.getTextType(), translateTextDO.getTargetText(), translateText.getTargetCode(), translateTextDO.getSourceText(), translateText.getSourceCode());
         }else {
             return baseMapper.insertTranslateTextTable(translateTextDO.getResourceId(), translateTextDO.getDigest(), translateTextDO.getTextType(), translateTextDO.getTargetText(), translateTextDO.getTargetCode(), translateTextDO.getSourceText(), translateTextDO.getSourceCode());

@@ -153,7 +153,7 @@ public class ShopifyService {
         try {
             rootNode = objectMapper.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
-            System.out.println("解析JSON数据失败： " + translateResource);
+//            System.out.println("解析JSON数据失败： " + translateResource);
             appInsights.trackTrace("解析JSON数据失败： " + translateResource);
         }
         return rootNode;
@@ -270,7 +270,7 @@ public class ShopifyService {
             if ("handle".equals(contentItemNode.path("key").asText(null))
                     || "JSON".equals(contentItemNode.path("type").asText(null))
                     || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
-                    || translateResourceDTO.getResourceType().equals(METAFIELD) || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
+                    || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
             ) {
                 continue;  // 跳过当前项
             }
@@ -391,7 +391,7 @@ public class ShopifyService {
             if ("handle".equals(contentItemNode.path("key").asText(null))
                     || "JSON".equals(contentItemNode.path("type").asText(null))
                     || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
-                    || translateResourceDTO.getResourceType().equals(METAFIELD) || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
+                    || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
             ) {
                 continue;  // 跳过当前项
             }
