@@ -125,7 +125,6 @@ public class ShopifyController {
                 int totalWords = shopifyService.getTotalWords(shopifyRequest, method, resourceDTO);
                 tokens += totalWords;
             }
-            System.out.println("key: " + key + " tokens: " + tokens);
         }
         return new BaseResponse<>().CreateSuccessResponse("success");
     }

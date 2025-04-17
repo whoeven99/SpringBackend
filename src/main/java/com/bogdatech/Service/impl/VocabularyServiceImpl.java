@@ -88,8 +88,6 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
             // 查询 VocabularyDO 表中是否已经存在该 sourceText，使用缓存来避免重复查询
             String cacheKey = sourceText + "_" + sourceCode;
             VocabularyDO existingVocabulary = existingVocabularyCache.get(cacheKey);
-            System.out.println("Querying field: " + LANGUAGE_CODE_TO_FIELD.get(sourceCode));
-            System.out.println("Querying value: " + sourceText);
 
             try {
                 if (existingVocabulary == null) {
@@ -108,7 +106,6 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
                     setLanguageField(existingVocabulary, sourceCode, sourceText);
 
                     // 使用 MyBatis-Plus 提供的 insert 方法插入数据
-                    System.out.println("existingVocabularyInsert: " + existingVocabulary);
                     int insertResult = baseMapper.insert(existingVocabulary);
                     if (insertResult == 0) {
                         System.err.println("插入记录失败，sourceText: " + sourceText);
@@ -124,7 +121,6 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
                 existingVocabulary.setVid(null);
 
                 // 使用 MyBatis-Plus 提供的 updateById 方法更新数据
-                System.out.println("existingVocabularyUpdate: " + existingVocabulary);
                 int updateResult = baseMapper.update(existingVocabulary, new QueryWrapper<VocabularyDO>()
                         .eq(LANGUAGE_CODE_TO_FIELD.get(sourceCode), sourceText));
                 if (updateResult == 0) {

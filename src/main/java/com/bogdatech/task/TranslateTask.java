@@ -24,7 +24,6 @@ public class TranslateTask {
 //    @PostConstruct
 //    @Scheduled(cron = "0 5 * * * ?")
     public void translate() {
-        System.out.println("translate");
         //查询Translates表status为0的数据
         List<TranslatesDO> list = translatesServiceImpl.readTranslateInfo(0);
         //遍历list，调用translateService.translate()方法

@@ -37,6 +37,9 @@ public class RegularJudgmentUtils {
         if(NUM_PATTERN.matcher(input).matches()) {
             return true;
         }
+        if (input.startsWith("#") && input.length() <= 10){
+            return true;
+        }
         // 第二步：统计标点符号数量
         long punctCount = PUNCT_PATTERN.matcher(input).results().count();
         return punctCount >= 2;

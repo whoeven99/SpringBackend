@@ -153,7 +153,7 @@ public class ShopifyService {
         try {
             rootNode = objectMapper.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
-            System.out.println("解析JSON数据失败： " + translateResource);
+//            System.out.println("解析JSON数据失败： " + translateResource);
             appInsights.trackTrace("解析JSON数据失败： " + translateResource);
         }
         return rootNode;

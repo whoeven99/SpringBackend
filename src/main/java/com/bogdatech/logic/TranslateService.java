@@ -141,13 +141,11 @@ public class TranslateService {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                     appInsights.trackTrace("翻译失败的原因： " + e.getErrorMessage());
-                    System.out.println("翻译失败的原因： " + e.getErrorMessage());
                     //更新初始值
                     try {
                         startTokenCount(request);
                     } catch (Exception e2) {
                         appInsights.trackTrace("重新更新token值失败！！！");
-                        System.out.println("翻译失败的原因： " + e.getErrorMessage());
                     }
                     return;
                 }
@@ -158,9 +156,9 @@ public class TranslateService {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
 //                //发送报错邮件
                     AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
-                if (emailSent.compareAndSet(false, true)) {
-                    translateFailEmail(shopName,counter,begin, usedChars, remainingChars, target, source);
-                }
+                    if (emailSent.compareAndSet(false, true)) {
+                        translateFailEmail(shopName, counter, begin, usedChars, remainingChars, target, source);
+                    }
                     startTokenCount(request);
                 } catch (Exception e3) {
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
@@ -168,7 +166,6 @@ public class TranslateService {
                 }
                 return;
             } catch (CannotCreateTransactionException e) {
-                System.out.println("翻译失败的原因： " + e);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 appInsights.trackTrace("Translation task failed: " + e);
                 //更新初始值
@@ -179,7 +176,6 @@ public class TranslateService {
                 }
                 return;
             } catch (Exception e) {
-                System.out.println("翻译失败的原因： " + e);
                 appInsights.trackTrace("Translation task failed: " + e);
                 //更新初始值
                 try {
@@ -316,7 +312,7 @@ public class TranslateService {
 
         //TRANSLATION_RESOURCES
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-            if (translateResource.getResourceType().equals(SHOP_POLICY)){
+            if (translateResource.getResourceType().equals(SHOP_POLICY)) {
                 continue;
             }
             // 定期检查是否停止
@@ -526,26 +522,26 @@ public class TranslateService {
             if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils(), translateContext.getShopifyRequest().getTarget(), translateContext.getSource()))
                 return;
             switch (entry.getKey()) {
-//                case PLAIN_TEXT:
-//                    translateDataByAPI(entry.getValue(), translateContext);
-//                    break;
-//                case HTML:
-//                    translateHtml(entry.getValue(), translateContext);
-//                    break;
-//                case JSON_TEXT:
-//                    translateJsonText(entry.getValue(), translateContext);
-//                    break;
-//                case DATABASE:
-//                    //处理database数据
-//                    translateDataByDatabase(entry.getValue(), translateContext);
-//                    break;
-//                case GLOSSARY:
-//                    //区分大小写
-//                    translateDataByGlossary(entry.getValue(), translateContext);
-//                    break;
-//                case OPENAI:
-//                    translateDataByOPENAI(entry.getValue(), translateContext);
-//                    break;
+                case PLAIN_TEXT:
+                    translateDataByAPI(entry.getValue(), translateContext);
+                    break;
+                case HTML:
+                    translateHtml(entry.getValue(), translateContext);
+                    break;
+                case JSON_TEXT:
+                    translateJsonText(entry.getValue(), translateContext);
+                    break;
+                case DATABASE:
+                    //处理database数据
+                    translateDataByDatabase(entry.getValue(), translateContext);
+                    break;
+                case GLOSSARY:
+                    //区分大小写
+                    translateDataByGlossary(entry.getValue(), translateContext);
+                    break;
+                case OPENAI:
+                    translateDataByOPENAI(entry.getValue(), translateContext);
+                    break;
                 case METAFIELD:
                     translateMetafield(entry.getValue(), translateContext);
                     break;
@@ -585,7 +581,7 @@ public class TranslateService {
             }
 
             if (SINGLE_LINE_TEXT_FIELD.equals(type)) {
-                //纯数字字母符号 且有两个  标点符号 不翻译
+                //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
                 if (isValidString(value)) {
                     continue;
                 }
@@ -1118,16 +1114,13 @@ public class TranslateService {
 
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
-                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()){
-                    System.out.println("key值不匹配 跳过翻译： " + key + " , " + value);
-                   continue;
-                }
-                //如果包含对应key和value，则跳过
-                if(!shouldTranslate(key,value) && !isHtml(value)){
-                    System.out.println("key和value 不匹配 跳过翻译： " + key + " , " + value);
+                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
                     continue;
                 }
-                System.out.println("翻译的数据: " + key + " , " + value);
+                //如果包含对应key和value，则跳过
+                if (!shouldTranslate(key, value) && !isHtml(value)) {
+                    continue;
+                }
             }
 
 
