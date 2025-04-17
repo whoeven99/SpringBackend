@@ -325,8 +325,8 @@ public class LanguageFlagConfig {
         ZH_TW.put("Local", "中文（繁體）");
         ZH_TW.put("isoCode", "zh-TW");
         ZH_TW.put("countries", new String[]{
-                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TW.webp",
                 "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/HK.webp",
+                "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/TW.webp",
                 "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/MO.webp"
         });
 
