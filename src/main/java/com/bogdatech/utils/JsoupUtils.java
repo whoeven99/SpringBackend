@@ -280,7 +280,7 @@ public class JsoupUtils {
         System.out.println("prompt变量和极简: " + prompt);
 
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW")) {
+        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil")) {
             return singleTranslate(content, prompt, counter, target);
         }
 
