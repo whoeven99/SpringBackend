@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.entity.UserSubscriptionsDO;
@@ -25,6 +26,14 @@ public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsM
     @Override
     public Boolean updateUserSubscription(UserSubscriptionsRequest request) {
         return null;
+    }
+
+    @Override
+    public Integer checkUserPlan(String shopName, int planId) {
+        UserSubscriptionsDO userSubscriptionsDO = new UserSubscriptionsDO();
+        userSubscriptionsDO.setShopName(shopName);
+        userSubscriptionsDO.setPlanId(planId);
+        return baseMapper.update(userSubscriptionsDO, new UpdateWrapper<UserSubscriptionsDO>().eq("shop_name", shopName));
     }
 
 

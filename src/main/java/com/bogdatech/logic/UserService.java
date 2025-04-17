@@ -187,4 +187,8 @@ public class UserService {
     public void updateUserTokenByShopName(String shopName, String accessToken) {
         usersService.updateUserTokenByShopName(shopName, accessToken);
     }
+
+    public Integer checkUserPlan(String shopName, int planId) {
+        return userSubscriptionsService.checkUserPlan(shopName, planId);
+    }
 }
