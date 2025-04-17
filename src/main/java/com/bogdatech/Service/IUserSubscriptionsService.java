@@ -9,4 +9,6 @@ public interface IUserSubscriptionsService extends IService<UserSubscriptionsDO>
     Integer getUserSubscriptionPlan(String shopName);
 
     Boolean updateUserSubscription(UserSubscriptionsRequest request);
+
+    Integer checkUserPlan(String shopName, int planId);
 }

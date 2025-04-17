@@ -15,6 +15,6 @@ public class SubscriptionPlansDO {
     private Integer planId;
     private String planName;
     private String description;
-    private Integer price;
+    private Double price;
     private Integer maxTranslationsMonth;
 }
