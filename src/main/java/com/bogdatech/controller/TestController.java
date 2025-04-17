@@ -19,13 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
-import static com.bogdatech.utils.JsoupUtils.*;
 
 @RestController
 public class TestController {
@@ -37,7 +34,6 @@ public class TestController {
     private final JsoupUtils jsoupUtils;
     private final RateHttpIntegration rateHttpIntegration;
     TelemetryClient appInsights = new TelemetryClient();
-
     @Autowired
     public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
@@ -116,15 +112,4 @@ public class TestController {
         addData(target, value, targetText);
     }
 
-    @GetMapping("/testString")
-    public String testString() {
-        String str = "<p>Choose a HawkSling slingshot and experience uncompromising reliability that outdoor enthusiasts count on for every adventure. Our meticulous manufacturing process delivers consistent performance and rock-solid durability, ensuring the same precise results whether you’re shot with a slingshot or testing innovative fishing slingshot techniques.</p>";
-        Map<String, String> keyMap1 = new HashMap<>();
-        Map<String, String> keyMap0 = new HashMap<>();
-        keyMap1.put("slingshot", "Schleuder");
-        keyMap0.put("牧原丘", "Pasture Hill");
-        String glossaryString = glossaryText(keyMap1, keyMap0, str);
-        return glossaryTranslationModel(new TranslateRequest(0, "123", "123", "en", "ko", str)
-                , new CharacterCountUtils(), glossaryString);
-    }
 }

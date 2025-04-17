@@ -125,7 +125,6 @@ public class ShopifyController {
                 int totalWords = shopifyService.getTotalWords(shopifyRequest, method, resourceDTO);
                 tokens += totalWords;
             }
-            System.out.println("key: " + key + " tokens: " + tokens);
         }
         return new BaseResponse<>().CreateSuccessResponse("success");
     }
@@ -242,10 +241,8 @@ public class ShopifyController {
 
     @PostMapping("/getTranslationItemsInfoTest")
     public void getTranslationItemsInfoTest(@RequestBody ResourceTypeRequest request) {
-        System.out.println("first: " + LocalDateTime.now());
         for (String key : RESOURCE_MAP.keySet()
         ) {
-            System.out.println("key: " + key);
             ResourceTypeRequest resourceTypeRequest = new ResourceTypeRequest();
             resourceTypeRequest.setResourceType(key);
             resourceTypeRequest.setTarget(request.getTarget());

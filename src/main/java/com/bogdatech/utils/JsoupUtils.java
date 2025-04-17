@@ -277,7 +277,7 @@ public class JsoupUtils {
         }else {
             prompt = getSimplePrompt(targetLanguage);
         }
-        System.out.println("prompt变量和极简: " + prompt);
+//        System.out.println("prompt变量和极简: " + prompt);
 
         //目标语言是中文的，用qwen-max翻译
         if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil")) {
