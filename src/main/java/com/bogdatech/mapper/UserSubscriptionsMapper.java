@@ -12,5 +12,5 @@ public interface UserSubscriptionsMapper extends BaseMapper<UserSubscriptionsDO>
                             FROM UserSubscriptions us
                             JOIN SubscriptionPlans sp ON us.plan_id = sp.plan_id
                             WHERE us.shop_name = #{shopName}""")
-    String getUserSubscriptionPlan(String shopName);
+    Integer getUserSubscriptionPlan(String shopName);
 }
