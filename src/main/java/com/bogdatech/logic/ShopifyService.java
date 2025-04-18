@@ -679,7 +679,7 @@ public class ShopifyService {
         request.setStartDate(startDate);
         request.setEndDate(null);
         //先判断是否有这个数据，没有插入，有了更新
-        String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request.getShopName());
+        Integer userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(request.getShopName());
         if (userSubscriptionPlan == null) {
             Integer i = userSubscriptionsService.addUserSubscription(request);
             if (i > 0) {

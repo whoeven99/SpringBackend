@@ -4,6 +4,7 @@ package com.bogdatech.controller;
 import com.bogdatech.entity.UsersDO;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserService;
+import com.bogdatech.model.controller.request.UserSubscriptionsRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -71,5 +72,11 @@ public class UserController {
     @GetMapping("/InitializationDetection")
     public BaseResponse<Object> InitializationDetection(String shopName) {
         return new BaseResponse<>().CreateSuccessResponse(userService.InitializationDetection(shopName));
+    }
+
+    @PostMapping("/checkUserPlan")
+    public BaseResponse<Object> checkUserPlan(@RequestBody UserSubscriptionsRequest userSubscriptionsRequest) {
+
+        return new BaseResponse<>().CreateSuccessResponse(userService.checkUserPlan(userSubscriptionsRequest.getShopName(), userSubscriptionsRequest.getPlanId()));
     }
 }

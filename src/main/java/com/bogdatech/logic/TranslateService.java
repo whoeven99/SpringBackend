@@ -1684,7 +1684,5 @@ public class TranslateService {
             appInsights.trackTrace("错误原因： " + e.getMessage());
         }
     }
-
-
 }
 
