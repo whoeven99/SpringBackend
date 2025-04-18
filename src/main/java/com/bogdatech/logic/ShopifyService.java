@@ -122,7 +122,7 @@ public class ShopifyService {
         translateResource.setTarget(request.getTarget());
         String query = shopifyRequestBody.getFirstQuery(translateResource);
         cloudServiceRequest.setBody(query);
-        String infoByShopify = null;
+        String infoByShopify;
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(request, query));
         } else {
