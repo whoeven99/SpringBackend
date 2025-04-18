@@ -580,9 +580,10 @@ public class TranslateService {
                 continue;
             }
 
-            if (SINGLE_LINE_TEXT_FIELD.equals(type)) {
-                //纯数字字母符号 且有两个标点符号 以#开头，长度为10 不翻译
-                if (isValidString(value) && !isHtml(value)) {
+
+            if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
+                //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
+                if (isValidString(value)) {
                     continue;
                 }
 

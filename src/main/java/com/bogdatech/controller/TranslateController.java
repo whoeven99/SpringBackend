@@ -290,4 +290,10 @@ public class TranslateController {
         }
         return null;
     }
+
+    //当支付成功后，调用该方法，将该用户的状态3，改为状态6
+    @PostMapping("/updateStatus")
+    public void updateStatus3To6(@RequestBody TranslateRequest request) {
+        translatesService.updateStatus3To6(request.getShopName());
+    }
 }

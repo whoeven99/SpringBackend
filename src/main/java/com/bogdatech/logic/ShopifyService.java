@@ -46,6 +46,7 @@ import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
+import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.countWords;
 
 @Component
@@ -816,9 +817,11 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             JsonNode translationsNode = contentItemNode.path("translations");
             JsonNode translatableContentNode = contentItemNode.path("translatableContent");
-            if ("ONLINE_STORE_THEME".equals(translateResource.getResourceType())) {
+            if (ONLINE_STORE_THEME.equals(translateResource.getResourceType())) {
                 // 当资源类型为 ONLINE_STORE_THEME 时，调用专门的计数方法
                 countThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
+            } else if (METAFIELD.equals(translateResource.getResourceType())) {
+                countMetafieldData(translationsNode, translatableContentNode, counter, translatedCounter);
             } else {
                 // 处理其他类型的数据
                 countNonThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
@@ -849,6 +852,78 @@ public class ShopifyService {
             }
         }
 
+    }
+
+    //计数 METAFIELD 类型的资源数据
+    private void countMetafieldData(JsonNode translationsNode, JsonNode translatableContentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter) {
+        if (translatableContentNode != null) {
+
+            // 遍历可翻译内容节点，增加未翻译的字符数
+            for (JsonNode contentItem : translatableContentNode) {
+                ObjectNode contentItemNode = (ObjectNode) contentItem;
+                // 跳过 value 为空的项
+
+                if (contentItemNode == null) {
+                    continue;
+                }
+
+                String value;
+                String key;
+                String type;
+                try {
+                    JsonNode valueNode = contentItemNode.path("value");
+                    if (valueNode == null) {
+                        continue;
+                    }
+                    value = contentItemNode.path("value").asText(null);
+                    key = contentItemNode.path("key").asText(null);
+                    type = contentItemNode.path("type").asText(null);
+                    if (value == null) {
+                        continue;  // 跳过当前项
+                    }
+                    if (value.matches("\\p{Zs}")) {
+                        continue;
+                    }
+                    if (value.trim().isEmpty()) {
+                        continue;
+                    }
+                } catch (Exception e) {
+                    appInsights.trackTrace("失败的原因： " + e.getMessage());
+                    translatedCounter.addChars(1);
+                    continue;
+                }
+                if (key.contains("metafield:") || key.contains("color")
+                        || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
+                        || key.contains("carousel_easing") || key.contains("_link") || key.contains("general") || key.contains("css:")
+                        || key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+                        || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
+                        || type.equals(("LIST_URL"))
+                ) {
+                    translatedCounter.addChars(1);
+                }
+
+                //如果是METAFIELD模块的数据
+                if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
+                    //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
+                    if (isValidString(value)) {
+                        translatedCounter.addChars(1);
+                    }
+                }else if (!LIST_SINGLE_LINE_TEXT_FIELD.equals(type)) {
+                    translatedCounter.addChars(1);
+                }
+                counter.addChars(1);
+            }
+        }
+
+        if (translationsNode != null) {
+            // 遍历翻译内容节点，增加已翻译的字符数
+            for (JsonNode contentItem : translationsNode) {
+                ObjectNode contentItemNode = (ObjectNode) contentItem;
+                if (contentItemNode != null) {
+                    translatedCounter.addChars(1);
+                }
+            }
+        }
     }
 
     //计数非 ONLINE_STORE_THEME 类型的资源数据。
