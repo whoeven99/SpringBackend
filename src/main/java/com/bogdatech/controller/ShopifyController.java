@@ -15,7 +15,6 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -178,7 +177,7 @@ public class ShopifyController {
     //获取用户订阅计划
     @GetMapping("/getUserSubscriptionPlan")
     public BaseResponse<Object> getUserSubscriptionPlan(String shopName) {
-        String userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(shopName);
+        Integer userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(shopName);
         if (userSubscriptionPlan == null) {
             return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
         } else {

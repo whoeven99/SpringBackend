@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.entity.CharsOrdersDO;
@@ -20,5 +21,13 @@ public class CharsOrdersServiceImpl extends ServiceImpl<CharsOrdersMapper, Chars
     @Override
     public List<String> getIdByShopName(String shopName) {
         return baseMapper.getIdByShopName(shopName);
+    }
+
+    @Override
+    public List<CharsOrdersDO> getShopNameAndId() {
+        return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().select(CharsOrdersDO::getShopName, CharsOrdersDO::getId)
+                .eq(CharsOrdersDO::getStatus, "ACTIVE")
+                .like(CharsOrdersDO::getId, "AppSubscription")
+        );
     }
 }

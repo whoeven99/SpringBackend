@@ -32,4 +32,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     TranslatesDO selectLatestOne(TranslateRequest request);
 
     String getResourceTypeByshopNameAndTargetAndSource(String shopName, String target, String source);
+
+    void updateStatus3To6(String shopName);
 }
