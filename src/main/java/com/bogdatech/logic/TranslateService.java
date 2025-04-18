@@ -580,7 +580,8 @@ public class TranslateService {
                 continue;
             }
 
-            if (SINGLE_LINE_TEXT_FIELD.equals(type)) {
+
+            if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
                 //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
                 if (isValidString(value)) {
                     continue;
@@ -1683,5 +1684,7 @@ public class TranslateService {
             appInsights.trackTrace("错误原因： " + e.getMessage());
         }
     }
+
+
 }
 

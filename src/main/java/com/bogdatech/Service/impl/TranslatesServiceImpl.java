@@ -1,6 +1,7 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.TranslatesDO;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 @Transactional
@@ -107,5 +109,30 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.getResourceTypeByshopNameAndTarget(shopName, target, source);
     }
 
+    @Override
+    public void updateStatus3To6(String shopName) {
+        TranslatesDO translatesDO= new TranslatesDO();
+        translatesDO.setStatus(6);
+        final int maxRetries = 3;
+        int attempt = 0;
+        boolean success = false;
+
+        while (attempt < maxRetries && !success) {
+            attempt++;
+            try {
+                int affectedRows = baseMapper.update(translatesDO, new UpdateWrapper<TranslatesDO>()
+                        .eq(SHOP_NAME, shopName)
+                        .eq("status", 3));
+                if (affectedRows > 0) {
+                    success = true;
+                }
+            } catch (Exception e) {
+                appInsights.trackTrace("Exception during update attempt "
+                        + attempt + "errorMessage: "
+                        + e.getMessage()
+                        + " error: " + e);
+            }
+        }
+    }
 
 }
