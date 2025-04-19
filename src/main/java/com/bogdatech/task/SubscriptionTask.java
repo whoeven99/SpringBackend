@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,8 +89,15 @@ public class SubscriptionTask {
             System.out.println("Current Period End: " + currentPeriodEnd);
 
             Instant created = Instant.parse(createdAt);
+            System.out.println("created: " + created);
             Instant end = Instant.parse(currentPeriodEnd);
-            Instant buyCreated = Instant.parse(userPriceRequest.getCreateAt());
+            System.out.println("end: " + end);
+            //如何将localtime 转化为 instant
+            // 指定一个UTC时区
+            ZoneId zoneId = ZoneId.of("UTC");
+            // 转换为 Instant
+            Instant buyCreated = userPriceRequest.getCreateAt().atZone(zoneId).toInstant();
+            System.out.println("buyCreated: " + buyCreated);
 
 
 
