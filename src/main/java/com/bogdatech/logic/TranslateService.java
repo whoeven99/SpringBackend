@@ -52,6 +52,7 @@ import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
+import static com.bogdatech.utils.StringUtils.isNumber;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -1120,6 +1121,10 @@ public class TranslateService {
                 }
                 //如果包含对应key和value，则跳过
                 if (!shouldTranslate(key, value) && !isHtml(value)) {
+                    continue;
+                }
+                //如果值为纯数字的话，不翻译
+                if (isNumber(value)) {
                     continue;
                 }
             }
