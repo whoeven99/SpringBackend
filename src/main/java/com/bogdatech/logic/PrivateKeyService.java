@@ -53,10 +53,12 @@ import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
+import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
+import static com.bogdatech.utils.StringUtils.isNumber;
 import static com.bogdatech.utils.StringUtils.replaceDot;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -1002,12 +1004,29 @@ public class PrivateKeyService {
             }
 
             //如果包含相对路径则跳过
-            if ( key.contains("color") || key.contains("metafield:") ||key.contains("formId:") ||key.contains("phone_text") ||key.contains("email_text") ||key.contains("carousel_easing") || key.contains("_link")|| key.contains("general.rtl") || key.contains("css:")|| key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+            if (key.contains("metafield:") || key.contains("color")
+                    || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
+                    || key.contains("carousel_easing") || key.contains("_link") || key.contains("general") || key.contains("css:")
+                    || key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL"))
-                    || resourceType.equals(SHOP_POLICY)
-                  ) {
+                    || resourceType.equals(SHOP_POLICY)) {
                 continue;
+            }
+
+            //如果是theme模块的数据
+            if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
+                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
+                    continue;
+                }
+                //如果包含对应key和value，则跳过
+                if (!shouldTranslate(key, value) && !isHtml(value)) {
+                    continue;
+                }
+                //如果值为纯数字的话，不翻译
+                if (isNumber(value)) {
+                    continue;
+                }
             }
 
             //对METAFIELD字段翻译
