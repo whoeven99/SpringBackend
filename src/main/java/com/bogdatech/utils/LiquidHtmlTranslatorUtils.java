@@ -29,7 +29,7 @@ public class LiquidHtmlTranslatorUtils {
     // 不翻译的Liquid变量模式
     public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
     // 自定义变量模式：%{ order.name } 等
-    public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("%\\{[^}]+\\}");
+    public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\w+\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]");
     // Liquid条件语句模式：{% if order.po_number != blank %} 等
     public static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
     // 数组变量模式：[ product[1]] 等
