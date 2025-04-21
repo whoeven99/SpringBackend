@@ -110,10 +110,11 @@ public class JsoupUtils {
 
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-                VARIABLE_PATTERN,
-                CUSTOM_VAR_PATTERN,
-                LIQUID_CONDITION_PATTERN,
-                ARRAY_VAR_PATTERN
+//                VARIABLE_PATTERN,
+                CUSTOM_VAR_PATTERN
+//                ,
+//                LIQUID_CONDITION_PATTERN,
+//                ARRAY_VAR_PATTERN
         );
 
         List<MatchRange> matches = new ArrayList<>();
@@ -236,9 +237,9 @@ public class JsoupUtils {
         }
 
         //判断是否符合google翻译， 是， google翻译
-        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
-            return googleTranslateByJudge(request, counter, prompt);
-        }
+//        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
+//            return googleTranslateByJudge(request, counter, prompt);
+//        }
 
         return checkTranslationModel(request, counter, prompt);
     }
@@ -285,13 +286,7 @@ public class JsoupUtils {
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if (target.equals("hi")) {
-            target = "Hindi";
-            return douBaoTranslate(target, prompt, content, counter);
-        }
-
-        if (target.equals("th")) {
-            target = "Thai";
+        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
@@ -542,10 +537,10 @@ public class JsoupUtils {
         // 合并所有需要保护的模式
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-                VARIABLE_PATTERN,
+//                VARIABLE_PATTERN,
                 CUSTOM_VAR_PATTERN,
-                LIQUID_CONDITION_PATTERN,
-                ARRAY_VAR_PATTERN,
+//                LIQUID_CONDITION_PATTERN,
+//                ARRAY_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 

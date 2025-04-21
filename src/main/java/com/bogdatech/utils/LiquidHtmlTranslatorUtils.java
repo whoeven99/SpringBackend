@@ -26,14 +26,14 @@ public class LiquidHtmlTranslatorUtils {
     static TelemetryClient appInsights = new TelemetryClient();
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
-    // 不翻译的Liquid变量模式
-    public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
+//    // 不翻译的Liquid变量模式
+//    public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
     // 自定义变量模式：%{ order.name } 等
-    public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("%\\{[^}]+\\}");
-    // Liquid条件语句模式：{% if order.po_number != blank %} 等
-    public static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
-    // 数组变量模式：[ product[1]] 等
-    public static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
+    public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\w+\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]");
+//    // Liquid条件语句模式：{% if order.po_number != blank %} 等
+//    public static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
+//    // 数组变量模式：[ product[1]] 等
+//    public static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
     // 纯符号模式：匹配单独的 -、×、+、= 等符号（不含字母数字）
     public static final Pattern SYMBOL_PATTERN = Pattern.compile("^[\\-×\\+=×*/|!@#$%^&()_]+$", Pattern.MULTILINE);
     // 判断是否有 <html> 标签的模式
@@ -174,10 +174,10 @@ public class LiquidHtmlTranslatorUtils {
         // 合并所有需要保护的模式
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-                VARIABLE_PATTERN,
-                CUSTOM_VAR_PATTERN,
-                LIQUID_CONDITION_PATTERN,
-                ARRAY_VAR_PATTERN,
+//                VARIABLE_PATTERN,
+//                CUSTOM_VAR_PATTERN,
+//                LIQUID_CONDITION_PATTERN,
+//                ARRAY_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 
