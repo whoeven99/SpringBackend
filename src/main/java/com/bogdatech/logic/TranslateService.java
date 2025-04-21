@@ -717,7 +717,6 @@ public class TranslateService {
 
         // Handle specific cases
         if ("handle".equals(key) || "JSON".equals(type) || "JSON_STRING".equals(type)) {
-            saveToShopify(value, translation, resourceId, request);
             return true;
         }
 
@@ -1162,6 +1161,9 @@ public class TranslateService {
 
             //对从数据库中获取的数据单独处理
             if (isDatabaseResourceType(resourceType)) {
+                if ("HTML".equals(type) || isHtml(value) || "body_html".equals(key)){
+                    judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                }
                 //先将type存在target里面
                 judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
