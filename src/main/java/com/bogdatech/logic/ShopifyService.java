@@ -820,6 +820,9 @@ public class ShopifyService {
             if (ONLINE_STORE_THEME.equals(translateResource.getResourceType())) {
                 // 当资源类型为 ONLINE_STORE_THEME 时，调用专门的计数方法
                 countThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
+                if (counter.getTotalChars() != translatedCounter.getTotalChars()){
+                    translatedCounter.addChars(counter.getTotalChars());
+                }
             } else if (METAFIELD.equals(translateResource.getResourceType())) {
                 countMetafieldData(translationsNode, translatableContentNode, counter, translatedCounter);
             } else {
@@ -835,9 +838,7 @@ public class ShopifyService {
 
             // 遍历可翻译内容节点，增加未翻译的字符数
             for (JsonNode contentItem : translatableContentNode) {
-//                System.out.println("total: " + contentItem);
                 counter.addChars(1);
-
             }
         }
 
