@@ -236,9 +236,9 @@ public class JsoupUtils {
         }
 
         //判断是否符合google翻译， 是， google翻译
-        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
-            return googleTranslateByJudge(request, counter, prompt);
-        }
+//        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
+//            return googleTranslateByJudge(request, counter, prompt);
+//        }
 
         return checkTranslationModel(request, counter, prompt);
     }
@@ -285,13 +285,7 @@ public class JsoupUtils {
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if (target.equals("hi")) {
-            target = "Hindi";
-            return douBaoTranslate(target, prompt, content, counter);
-        }
-
-        if (target.equals("th")) {
-            target = "Thai";
+        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
