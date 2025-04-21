@@ -997,7 +997,7 @@ public class ShopifyService {
     public int updateTranslationStatus(TranslateRequest request) {
         AtomicInteger i = new AtomicInteger();
         int i1;
-        getTranslationItemsInfo(new ResourceTypeRequest(request.getShopName(), request.getAccessToken(), null, request.getTarget()));
+        getTranslationItemsInfo(new ResourceTypeRequest(request.getShopName(), request.getAccessToken(), null, request.getTarget(), null));
         //从数据库中获取数据并判断
         List<ItemsDO> itemsRequests = itemsService.readItemsInfo(new ShopifyRequest(request.getShopName(), null, null, request.getTarget()));
         itemsRequests.forEach(item -> {
