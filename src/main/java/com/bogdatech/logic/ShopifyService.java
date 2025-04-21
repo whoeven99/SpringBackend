@@ -748,6 +748,12 @@ public class ShopifyService {
                     continue;
                 }
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
+                //判断数据库对应语言是否翻译，为1，就满的
+                Integer statusByShopNameAndTargetAndSource = translatesService.getStatusByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+                if (statusByShopNameAndTargetAndSource == 1) {
+                    translatedCounter.addChars(allCounter.getTotalChars());
+                }
+
                 if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
                     translatedCounter.reset();
                     translatedCounter.addChars(allCounter.getTotalChars());
@@ -820,9 +826,9 @@ public class ShopifyService {
             if (ONLINE_STORE_THEME.equals(translateResource.getResourceType())) {
                 // 当资源类型为 ONLINE_STORE_THEME 时，调用专门的计数方法
                 countThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
-                if (counter.getTotalChars() != translatedCounter.getTotalChars()){
-                    translatedCounter.addChars(counter.getTotalChars());
-                }
+//                if (counter.getTotalChars() != translatedCounter.getTotalChars()){
+//                    translatedCounter.addChars(counter.getTotalChars());
+//                }
             } else if (METAFIELD.equals(translateResource.getResourceType())) {
                 countMetafieldData(translationsNode, translatableContentNode, counter, translatedCounter);
             } else {
