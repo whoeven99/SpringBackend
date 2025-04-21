@@ -748,11 +748,6 @@ public class ShopifyService {
                     continue;
                 }
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
-                //判断数据库对应语言是否翻译，为1，就满的
-                Integer statusByShopNameAndTargetAndSource = translatesService.getStatusByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
-                if (statusByShopNameAndTargetAndSource == 1) {
-                    translatedCounter.addChars(allCounter.getTotalChars());
-                }
 
                 if (allCounter.getTotalChars() <= translatedCounter.getTotalChars()) {
                     translatedCounter.reset();
@@ -997,7 +992,7 @@ public class ShopifyService {
     public int updateTranslationStatus(TranslateRequest request) {
         AtomicInteger i = new AtomicInteger();
         int i1;
-        getTranslationItemsInfo(new ResourceTypeRequest(request.getShopName(), request.getAccessToken(), null, request.getTarget(), null));
+        getTranslationItemsInfo(new ResourceTypeRequest(request.getShopName(), request.getAccessToken(), null, request.getTarget()));
         //从数据库中获取数据并判断
         List<ItemsDO> itemsRequests = itemsService.readItemsInfo(new ShopifyRequest(request.getShopName(), null, null, request.getTarget()));
         itemsRequests.forEach(item -> {
