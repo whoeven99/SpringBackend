@@ -457,7 +457,7 @@ public class TranslateService {
             return;
         //对judgeData数据进行翻译和存入shopify,除了html
         try {
-            translateAndSaveData(judgeData, translateContext);
+//            translateAndSaveData(judgeData, translateContext);
         } catch (ClientException e) {
             appInsights.trackTrace("翻译过程中抛出的异常" + e.getErrorMessage());
             throw e;
@@ -1133,7 +1133,7 @@ public class TranslateService {
                 judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
-
+            
             //对于json和json_string的数据直接不存，跳过
             if ("JSON".equals(type)
                     || "JSON_STRING".equals(type)) {
@@ -1161,9 +1161,6 @@ public class TranslateService {
 
             //对从数据库中获取的数据单独处理
             if (isDatabaseResourceType(resourceType)) {
-                if ("HTML".equals(type) || isHtml(value) || "body_html".equals(key)){
-                    judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
-                }
                 //先将type存在target里面
                 judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
@@ -1171,6 +1168,9 @@ public class TranslateService {
 
             //对product和blog的type用AI翻译
             if (isAiTranslateResourceType(resourceType)) {
+                if (isHtml(value)){
+                    judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                }
                 judgeData.get(OPENAI).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
