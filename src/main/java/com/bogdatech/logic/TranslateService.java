@@ -1122,6 +1122,11 @@ public class TranslateService {
                 if (isNumber(value)) {
                     continue;
                 }
+
+                //如果是html放html文本里面
+                if(isHtml(value)){
+                    judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                }
             }
 
             //对METAFIELD字段翻译
