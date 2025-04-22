@@ -22,6 +22,8 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.PlaceholderUtils.*;
+import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
 
 @RestController
 public class TestController {
@@ -111,4 +113,18 @@ public class TestController {
         addData(target, value, targetText);
     }
 
+    @GetMapping("/testJsoup")
+    public void testJsoup() {
+        String content = "{{ shop.name }} {{ gift_card.initial_value | money_without_trailing_zeros }} {gift} [card] {% if gift_card.recipient and gift_card.customer %} %{from} {% if gift_card.customer.name != blank %}{{ gift_card.customer.name }}{% elsif gift_card.customer.email != blank %}{{ gift_card.customer.email }}{% else %}{{ gift_card.customer.phone }}{% endif %}{% endif %}.";
+        String targetLanguage = "Arabic";
+        String prompt;
+        //测试正则表达式
+        if(hasPlaceholders(content)){
+            String variableString = getOuterString(content);
+            prompt = getVariablePrompt(targetLanguage, variableString);
+        }else {
+            prompt = getSimplePrompt(targetLanguage);
+        }
+        System.out.println("prompt: " + prompt);
+    }
 }

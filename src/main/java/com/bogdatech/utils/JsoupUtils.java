@@ -232,9 +232,9 @@ public class JsoupUtils {
         }
 
         //判断是否符合大模型翻译，如果可以，翻译
-        if (sourceText.length() > 100) {
-            return checkTranslationModel(request, counter, prompt);
-        }
+//        if (sourceText.length() > 100) {
+//            return checkTranslationModel(request, counter, prompt);
+//        }
 
         //判断是否符合google翻译， 是， google翻译
 //        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
