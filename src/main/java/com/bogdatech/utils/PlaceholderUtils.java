@@ -92,13 +92,17 @@ public class PlaceholderUtils {
      * **/
     private static String getOuterMarker(String placeholder) {
         if (placeholder.startsWith("{{")) {
-            return "{{}}";
+            return "{{ }}";
         } else if (placeholder.startsWith("%{")) {
-            return "%{}";
+            return "%{ }";
         } else if (placeholder.startsWith("{%")) {
-            return "{%%}";
+            return "{% %}";
         } else if (placeholder.startsWith("[")) {
-            return "[]";
+            return "[ ]";
+        } else if (placeholder.startsWith("[{{")) {
+            return "[{{ }}]";
+        } else if (placeholder.startsWith("{")) {
+            return "{ }";
         }
         return "";
     }

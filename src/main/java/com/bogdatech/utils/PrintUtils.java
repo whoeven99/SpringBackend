@@ -17,7 +17,7 @@ public class PrintUtils {
      * @param shopName     用户店铺名称
      * @param resourceType 用户翻译的模块类型
      */
-    public static void printTranslation(String targetText, String sourceText, Map<String, Object> translation, String shopName, String resourceType, String resourceId) {
+    public static void printTranslation(String targetText, String sourceText, Map<String, Object> translation, String shopName, String resourceType, String resourceId, String source) {
         //设置customDimensions为用户的翻译数据
         HashMap<String, String> properties = new HashMap<>();
         properties.put("targetText", targetText);
@@ -26,7 +26,7 @@ public class PrintUtils {
 
         //设置customMeasurements为用户的模块数据
         HashMap<String, Double> metrics = new HashMap<>();
-        metrics.put(resourceType, 1D);
+        metrics.put(resourceType + "   " + source, 1D);
 
         //设置打印name为用户的shopName
         appInsights.trackEvent(shopName + " " + resourceId + " ", properties, metrics);

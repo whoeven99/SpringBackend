@@ -557,7 +557,7 @@ public class PrivateKeyService {
                     continue;
                 }
                 saveToShopify(targetText, translation, resourceId, request);
-                printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY , translateContext.getTranslateResource().getResourceType(), resourceId);
+                printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY , translateContext.getTranslateResource().getResourceType(), resourceId, source);
                 continue;
             }
 
@@ -577,7 +577,7 @@ public class PrivateKeyService {
             }
             String finalText = restoreKeywords(translatedText, placeholderMap);
             saveToShopify(finalText, translation, resourceId, request);
-            printTranslation(translatedText, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId);
+            printTranslation(translatedText, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId, source);
             addData(request.getTarget(), value, translatedText);
 
             if (checkIsStopped(request.getShopName(), counter))
@@ -630,7 +630,7 @@ public class PrivateKeyService {
                 continue;
             }
             saveToShopify(htmlTranslation, translation, resourceId, request);
-            printTranslation(htmlTranslation, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId);
+            printTranslation(htmlTranslation, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId, source);
 
             if (checkIsStopped(request.getShopName(), counter))
                 return;
@@ -812,7 +812,7 @@ public class PrivateKeyService {
 //        String targetValue = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, request.getTarget(), value));
         //翻译成功后，将翻译后的数据存shopify本地中
         saveToShopify(targetValue, translation, resourceId, request);
-        printTranslation(targetValue, value, translation, request.getShopName() + PRIVATE_KEY, resourceType, resourceId);
+        printTranslation(targetValue, value, translation, request.getShopName() + PRIVATE_KEY, resourceType, resourceId, source);
 
     }
 
@@ -859,7 +859,7 @@ public class PrivateKeyService {
         String targetCache = translateSingleLine(value, request.getTarget());
         if (targetCache != null) {
             saveToShopify(targetCache, translation, resourceId, request);
-            printTranslation(targetCache, value, translation, request.getShopName() + PRIVATE_KEY, "cache", resourceId);
+            printTranslation(targetCache, value, translation, request.getShopName() + PRIVATE_KEY, "cache", resourceId, source);
             return true;
         }
         //TODO: 255字符以内才从数据库中获取数据
@@ -873,7 +873,7 @@ public class PrivateKeyService {
         if (targetText != null) {
             addData(target, value, targetText);
             saveToShopify(targetText, translation, resourceId, request);
-            printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY, "database", resourceId);
+            printTranslation(targetText, value, translation, request.getShopName() + PRIVATE_KEY, "database", resourceId, source);
             return true;
         }
         return false;
