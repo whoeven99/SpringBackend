@@ -12,4 +12,5 @@ public class ResourceTypeRequest {
     private String accessToken;
     private String resourceType;
     private String target;
+    private String source;
 }

@@ -314,7 +314,7 @@ public class PrivateIntegration {
                 String toTranslate = text.substring(lastEnd, match.start);
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
                 //对特殊符号进行处理
-                if (cleanedText.matches("\\p{Zs}")) {
+                if (cleanedText.matches("\\p{Zs}+")) {
                     result.append(cleanedText);
                     continue;
                 }
@@ -344,7 +344,7 @@ public class PrivateIntegration {
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
-            if (cleanedText.matches("\\p{Zs}")) {
+            if (cleanedText.matches("\\p{Zs}+")) {
                 result.append(cleanedText);
                 return result.toString();
             }
