@@ -11,6 +11,7 @@ import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.PlaceholderUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
 
@@ -126,5 +128,13 @@ public class TestController {
             prompt = getSimplePrompt(targetLanguage);
         }
         System.out.println("prompt: " + prompt);
+    }
+
+    @GetMapping("/testHtml")
+    public void testHtml() {
+        String html = """
+               """;
+        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
+        System.out.println("final: " + s);
     }
 }

@@ -987,7 +987,7 @@ public class PrivateKeyService {
                 if (value == null) {
                     continue;  // 跳过当前项
                 }
-                if (value.matches("\\p{Zs}")) {
+                if (value.matches("\\p{Zs}+")) {
                     continue;
                 }
                 String clearValue = cleanTextFormat(value);

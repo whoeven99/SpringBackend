@@ -198,9 +198,10 @@ public class LiquidHtmlTranslatorUtils {
             if (match.start > lastEnd) {
                 String toTranslate = text.substring(lastEnd, match.start);
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
+//                System.out.println("cleanedText1: " + cleanedText);
                 //对特殊符号进行处理
-                if (cleanedText.matches("\\p{Zs}")) {
-//                    System.out.println("要翻译的空白： " + cleanedText);
+                if (cleanedText.matches("\\p{Zs}+")) {
+//                    System.out.println("要翻译的空白1： " + cleanedText);
                     result.append(cleanedText);
                     continue;
                 }
@@ -209,7 +210,7 @@ public class LiquidHtmlTranslatorUtils {
                     try {
                         request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
-//                            System.out.println("要翻译的文本： " + cleanedText);
+//                            System.out.println("要翻译的文本1： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
                         result.append(targetString);
                     } catch (ClientException e) {
@@ -230,7 +231,8 @@ public class LiquidHtmlTranslatorUtils {
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
-            if (cleanedText.matches("\\p{Zs}")) {
+//            System.out.println("cleanedText2: " + cleanedText);
+            if (cleanedText.matches("\\p{Zs}+")) {
                 result.append(cleanedText);
                 return result.toString();
             }
@@ -239,7 +241,7 @@ public class LiquidHtmlTranslatorUtils {
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                        System.out.println("要翻译的文本： " + cleanedText);
+//                        System.out.println("要翻译的文本2： " + cleanedText);
                     targetString = translateAndCount(request, counter, resourceType);
                     result.append(targetString);
                 } catch (ClientException e) {
