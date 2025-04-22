@@ -1082,7 +1082,7 @@ public class TranslateService {
                 if (value == null) {
                     continue;  // 跳过当前项
                 }
-                if (value.matches("\\p{Zs}")) {
+                if (value.matches("\\p{Zs}+")) {
                     continue;
                 }
                 if (value.trim().isEmpty()) {
