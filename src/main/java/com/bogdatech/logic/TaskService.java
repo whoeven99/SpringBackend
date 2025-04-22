@@ -93,16 +93,20 @@ public class TaskService {
         String currentPeriodEnd = node.getString("currentPeriodEnd");
         //订阅开始时间
         Instant created = Instant.parse(createdAt);
+        System.out.println("created: " + created);
         //订阅结束时间
         Instant end = Instant.parse(currentPeriodEnd);
-
+        System.out.println("end: " + end);
         //当前时间
         Instant now = Instant.now();
+        System.out.println("now = " + now);
         //计算当前是第几个月
         int billingCycle = (int) ChronoUnit.DAYS.between(created, now) / 30 + 1;
         System.out.println("billingCycle = " + billingCycle);
         //根据第几个月添加对应的周期
         // 如果当前时间已经超过订阅开始 30 天，且仍在当前订阅周期内
+        System.out.println("before: " + created.plus(30L * billingCycle, ChronoUnit.DAYS));
+        System.out.println("after: " + end.plus(30L * billingCycle, ChronoUnit.DAYS));
         if (now.isAfter(created.plus(30L * billingCycle, ChronoUnit.DAYS)) && now.isBefore(end.plus(30L * billingCycle, ChronoUnit.DAYS)) && status.equals("ACTIVE")) {
             // 满足第二个月条件，执行添加字符的逻辑
             System.out.println("满足第二个月条件，执行添加字符的逻辑");

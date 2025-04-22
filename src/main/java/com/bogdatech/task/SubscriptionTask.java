@@ -21,7 +21,7 @@ public class SubscriptionTask {
     }
 
     @PostConstruct
-    @Scheduled(cron = "0 15 1 ? * *")
+    @Scheduled(cron = "0 0 0 * * ?")
     public void subscriptionTask() {
         taskService.judgeAddChars();
     }
