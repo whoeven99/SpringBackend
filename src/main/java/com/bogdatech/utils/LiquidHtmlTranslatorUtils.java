@@ -69,6 +69,7 @@ public class LiquidHtmlTranslatorUtils {
                 String result = doc.outerHtml(); // 返回完整的HTML结构
 //                appInsights.trackTrace("有html标签： "  + result);
 //                System.out.println("有html标签： "  + result);
+                result = isHtmlEntity(result);
                 return result;
             } else {
                 // 如果没有 <html> 标签，作为片段处理
@@ -86,6 +87,7 @@ public class LiquidHtmlTranslatorUtils {
                 String output = result.toString();
 //                appInsights.trackTrace("没有html标签： "  + output);
 //                System.out.println("没有html标签： "  + output);
+                output = isHtmlEntity(output);
                 return output;
             }
 
