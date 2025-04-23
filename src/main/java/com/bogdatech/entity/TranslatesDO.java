@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,5 +23,5 @@ public class TranslatesDO {
     private Integer status;
     private String resourceType;
 //    private Timestamp createAt;
-//    private Timestamp updateAt;
+    private Timestamp updateAt;
 }
