@@ -152,7 +152,7 @@ public class PlaceholderUtils {
      * @return 变量提示词
      * */
     public static String getVariablePrompt(String target, String variables){
-        return "Translate the following text into " + target + ", keeping variables like " + variables + " untranslated. Output only the translated text.";
+        return "Translate the following text into " + target + ". Do not translate any content enclosed in " + variables + " —these are variable placeholders and must remain exactly as they are. Output only the translated text.";
     }
 
     /**
