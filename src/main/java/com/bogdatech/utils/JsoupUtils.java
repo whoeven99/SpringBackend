@@ -84,8 +84,8 @@ public class JsoupUtils {
 
     /**
      *
-     * **/
-    public static String glossaryText(Map<String, String> keyMap1, Map<String, String> keyMap0, String cleanedText){
+     **/
+    public static String glossaryText(Map<String, String> keyMap1, Map<String, String> keyMap0, String cleanedText) {
         //根据keyMap1和keyMap0提取关键词
         List<KeywordModel> keywordModels = mergeKeywordMap(keyMap0, keyMap1);
         String glossaryString = null;
@@ -94,7 +94,7 @@ public class JsoupUtils {
             if (i == 0 && cleanedText.contains(entry.getKeyword())) {
                 i++;
                 glossaryString = entry.getKeyword() + "->" + entry.getTranslation();
-            }else if (cleanedText.contains(entry.getKeyword())) {
+            } else if (cleanedText.contains(entry.getKeyword())) {
                 glossaryString = glossaryString + "," + entry.getKeyword() + "->" + entry.getTranslation();
             }
         }
@@ -110,10 +110,11 @@ public class JsoupUtils {
 
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-                VARIABLE_PATTERN,
-                CUSTOM_VAR_PATTERN,
-                LIQUID_CONDITION_PATTERN,
-                ARRAY_VAR_PATTERN
+//                VARIABLE_PATTERN,
+                CUSTOM_VAR_PATTERN
+//                ,
+//                LIQUID_CONDITION_PATTERN,
+//                ARRAY_VAR_PATTERN
         );
 
         List<MatchRange> matches = new ArrayList<>();
@@ -215,10 +216,10 @@ public class JsoupUtils {
      * 调用多模型翻译：1，100字符以内用model翻译。2，ar用hunyuan-turbo-latest翻译 3，hi用doubao-1.5-pro-256k翻译
      * 根据语言代码切换API翻译
      *
-     * @param request      翻译所需要的数据
-     * @param counter      计数器
-     * @param prompt       提示词
-     * return String       翻译后的文本
+     * @param request 翻译所需要的数据
+     * @param counter 计数器
+     * @param prompt  提示词
+     *                return String       翻译后的文本
      */
     public static String translateByModel(TranslateRequest request, CharacterCountUtils counter, String prompt) {
         String target = request.getTarget();
@@ -231,14 +232,14 @@ public class JsoupUtils {
         }
 
         //判断是否符合大模型翻译，如果可以，翻译
-        if (sourceText.length() > 100) {
-            return checkTranslationModel(request, counter, prompt);
-        }
+//        if (sourceText.length() > 100) {
+//            return checkTranslationModel(request, counter, prompt);
+//        }
 
         //判断是否符合google翻译， 是， google翻译
-        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
-            return googleTranslateByJudge(request, counter, prompt);
-        }
+//        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
+//            return googleTranslateByJudge(request, counter, prompt);
+//        }
 
         return checkTranslationModel(request, counter, prompt);
     }
@@ -271,13 +272,14 @@ public class JsoupUtils {
         String content = request.getContent();
         String prompt;
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
-        if(hasPlaceholders(content)){
+        if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString);
-        }else {
+            return douBaoTranslate(target, prompt, content, counter);
+        } else {
             prompt = getSimplePrompt(targetLanguage);
+//            System.out.println("prompt变量和极简: " + prompt);
         }
-//        System.out.println("prompt变量和极简: " + prompt);
 
         //目标语言是中文的，用qwen-max翻译
         if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil")) {
@@ -285,16 +287,9 @@ public class JsoupUtils {
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if (target.equals("hi")) {
-            target = "Hindi";
+        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-
-        if (target.equals("th")) {
-            target = "Thai";
-            return douBaoTranslate(target, prompt, content, counter);
-        }
-
         return hunYuanTranslate(content, prompt, counter, getLanguageName(target), "hunyuan-large");
 
     }
@@ -303,8 +298,8 @@ public class JsoupUtils {
      * 根据每个模型的条件，翻译文本数据
      * 在翻译的同时计数字符数
      *
-     * @param request      翻译所需要的数据
-     * @param counter      计数器
+     * @param request        翻译所需要的数据
+     * @param counter        计数器
      * @param glossaryString 提示词的数据
      * @return String 翻译后的文本
      */
@@ -314,10 +309,10 @@ public class JsoupUtils {
         String targetName = getLanguageName(request.getTarget());
         String prompt;
 
-        if (glossaryString != null ){
-             prompt = getGlossaryPrompt(targetName, glossaryString);
-        }else {
-             prompt = getSimplePrompt(targetName);
+        if (glossaryString != null) {
+            prompt = getGlossaryPrompt(targetName, glossaryString);
+        } else {
+            prompt = getSimplePrompt(targetName);
         }
 
         //目标语言是中文的，用qwen-max翻译
@@ -340,15 +335,14 @@ public class JsoupUtils {
     }
 
 
-
     /**
      * 如果source和target都是QwenMT支持的语言，则调用QwenMT的API。
      * 在翻译的同时计数字符数
      *
      * @param request 翻译所需要的数据
      * @param counter 计数器
-     * @param prompt 提示词
-     * return String 翻译后的文本
+     * @param prompt  提示词
+     *                return String 翻译后的文本
      */
     public static String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, String prompt) {
         String target = request.getTarget();
@@ -397,7 +391,7 @@ public class JsoupUtils {
      * @param request 翻译所需要的数据
      * @param counter 计数器
      * @param prompt  提示词
-     * return String 翻译后的文本
+     *                return String 翻译后的文本
      */
     public static String translateAndCount(TranslateRequest request,
                                            CharacterCountUtils counter, String prompt) {
@@ -542,10 +536,10 @@ public class JsoupUtils {
         // 合并所有需要保护的模式
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-                VARIABLE_PATTERN,
+//                VARIABLE_PATTERN,
                 CUSTOM_VAR_PATTERN,
-                LIQUID_CONDITION_PATTERN,
-                ARRAY_VAR_PATTERN,
+//                LIQUID_CONDITION_PATTERN,
+//                ARRAY_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 
@@ -567,7 +561,7 @@ public class JsoupUtils {
                 String toTranslate = text.substring(lastEnd, match.start);
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
                 //对特殊符号进行处理
-                if (cleanedText.matches("\\p{Zs}")) {
+                if (cleanedText.matches("\\p{Zs}+")) {
                     result.append(cleanedText);
                     continue;
                 }
@@ -596,7 +590,7 @@ public class JsoupUtils {
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
-            if (cleanedText.matches("\\p{Zs}")) {
+            if (cleanedText.matches("\\p{Zs}+")) {
                 result.append(cleanedText);
                 return result.toString();
             }

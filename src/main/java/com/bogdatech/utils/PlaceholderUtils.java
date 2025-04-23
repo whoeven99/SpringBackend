@@ -15,7 +15,7 @@ public class PlaceholderUtils {
 
     // 定义占位符的正则表达式
     private static final Pattern PLACEHOLDER_PATTERN =
-            Pattern.compile("\\{\\{[^}]+\\}\\}|%\\{[^}]+\\}|\\{%[^%]+%\\}|\\[[^\\]]+\\]");
+            Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\w+\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]");
 
     /**
      * 判断文本中是否包含指定类型的占位符
@@ -92,13 +92,17 @@ public class PlaceholderUtils {
      * **/
     private static String getOuterMarker(String placeholder) {
         if (placeholder.startsWith("{{")) {
-            return "{{}}";
+            return "{{ }}";
         } else if (placeholder.startsWith("%{")) {
-            return "%{}";
+            return "%{ }";
         } else if (placeholder.startsWith("{%")) {
-            return "{%%}";
+            return "{% %}";
         } else if (placeholder.startsWith("[")) {
-            return "[]";
+            return "[ ]";
+        } else if (placeholder.startsWith("[{{")) {
+            return "[{{ }}]";
+        } else if (placeholder.startsWith("{")) {
+            return "{ }";
         }
         return "";
     }
@@ -138,7 +142,7 @@ public class PlaceholderUtils {
      * @return 极简提示词
      * */
     public static String getSimplePrompt(String target){
-        return "Accurately translate the following text into " + target + ".Output only the target text";
+        return "Translate the following text into " + target + ".Output only the translated text";
     }
 
     /**
@@ -148,7 +152,7 @@ public class PlaceholderUtils {
      * @return 变量提示词
      * */
     public static String getVariablePrompt(String target, String variables){
-        return "Accurately translate the following text into " + target + ", keeping variables like " + variables + " untranslated. Output only the target text.";
+        return "Translate the following text into " + target + ", keeping variables like " + variables + " untranslated. Output only the translated text.";
     }
 
     /**
@@ -158,7 +162,7 @@ public class PlaceholderUtils {
      * @return 词汇表的提示词
      * */
     public static String getGlossaryPrompt(String target, String glossary){
-        return "Accurately translate the following text into " + target + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the target text.";
+        return "Translate the following text into " + target + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text.";
     }
 
     /**

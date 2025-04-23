@@ -26,14 +26,14 @@ public class LiquidHtmlTranslatorUtils {
     static TelemetryClient appInsights = new TelemetryClient();
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
-    // 不翻译的Liquid变量模式
-    public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
+//    // 不翻译的Liquid变量模式
+//    public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
     // 自定义变量模式：%{ order.name } 等
-    public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("%\\{[^}]+\\}");
-    // Liquid条件语句模式：{% if order.po_number != blank %} 等
-    public static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
-    // 数组变量模式：[ product[1]] 等
-    public static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
+    public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\w+\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]");
+//    // Liquid条件语句模式：{% if order.po_number != blank %} 等
+//    public static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
+//    // 数组变量模式：[ product[1]] 等
+//    public static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
     // 纯符号模式：匹配单独的 -、×、+、= 等符号（不含字母数字）
     public static final Pattern SYMBOL_PATTERN = Pattern.compile("^[\\-×\\+=×*/|!@#$%^&()_]+$", Pattern.MULTILINE);
     // 判断是否有 <html> 标签的模式
@@ -174,10 +174,10 @@ public class LiquidHtmlTranslatorUtils {
         // 合并所有需要保护的模式
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-                VARIABLE_PATTERN,
-                CUSTOM_VAR_PATTERN,
-                LIQUID_CONDITION_PATTERN,
-                ARRAY_VAR_PATTERN,
+//                VARIABLE_PATTERN,
+//                CUSTOM_VAR_PATTERN,
+//                LIQUID_CONDITION_PATTERN,
+//                ARRAY_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 
@@ -198,9 +198,10 @@ public class LiquidHtmlTranslatorUtils {
             if (match.start > lastEnd) {
                 String toTranslate = text.substring(lastEnd, match.start);
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
+//                System.out.println("cleanedText1: " + cleanedText);
                 //对特殊符号进行处理
-                if (cleanedText.matches("\\p{Zs}")) {
-//                    System.out.println("要翻译的空白： " + cleanedText);
+                if (cleanedText.matches("\\p{Zs}+")) {
+//                    System.out.println("要翻译的空白1： " + cleanedText);
                     result.append(cleanedText);
                     continue;
                 }
@@ -209,7 +210,7 @@ public class LiquidHtmlTranslatorUtils {
                     try {
                         request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
-//                            System.out.println("要翻译的文本： " + cleanedText);
+//                            System.out.println("要翻译的文本1： " + cleanedText);
                         targetString = translateAndCount(request, counter, resourceType);
                         result.append(targetString);
                     } catch (ClientException e) {
@@ -230,7 +231,8 @@ public class LiquidHtmlTranslatorUtils {
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
-            if (cleanedText.matches("\\p{Zs}")) {
+//            System.out.println("cleanedText2: " + cleanedText);
+            if (cleanedText.matches("\\p{Zs}+")) {
                 result.append(cleanedText);
                 return result.toString();
             }
@@ -239,7 +241,7 @@ public class LiquidHtmlTranslatorUtils {
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                        System.out.println("要翻译的文本： " + cleanedText);
+//                        System.out.println("要翻译的文本2： " + cleanedText);
                     targetString = translateAndCount(request, counter, resourceType);
                     result.append(targetString);
                 } catch (ClientException e) {

@@ -4,21 +4,24 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
+
 public class JudgeTranslateUtils {
 
     //主题模块
     public static final Set<String> TRANSLATABLE_RESOURCE_TYPES = Set.of(
-            "ONLINE_STORE_THEME",
-            "ONLINE_STORE_THEME_APP_EMBED",
-            "ONLINE_STORE_THEME_JSON_TEMPLATE",
-            "ONLINE_STORE_THEME_SECTION_GROUP",
-            "ONLINE_STORE_THEME_SETTINGS_CATEGORY",
-            "ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS",
-            "ONLINE_STORE_THEME_LOCALE_CONTENT"
+            ONLINE_STORE_THEME,
+            ONLINE_STORE_THEME_APP_EMBED,
+            ONLINE_STORE_THEME_JSON_TEMPLATE,
+            ONLINE_STORE_THEME_SECTION_GROUP,
+            ONLINE_STORE_THEME_SETTINGS_CATEGORY,
+            ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS,
+            ONLINE_STORE_THEME_LOCALE_CONTENT
     );
 
     public static final Pattern TRANSLATABLE_KEY_PATTERN =
-            Pattern.compile(".*(heading|description|content|title|label|product|faq|header|desc|custom_html|text|slide).*");
+            Pattern.compile(".*(heading|description|content|title|label|product|faq|header|desc|custom_html|text|slide|name).*");
 
 
     // 明确不翻译的key集合
@@ -78,7 +81,6 @@ public class JudgeTranslateUtils {
 
     static {
         OLD_NO_TRANSLATE.add("metafield:");
-        OLD_NO_TRANSLATE.add("color");
         OLD_NO_TRANSLATE.add("formId:");
         OLD_NO_TRANSLATE.add("phone_text");
         OLD_NO_TRANSLATE.add("email_text");
@@ -132,6 +134,10 @@ public class JudgeTranslateUtils {
         }
 
         if (key.equals("handle")) {
+            return false;
+        }
+
+        if(key.contains("captions")){
             return false;
         }
 
@@ -221,6 +227,11 @@ public class JudgeTranslateUtils {
 
         //第十三步，包含邮箱
         if (EMAIL_PATTERN.matcher(value).matches()) {
+            return false;
+        }
+
+        //第十四步，如果key包含color 但 是html， 翻译
+        if (key.contains("color") && !isHtml(value)) {
             return false;
         }
 

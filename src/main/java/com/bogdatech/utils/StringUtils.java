@@ -72,4 +72,14 @@ public class StringUtils {
      public static String replaceDot(String text) {
         return text.replace(".", "-");
      }
+
+
+     //判断字符串是否为纯数字,小数或负数
+     public static boolean isNumber(String value) {
+         if (value == null) {
+             return false;
+         }
+         // 正则表达式支持：正整数、负整数、零、正小数、负小数
+         return value.matches("-?\\d+(\\.\\d+)?");
+     }
 }
