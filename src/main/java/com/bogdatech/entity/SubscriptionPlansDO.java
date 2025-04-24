@@ -17,4 +17,5 @@ public class SubscriptionPlansDO {
     private String description;
     private Double price;
     private Integer maxTranslationsMonth;
+    private Integer everyMonthToken;
 }

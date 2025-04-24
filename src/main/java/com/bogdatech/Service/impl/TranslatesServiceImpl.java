@@ -116,13 +116,23 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         final int maxRetries = 3;
         int attempt = 0;
         boolean success = false;
-
         while (attempt < maxRetries && !success) {
             attempt++;
             try {
-                int affectedRows = baseMapper.update(translatesDO, new UpdateWrapper<TranslatesDO>()
+                QueryWrapper<TranslatesDO> wrapper = new QueryWrapper<>();
+                wrapper.select(
+                        "TOP 1 source, access_token, target, shop_name, status, resource_type"
+                );
+                wrapper.eq(SHOP_NAME, shopName); // shopName 是参数
+                wrapper.orderByDesc("update_at");
+                TranslatesDO getOneTranslate = baseMapper.selectOne(wrapper);
+                getOneTranslate.setStatus(6);
+                int affectedRows = baseMapper.update(getOneTranslate, new UpdateWrapper<TranslatesDO>()
                         .eq(SHOP_NAME, shopName)
-                        .eq("status", 3));
+                        .eq("status", 3)
+                        .eq("source", getOneTranslate.getSource())
+                        .eq("target", getOneTranslate.getTarget())
+                );
                 if (affectedRows > 0) {
                     success = true;
                 }

@@ -25,7 +25,7 @@ public class ShopifyHttpIntegration {
 
     // 设置头部信息
     //查询数据
-    public String sendShopifyPost(ShopifyRequest request, String stringQuery, Map<String, Object> variables) {
+    public String sendShopifyPost(ShopifyRequest request, String  stringQuery, Map<String, Object> variables) {
         String url = "https://" + request.getShopName() + "/admin/api/" + request.getApiVersion() + "/graphql.json";
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);

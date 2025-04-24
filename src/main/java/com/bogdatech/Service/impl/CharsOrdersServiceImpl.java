@@ -25,7 +25,7 @@ public class CharsOrdersServiceImpl extends ServiceImpl<CharsOrdersMapper, Chars
 
     @Override
     public List<CharsOrdersDO> getShopNameAndId() {
-        return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().select(CharsOrdersDO::getShopName, CharsOrdersDO::getId)
+        return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().select(CharsOrdersDO::getShopName, CharsOrdersDO::getId, CharsOrdersDO::getCreatedAt)
                 .eq(CharsOrdersDO::getStatus, "ACTIVE")
                 .like(CharsOrdersDO::getId, "AppSubscription")
         );
