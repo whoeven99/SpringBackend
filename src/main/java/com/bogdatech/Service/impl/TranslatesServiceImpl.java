@@ -47,8 +47,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public List<Integer> readStatusInTranslatesByShopName(TranslateRequest request) {
-       return baseMapper.readStatusInTranslatesByShopName(request.getShopName());
+    public List<Integer> readStatusInTranslatesByShopName(String shopName) {
+       return baseMapper.readStatusInTranslatesByShopName(shopName);
     }
 
     @Override
@@ -143,6 +143,11 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                         + " error: " + e);
             }
         }
+    }
+
+    @Override
+    public List<TranslatesDO> getStatus2Data() {
+        return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("status", 2));
     }
 
 }

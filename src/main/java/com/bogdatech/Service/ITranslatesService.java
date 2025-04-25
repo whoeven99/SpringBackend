@@ -12,7 +12,7 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     public List<TranslatesDO> readTranslateInfo(Integer status);
     public int updateTranslateStatus(String shopName, int status, String target, String source, String accessToken);
     public List<TranslatesDO> readInfoByShopName(String shopName, String source);
-    public List<Integer> readStatusInTranslatesByShopName(TranslateRequest request);
+    public List<Integer> readStatusInTranslatesByShopName(String shopName);
 
     TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO);
     public int updateStatusByShopNameAnd2(String shopName);
@@ -34,4 +34,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     String getResourceTypeByshopNameAndTargetAndSource(String shopName, String target, String source);
 
     void updateStatus3To6(String shopName);
+
+    List<TranslatesDO> getStatus2Data();
 }
