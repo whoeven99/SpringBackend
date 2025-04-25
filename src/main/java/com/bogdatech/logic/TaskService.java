@@ -179,4 +179,52 @@ public class TaskService {
             }
         }
     }
+
+
+    /**
+     * 用户的自动翻译功能
+     * 1，先判断哪些用户使用了自动翻译功能
+     * 2，再判断这些用户是否卸载了，卸载了就不管了
+     * 3，再判断该用户剩余token数是否足够，不够就不管了
+     * 4，再判断该用户是否正在翻译，正在翻译就不翻译了
+     * 5，如果一个用户切换了本地语言，前后都设置了定时任务，只翻译最新的那个目标语言
+     * */
+    public void autoTranslate() {
+        //获取所有使用自动翻译的用户
+        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        for (TranslatesDO translatesDO: translatesDOList
+             ) {
+            System.out.println("translatesDO: " + translatesDO);
+            String shopName = translatesDO.getShopName();
+            //判断该用户是否正在翻译，正在翻译就不翻译了
+            if (translatesDO.getStatus() == 2){
+                continue;
+            }
+
+            //判断这些用户是否卸载了，卸载了就不管了
+            UsersDO usersDO = usersService.getUserByName(shopName);
+            if (usersDO.getUninstallTime() == null) {
+                continue;
+            }
+
+            //判断该用户剩余token数是否足够，不够就不管了
+            //判断字符是否超限
+            TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+            Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+            int usedChars = request1.getUsedChars();
+            // 如果字符超限，则直接返回字符超限
+            if (usedChars >= remainingChars) {
+                continue;
+            }
+
+            //如果一个用户切换了本地语言，前后都设置了定时任务，只翻译最新的那个目标语言
+            List<TranslatesDO> listData = translatesService.list(new QueryWrapper<TranslatesDO>()
+                    .eq("shop_name", shopName)
+                    .eq("target", translatesDO.getTarget())
+                    .orderByDesc("update_time")
+            );
+            System.out.println("the latest date: " + listData.get(0));
+
+        }
+    }
 }

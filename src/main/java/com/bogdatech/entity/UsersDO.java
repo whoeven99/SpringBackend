@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,4 +25,5 @@ public class UsersDO {
     private String userTag;
     private String firstName;
     private String lastName;
+    private Timestamp uninstallTime;
 }
