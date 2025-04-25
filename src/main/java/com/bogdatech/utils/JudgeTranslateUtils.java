@@ -36,6 +36,7 @@ public class JudgeTranslateUtils {
         NO_TRANSLATE_KEYS.add("_font");
         NO_TRANSLATE_KEYS.add("spacing");
         NO_TRANSLATE_KEYS.add("items_resp");
+        NO_TRANSLATE_KEYS.add("animations_type");
     }
 
     // 包含.json时不翻译的子字符串集合
