@@ -52,26 +52,6 @@ public class WidgetConfigurationsController {
     //供前端查询数据API
     @PostMapping("/getData")
     public BaseResponse<Object> getData(@RequestBody WidgetConfigurationsDO widgetConfigurationsDO) {
-        WidgetConfigurationsDO b;
-        int maxRetries = 3;
-        int attempt = 0;
-        boolean success = false;
-
-        while (attempt < maxRetries && !success) {
-            try {
-                b = widgetConfigurationsService.getData(widgetConfigurationsDO.getShopName());
-                if (b != null) {
-                    success = true;
-                    return new BaseResponse<>().CreateSuccessResponse(b);
-                } else {
-                    attempt++;
-                    appInsights.trackTrace("查询失败 (b=" + b + ")，正在重试第 " + (attempt + 1) + " 次");
-                }
-            } catch (Exception e) {
-                attempt++;
-                appInsights.trackTrace("查询异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
-            }
-        }
-        return new BaseResponse<>().CreateErrorResponse("查询失败，已重试3次仍未成功");
+        return new BaseResponse<>().CreateSuccessResponse(widgetConfigurationsService.getData(widgetConfigurationsDO.getShopName()));
     }
 }
