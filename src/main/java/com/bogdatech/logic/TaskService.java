@@ -4,14 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
-import com.bogdatech.entity.CharsOrdersDO;
-import com.bogdatech.entity.SubscriptionQuotaRecordDO;
-import com.bogdatech.entity.UsersDO;
+import com.bogdatech.entity.*;
 import com.bogdatech.integration.ShopifyHttpIntegration;
-import com.bogdatech.model.controller.request.CloudServiceRequest;
-import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslationCounterRequest;
-import com.bogdatech.model.controller.request.UserPriceRequest;
+import com.bogdatech.model.controller.request.*;
+import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -35,10 +31,12 @@ public class TaskService {
     private final ISubscriptionPlansService subscriptionPlansService;
 
     private final ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
+    private final ITranslatesService translatesService;
+    private final TranslateService translateService;
 
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.shopifyApiIntegration = shopifyApiIntegration;
@@ -46,6 +44,8 @@ public class TaskService {
         this.translationCounterService = translationCounterService;
         this.subscriptionPlansService = subscriptionPlansService;
         this.subscriptionQuotaRecordService = subscriptionQuotaRecordService;
+        this.translatesService = translatesService;
+        this.translateService = translateService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -126,5 +126,57 @@ public class TaskService {
         }
     }
 
+    //当自动重启后，重启翻译状态为2的任务
+    @Async
+    public void translateStatus2WhenSystemRestart() {
+        //查找翻译状态为2的任务
+        List<TranslatesDO> listData =translatesService.getStatus2Data();
+        //循环处理获取到的任务，先将状态改为3，然后调用翻译API
+        for (TranslatesDO translatesDO: listData
+        ) {
+//            System.out.println("translatesDO: " + translatesDO);
+            translateStatus2WhenSystemRestartComplete(translatesDO);
+        }
+    }
 
+    //判断是否符合翻译条件
+    public Boolean isTranslateCondition(TranslatesDO translatesDO, TranslationCounterDO request1, Integer remainingChars) {
+//        一个用户当前只能翻译一条语言，根据用户的status判断
+        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(translatesDO.getShopName());
+        for (Integer integer : integers) {
+            if (integer == 2) {
+                return false;
+            }
+        }
+
+        int usedChars = request1.getUsedChars();
+        // 如果字符超限，则直接返回字符超限
+        if (usedChars >= remainingChars) {
+            return false;
+        }
+        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+        translatesService.updateTranslateStatus(translatesDO.getShopName(), 2, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
+        return true;
+    }
+
+    //服务器重启的完整翻译方法
+    public void translateStatus2WhenSystemRestartComplete(TranslatesDO translatesDO) {
+        int i = translatesService.updateTranslateStatus(translatesDO.getShopName(), 3, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
+        if (i > 0) {
+            //准备开始翻译，判断是否符合翻译条件
+            //判断字符是否超限
+            String shopName = translatesDO.getShopName();
+            TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+            Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+            Boolean translateCondition = isTranslateCondition(translatesDO, request1, remainingChars);
+            if (translateCondition) {
+                Integer usedChars = request1.getUsedChars();
+                //初始化计数器
+                CharacterCountUtils counter = new CharacterCountUtils();
+                counter.addChars(usedChars);
+                //开始翻译product模块
+                translateService.startTranslation(new TranslateRequest(0,translatesDO.getShopName(),translatesDO.getAccessToken(),translatesDO.getSource(),translatesDO.getTarget(), null), remainingChars, counter, usedChars);
+            }
+        }
+    }
 }

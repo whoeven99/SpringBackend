@@ -1653,6 +1653,7 @@ public class TranslateService {
                 //添加这个翻译项
                 //插入语言状态
                 insertLanguageStatus(request);
+                translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
             }
             //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
             Integer status = userTypeTokenService.getStatusByTranslationId(translationId);

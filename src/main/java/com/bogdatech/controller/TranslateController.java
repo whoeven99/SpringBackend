@@ -144,7 +144,7 @@ public class TranslateController {
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
 
 //        一个用户当前只能翻译一条语言，根据用户的status判断
-        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request);
+        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request.getShopName());
         for (Integer integer : integers) {
             if (integer == 2) {
                 return new BaseResponse<>().CreateSuccessResponse(HAS_TRANSLATED);
