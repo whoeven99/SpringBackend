@@ -1131,7 +1131,7 @@ public class TranslateService {
 
             //对METAFIELD字段翻译
             if (resourceType.equals(METAFIELD)) {
-                if (value.equals("TRUE") || value.equals("FALSE")) {
+                if ("TRUE".equalsIgnoreCase(value) || "FALSE".equalsIgnoreCase(value)) {
                     continue;
                 }
                 judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
