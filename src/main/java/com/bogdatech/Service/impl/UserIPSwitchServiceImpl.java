@@ -18,7 +18,7 @@ public class UserIPSwitchServiceImpl extends ServiceImpl<UserIPSwitchMapper, Use
     }
 
     @Override
-    public int getSwitchId(String shopName) {
+    public Integer getSwitchId(String shopName) {
         return baseMapper.getSwitchId(shopName);
     }
 }
