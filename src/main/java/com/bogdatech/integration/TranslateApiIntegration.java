@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
-import com.microsoft.applicationinsights.TelemetryClient;
 import com.volcengine.model.request.translate.TranslateTextRequest;
 import com.volcengine.model.response.translate.TranslateTextResponse;
 import com.volcengine.service.translate.ITranslateService;
@@ -27,10 +26,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Component
 public class TranslateApiIntegration {
-
-    private static final TelemetryClient appInsights = new TelemetryClient();
 
     @Value("${baidu.api.key}")
     private String apiUrl;

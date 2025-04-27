@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.requestBody.ShopifyRequestBody;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -18,10 +17,10 @@ import java.io.IOException;
 import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class ShopifyHttpIntegration {
-    private final TelemetryClient appInsights = new TelemetryClient();
 
     // 设置头部信息
     //查询数据

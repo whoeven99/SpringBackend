@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.mapper.TranslatesMapper;
+import com.bogdatech.model.controller.request.AutoTranslateRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -148,6 +150,25 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public List<TranslatesDO> getStatus2Data() {
         return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("status", 2));
+    }
+
+    @Override
+    public BaseResponse<Object> updateAutoTranslateByShopName(String shopName, Boolean autoTranslate, String source, String target) {
+        int flag = baseMapper.update(new UpdateWrapper<TranslatesDO>()
+                .eq("shop_name", shopName)
+                .eq("source", source)
+                .eq("target", target)
+                .set("auto_translate", autoTranslate));
+        if (flag > 0) {
+            return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate));
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("更新失败");
+        }
+    }
+
+    @Override
+    public List<TranslatesDO> readAllTranslates() {
+        return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("auto_translate", true));
     }
 
 }

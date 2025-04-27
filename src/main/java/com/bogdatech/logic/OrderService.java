@@ -8,7 +8,6 @@ import com.bogdatech.entity.UsersDO;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +26,7 @@ public class OrderService {
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
     private final ITranslationCounterService translationCounterService;
-    TelemetryClient appInsights = new TelemetryClient();
+
     @Autowired
     public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService){
     this.charsOrdersService = charsOrdersService;

@@ -6,19 +6,23 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 @Component
 @EnableScheduling
 @EnableAsync
-public class SubscriptionTask {
+public class AutoTranslateTask {
+
     private final TaskService taskService;
 
     @Autowired
-    public SubscriptionTask(TaskService taskService) {
+    public AutoTranslateTask(TaskService taskService) {
         this.taskService = taskService;
     }
 
-//    @Scheduled(cron = "0 0 0 * * ?")
-    public void subscriptionTask() {
-        taskService.judgeAddChars();
+//    @Scheduled(cron = "0 0 1 * * ?")
+    @PostConstruct
+    public void autoTranslate() {
+        taskService.autoTranslate();
     }
 }

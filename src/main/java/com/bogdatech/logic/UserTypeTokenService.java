@@ -6,12 +6,12 @@ import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.UserTypeTokenDO;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -26,7 +26,6 @@ public class UserTypeTokenService {
         this.translatesService = translatesService;
         this.translateService = translateService;
     }
-    private static TelemetryClient appInsights = new TelemetryClient();
 
     /**
      * 调用方法获取数据库Translates里面的id值，根据id值从UserTypeToken表获取对应的数据

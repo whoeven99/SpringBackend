@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bogdatech.integration.ALiYunTranslateIntegration.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class ArkTranslateIntegration {
 

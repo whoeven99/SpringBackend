@@ -11,7 +11,6 @@ import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +22,7 @@ import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/shopify")
@@ -43,8 +43,6 @@ public class ShopifyController {
         this.userSubscriptionsService = userSubscriptionsService;
 
     }
-
-    private final TelemetryClient appInsights = new TelemetryClient();
 
     //通过测试环境调shopify的API
     @PostMapping("/test123")

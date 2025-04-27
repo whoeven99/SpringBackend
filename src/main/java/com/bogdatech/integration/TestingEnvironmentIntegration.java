@@ -2,7 +2,6 @@ package com.bogdatech.integration;
 
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -19,8 +18,6 @@ import static com.bogdatech.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
 
 @Component
 public class TestingEnvironmentIntegration {
-
-    private TelemetryClient appInsights = new TelemetryClient();
 
     public String sendShopifyGet(ShopifyRequest request, String api) {
         String url = "https://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/"+ api;

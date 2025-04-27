@@ -35,7 +35,6 @@ public class TestController {
     private final TranslateService translateService;
     private final JsoupUtils jsoupUtils;
     private final RateHttpIntegration rateHttpIntegration;
-    TelemetryClient appInsights = new TelemetryClient();
     @Autowired
     public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;

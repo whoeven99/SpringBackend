@@ -1,7 +1,6 @@
 package com.bogdatech.integration;
 
 import com.alibaba.fastjson.JSONObject;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -9,6 +8,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class RateHttpIntegration {
@@ -21,7 +22,6 @@ public class RateHttpIntegration {
 
     public static Map<String, Double> rateMap = new HashMap<String, Double>();
 
-    private final TelemetryClient appInsights = new TelemetryClient();
 
     public void getFixerRate() {
         String url = "https://api.apilayer.com/fixer/latest?base=EUR" +
