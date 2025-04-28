@@ -5,7 +5,6 @@ import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.requestBody.EmailRequestBody;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.microsoft.applicationinsights.TelemetryClient;
 import com.tencentcloudapi.common.AbstractModel;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
@@ -27,13 +26,14 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Component
 public class EmailIntegration {
 
     @Value("${email.key}")
     private String mailChimpKey;
 
-    TelemetryClient appInsights = new TelemetryClient();
     public  String sendEmail(MailChampSendEmailRequest sendEmailRequest) {
         sendEmailRequest.setEmailKey(mailChimpKey);
 //        System.out.println("mailChimpKey: " + mailChimpKey);

@@ -58,6 +58,12 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(LINK, MAX_LENGTH, "", "")
     ));
 
+    public static final List<TranslateResourceDTO> PRODUCT_RESOURCES = new ArrayList<>(Arrays.asList(
+            new TranslateResourceDTO(PRODUCT, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", "")
+    ));
+
     public static final List<TranslateResourceDTO> ALL_RESOURCES = new ArrayList<>(Arrays.asList(
 
             new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", ""),

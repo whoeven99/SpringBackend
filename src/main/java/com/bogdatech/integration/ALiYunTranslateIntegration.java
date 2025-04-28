@@ -19,7 +19,6 @@ import com.bogdatech.utils.ApiCodeUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -29,11 +28,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.SwitchModelUtils.switchModel;
 
 @Component
 public class ALiYunTranslateIntegration {
-    static TelemetryClient appInsights = new TelemetryClient();
 
     public com.aliyun.alimt20181012.Client createClient() {
         // 工程代码泄露可能会导致 AccessKey 泄露，并威胁账号下所有资源的安全性。以下代码示例仅供参考。

@@ -22,6 +22,7 @@ public class TranslatesDO {
     private String shopName;
     private Integer status;
     private String resourceType;
+    private Boolean autoTranslate;
 //    private Timestamp createAt;
     private Timestamp updateAt;
 }

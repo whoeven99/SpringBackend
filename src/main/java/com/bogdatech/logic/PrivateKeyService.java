@@ -2,7 +2,6 @@ package com.bogdatech.logic;
 
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.*;
@@ -21,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -44,7 +42,6 @@ import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
-import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
 import static com.bogdatech.integration.PrivateIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.integration.PrivateIntegration.translatePrivateNewHtml;
@@ -104,9 +101,8 @@ public class PrivateKeyService {
         this.userTypeTokenService = userTypeTokenService;
     }
 
-    TelemetryClient appInsights = new TelemetryClient();
 
-    private static String PRIVATE_KEY = "private_key";
+    private static final String PRIVATE_KEY = "private_key";
     /**
      * 私有key翻译前的判断
      *
@@ -285,37 +281,7 @@ public class PrivateKeyService {
             //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
             Integer status = userTypeTokenService.getStatusByTranslationId(translationId);
             if (status != 2) {
-                //将UserTypeToken的status修改为2
-                userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 2);
-                ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
-                //循环type获取token
-                for (String key : TOKEN_MAP.keySet()
-                ) {
-                    int tokens = 0;
-
-                    for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
-                        int token = shopifyService.getTotalWords(shopifyRequest, "tokens", translateResourceDTO);
-                        tokens += token;
-                    }
-
-                    //将tokens存储到UserTypeToken对应的列里面
-                    userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
-                    if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
-                            || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
-                            || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                            || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
-                        UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
-                        updateWrapper.eq("translation_id", translationId);
-
-                        // 根据传入的列名动态设置更新的字段
-                        updateWrapper.set(key, tokens);
-                        userTypeTokenService.update(null, updateWrapper);
-                    } else {
-                        appInsights.trackTrace("Invalid column name");
-                    }
-                }
-                //token全部获取完之后修改，UserTypeToken的status==1
-                userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
+                getUserTranslatedToken(request, translationId, userTypeTokenService, shopifyService);
             }
         } catch (IllegalArgumentException e) {
             appInsights.trackTrace("错误原因： " + e.getMessage());

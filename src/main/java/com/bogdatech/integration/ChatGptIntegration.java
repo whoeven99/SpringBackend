@@ -9,12 +9,13 @@ import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.azure.core.exception.HttpResponseException;
 import com.bogdatech.exception.ClientException;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class ChatGptIntegration {
@@ -26,7 +27,6 @@ public class ChatGptIntegration {
     @Value("${gpt.deploymentName}")
     private String deploymentName;
 
-    TelemetryClient appInsights = new TelemetryClient();
     public String chatWithGpt(String prompt) {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()

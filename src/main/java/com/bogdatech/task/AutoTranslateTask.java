@@ -10,16 +10,17 @@ import org.springframework.stereotype.Component;
 @Component
 @EnableScheduling
 @EnableAsync
-public class SubscriptionTask {
+public class AutoTranslateTask {
+
     private final TaskService taskService;
 
     @Autowired
-    public SubscriptionTask(TaskService taskService) {
+    public AutoTranslateTask(TaskService taskService) {
         this.taskService = taskService;
     }
 
-    @Scheduled(cron = "0 0 0 * * ?")
-    public void subscriptionTask() {
-        taskService.judgeAddChars();
+    @Scheduled(cron = "0 0 1 * * ?")
+    public void autoTranslate() {
+        taskService.autoTranslate();
     }
 }

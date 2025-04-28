@@ -1,7 +1,6 @@
 package com.bogdatech.exception;
 
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.enums.ErrorEnum.SERVER_ERROR;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 
 @RestControllerAdvice
@@ -19,7 +19,6 @@ public class UserHandleException {
 
     @ExceptionHandler(Exception.class)
     public BaseResponse resolveException(Exception ex){
-        TelemetryClient appInsights = new TelemetryClient();
         //判断拦截的异常是我们自定义的异常
         if (ex instanceof ClientException){
             System.out.println("-----------ClientException异常错误信息---------");
@@ -39,7 +38,6 @@ public class UserHandleException {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public BaseResponse handleMethodArgumentNotValidException  (MethodArgumentNotValidException ex){
-        TelemetryClient appInsights = new TelemetryClient();
         List<ObjectError> errors = ex.getBindingResult().getAllErrors();
         String message = errors.stream().map(ObjectError::getDefaultMessage).collect(Collectors.joining(","));
         System.out.println("-----------校验数据错误信息---------");
