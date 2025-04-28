@@ -15,7 +15,7 @@ public class MailChimpConstants {
     public static final String CHARACTER_QUOTA_USED_UP_SUBJECT = "Reminder: Your Character Balance Has Run Out — Top Up Now!";
     public static final String CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT = "Confirmation of Successful Credits Purchase";
     public static final String ONLINE_NOT_TRANSLATION_SUBJECT = "Translate Task Reminder Not Complete";
-
+    public static final String PLAN_UPGRADE_SUCCESSFUL = "Plan Upgrade Successful!";
     //from_email
     public static final String FROM_EMAIL = "support@ciwi.ai";
     public static final String TENCENT_FROM_EMAIL = "support@msg.ciwi.ai";

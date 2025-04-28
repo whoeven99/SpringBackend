@@ -54,4 +54,15 @@ public class CharsOrdersController {
             return new BaseResponse<>().CreateErrorResponse("false");
         }
     }
+
+    //订阅付费计划成功之后发送相关邮件
+    @PostMapping("/sendSubscribeSuccessEmail")
+    public BaseResponse<Object> sendSubscribeSuccessEmail(@RequestBody CharsOrdersDO charsOrdersDO) {
+        Boolean flag = orderService.sendSubscribeSuccessEmail(charsOrdersDO);
+        if (flag) {
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("false");
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.bogdatech.logic;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
@@ -12,13 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.bogdatech.constants.MailChimpConstants.CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT;
-import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
+import static com.bogdatech.constants.MailChimpConstants.*;
 
 @Component
 public class OrderService {
@@ -68,5 +69,28 @@ public class OrderService {
         templateData.put("total_credits_count", formattedNumber2 + " Credits");
 //        return true;
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(138372L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+    }
+
+    public Boolean sendSubscribeSuccessEmail(CharsOrdersDO charsOrdersDO) {
+        //根据shopName获取用户名
+        UsersDO usersDO = usersService.getUserByName(charsOrdersDO.getShopName());
+        //根据shopName获取订单信息
+        CharsOrdersDO userData = charsOrdersService.getOne(new QueryWrapper<CharsOrdersDO>().eq("id", charsOrdersDO.getId()));
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("user", usersDO.getFirstName());
+        templateData.put("new_plan_name", userData.getName());
+        templateData.put("new_fee", "$" + userData.getAmount());
+        // 定义输出格式 (不带 T 的格式)
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        // 格式化为目标格式
+        String formattedDateTime = userData.getCreatedAt().format(outputFormatter);
+        templateData.put("effective_date", formattedDateTime + " UTC");
+        String suffix = ".myshopify.com";
+        String TargetShop;
+        TargetShop = usersDO.getShopName().substring(0, usersDO.getShopName().length() - suffix.length());
+        templateData.put("shop_name", TargetShop);
+
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 }
