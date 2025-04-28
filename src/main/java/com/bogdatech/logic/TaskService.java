@@ -196,11 +196,11 @@ public class TaskService {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         for (TranslatesDO translatesDO: translatesDOList
              ) {
-            System.out.println("translatesDO: " + translatesDO);
+//            System.out.println("translatesDO: " + translatesDO);
             String shopName = translatesDO.getShopName();
             //判断该用户是否正在翻译，正在翻译就不翻译了
             if (translatesDO.getStatus() == 2){
-                System.out.println("该用户正在翻译，不翻译了");
+//                System.out.println("该用户正在翻译，不翻译了");
                 continue;
             }
 
@@ -209,10 +209,10 @@ public class TaskService {
             if (usersDO.getUninstallTime() != null ) {
                 //如果用户卸载了，但有登陆时间，需要判断两者的前后
                 if (usersDO.getLoginTime() == null) {
-                    System.out.println("该用户已卸载，不翻译了");
+//                    System.out.println("该用户已卸载，不翻译了");
                     continue;
                 }else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())){
-                    System.out.println("该用户已卸载，不翻译了");
+//                    System.out.println("该用户已卸载，不翻译了");
                     continue;
                 }
             }
@@ -224,21 +224,12 @@ public class TaskService {
             int usedChars = request1.getUsedChars();
             // 如果字符超限，则直接返回字符超限
             if (usedChars >= remainingChars) {
-                System.out.println("该用户字符超限，不翻译了");
+//                System.out.println("该用户字符超限，不翻译了");
                 continue;
             }
 
-            //如果一个用户切换了本地语言，前后都设置了定时任务，只翻译最新的那个目标语言
-            List<TranslatesDO> listData = translatesService.list(new QueryWrapper<TranslatesDO>()
-                    .eq("shop_name", shopName)
-                    .eq("target", translatesDO.getTarget())
-                    .orderByDesc("update_at")
-            );
-            System.out.println("the latest date: " + listData.get(0));
-
             //UTC每天凌晨1点翻译，且只翻译product模块
-            System.out.println("开始翻译");
-//            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, new CharacterCountUtils(), usedChars, true);
+            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, new CharacterCountUtils(), usedChars, true);
 
         }
     }

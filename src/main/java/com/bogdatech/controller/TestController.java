@@ -7,13 +7,13 @@ import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.logic.TaskService;
 import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -33,16 +33,16 @@ public class TestController {
     private final ShopifyHttpIntegration shopifyApiIntegration;
     private final TestService testService;
     private final TranslateService translateService;
-    private final JsoupUtils jsoupUtils;
+    private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, JsoupUtils jsoupUtils, RateHttpIntegration rateHttpIntegration) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.testService = testService;
         this.translateService = translateService;
-        this.jsoupUtils = jsoupUtils;
+        this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
     }
 
@@ -127,5 +127,10 @@ public class TestController {
                """;
         String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
         System.out.println("final: " + s);
+    }
+
+    @PutMapping("/testAutoTranslate")
+    public void testAutoTranslate() {
+        taskService.autoTranslate();
     }
 }

@@ -4,6 +4,7 @@ import com.bogdatech.logic.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,7 +18,7 @@ public class SubscriptionTask {
         this.taskService = taskService;
     }
 
-//    @Scheduled(cron = "0 0 0 * * ?")
+    @Scheduled(cron = "0 0 0 * * ?")
     public void subscriptionTask() {
         taskService.judgeAddChars();
     }
