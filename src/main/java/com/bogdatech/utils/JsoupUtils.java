@@ -275,7 +275,12 @@ public class JsoupUtils {
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString);
-            return singleTranslate(content, prompt, counter, target);
+            if (target.equals("ar")){
+                return singleTranslate(content, prompt, counter, target);
+            }else {
+                return douBaoTranslate(targetLanguage, prompt, content, counter);
+            }
+
         } else {
             prompt = getSimplePrompt(targetLanguage);
 //            System.out.println("prompt变量和极简: " + prompt);
