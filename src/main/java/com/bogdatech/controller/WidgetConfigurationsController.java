@@ -52,6 +52,12 @@ public class WidgetConfigurationsController {
     //供前端查询数据API
     @PostMapping("/getData")
     public BaseResponse<Object> getData(@RequestBody WidgetConfigurationsDO widgetConfigurationsDO) {
-        return new BaseResponse<>().CreateSuccessResponse(widgetConfigurationsService.getData(widgetConfigurationsDO.getShopName()));
+        WidgetConfigurationsDO data = widgetConfigurationsService.getData(widgetConfigurationsDO.getShopName());
+        if (data != null) {
+            return new BaseResponse<>().CreateSuccessResponse(data);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("查询失败");
+        }
+
     }
 }

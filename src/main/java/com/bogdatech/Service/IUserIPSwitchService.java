@@ -6,5 +6,5 @@ import com.bogdatech.entity.UserIPSwitchDO;
 public interface IUserIPSwitchService extends IService<UserIPSwitchDO> {
     int insertSwitch(UserIPSwitchDO userIPSwitchDO);
 
-    int getSwitchId(String shopName);
+    Integer getSwitchId(String shopName);
 }
