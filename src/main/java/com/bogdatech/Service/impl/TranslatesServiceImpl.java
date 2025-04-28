@@ -45,7 +45,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public List<TranslatesDO> readInfoByShopName(String shopName, String source) {
-        return baseMapper.readInfoByShopName(shopName, source);
+        return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("source", source));
     }
 
     @Override
