@@ -207,7 +207,12 @@ public class TaskService {
             }
 
             //UTC每天凌晨1点翻译，且只翻译product模块
-            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, new CharacterCountUtils(), usedChars, true);
+            //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+            //初始化计数器
+            CharacterCountUtils counter = new CharacterCountUtils();
+            counter.addChars(usedChars);
+            translatesService.updateTranslateStatus(shopName, 2, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
+            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, true);
 
         }
     }
