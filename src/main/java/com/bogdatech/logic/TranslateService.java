@@ -110,7 +110,7 @@ public class TranslateService {
     //判断是否可以终止翻译流程
     public static Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
     public static Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
-//    private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
+    //    private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
     public static ExecutorService executorService = new ThreadPoolExecutor(
@@ -601,6 +601,11 @@ public class TranslateService {
                 continue;
             }
 
+            //元字段Html翻译
+            if (isHtml(value)) {
+                htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation);
+                continue;
+            }
 
             if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
                 //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
@@ -617,34 +622,54 @@ public class TranslateService {
             }
 
             if (LIST_SINGLE_LINE_TEXT_FIELD.equals(type)) {
-                //先将list数据由String转为List<String>，循环判断
-                try {
-                    //如果符合要求，则翻译，不符合要求则返回原值
-                    List<String> resultList = objectMapper.readValue(value, new TypeReference<List<String>>() {
-                    });
-                    for (int i = 0; i < resultList.size(); i++) {
-                        String original = resultList.get(i);
-                        if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
-                            //走翻译流程
-                            String translated = translateSingleText(request, original, type, counter, source);
-                            //将数据填回去
-                            resultList.set(i, translated);
-                        }
-                    }
-                    //将list数据转为String 再存储到shopify本地
-                    String translatedValue = objectMapper.writeValueAsString(resultList);
-                    saveToShopify(translatedValue, translation, resourceId, request);
-                    printTranslation(translatedValue, value, translation, request.getShopName(), type, resourceId, source);
-                } catch (Exception e) {
-                    //存原数据到shopify本地
-                    saveToShopify(value, translation, resourceId, request);
-                    appInsights.trackTrace("LIST错误原因： " + e.getMessage());
-//                    System.out.println("LIST错误原因： " + e.getMessage());
-                }
+                //翻译list类型文本
+                translateListData(value, request, type, counter, source, resourceId, translation);
             }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
         }
+    }
+
+    //元字段list类型翻译
+    private void translateListData(String value, ShopifyRequest request, String type, CharacterCountUtils counter, String source, String resourceId, Map<String, Object> translation) {
+        //先将list数据由String转为List<String>，循环判断
+        try {
+            //如果符合要求，则翻译，不符合要求则返回原值
+            List<String> resultList = objectMapper.readValue(value, new TypeReference<List<String>>() {
+            });
+            for (int i = 0; i < resultList.size(); i++) {
+                String original = resultList.get(i);
+                if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
+                    //走翻译流程
+                    String translated = translateSingleText(request, original, type, counter, source);
+                    //将数据填回去
+                    resultList.set(i, translated);
+                }
+            }
+            //将list数据转为String 再存储到shopify本地
+            String translatedValue = objectMapper.writeValueAsString(resultList);
+            saveToShopify(translatedValue, translation, resourceId, request);
+            printTranslation(translatedValue, value, translation, request.getShopName(), type, resourceId, source);
+        } catch (Exception e) {
+            //存原数据到shopify本地
+            saveToShopify(value, translation, resourceId, request);
+            appInsights.trackTrace("LIST错误原因： " + e.getMessage());
+//                    System.out.println("LIST错误原因： " + e.getMessage());
+        }
+    }
+
+    //html的翻译
+    private void htmlTranslate(TranslateContext translateContext, ShopifyRequest request, CharacterCountUtils counter, String target, String value, String source, String resourceId, Map<String, Object> translation) {
+        String htmlTranslation;
+        try {
+            TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
+            htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
+        } catch (Exception e) {
+            saveToShopify(value, translation, resourceId, request);
+            return;
+        }
+        saveToShopify(htmlTranslation, translation, resourceId, request);
+        printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
     }
 
     //仅翻译单行文本。先缓存，后数据库，再普通翻译
@@ -898,17 +923,7 @@ public class TranslateService {
             if ("HTML".equals(type) || isHtml(value)) {
                 //存放在html的list集合里面
                 // 解析HTML文档
-                String htmlTranslation;
-                try {
-                    TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
-                    htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType());
-                } catch (Exception e) {
-                    saveToShopify(value, translation, resourceId, request);
-                    continue;
-                }
-                saveToShopify(htmlTranslation, translation, resourceId, request);
-                printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
-                continue;
+                htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation);
             }
 
             //TODO: 改为判断语言代码方法
