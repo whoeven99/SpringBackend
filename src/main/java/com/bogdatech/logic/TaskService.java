@@ -88,6 +88,7 @@ public class TaskService {
         JSONObject root = JSON.parseObject(infoByShopify);
         JSONObject node = root.getJSONObject("node");
         if (node == null) {
+            //用户卸载，计划会被取消，但不确定其他情况
             return;
         }
         String name = node.getString("name");
@@ -105,7 +106,7 @@ public class TaskService {
         Instant now = Instant.now();
 
         // 只处理活跃、非试用、且还在本期内的订阅
-        if (!"ACTIVE".equals(status) || now.isAfter(end)){
+        if (!"ACTIVE".equals(status) || now.isAfter(end)) {
 //            System.out.println("不满足条件");
             return;
         }
@@ -130,53 +131,89 @@ public class TaskService {
     @Async
     public void translateStatus2WhenSystemRestart() {
         //查找翻译状态为2的任务
-        List<TranslatesDO> listData =translatesService.getStatus2Data();
+        List<TranslatesDO> listData = translatesService.getStatus2Data();
         //循环处理获取到的任务，先将状态改为3，然后调用翻译API
-        for (TranslatesDO translatesDO: listData
+        for (TranslatesDO translatesDO : listData
         ) {
 //            System.out.println("translatesDO: " + translatesDO);
             translateStatus2WhenSystemRestartComplete(translatesDO);
         }
     }
 
-    //判断是否符合翻译条件
-    public Boolean isTranslateCondition(TranslatesDO translatesDO, TranslationCounterDO request1, Integer remainingChars) {
-//        一个用户当前只能翻译一条语言，根据用户的status判断
-        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(translatesDO.getShopName());
-        for (Integer integer : integers) {
-            if (integer == 2) {
-                return false;
-            }
-        }
-
-        int usedChars = request1.getUsedChars();
-        // 如果字符超限，则直接返回字符超限
-        if (usedChars >= remainingChars) {
-            return false;
-        }
-        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-        translatesService.updateTranslateStatus(translatesDO.getShopName(), 2, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
-        return true;
-    }
-
     //服务器重启的完整翻译方法
     public void translateStatus2WhenSystemRestartComplete(TranslatesDO translatesDO) {
-        int i = translatesService.updateTranslateStatus(translatesDO.getShopName(), 3, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
-        if (i > 0) {
-            //准备开始翻译，判断是否符合翻译条件
-            //判断字符是否超限
+        //准备开始翻译，判断是否符合翻译条件
+        //判断字符是否超限
+        String shopName = translatesDO.getShopName();
+        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+        int usedChars = request1.getUsedChars();
+        // 如果字符超限，则直接返回字符超限
+
+        if (usedChars < remainingChars) {
+            //初始化计数器
+            CharacterCountUtils counter = new CharacterCountUtils();
+            counter.addChars(usedChars);
+            //开始翻译状态为2的翻译
+            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false);
+        }
+    }
+
+
+    /**
+     * 用户的自动翻译功能
+     * 1，先判断哪些用户使用了自动翻译功能
+     * 2，再判断这些用户是否卸载了，卸载了就不管了
+     * 3，再判断该用户剩余token数是否足够，不够就不管了
+     * 4，再判断该用户是否正在翻译，正在翻译就不翻译了
+     * 5，如果一个用户切换了本地语言，前后都设置了定时任务，只翻译最新的那个目标语言
+     */
+    @Async
+    public void autoTranslate() {
+        //获取所有使用自动翻译的用户
+        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        for (TranslatesDO translatesDO : translatesDOList
+        ) {
+//            System.out.println("translatesDO: " + translatesDO);
             String shopName = translatesDO.getShopName();
+            //判断该用户是否正在翻译，正在翻译就不翻译了
+            if (translatesDO.getStatus() == 2) {
+//                System.out.println("该用户正在翻译，不翻译了");
+                continue;
+            }
+
+            //判断这些用户是否卸载了，卸载了就不管了
+            UsersDO usersDO = usersService.getUserByName(shopName);
+            if (usersDO.getUninstallTime() != null) {
+                //如果用户卸载了，但有登陆时间，需要判断两者的前后
+                if (usersDO.getLoginTime() == null) {
+//                    System.out.println("该用户已卸载，不翻译了");
+                    continue;
+                } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+//                    System.out.println("该用户已卸载，不翻译了");
+                    continue;
+                }
+            }
+
+            //判断该用户剩余token数是否足够，不够就不管了
+            //判断字符是否超限
             TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
             Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-            Boolean translateCondition = isTranslateCondition(translatesDO, request1, remainingChars);
-            if (translateCondition) {
-                Integer usedChars = request1.getUsedChars();
-                //初始化计数器
-                CharacterCountUtils counter = new CharacterCountUtils();
-                counter.addChars(usedChars);
-                //开始翻译product模块
-                translateService.startTranslation(new TranslateRequest(0,translatesDO.getShopName(),translatesDO.getAccessToken(),translatesDO.getSource(),translatesDO.getTarget(), null), remainingChars, counter, usedChars);
+            int usedChars = request1.getUsedChars();
+            // 如果字符超限，则直接返回字符超限
+            if (usedChars >= remainingChars) {
+//                System.out.println("该用户字符超限，不翻译了");
+                continue;
             }
+
+            //UTC每天凌晨1点翻译，且只翻译product模块
+            //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+            //初始化计数器
+            CharacterCountUtils counter = new CharacterCountUtils();
+            counter.addChars(usedChars);
+            translatesService.updateTranslateStatus(shopName, 2, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
+            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, true);
+
         }
     }
 }

@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -45,6 +44,7 @@ import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.countWords;
@@ -77,7 +77,6 @@ public class ShopifyService {
         this.translatesService = translatesService;
     }
 
-    private final TelemetryClient appInsights = new TelemetryClient();
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
     private final int length = 32;
 
@@ -135,6 +134,9 @@ public class ShopifyService {
 
     //计数翻译前所需要的总共的字符数
     public void countBeforeTranslateChars(String infoByShopify, ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils counter, CharacterCountUtils translateCounter, String method) {
+        if (infoByShopify == null) {
+            return;
+        }
         JsonNode rootNode = ConvertStringToJsonNode(infoByShopify, translateResource);
         if (rootNode == null) {
             return;

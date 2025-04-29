@@ -3,7 +3,6 @@ package com.bogdatech.utils;
 
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -17,13 +16,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 
 @Component
 public class LiquidHtmlTranslatorUtils {
 
-    static TelemetryClient appInsights = new TelemetryClient();
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
 //    // 不翻译的Liquid变量模式

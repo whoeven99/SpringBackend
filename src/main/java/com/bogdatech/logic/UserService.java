@@ -8,7 +8,6 @@ import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.Trigger;
@@ -25,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 @Transactional
@@ -37,7 +37,6 @@ public class UserService {
     private final IUserSubscriptionsService userSubscriptionsService;
     private final EmailIntegration emailIntegration;
     private final IEmailService emailServicel;
-    TelemetryClient appInsights = new TelemetryClient();
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
 
     @Autowired

@@ -21,6 +21,16 @@ public class UserTypeTokenImpl extends ServiceImpl<UserTypeTokenMapper, UserType
     }
 
     @Override
+    public Boolean insertTokenInfo(TranslateRequest request, int translateId) {
+        //先根据translateId查询UserTypeToken是否存在，如果存在就返回，如果不存在就插入一条数据到数据库
+        UserTypeTokenDO userTypeTokenDO = this.getOne(new QueryWrapper<UserTypeTokenDO>().eq("translation_id", translateId));
+        if (userTypeTokenDO == null) {
+            baseMapper.insertTypeInfo(translateId);
+        }
+        return true;
+    }
+
+    @Override
     public Integer getStatusByTranslationId(int translationId) {
         return baseMapper.getStatusByTranslationId(translationId);
     }

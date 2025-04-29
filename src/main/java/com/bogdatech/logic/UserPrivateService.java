@@ -7,12 +7,12 @@ import com.bogdatech.Service.IUserPrivateService;
 import com.bogdatech.entity.UserPrivateDO;
 import com.bogdatech.model.controller.request.UserPrivateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.replaceDot;
 
 @Component
@@ -26,8 +26,6 @@ public class UserPrivateService {
         this.userPrivateService = userPrivateService;
         this.secretClient = secretClient;
     }
-
-    TelemetryClient appInsights = new TelemetryClient();
 
     public BaseResponse<Object> saveOrUpdateUserData(UserPrivateRequest userPrivateRequest) {
         String model = userPrivateRequest.getModel();

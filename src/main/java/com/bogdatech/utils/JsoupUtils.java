@@ -3,7 +3,6 @@ package com.bogdatech.utils;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.service.KeywordModel;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,9 +34,6 @@ import static java.lang.Thread.sleep;
 
 @Component
 public class JsoupUtils {
-
-
-    static TelemetryClient appInsights = new TelemetryClient();
 
     /**
      * 翻译词汇表单行文本，保护变量、URL和符号

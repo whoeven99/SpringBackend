@@ -3,9 +3,10 @@ package com.bogdatech.controller;
 import com.bogdatech.Service.IUserIPSwitchService;
 import com.bogdatech.entity.UserIPSwitchDO;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/IpSwitch")
@@ -16,7 +17,6 @@ public class UserIPSwitchController {
     public UserIPSwitchController(IUserIPSwitchService userIPSwitchService) {
         this.userIPSwitchService = userIPSwitchService;
     }
-    private final TelemetryClient appInsights = new TelemetryClient();
 
     @PostMapping("/insertSwitch")
     public BaseResponse<Object> insertSwitch(@RequestBody UserIPSwitchDO userIPSwitchDO) {

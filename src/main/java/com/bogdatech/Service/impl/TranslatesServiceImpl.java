@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.mapper.TranslatesMapper;
+import com.bogdatech.model.controller.request.AutoTranslateRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +29,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public Integer insertShopTranslateInfo(TranslateRequest request, int status) {
-       return  baseMapper.insertShopTranslateInfo(request.getSource(),request.getAccessToken(),
-               request.getTarget(), request.getShopName(), status);
+        return baseMapper.insertShopTranslateInfo(request.getSource(), request.getAccessToken(),
+                request.getTarget(), request.getShopName(), status);
     }
 
     @Override
@@ -38,22 +40,22 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public int updateTranslateStatus(String shopName, int status, String target, String source, String accessToken) {
-       return baseMapper.updateTranslateStatus(status, shopName, target, source, accessToken);
+        return baseMapper.updateTranslateStatus(status, shopName, target, source, accessToken);
     }
 
     @Override
     public List<TranslatesDO> readInfoByShopName(String shopName, String source) {
-        return baseMapper.readInfoByShopName(shopName, source);
+        return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("source", source));
     }
 
     @Override
     public List<Integer> readStatusInTranslatesByShopName(String shopName) {
-       return baseMapper.readStatusInTranslatesByShopName(shopName);
+        return baseMapper.readStatusInTranslatesByShopName(shopName);
     }
 
     @Override
     public TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO) {
-        return baseMapper.readTranslatesDOByArray(translatesDO.getShopName(),translatesDO.getSource(), translatesDO.getTarget());
+        return baseMapper.readTranslatesDOByArray(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
     }
 
     @Override
@@ -78,7 +80,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public void updateTranslatesResourceType(String shopName, String target, String source, String resourceType) {
-         baseMapper.updateTranslatesResourceType(shopName, target, source, resourceType);
+        baseMapper.updateTranslatesResourceType(shopName, target, source, resourceType);
     }
 
     @Override
@@ -111,7 +113,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public void updateStatus3To6(String shopName) {
-        TranslatesDO translatesDO= new TranslatesDO();
+        TranslatesDO translatesDO = new TranslatesDO();
         translatesDO.setStatus(6);
         final int maxRetries = 3;
         int attempt = 0;
@@ -148,6 +150,42 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public List<TranslatesDO> getStatus2Data() {
         return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("status", 2));
+    }
+
+    @Override
+    public BaseResponse<Object> updateAutoTranslateByShopName(String shopName, Boolean autoTranslate, String source, String target) {
+        //一个用户只允许一条定时任务
+        //先判断该用户是否将其他翻译项设为定时任务
+        List<TranslatesDO> isTrueList = baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("auto_translate", true));
+        if (!isTrueList.isEmpty()) {
+            //将list集合里面的值全部修改为false
+            for (TranslatesDO translatesDO : isTrueList) {
+                if (translatesDO.getAutoTranslate()) {
+                    baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("id", translatesDO.getId()).set("auto_translate", false));
+                }
+            }
+            if (!autoTranslate){
+                return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate));
+            }
+        }
+
+        int flag = baseMapper.update(new UpdateWrapper<TranslatesDO>()
+                .eq("shop_name", shopName)
+                .eq("source", source)
+                .eq("target", target)
+                .set("auto_translate", autoTranslate));
+        if (flag > 0) {
+            return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate));
+        } else {
+            return new BaseResponse<>().CreateErrorResponse("更新失败");
+        }
+
+
+    }
+
+    @Override
+    public List<TranslatesDO> readAllTranslates() {
+        return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("auto_translate", true));
     }
 
 }

@@ -1,12 +1,11 @@
 package com.bogdatech.utils;
 
-import com.microsoft.applicationinsights.TelemetryClient;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 public class PrintUtils {
-    static TelemetryClient appInsights = new TelemetryClient();
 
     /**
      * 自定义打印类型，用与打印用户翻译前后的数据

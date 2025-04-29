@@ -10,6 +10,7 @@ public interface IUserTypeTokenService extends IService<UserTypeTokenDO> {
     @Async
     void insertTypeInfo(TranslateRequest request1, int idByShopNameAndTarget);
 
+    Boolean insertTokenInfo(TranslateRequest request1, int idByShopNameAndTarget);
     Integer getStatusByTranslationId(int translationId);
 
     void updateTokenByTranslationId(int translationId, int tokens, String key);

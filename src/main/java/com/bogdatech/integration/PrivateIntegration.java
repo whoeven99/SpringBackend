@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -30,13 +29,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 
 @Component
 public class PrivateIntegration {
     private final RestTemplate restTemplate;
     private final TranslateApiIntegration translateApiIntegration;
-    static TelemetryClient appInsights = new TelemetryClient();
 
     public PrivateIntegration(RestTemplate restTemplate, TranslateApiIntegration translateApiIntegration) {
         this.restTemplate = restTemplate;

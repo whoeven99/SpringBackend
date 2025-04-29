@@ -18,10 +18,10 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
-import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
-import static com.bogdatech.utils.TypeConversionUtils.*;
+import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
+import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
 @RestController
 @RequestMapping("/translate")
@@ -49,7 +49,7 @@ public class TranslateController {
     }
 
 
-    /*
+    /**
      * 插入shop翻译项信息
      */
     @PostMapping("/insertShopTranslateInfo")
@@ -57,17 +57,15 @@ public class TranslateController {
         translateService.insertLanguageStatus(request);
     }
 
-    /*
+    /**
      * 调用谷歌翻译的API接口
      */
     @PostMapping("/googleTranslate")
     public String googleTranslate(@RequestBody TranslateRequest request) {
         return translateService.googleTranslate(request);
-
     }
 
-
-    /*
+    /**
      * 调用百度翻译的API接口
      */
     @PostMapping("/baiDuTranslate")
@@ -75,7 +73,7 @@ public class TranslateController {
         return new BaseResponse<>().CreateSuccessResponse(translateService.baiDuTranslate(request));
     }
 
-    /*
+    /**
      * 读取所有的翻译状态信息
      */
     @GetMapping("/readTranslateInfo")
@@ -87,7 +85,7 @@ public class TranslateController {
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
-    /*
+    /**
      * 根据传入的数组获取对应的数据
      */
     @PostMapping("/readTranslateDOByArray")
@@ -106,7 +104,7 @@ public class TranslateController {
         }
     }
 
-    /*
+    /**
      * 根据传入的shopName和source，返回一个最新时间的翻译项数据，status为1-3
      */
     @PostMapping("/getTranslateDOByShopNameAndSource")
@@ -118,7 +116,7 @@ public class TranslateController {
         return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
     }
 
-    /*
+    /**
      * 读取shopName的所有翻译状态信息
      */
     @GetMapping("/readInfoByShopName")
@@ -130,7 +128,7 @@ public class TranslateController {
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
-    /*
+    /**
      *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @PutMapping("/clickTranslation")
@@ -162,7 +160,7 @@ public class TranslateController {
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
 //      翻译
-        translateService.startTranslation(request, remainingChars, counter, usedChars);
+        translateService.startTranslation(request, remainingChars, counter, usedChars, false);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
@@ -172,7 +170,7 @@ public class TranslateController {
         translateService.stopTranslation(shopName);
     }
 
-    /*
+    /**
      *  一键存储数据库流程
      */
     @PostMapping("/saveTranslateText")
@@ -192,7 +190,7 @@ public class TranslateController {
         return translateService.stopTranslationManually(request.getShopName());
     }
 
-    /*
+    /**
      *  将一条数据存shopify本地
      */
     @PostMapping("/insertTranslatedText")
@@ -268,32 +266,19 @@ public class TranslateController {
 
     //异步调用startTokenCount方法获取所有的数据信息
     @PostMapping("/startTokenCount")
-    public BaseResponse<Object> startTokenCount(@RequestBody TranslateRequest request) {
-        //获取translates表中shopName和target对应的id
-        int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
-        //开始token的计数各个类型的token计数
-        //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
-        Integer status = userTypeTokenService.getStatusByTranslationId(idByShopNameAndTarget);
-        if (status != 2) {
-            //TODO: 这只是大致流程，还需要做异常处理
-            //将UserTypeToken的status修改为2
-            userTypeTokenService.updateStatusByTranslationIdAndStatus(idByShopNameAndTarget, 2);
-            ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
-            //循环type获取token
-            for (String key : TOKEN_MAP.keySet()
-            ) {
-                translateService.updateStatusByTranslation(shopifyRequest, key, idByShopNameAndTarget, "tokens");
-            }
-//            token全部获取完之后修改，UserTypeToken的status==1
-            userTypeTokenService.updateStatusByTranslationIdAndStatus(idByShopNameAndTarget, 1);
-
-        }
-        return null;
+    public void startTokenCount(@RequestBody TranslateRequest request) {
+        translateService.startTokenCount(request);
     }
 
     //当支付成功后，调用该方法，将该用户的状态3，改为状态6
     @PostMapping("/updateStatus")
     public void updateStatus3To6(@RequestBody TranslateRequest request) {
         translatesService.updateStatus3To6(request.getShopName());
+    }
+
+    //用户是否选择定时任务的方法
+    @PostMapping("/updateAutoTranslateByData")
+    public BaseResponse<Object> updateStatusByShopName(@RequestBody AutoTranslateRequest request) {
+        return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(),request.getSource(), request.getTarget());
     }
 }
