@@ -27,4 +27,15 @@ public class JsonUtils {
             throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
         }
     }
+
+    //判断一个string类型是不是Json数据
+    public static boolean isJson(String str) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.readTree(str);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
