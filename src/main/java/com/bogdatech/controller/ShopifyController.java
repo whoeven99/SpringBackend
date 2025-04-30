@@ -1,12 +1,11 @@
 package com.bogdatech.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.Service.IUserSubscriptionsService;
-import com.bogdatech.entity.TranslateResourceDTO;
-import com.bogdatech.entity.TranslatesDO;
-import com.bogdatech.entity.TranslationCounterDO;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bogdatech.Service.*;
+import com.bogdatech.entity.*;
+import com.bogdatech.entity.VO.SubscriptionVO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
@@ -22,6 +21,7 @@ import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
@@ -33,15 +33,19 @@ public class ShopifyController {
     private final ITranslatesService translatesService;
     private final ITranslationCounterService translationCounterService;
     private final IUserSubscriptionsService userSubscriptionsService;
+    private final ICharsOrdersService charsOrdersService;
+    private final IUsersService usersService;
 
     @Autowired
-    public ShopifyController(ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService) {
+    public ShopifyController(ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService, ICharsOrdersService charsOrdersService, IUsersService usersService) {
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.userSubscriptionsService = userSubscriptionsService;
 
+        this.charsOrdersService = charsOrdersService;
+        this.usersService = usersService;
     }
 
     //通过测试环境调shopify的API
@@ -175,12 +179,52 @@ public class ShopifyController {
     //获取用户订阅计划
     @GetMapping("/getUserSubscriptionPlan")
     public BaseResponse<Object> getUserSubscriptionPlan(String shopName) {
+        SubscriptionVO subscriptionVO = new SubscriptionVO();
         Integer userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(shopName);
-        if (userSubscriptionPlan == null) {
-            return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
-        } else {
-            return new BaseResponse<>().CreateSuccessResponse(userSubscriptionPlan);
+        subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
+        //如果是userSubscriptionPlan是1和2，传null
+        if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2) {
+            subscriptionVO.setCurrentPeriodEnd(null);
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
+
+        //根据shopName查询用户订阅计划，最新的那个，再根据最新的resourceId，查询是否过期
+        CharsOrdersDO charsOrdersDO = charsOrdersService.getOne(new QueryWrapper<CharsOrdersDO>()
+                .select(
+                        "TOP 1 id"
+                )
+                .eq("shop_name", shopName)
+                .eq("status", "ACTIVE")
+                .orderByDesc("updated_date")
+        );
+        UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>()
+                .eq("shop_name", shopName)
+        );
+//        System.out.println("usersDO = " + usersDO);
+//        System.out.println("charsOrdersDO = " + charsOrdersDO);
+        //通过charsOrdersDO的id，获取信息
+        String query = getSubscriptionQuery(charsOrdersDO.getId());
+        String infoByShopify;
+        String env = System.getenv("ApplicationEnv");
+        //根据新的集合获取这个订阅计划的信息
+        if ("prod".equals(env) || "dev".equals(env)) {
+            infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(new ShopifyRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", null), query));
+        } else {
+            infoByShopify = shopifyService.getShopifyData(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", "en", query));
+        }
+//        System.out.println("infoByShopify = " + infoByShopify);
+        //根据订阅计划信息，判断是否是第一个月的开始，是否要添加额度
+        JSONObject root = JSON.parseObject(infoByShopify);
+        JSONObject node = root.getJSONObject("node");
+        if (node == null) {
+            //用户卸载，计划会被取消，但不确定其他情况
+            subscriptionVO.setUserSubscriptionPlan(2);
+            subscriptionVO.setCurrentPeriodEnd(null);
+        }else {
+            String currentPeriodEnd = node.getString("currentPeriodEnd");
+            subscriptionVO.setCurrentPeriodEnd(currentPeriodEnd);
+        }
+        return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
     }
 
     //根据前端传来的值，返回对应的图片信息
