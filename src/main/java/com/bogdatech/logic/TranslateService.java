@@ -618,6 +618,13 @@ public class TranslateService {
                 addData(request.getTarget(), value, translatedText);
                 saveToShopify(translatedText, translation, resourceId, request);
                 printTranslation(translatedText, value, translation, request.getShopName(), type, resourceId, source);
+                //存到数据库中
+                try {
+                    // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
+                    vocabularyService.InsertOne(request.getTarget(), translatedText, registerTransactionRequest.getLocale(), value);
+                } catch (Exception e) {
+                    appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
+                }
                 continue;
             }
 
