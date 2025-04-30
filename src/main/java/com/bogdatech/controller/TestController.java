@@ -13,6 +13,7 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.request.UserRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,8 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.AESUtils.decrypt;
+import static com.bogdatech.utils.AESUtils.encrypt;
 import static com.bogdatech.utils.JudgeTranslateUtils.TRANSLATABLE_KEY_PATTERN;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 
@@ -132,5 +135,26 @@ public class TestController {
     @PutMapping("/testAutoTranslate")
     public void testAutoTranslate() {
         taskService.autoTranslate();
+    }
+
+    @GetMapping("/testEncrypt")
+    public void testAES(String text) {
+        try {
+            String target = encrypt(text);
+            System.out.println("encrypt: " + target);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @PostMapping("/testDecrypt")
+    public void testDecrypt(@RequestBody UserRequest userRequest) {
+        try {
+            System.out.println("text: " + userRequest.getShopName());
+            String target = decrypt(userRequest.getShopName());
+            System.out.println("decrypt: " + target);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

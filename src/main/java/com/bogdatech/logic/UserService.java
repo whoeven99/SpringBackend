@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
+import static com.bogdatech.utils.AESUtils.encrypt;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -52,6 +53,14 @@ public class UserService {
 
     //添加用户
     public BaseResponse<Object> addUser(UsersDO usersDO) {
+        try {
+            String encryptionEmail = encrypt(usersDO.getEmail());
+            if (encryptionEmail != null) {
+                usersDO.setEncryptionEmail(encryptionEmail);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         int i = usersService.addUser(usersDO);
         if (i > 0) {
 
@@ -157,7 +166,7 @@ public class UserService {
     public Map<String, Boolean> InitializationDetection(String shopName) {
         Map<String, Boolean> map = new HashMap<>();
         //查询用户是否初始化
-        map.put("add", false);
+//        map.put("add", false);
 
 
         //查询是否添加免费额度
