@@ -1,5 +1,7 @@
 package com.bogdatech.logic;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.EmailDO;
 import com.bogdatech.entity.UsersDO;
@@ -75,7 +77,7 @@ public class UserService {
 
             if (flag2 > 0 && flag1) {
                 return new BaseResponse<>().CreateSuccessResponse(true);
-            }else {
+            } else {
                 return new BaseResponse<>().CreateErrorResponse(TENCENT_SEND_FAILED);
             }
 
@@ -100,7 +102,7 @@ public class UserService {
                 usersService.unInstallApp(userRequest);
                 success = true;  // 如果没有抛出异常，则表示执行成功，退出循环
             } catch (Exception e) {
-            appInsights.trackTrace("Uninstallation failed, retrying...");
+                appInsights.trackTrace("Uninstallation failed, retrying...");
             }
         }
         return true;
@@ -198,5 +200,27 @@ public class UserService {
 
     public Integer checkUserPlan(String shopName, int planId) {
         return userSubscriptionsService.checkUserPlan(shopName, planId);
+    }
+
+    public String getEncryptedEmail(String shopName) {
+        UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>()
+                .eq("shop_name", shopName)
+        );
+        if (usersDO.getEncryptionEmail() != null) {
+            return usersDO.getEncryptionEmail();
+        }
+        String encryptionEmail = null;
+        try {
+            encryptionEmail = encrypt(usersDO.getEmail());
+        } catch (Exception e) {
+            appInsights.trackTrace(shopName + "加密邮箱失败");
+        }
+
+        //更新加密邮箱
+        usersService.update(new UpdateWrapper<UsersDO>()
+                .eq("shop_name", shopName)
+                .set("encryption_email", encryptionEmail));
+        //返回对应的值
+        return encryptionEmail;
     }
 }
