@@ -12,7 +12,6 @@ import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +22,9 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.TRANSLATABLE_KEY_PATTERN;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 
 @RestController
 public class TestController {
@@ -124,9 +124,21 @@ public class TestController {
     @GetMapping("/testHtml")
     public void testHtml() {
         String html = """
-               """;
-        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
-        System.out.println("final: " + s);
+                
+                """;
+        if (isHtml(html)){
+            System.out.println("is html");
+        }else {
+            System.out.println("is not html");
+        }
+
+        if (isJson(html)){
+            System.out.println("is json");
+        }else {
+            System.out.println("is not json");
+        }
+//        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
+//        System.out.println("final: " + s);
     }
 
     @PutMapping("/testAutoTranslate")
