@@ -43,6 +43,7 @@ import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTransla
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
@@ -602,7 +603,7 @@ public class TranslateService {
             }
 
             //元字段Html翻译
-            if (isHtml(value)) {
+            if (isHtml(value) && !isJson(value)) {
                 htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation);
                 continue;
             }
