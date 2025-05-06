@@ -51,7 +51,6 @@ import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
-import static com.bogdatech.utils.StringUtils.isNumber;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -531,7 +530,6 @@ public class TranslateService {
             put(PLAIN_TEXT, new ArrayList<>());
             put(HTML, new ArrayList<>());
             put(DATABASE, new ArrayList<>());
-            put(JSON_TEXT, new ArrayList<>());
             put(GLOSSARY, new ArrayList<>());
             put(OPENAI, new ArrayList<>());
             put(METAFIELD, new ArrayList<>());
@@ -549,9 +547,6 @@ public class TranslateService {
                     break;
                 case HTML:
                     translateHtml(entry.getValue(), translateContext);
-                    break;
-                case JSON_TEXT:
-                    translateJsonText(entry.getValue(), translateContext);
                     break;
                 case DATABASE:
                     //处理database数据
@@ -869,29 +864,6 @@ public class TranslateService {
     }
 
 
-    //处理JSON_TEXT类型的数据
-    private void translateJsonText(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
-
-        ShopifyRequest request = translateContext.getShopifyRequest();
-        CharacterCountUtils counter = translateContext.getCharacterCountUtils();
-        //判断是否停止翻译
-        if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource())) return;
-        String target = request.getTarget();
-        Map<String, Object> translation = new HashMap<>();
-        for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
-            //判断是否停止翻译
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
-                return;
-            translation.put("locale", target);
-            translation.put("key", registerTransactionRequest.getKey());
-            translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
-            //直接存放到shopify本地
-            saveToShopify(registerTransactionRequest.getValue(), translation, registerTransactionRequest.getResourceId(), request);
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
-                return;
-        }
-    }
-
     //处理从数据库获取的数据
     private void translateDataByDatabase(List<RegisterTransactionRequest> registerTransactionRequests, TranslateContext translateContext) {
         ShopifyRequest request = translateContext.getShopifyRequest();
@@ -1145,7 +1117,14 @@ public class TranslateService {
             if (key.equals("handle") || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL"))
+                    || "JSON".equals(type)
+                    || "JSON_STRING".equals(type)
                     || resourceType.equals(SHOP_POLICY)) {
+                continue;
+            }
+
+            //通用的不翻译数据
+            if (!generalTranslate(key, value)){
                 continue;
             }
 
@@ -1158,10 +1137,6 @@ public class TranslateService {
                 if (!shouldTranslate(key, value)) {
                     continue;
                 }
-                //如果值为纯数字的话，不翻译
-                if (isNumber(value)) {
-                    continue;
-                }
 
                 //如果是html放html文本里面
                 if (isHtml(value)) {
@@ -1171,18 +1146,14 @@ public class TranslateService {
 
             //对METAFIELD字段翻译
             if (resourceType.equals(METAFIELD)) {
-                if ("TRUE".equalsIgnoreCase(value) || "FALSE".equalsIgnoreCase(value)) {
+                //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。
+                if (SUSPICIOUS_PATTERN.matcher(value).matches()){
+                    continue;
+                }
+                if (!metaTranslate(value)){
                     continue;
                 }
                 judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
-                continue;
-            }
-
-            //对于json和json_string的数据直接不存，跳过
-            if ("JSON".equals(type)
-                    || "JSON_STRING".equals(type)) {
-                //存放在json的集合里面
-//                judgeData.get(JSON_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                 continue;
             }
 
