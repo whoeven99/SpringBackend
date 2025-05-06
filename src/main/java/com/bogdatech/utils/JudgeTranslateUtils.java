@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
+import static com.bogdatech.utils.StringUtils.isNumber;
 
 public class JudgeTranslateUtils {
 
@@ -103,6 +104,7 @@ public class JudgeTranslateUtils {
 
     // 正则表达式
     private static final Pattern PURE_NUMBER = Pattern.compile("^\\d+$"); // 纯数字
+    public static final Pattern SUSPICIOUS_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])[A-Za-z0-9]{9,}$"); //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。
     private static final Pattern DASH_PATTERN = Pattern.compile(
             "^[\\dA-Z+-.]+$" // 仅包含数字、全大写字母、标点符号（+、-、.()）
     );
@@ -163,13 +165,26 @@ public class JudgeTranslateUtils {
             }
         }
 
+        //第十四步，如果key包含color 但 是html， 翻译
+        if (key.contains("color") && !isHtml(value)) {
+            return false;
+        }
+
+        // 如果以上条件都不满足，则需要翻译
+        return true;
+    }
+
+
+    /**
+     * 通用不翻译的数据类型判断
+     *
+     * @param key   要检查的key
+     * @param value 对应的value，可能为null
+     * @return true表示需要翻译，false表示不需要翻译
+     */
+    public static boolean generalTranslate(String key, String value) {
         // 第四步：检查value包含px的情况
         if (value.contains("px")) {
-//            for (String substring : PX_NO_TRANSLATE_SUBSTRINGS) {
-//                if (key.contains(substring)) {
-//                    return false;
-//                }
-//            }
             return false;
         }
 
@@ -231,8 +246,8 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        //第十四步，如果key包含color 但 是html， 翻译
-        if (key.contains("color") && !isHtml(value)) {
+        //如果值为纯数字,小数或负数的话，不翻译
+        if (isNumber(value)) {
             return false;
         }
 
@@ -240,5 +255,12 @@ public class JudgeTranslateUtils {
         return true;
     }
 
-
+    /**
+     * 元字段对应的数据不翻译，left，right，top，bottom
+     * @param value 对应的value，可能为null
+     * @return true表示需要翻译，false表示不需要翻译
+     */
+    public static boolean metaTranslate(String value) {
+        return !value.equals("left") && !value.equals("right") && !value.equals("top") && !value.equals("bottom");
+    }
 }

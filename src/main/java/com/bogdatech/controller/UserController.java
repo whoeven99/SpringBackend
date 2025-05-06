@@ -79,4 +79,14 @@ public class UserController {
 
         return new BaseResponse<>().CreateSuccessResponse(userService.checkUserPlan(userSubscriptionsRequest.getShopName(), userSubscriptionsRequest.getPlanId()));
     }
+
+    //获取用户表中的加密邮件
+    @PostMapping("/getEncryptedEmail")
+    public BaseResponse<Object> getEncryptedEmail(@RequestBody UsersDO userRequest) {
+        return new BaseResponse<>().CreateSuccessResponse(userService.getEncryptedEmail(userRequest.getShopName()));
+    }
+
+    //TODO：判断用户是否被邀请 新建一个表实现
+    //TODO：给用户添加额度
+
 }
