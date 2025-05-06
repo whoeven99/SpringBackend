@@ -165,7 +165,7 @@ public class JudgeTranslateUtils {
             }
         }
 
-        //第十四步，如果key包含color 但 是html， 翻译
+        // 第十四步，如果key包含color 但 是html， 翻译
         if (key.contains("color") && !isHtml(value)) {
             return false;
         }
