@@ -26,7 +26,7 @@ import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.AESUtils.decrypt;
 import static com.bogdatech.utils.AESUtils.encrypt;
-import static com.bogdatech.utils.JudgeTranslateUtils.TRANSLATABLE_KEY_PATTERN;
+import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 
 @RestController
