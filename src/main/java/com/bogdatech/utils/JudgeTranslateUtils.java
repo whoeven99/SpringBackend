@@ -183,6 +183,10 @@ public class JudgeTranslateUtils {
      * @return true表示需要翻译，false表示不需要翻译
      */
     public static boolean generalTranslate(String key, String value) {
+        if (isHtml(value)){
+            return true;
+        }
+
         // 第四步：检查value包含px的情况
         if (value.contains("px")) {
             return false;

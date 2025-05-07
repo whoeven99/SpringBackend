@@ -154,8 +154,10 @@ public class TaskService {
             //初始化计数器
             CharacterCountUtils counter = new CharacterCountUtils();
             counter.addChars(usedChars);
+            List<String> list = new ArrayList<>();
+            list.add("products");
             //开始翻译状态为2的翻译
-            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false);
+            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list);
         }
     }
 
@@ -212,7 +214,9 @@ public class TaskService {
             CharacterCountUtils counter = new CharacterCountUtils();
             counter.addChars(usedChars);
             translatesService.updateTranslateStatus(shopName, 2, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
-            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, true);
+            List<String> list = new ArrayList<>();
+            list.add("products");
+            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, true, list);
 
         }
     }
