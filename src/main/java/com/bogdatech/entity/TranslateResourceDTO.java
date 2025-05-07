@@ -78,7 +78,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(FILTER, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")
             ,
-            new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
+//            new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN_GROUP, MAX_LENGTH, "", ""),
