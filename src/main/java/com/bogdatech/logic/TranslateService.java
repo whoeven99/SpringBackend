@@ -122,7 +122,7 @@ public class TranslateService {
     );
 
     // 启动翻译任务
-    public void startTranslation(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, Boolean isTask) {
+    public void startTranslation(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, Boolean isTask, List<String> translateSettings3) {
         // 创建并启动翻译任务
         String shopName = request.getShopName();
         String source = request.getSource();
@@ -133,9 +133,9 @@ public class TranslateService {
             try {
                 if (isTask) {
                     //定时任务的翻译任务
-                    taskTranslating(request, remainingChars, counter);
+                    taskTranslating(request, remainingChars, counter, translateSettings3);
                 } else {
-                    translating(request, remainingChars, counter, usedChars);  // 执行翻译任务
+                    translating(request, remainingChars, counter, usedChars, translateSettings3);  // 执行翻译任务
                 }
             } catch (ClientException e) {
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
@@ -288,7 +288,7 @@ public class TranslateService {
     }
 
     //定时任务自动翻译
-    public void taskTranslating(TranslateRequest request, int remainingChars, CharacterCountUtils counter) {
+    public void taskTranslating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, List<String> list) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
 
         //判断是否有同义词
@@ -332,7 +332,7 @@ public class TranslateService {
     }
 
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
-    public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars) {
+    public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, List<String> translateSettings3) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
 
         //判断是否有同义词
@@ -344,20 +344,21 @@ public class TranslateService {
         AILanguagePacksDO aiLanguagePacksDO = aiLanguagePacksService.getPromotByPackId(packId);
 
         //循环翻译ALL_RESOURCES里面所有的模块
-        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-            if (translateResource.getResourceType().equals(SHOP_POLICY)) {
-                continue;
+        for (String model : translateSettings3) {
+            List<TranslateResourceDTO> translateResourceList = TOKEN_MAP.get(model);
+            for (TranslateResourceDTO translateResource : translateResourceList
+                 ) {
+                // 定期检查是否停止
+                if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
+                String completePrompt = aiLanguagePackService.getCompletePrompt(aiLanguagePacksDO, translateResource.getResourceType(), request.getTarget());
+                aiLanguagePacksDO.setPromotWord(completePrompt);
+                translateResource.setTarget(request.getTarget());
+                String shopifyData = getShopifyData(shopifyRequest, translateResource, counter);
+                TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), aiLanguagePacksDO, null);
+                translateJson(translateContext);
+                // 定期检查是否停止
+                if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
             }
-            // 定期检查是否停止
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
-            String completePrompt = aiLanguagePackService.getCompletePrompt(aiLanguagePacksDO, translateResource.getResourceType(), request.getTarget());
-            aiLanguagePacksDO.setPromotWord(completePrompt);
-            translateResource.setTarget(request.getTarget());
-            String shopifyData = getShopifyData(shopifyRequest, translateResource, counter);
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), aiLanguagePacksDO, null);
-            translateJson(translateContext);
-            // 定期检查是否停止
-            if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
         }
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
         System.out.println("翻译结束");

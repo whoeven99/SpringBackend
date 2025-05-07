@@ -160,7 +160,7 @@ public class TranslateController {
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
 //      翻译
-        translateService.startTranslation(request, remainingChars, counter, usedChars, false);
+        translateService.startTranslation(request, remainingChars, counter, usedChars, false, clickTranslateRequest.getTranslateSettings3());
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
