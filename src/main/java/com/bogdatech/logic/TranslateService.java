@@ -729,10 +729,6 @@ public class TranslateService {
                 continue;
             }
 
-            if (value == null) {
-                continue;
-            }
-
             // 处理 "handle", "JSON", "HTML" 数据
             if (handleSpecialCases(value, translation, resourceId, request, registerTransactionRequest, counter, translateContext)) {
                 continue;
@@ -762,10 +758,6 @@ public class TranslateService {
         String key = registerTransactionRequest.getKey();
         String type = registerTransactionRequest.getTarget();
         String source = registerTransactionRequest.getLocale();
-        // Handle specific cases
-        if ("JSON".equals(type) || "JSON_STRING".equals(type)) {
-            return true;
-        }
 
         if ("HTML".equals(type) || isHtml(value)) {
             String htmlTranslation;
@@ -1136,9 +1128,6 @@ public class TranslateService {
                 continue;
             }
 
-            if (type.equals("URL") && key.equals("handle")){
-
-            }
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
                 if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
