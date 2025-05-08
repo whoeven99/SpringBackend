@@ -475,7 +475,7 @@ public class TranslateService {
             return;
         //对judgeData数据进行翻译和存入shopify,除了html
         try {
-//            translateAndSaveData(judgeData, translateContext);
+            translateAndSaveData(judgeData, translateContext);
         } catch (ClientException e) {
             appInsights.trackTrace("翻译过程中抛出的异常" + e.getErrorMessage());
             throw e;
