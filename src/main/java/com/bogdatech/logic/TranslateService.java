@@ -762,7 +762,7 @@ public class TranslateService {
         String type = registerTransactionRequest.getTarget();
         String source = registerTransactionRequest.getLocale();
         // Handle specific cases
-        if ("handle".equals(key) || "JSON".equals(type) || "JSON_STRING".equals(type)) {
+        if ("JSON".equals(type) || "JSON_STRING".equals(type)) {
             return true;
         }
 
@@ -890,7 +890,7 @@ public class TranslateService {
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
             //从数据库中获取数据，如果不为空，存入shopify本地；如果为空翻译
             //判断数据类型
-            if ("handle".equals(key) || "JSON".equals(type)
+            if ("JSON".equals(type)
                     || "JSON_STRING".equals(type)
             ) {
                 continue;
