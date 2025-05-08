@@ -901,7 +901,7 @@ public class ShopifyService {
                 if (key.contains("metafield:") || key.contains("color")
                         || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
                         || key.contains("carousel_easing") || key.contains("_link") || key.contains("general") || key.contains("css:")
-                        || key.contains("icon:") || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+                        || key.contains("icon:") || type.equals("FILE_REFERENCE")  || type.equals("LINK")
                         || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                         || type.equals(("LIST_URL"))
                 ) {
