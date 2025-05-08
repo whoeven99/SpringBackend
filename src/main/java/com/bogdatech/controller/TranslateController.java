@@ -3,6 +3,7 @@ package com.bogdatech.controller;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
+import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -162,9 +163,9 @@ public class TranslateController {
         counter.addChars(usedChars);
 
         //修改模块的排序
-
+        List<TranslateResourceDTO> translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
 //      翻译
-        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateModel(clickTranslateRequest.getTranslateSettings3()));
+        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 

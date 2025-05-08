@@ -349,6 +349,8 @@ public class TranslateService {
                 if (!translateSettings3.contains(translateResource)){
                     continue;
                 }
+                //将目前的状态，添加到数据库中，前端要用这个数据做进度条功能
+                translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), translateResource.getResourceType());
                 // 定期检查是否停止
                 if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
                 String completePrompt = aiLanguagePackService.getCompletePrompt(aiLanguagePacksDO, translateResource.getResourceType(), request.getTarget());
@@ -403,8 +405,6 @@ public class TranslateService {
         String resourceType = translateContext.getTranslateResource().getResourceType();
         ShopifyRequest request = translateContext.getShopifyRequest();
         System.out.println("现在翻译到： " + resourceType);
-        //将目前的状态，添加到数据库中，前端要用这个数据做进度条功能
-        translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), translateContext.getSource(), resourceType);
 
         if (translateContext.getShopifyData() == null) {
             // 返回默认值或空结果
@@ -729,10 +729,6 @@ public class TranslateService {
                 continue;
             }
 
-            if (value == null) {
-                continue;
-            }
-
             // 处理 "handle", "JSON", "HTML" 数据
             if (handleSpecialCases(value, translation, resourceId, request, registerTransactionRequest, counter, translateContext)) {
                 continue;
@@ -762,10 +758,6 @@ public class TranslateService {
         String key = registerTransactionRequest.getKey();
         String type = registerTransactionRequest.getTarget();
         String source = registerTransactionRequest.getLocale();
-        // Handle specific cases
-        if ("JSON".equals(type) || "JSON_STRING".equals(type)) {
-            return true;
-        }
 
         if ("HTML".equals(type) || isHtml(value)) {
             String htmlTranslation;
@@ -1136,9 +1128,6 @@ public class TranslateService {
                 continue;
             }
 
-            if (type.equals("URL") && key.equals("handle")){
-
-            }
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
                 if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
