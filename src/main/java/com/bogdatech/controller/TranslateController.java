@@ -21,6 +21,7 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
@@ -163,8 +164,17 @@ public class TranslateController {
         counter.addChars(usedChars);
 
         //修改模块的排序
-        List<TranslateResourceDTO> translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
+        List<TranslateResourceDTO> translateResourceDTOS = null;
+        appInsights.trackTrace("models:  " + clickTranslateRequest.getTranslateSettings3());
+        try {
+            translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
+        } catch (Exception e) {
+             appInsights.trackTrace("translateModel error: " + e.getMessage());
+        }
 //      翻译
+        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
+            return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
+        }
         translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
