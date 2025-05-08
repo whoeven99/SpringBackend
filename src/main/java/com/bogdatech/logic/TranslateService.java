@@ -122,7 +122,7 @@ public class TranslateService {
     );
 
     // 启动翻译任务
-    public void startTranslation(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, Boolean isTask, List<String> translateSettings3) {
+    public void startTranslation(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, Boolean isTask, List<TranslateResourceDTO> translateSettings3) {
         // 创建并启动翻译任务
         String shopName = request.getShopName();
         String source = request.getSource();
@@ -288,7 +288,7 @@ public class TranslateService {
     }
 
     //定时任务自动翻译
-    public void taskTranslating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, List<String> list) {
+    public void taskTranslating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, List<TranslateResourceDTO> list) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
 
         //判断是否有同义词
@@ -332,7 +332,7 @@ public class TranslateService {
     }
 
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
-    public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, List<String> translateSettings3) {
+    public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, List<TranslateResourceDTO> translateSettings3) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
 
         //判断是否有同义词
@@ -344,10 +344,11 @@ public class TranslateService {
         AILanguagePacksDO aiLanguagePacksDO = aiLanguagePacksService.getPromotByPackId(packId);
 
         //循环翻译ALL_RESOURCES里面所有的模块
-        for (String model : translateSettings3) {
-            List<TranslateResourceDTO> translateResourceList = TOKEN_MAP.get(model);
-            for (TranslateResourceDTO translateResource : translateResourceList
+            for (TranslateResourceDTO translateResource : ALL_RESOURCES
                  ) {
+                if (!translateSettings3.contains(translateResource)){
+                    continue;
+                }
                 // 定期检查是否停止
                 if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
                 String completePrompt = aiLanguagePackService.getCompletePrompt(aiLanguagePacksDO, translateResource.getResourceType(), request.getTarget());
@@ -358,7 +359,7 @@ public class TranslateService {
                 translateJson(translateContext);
                 // 定期检查是否停止
                 if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
-            }
+
         }
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
         System.out.println("翻译结束");

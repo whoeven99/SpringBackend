@@ -19,6 +19,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 
 @Component
@@ -154,9 +155,9 @@ public class TaskService {
             //初始化计数器
             CharacterCountUtils counter = new CharacterCountUtils();
             counter.addChars(usedChars);
-            List<String> list = new ArrayList<>();
-            list.add("products");
             //开始翻译状态为2的翻译
+            //服务器重启后，将所有都翻译
+            List<TranslateResourceDTO> list = ALL_RESOURCES.stream().toList();
             translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list);
         }
     }
@@ -214,9 +215,7 @@ public class TaskService {
             CharacterCountUtils counter = new CharacterCountUtils();
             counter.addChars(usedChars);
             translatesService.updateTranslateStatus(shopName, 2, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
-            List<String> list = new ArrayList<>();
-            list.add("products");
-            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, true, list);
+            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, true, null);
 
         }
     }

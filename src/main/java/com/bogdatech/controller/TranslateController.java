@@ -20,6 +20,7 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
@@ -159,8 +160,11 @@ public class TranslateController {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
+
+        //修改模块的排序
+
 //      翻译
-        translateService.startTranslation(request, remainingChars, counter, usedChars, false, clickTranslateRequest.getTranslateSettings3());
+        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateModel(clickTranslateRequest.getTranslateSettings3()));
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
