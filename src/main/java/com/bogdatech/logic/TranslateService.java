@@ -344,9 +344,10 @@ public class TranslateService {
         AILanguagePacksDO aiLanguagePacksDO = aiLanguagePacksService.getPromotByPackId(packId);
 
         //循环翻译ALL_RESOURCES里面所有的模块
+        try {
             for (TranslateResourceDTO translateResource : ALL_RESOURCES
-                 ) {
-                if (!translateSettings3.contains(translateResource)){
+            ) {
+                if (!translateSettings3.contains(translateResource)) {
                     continue;
                 }
                 // 定期检查是否停止
@@ -355,11 +356,15 @@ public class TranslateService {
                 aiLanguagePacksDO.setPromotWord(completePrompt);
                 translateResource.setTarget(request.getTarget());
                 String shopifyData = getShopifyData(shopifyRequest, translateResource, counter);
+                appInsights.trackTrace("shopifyData: " + shopifyData);
                 TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), aiLanguagePacksDO, null);
                 translateJson(translateContext);
                 // 定期检查是否停止
                 if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
 
+            }
+        } catch (Exception e) {
+            appInsights.trackTrace("error: " + e.getMessage());
         }
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
         System.out.println("翻译结束");
@@ -371,6 +376,7 @@ public class TranslateService {
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”//
             translatesService.updateStatusByShopNameAnd2(shopName);
+            appInsights.trackTrace("用户因为卸载停止翻译");
             return true;
         }
         return false;
@@ -1123,7 +1129,7 @@ public class TranslateService {
                 // 如果 key 为 "handle"，这里是要处理的代码
             }
             //通用的不翻译数据
-            if (!generalTranslate(key, value)){
+            if (!generalTranslate(key, value)) {
                 continue;
             }
 
@@ -1146,10 +1152,10 @@ public class TranslateService {
             //对METAFIELD字段翻译
             if (resourceType.equals(METAFIELD)) {
                 //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。
-                if (SUSPICIOUS_PATTERN.matcher(value).matches()){
+                if (SUSPICIOUS_PATTERN.matcher(value).matches()) {
                     continue;
                 }
-                if (!metaTranslate(value)){
+                if (!metaTranslate(value)) {
                     continue;
                 }
                 judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
