@@ -1124,11 +1124,20 @@ public class TranslateService {
                 continue;
             }
 
+            if (type.equals("URL")) {
+                if (!key.equals("handle")) {
+                    continue;  // 跳过当前循环
+                }
+                // 如果 key 为 "handle"，这里是要处理的代码
+            }
             //通用的不翻译数据
             if (!generalTranslate(key, value)){
                 continue;
             }
 
+            if (type.equals("URL") && key.equals("handle")){
+
+            }
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
                 if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
