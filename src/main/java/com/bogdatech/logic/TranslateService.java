@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.*;
+import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -46,6 +48,7 @@ import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
+import static com.bogdatech.utils.JudgeTranslateUtils.shouldTranslate;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
@@ -129,7 +132,7 @@ public class TranslateService {
         String target = request.getTarget();
         Future<?> future = executorService.submit(() -> {
             LocalDateTime begin = LocalDateTime.now();
-            appInsights.trackTrace("Task submitted at: " + begin + " for shop: " + shopName);
+            appInsights.trackTrace("Task submitted at: " + begin + " for shop: " + shopName + " and source: " + source);
             try {
                 if (isTask) {
                     //定时任务的翻译任务
@@ -1113,26 +1116,10 @@ public class TranslateService {
                 }
             }
 
-            //如果包含相对路径则跳过
-            if (key.equals("handle") || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
-                    || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
-                    || type.equals(("LIST_URL"))
-                    || "JSON".equals(type)
-                    || "JSON_STRING".equals(type)
-                    || resourceType.equals(SHOP_POLICY)) {
+            if (translationLogic(key, value, type, resourceType)) {
                 continue;
             }
 
-            //通用的不翻译数据
-            if (!generalTranslate(key, value)){
-                continue;
-            }
-
-            if (PRODUCT_OPTION.equals(resourceType)){
-                if (value.equalsIgnoreCase("color")){
-                    continue;
-                }
-            }
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
                 if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
@@ -1152,10 +1139,10 @@ public class TranslateService {
             //对METAFIELD字段翻译
             if (resourceType.equals(METAFIELD)) {
                 //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。
-                if (SUSPICIOUS_PATTERN.matcher(value).matches()){
+                if (SUSPICIOUS_PATTERN.matcher(value).matches()) {
                     continue;
                 }
-                if (!metaTranslate(value)){
+                if (!metaTranslate(value)) {
                     continue;
                 }
                 judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
@@ -1206,6 +1193,29 @@ public class TranslateService {
             }
         }
 
+    }
+
+    //判断是否翻译的通用逻辑
+    private boolean translationLogic(String key, String value, String type, String resourceType) {
+        //如果包含相对路径则跳过
+        if (key.equals("handle") || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+                || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
+                || type.equals(("LIST_URL"))
+                || "JSON".equals(type)
+                || "JSON_STRING".equals(type)
+                || resourceType.equals(SHOP_POLICY)) {
+            return true;
+        }
+
+        //通用的不翻译数据
+        if (!generalTranslate(key, value)) {
+            return true;
+        }
+
+        if (PRODUCT_OPTION.equals(resourceType)) {
+            return value.equalsIgnoreCase("color");
+        }
+        return false;
     }
 
     // 判断是否为数据库资源类型
@@ -1721,5 +1731,71 @@ public class TranslateService {
         userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
     }
 
+    /**
+     * 单条文本翻译，判断是否在翻译逻辑里面，是否额度充足，扣额度，返回翻译后的文本
+     */
+    public BaseResponse<Object> singleTextTranslate(SingleTranslateVO singleTranslateVO) {
+        //判断是否为空
+        String value = singleTranslateVO.getContext();
+        if (value == null) {
+            return new BaseResponse<>().CreateErrorResponse("NULL");
+        }
+        //判断额度是否足够
+        String shopName = singleTranslateVO.getShopName();
+        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+        int usedChars = request1.getUsedChars();
+        // 如果字符超限，则直接返回字符超限
+        if (usedChars >= remainingChars) {
+            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+        }
+
+        //根据模块判断是否翻译
+        String key = singleTranslateVO.getKey();
+
+        String source = singleTranslateVO.getSource();
+        String target = singleTranslateVO.getTarget();
+        String resourceType = singleTranslateVO.getResourceType();
+        if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
+            if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+            //如果包含对应key和value，则跳过
+            if (!shouldTranslate(key, value)) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+        }
+        if (resourceType.equals(METAFIELD)) {
+            if (SUSPICIOUS_PATTERN.matcher(value).matches()) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+            if (!metaTranslate(value)) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+        }
+
+        if (translationLogic(singleTranslateVO.getKey(), singleTranslateVO.getContext(), singleTranslateVO.getType(), singleTranslateVO.getResourceType())) {
+            return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+        }
+
+
+        CharacterCountUtils counter = new CharacterCountUtils();
+        //开始翻译,判断是普通文本还是html文本
+        try {
+            if (isHtml(value)) {
+                String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
+            } else {
+                String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                return new BaseResponse<>().CreateSuccessResponse(targetString);
+            }
+        } catch (Exception e) {
+            appInsights.trackTrace("singleTranslate error: " + e.getMessage());
+        }
+
+        return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+    }
 }
 
