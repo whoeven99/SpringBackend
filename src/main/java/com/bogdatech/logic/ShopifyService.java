@@ -171,18 +171,21 @@ public class ShopifyService {
     public void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter,
                                     CharacterCountUtils translateCounter, TranslateResourceDTO translateResource, String method) {
         AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
+        if (objectNode == null){
+            return;
+        }
         JsonNode translatableResourcesNode = objectNode.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
             return;
         }
         // 处理 nodes 数组
         JsonNode nodesNode = translatableResourcesNode.path("nodes");
-        if (!nodesNode.isArray()) {
+        if (nodesNode == null ||!nodesNode.isArray()) {
             return;
         }
         ArrayNode nodesArray = (ArrayNode) nodesNode;
         for (JsonNode nodeElement : nodesArray) {
-            if (!nodeElement.isObject()) {
+            if (nodeElement == null || !nodeElement.isObject()) {
                 continue;
             }
             Iterator<Map.Entry<String, JsonNode>> fields = nodeElement.fields();
