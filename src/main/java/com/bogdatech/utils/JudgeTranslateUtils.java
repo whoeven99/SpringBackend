@@ -136,10 +136,6 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        if (key.equals("handle")) {
-            return false;
-        }
-
         if(key.contains("captions")){
             return false;
         }

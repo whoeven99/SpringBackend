@@ -345,7 +345,8 @@ public class TranslateService {
 
         //循环翻译ALL_RESOURCES里面所有的模块
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-            if (translateResource.getResourceType().equals(SHOP_POLICY)) {
+            if (translateResource.getResourceType().equals(SHOP_POLICY)
+                    || translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
                 continue;
             }
             // 定期检查是否停止
@@ -761,7 +762,7 @@ public class TranslateService {
         String type = registerTransactionRequest.getTarget();
         String source = registerTransactionRequest.getLocale();
         // Handle specific cases
-        if ("handle".equals(key) || "JSON".equals(type) || "JSON_STRING".equals(type)) {
+        if ("JSON".equals(type) || "JSON_STRING".equals(type)) {
             return true;
         }
 
@@ -889,7 +890,7 @@ public class TranslateService {
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
             //从数据库中获取数据，如果不为空，存入shopify本地；如果为空翻译
             //判断数据类型
-            if ("handle".equals(key) || "JSON".equals(type)
+            if ("JSON".equals(type)
                     || "JSON_STRING".equals(type)
             ) {
                 continue;
@@ -1114,7 +1115,7 @@ public class TranslateService {
             }
 
             //如果包含相对路径则跳过
-            if (key.equals("handle") || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+            if (type.equals("FILE_REFERENCE") || type.equals("LINK")
                     || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                     || type.equals(("LIST_URL"))
                     || "JSON".equals(type)
