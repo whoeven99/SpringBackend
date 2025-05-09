@@ -270,8 +270,7 @@ public class ShopifyService {
             }
 
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.path("key").asText(null))
-                    || "JSON".equals(contentItemNode.path("type").asText(null))
+            if ("JSON".equals(contentItemNode.path("type").asText(null))
                     || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
                     || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
             ) {
@@ -318,8 +317,7 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.path("key").asText(null))
-                    || "JSON".equals(contentItemNode.path("type").asText(null))
+            if ("JSON".equals(contentItemNode.path("type").asText(null))
                     || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
             ) {
                 continue;  // 跳过当前项
@@ -391,8 +389,7 @@ public class ShopifyService {
                 continue;
             }
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.path("key").asText(null))
-                    || "JSON".equals(contentItemNode.path("type").asText(null))
+            if ("JSON".equals(contentItemNode.path("type").asText(null))
                     || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
                     || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
             ) {
@@ -904,7 +901,7 @@ public class ShopifyService {
                 if (key.contains("metafield:") || key.contains("color")
                         || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
                         || key.contains("carousel_easing") || key.contains("_link") || key.contains("general") || key.contains("css:")
-                        || key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+                        || key.contains("icon:") || type.equals("FILE_REFERENCE")  || type.equals("LINK")
                         || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                         || type.equals(("LIST_URL"))
                 ) {
