@@ -68,7 +68,7 @@ public class TranslateResourceDTO {
 
             new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
 
             new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),
@@ -79,7 +79,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")
             ,
             new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN_GROUP, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SHOP, MAX_LENGTH, "", ""),
