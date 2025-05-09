@@ -3,7 +3,6 @@ package com.bogdatech.controller;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
-import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
@@ -165,12 +164,11 @@ public class TranslateController {
         counter.addChars(usedChars);
 
         //修改模块的排序
-        List<TranslateResourceDTO> translateResourceDTOS = null;
-        appInsights.trackTrace("models:  " + clickTranslateRequest.getTranslateSettings3());
+        List<String> translateResourceDTOS = null;
         try {
             translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
         } catch (Exception e) {
-             appInsights.trackTrace("translateModel error: " + e.getMessage());
+            appInsights.trackTrace("translateModel error: " + e.getMessage());
         }
 //      翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {

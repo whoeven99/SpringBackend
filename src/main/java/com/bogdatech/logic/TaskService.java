@@ -158,7 +158,8 @@ public class TaskService {
             //开始翻译状态为2的翻译
             //服务器重启后，将所有都翻译
             List<TranslateResourceDTO> list = ALL_RESOURCES.stream().toList();
-            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list);
+            List<String> list1 = list.stream().map(TranslateResourceDTO::getResourceType).toList();
+            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list1);
         }
     }
 

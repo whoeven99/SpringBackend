@@ -68,7 +68,7 @@ public class TranslateResourceDTO {
 
             new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
+//            new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
 
             new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),

@@ -387,8 +387,12 @@ public class ShopifyService {
         }
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
+            if (contentItemNode == null) {
+                continue;
+            }
             //当在contentItemNode的key在translatedContent里面，则跳过
-            if (contentItemNode == null || translatedContent.contains(contentItemNode.path("key").asText(null))) {
+            String key = contentItemNode.path("key").asText(null);
+            if (key == null || translatedContent.contains(key)) {
                 continue;
             }
             // 跳过 key 为 "handle" 的项
