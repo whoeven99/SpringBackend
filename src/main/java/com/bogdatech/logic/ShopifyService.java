@@ -382,6 +382,9 @@ public class ShopifyService {
     //计算剩余精确值
     public void calculateExactToken(ArrayNode contentNode, CharacterCountUtils counter,
                                     List<String> translatedContent, TranslateResourceDTO translateResourceDTO, ShopifyRequest request) {
+        if (translatedContent == null) {
+            return;
+        }
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //当在contentItemNode的key在translatedContent里面，则跳过
