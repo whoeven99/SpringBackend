@@ -194,6 +194,7 @@ public class ShopifyController {
                         "TOP 1 id"
                 )
                 .eq("shop_name", shopName)
+                .like("id", "AppSubscription")
                 .eq("status", "ACTIVE")
                 .orderByDesc("updated_date")
         );

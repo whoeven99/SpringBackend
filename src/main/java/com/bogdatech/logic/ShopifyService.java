@@ -128,7 +128,11 @@ public class ShopifyService {
         } else {
             infoByShopify = getShopifyData(cloudServiceRequest);
         }
-        countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
+        try {
+            countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
+        } catch (Exception e) {
+            appInsights.trackTrace("统计字符数失败： " + e.getMessage());
+        }
         return counter.getTotalChars();
     }
 
@@ -171,18 +175,21 @@ public class ShopifyService {
     public void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter,
                                     CharacterCountUtils translateCounter, TranslateResourceDTO translateResource, String method) {
         AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
+        if (objectNode == null){
+            return;
+        }
         JsonNode translatableResourcesNode = objectNode.path("translatableResources");
         if (!translatableResourcesNode.isObject()) {
             return;
         }
         // 处理 nodes 数组
         JsonNode nodesNode = translatableResourcesNode.path("nodes");
-        if (!nodesNode.isArray()) {
+        if (nodesNode == null ||!nodesNode.isArray()) {
             return;
         }
         ArrayNode nodesArray = (ArrayNode) nodesNode;
         for (JsonNode nodeElement : nodesArray) {
-            if (!nodeElement.isObject()) {
+            if (nodeElement == null || !nodeElement.isObject()) {
                 continue;
             }
             Iterator<Map.Entry<String, JsonNode>> fields = nodeElement.fields();
@@ -270,8 +277,7 @@ public class ShopifyService {
             }
 
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.path("key").asText(null))
-                    || "JSON".equals(contentItemNode.path("type").asText(null))
+            if ("JSON".equals(contentItemNode.path("type").asText(null))
                     || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
                     || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
             ) {
@@ -318,8 +324,7 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             //打印当前遍历的值 为什么部分不翻译
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.path("key").asText(null))
-                    || "JSON".equals(contentItemNode.path("type").asText(null))
+            if ("JSON".equals(contentItemNode.path("type").asText(null))
                     || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
             ) {
                 continue;  // 跳过当前项
@@ -384,15 +389,21 @@ public class ShopifyService {
     //计算剩余精确值
     public void calculateExactToken(ArrayNode contentNode, CharacterCountUtils counter,
                                     List<String> translatedContent, TranslateResourceDTO translateResourceDTO, ShopifyRequest request) {
+        if (translatedContent == null) {
+            return;
+        }
         for (JsonNode contentItem : contentNode) {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
+            if (contentItemNode == null) {
+                continue;
+            }
             //当在contentItemNode的key在translatedContent里面，则跳过
-            if (contentItemNode == null || translatedContent.contains(contentItemNode.path("key").asText(null))) {
+            String key = contentItemNode.path("key").asText(null);
+            if (key == null || translatedContent.contains(key)) {
                 continue;
             }
             // 跳过 key 为 "handle" 的项
-            if ("handle".equals(contentItemNode.path("key").asText(null))
-                    || "JSON".equals(contentItemNode.path("type").asText(null))
+            if ("JSON".equals(contentItemNode.path("type").asText(null))
                     || "JSON_STRING".equals(contentItemNode.path("type").asText(null))
                     || translateResourceDTO.getResourceType().equals(SHOP_POLICY)
             ) {
@@ -904,7 +915,7 @@ public class ShopifyService {
                 if (key.contains("metafield:") || key.contains("color")
                         || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
                         || key.contains("carousel_easing") || key.contains("_link") || key.contains("general") || key.contains("css:")
-                        || key.contains("icon:") || "handle".equals(key) || type.equals("FILE_REFERENCE") || type.equals("URL") || type.equals("LINK")
+                        || key.contains("icon:") || type.equals("FILE_REFERENCE")  || type.equals("LINK")
                         || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
                         || type.equals(("LIST_URL"))
                 ) {

@@ -20,6 +20,8 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
@@ -159,8 +161,19 @@ public class TranslateController {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
+
+        //修改模块的排序
+        List<String> translateResourceDTOS = null;
+        try {
+            translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
+        } catch (Exception e) {
+            appInsights.trackTrace("translateModel error: " + e.getMessage());
+        }
 //      翻译
-        translateService.startTranslation(request, remainingChars, counter, usedChars, false);
+        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
+            return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
+        }
+        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
@@ -281,4 +294,5 @@ public class TranslateController {
     public BaseResponse<Object> updateStatusByShopName(@RequestBody AutoTranslateRequest request) {
         return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(),request.getSource(), request.getTarget());
     }
+
 }

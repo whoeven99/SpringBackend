@@ -86,7 +86,7 @@ public class ArkTranslateIntegration {
             countUtils.addChars(totalTokensInt);
             return response.toString();
         } catch (Exception e) {
-            throw new RuntimeException("Chat completion failed", e);
+            throw new RuntimeException(e);
         }
     }
 }

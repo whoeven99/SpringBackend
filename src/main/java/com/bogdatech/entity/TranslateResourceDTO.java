@@ -150,7 +150,7 @@ public class TranslateResourceDTO {
                 new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", "")
         ));
         TOKEN_MAP.put("article", List.of(new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")));
-        TOKEN_MAP.put("blog_titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, MAX_LENGTH, "")));
+        TOKEN_MAP.put("blog_titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("filters", List.of(new TranslateResourceDTO(FILTER, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("metaobjects", List.of(new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("pages", List.of(new TranslateResourceDTO(PAGE, MAX_LENGTH, "", "")));
