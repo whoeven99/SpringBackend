@@ -1,14 +1,27 @@
 package com.bogdatech.utils;
 
-import java.util.Set;
+import com.bogdatech.entity.TranslateResourceDTO;
 
-import static com.bogdatech.constants.TranslateConstants.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 
 public class ModelUtils {
-    public static final Set<String> PRODUCT_RESOURCE_TYPES = Set.of(
-            PRODUCT,
-            PRODUCT_OPTION,
-            PRODUCT_OPTION_VALUE
-    );
+
+    //将前端传的宽泛的模块解析成具体的翻译模块，并输出
+    public static List<String> translateModel(List<String> list){
+        List<TranslateResourceDTO> translateList = new ArrayList<>();
+        for (String model: list
+             ) {
+            List<TranslateResourceDTO> translateResourceList = TOKEN_MAP.get(model);
+            translateList.addAll(translateResourceList);
+        }
+        List<String> translateModelList = new ArrayList<>();
+        for (TranslateResourceDTO resourceDTO: translateList){
+            translateModelList.add(resourceDTO.getResourceType());
+        }
+        return translateModelList;
+    }
 
 }

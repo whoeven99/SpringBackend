@@ -68,7 +68,7 @@ public class TranslateResourceDTO {
 
             new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
+//            new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
 
             new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),
@@ -79,7 +79,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")
             ,
             new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
+//            new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN_GROUP, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SHOP, MAX_LENGTH, "", ""),
@@ -150,7 +150,7 @@ public class TranslateResourceDTO {
                 new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", "")
         ));
         TOKEN_MAP.put("article", List.of(new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")));
-        TOKEN_MAP.put("blog_titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, MAX_LENGTH, "")));
+        TOKEN_MAP.put("blog_titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("filters", List.of(new TranslateResourceDTO(FILTER, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("metaobjects", List.of(new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("pages", List.of(new TranslateResourceDTO(PAGE, MAX_LENGTH, "", "")));
