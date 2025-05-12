@@ -40,10 +40,11 @@ public class UserService {
     private final IUserSubscriptionsService userSubscriptionsService;
     private final EmailIntegration emailIntegration;
     private final IEmailService emailServicel;
+    private final ITranslatesService translatesService;
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
 
     @Autowired
-    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel) {
+    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService) {
         this.usersService = usersService;
         this.taskScheduler = taskScheduler;
         this.translationCounterService = translationCounterService;
@@ -51,6 +52,7 @@ public class UserService {
         this.userSubscriptionsService = userSubscriptionsService;
         this.emailIntegration = emailIntegration;
         this.emailServicel = emailServicel;
+        this.translatesService = translatesService;
     }
 
     //添加用户
@@ -99,7 +101,10 @@ public class UserService {
         boolean success = false;
         while (!success) {
             try {
+                //更改用户卸载翻译时间
                 usersService.unInstallApp(userRequest);
+                //将用户定时任务的true都改为false
+                translatesService.updateAutoTranslateByShopNameToFalse(userRequest.getShopName());
                 success = true;  // 如果没有抛出异常，则表示执行成功，退出循环
             } catch (Exception e) {
                 appInsights.trackTrace("Uninstallation failed, retrying...");
