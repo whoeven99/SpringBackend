@@ -41,4 +41,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     BaseResponse<Object> updateAutoTranslateByShopName(String shopName, Boolean autoTranslate, String source, String target);
 
     List<TranslatesDO> readAllTranslates();
+
+    void updateAutoTranslateByShopNameToFalse(String shopName);
 }
