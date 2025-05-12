@@ -22,7 +22,7 @@ public class JudgeTranslateUtils {
     );
 
     public static final Pattern TRANSLATABLE_KEY_PATTERN =
-            Pattern.compile(".*(heading|description|content|title|label|product|faq|header|desc|custom_html|text|slide|name).*");
+            Pattern.compile(".*(heading|description|content|title|label|product|faq|header|des|custom_html|text|slide|name).*");
 
 
     // 明确不翻译的key集合
