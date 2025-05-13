@@ -3,6 +3,7 @@ package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
+import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
@@ -24,7 +25,7 @@ import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
-import static com.bogdatech.utils.JudgeTranslateUtils.TRANSLATABLE_KEY_PATTERN;
+import static com.bogdatech.utils.JudgeTranslateUtils.*;
 
 @RestController
 public class TestController {
@@ -35,6 +36,7 @@ public class TestController {
     private final TranslateService translateService;
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
+
     @Autowired
     public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
@@ -124,21 +126,48 @@ public class TestController {
     @GetMapping("/testHtml")
     public void testHtml() {
         String html = """
-                
+                                
                 """;
-        if (isHtml(html)){
+        if (isHtml(html)) {
             System.out.println("is html");
-        }else {
+        } else {
             System.out.println("is not html");
         }
 
-        if (isJson(html)){
+        if (isJson(html)) {
             System.out.println("is json");
-        }else {
+        } else {
             System.out.println("is not json");
         }
 //        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
 //        System.out.println("final: " + s);
+    }
+
+    //测试theme判断
+    @PostMapping("/testKeyValue")
+    public void testKeyValue(@RequestBody KeyValueDTO keyValueDTO) {
+        String key = keyValueDTO.getKey();
+        String value = keyValueDTO.getValue();
+        //通用的不翻译数据
+        if (!generalTranslate(key, value)) {
+            System.out.println("不翻译");
+            return;
+        }
+
+        //如果是theme模块的数据
+
+        if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
+            System.out.println("不翻译");
+            return;
+        }
+        //如果包含对应key和value，则跳过
+        if (!shouldTranslate(key, value)) {
+            System.out.println("不翻译");
+            return;
+        }
+
+        System.out.println("需要翻译");
+
     }
 
     @PutMapping("/testAutoTranslate")

@@ -3,6 +3,7 @@ package com.bogdatech.logic;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.IItemsService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserSubscriptionsService;
@@ -10,6 +11,7 @@ import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.ItemsDO;
 import com.bogdatech.entity.TranslateResourceDTO;
+import com.bogdatech.entity.UserTypeTokenDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -41,6 +43,7 @@ import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.TranslateResourceDTO.RESOURCE_MAP;
+import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
@@ -1038,6 +1041,38 @@ public class ShopifyService {
 //        System.out.println("request1: " + request.getResourceType());
         Map<String, Map<String, Object>> translationItemsInfo = getTranslationItemsInfo(request);
 //        System.out.println("translationItemsInfo" + translationItemsInfo);
+
+    }
+
+    /**
+     * 根据shopifyRequest，key和method获取对应模块的token。
+     *
+     * @param shopifyRequest 请求对象，包含shopName、target、source，accessToken等信息
+     * @param key            模块类型
+     * @param method         调用方式
+     */
+    @Async
+    public void insertInitialByTranslation(ShopifyRequest shopifyRequest, String key, String method) {
+        int tokens = 0;
+
+        for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
+            int token = getTotalWords(shopifyRequest, method, translateResourceDTO);
+            tokens += token;
+        }
+
+        if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
+                || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
+                || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
+                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
+            UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq(SHOP_NAME, shopifyRequest.getShopName());
+
+            // 根据传入的列名动态设置更新的字段
+            updateWrapper.set(key, tokens);
+            userTypeTokenService.update(null, updateWrapper);
+        } else {
+            throw new IllegalArgumentException("Invalid column name");
+        }
 
     }
 }

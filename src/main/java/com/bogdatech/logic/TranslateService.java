@@ -1,7 +1,6 @@
 package com.bogdatech.logic;
 
 
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.*;
@@ -71,7 +70,7 @@ public class TranslateService {
     private final EmailIntegration emailIntegration;
     private final IEmailService emailService;
     private final IVocabularyService vocabularyService;
-    private final IUserTypeTokenService userTypeTokenService;
+    private final UserTypeTokenService userTypeTokensService;
 
     @Autowired
     public TranslateService(
@@ -87,7 +86,9 @@ public class TranslateService {
             IAILanguagePacksService aiLanguagePacksService,
             IUsersService usersService,
             EmailIntegration emailIntegration,
-            IEmailService emailService, IVocabularyService vocabularyService, IUserTypeTokenService userTypeTokenService) {
+            IEmailService emailService,
+            IVocabularyService vocabularyService,
+            UserTypeTokenService userTypeTokensService) {
         this.translateApiIntegration = translateApiIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
@@ -102,7 +103,7 @@ public class TranslateService {
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
         this.vocabularyService = vocabularyService;
-        this.userTypeTokenService = userTypeTokenService;
+        this.userTypeTokensService = userTypeTokensService;
     }
 
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
@@ -178,7 +179,7 @@ public class TranslateService {
         //更新初始值
         try {
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-            startTokenCount(request);
+            userTypeTokensService.startTokenCount(request);
         } catch (Exception e) {
             appInsights.trackTrace("重新更新token值失败！！！" + e.getMessage());
         }
@@ -196,7 +197,7 @@ public class TranslateService {
             if (!userStopFlags.get(request.getShopName()).get()) {
                 translateSuccessEmail(request, counter, begin, usedChars, remainingChars, isTask);
             }
-            startTokenCount(request);
+            userTypeTokensService.startTokenCount(request);
         } catch (Exception e) {
             appInsights.trackTrace("重新更新token值失败！！！" + e.getMessage());
         }
@@ -1482,14 +1483,6 @@ public class TranslateService {
         return null;
     }
 
-    //插入语言状态
-    public void insertLanguageStatus(TranslateRequest request) {
-        Integer status = translatesService.readStatus(request);
-        if (status == null) {
-            translatesService.insertShopTranslateInfo(request, 0);
-        }
-    }
-
     //将缓存的数据存到数据库中
     public void saveToTranslates() {
         //添加数据
@@ -1609,136 +1602,7 @@ public class TranslateService {
         return translatesService.getIdByShopNameAndTargetAndSource(shopName, target, source);
     }
 
-    /**
-     * 根据request和translationId获取对应模块的token。
-     *
-     * @param shopifyRequest 请求对象，包含shopName、target、source，accessToken等信息
-     * @param key            请求对象的类型
-     * @param translationId  shopName和target对应的ID
-     */
-    @Async
-    public void updateStatusByTranslation(ShopifyRequest shopifyRequest, String key, int translationId, String method) {
-        int tokens = 0;
 
-        for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
-            int token = shopifyService.getTotalWords(shopifyRequest, method, translateResourceDTO);
-            tokens += token;
-        }
-//        System.out.println("tokens: " + tokens);
-        //将tokens存储到UserTypeToken对应的列里面
-        userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
-        if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
-                || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
-                || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
-            UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
-            updateWrapper.eq("translation_id", translationId);
-
-            // 根据传入的列名动态设置更新的字段
-            updateWrapper.set(key, tokens);
-            userTypeTokenService.update(null, updateWrapper);
-        } else {
-            throw new IllegalArgumentException("Invalid column name");
-        }
-//        System.out.println("second: " + LocalDateTime.now());
-    }
-
-    /**
-     * 根据shopifyRequest，key和method获取对应模块的token。
-     *
-     * @param shopifyRequest 请求对象，包含shopName、target、source，accessToken等信息
-     * @param key            模块类型
-     * @param method         调用方式
-     */
-    @Async
-    public void insertInitialByTranslation(ShopifyRequest shopifyRequest, String key, String method) {
-        int tokens = 0;
-
-        for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
-            int token = shopifyService.getTotalWords(shopifyRequest, method, translateResourceDTO);
-            tokens += token;
-        }
-
-        if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
-                || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
-                || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
-            UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
-            updateWrapper.eq(SHOP_NAME, shopifyRequest.getShopName());
-
-            // 根据传入的列名动态设置更新的字段
-            updateWrapper.set(key, tokens);
-            userTypeTokenService.update(null, updateWrapper);
-        } else {
-            throw new IllegalArgumentException("Invalid column name");
-        }
-
-    }
-
-    /**
-     * 根据request获取对应模块的token。如果status为2就不计数，如果为其他就开始计数
-     *
-     * @param request 请求对象，包含shopName、target、source，accessToken等信息
-     */
-    public void startTokenCount(TranslateRequest request) {
-        try {
-            //获取translationId
-            Integer translationId;
-            translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
-            if (translationId == null) {
-                //添加这个翻译项
-                //插入语言状态
-                insertLanguageStatus(request);
-                translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
-            }
-            //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
-            Integer status = userTypeTokenService.getStatusByTranslationId(translationId);
-            //如果status为空，插入一条userTypeToken表信息
-            if (status == null) {
-                Boolean b = userTypeTokenService.insertTokenInfo(request, translationId);
-                status = userTypeTokenService.getStatusByTranslationId(translationId);
-            }
-            if (status != 2) {
-                getUserTranslatedToken(request, translationId, userTypeTokenService, shopifyService);
-            }
-        } catch (IllegalArgumentException e) {
-            appInsights.trackTrace("错误原因： " + e.getMessage());
-        }
-    }
-
-    public static void getUserTranslatedToken(TranslateRequest request, Integer translationId, IUserTypeTokenService userTypeTokenService, ShopifyService shopifyService) {
-        //将UserTypeToken的status修改为2
-        userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 2);
-        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
-        //循环type获取token
-        for (String key : TOKEN_MAP.keySet()
-        ) {
-            int tokens = 0;
-
-            for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
-                int token = shopifyService.getTotalWords(shopifyRequest, "tokens", translateResourceDTO);
-                tokens += token;
-            }
-
-            //将tokens存储到UserTypeToken对应的列里面
-            userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
-            if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
-                    || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
-                    || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                    || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
-                UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
-                updateWrapper.eq("translation_id", translationId);
-
-                // 根据传入的列名动态设置更新的字段
-                updateWrapper.set(key, tokens);
-                userTypeTokenService.update(null, updateWrapper);
-            } else {
-                appInsights.trackTrace("Invalid column name");
-            }
-        }
-        //token全部获取完之后修改，UserTypeToken的status==1
-        userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
-    }
 
 }
 

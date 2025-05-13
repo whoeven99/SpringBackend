@@ -188,4 +188,12 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("auto_translate", true));
     }
 
+    @Override
+    public void insertLanguageStatus(TranslateRequest request) {
+        Integer status = readStatus(request);
+        if (status == null) {
+            insertShopTranslateInfo(request, 0);
+        }
+    }
+
 }

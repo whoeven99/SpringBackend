@@ -18,7 +18,7 @@ public class RabbitMQConfig {
     // 声明直连交换机
     @Bean
     public DirectExchange scheduledTranslateExchange() {
-        return new DirectExchange(SCHEDULED_TRANSLATE_EXCHANGE);
+        return new DirectExchange(SCHEDULED_TRANSLATE_EXCHANGE, true, false);
     }
 
     // 队列绑定到交换机
