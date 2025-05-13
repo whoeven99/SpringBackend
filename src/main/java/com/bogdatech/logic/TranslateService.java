@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.*;
+import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -1740,5 +1742,70 @@ public class TranslateService {
         userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
     }
 
+    /**
+     * 单条文本翻译，判断是否在翻译逻辑里面，是否额度充足，扣额度，返回翻译后的文本
+     */
+    public BaseResponse<Object> singleTextTranslate(SingleTranslateVO singleTranslateVO) {
+        //判断是否为空
+        String value = singleTranslateVO.getContext();
+        if (value == null) {
+            return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+        }
+        //判断额度是否足够
+        String shopName = singleTranslateVO.getShopName();
+        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+        int usedChars = request1.getUsedChars();
+        // 如果字符超限，则直接返回字符超限
+        if (usedChars >= remainingChars) {
+            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+        }
+
+        //根据模块判断是否翻译
+        String key = singleTranslateVO.getKey();
+        String source = singleTranslateVO.getSource();
+        String target = singleTranslateVO.getTarget();
+        String resourceType = singleTranslateVO.getResourceType();
+
+        if (translationLogic(singleTranslateVO.getKey(), singleTranslateVO.getContext(), singleTranslateVO.getType(), singleTranslateVO.getResourceType())) {
+            return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+        }
+
+        if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
+            if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+            //如果包含对应key和value，则跳过
+            if (!shouldTranslate(key, value)) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+        }
+        if (resourceType.equals(METAFIELD)) {
+            if (SUSPICIOUS_PATTERN.matcher(value).matches()) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+            if (!metaTranslate(value)) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+        }
+
+        CharacterCountUtils counter = new CharacterCountUtils();
+        //开始翻译,判断是普通文本还是html文本
+        try {
+            if (isHtml(value)) {
+                String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
+            } else {
+                String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                return new BaseResponse<>().CreateSuccessResponse(targetString);
+            }
+        } catch (Exception e) {
+            appInsights.trackTrace("singleTranslate error: " + e.getMessage());
+        }
+
+        return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+    }
 }
 

@@ -5,6 +5,7 @@ import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.TranslatesDO;
 import com.bogdatech.entity.TranslationCounterDO;
+import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
@@ -295,4 +296,9 @@ public class TranslateController {
         return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(),request.getSource(), request.getTarget());
     }
 
+    //单条文本翻译
+    @PostMapping("/singleTextTranslate")
+    public BaseResponse<Object> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
+        return translateService.singleTextTranslate(singleTranslateVO);
+    }
 }
