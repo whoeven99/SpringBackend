@@ -57,6 +57,8 @@ public class JudgeTranslateUtils {
         JSON_NO_TRANSLATE_SUBSTRINGS.add("date_formats");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("css");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("grid_");
+        JSON_NO_TRANSLATE_SUBSTRINGS.add("variant_");
+        JSON_NO_TRANSLATE_SUBSTRINGS.add("code");
     }
 
     // value包含px时不翻译的key子字符串集合
@@ -155,9 +157,11 @@ public class JudgeTranslateUtils {
         }
 
         // 第三步：检查包含.json的key
-        for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
-            if (key.contains(substring)) {
-                return false;
+        if (key.contains(".json")) {
+            for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
+                if (key.contains(substring)) {
+                    return false;
+                }
             }
         }
 
