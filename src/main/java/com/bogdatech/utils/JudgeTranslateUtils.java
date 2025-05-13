@@ -90,7 +90,7 @@ public class JudgeTranslateUtils {
         OLD_NO_TRANSLATE.add("email_text");
         OLD_NO_TRANSLATE.add("carousel_easing");
         OLD_NO_TRANSLATE.add("_link");
-        OLD_NO_TRANSLATE.add("general.rtl");
+        OLD_NO_TRANSLATE.add("rtl");
         OLD_NO_TRANSLATE.add("css:");
         OLD_NO_TRANSLATE.add("icon:");
     }
