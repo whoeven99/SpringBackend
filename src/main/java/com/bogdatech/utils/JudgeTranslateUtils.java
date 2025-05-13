@@ -57,7 +57,6 @@ public class JudgeTranslateUtils {
         JSON_NO_TRANSLATE_SUBSTRINGS.add("date_formats");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("css");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("grid_");
-        JSON_NO_TRANSLATE_SUBSTRINGS.add("image");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("variant_");
     }
 
