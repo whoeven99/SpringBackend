@@ -58,6 +58,7 @@ public class JudgeTranslateUtils {
         JSON_NO_TRANSLATE_SUBSTRINGS.add("css");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("grid_");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("variant_");
+        JSON_NO_TRANSLATE_SUBSTRINGS.add("code");
     }
 
     // value包含px时不翻译的key子字符串集合
