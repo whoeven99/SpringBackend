@@ -178,12 +178,11 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("auto_translate", true));
     }
 
+
+
     @Override
-    public void insertLanguageStatus(TranslateRequest request) {
-        Integer status = readStatus(request);
-        if (status == null) {
-            insertShopTranslateInfo(request, 0);
-        }
+    public void updateAutoTranslateByShopNameToFalse(String shopName) {
+        baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("auto_translate", false));
     }
 
 }

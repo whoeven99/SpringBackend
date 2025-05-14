@@ -22,7 +22,7 @@ public class JudgeTranslateUtils {
     );
 
     public static final Pattern TRANSLATABLE_KEY_PATTERN =
-            Pattern.compile(".*(heading|description|content|title|label|product|faq|header|des|custom_html|text|slide|name).*");
+            Pattern.compile(".*(heading|description|content|title|label|product|faq|header|des|custom_html|text|slide|name|checkout).*");
 
 
     // 明确不翻译的key集合
@@ -57,6 +57,8 @@ public class JudgeTranslateUtils {
         JSON_NO_TRANSLATE_SUBSTRINGS.add("date_formats");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("css");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("grid_");
+        JSON_NO_TRANSLATE_SUBSTRINGS.add("variant_");
+        JSON_NO_TRANSLATE_SUBSTRINGS.add("code");
     }
 
     // value包含px时不翻译的key子字符串集合
@@ -88,7 +90,7 @@ public class JudgeTranslateUtils {
         OLD_NO_TRANSLATE.add("email_text");
         OLD_NO_TRANSLATE.add("carousel_easing");
         OLD_NO_TRANSLATE.add("_link");
-        OLD_NO_TRANSLATE.add("general.rtl");
+        OLD_NO_TRANSLATE.add("rtl");
         OLD_NO_TRANSLATE.add("css:");
         OLD_NO_TRANSLATE.add("icon:");
     }
@@ -155,9 +157,11 @@ public class JudgeTranslateUtils {
         }
 
         // 第三步：检查包含.json的key
-        for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
-            if (key.contains(substring)) {
-                return false;
+        if (key.contains(".json")) {
+            for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
+                if (key.contains(substring)) {
+                    return false;
+                }
             }
         }
 

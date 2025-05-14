@@ -42,5 +42,5 @@ public interface ITranslatesService extends IService<TranslatesDO> {
 
     List<TranslatesDO> readAllTranslates();
 
-    void insertLanguageStatus(TranslateRequest request);
+    void updateAutoTranslateByShopNameToFalse(String shopName);
 }
