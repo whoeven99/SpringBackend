@@ -1,13 +1,9 @@
 package com.bogdatech.model.service;
 
-import com.bogdatech.entity.DTO.ScheduledTranslateTaskDTO;
-import com.bogdatech.entity.DTO.TranslateDTO;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 import static com.bogdatech.constants.RabbitMQConstants.SCHEDULED_TRANSLATE_EXCHANGE;
 import static com.bogdatech.constants.RabbitMQConstants.SCHEDULED_TRANSLATE_ROUTING_KEY;
@@ -25,10 +21,7 @@ public class TranslateTaskPublisherService {
     /**
      * 自动翻译发送翻译任务消息到 MQ
      */
-    public void sendScheduledTranslateTask(ScheduledTranslateTaskDTO<TranslateDTO> message) {
-        message.setCreatedAt(LocalDateTime.now());
-
-        System.out.println("发送翻译任务消息：" + message);
+    public void sendScheduledTranslateTask(String message) {
 
         // 发送消息到指定交换机和路由键
         rabbitTemplate.convertAndSend(

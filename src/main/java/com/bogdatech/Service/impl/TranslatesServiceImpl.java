@@ -154,32 +154,22 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public BaseResponse<Object> updateAutoTranslateByShopName(String shopName, Boolean autoTranslate, String source, String target) {
-        //一个用户只允许一条定时任务
-        //先判断该用户是否将其他翻译项设为定时任务
-        List<TranslatesDO> isTrueList = baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("auto_translate", true));
-        if (!isTrueList.isEmpty()) {
-            //将list集合里面的值全部修改为false
-            for (TranslatesDO translatesDO : isTrueList) {
-                if (translatesDO.getAutoTranslate()) {
-                    baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("id", translatesDO.getId()).set("auto_translate", false));
-                }
-            }
-            if (!autoTranslate){
-                return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate));
-            }
-        }
-
         int flag = baseMapper.update(new UpdateWrapper<TranslatesDO>()
                 .eq("shop_name", shopName)
                 .eq("source", source)
                 .eq("target", target)
                 .set("auto_translate", autoTranslate));
+
+        //将source不为修改的值的True改为false
+        baseMapper.update(new UpdateWrapper<TranslatesDO>()
+                .eq("shop_name", shopName)
+                .ne("source", source)
+                .set("auto_translate", false));
         if (flag > 0) {
             return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate));
         } else {
             return new BaseResponse<>().CreateErrorResponse("更新失败");
         }
-
 
     }
 

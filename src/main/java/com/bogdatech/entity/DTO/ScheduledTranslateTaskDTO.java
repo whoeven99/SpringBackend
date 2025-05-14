@@ -2,10 +2,11 @@ package com.bogdatech.entity.DTO;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
-public class ScheduledTranslateTaskDTO<T> {
+public class ScheduledTranslateTaskDTO<T> implements Serializable {
     private String taskId;         // 任务ID
     private T messageData;         // 消息数据
     private LocalDateTime createdAt; // 创建时间

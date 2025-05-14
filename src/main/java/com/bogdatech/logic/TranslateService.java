@@ -288,10 +288,39 @@ public class TranslateService {
         }
     }
 
+    //对自动翻译的异常捕获
+    public void autoTranslateException(TranslateRequest request, int remainingChars, CharacterCountUtils counter,int usedChars) {
+        String shopName = request.getShopName();
+        String source = request.getSource();
+        String target = request.getTarget();
+        Boolean isTask = true;
+        userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
+        LocalDateTime begin = LocalDateTime.now();
+        try {
+            taskTranslating(request, remainingChars, counter, new ArrayList<>());
+        } catch (ClientException e) {
+            System.out.println("startTranslation " + e.getErrorMessage());
+            translate3Handle(request, counter, begin, remainingChars, usedChars);
+            return;
+        } catch (CannotCreateTransactionException e) {
+            System.out.println("CannotCreateTransactionException Translation task failed: " + e);
+            //更新初始值
+            translateFailHandle(request, counter);
+            return;
+        } catch (Exception e) {
+            translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
+            System.out.println("Exception Translation task failed: " + e);
+            //更新初始值
+            translateFailHandle(request, counter);
+            return;
+        }
+        translateSuccessHandle(request, counter, begin, remainingChars, usedChars, isTask);
+    }
     //定时任务自动翻译
     public void taskTranslating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, List<String> list) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
-
+        appInsights.trackTrace("定时任务自动翻译开启");
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -335,7 +364,7 @@ public class TranslateService {
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
     public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, List<String> translateSettings3) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
-
+        appInsights.trackTrace("普通翻译开始");
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -405,7 +434,7 @@ public class TranslateService {
     public Future<Void> translateJson(TranslateContext translateContext) {
         String resourceType = translateContext.getTranslateResource().getResourceType();
         ShopifyRequest request = translateContext.getShopifyRequest();
-        System.out.println("现在翻译到： " + resourceType);
+        System.out.println("现在翻译到： " + resourceType + " shopName:" + request.getShopName() + " accessToken: " + request.getAccessToken() + " target: " + request.getTarget());
         //将目前的状态，添加到数据库中，前端要用这个数据做进度条功能
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), translateContext.getSource(), resourceType);
         if (translateContext.getShopifyData() == null) {

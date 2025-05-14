@@ -1,21 +1,20 @@
 package com.bogdatech.entity.DTO;
 
-import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.utils.CharacterCountUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.io.Serializable;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class TranslateDTO {
-    private TranslateRequest translateRequest;
+public class TranslateDTO implements Serializable {
     private Integer remainingChars;
     private Integer usedChars;
-    private CharacterCountUtils counter;
-    private Boolean isTask;
-    private List<String> translateModels;
+    private Integer status;
+    private String shopName;
+    private String accessToken;
+    private String source; //原语言
+    private String target; //目标语言
 }

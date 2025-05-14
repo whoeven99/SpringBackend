@@ -12,8 +12,12 @@ public class RabbitMQConfig {
     // 声明队列
     @Bean
     public Queue scheduledTranslateQueue() {
-        return QueueBuilder.durable(SCHEDULED_TRANSLATE_QUEUE).build();
+        return QueueBuilder.durable(SCHEDULED_TRANSLATE_QUEUE)
+                .withArgument("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE) // 指定死信交换机
+                .withArgument("x-dead-letter-routing-key", DEAD_LETTER_ROUTING_KEY) // 指定死信路由键
+         .build();
     }
+
 
     // 声明直连交换机
     @Bean
@@ -27,5 +31,25 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(scheduledTranslateQueue())
                 .to(scheduledTranslateExchange())
                 .with(SCHEDULED_TRANSLATE_ROUTING_KEY);
+    }
+
+    // 声明死信队列
+    @Bean
+    public Queue deadLetterQueue() {
+        return QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
+    }
+
+    // 声明死信交换机
+    @Bean
+    public DirectExchange deadLetterExchange() {
+        return new DirectExchange(DEAD_LETTER_EXCHANGE, true, false);
+    }
+
+    // 死信队列绑定到死信交换机
+    @Bean
+    public Binding deadLetterBinding() {
+        return BindingBuilder.bind(deadLetterQueue())
+                .to(deadLetterExchange())
+                .with(DEAD_LETTER_ROUTING_KEY);
     }
 }

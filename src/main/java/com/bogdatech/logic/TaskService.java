@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.*;
-import com.bogdatech.entity.DTO.ScheduledTranslateTaskDTO;
 import com.bogdatech.entity.DTO.TranslateDTO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.model.controller.request.*;
@@ -24,6 +23,7 @@ import java.util.List;
 
 import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 
 @Component
 public class TaskService {
@@ -184,15 +184,8 @@ public class TaskService {
         for (TranslatesDO translatesDO : translatesDOList
         ) {
 
-
 //            System.out.println("translatesDO: " + translatesDO);
             String shopName = translatesDO.getShopName();
-            //判断该用户是否正在翻译，正在翻译就不翻译了
-            if (translatesDO.getStatus() == 2) {
-//                System.out.println("该用户正在翻译，不翻译了");
-                //TODO: 如果正在翻译，则将任务放到最后
-                continue;
-            }
 
             //判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getUserByName(shopName);
@@ -221,14 +214,12 @@ public class TaskService {
             //TODO：修改，发送到定时任务的队列里面
             //UTC每天凌晨1点翻译，且只翻译product模块
             //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-            //初始化计数器
-            CharacterCountUtils counter = new CharacterCountUtils();
-            counter.addChars(usedChars);
             translatesService.updateTranslateStatus(shopName, 2, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
 //            translateService.startTranslation(, remainingChars, counter, usedChars, true, null);
-            TranslateRequest translateRequest = new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null);
-            TranslateDTO translateDTO = new TranslateDTO(translateRequest, remainingChars, usedChars, counter, true, null);
-            translateTaskPublisherService.sendScheduledTranslateTask(new ScheduledTranslateTaskDTO<TranslateDTO>().CreateMessageData(translateDTO));
+//            TranslateRequest translateRequest = new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null);
+            TranslateDTO translateDTO = new TranslateDTO(remainingChars, usedChars, translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
+            String json = objectToJson(translateDTO);
+            translateTaskPublisherService.sendScheduledTranslateTask(json);
         }
     }
 
