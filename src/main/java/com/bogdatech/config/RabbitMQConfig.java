@@ -1,6 +1,8 @@
 package com.bogdatech.config;
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -8,6 +10,17 @@ import static com.bogdatech.constants.RabbitMQConstants.*;
 
 @Configuration
 public class RabbitMQConfig {
+
+    //连接rabbitMQ服务
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+        connectionFactory.setHost(System.getenv(RABBIT_MQ_HOST));
+        connectionFactory.setPort(Integer.parseInt(System.getenv(RABBIT_MQ_PORT)));
+        connectionFactory.setUsername(System.getenv(RABBIT_MQ_USERNAME));
+        connectionFactory.setPassword(System.getenv(RABBIT_MQ_PASSWORD));
+        return connectionFactory;
+    }
 
     // 声明队列
     @Bean
@@ -52,4 +65,6 @@ public class RabbitMQConfig {
                 .to(deadLetterExchange())
                 .with(DEAD_LETTER_ROUTING_KEY);
     }
+
+
 }
