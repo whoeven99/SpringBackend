@@ -16,7 +16,7 @@ public class RabbitMQConfig {
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
         connectionFactory.setHost(System.getenv(RABBIT_MQ_HOST));
-        connectionFactory.setPort(Integer.parseInt(System.getenv(RABBIT_MQ_PORT)));
+        connectionFactory.setPort(5672);
         connectionFactory.setUsername(System.getenv(RABBIT_MQ_USERNAME));
         connectionFactory.setPassword(System.getenv(RABBIT_MQ_PASSWORD));
         return connectionFactory;
