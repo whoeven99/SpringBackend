@@ -169,10 +169,7 @@ public class TranslateService {
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
         //发送报错邮件
-        AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(request.getShopName(), k -> new AtomicBoolean(false));
-        if (emailSent.compareAndSet(false, true)) {
-            translateFailEmail(request.getShopName(), counter, begin, usedChars, remainingChars, request.getTarget(), request.getSource());
-        }
+        translateFailEmail(request.getShopName(), counter, begin, usedChars, remainingChars, request.getTarget(), request.getSource());
         translateFailHandle(request, counter);
     }
 
@@ -296,7 +293,6 @@ public class TranslateService {
         String source = request.getSource();
         String target = request.getTarget();
         Boolean isTask = true;
-        userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
         userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
         LocalDateTime begin = LocalDateTime.now();
         try {
