@@ -1,7 +1,9 @@
 package com.bogdatech.model.service;
 
 import com.bogdatech.Service.ITranslatesService;
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DTO.TranslateDTO;
+import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -22,11 +24,13 @@ public class TranslateTaskConsumerService {
 
     private final TranslateService translateService;
     private final ITranslatesService translatesService;
+    private final ITranslationCounterService translationCounterService;
 
     @Autowired
-    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService) {
+    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService, ITranslationCounterService translationCounterService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
+        this.translationCounterService = translationCounterService;
     }
 
     /**
@@ -37,8 +41,9 @@ public class TranslateTaskConsumerService {
         String deliveryTag = String.valueOf(rawMessage.getMessageProperties().getDeliveryTag());
         TranslateDTO translateDTO = jsonToObject(json, TranslateDTO.class);
         try {
+            String shopName = translateDTO.getShopName();
             //判断该用户是否正在翻译，正在翻译就不翻译了
-            List<Integer> integers = translatesService.readStatusInTranslatesByShopName(translateDTO.getShopName());
+            List<Integer> integers = translatesService.readStatusInTranslatesByShopName(shopName);
             for (Integer integer : integers) {
                 if (integer == 2) {
                     channel.basicNack(rawMessage.getMessageProperties().getDeliveryTag(), false, true);
@@ -46,13 +51,17 @@ public class TranslateTaskConsumerService {
                 }
             }
 
+            TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+            Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+            int usedChars = request1.getUsedChars();
+
             translatesService.updateTranslateStatus(translateDTO.getShopName(), 2, translateDTO.getTarget(), translateDTO.getSource(), translateDTO.getAccessToken());
             //初始化计数器
             CharacterCountUtils counter = new CharacterCountUtils();
-            counter.addChars(translateDTO.getUsedChars());
+            counter.addChars(usedChars);
             //autoTranslateException，对异常进行处理
             TranslateRequest request = new TranslateRequest(0, translateDTO.getShopName(), translateDTO.getAccessToken(), translateDTO.getSource(), translateDTO.getTarget(),null);
-            translateService.autoTranslateException(request, translateDTO.getRemainingChars(), counter, translateDTO.getUsedChars());
+            translateService.autoTranslateException(request, remainingChars, counter, usedChars);
             // 业务处理完成后，手动ACK消息，RabbitMQ可安全移除消息
             channel.basicAck(rawMessage.getMessageProperties().getDeliveryTag(), false);
 
