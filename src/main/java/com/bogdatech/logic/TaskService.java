@@ -216,7 +216,7 @@ public class TaskService {
             //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
 //            translateService.startTranslation(, remainingChars, counter, usedChars, true, null);
 //            TranslateRequest translateRequest = new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null);
-            TranslateDTO translateDTO = new TranslateDTO(remainingChars, usedChars, translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
+            TranslateDTO translateDTO = new TranslateDTO(translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
             String json = objectToJson(translateDTO);
             translateTaskPublisherService.sendScheduledTranslateTask(json);
         }

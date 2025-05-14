@@ -10,8 +10,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Data
 public class TranslateDTO implements Serializable {
-    private Integer remainingChars;
-    private Integer usedChars;
     private Integer status;
     private String shopName;
     private String accessToken;
