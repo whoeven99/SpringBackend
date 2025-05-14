@@ -1,5 +1,6 @@
 package com.bogdatech.model.service;
 
+import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DTO.TranslateDTO;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.TranslateRequest;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 import static com.bogdatech.constants.RabbitMQConstants.SCHEDULED_TRANSLATE_QUEUE;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
@@ -19,10 +21,12 @@ import static com.bogdatech.utils.JsonUtils.jsonToObject;
 public class TranslateTaskConsumerService {
 
     private final TranslateService translateService;
+    private final ITranslatesService translatesService;
 
     @Autowired
-    public TranslateTaskConsumerService(TranslateService translateService) {
+    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService) {
         this.translateService = translateService;
+        this.translatesService = translatesService;
     }
 
     /**
@@ -34,11 +38,15 @@ public class TranslateTaskConsumerService {
         TranslateDTO translateDTO = jsonToObject(json, TranslateDTO.class);
         try {
             //判断该用户是否正在翻译，正在翻译就不翻译了
-            if (translateDTO.getStatus() == 2) {
-//                如果正在翻译，则将任务丢回队列
-                channel.basicNack(rawMessage.getMessageProperties().getDeliveryTag(), false, true);
-                return;
+            List<Integer> integers = translatesService.readStatusInTranslatesByShopName(translateDTO.getShopName());
+            for (Integer integer : integers) {
+                if (integer == 2) {
+                    channel.basicNack(rawMessage.getMessageProperties().getDeliveryTag(), false, true);
+                    return;
+                }
             }
+
+            translatesService.updateTranslateStatus(translateDTO.getShopName(), 2, translateDTO.getTarget(), translateDTO.getSource(), translateDTO.getAccessToken());
             //初始化计数器
             CharacterCountUtils counter = new CharacterCountUtils();
             counter.addChars(translateDTO.getUsedChars());
