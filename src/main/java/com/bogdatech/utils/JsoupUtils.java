@@ -227,16 +227,6 @@ public class JsoupUtils {
             return checkTranslationApi(request, counter, prompt);
         }
 
-        //判断是否符合大模型翻译，如果可以，翻译
-//        if (sourceText.length() > 100) {
-//            return checkTranslationModel(request, counter, prompt);
-//        }
-
-        //判断是否符合google翻译， 是， google翻译
-//        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
-//            return googleTranslateByJudge(request, counter, prompt);
-//        }
-
         return checkTranslationModel(request, counter, prompt);
     }
 
@@ -397,11 +387,19 @@ public class JsoupUtils {
     public static String translateAndCount(TranslateRequest request,
                                            CharacterCountUtils counter, String prompt) {
         String text = request.getContent();
+        //检测text是不是全大写，如果是的话，最后翻译完也全大写
+        boolean isUpperCase = text.equals(text.toUpperCase());
+
         String targetString = translateByModel(request, counter, prompt);
         if (targetString == null) {
             return text;
         }
+
         targetString = isHtmlEntity(targetString);
+        if (isUpperCase) {
+            targetString = targetString.toUpperCase();
+        }
+
         addData(request.getTarget(), text, targetString);
         return targetString;
     }
