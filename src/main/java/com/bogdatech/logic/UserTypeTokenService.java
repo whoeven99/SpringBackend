@@ -1,12 +1,16 @@
 package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserTypeTokenService;
+import com.bogdatech.entity.TranslateResourceDTO;
 import com.bogdatech.entity.UserTypeTokenDO;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
@@ -15,16 +19,17 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
+@EnableAsync
 public class UserTypeTokenService {
     private final IUserTypeTokenService userTypeTokenService;
     private final ITranslatesService translatesService;
-    private final TranslateService translateService;
+    private final ShopifyService shopifyService;
 
     @Autowired
-    public UserTypeTokenService(IUserTypeTokenService userTypeTokenService, ITranslatesService translatesService, TranslateService translateService) {
+    public UserTypeTokenService(IUserTypeTokenService userTypeTokenService, ITranslatesService translatesService, ShopifyService shopifyService) {
         this.userTypeTokenService = userTypeTokenService;
         this.translatesService = translatesService;
-        this.translateService = translateService;
+        this.shopifyService = shopifyService;
     }
 
     /**
@@ -57,7 +62,7 @@ public class UserTypeTokenService {
             for (String key : TOKEN_MAP.keySet()
             ) {
                 try {
-                    translateService.insertInitialByTranslation(shopifyRequest, key, "initial");
+                    shopifyService.insertInitialByTranslation(shopifyRequest, key, "initial");
                 } catch (Exception e) {
                     appInsights.trackTrace(key + "模块获取失败： " + request);
                 }
@@ -74,4 +79,71 @@ public class UserTypeTokenService {
     public UserTypeTokenDO getUserInitTokenByShopName(String shopName) {
         return userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(SHOP_NAME, shopName));
     }
+
+    /**
+     * 根据request获取对应模块的token。如果status为2就不计数，如果为其他就开始计数
+     *
+     * @param request 请求对象，包含shopName、target、source，accessToken等信息
+     */
+    @Async
+    public void startTokenCount(TranslateRequest request) {
+        try {
+            //获取translationId
+            Integer translationId;
+            translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+            if (translationId == null) {
+                //添加这个翻译项
+                //插入语言状态
+                translatesService.insertLanguageStatus(request);
+                translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
+            }
+            //判断数据库中UserTypeToken中translationId对应的status是什么 如果是2，则不获取token；如果是除2以外的其他值，获取token
+            Integer status = userTypeTokenService.getStatusByTranslationId(translationId);
+            //如果status为空，插入一条userTypeToken表信息
+            if (status == null) {
+                Boolean b = userTypeTokenService.insertTokenInfo(request, translationId);
+                status = userTypeTokenService.getStatusByTranslationId(translationId);
+            }
+            if (status != 2) {
+                getUserTranslatedToken(request, translationId, userTypeTokenService, shopifyService);
+            }
+        } catch (IllegalArgumentException e) {
+            appInsights.trackTrace("错误原因： " + e.getMessage());
+        }
+    }
+
+    public static void getUserTranslatedToken(TranslateRequest request, Integer translationId, IUserTypeTokenService userTypeTokenService, ShopifyService shopifyService) {
+        //将UserTypeToken的status修改为2
+        userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 2);
+        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
+        //循环type获取token
+        for (String key : TOKEN_MAP.keySet()
+        ) {
+            int tokens = 0;
+
+            for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
+                int token = shopifyService.getTotalWords(shopifyRequest, "tokens", translateResourceDTO);
+                tokens += token;
+            }
+
+            //将tokens存储到UserTypeToken对应的列里面
+            userTypeTokenService.updateTokenByTranslationId(translationId, tokens, key);
+            if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
+                    || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
+                    || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
+                    || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
+                UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
+                updateWrapper.eq("translation_id", translationId);
+
+                // 根据传入的列名动态设置更新的字段
+                updateWrapper.set(key, tokens);
+                userTypeTokenService.update(null, updateWrapper);
+            } else {
+                appInsights.trackTrace("Invalid column name");
+            }
+        }
+        //token全部获取完之后修改，UserTypeToken的status==1
+        userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
+    }
+
 }

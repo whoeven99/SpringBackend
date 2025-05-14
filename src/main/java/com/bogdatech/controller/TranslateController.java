@@ -57,7 +57,7 @@ public class TranslateController {
      */
     @PostMapping("/insertShopTranslateInfo")
     public void insertShopTranslateInfo(@RequestBody TranslateRequest request) {
-        translateService.insertLanguageStatus(request);
+        translatesService.insertLanguageStatus(request);
     }
 
     /**
@@ -254,7 +254,7 @@ public class TranslateController {
             ) {
                 TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), request.getSource(), target, null);
                 //插入语言状态
-                translateService.insertLanguageStatus(request1);
+                translatesService.insertLanguageStatus(request1);
                 //获取translates表中shopName和target对应的id
                 int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request1.getShopName(), request1.getTarget(), request1.getSource());
                 //初始化用户对应token表
@@ -267,7 +267,7 @@ public class TranslateController {
             ) {
                 TranslateRequest request1 = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), request.getSource(), target, null);
                 //插入语言状态
-                translateService.insertLanguageStatus(request1);
+                translatesService.insertLanguageStatus(request1);
                 //获取translates表中shopName和target对应的id
                 int idByShopNameAndTarget = translateService.getIdByShopNameAndTargetAndSource(request1.getShopName(), request1.getTarget(), request1.getSource());
                 //初始化用户对应token表
@@ -276,12 +276,6 @@ public class TranslateController {
         }
 
 
-    }
-
-    //异步调用startTokenCount方法获取所有的数据信息
-    @PostMapping("/startTokenCount")
-    public void startTokenCount(@RequestBody TranslateRequest request) {
-        translateService.startTokenCount(request);
     }
 
     //当支付成功后，调用该方法，将该用户的状态3，改为状态6
@@ -301,4 +295,5 @@ public class TranslateController {
     public BaseResponse<Object> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
         return translateService.singleTextTranslate(singleTranslateVO);
     }
+
 }

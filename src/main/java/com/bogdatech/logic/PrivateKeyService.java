@@ -46,6 +46,7 @@ import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
 import static com.bogdatech.integration.PrivateIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.integration.PrivateIntegration.translatePrivateNewHtml;
 import static com.bogdatech.logic.TranslateService.*;
+import static com.bogdatech.logic.UserTypeTokenService.getUserTranslatedToken;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
@@ -62,8 +63,6 @@ import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToS
 
 @Component
 public class PrivateKeyService {
-    private final PrivateIntegration privateIntegration;
-    private final TranslateApiIntegration translateApiIntegration;
     private final UserPrivateService userPrivateService;
     private final IUserPrivateService iUserPrivateService;
     private final ITranslatesService iTranslatesService;
@@ -81,9 +80,7 @@ public class PrivateKeyService {
     private final IUserTypeTokenService userTypeTokenService;
 
     @Autowired
-    public PrivateKeyService(PrivateIntegration privateIntegration, TranslateApiIntegration translateApiIntegration, UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService) {
-        this.privateIntegration = privateIntegration;
-        this.translateApiIntegration = translateApiIntegration;
+    public PrivateKeyService(UserPrivateService userPrivateService, IUserPrivateService iUserPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, IGlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService) {
         this.userPrivateService = userPrivateService;
         this.iUserPrivateService = iUserPrivateService;
         this.iTranslatesService = iTranslatesService;

@@ -5,8 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.*;
+import com.bogdatech.entity.DTO.TranslateDTO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.service.TranslateTaskPublisherService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -21,6 +23,7 @@ import java.util.List;
 
 import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 
 @Component
 public class TaskService {
@@ -34,10 +37,11 @@ public class TaskService {
     private final ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
     private final ITranslatesService translatesService;
     private final TranslateService translateService;
+    private final TranslateTaskPublisherService translateTaskPublisherService;
 
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.shopifyApiIntegration = shopifyApiIntegration;
@@ -47,6 +51,7 @@ public class TaskService {
         this.subscriptionQuotaRecordService = subscriptionQuotaRecordService;
         this.translatesService = translatesService;
         this.translateService = translateService;
+        this.translateTaskPublisherService = translateTaskPublisherService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -166,7 +171,7 @@ public class TaskService {
 
     /**
      * 用户的自动翻译功能
-     * 1，先判断哪些用户使用了自动翻译功能
+     * 1，先判断该用户是否在翻译，如果在，放在最后
      * 2，再判断这些用户是否卸载了，卸载了就不管了
      * 3，再判断该用户剩余token数是否足够，不够就不管了
      * 4，再判断该用户是否正在翻译，正在翻译就不翻译了
@@ -178,13 +183,9 @@ public class TaskService {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         for (TranslatesDO translatesDO : translatesDOList
         ) {
+
 //            System.out.println("translatesDO: " + translatesDO);
             String shopName = translatesDO.getShopName();
-            //判断该用户是否正在翻译，正在翻译就不翻译了
-            if (translatesDO.getStatus() == 2) {
-//                System.out.println("该用户正在翻译，不翻译了");
-                continue;
-            }
 
             //判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getUserByName(shopName);
@@ -210,14 +211,17 @@ public class TaskService {
                 continue;
             }
 
+            //TODO：修改，发送到定时任务的队列里面
             //UTC每天凌晨1点翻译，且只翻译product模块
             //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-            //初始化计数器
-            CharacterCountUtils counter = new CharacterCountUtils();
-            counter.addChars(usedChars);
             translatesService.updateTranslateStatus(shopName, 2, translatesDO.getTarget(), translatesDO.getSource(), translatesDO.getAccessToken());
-            translateService.startTranslation(new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, true, null);
-
+//            translateService.startTranslation(, remainingChars, counter, usedChars, true, null);
+//            TranslateRequest translateRequest = new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null);
+            TranslateDTO translateDTO = new TranslateDTO(remainingChars, usedChars, translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
+            String json = objectToJson(translateDTO);
+            translateTaskPublisherService.sendScheduledTranslateTask(json);
         }
     }
+
+
 }

@@ -1,7 +1,7 @@
 package com.bogdatech.utils;
 
 
-import com.bogdatech.model.service.KeywordModel;
+import com.bogdatech.entity.VO.KeywordVO;
 import com.microsoft.applicationinsights.TelemetryClient;
 
 import java.util.ArrayList;
@@ -30,12 +30,12 @@ public class CaseSensitiveUtils {
 
     // 替换关键词为占位符
     public static String extractKeywords(String text, Map<String, String> placeholders, Map<String, String> keywordTranslationMap, Map<String, String> keyMap0, String source) {
-        List<KeywordModel> allKeywords = mergeKeywordMap(keyMap0, keywordTranslationMap);
+        List<KeywordVO> allKeywords = mergeKeywordMap(keyMap0, keywordTranslationMap);
 
         // 依次替换关键词
         int i = 0;
         String targetText = text; // 初始化为原始 text
-        for (KeywordModel entry : allKeywords) {
+        for (KeywordVO entry : allKeywords) {
             String keyword = entry.keyword;
             String placeholder = "#_" + i++;
             placeholders.put(placeholder, entry.translation); // 存储翻译
@@ -67,13 +67,13 @@ public class CaseSensitiveUtils {
      * 将key0和key1的值放到一个集合里面，并按长度顺序排序
      *
      * */
-     public static List<KeywordModel> mergeKeywordMap(Map<String, String> keyMap0, Map<String, String> keyMap1) {
-         List<KeywordModel> allKeywords = new ArrayList<>();
+     public static List<KeywordVO> mergeKeywordMap(Map<String, String> keyMap0, Map<String, String> keyMap1) {
+         List<KeywordVO> allKeywords = new ArrayList<>();
          for (Map.Entry<String, String> entry : keyMap1.entrySet()) {
-             allKeywords.add(new KeywordModel(entry.getKey(), entry.getValue(), true));
+             allKeywords.add(new KeywordVO(entry.getKey(), entry.getValue(), true));
          }
          for (Map.Entry<String, String> entry : keyMap0.entrySet()) {
-             allKeywords.add(new KeywordModel(entry.getKey(), entry.getValue(), false));
+             allKeywords.add(new KeywordVO(entry.getKey(), entry.getValue(), false));
          }
 
          // 按关键词长度从长到短排序，若长度相同则保持原有顺序

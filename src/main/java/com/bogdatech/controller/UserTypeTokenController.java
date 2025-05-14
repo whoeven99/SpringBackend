@@ -47,4 +47,10 @@ public class UserTypeTokenController {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
     }
+
+    //异步调用startTokenCount方法获取所有的数据信息
+    @PostMapping("/startTokenCount")
+    public void startTokenCount(@RequestBody TranslateRequest request) {
+        userTypeTokenService.startTokenCount(request);
+    }
  }
