@@ -436,7 +436,7 @@ public class TranslateService {
     public Future<Void> translateJson(TranslateContext translateContext) {
         String resourceType = translateContext.getTranslateResource().getResourceType();
         ShopifyRequest request = translateContext.getShopifyRequest();
-        System.out.println("现在翻译到： " + resourceType + " shopName:" + request.getShopName() + " accessToken: " + request.getAccessToken() + " target: " + request.getTarget());
+        appInsights.trackTrace("现在翻译到： " + resourceType + " shopName:" + request.getShopName() + " accessToken: " + request.getAccessToken() + " target: " + request.getTarget());
         //将目前的状态，添加到数据库中，前端要用这个数据做进度条功能
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), translateContext.getSource(), resourceType);
         if (translateContext.getShopifyData() == null) {
