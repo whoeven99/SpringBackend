@@ -142,7 +142,7 @@ public class PlaceholderUtils {
      * @return 极简提示词
      * */
     public static String getSimplePrompt(String target){
-        return "Translate the following text into " + target + ".Output only the translated text";
+        return "Translate the following text into " + target + ". Do not output any notes, annotations, explanations, corrections, or bilingual text.Even if you detect an error in the original, do not mention it—only output the final correct translation.";
     }
 
     /**
