@@ -185,4 +185,11 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("auto_translate", false));
     }
 
+    @Override
+    public void insertLanguageStatus(TranslateRequest request) {
+        Integer status = readStatus(request);
+        if (status == null) {
+            insertShopTranslateInfo(request, 0);
+        }
+    }
 }

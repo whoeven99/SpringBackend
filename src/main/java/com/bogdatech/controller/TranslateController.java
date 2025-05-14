@@ -295,4 +295,5 @@ public class TranslateController {
     public BaseResponse<Object> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
         return translateService.singleTextTranslate(singleTranslateVO);
     }
+
 }
