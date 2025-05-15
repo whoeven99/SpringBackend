@@ -106,11 +106,8 @@ public class JsoupUtils {
 
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-//                VARIABLE_PATTERN,
-                CUSTOM_VAR_PATTERN
-//                ,
-//                LIQUID_CONDITION_PATTERN,
-//                ARRAY_VAR_PATTERN
+                CUSTOM_VAR_PATTERN,
+                SYMBOL_PATTERN
         );
 
         List<MatchRange> matches = new ArrayList<>();
@@ -223,19 +220,9 @@ public class JsoupUtils {
         String sourceText = request.getContent();
 
         //判断是否符合mt翻译 ，是， 调用mt翻译。
-        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 100) {
+        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 100 && !hasPlaceholders(request.getContent())) {
             return checkTranslationApi(request, counter, prompt);
         }
-
-        //判断是否符合大模型翻译，如果可以，翻译
-//        if (sourceText.length() > 100) {
-//            return checkTranslationModel(request, counter, prompt);
-//        }
-
-        //判断是否符合google翻译， 是， google翻译
-//        if (!LANGUAGE_CODES.contains(target) && !LANGUAGE_CODES.contains(source)) {
-//            return googleTranslateByJudge(request, counter, prompt);
-//        }
 
         return checkTranslationModel(request, counter, prompt);
     }
@@ -271,9 +258,9 @@ public class JsoupUtils {
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString);
-            if (target.equals("ar")){
+            if (target.equals("ar")) {
                 return singleTranslate(content, prompt, counter, target);
-            }else {
+            } else {
                 return douBaoTranslate(targetLanguage, prompt, content, counter);
             }
 
@@ -356,10 +343,6 @@ public class JsoupUtils {
             appInsights.trackTrace("sleep错误： " + e.getMessage());
         }
 
-        if (hasPlaceholders(request.getContent())) {
-            return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), QWEN_MT, request.getSource(), request.getTarget());
-        }
-
         String resultTranslation;
         try {
             resultTranslation = translateByQwenMt(request.getContent(), source, target, counter);
@@ -397,11 +380,19 @@ public class JsoupUtils {
     public static String translateAndCount(TranslateRequest request,
                                            CharacterCountUtils counter, String prompt) {
         String text = request.getContent();
+        //检测text是不是全大写，如果是的话，最后翻译完也全大写
+        boolean isUpperCase = text.equals(text.toUpperCase());
+
         String targetString = translateByModel(request, counter, prompt);
         if (targetString == null) {
             return text;
         }
+
         targetString = isHtmlEntity(targetString);
+        if (isUpperCase) {
+            targetString = targetString.toUpperCase();
+        }
+
         addData(request.getTarget(), text, targetString);
         return targetString;
     }
@@ -537,10 +528,7 @@ public class JsoupUtils {
         // 合并所有需要保护的模式
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-//                VARIABLE_PATTERN,
                 CUSTOM_VAR_PATTERN,
-//                LIQUID_CONDITION_PATTERN,
-//                ARRAY_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 
@@ -570,6 +558,8 @@ public class JsoupUtils {
                     String targetString;
                     try {
                         request.setContent(cleanedText);
+//                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
+                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
                         targetString = isHtmlEntity(targetString);
                         result.append(targetString);
@@ -600,7 +590,7 @@ public class JsoupUtils {
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                        System.out.println("要翻译的文本： " + cleanedText);
+                    System.out.println("要翻译的文本： " + cleanedText);
                     targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);

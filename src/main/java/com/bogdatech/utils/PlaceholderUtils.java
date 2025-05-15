@@ -15,7 +15,7 @@ public class PlaceholderUtils {
 
     // 定义占位符的正则表达式
     private static final Pattern PLACEHOLDER_PATTERN =
-            Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\w+\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]");
+            Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\s*[^}]*\\s*\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]|\\{\\}");
 
     /**
      * 判断文本中是否包含指定类型的占位符
