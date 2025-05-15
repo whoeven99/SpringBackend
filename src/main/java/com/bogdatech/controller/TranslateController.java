@@ -261,7 +261,7 @@ public class TranslateController {
                 userTypeTokenService.insertTypeInfo(request1, idByShopNameAndTarget);
             }
         } else {
-            translateRequest.setTarget("zh-CN");
+            translateRequest.setTarget("asdf");
             userTypeTokensService.getUserInitToken(translateRequest);
             for (String target : targetList
             ) {
