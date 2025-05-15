@@ -2,7 +2,7 @@ package com.bogdatech.utils;
 
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.model.service.KeywordModel;
+import com.bogdatech.entity.VO.KeywordVO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -83,10 +83,10 @@ public class JsoupUtils {
      **/
     public static String glossaryText(Map<String, String> keyMap1, Map<String, String> keyMap0, String cleanedText) {
         //根据keyMap1和keyMap0提取关键词
-        List<KeywordModel> keywordModels = mergeKeywordMap(keyMap0, keyMap1);
+        List<KeywordVO> KeywordVOs = mergeKeywordMap(keyMap0, keyMap1);
         String glossaryString = null;
         int i = 0;
-        for (KeywordModel entry : keywordModels) {
+        for (KeywordVO entry : KeywordVOs) {
             if (i == 0 && cleanedText.contains(entry.getKeyword())) {
                 i++;
                 glossaryString = entry.getKeyword() + "->" + entry.getTranslation();

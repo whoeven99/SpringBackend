@@ -98,19 +98,32 @@ public class UserService {
 
     //用户卸载应用
     public Boolean unInstallApp(UsersDO userRequest) {
-        boolean success = false;
-        while (!success) {
+        int MAX_RETRY_ATTEMPTS = 3;
+        long RETRY_DELAY_MS = 1000;
+        int attempt = 0;
+        while (attempt < MAX_RETRY_ATTEMPTS) {
             try {
                 //更改用户卸载翻译时间
                 usersService.unInstallApp(userRequest);
                 //将用户定时任务的true都改为false
                 translatesService.updateAutoTranslateByShopNameToFalse(userRequest.getShopName());
-                success = true;  // 如果没有抛出异常，则表示执行成功，退出循环
+                return true;
             } catch (Exception e) {
-                appInsights.trackTrace("Uninstallation failed, retrying...");
+                attempt++;
+                if (attempt >= MAX_RETRY_ATTEMPTS) {
+                    appInsights.trackTrace("Uninstallation failed, retrying..." + e);
+                    return false;
+                }
+                try {
+                    Thread.sleep(RETRY_DELAY_MS);
+                } catch (InterruptedException ie) {
+                    appInsights.trackTrace("Retry delay interrupted for shop: "+ ie);
+                    Thread.currentThread().interrupt(); // Restore interrupted status
+                    return false;
+                }
             }
         }
-        return true;
+        return false;
     }
 
     //用户卸载应用后48小时后清除数据
