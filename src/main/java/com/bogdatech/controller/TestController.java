@@ -115,13 +115,6 @@ public class TestController {
         addData(target, value, targetText);
     }
 
-    @GetMapping("/testJsoup")
-    public void testJsoup() {
-        String key = "general.animations_type";
-        if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-            System.out.println("不匹配");
-        }
-    }
 
     @GetMapping("/testHtml")
     public void testHtml() {
@@ -170,8 +163,10 @@ public class TestController {
 
     }
 
+    //测试自动翻译功能
     @PutMapping("/testAutoTranslate")
     public void testAutoTranslate() {
         taskService.autoTranslate();
     }
+
 }

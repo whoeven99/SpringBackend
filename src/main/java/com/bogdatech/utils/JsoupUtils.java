@@ -106,11 +106,8 @@ public class JsoupUtils {
 
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-//                VARIABLE_PATTERN,
-                CUSTOM_VAR_PATTERN
-//                ,
-//                LIQUID_CONDITION_PATTERN,
-//                ARRAY_VAR_PATTERN
+                CUSTOM_VAR_PATTERN,
+                SYMBOL_PATTERN
         );
 
         List<MatchRange> matches = new ArrayList<>();
@@ -223,7 +220,7 @@ public class JsoupUtils {
         String sourceText = request.getContent();
 
         //判断是否符合mt翻译 ，是， 调用mt翻译。
-        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 100) {
+        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 100 && !hasPlaceholders(request.getContent())) {
             return checkTranslationApi(request, counter, prompt);
         }
 
@@ -261,9 +258,9 @@ public class JsoupUtils {
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString);
-            if (target.equals("ar")){
+            if (target.equals("ar")) {
                 return singleTranslate(content, prompt, counter, target);
-            }else {
+            } else {
                 return douBaoTranslate(targetLanguage, prompt, content, counter);
             }
 
@@ -344,10 +341,6 @@ public class JsoupUtils {
             sleep(300);
         } catch (Exception e) {
             appInsights.trackTrace("sleep错误： " + e.getMessage());
-        }
-
-        if (hasPlaceholders(request.getContent())) {
-            return processTextWithPlaceholders(request.getContent(), counter, qwenMtCode(request.getSource()), qwenMtCode(request.getTarget()), QWEN_MT, request.getSource(), request.getTarget());
         }
 
         String resultTranslation;
@@ -535,10 +528,7 @@ public class JsoupUtils {
         // 合并所有需要保护的模式
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-//                VARIABLE_PATTERN,
                 CUSTOM_VAR_PATTERN,
-//                LIQUID_CONDITION_PATTERN,
-//                ARRAY_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 
@@ -568,6 +558,8 @@ public class JsoupUtils {
                     String targetString;
                     try {
                         request.setContent(cleanedText);
+//                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
+                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
                         targetString = isHtmlEntity(targetString);
                         result.append(targetString);
@@ -598,7 +590,7 @@ public class JsoupUtils {
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                        System.out.println("要翻译的文本： " + cleanedText);
+                    System.out.println("要翻译的文本： " + cleanedText);
                     targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);

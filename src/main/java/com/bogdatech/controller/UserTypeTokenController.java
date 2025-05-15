@@ -20,6 +20,7 @@ public class UserTypeTokenController {
         this.userTypeTokenService = userTypeTokenService;
     }
 
+    //获取用户所有模块的token
     @PostMapping("/getUserToken")
     public BaseResponse<Object> getUserToken(@RequestBody TranslateRequest request){
         UserTypeTokenDO userTypeToken = userTypeTokenService.getUserTypeToken(request);
