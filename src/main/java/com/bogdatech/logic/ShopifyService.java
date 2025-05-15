@@ -304,7 +304,6 @@ public class ShopifyService {
                     String s = cueWordSingle(request.getTarget(), resourceType) + value;
                     int token = calculateBaiLianToken(s);
                     counter.addChars(token * 2);
-//                    counter.addChars(calculateBaiLianToken(value));
                 } else {
                     counter.addChars(calculateBaiLianToken(value) * 2);
                 }

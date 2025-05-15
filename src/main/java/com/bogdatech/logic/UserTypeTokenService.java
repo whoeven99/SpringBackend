@@ -50,6 +50,7 @@ public class UserTypeTokenService {
      * @param request 用户数据对象，包含用户信息（如shopName、target、source, accessToken）
      *
      */
+    @Async
     public void getUserInitToken(TranslateRequest request) {
         UserTypeTokenDO userTypeTokenDO = userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(SHOP_NAME, request.getShopName()));
         if (userTypeTokenDO == null){
