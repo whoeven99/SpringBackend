@@ -1678,7 +1678,9 @@ public class TranslateService {
             }
         }
 
+        //获取当前翻译token数
         CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
         //开始翻译,判断是普通文本还是html文本
         try {
             if (isHtml(value)) {
