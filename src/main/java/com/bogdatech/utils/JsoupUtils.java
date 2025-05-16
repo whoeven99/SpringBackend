@@ -559,7 +559,7 @@ public class JsoupUtils {
                     try {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-                        System.out.println("要翻译的文本： " + cleanedText);
+//                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
                         targetString = isHtmlEntity(targetString);
                         result.append(targetString);
@@ -590,7 +590,7 @@ public class JsoupUtils {
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-                    System.out.println("要翻译的文本： " + cleanedText);
+//                    System.out.println("要翻译的文本： " + cleanedText);
                     targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);
