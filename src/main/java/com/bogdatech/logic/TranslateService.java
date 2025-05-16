@@ -1254,7 +1254,7 @@ public class TranslateService {
         }
 
         if (PRODUCT_OPTION.equals(resourceType)) {
-            return value.equalsIgnoreCase("color");
+            return value.equalsIgnoreCase("color") || value.equalsIgnoreCase("size");
         }
         return false;
     }
@@ -1659,7 +1659,10 @@ public class TranslateService {
         String source = singleTranslateVO.getSource();
         String target = singleTranslateVO.getTarget();
         String resourceType = singleTranslateVO.getResourceType();
-
+        String type = singleTranslateVO.getType();
+        //获取当前翻译token数
+        CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
         if (translationLogic(singleTranslateVO.getKey(), singleTranslateVO.getContext(), singleTranslateVO.getType(), singleTranslateVO.getResourceType())) {
             return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
         }
@@ -1680,11 +1683,15 @@ public class TranslateService {
             if (!metaTranslate(value)) {
                 return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
             }
+
+            if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
+                //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
+                if (isValidString(value)) {
+                    return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+                }
+            }
         }
 
-        //获取当前翻译token数
-        CharacterCountUtils counter = new CharacterCountUtils();
-        counter.addChars(usedChars);
         //开始翻译,判断是普通文本还是html文本
         try {
             if (isHtml(value)) {
