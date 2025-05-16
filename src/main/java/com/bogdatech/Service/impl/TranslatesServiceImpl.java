@@ -192,4 +192,11 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
             insertShopTranslateInfo(request, 0);
         }
     }
+
+    @Override
+    public void updateAllStatusTo0(String shopName) {
+        if (shopName != null ) {
+            baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("status", 0));
+        }
+    }
 }

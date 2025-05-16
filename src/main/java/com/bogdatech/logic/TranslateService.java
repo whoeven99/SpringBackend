@@ -1157,6 +1157,10 @@ public class TranslateService {
                 continue;
             }
 
+            if (PRODUCT_OPTION.equals(resourceType) && value.equalsIgnoreCase("color") || value.equalsIgnoreCase("size")) {
+                 continue;
+            }
+
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
                 if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
