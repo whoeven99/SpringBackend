@@ -40,7 +40,7 @@ public class JsoupUtils {
      * 翻译词汇表单行文本，保护变量、URL和符号
      */
     private static String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
-                                                            Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType) {
+                                                            Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType, String languagePackId) {
         // 检查缓存
         String translatedCache = translateSingleLine(text, request.getTarget());
         if (translatedCache != null) {
@@ -215,17 +215,17 @@ public class JsoupUtils {
      * @param languagePackId 语言包id
      * return String       翻译后的文本
      */
-    public static String translateByModel(TranslateRequest request, CharacterCountUtils counter, String prompt) {
+    public static String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
         String target = request.getTarget();
         String source = request.getSource();
         String sourceText = request.getContent();
 
         //判断是否符合mt翻译 ，是， 调用mt翻译。
         if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 100 && !hasPlaceholders(request.getContent())) {
-            return checkTranslationApi(request, counter, prompt);
+            return checkTranslationApi(request, counter, languagePackId);
         }
 
-        return checkTranslationModel(request, counter, prompt);
+        return checkTranslationModel(request, counter, languagePackId);
     }
 
     /**
