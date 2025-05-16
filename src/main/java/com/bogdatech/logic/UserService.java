@@ -107,6 +107,8 @@ public class UserService {
                 usersService.unInstallApp(userRequest);
                 //将用户定时任务的true都改为false
                 translatesService.updateAutoTranslateByShopNameToFalse(userRequest.getShopName());
+                //将用户翻译状态改为0
+                translatesService.updateAllStatusTo0(userRequest.getShopName());
                 return true;
             } catch (Exception e) {
                 attempt++;
