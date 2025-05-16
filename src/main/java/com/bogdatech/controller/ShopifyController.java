@@ -179,6 +179,10 @@ public class ShopifyController {
     //获取用户订阅计划
     @GetMapping("/getUserSubscriptionPlan")
     public BaseResponse<Object> getUserSubscriptionPlan(String shopName) {
+        //判断shopName的值是否有
+        if (shopName == null || shopName.isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse("shopName is null");
+        }
         SubscriptionVO subscriptionVO = new SubscriptionVO();
         Integer userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(shopName);
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
@@ -201,8 +205,7 @@ public class ShopifyController {
         UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>()
                 .eq("shop_name", shopName)
         );
-//        System.out.println("usersDO = " + usersDO);
-//        System.out.println("charsOrdersDO = " + charsOrdersDO);
+
         //通过charsOrdersDO的id，获取信息
         String query = getSubscriptionQuery(charsOrdersDO.getId());
         String infoByShopify;
