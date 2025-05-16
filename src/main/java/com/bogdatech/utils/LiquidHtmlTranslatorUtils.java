@@ -64,6 +64,12 @@ public class LiquidHtmlTranslatorUtils {
                     return html;
                 }
 
+                // 获取 <html> 元素并修改 lang 属性
+                Element htmlTag = doc.selectFirst("html");
+                if (htmlTag != null) {
+                    htmlTag.attr("lang", request.getTarget());
+                }
+
                 processNode(doc.body(), request, counter, resourceType);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
 //                appInsights.trackTrace("有html标签： "  + result);

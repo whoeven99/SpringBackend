@@ -170,11 +170,13 @@ public class TranslateController {
         } catch (Exception e) {
             appInsights.trackTrace("translateModel error: " + e.getMessage());
         }
+
+
 //      翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
             return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
         }
-        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS);
+        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS, clickTranslateRequest.getTranslateSettings2());//translateSettings2 是语言包,值为1，2，3
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 

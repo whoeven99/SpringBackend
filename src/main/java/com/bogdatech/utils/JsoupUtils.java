@@ -28,6 +28,7 @@ import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.LanguagePackIdUtils.getLanguagePackIdByValue;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.*;
 import static java.lang.Thread.sleep;
@@ -68,7 +69,7 @@ public class JsoupUtils {
                 //如果字符数大于100字符，用大模型翻译
                 String glossaryString = glossaryText(keyMap1, keyMap0, cleanedText);
                 //根据关键词生成对应的提示词
-                String finalText = glossaryTranslationModel(request, counter, glossaryString);
+                String finalText = glossaryTranslationModel(request, counter, glossaryString, getLanguagePackIdByValue(languagePackId));
                 addData(request.getTarget(), cleanedText, finalText);
                 return finalText;
             }
@@ -211,8 +212,8 @@ public class JsoupUtils {
      *
      * @param request 翻译所需要的数据
      * @param counter 计数器
-     * @param prompt  提示词
-     *                return String       翻译后的文本
+     * @param languagePackId 语言包id
+     * return String       翻译后的文本
      */
     public static String translateByModel(TranslateRequest request, CharacterCountUtils counter, String prompt) {
         String target = request.getTarget();
@@ -246,10 +247,10 @@ public class JsoupUtils {
      *
      * @param request      翻译所需要的数据
      * @param counter      计数器
-     * @param resourceType 模块类型
+     * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public static String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String resourceType) {
+    public static String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
@@ -257,7 +258,7 @@ public class JsoupUtils {
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
-            prompt = getVariablePrompt(targetLanguage, variableString);
+            prompt = getVariablePrompt(targetLanguage, variableString, getLanguagePackIdByValue(languagePackId));
             if (target.equals("ar")) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
@@ -265,7 +266,7 @@ public class JsoupUtils {
             }
 
         } else {
-            prompt = getSimplePrompt(targetLanguage);
+            prompt = getSimplePrompt(targetLanguage, languagePackId);
 //            System.out.println("prompt变量和极简: " + prompt);
         }
 
@@ -289,18 +290,19 @@ public class JsoupUtils {
      * @param request        翻译所需要的数据
      * @param counter        计数器
      * @param glossaryString 提示词的数据
+     * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public static String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString) {
+    public static String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString, String languagePackId) {
         String target = request.getTarget();
         String content = request.getContent();
         String targetName = getLanguageName(request.getTarget());
         String prompt;
 
         if (glossaryString != null) {
-            prompt = getGlossaryPrompt(targetName, glossaryString);
+            prompt = getGlossaryPrompt(targetName, glossaryString, getLanguagePackIdByValue(languagePackId));
         } else {
-            prompt = getSimplePrompt(targetName);
+            prompt = getSimplePrompt(targetName, getLanguagePackIdByValue(languagePackId));
         }
 
         //目标语言是中文的，用qwen-max翻译
