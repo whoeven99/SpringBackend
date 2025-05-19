@@ -427,6 +427,12 @@ public class JsoupUtils {
                     return html;
                 }
 
+                // 获取 <html> 元素并修改 lang 属性
+                Element htmlTag = doc.selectFirst("html");
+                if (htmlTag != null) {
+                    htmlTag.attr("lang", request.getTarget());
+                }
+
                 processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1);
                 return doc.outerHtml();
             } else {
