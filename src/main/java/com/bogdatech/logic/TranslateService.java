@@ -460,7 +460,7 @@ public class TranslateService {
         // 判断数据库的token数是否发生改变，如果改变，将新的和旧的counter做对比，如果一致
         judgeCounterByOldAndNew(usedCharCounter, request.getShopName(), translateContext.getCharacterCountUtils());  // 递归处理下一页数据
 
-        handlePagination(rootNode, translateContext);
+        handlePagination(rootNode, translateContext, usedCharCounter);
         return null;
     }
 
@@ -492,7 +492,7 @@ public class TranslateService {
     }
 
     // 递归处理下一页数据
-    private void handlePagination(JsonNode translatedRootNode, TranslateContext translateContext) {
+    private void handlePagination(JsonNode translatedRootNode, TranslateContext translateContext, CharacterCountUtils usedCharCounter) {
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
         // 获取pageInfo节点
@@ -502,7 +502,7 @@ public class TranslateService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.path("endCursor");
                 translateContext.getTranslateResource().setAfter(endCursor.asText(null));
-                translateNextPage(translateContext);
+                translateNextPage(translateContext, usedCharCounter);
             }
         }
     }
@@ -548,7 +548,6 @@ public class TranslateService {
             appInsights.trackTrace("翻译过程中抛出的异常" + e.getErrorMessage());
             throw e;
         }
-        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopifyRequest.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));
     }
 
     // 处理单个节点元素，提取相关信息并分类存储
@@ -1389,7 +1388,7 @@ public class TranslateService {
     }
 
     //递归处理下一页数据
-    private void translateNextPage(TranslateContext translateContext) {
+    private void translateNextPage(TranslateContext translateContext, CharacterCountUtils usedCharCounter) {
         JsonNode nextPageData;
         try {
             nextPageData = fetchNextPage(translateContext.getTranslateResource(), translateContext.getShopifyRequest());
@@ -1398,8 +1397,11 @@ public class TranslateService {
         }
         // 重新开始翻译流程
         translateSingleLineTextFieldsRecursively(nextPageData, translateContext);
+        // 判断数据库的token数是否发生改变，如果改变，将新的和旧的counter做对比，如果一致
+        judgeCounterByOldAndNew(usedCharCounter, translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils());  // 递归处理下一页数据
+
         // 递归处理下一页数据
-        handlePagination(nextPageData, translateContext);
+        handlePagination(nextPageData, translateContext, usedCharCounter);
     }
 
     // 将翻译后的数据存储到数据库中
