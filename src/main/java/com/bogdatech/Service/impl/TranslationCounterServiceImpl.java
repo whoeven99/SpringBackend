@@ -37,4 +37,5 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     public Boolean updateCharsByShopName(TranslationCounterRequest request) {
         return baseMapper.updateCharsByShopName(request.getShopName(), request.getChars());
     }
+
 }
