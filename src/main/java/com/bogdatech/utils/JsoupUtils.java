@@ -367,6 +367,7 @@ public class JsoupUtils {
             }
             return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
         }
+
     }
 
     /**
@@ -392,7 +393,7 @@ public class JsoupUtils {
         if (isUpperCase) {
             targetString = targetString.toUpperCase();
         }
-
+//        appInsights.trackTrace("now tokens: " + counter.getTotalChars());
         addData(request.getTarget(), text, targetString);
         return targetString;
     }
@@ -424,6 +425,12 @@ public class JsoupUtils {
                 Document doc = Jsoup.parse(html);
                 if (doc == null) {
                     return html;
+                }
+
+                // 获取 <html> 元素并修改 lang 属性
+                Element htmlTag = doc.selectFirst("html");
+                if (htmlTag != null) {
+                    htmlTag.attr("lang", request.getTarget());
                 }
 
                 processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1);

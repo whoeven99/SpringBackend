@@ -3,8 +3,10 @@ package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
+import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.entity.TranslationCounterDO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Scanner;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
@@ -36,9 +39,10 @@ public class TestController {
     private final TranslateService translateService;
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
+    private final TranslationCounterServiceImpl translationCounterService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, TranslationCounterServiceImpl translationCounterService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.shopifyApiIntegration = shopifyApiIntegration;
@@ -46,6 +50,7 @@ public class TestController {
         this.translateService = translateService;
         this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
+        this.translationCounterService = translationCounterService;
     }
 
     @GetMapping("/ping")
@@ -169,4 +174,31 @@ public class TestController {
         taskService.autoTranslate();
     }
 
+    @GetMapping("/testCharacterCount")
+    public void testCharacterCount() {
+        String shopName = "ciwishop.myshopify.com";
+        TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(shopName);
+        System.out.println("一开始的token数： " + translationCounterDO.getUsedChars());
+        CharacterCountUtils usedCounter = new CharacterCountUtils();
+        usedCounter.addChars(translationCounterDO.getUsedChars());
+        CharacterCountUtils totalCounter = new CharacterCountUtils();
+        totalCounter.addChars(translationCounterDO.getUsedChars());
+        Scanner scanner = new Scanner(System.in);
+
+        while (true){
+            System.out.println("请输入要翻译的字符数");
+            int num = scanner.nextInt();
+            totalCounter.addChars(num);
+            int i = 3;
+            while (i>0){
+                System.out.println("请输入手动翻译的token数");
+                int token = scanner.nextInt();
+                usedCounter.addChars(token);
+                i--;
+            }
+
+            translateService.judgeCounterByOldAndNew(usedCounter, shopName, totalCounter);
+        }
+
+    }
 }

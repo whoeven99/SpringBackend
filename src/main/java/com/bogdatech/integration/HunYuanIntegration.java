@@ -67,6 +67,7 @@ public class HunYuanIntegration {
 //            System.out.println("targetText: " + targetText);
             int totalToken = resp.getUsage().getTotalTokens().intValue();
             countUtils.addChars(totalToken);
+//            System.out.println("翻译源文本: " + targetText + "counter: " + totalToken);
         }
         return targetText;
     }

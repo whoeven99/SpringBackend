@@ -53,5 +53,5 @@ public class TranslateConstants {
     public static final String CONTENTS = "contents";
     public static final String TOTAL_TOKEN = "totalToken";
     public static final String SHOP_NAME = "shop_name";
-    public static final String NOT_TRANSLATE = "NOT_TRANSLATE";
+    public static final String NOT_TRANSLATE = "No translation needed";
 }

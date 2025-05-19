@@ -84,6 +84,7 @@ public class ArkTranslateIntegration {
             long totalTokens = chatCompletion.getUsage().getTotalTokens();
             int totalTokensInt = (int) totalTokens;
             countUtils.addChars(totalTokensInt);
+//            System.out.println("翻译源文本: " + "counter: " + totalTokens);
             return response.toString();
         } catch (Exception e) {
             throw new RuntimeException(e);
