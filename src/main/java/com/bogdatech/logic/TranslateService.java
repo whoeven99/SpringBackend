@@ -1744,7 +1744,7 @@ public class TranslateService {
         } catch (Exception e) {
             appInsights.trackTrace("singleTranslate error: " + e.getMessage());
         }
-
+        appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
         return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
     }
 }
