@@ -681,10 +681,11 @@ public class PrivateKeyService {
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
 //                VARIABLE_PATTERN,
-                CUSTOM_VAR_PATTERN
+//                CUSTOM_VAR_PATTERN
 //                ,
 //                LIQUID_CONDITION_PATTERN,
 //                ARRAY_VAR_PATTERN
+                SYMBOL_PATTERN
         );
 
         List<MatchRange> matches = new ArrayList<>();
