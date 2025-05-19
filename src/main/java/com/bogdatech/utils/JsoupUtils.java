@@ -411,7 +411,7 @@ public class JsoupUtils {
             "id", "vi", "pt-BR", "it", "nl", "ru", "km", "cs", "pl", "fa", "he", "tr", "hi", "bn", "ur"
     ));
 
-    public static String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1) {
+    public static String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId) {
         // 检查输入是否有效
         if (html == null || html.trim().isEmpty()) {
             return html;
@@ -428,14 +428,14 @@ public class JsoupUtils {
                     return html;
                 }
 
-                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1);
+                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1, languagePackId);
                 return doc.outerHtml();
             } else {
                 // 如果没有 <html> 标签，作为片段处理
                 Document doc = Jsoup.parseBodyFragment(html);
                 Element body = doc.body();
 
-                processNode(body, request, counter, resourceType, keyMap0, keyMap1);
+                processNode(body, request, counter, resourceType, keyMap0, keyMap1, languagePackId);
 
                 // 只返回子节点内容，不包含 <body>
                 StringBuilder result = new StringBuilder();
@@ -456,7 +456,7 @@ public class JsoupUtils {
      *
      * @param node 当前节点
      */
-    private static void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1) {
+    private static void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId) {
         try {
             // 如果是元素节点
             if (node instanceof Element) {
@@ -474,7 +474,7 @@ public class JsoupUtils {
 
                 // 递归处理子节点
                 for (Node child : element.childNodes()) {
-                    processNode(child, request, counter, resourceType, keyMap0, keyMap1);
+                    processNode(child, request, counter, resourceType, keyMap0, keyMap1, languagePackId);
                 }
             }
             // 如果是文本节点
@@ -488,7 +488,7 @@ public class JsoupUtils {
                 }
 
                 // 使用缓存处理文本
-                String translatedText = translateTextWithCache(text, request, counter, resourceType, keyMap0, keyMap1);
+                String translatedText = translateTextWithCache(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId);
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
@@ -502,7 +502,7 @@ public class JsoupUtils {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private static String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1) {
+    private static String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId) {
         // 检查缓存
         String translated = translateSingleLine(text, request.getTarget());
         if (translated != null) {
@@ -510,7 +510,7 @@ public class JsoupUtils {
         }
 
         // 处理文本中的变量和URL
-        String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1);
+        String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId);
 
         // 存入缓存
         addData(request.getTarget(), text, translatedText);
@@ -523,7 +523,7 @@ public class JsoupUtils {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private static String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1) {
+    private static String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId) {
         StringBuilder result = new StringBuilder();
         int lastEnd = 0;
 
@@ -562,7 +562,7 @@ public class JsoupUtils {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本： " + cleanedText);
-                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
+                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId);
                         targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     } catch (ClientException e) {
@@ -593,7 +593,7 @@ public class JsoupUtils {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                    System.out.println("要翻译的文本： " + cleanedText);
-                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
+                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);
                 } catch (ClientException e) {

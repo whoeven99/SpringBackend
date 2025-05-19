@@ -851,7 +851,7 @@ public class TranslateService {
             //判断是否为HTML
             if (registerTransactionRequest.getTarget().equals(HTML) || isHtml(value)) {
                 try {
-                    targetText = translateGlossaryHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType(), keyMap0, keyMap1);
+                    targetText = translateGlossaryHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType(), keyMap0, keyMap1, translateContext.getLanguagePackId());
                     targetText = isHtmlEntity(targetText);
                 } catch (Exception e) {
                     saveToShopify(value, translation, resourceId, request);
