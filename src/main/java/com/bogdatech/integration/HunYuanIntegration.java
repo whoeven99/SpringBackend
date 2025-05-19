@@ -10,8 +10,6 @@ import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.stereotype.Component;
 
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-
 @Component
 public class HunYuanIntegration {
 
@@ -69,7 +67,7 @@ public class HunYuanIntegration {
 //            System.out.println("targetText: " + targetText);
             int totalToken = resp.getUsage().getTotalTokens().intValue();
             countUtils.addChars(totalToken);
-            appInsights.trackTrace("翻译源文本: " + targetText + "counter: " + totalToken);
+//            System.out.println("翻译源文本: " + targetText + "counter: " + totalToken);
         }
         return targetText;
     }
