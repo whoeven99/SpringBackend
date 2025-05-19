@@ -474,18 +474,18 @@ public class TranslateService {
     public void judgeCounterByOldAndNew(CharacterCountUtils usedCharCounter, String shopName, CharacterCountUtils counter) {
         TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(shopName);
         if (Objects.equals(usedCharCounter.getTotalChars(), translationCounterDO.getUsedChars())) {
-            appInsights.trackTrace("没有手动token。");
+//            appInsights.trackTrace("没有手动token。");
             return;
         } else {
             //发生改变，需要修改原有值
             int difference = Math.abs(translationCounterDO.getUsedChars() - usedCharCounter.getTotalChars());
-            appInsights.trackTrace("差值： " + difference);
+//            appInsights.trackTrace("差值： " + difference);
             //在翻译的计数器中添加这些差值
             counter.addChars(difference);
-            appInsights.trackTrace("翻译的计数器： " + counter.getTotalChars());
+//            appInsights.trackTrace("翻译的计数器： " + counter.getTotalChars());
             usedCharCounter.reset();
             usedCharCounter.addChars(counter.getTotalChars());
-            appInsights.trackTrace("使用的计数器： " + usedCharCounter.getTotalChars());
+//            appInsights.trackTrace("使用的计数器： " + usedCharCounter.getTotalChars());
             //在数据库中更新这些差值
             translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
         }
@@ -1730,12 +1730,12 @@ public class TranslateService {
             if (isHtml(value)) {
                 String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
+//                appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
                 String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
+//                appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }
         } catch (Exception e) {
