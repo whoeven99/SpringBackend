@@ -1730,16 +1730,18 @@ public class TranslateService {
             if (isHtml(value)) {
                 String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
                 String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }
         } catch (Exception e) {
             appInsights.trackTrace("singleTranslate error: " + e.getMessage());
         }
-        appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
+
         return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
     }
 }
