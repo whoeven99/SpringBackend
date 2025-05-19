@@ -148,7 +148,7 @@ public class TranslateController {
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request.getShopName());
         for (Integer integer : integers) {
             if (integer == 2) {
-                return new BaseResponse<>().CreateSuccessResponse(HAS_TRANSLATED);
+                return new BaseResponse<>().CreateErrorResponse(HAS_TRANSLATED);
             }
         }
 
@@ -157,8 +157,7 @@ public class TranslateController {
         if (usedChars >= remainingChars) {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
-        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
+
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
@@ -172,8 +171,10 @@ public class TranslateController {
         }
 //      翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
-            return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
+            return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
         }
+        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }

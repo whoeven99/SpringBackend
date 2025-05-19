@@ -53,6 +53,7 @@ import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
@@ -142,6 +143,17 @@ public class PrivateKeyService {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
+        //修改模块的排序
+        List<String> translateResourceDTOS = null;
+        try {
+            translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
+        } catch (Exception e) {
+            appInsights.trackTrace("translateModel error: " + e.getMessage());
+        }
+//      翻译
+        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
+        }
         //私有key翻译
         startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey, clickTranslateRequest.getTranslateSettings3());
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
