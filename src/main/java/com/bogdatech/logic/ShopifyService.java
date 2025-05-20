@@ -715,7 +715,7 @@ public class ShopifyService {
         appInsights.trackTrace("传入的值： " + registerTransactionRequest.toString());
         String string = updateShopifySingleData(registerTransactionRequest);
         appInsights.trackTrace("返回的值： " + string);
-        if (string.contains("value")) {
+        if (string.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
             return new BaseResponse<>().CreateErrorResponse("insert error");
