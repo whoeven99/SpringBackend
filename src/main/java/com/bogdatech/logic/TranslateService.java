@@ -1223,6 +1223,12 @@ public class TranslateService {
                     judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                 }
             }
+            //对METAOBJECT字段翻译
+            if (resourceType.equals(METAOBJECT)){
+                if (isJson(value)) {
+                    continue;
+                }
+            }
 
             //对METAFIELD字段翻译
             if (resourceType.equals(METAFIELD)) {
