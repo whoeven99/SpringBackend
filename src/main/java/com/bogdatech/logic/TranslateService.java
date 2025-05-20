@@ -1769,9 +1769,7 @@ public class TranslateService {
         String target = singleTranslateVO.getTarget();
         String resourceType = singleTranslateVO.getResourceType();
         String type = singleTranslateVO.getType();
-        //获取当前翻译token数
-        CharacterCountUtils counter = new CharacterCountUtils();
-        counter.addChars(usedChars);
+
         if (translationLogic(singleTranslateVO.getKey(), singleTranslateVO.getContext(), singleTranslateVO.getType(), singleTranslateVO.getResourceType())) {
             return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
         }
@@ -1808,6 +1806,19 @@ public class TranslateService {
             }
         }
 
+        //获取当前翻译token数
+        CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
+        if (type.equals("URL")) {
+            // 如果 key 为 "handle"，这里是要处理的代码
+            if (key.equals("handle")) {
+                String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, resourceType, HANDLE);
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                appInsights.trackTrace(shopName + "用户，" + "单条翻译handle模块： " + value + "消耗token数： " + counter.getTotalChars());
+                return new BaseResponse<>().CreateSuccessResponse(targetString);
+            }
+        }
+
         //开始翻译,判断是普通文本还是html文本
         try {
             if (isHtml(value)) {
@@ -1818,7 +1829,7 @@ public class TranslateService {
             } else {
                 String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, resourceType, GENERAL);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                appInsights.trackTrace(shopName + "用户，" + "单条翻译" + value + "消耗token数： " + counter.getTotalChars());
+                appInsights.trackTrace(shopName + "用户，" + "单条翻译： " + value + "消耗token数： " + counter.getTotalChars());
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }
         } catch (Exception e) {
