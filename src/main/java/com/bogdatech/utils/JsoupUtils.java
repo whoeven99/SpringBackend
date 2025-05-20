@@ -106,7 +106,7 @@ public class JsoupUtils {
 
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-                CUSTOM_VAR_PATTERN,
+//                CUSTOM_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 

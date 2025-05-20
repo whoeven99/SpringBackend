@@ -288,10 +288,10 @@ public class PrivateIntegration {
         // 合并所有需要保护的模式
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-                VARIABLE_PATTERN,
-                CUSTOM_VAR_PATTERN,
-                LIQUID_CONDITION_PATTERN,
-                ARRAY_VAR_PATTERN,
+//                VARIABLE_PATTERN,
+//                CUSTOM_VAR_PATTERN,
+//                LIQUID_CONDITION_PATTERN,
+//                ARRAY_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 

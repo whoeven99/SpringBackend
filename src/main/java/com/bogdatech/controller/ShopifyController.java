@@ -277,7 +277,7 @@ public class ShopifyController {
     @PostMapping("/updateItems")
     public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
         String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
-        if (s.contains("value")) {
+        if (s.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
             return new BaseResponse<>().CreateErrorResponse(s);

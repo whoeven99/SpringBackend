@@ -132,6 +132,9 @@ public class ShopifyService {
             infoByShopify = getShopifyData(cloudServiceRequest);
         }
         try {
+            if (infoByShopify == null) {
+                return 0;
+            }
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
         } catch (Exception e) {
             appInsights.trackTrace("统计字符数失败： " + e.getMessage());
@@ -712,7 +715,7 @@ public class ShopifyService {
         appInsights.trackTrace("传入的值： " + registerTransactionRequest.toString());
         String string = updateShopifySingleData(registerTransactionRequest);
         appInsights.trackTrace("返回的值： " + string);
-        if (string.contains("value")) {
+        if (string.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
             return new BaseResponse<>().CreateErrorResponse("insert error");
