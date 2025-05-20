@@ -137,18 +137,6 @@ public class TranslateService {
                 if (isTask) {
                     //定时任务的翻译任务
                     taskTranslating(request, remainingChars, counter, translateSettings3);
-                    //共消耗的字符数
-                    int endChars = counter.getTotalChars();
-                    int costChars = endChars - usedChars;
-                    if (costChars == 0){
-                        //更新数据库中的已使用字符数
-                        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-                        // 将翻译状态改为“已翻译”//
-                        translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
-                        appInsights.trackTrace(shopName + "消耗的token为： " + costChars);
-                        return;
-                    }
-
                 } else {
                     translating(request, remainingChars, counter, usedChars, translateSettings3);  // 执行翻译任务
                 }
@@ -309,6 +297,19 @@ public class TranslateService {
         LocalDateTime begin = LocalDateTime.now();
         try {
             taskTranslating(request, remainingChars, counter, new ArrayList<>());
+            //共消耗的字符数
+            int endChars = counter.getTotalChars();
+            System.out.println("endChars: " + endChars);
+            int costChars = endChars - usedChars;
+            System.out.println("costChars: " + costChars);
+            if (costChars == 0){
+                //更新数据库中的已使用字符数
+                translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+                // 将翻译状态改为“已翻译”//
+                translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
+                appInsights.trackTrace(shopName + "消耗的token为： " + costChars);
+                return;
+            }
         } catch (ClientException e) {
             System.out.println("startTranslation " + e.getErrorMessage());
             translate3Handle(request, counter, begin, remainingChars, usedChars);
@@ -1720,6 +1721,13 @@ public class TranslateService {
             return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
         }
 
+        //对METAOBJECT字段翻译
+        if (resourceType.equals(METAOBJECT)){
+            if (isJson(value)) {
+                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+        }
+
         if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
             if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
                 return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
@@ -1746,12 +1754,12 @@ public class TranslateService {
             if (isHtml(value)) {
                 String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-//                appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
+                appInsights.trackTrace(shopName + "用户，" + "HTML单条翻译消耗token数： " + counter.getTotalChars());
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
                 String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-//                appInsights.trackTrace("单条翻译消耗token数： " + counter.getTotalChars());
+                appInsights.trackTrace(shopName + "用户，" + "单条翻译" + value + "消耗token数： " + counter.getTotalChars());
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }
         } catch (Exception e) {
