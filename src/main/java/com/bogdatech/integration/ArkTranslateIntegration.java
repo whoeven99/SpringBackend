@@ -74,7 +74,7 @@ public class ArkTranslateIntegration {
             messages.add(userMessage);
 
             ChatCompletionRequest request = ChatCompletionRequest.builder()
-                    .model("doubao-1-5-pro-256k-250115")
+                    .model("doubao-1-5-pro-256k-250115") //256k token
                     .messages(messages)
                     .build();
 
