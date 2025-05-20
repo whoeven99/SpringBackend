@@ -186,7 +186,17 @@ public class TranslateService {
 
     //翻译成功的处理
     public void translateSuccessHandle(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int remainingChars, int usedChars, Boolean isTask) {
-        //         更新数据库中的已使用字符数
+        //TODO：当counter消耗为0时，只修改状态，不发邮件
+        int usedChar = counter.getTotalChars();
+        if (usedChar == 0){
+            //更新数据库中的已使用字符数
+            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+            // 将翻译状态改为“已翻译”//
+            translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
+            return;
+        }
+
+        //更新数据库中的已使用字符数
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         // 将翻译状态改为“已翻译”//
         translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
@@ -1211,6 +1221,12 @@ public class TranslateService {
                 //如果是html放html文本里面
                 if (isHtml(value)) {
                     judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                }
+            }
+            //对METAOBJECT字段翻译
+            if (resourceType.equals(METAOBJECT)){
+                if (isJson(value)) {
+                    continue;
                 }
             }
 

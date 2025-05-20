@@ -132,6 +132,9 @@ public class ShopifyService {
             infoByShopify = getShopifyData(cloudServiceRequest);
         }
         try {
+            if (infoByShopify == null) {
+                return 0;
+            }
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
         } catch (Exception e) {
             appInsights.trackTrace("统计字符数失败： " + e.getMessage());
