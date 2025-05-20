@@ -306,18 +306,12 @@ public class JsoupUtils {
         }
 
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW")) {
+        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil")) {
             return singleTranslate(content, prompt, counter, target);
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if (target.equals("hi")) {
-            target = "Hindi";
-            return douBaoTranslate(target, prompt, content, counter);
-        }
-
-        if (target.equals("th")) {
-            target = "Thai";
+        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
