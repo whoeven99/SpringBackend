@@ -137,6 +137,18 @@ public class TranslateService {
                 if (isTask) {
                     //定时任务的翻译任务
                     taskTranslating(request, remainingChars, counter, translateSettings3);
+                    //共消耗的字符数
+                    int endChars = counter.getTotalChars();
+                    int costChars = endChars - usedChars;
+                    if (costChars == 0){
+                        //更新数据库中的已使用字符数
+                        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
+                        // 将翻译状态改为“已翻译”//
+                        translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
+                        appInsights.trackTrace(shopName + "消耗的token为： " + costChars);
+                        return;
+                    }
+
                 } else {
                     translating(request, remainingChars, counter, usedChars, translateSettings3);  // 执行翻译任务
                 }
@@ -186,16 +198,6 @@ public class TranslateService {
 
     //翻译成功的处理
     public void translateSuccessHandle(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int remainingChars, int usedChars, Boolean isTask) {
-        //TODO：当counter消耗为0时，只修改状态，不发邮件
-        int usedChar = counter.getTotalChars();
-        if (usedChar == 0){
-            //更新数据库中的已使用字符数
-            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
-            // 将翻译状态改为“已翻译”//
-            translatesService.updateTranslateStatus(request.getShopName(), 1, request.getTarget(), request.getSource(), request.getAccessToken());
-            return;
-        }
-
         //更新数据库中的已使用字符数
         translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         // 将翻译状态改为“已翻译”//
@@ -348,8 +350,6 @@ public class TranslateService {
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
         }
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
-        appInsights.trackTrace("用户的手动翻译token：" + usedCharCounter.getTotalChars());
-        appInsights.trackTrace("用户翻译token： " + counter.getTotalChars());
         System.out.println("翻译结束");
     }
 
