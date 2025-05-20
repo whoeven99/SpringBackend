@@ -1360,7 +1360,7 @@ public class TranslateService {
         }
 
         if (PRODUCT_OPTION.equals(resourceType)) {
-            return value.equalsIgnoreCase("color");
+            return value.equalsIgnoreCase("color") || value.equalsIgnoreCase("size");
         }
         return false;
     }
@@ -1774,8 +1774,6 @@ public class TranslateService {
             return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
         }
 
-
-
         //对METAOBJECT字段翻译
         if (resourceType.equals(METAOBJECT)) {
             if (isJson(value)) {
@@ -1798,6 +1796,13 @@ public class TranslateService {
             }
             if (!metaTranslate(value)) {
                 return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+            }
+
+            if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
+                //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
+                if (isValidString(value)) {
+                    return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+                }
             }
         }
 
