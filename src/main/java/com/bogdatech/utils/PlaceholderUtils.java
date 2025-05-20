@@ -166,6 +166,15 @@ public class PlaceholderUtils {
     }
 
     /**
+     * handle类型的提示词
+     * @param target 目标语言
+     * @return handle类型的提示词
+     * */
+    public static String getHandlePrompt(String target){
+        return "Translate each word in the following handle into " + target + ". Keep the '-' separators as they are. Output only the translated handle.";
+    }
+
+    /**
      * 根据type类型选择提示词
      * @param type 类型
      * @param target 目标语言

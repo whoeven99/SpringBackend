@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.bogdatech.constants.TranslateConstants.QWEN_MT;
+import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.singleTranslate;
@@ -60,7 +60,7 @@ public class JsoupUtils {
                 Map<String, String> placeholderMap = new HashMap<>();
                 String updateText = extractKeywords(cleanedText, placeholderMap, keyMap1, keyMap0, request.getSource());
                 request.setContent(updateText);
-                String targetString = translateAndCount(request, counter, resourceType);
+                String targetString = translateAndCount(request, counter, resourceType, GENERAL);
                 String finalText = restoreKeywords(targetString, placeholderMap);
                 addData(request.getTarget(), cleanedText, finalText);
                 return finalText;
@@ -373,18 +373,24 @@ public class JsoupUtils {
     /**
      * 在调用googleTranslateJudgeCode的基础上添加计数功能,并添加到翻译后的文本
      *
-     * @param request 翻译所需要的数据
-     * @param counter 计数器
-     * @param prompt  提示词
-     *                return String 翻译后的文本
+     * @param request       翻译所需要的数据
+     * @param counter       计数器
+     * @param prompt        提示词
+     * @param translateType 翻译类型
+     * return String 翻译后的文本
      */
     public static String translateAndCount(TranslateRequest request,
-                                           CharacterCountUtils counter, String prompt) {
+                                           CharacterCountUtils counter, String prompt, String translateType) {
         String text = request.getContent();
         //检测text是不是全大写，如果是的话，最后翻译完也全大写
         boolean isUpperCase = text.equals(text.toUpperCase());
+        String targetString;
+        if (translateType.equals(HANDLE)) {
+            targetString = translationHandle(request, counter, prompt);
+        } else {
+            targetString = translateByModel(request, counter, prompt);
+        }
 
-        String targetString = translateByModel(request, counter, prompt);
         if (targetString == null) {
             return text;
         }
@@ -611,5 +617,31 @@ public class JsoupUtils {
         return result.toString();
     }
 
+    /**
+     * 翻译handle数据
+     * 根据每个模型的条件，翻译文本数据
+     * 在翻译的同时计数字符数
+     *
+     * @param request        翻译所需要的数据
+     * @param counter        计数器
+     * @param languagePackId 语言包id
+     * @return String 翻译后的文本
+     */
+    public static String translationHandle(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
+        String target = request.getTarget();
+        String targetLanguage = getLanguageName(target);
+        String content = request.getContent();
+        //handle特供翻译， handle特用提示词
+        String prompt = getHandlePrompt(targetLanguage);
+        //目标语言是中文的，用qwen-max翻译
+        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar")) {
+            return singleTranslate(content, prompt, counter, target);
+        }
 
+        //hi用doubao-1.5-pro-256k翻译
+        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
+            return douBaoTranslate(target, prompt, content, counter);
+        }
+        return hunYuanTranslate(content, prompt, counter, getLanguageName(target), "hunyuan-large");
+    }
 }
