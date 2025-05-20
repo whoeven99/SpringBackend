@@ -255,10 +255,11 @@ public class JsoupUtils {
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
         String prompt;
+        String languagePackIdByValue = getLanguagePackIdByValue(languagePackId);
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
-            prompt = getVariablePrompt(targetLanguage, variableString, getLanguagePackIdByValue(languagePackId));
+            prompt = getVariablePrompt(targetLanguage, variableString, languagePackIdByValue);
             if (target.equals("ar")) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
@@ -266,7 +267,7 @@ public class JsoupUtils {
             }
 
         } else {
-            prompt = getSimplePrompt(targetLanguage, languagePackId);
+            prompt = getSimplePrompt(targetLanguage, languagePackIdByValue);
 //            System.out.println("prompt变量和极简: " + prompt);
         }
 
@@ -279,7 +280,7 @@ public class JsoupUtils {
         if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-        return hunYuanTranslate(content, prompt, counter, getLanguageName(target), "hunyuan-large");
+        return hunYuanTranslate(content, prompt, counter, targetLanguage, "hunyuan-large");
 
     }
 
@@ -298,15 +299,15 @@ public class JsoupUtils {
         String content = request.getContent();
         String targetName = getLanguageName(request.getTarget());
         String prompt;
-
+        String languagePackIdByValue = getLanguagePackIdByValue(languagePackId);
         if (glossaryString != null) {
-            prompt = getGlossaryPrompt(targetName, glossaryString, getLanguagePackIdByValue(languagePackId));
+            prompt = getGlossaryPrompt(targetName, glossaryString, languagePackIdByValue);
         } else {
-            prompt = getSimplePrompt(targetName, getLanguagePackIdByValue(languagePackId));
+            prompt = getSimplePrompt(targetName, languagePackIdByValue);
         }
 
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil")) {
+        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar")) {
             return singleTranslate(content, prompt, counter, target);
         }
 
@@ -370,16 +371,16 @@ public class JsoupUtils {
      *
      * @param request 翻译所需要的数据
      * @param counter 计数器
-     * @param prompt  提示词
+     * @param languagePackId 语言包id
      *                return String 翻译后的文本
      */
     public static String translateAndCount(TranslateRequest request,
-                                           CharacterCountUtils counter, String prompt) {
+                                           CharacterCountUtils counter, String languagePackId) {
         String text = request.getContent();
         //检测text是不是全大写，如果是的话，最后翻译完也全大写
         boolean isUpperCase = text.equals(text.toUpperCase());
 
-        String targetString = translateByModel(request, counter, prompt);
+        String targetString = translateByModel(request, counter, languagePackId);
         if (targetString == null) {
             return text;
         }
