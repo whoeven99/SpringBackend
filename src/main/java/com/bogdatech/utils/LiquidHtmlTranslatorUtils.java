@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.bogdatech.constants.TranslateConstants.GENERAL;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.translateAndCount;
@@ -218,7 +219,7 @@ public class LiquidHtmlTranslatorUtils {
                         request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本1： " + cleanedText);
-                        targetString = translateAndCount(request, counter, resourceType);
+                        targetString = translateAndCount(request, counter, resourceType, GENERAL);
                         result.append(targetString);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
@@ -249,7 +250,7 @@ public class LiquidHtmlTranslatorUtils {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本2： " + cleanedText);
-                    targetString = translateAndCount(request, counter, resourceType);
+                    targetString = translateAndCount(request, counter, resourceType, GENERAL);
                     result.append(targetString);
                 } catch (ClientException e) {
                     result.append(cleanedText);

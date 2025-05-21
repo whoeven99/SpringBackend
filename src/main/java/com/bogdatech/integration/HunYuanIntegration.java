@@ -43,7 +43,7 @@ public class HunYuanIntegration {
         // 1. 创建 ChatCompletions 请求
         ChatCompletionsRequest req = new ChatCompletionsRequest();
         // 设置模型名称（请确认具体名称，假设为 "hunyuan-turbo-s"）
-        req.setModel(model);
+        req.setModel(model); //28k token
         // 设置对话消息
         Message[] messages = new Message[1];
         messages[0] = new Message();

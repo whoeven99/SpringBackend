@@ -64,4 +64,9 @@ public class EmailController {
         }
     }
 
+    @PostMapping("/sendAutoTranslateEmail")
+    public BaseResponse<Object> sendAutoTranslateEmail() {
+
+        return null;
+    }
 }
