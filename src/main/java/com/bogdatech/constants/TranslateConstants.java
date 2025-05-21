@@ -8,6 +8,7 @@ public class TranslateConstants {
     public static final String PLAIN_TEXT = "PLAIN_TEXT";
     public static final String HTML = "HTML";
     public static final String HANDLE = "HANDLE";
+    public static final String URL = "URL";
     public static final String GENERAL = "GENERAL";
     public static final String DATABASE = "DATABASE";
     public static final String JSON_TEXT = "JSON_TEXT";
