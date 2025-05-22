@@ -80,10 +80,10 @@ public class TencentEmailService {
 //            System.out.println("divBuilder is empty");
             return true;
         }
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, "1287127238@qq.com"));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
 
         //存入数据库中
-        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, "1287127238@qq.com", SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
+        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
         return b;
     }
 }
