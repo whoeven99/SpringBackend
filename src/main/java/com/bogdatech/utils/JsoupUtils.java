@@ -399,7 +399,6 @@ public class JsoupUtils {
         if (isUpperCase) {
             targetString = targetString.toUpperCase();
         }
-//        appInsights.trackTrace("now tokens: " + counter.getTotalChars());
         addData(request.getTarget(), text, targetString);
         return targetString;
     }
