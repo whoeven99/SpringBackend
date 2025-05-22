@@ -141,7 +141,7 @@ public class TranslateService {
                     //定时任务的翻译任务
                     taskTranslating(request, remainingChars, counter, translateSettings3);
                 } else {
-                    translating(request, remainingChars, counter, usedChars, translateSettings3);  // 执行翻译任务
+                    translating(request, remainingChars, counter, usedChars, translateSettings3, languagePackId);  // 执行翻译任务
                 }
             } catch (ClientException e) {
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
@@ -336,6 +336,8 @@ public class TranslateService {
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource, counter);
+            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), null, null);
+            translateJson(translateContext);
             TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), new AILanguagePacksDO(), null);
             translateJson(translateContext, usedCharCounter);
             // 定期检查是否停止
@@ -367,7 +369,7 @@ public class TranslateService {
     }
 
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
-    public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, List<String> translateSettings3) {
+    public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, List<String> translateSettings3, String languagePackId) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         appInsights.trackTrace("普通翻译开始");
         //判断是否有同义词
@@ -391,12 +393,12 @@ public class TranslateService {
             }
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
-            String completePrompt = aiLanguagePackService.getCompletePrompt(aiLanguagePacksDO, translateResource.getResourceType(), request.getTarget());
-            aiLanguagePacksDO.setPromotWord(completePrompt);
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource, counter);
             TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), aiLanguagePacksDO, null);
             translateJson(translateContext, usedCharCounter);
+            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), languagePackId, null);
+            translateJson(translateContext);
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
         }
@@ -724,7 +726,7 @@ public class TranslateService {
                 }
 
                 //走翻译流程
-                String translatedText = translateSingleText(request, value, type, counter, source);
+                String translatedText = translateSingleText(request, value, translateContext.getLanguagePackId(), counter, source);
                 addData(request.getTarget(), value, translatedText);
                 saveToShopify(translatedText, translation, resourceId, request);
                 printTranslation(translatedText, value, translation, request.getShopName(), type, resourceId, source);
@@ -740,7 +742,7 @@ public class TranslateService {
 
             if (LIST_SINGLE_LINE_TEXT_FIELD.equals(type)) {
                 //翻译list类型文本
-                translateListData(value, request, type, counter, source, resourceId, translation);
+                translateListData(value, request, type, counter, source, resourceId, translation, translateContext.getLanguagePackId());
             }
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), translateContext.getSource()))
                 return;
@@ -748,7 +750,7 @@ public class TranslateService {
     }
 
     //元字段list类型翻译
-    private void translateListData(String value, ShopifyRequest request, String type, CharacterCountUtils counter, String source, String resourceId, Map<String, Object> translation) {
+    private void translateListData(String value, ShopifyRequest request, String type, CharacterCountUtils counter, String source, String resourceId, Map<String, Object> translation, String languagePackId) {
         //先将list数据由String转为List<String>，循环判断
         try {
             //如果符合要求，则翻译，不符合要求则返回原值
@@ -758,7 +760,7 @@ public class TranslateService {
                 String original = resultList.get(i);
                 if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
                     //走翻译流程
-                    String translated = translateSingleText(request, original, type, counter, source);
+                    String translated = translateSingleText(request, original, languagePackId, counter, source);
                     //将数据填回去
                     resultList.set(i, translated);
                 }
@@ -789,8 +791,16 @@ public class TranslateService {
         printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
     }
 
-    //仅翻译单行文本。先缓存，后数据库，再普通翻译
-    public String translateSingleText(ShopifyRequest request, String value, String type, CharacterCountUtils counter, String source) {
+    /**
+     * 仅翻译单行文本。先缓存，后数据库，再普通翻译
+     * @Param request shopName，accessToken，target
+     * @Param value 原文本
+     * @Param languagePackId 语言包
+     * @Param counter 计数器
+     * @Param source 源语言
+     * @return String
+     * */
+    public String translateSingleText(ShopifyRequest request, String value, String languagePackId, CharacterCountUtils counter, String source) {
         //缓存
         String targetCache = translateSingleLine(value, request.getTarget());
         if (targetCache != null) {
@@ -810,6 +820,7 @@ public class TranslateService {
         }
 
         //普通翻译
+        return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, languagePackId);
         return translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), source, request.getTarget(), value), counter, type, GENERAL);
     }
 
@@ -849,6 +860,7 @@ public class TranslateService {
             //用AI翻译
             try {
                 translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType(), GENERAL);
+                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getLanguagePackId(), translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
                 appInsights.trackTrace("translateDataByOPENAI error： " + e.getMessage());
             }
@@ -947,6 +959,23 @@ public class TranslateService {
 
             String finalText;
             //其他数据类型，对数据做处理再翻译
+            if (value.length() <= 100) {
+                counter.addChars(googleCalculateToken(value));
+                Map<String, String> placeholderMap = new HashMap<>();
+                String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0, source);
+                translateRequest.setContent(updateText);
+                String targetString = translateAndCount(translateRequest, counter, translateContext.getLanguagePackId());
+                finalText = restoreKeywords(targetString, placeholderMap);
+                addData(request.getTarget(), value, finalText);
+            } else {
+                //如果字符数大于100字符，用大模型翻译
+                String glossaryString = glossaryText(keyMap1, keyMap0, value);
+                //根据关键词生成对应的提示词
+                finalText = glossaryTranslationModel(translateRequest, counter, glossaryString, translateContext.getLanguagePackId());
+                addData(request.getTarget(), value, finalText);
+            }
+            saveToShopify(finalText, translation, resourceId, request);
+            printTranslation(finalText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
             try {
                 if (value.length() <= 100) {
                     counter.addChars(googleCalculateToken(value));
@@ -1020,6 +1049,7 @@ public class TranslateService {
             //改为判断语言代码方法
             try {
                 translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType(), GENERAL);
+                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getLanguagePackId(), translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
                 appInsights.trackTrace("database translation error: " + e.getMessage());
                 appInsights.trackTrace("accessToken: " + request.getAccessToken() + "，shopName: " + request.getShopName() + "，source: " + registerTransactionRequest.getLocale() + "，target: " + request.getTarget() + "，key: " + key + "，type: " + type + "，value: " + value + ", resourceID: " + registerTransactionRequest.getResourceId() + ", digest: " + registerTransactionRequest.getTranslatableContentDigest());
@@ -1094,6 +1124,7 @@ public class TranslateService {
 //            首选谷歌翻译，翻译不了用AI翻译
             try {
                 translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getTranslateResource().getResourceType(), GENERAL);
+                translateByGoogleOrAI(request, counter, registerTransactionRequest, translation, translateContext.getLanguagePackId(), translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
                 appInsights.trackTrace("translateDataByAPI error: " + e.getMessage());
                 appInsights.trackTrace("翻译失败后的字符数： " + counter.getTotalChars());
@@ -1139,12 +1170,14 @@ public class TranslateService {
     //首选谷歌翻译，翻译不了用AI翻译
     public void translateByGoogleOrAI(ShopifyRequest request, CharacterCountUtils counter,
                                       RegisterTransactionRequest registerTransactionRequest,
+                                      Map<String, Object> translation, String languagePackId, String resourceType) {
                                       Map<String, Object> translation, String resourceType, String translateType) {
         String value = registerTransactionRequest.getValue();
         String source = registerTransactionRequest.getLocale();
         String targetString = null;
         try {
             targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, resourceType, translateType);
+            targetString = translateAndCount(new TranslateRequest(0, null, request.getAccessToken(), registerTransactionRequest.getLocale(), request.getTarget(), value), counter, languagePackId);
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败： " + e.getMessage() + " ，继续翻译");
         }
@@ -1825,11 +1858,12 @@ public class TranslateService {
         //开始翻译,判断是普通文本还是html文本
         try {
             if (isHtml(value)) {
-                String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, resourceType);
+                String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, null);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 appInsights.trackTrace(shopName + "用户，" + value + "HTML单条翻译消耗token数： " + (counter.getTotalChars() - usedChars));
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
+                String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, null);
                 String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, resourceType, GENERAL);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 appInsights.trackTrace(shopName + "用户，" + value + "单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars));

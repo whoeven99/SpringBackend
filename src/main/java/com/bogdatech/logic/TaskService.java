@@ -164,7 +164,7 @@ public class TaskService {
             //服务器重启后，将所有都翻译
             List<TranslateResourceDTO> list = ALL_RESOURCES.stream().toList();
             List<String> list1 = list.stream().map(TranslateResourceDTO::getResourceType).toList();
-            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list1);
+            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list1, null);
         }
     }
 
@@ -214,8 +214,6 @@ public class TaskService {
             //TODO：修改，发送到定时任务的队列里面
             //UTC每天凌晨1点翻译，且只翻译product模块
             //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-//            translateService.startTranslation(, remainingChars, counter, usedChars, true, null);
-//            TranslateRequest translateRequest = new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null);
             TranslateDTO translateDTO = new TranslateDTO(translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
             String json = objectToJson(translateDTO);
             translateTaskPublisherService.sendScheduledTranslateTask(json);

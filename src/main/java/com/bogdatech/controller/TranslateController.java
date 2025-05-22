@@ -182,6 +182,7 @@ public class TranslateController {
         //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
         translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS);
+        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS, clickTranslateRequest.getTranslateSettings2());//translateSettings2 是语言包,值为1，2，3
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 

@@ -19,6 +19,7 @@ public class RabbitMQConfig {
         connectionFactory.setPort(5672);
         connectionFactory.setUsername(System.getenv(RABBIT_MQ_USERNAME));
         connectionFactory.setPassword(System.getenv(RABBIT_MQ_PASSWORD));
+
         return connectionFactory;
     }
 
