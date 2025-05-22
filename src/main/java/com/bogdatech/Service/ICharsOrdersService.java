@@ -1,7 +1,7 @@
 package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogdatech.entity.CharsOrdersDO;
+import com.bogdatech.entity.DO.CharsOrdersDO;
 
 import java.util.List;
 

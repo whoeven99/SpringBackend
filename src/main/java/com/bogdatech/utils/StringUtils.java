@@ -82,4 +82,15 @@ public class StringUtils {
          // 正则表达式支持：正整数、负整数、零、正小数、负小数
          return value.matches("-?\\d+(\\.\\d+)?");
      }
+
+    /**
+     * 解析shopName的数据，去掉后缀
+     * @param shopName
+     * @return parseShopName 去掉后缀的parseShopName
+     * */
+    public static String parseShopName(String shopName) {
+        // 定义要移除的后缀
+        String suffix = ".myshopify.com";
+        return  shopName.substring(0, shopName.length() - suffix.length());
+    }
 }

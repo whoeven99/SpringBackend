@@ -3,7 +3,7 @@ package com.bogdatech.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserPrivateService;
-import com.bogdatech.entity.UserPrivateDO;
+import com.bogdatech.entity.DO.UserPrivateDO;
 import com.bogdatech.mapper.UserPrivateMapper;
 import org.springframework.stereotype.Service;
 

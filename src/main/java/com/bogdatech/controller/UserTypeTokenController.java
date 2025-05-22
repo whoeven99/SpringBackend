@@ -1,6 +1,6 @@
 package com.bogdatech.controller;
 
-import com.bogdatech.entity.UserTypeTokenDO;
+import com.bogdatech.entity.DO.UserTypeTokenDO;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;

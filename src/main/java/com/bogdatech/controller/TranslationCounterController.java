@@ -1,7 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.entity.TranslationCounterDO;
+import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;

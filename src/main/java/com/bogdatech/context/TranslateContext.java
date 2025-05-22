@@ -1,7 +1,7 @@
 package com.bogdatech.context;
 
-import com.bogdatech.entity.AILanguagePacksDO;
-import com.bogdatech.entity.TranslateResourceDTO;
+import com.bogdatech.entity.DO.AILanguagePacksDO;
+import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import lombok.AllArgsConstructor;

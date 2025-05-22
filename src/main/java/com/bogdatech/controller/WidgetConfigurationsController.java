@@ -1,7 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.IWidgetConfigurationsService;
-import com.bogdatech.entity.WidgetConfigurationsDO;
+import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;

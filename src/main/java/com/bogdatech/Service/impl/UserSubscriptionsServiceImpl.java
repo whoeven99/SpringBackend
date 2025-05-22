@@ -3,7 +3,7 @@ package com.bogdatech.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserSubscriptionsService;
-import com.bogdatech.entity.UserSubscriptionsDO;
+import com.bogdatech.entity.DO.UserSubscriptionsDO;
 import com.bogdatech.mapper.UserSubscriptionsMapper;
 import com.bogdatech.model.controller.request.UserSubscriptionsRequest;
 import com.bogdatech.utils.TypeConversionUtils;

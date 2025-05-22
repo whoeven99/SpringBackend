@@ -1,4 +1,4 @@
-package com.bogdatech.entity;
+package com.bogdatech.entity.DO;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -10,14 +10,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("SubscriptionProject")
-public class SubscriptionProjectDO {
+@TableName("Rates")
+public class RatesDO {
     @TableId(type = IdType.AUTO)
-    private Integer projectId;
-    private String projectKey;
-    private String name;
-    private Integer characters;
-    private Float currentPrice;
-    private Float compared_price;
-    private String currency_code;
+    private Integer id;
+    private String sourceCurrency;
+    private String targetCurrency;
+    private byte rate;
 }

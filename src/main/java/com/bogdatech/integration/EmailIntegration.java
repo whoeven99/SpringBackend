@@ -26,8 +26,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-
 @Component
 public class EmailIntegration {
 
@@ -119,10 +117,11 @@ public class EmailIntegration {
             SendEmailResponse resp = client.SendEmail(req);
             // 输出json格式的字符串回包
             jsonString = AbstractModel.toJsonString(resp);
-//            System.out.println("jsonString: " + jsonString);
+            System.out.println("jsonString: " + jsonString);
         } catch (TencentCloudSDKException e) {
-            appInsights.trackTrace(e.toString());
+            System.out.println(e.toString());
         } catch (JsonProcessingException e) {
+            System.out.println(e.toString());
             throw new RuntimeException(e);
         }
         //判断服务的返回值是否含有RequestId

@@ -2,7 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IItemsService;
-import com.bogdatech.entity.ItemsDO;
+import com.bogdatech.entity.DO.ItemsDO;
 import com.bogdatech.mapper.ItemsMapper;
 import com.bogdatech.model.controller.request.ItemsRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;

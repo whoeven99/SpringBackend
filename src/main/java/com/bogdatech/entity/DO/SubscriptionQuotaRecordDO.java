@@ -1,4 +1,4 @@
-package com.bogdatech.entity;
+package com.bogdatech.entity.DO;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -10,12 +10,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@TableName("AILanguagePacks")
-public class AILanguagePacksDO {
-   @TableId(type = IdType.AUTO)
-   private Integer id;
-   private String packName;
-   private String packDescribe;
-   private String promotWord;
-   private Integer deductionRate;
+@TableName("SubscriptionQuotaRecord")
+public class SubscriptionQuotaRecordDO {
+    @TableId(type = IdType.AUTO)
+    private Integer id;
+    private String subscriptionId;
+    private Integer billingCycle;
 }

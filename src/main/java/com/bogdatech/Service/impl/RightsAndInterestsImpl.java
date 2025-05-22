@@ -2,8 +2,8 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IRightsAndInterestsService;
-import com.bogdatech.entity.RightsAndInterestsDO;
-import com.bogdatech.entity.UserRightsAndInterestsDO;
+import com.bogdatech.entity.DO.RightsAndInterestsDO;
+import com.bogdatech.entity.DO.UserRightsAndInterestsDO;
 import com.bogdatech.mapper.RightsAndInterestsMapper;
 import com.bogdatech.model.controller.request.UserRAIRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
