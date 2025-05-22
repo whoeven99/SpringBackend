@@ -1,6 +1,6 @@
 package com.bogdatech.controller;
 
-import com.bogdatech.entity.TranslateTextDO;
+import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.logic.VocabularyService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;

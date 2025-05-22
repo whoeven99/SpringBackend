@@ -1,6 +1,6 @@
 package com.bogdatech.requestBody;
 
-import com.bogdatech.entity.TranslateResourceDTO;
+import com.bogdatech.entity.DO.TranslateResourceDTO;
 
 public class ShopifyRequestBody {
 

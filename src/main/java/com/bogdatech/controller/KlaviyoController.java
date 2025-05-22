@@ -1,6 +1,6 @@
 package com.bogdatech.controller;
 
-import com.bogdatech.entity.UsersDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.logic.KlaviyoService;
 import com.bogdatech.model.controller.request.ProfileToListRequest;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -3,7 +3,7 @@ package com.bogdatech.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserTypeTokenService;
-import com.bogdatech.entity.UserTypeTokenDO;
+import com.bogdatech.entity.DO.UserTypeTokenDO;
 import com.bogdatech.mapper.UserTypeTokenMapper;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.springframework.stereotype.Service;

@@ -2,7 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IKlaviyoDataService;
-import com.bogdatech.entity.KlaviyoDataDO;
+import com.bogdatech.entity.DO.KlaviyoDataDO;
 import com.bogdatech.mapper.KlaviyoDataMapper;
 import org.springframework.stereotype.Service;
 

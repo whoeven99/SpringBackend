@@ -1,7 +1,7 @@
 package com.bogdatech.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.entity.DO.TranslatesDO;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

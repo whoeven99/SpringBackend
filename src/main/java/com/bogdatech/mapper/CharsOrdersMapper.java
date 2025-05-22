@@ -1,7 +1,7 @@
 package com.bogdatech.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogdatech.entity.CharsOrdersDO;
+import com.bogdatech.entity.DO.CharsOrdersDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;

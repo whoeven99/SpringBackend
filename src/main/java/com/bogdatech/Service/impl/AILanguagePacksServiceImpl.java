@@ -2,7 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IAILanguagePacksService;
-import com.bogdatech.entity.AILanguagePacksDO;
+import com.bogdatech.entity.DO.AILanguagePacksDO;
 import com.bogdatech.mapper.AILanguagePacksMapper;
 import com.bogdatech.model.controller.request.UserLanguageRequest;
 import com.bogdatech.model.controller.response.BaseResponse;

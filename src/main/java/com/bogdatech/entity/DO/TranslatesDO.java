@@ -1,4 +1,4 @@
-package com.bogdatech.entity;
+package com.bogdatech.entity.DO;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -7,17 +7,22 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("TranslationCounter")
-public class TranslationCounterDO {
+@TableName("Translates")
+public class TranslatesDO {
     @TableId(type = IdType.AUTO)
     private Integer id;
+    private String source;
+    private String accessToken;
+    private String target;
     private String shopName;
-    private Integer totalChars;
-    private Integer chars;
-    private Integer googleChars;
-    private Integer openAiChars;
-    private Integer usedChars;
+    private Integer status;
+    private String resourceType;
+    private Boolean autoTranslate;
+//    private Timestamp createAt;
+    private Timestamp updateAt;
 }

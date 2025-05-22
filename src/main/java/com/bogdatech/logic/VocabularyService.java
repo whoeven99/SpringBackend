@@ -2,7 +2,7 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.ITranslateTextService;
 import com.bogdatech.Service.IVocabularyService;
-import com.bogdatech.entity.TranslateTextDO;
+import com.bogdatech.entity.DO.TranslateTextDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

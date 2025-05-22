@@ -1,4 +1,4 @@
-package com.bogdatech.entity;
+package com.bogdatech.entity.DO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

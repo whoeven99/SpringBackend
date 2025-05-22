@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.entity.TranslatesDO;
+import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.mapper.TranslatesMapper;
 import com.bogdatech.model.controller.request.AutoTranslateRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;

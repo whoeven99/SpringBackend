@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IWidgetConfigurationsService;
-import com.bogdatech.entity.WidgetConfigurationsDO;
+import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import com.bogdatech.mapper.WidgetConfigurationsMapper;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.IEmailService;
-import com.bogdatech.entity.EmailDO;
+import com.bogdatech.entity.DO.EmailDO;
 import com.bogdatech.logic.MailChimpService;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.model.controller.request.MailChampSendEmailRequest;
@@ -66,7 +66,12 @@ public class EmailController {
 
     @PostMapping("/sendAutoTranslateEmail")
     public BaseResponse<Object> sendAutoTranslateEmail() {
-
-        return null;
+        Boolean b = tencentEmailService.sendAutoTranslateEmail("shopName");
+        if(b){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        else {
+            return new BaseResponse<>().CreateErrorResponse("false");
+        }
     }
 }

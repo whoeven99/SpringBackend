@@ -1,9 +1,15 @@
 package com.bogdatech.model.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.ITranslationUsageService;
+import com.bogdatech.entity.DO.TranslatesDO;
+import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.DO.TranslationUsageDO;
 import com.bogdatech.entity.DTO.TranslateDTO;
-import com.bogdatech.entity.TranslationCounterDO;
+import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -25,12 +31,16 @@ public class TranslateTaskConsumerService {
     private final TranslateService translateService;
     private final ITranslatesService translatesService;
     private final ITranslationCounterService translationCounterService;
+    private final ITranslationUsageService translationUsageService;
+    private final TencentEmailService tencentEmailService;
 
     @Autowired
-    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService, ITranslationCounterService translationCounterService) {
+    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, ITranslationUsageService translationUsageService, TencentEmailService tencentEmailService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
+        this.translationUsageService = translationUsageService;
+        this.tencentEmailService = tencentEmailService;
     }
 
     /**
@@ -41,6 +51,10 @@ public class TranslateTaskConsumerService {
         String deliveryTag = String.valueOf(rawMessage.getMessageProperties().getDeliveryTag());
         TranslateDTO translateDTO = jsonToObject(json, TranslateDTO.class);
         try {
+            if (translateDTO == null) {
+                channel.basicAck(rawMessage.getMessageProperties().getDeliveryTag(), false);
+                return;
+            }
             String shopName = translateDTO.getShopName();
             //判断该用户是否正在翻译，正在翻译就不翻译了
             List<Integer> integers = translatesService.readStatusInTranslatesByShopName(shopName);
@@ -64,7 +78,16 @@ public class TranslateTaskConsumerService {
             translateService.autoTranslateException(request, remainingChars, counter, usedChars);
             // 业务处理完成后，手动ACK消息，RabbitMQ可安全移除消息
             channel.basicAck(rawMessage.getMessageProperties().getDeliveryTag(), false);
-
+            //判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
+            List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("auto_translate", true));
+            Boolean b = translationUsageService.judgeSendAutoEmail(list, shopName);
+            if (b) {
+                tencentEmailService.sendAutoTranslateEmail(shopName);
+                //将所有status都改为0
+                translationUsageService.update(new UpdateWrapper<TranslationUsageDO>()
+                        .eq("shop_name", shopName)
+                        .set("status", 0));
+            }
         } catch (Exception e) {
             // 可以选择不ack，丢回队列（false代表仅当前消息）
             channel.basicNack(rawMessage.getMessageProperties().getDeliveryTag(), false, true);

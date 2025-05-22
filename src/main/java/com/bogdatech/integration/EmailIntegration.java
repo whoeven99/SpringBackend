@@ -119,10 +119,11 @@ public class EmailIntegration {
             SendEmailResponse resp = client.SendEmail(req);
             // 输出json格式的字符串回包
             jsonString = AbstractModel.toJsonString(resp);
-//            System.out.println("jsonString: " + jsonString);
+            appInsights.trackTrace("jsonString: " + jsonString);
         } catch (TencentCloudSDKException e) {
             appInsights.trackTrace(e.toString());
         } catch (JsonProcessingException e) {
+            appInsights.trackTrace(e.toString());
             throw new RuntimeException(e);
         }
         //判断服务的返回值是否含有RequestId

@@ -1,4 +1,4 @@
-package com.bogdatech.entity;
+package com.bogdatech.entity.DO;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -10,13 +10,14 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("klaviyoData")
-public class KlaviyoDataDO {
+@TableName("TranslationCounter")
+public class TranslationCounterDO {
     @TableId(type = IdType.AUTO)
     private Integer id;
     private String shopName;
-    private String name;
-    private String type;
-    private String stringId;
-
+    private Integer totalChars;
+    private Integer chars;
+    private Integer googleChars;
+    private Integer openAiChars;
+    private Integer usedChars;
 }

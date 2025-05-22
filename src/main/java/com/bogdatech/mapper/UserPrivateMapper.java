@@ -1,7 +1,7 @@
 package com.bogdatech.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogdatech.entity.UserPrivateDO;
+import com.bogdatech.entity.DO.UserPrivateDO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;

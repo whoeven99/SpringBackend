@@ -1,11 +1,11 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.entity.TranslateResourceDTO;
+import com.bogdatech.entity.DO.TranslateResourceDTO;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bogdatech.entity.TranslateResourceDTO.TOKEN_MAP;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 
 public class ModelUtils {
 

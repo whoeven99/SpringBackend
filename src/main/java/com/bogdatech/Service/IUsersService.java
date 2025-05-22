@@ -1,7 +1,7 @@
 package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogdatech.entity.UsersDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
 
 public interface IUsersService extends IService<UsersDO> {

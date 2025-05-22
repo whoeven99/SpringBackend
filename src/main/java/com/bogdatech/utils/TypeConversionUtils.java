@@ -1,7 +1,7 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.entity.TranslateTextDO;
-import com.bogdatech.entity.UserSubscriptionsDO;
+import com.bogdatech.entity.DO.TranslateTextDO;
+import com.bogdatech.entity.DO.UserSubscriptionsDO;
 import com.bogdatech.model.controller.request.*;
 
 public class TypeConversionUtils {
