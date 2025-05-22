@@ -1,6 +1,6 @@
 package com.bogdatech.logic;
 
-import com.bogdatech.entity.AILanguagePacksDO;
+import com.bogdatech.entity.DO.AILanguagePacksDO;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.utils.StringUtils.replaceLanguage;

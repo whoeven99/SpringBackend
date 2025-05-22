@@ -1,7 +1,7 @@
 package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogdatech.entity.UserTypeTokenDO;
+import com.bogdatech.entity.DO.UserTypeTokenDO;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.springframework.scheduling.annotation.Async;
 

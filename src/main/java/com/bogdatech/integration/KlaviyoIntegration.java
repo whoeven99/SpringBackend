@@ -2,7 +2,7 @@ package com.bogdatech.integration;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.bogdatech.entity.UsersDO;
+import com.bogdatech.entity.DO.UsersDO;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;

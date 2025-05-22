@@ -1,6 +1,6 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.entity.TranslateResourceDTO;
+import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 
 import java.util.ArrayList;
@@ -8,8 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.bogdatech.entity.TranslateResourceDTO.ALL_RESOURCES;
-import static com.bogdatech.entity.TranslateResourceDTO.EMAIL_MAP;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 
 public class ResourceTypeUtils {
     public static TypeSplitResponse splitByType(String targetType){

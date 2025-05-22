@@ -2,7 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ICurrenciesService;
-import com.bogdatech.entity.CurrenciesDO;
+import com.bogdatech.entity.DO.CurrenciesDO;
 import com.bogdatech.mapper.CurrenciesMapper;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;

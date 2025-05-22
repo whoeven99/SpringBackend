@@ -2,7 +2,7 @@ package com.bogdatech.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ISubscriptionQuotaRecordService;
-import com.bogdatech.entity.SubscriptionQuotaRecordDO;
+import com.bogdatech.entity.DO.SubscriptionQuotaRecordDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;

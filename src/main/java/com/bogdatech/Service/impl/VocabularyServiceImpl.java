@@ -3,8 +3,8 @@ package com.bogdatech.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IVocabularyService;
-import com.bogdatech.entity.TranslateTextDO;
-import com.bogdatech.entity.VocabularyDO;
+import com.bogdatech.entity.DO.TranslateTextDO;
+import com.bogdatech.entity.DO.VocabularyDO;
 import com.bogdatech.mapper.VocabularyMapper;
 import org.springframework.stereotype.Service;
 

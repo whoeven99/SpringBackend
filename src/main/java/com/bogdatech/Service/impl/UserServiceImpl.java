@@ -2,7 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUsersService;
-import com.bogdatech.entity.UsersDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.mapper.UsersMapper;
 import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.bogdatech.Service;
 
-import com.bogdatech.entity.GlossaryDO;
+import com.bogdatech.entity.DO.GlossaryDO;
 
 public interface IGlossaryService {
     Boolean insertGlossaryInfo(GlossaryDO glossaryDO);

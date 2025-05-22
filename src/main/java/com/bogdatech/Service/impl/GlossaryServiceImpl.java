@@ -2,7 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IGlossaryService;
-import com.bogdatech.entity.GlossaryDO;
+import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.mapper.GlossaryMapper;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package com.bogdatech.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogdatech.entity.ItemsDO;
+import com.bogdatech.entity.DO.ItemsDO;
 import com.bogdatech.model.controller.request.ItemsRequest;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;

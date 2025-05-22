@@ -1,7 +1,7 @@
 package com.bogdatech.controller;
 
 
-import com.bogdatech.entity.UsersDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserService;
 import com.bogdatech.model.controller.request.UserSubscriptionsRequest;

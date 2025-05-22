@@ -1,7 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ICurrenciesService;
-import com.bogdatech.entity.CurrenciesDO;
+import com.bogdatech.entity.DO.CurrenciesDO;
 import com.bogdatech.logic.PurchaseService;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;

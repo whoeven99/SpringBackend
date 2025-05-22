@@ -1,7 +1,7 @@
 package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogdatech.entity.TranslateTextDO;
+import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.model.controller.request.TranslateTextRequest;
 
 import java.util.List;

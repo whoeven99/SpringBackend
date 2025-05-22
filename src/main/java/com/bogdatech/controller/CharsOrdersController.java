@@ -1,6 +1,6 @@
 package com.bogdatech.controller;
 
-import com.bogdatech.entity.CharsOrdersDO;
+import com.bogdatech.entity.DO.CharsOrdersDO;
 import com.bogdatech.logic.OrderService;
 import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
 import com.bogdatech.model.controller.response.BaseResponse;

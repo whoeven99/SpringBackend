@@ -1,7 +1,7 @@
 package com.bogdatech.utils;
 
 import com.bogdatech.config.CurrencyConfig;
-import com.bogdatech.entity.CurrenciesDO;
+import com.bogdatech.entity.DO.CurrenciesDO;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;

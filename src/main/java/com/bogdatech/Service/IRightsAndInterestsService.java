@@ -1,7 +1,7 @@
 package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogdatech.entity.RightsAndInterestsDO;
+import com.bogdatech.entity.DO.RightsAndInterestsDO;
 import com.bogdatech.model.controller.request.UserRAIRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 

@@ -2,7 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.entity.TranslationCounterDO;
+import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.mapper.TranslationCounterMapper;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import org.springframework.stereotype.Service;

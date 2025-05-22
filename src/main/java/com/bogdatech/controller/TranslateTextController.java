@@ -1,7 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ITranslateTextService;
-import com.bogdatech.entity.TranslateTextDO;
+import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslateTextService;
-import com.bogdatech.entity.TranslateTextDO;
+import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.mapper.TranslateTextMapper;
 import com.bogdatech.model.controller.request.TranslateTextRequest;
 import org.springframework.stereotype.Service;

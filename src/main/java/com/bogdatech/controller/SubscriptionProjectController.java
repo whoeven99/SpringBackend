@@ -1,7 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ISubscriptionProjectService;
-import com.bogdatech.entity.SubscriptionProjectDO;
+import com.bogdatech.entity.DO.SubscriptionProjectDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,7 +1,7 @@
 package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogdatech.entity.KlaviyoDataDO;
+import com.bogdatech.entity.DO.KlaviyoDataDO;
 
 public interface IKlaviyoDataService extends IService<KlaviyoDataDO> {
     //存储用户的profile信息
