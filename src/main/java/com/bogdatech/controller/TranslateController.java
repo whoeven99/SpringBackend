@@ -136,7 +136,13 @@ public class TranslateController {
      */
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody ClickTranslateRequest clickTranslateRequest) {
-
+        //判断前端传的数据是否完整，如果不完整，报错
+        if (clickTranslateRequest.getShopName() == null || clickTranslateRequest.getShopName().isEmpty()
+                || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
+                || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
+                || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse("Missing parameters");
+        }
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
 
