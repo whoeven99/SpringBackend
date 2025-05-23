@@ -164,7 +164,7 @@ public class TaskService {
             //服务器重启后，将所有都翻译
             List<TranslateResourceDTO> list = ALL_RESOURCES.stream().toList();
             List<String> list1 = list.stream().map(TranslateResourceDTO::getResourceType).toList();
-            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list1, null);
+            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list1);
         }
     }
 

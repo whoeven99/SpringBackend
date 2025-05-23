@@ -24,7 +24,7 @@ public class ShopifyHttpIntegration {
 
     // 设置头部信息
     //查询数据
-    public String sendShopifyPost(ShopifyRequest request, String  stringQuery, Map<String, Object> variables) {
+    public static String sendShopifyPost(ShopifyRequest request, String  stringQuery, Map<String, Object> variables) {
         String url = "https://" + request.getShopName() + "/admin/api/" + request.getApiVersion() + "/graphql.json";
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
@@ -56,7 +56,7 @@ public class ShopifyHttpIntegration {
         return responseContent;
     }
 
-    public JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {
+    public static JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {
         String response = null;
         int maxRetries = 3;
         int attempt = 0;

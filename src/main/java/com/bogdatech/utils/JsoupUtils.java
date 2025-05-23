@@ -221,7 +221,7 @@ public class JsoupUtils {
         String sourceText = request.getContent();
 
         //判断是否符合mt翻译 ，是， 调用mt翻译。
-        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 100 && !hasPlaceholders(request.getContent())) {
+        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 20 && !hasPlaceholders(request.getContent())) {
             return checkTranslationApi(request, counter, languagePackId);
         }
 
@@ -255,11 +255,11 @@ public class JsoupUtils {
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
         String prompt;
-        String languagePackIdByValue = getLanguagePackIdByValue(languagePackId);
+//        String languagePackIdByValue = getLanguagePackIdByValue(languagePackId);
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
-            prompt = getVariablePrompt(targetLanguage, variableString, languagePackIdByValue);
+            prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
             if (target.equals("ar")) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
@@ -267,7 +267,7 @@ public class JsoupUtils {
             }
 
         } else {
-            prompt = getSimplePrompt(targetLanguage, languagePackIdByValue);
+            prompt = getSimplePrompt(targetLanguage, languagePackId);
 //            System.out.println("prompt变量和极简: " + prompt);
         }
 
@@ -373,21 +373,21 @@ public class JsoupUtils {
      * @param request 翻译所需要的数据
      * @param counter 计数器
      * @param languagePackId 语言包id
-     *                return String 翻译后的文本
+     * @param translateType 翻译类型
+     * return String 翻译后的文本
      */
     public static String translateAndCount(TranslateRequest request,
-                                           CharacterCountUtils counter, String languagePackId) {
+                                           CharacterCountUtils counter, String languagePackId, String translateType) {
         String text = request.getContent();
         //检测text是不是全大写，如果是的话，最后翻译完也全大写
         boolean isUpperCase = text.equals(text.toUpperCase());
         String targetString;
         if (translateType.equals(HANDLE)) {
-            targetString = translationHandle(request, counter, prompt);
+            targetString = translationHandle(request, counter, languagePackId);
         } else {
-            targetString = translateByModel(request, counter, prompt);
+            targetString = translateByModel(request, counter, languagePackId);
         }
 
-        String targetString = translateByModel(request, counter, languagePackId);
         if (targetString == null) {
             return text;
         }
@@ -435,7 +435,6 @@ public class JsoupUtils {
                     htmlTag.attr("lang", request.getTarget());
                 }
 
-                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1);
                 processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1, languagePackId);
                 return doc.outerHtml();
             } else {

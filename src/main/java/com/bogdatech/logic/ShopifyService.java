@@ -47,6 +47,7 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
+import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
@@ -84,13 +85,13 @@ public class ShopifyService {
     private final int length = 32;
 
     //封装调用云服务器实现获取shopify数据的方法
-    public String getShopifyData(CloudServiceRequest cloudServiceRequest) {
+    public static String getShopifyData(CloudServiceRequest cloudServiceRequest) {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
         String string;
         try {
             String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
-            string = testingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
+            string = sendShopifyPost("test123", requestBody);
         } catch (JsonProcessingException | ClientException e) {
             throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
         }
@@ -106,7 +107,7 @@ public class ShopifyService {
         JSONArray translationsObject;
         try {
             String requestBody = objectMapper.writeValueAsString(registerTransactionRequest);
-            string = testingEnvironmentIntegration.sendShopifyPost("shopify/updateItem", requestBody);
+            string = sendShopifyPost("shopify/updateItem", requestBody);
             JSONObject jsonObject = JSON.parseObject(string);
             translationsArray = jsonObject.getJSONObject("translationsRegister");
             translationsObject = translationsArray.getJSONArray("translations");

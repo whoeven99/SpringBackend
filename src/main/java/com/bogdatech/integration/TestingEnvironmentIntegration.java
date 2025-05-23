@@ -37,7 +37,7 @@ public class TestingEnvironmentIntegration {
         return responseContent;
     }
 
-    public String sendShopifyPost(String api, String body) {
+    public static String sendShopifyPost(String api, String body) {
         String url = "https://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/"+ api;
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);

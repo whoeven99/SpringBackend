@@ -191,13 +191,24 @@ public class PlaceholderUtils {
      * @param type 类型
      * @param target 目标语言
      * @param variable 变量和词汇表数据
+     * @param languagePackId 语言包
      * @return 提示词
      */
-    public static String getPrompt(String type, String target, String variable) {
+    public static String getPrompt(String type, String target, String variable, String languagePackId) {
         return switch (type) {
-            case "variables" -> getVariablePrompt(target, variable);
-            case "glossary" -> getGlossaryPrompt(target, variable);
-            default -> getSimplePrompt(target);
+            case "variables" -> getVariablePrompt(target, variable, languagePackId);
+            case "glossary" -> getGlossaryPrompt(target, variable, languagePackId);
+            default -> getSimplePrompt(target, languagePackId);
         };
     }
+
+    /**
+     * handle类型的提示词
+     * @return handle类型的提示词
+     * */
+    public static String getCategoryPrompt(){
+        return "Based on the following website description, return which category of e-commerce website this belongs to. Only return the category name.";
+    }
+
+
 }
