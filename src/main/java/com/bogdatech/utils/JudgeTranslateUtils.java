@@ -96,6 +96,7 @@ public class JudgeTranslateUtils {
         OLD_NO_TRANSLATE.add("rtl");
         OLD_NO_TRANSLATE.add("css:");
         OLD_NO_TRANSLATE.add("icon:");
+        OLD_NO_TRANSLATE.add("swatch");
     }
 
     // URL前缀集合
