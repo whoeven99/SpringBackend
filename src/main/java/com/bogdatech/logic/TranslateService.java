@@ -366,6 +366,12 @@ public class TranslateService {
         return shopifyData;
     }
 
+    private static final Set<String> EXCLUDED_SHOPS = new HashSet<>(Arrays.asList(
+            "qnxrrk-2n.myshopify.com",
+            "gemxco.myshopify.com",
+            "ciwishop.myshopify.com"
+    ));
+
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
     public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, List<String> translateSettings3) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
@@ -380,6 +386,7 @@ public class TranslateService {
 
         CharacterCountUtils usedCharCounter = new CharacterCountUtils();
         usedCharCounter.addChars(usedChars);
+        String shopName = request.getShopName();
         //循环翻译ALL_RESOURCES里面所有的模块
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
@@ -389,6 +396,11 @@ public class TranslateService {
             if (translateResource.getResourceType().equals(SHOP_POLICY) || translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
                 continue;
             }
+
+            if (EXCLUDED_SHOPS.contains(shopName) && PRODUCT_OPTION.equals(translateResource.getResourceType())) {
+                continue;
+            }
+
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
             String completePrompt = aiLanguagePackService.getCompletePrompt(aiLanguagePacksDO, translateResource.getResourceType(), request.getTarget());
