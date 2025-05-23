@@ -330,8 +330,12 @@ public class TranslateService {
         int usedChar = counter.getTotalChars();
         CharacterCountUtils usedCharCounter = new CharacterCountUtils();
         usedCharCounter.addChars(usedChar);
+        String shopName = request.getShopName();
         //只翻译product模块
         for (TranslateResourceDTO translateResource : PRODUCT_RESOURCES) {
+            if (EXCLUDED_SHOPS.contains(shopName) && PRODUCT_MODEL.contains(translateResource.getResourceType()) ) {
+                continue;
+            }
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
             translateResource.setTarget(request.getTarget());
@@ -368,6 +372,16 @@ public class TranslateService {
         return shopifyData;
     }
 
+    private static final Set<String> EXCLUDED_SHOPS = new HashSet<>(Arrays.asList(
+            "qnxrrk-2n.myshopify.com",
+            "gemxco.myshopify.com",
+            "ciwishop.myshopify.com"
+    ));
+
+    private static final Set<String> PRODUCT_MODEL = new HashSet<>(Arrays.asList(
+            PRODUCT_OPTION,
+            PRODUCT_OPTION_VALUE
+    ));
     //判断数据库是否有该用户如果有将状态改为2（翻译中），如果没有该用户插入用户信息和翻译状态,开始翻译流程
     public void translating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, List<String> translateSettings3, String languagePackId) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
@@ -382,6 +396,7 @@ public class TranslateService {
 
         CharacterCountUtils usedCharCounter = new CharacterCountUtils();
         usedCharCounter.addChars(usedChars);
+        String shopName = request.getShopName();
         //循环翻译ALL_RESOURCES里面所有的模块
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
@@ -391,6 +406,11 @@ public class TranslateService {
             if (translateResource.getResourceType().equals(SHOP_POLICY) || translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
                 continue;
             }
+
+            if (EXCLUDED_SHOPS.contains(shopName) && PRODUCT_MODEL.contains(translateResource.getResourceType()) ) {
+                continue;
+            }
+
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) return;
             translateResource.setTarget(request.getTarget());
@@ -1044,6 +1064,7 @@ public class TranslateService {
                 //存放在html的list集合里面
                 // 解析HTML文档
                 htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation);
+                continue;
             }
 
             //改为判断语言代码方法
