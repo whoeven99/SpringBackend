@@ -1015,6 +1015,7 @@ public class TranslateService {
                 //存放在html的list集合里面
                 // 解析HTML文档
                 htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation);
+                continue;
             }
 
             //改为判断语言代码方法
