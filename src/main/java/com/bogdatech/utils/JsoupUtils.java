@@ -1,8 +1,8 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.entity.VO.KeywordVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.entity.VO.KeywordVO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -39,7 +39,7 @@ public class JsoupUtils {
      * 翻译词汇表单行文本，保护变量、URL和符号
      */
     private static String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
-                                                            Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType) {
+                                                            Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType, String languagePackId) {
         // 检查缓存
         String translatedCache = translateSingleLine(text, request.getTarget());
         if (translatedCache != null) {
@@ -60,7 +60,7 @@ public class JsoupUtils {
                 Map<String, String> placeholderMap = new HashMap<>();
                 String updateText = extractKeywords(cleanedText, placeholderMap, keyMap1, keyMap0, request.getSource());
                 request.setContent(updateText);
-                String targetString = translateAndCount(request, counter, resourceType, GENERAL);
+                String targetString = translateAndCount(request, counter, languagePackId, GENERAL);
                 String finalText = restoreKeywords(targetString, placeholderMap);
                 addData(request.getTarget(), cleanedText, finalText);
                 return finalText;
@@ -68,7 +68,7 @@ public class JsoupUtils {
                 //如果字符数大于100字符，用大模型翻译
                 String glossaryString = glossaryText(keyMap1, keyMap0, cleanedText);
                 //根据关键词生成对应的提示词
-                String finalText = glossaryTranslationModel(request, counter, glossaryString);
+                String finalText = glossaryTranslationModel(request, counter, glossaryString, languagePackId);
                 addData(request.getTarget(), cleanedText, finalText);
                 return finalText;
             }
@@ -106,7 +106,7 @@ public class JsoupUtils {
 
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-//                CUSTOM_VAR_PATTERN,
+                CUSTOM_VAR_PATTERN,
                 SYMBOL_PATTERN
         );
 
@@ -211,20 +211,20 @@ public class JsoupUtils {
      *
      * @param request 翻译所需要的数据
      * @param counter 计数器
-     * @param prompt  提示词
-     *                return String       翻译后的文本
+     * @param languagePackId 语言包id
+     * return String       翻译后的文本
      */
-    public static String translateByModel(TranslateRequest request, CharacterCountUtils counter, String prompt) {
+    public static String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
         String target = request.getTarget();
         String source = request.getSource();
         String sourceText = request.getContent();
 
         //判断是否符合mt翻译 ，是， 调用mt翻译。
-        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 100 && !hasPlaceholders(request.getContent())) {
-            return checkTranslationApi(request, counter, prompt);
+        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 20 && !hasPlaceholders(request.getContent())) {
+            return checkTranslationApi(request, counter, languagePackId);
         }
 
-        return checkTranslationModel(request, counter, prompt);
+        return checkTranslationModel(request, counter, languagePackId);
     }
 
     /**
@@ -246,18 +246,19 @@ public class JsoupUtils {
      *
      * @param request      翻译所需要的数据
      * @param counter      计数器
-     * @param resourceType 模块类型
+     * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public static String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String resourceType) {
+    public static String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
         String prompt;
+
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
-            prompt = getVariablePrompt(targetLanguage, variableString);
+            prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
             if (target.equals("ar")) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
@@ -265,7 +266,7 @@ public class JsoupUtils {
             }
 
         } else {
-            prompt = getSimplePrompt(targetLanguage);
+            prompt = getSimplePrompt(targetLanguage, languagePackId);
 //            System.out.println("prompt变量和极简: " + prompt);
         }
 
@@ -278,7 +279,7 @@ public class JsoupUtils {
         if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-        return hunYuanTranslate(content, prompt, counter, getLanguageName(target), "hunyuan-large");
+        return hunYuanTranslate(content, prompt, counter, targetLanguage, "hunyuan-large");
 
     }
 
@@ -289,33 +290,28 @@ public class JsoupUtils {
      * @param request        翻译所需要的数据
      * @param counter        计数器
      * @param glossaryString 提示词的数据
+     * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public static String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString) {
+    public static String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString, String languagePackId) {
         String target = request.getTarget();
         String content = request.getContent();
         String targetName = getLanguageName(request.getTarget());
         String prompt;
 
         if (glossaryString != null) {
-            prompt = getGlossaryPrompt(targetName, glossaryString);
+            prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
         } else {
-            prompt = getSimplePrompt(targetName);
+            prompt = getSimplePrompt(targetName, languagePackId);
         }
 
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW")) {
+        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar")) {
             return singleTranslate(content, prompt, counter, target);
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if (target.equals("hi")) {
-            target = "Hindi";
-            return douBaoTranslate(target, prompt, content, counter);
-        }
-
-        if (target.equals("th")) {
-            target = "Thai";
+        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
@@ -373,22 +369,22 @@ public class JsoupUtils {
     /**
      * 在调用googleTranslateJudgeCode的基础上添加计数功能,并添加到翻译后的文本
      *
-     * @param request       翻译所需要的数据
-     * @param counter       计数器
-     * @param prompt        提示词
+     * @param request 翻译所需要的数据
+     * @param counter 计数器
+     * @param languagePackId 语言包id
      * @param translateType 翻译类型
      * return String 翻译后的文本
      */
     public static String translateAndCount(TranslateRequest request,
-                                           CharacterCountUtils counter, String prompt, String translateType) {
+                                           CharacterCountUtils counter, String languagePackId, String translateType) {
         String text = request.getContent();
         //检测text是不是全大写，如果是的话，最后翻译完也全大写
         boolean isUpperCase = text.equals(text.toUpperCase());
         String targetString;
         if (translateType.equals(HANDLE)) {
-            targetString = translationHandle(request, counter, prompt);
+            targetString = translationHandle(request, counter, languagePackId);
         } else {
-            targetString = translateByModel(request, counter, prompt);
+            targetString = translateByModel(request, counter, languagePackId);
         }
 
         if (targetString == null) {
@@ -399,7 +395,6 @@ public class JsoupUtils {
         if (isUpperCase) {
             targetString = targetString.toUpperCase();
         }
-//        appInsights.trackTrace("now tokens: " + counter.getTotalChars());
         addData(request.getTarget(), text, targetString);
         return targetString;
     }
@@ -416,7 +411,7 @@ public class JsoupUtils {
             "id", "vi", "pt-BR", "it", "nl", "ru", "km", "cs", "pl", "fa", "he", "tr", "hi", "bn", "ur"
     ));
 
-    public static String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1) {
+    public static String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId) {
         // 检查输入是否有效
         if (html == null || html.trim().isEmpty()) {
             return html;
@@ -439,14 +434,14 @@ public class JsoupUtils {
                     htmlTag.attr("lang", request.getTarget());
                 }
 
-                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1);
+                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1, languagePackId);
                 return doc.outerHtml();
             } else {
                 // 如果没有 <html> 标签，作为片段处理
                 Document doc = Jsoup.parseBodyFragment(html);
                 Element body = doc.body();
 
-                processNode(body, request, counter, resourceType, keyMap0, keyMap1);
+                processNode(body, request, counter, resourceType, keyMap0, keyMap1, languagePackId);
 
                 // 只返回子节点内容，不包含 <body>
                 StringBuilder result = new StringBuilder();
@@ -467,7 +462,7 @@ public class JsoupUtils {
      *
      * @param node 当前节点
      */
-    private static void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1) {
+    private static void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId) {
         try {
             // 如果是元素节点
             if (node instanceof Element) {
@@ -485,7 +480,7 @@ public class JsoupUtils {
 
                 // 递归处理子节点
                 for (Node child : element.childNodes()) {
-                    processNode(child, request, counter, resourceType, keyMap0, keyMap1);
+                    processNode(child, request, counter, resourceType, keyMap0, keyMap1, languagePackId);
                 }
             }
             // 如果是文本节点
@@ -499,7 +494,7 @@ public class JsoupUtils {
                 }
 
                 // 使用缓存处理文本
-                String translatedText = translateTextWithCache(text, request, counter, resourceType, keyMap0, keyMap1);
+                String translatedText = translateTextWithCache(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId);
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
@@ -513,7 +508,7 @@ public class JsoupUtils {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private static String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1) {
+    private static String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId) {
         // 检查缓存
         String translated = translateSingleLine(text, request.getTarget());
         if (translated != null) {
@@ -521,7 +516,7 @@ public class JsoupUtils {
         }
 
         // 处理文本中的变量和URL
-        String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1);
+        String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId);
 
         // 存入缓存
         addData(request.getTarget(), text, translatedText);
@@ -534,7 +529,7 @@ public class JsoupUtils {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private static String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1) {
+    private static String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId) {
         StringBuilder result = new StringBuilder();
         int lastEnd = 0;
 
@@ -573,7 +568,7 @@ public class JsoupUtils {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本： " + cleanedText);
-                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
+                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId);
                         targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     } catch (ClientException e) {
@@ -604,7 +599,7 @@ public class JsoupUtils {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                    System.out.println("要翻译的文本： " + cleanedText);
-                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType);
+                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);
                 } catch (ClientException e) {

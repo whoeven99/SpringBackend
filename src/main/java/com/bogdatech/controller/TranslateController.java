@@ -236,12 +236,6 @@ public class TranslateController {
         }
     }
 
-    //封装谷歌谷歌翻译
-    @PostMapping("/testGoogle")
-    public String testGoogle(@RequestBody TranslateRequest request) {
-        return translateService.getGoogleTranslateData(new TranslateRequest(0, null, null, request.getSource(), request.getTarget(), request.getContent()));
-    }
-
     //将缓存的数据存到数据库中
     @PostMapping("/saveCacheToTranslates")
     public String saveToTranslates() {

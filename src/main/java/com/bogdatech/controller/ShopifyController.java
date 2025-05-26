@@ -150,6 +150,7 @@ public class ShopifyController {
                     Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
                     map.put("chars", translationCounterRequests.getUsedChars());
                     map.put("totalChars", maxCharsByShopName);
+                    appInsights.trackTrace("chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
                     return new BaseResponse<>().CreateSuccessResponse(map);
                 }
             } catch (Exception e) {

@@ -16,4 +16,8 @@ public interface IAILanguagePacksService extends IService<AILanguagePacksDO> {
     AILanguagePacksDO getPromotByPackId(Integer packId);
 
     Integer getPackIdByShopName(String shopName);
+
+    String getLanguagePackByShopName(String shopName);
+
+    Boolean insertOrUpdateCategory(String shopName, String categoryText);
 }

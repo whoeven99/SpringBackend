@@ -20,6 +20,6 @@ public class TranslateContext {
     private Integer remainingChars;
     private Map<String, Object> glossaryMap;
     private String source;
-    private AILanguagePacksDO aiLanguagePacksDO;
+    private String languagePackId;
     private String apiKey;
 }
