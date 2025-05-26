@@ -64,24 +64,6 @@ public class JudgeTranslateUtils {
         JSON_NO_TRANSLATE_SUBSTRINGS.add("code");
     }
 
-    // value包含px时不翻译的key子字符串集合
-    private static final Set<String> PX_NO_TRANSLATE_SUBSTRINGS = new HashSet<>();
-
-    static {
-        PX_NO_TRANSLATE_SUBSTRINGS.add(".mg");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("max_with");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("radius_image");
-        PX_NO_TRANSLATE_SUBSTRINGS.add(".pd");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("zindex");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("section.index.json");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("swatch");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("not_applicable");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("image.json");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("wborder");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("fs");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("lh");
-        PX_NO_TRANSLATE_SUBSTRINGS.add("mr");
-    }
 
     //key中包含以下字符不翻译（原先的逻辑）
     private static final Set<String> OLD_NO_TRANSLATE = new HashSet<>();
@@ -97,6 +79,9 @@ public class JudgeTranslateUtils {
         OLD_NO_TRANSLATE.add("css:");
         OLD_NO_TRANSLATE.add("icon:");
         OLD_NO_TRANSLATE.add("swatch");
+        OLD_NO_TRANSLATE.add("zindex");
+        OLD_NO_TRANSLATE.add("wborder");
+        OLD_NO_TRANSLATE.add("option:");
     }
 
     // URL前缀集合
