@@ -77,7 +77,7 @@ public class ShopifyHttpIntegration {
     }
 
     //一次存储shopify数据
-    public String registerTransaction(ShopifyRequest request, Map<String, Object> variables) {
+    public static String registerTransaction(ShopifyRequest request, Map<String, Object> variables) {
         ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
         JSONObject jsonObject = null;
         int retryCount = 3;  // 最大重试次数

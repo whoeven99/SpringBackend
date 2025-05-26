@@ -14,6 +14,7 @@ import static com.bogdatech.constants.TranslateConstants.MAX_LENGTH;
 import static com.bogdatech.constants.TranslateConstants.SHOP;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.logic.TranslateService.getShopifyData;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.PlaceholderUtils.getCategoryPrompt;
 
 @Component
@@ -31,31 +32,32 @@ public class AILanguagePackService {
      * @param accessToken 店铺token
      * return true or false
      */
-    public Boolean getCategoryByDescription(String shopName, String accessToken, CharacterCountUtils counter) {
+    public String getCategoryByDescription(String shopName, String accessToken, CharacterCountUtils counter) {
+        //先判断数据库中是否有数据
+        String languagePackId = aiLanguagePacksService.getLanguagePackByShopName(shopName);
+        if (languagePackId != null && !languagePackId.isEmpty()) {
+            return languagePackId;
+        }
+
         String shopifyData = getShopifyData(new ShopifyRequest(shopName, accessToken, "2024-10", "zh-CN"), new TranslateResourceDTO(SHOP, MAX_LENGTH, "zh-CN", ""));
-        if (shopifyData == null) {
-            return false;
+        if (shopifyData == null || shopifyData.isEmpty()) {
+            return null;
         }
 
         String description = getDescription(shopifyData);
-        System.out.println("description: " + description);
-        if (description != null && !description.trim().isEmpty()){
-            return true;
-        }
 
         //判断description是否为空
         //调用混元生成类目
         String categoryPrompt = getCategoryPrompt();
         String categoryText = hunYuanTranslate(description, categoryPrompt, counter, null, "hunyuan-large");
-        System.out.println("category counter: " + counter.getTotalChars());
-        System.out.println("categoryText: " + categoryText);
+        appInsights.trackTrace("category counter: " + counter.getTotalChars() + "生成的类目数据为： " + categoryText);
         //如果categoryText字段在255字符里面，存到数据库中
         if (categoryText.length() > 100) {
-            return false;
+            return categoryText;
         }
-
         //存到数据库中
-        return aiLanguagePacksService.insertOrUpdateCategory(shopName, categoryText);
+        aiLanguagePacksService.insertOrUpdateCategory(shopName, categoryText);
+        return categoryText;
     }
 
     /**

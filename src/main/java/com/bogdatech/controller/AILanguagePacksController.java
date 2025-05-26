@@ -42,7 +42,7 @@ public class AILanguagePacksController {
     //获取用户的beta_description，根据这个由混元生成类目
     @GetMapping("/getBetaDescription")
     public BaseResponse<Object> getBetaDescription(String shopName, String accessToken) {
-        Boolean categoryByDescription = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, new CharacterCountUtils());
+        String categoryByDescription = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, new CharacterCountUtils());
         return new BaseResponse().CreateSuccessResponse(categoryByDescription);
     }
 }

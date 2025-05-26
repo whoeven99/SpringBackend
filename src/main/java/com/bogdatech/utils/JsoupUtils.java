@@ -1,8 +1,8 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.entity.VO.KeywordVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.entity.VO.KeywordVO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -28,7 +28,6 @@ import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
-import static com.bogdatech.utils.LanguagePackIdUtils.getLanguagePackIdByValue;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.*;
 import static java.lang.Thread.sleep;
@@ -61,7 +60,7 @@ public class JsoupUtils {
                 Map<String, String> placeholderMap = new HashMap<>();
                 String updateText = extractKeywords(cleanedText, placeholderMap, keyMap1, keyMap0, request.getSource());
                 request.setContent(updateText);
-                String targetString = translateAndCount(request, counter, resourceType, GENERAL);
+                String targetString = translateAndCount(request, counter, languagePackId, GENERAL);
                 String finalText = restoreKeywords(targetString, placeholderMap);
                 addData(request.getTarget(), cleanedText, finalText);
                 return finalText;
@@ -69,7 +68,7 @@ public class JsoupUtils {
                 //如果字符数大于100字符，用大模型翻译
                 String glossaryString = glossaryText(keyMap1, keyMap0, cleanedText);
                 //根据关键词生成对应的提示词
-                String finalText = glossaryTranslationModel(request, counter, glossaryString, getLanguagePackIdByValue(languagePackId));
+                String finalText = glossaryTranslationModel(request, counter, glossaryString, languagePackId);
                 addData(request.getTarget(), cleanedText, finalText);
                 return finalText;
             }
@@ -255,7 +254,7 @@ public class JsoupUtils {
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
         String prompt;
-//        String languagePackIdByValue = getLanguagePackIdByValue(languagePackId);
+
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
@@ -299,11 +298,11 @@ public class JsoupUtils {
         String content = request.getContent();
         String targetName = getLanguageName(request.getTarget());
         String prompt;
-        String languagePackIdByValue = getLanguagePackIdByValue(languagePackId);
+
         if (glossaryString != null) {
-            prompt = getGlossaryPrompt(targetName, glossaryString, languagePackIdByValue);
+            prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
         } else {
-            prompt = getSimplePrompt(targetName, languagePackIdByValue);
+            prompt = getSimplePrompt(targetName, languagePackId);
         }
 
         //目标语言是中文的，用qwen-max翻译
