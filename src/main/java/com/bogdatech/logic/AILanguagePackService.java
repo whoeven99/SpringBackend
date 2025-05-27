@@ -45,7 +45,9 @@ public class AILanguagePackService {
         }
 
         String description = getDescription(shopifyData);
-
+        if (description == null || description.isEmpty()) {
+            return null;
+        }
         //判断description是否为空
         //调用混元生成类目
         String categoryPrompt = getCategoryPrompt();
