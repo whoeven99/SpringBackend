@@ -140,6 +140,7 @@ public class TaskService {
             // 根据计划获取对应的字符
             Integer chars = subscriptionPlansService.getCharsByPlanName(name);
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
+            appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 添加字符额度：" + chars);
             translationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, userPriceRequest.getShopName(), chars, 0, 0, 0, 0));
         }
     }

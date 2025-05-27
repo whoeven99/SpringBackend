@@ -379,7 +379,7 @@ public class JsoupUtils {
                                            CharacterCountUtils counter, String languagePackId, String translateType) {
         String text = request.getContent();
         //检测text是不是全大写，如果是的话，最后翻译完也全大写
-        boolean isUpperCase = text.equals(text.toUpperCase());
+
         String targetString;
         if (translateType.equals(HANDLE)) {
             targetString = translationHandle(request, counter, languagePackId);
@@ -392,9 +392,7 @@ public class JsoupUtils {
         }
 
         targetString = isHtmlEntity(targetString);
-        if (isUpperCase) {
-            targetString = targetString.toUpperCase();
-        }
+
         addData(request.getTarget(), text, targetString);
         return targetString;
     }
