@@ -22,7 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
+import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
+import static com.bogdatech.logic.ShopifyService.getShopifyData;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
 
 @Component
@@ -73,7 +76,11 @@ public class TaskService {
         String env = System.getenv("ApplicationEnv");
         for (UserPriceRequest userPriceRequest : usedList
         ) {
-            addCharsByUserData(userPriceRequest, env);
+            try {
+                addCharsByUserData(userPriceRequest, env);
+            } catch (Exception e) {
+                appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 获取数据失败: " + e.getMessage());
+            }
         }
 
     }
@@ -85,13 +92,17 @@ public class TaskService {
         String infoByShopify;
         //根据新的集合获取这个订阅计划的信息
         if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(new ShopifyRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", null), query));
+            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", null), query));
         } else {
-            infoByShopify = shopifyService.getShopifyData(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", "en", query));
+            infoByShopify = getShopifyData(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", "en", query));
         }
 
         //根据订阅计划信息，判断是否是第一个月的开始，是否要添加额度
         JSONObject root = JSON.parseObject(infoByShopify);
+        if (root == null) {
+            appInsights.trackTrace("addCharsByUserData 定时任务添加额度获取数据失败");
+            return;
+        }
         JSONObject node = root.getJSONObject("node");
         if (node == null) {
             //用户卸载，计划会被取消，但不确定其他情况
