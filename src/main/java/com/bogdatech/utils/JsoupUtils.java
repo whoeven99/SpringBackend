@@ -271,7 +271,7 @@ public class JsoupUtils {
         }
 
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil")) {
+        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar") || target.equals("el")) {
             return singleTranslate(content, prompt, counter, target);
         }
 
@@ -306,7 +306,7 @@ public class JsoupUtils {
         }
 
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar")) {
+        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar") || target.equals("el")) {
             return singleTranslate(content, prompt, counter, target);
         }
 
@@ -629,7 +629,7 @@ public class JsoupUtils {
         //handle特供翻译， handle特用提示词
         String prompt = getHandlePrompt(targetLanguage);
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar")) {
+        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar") || target.equals("el")) {
             return singleTranslate(content, prompt, counter, target);
         }
 
