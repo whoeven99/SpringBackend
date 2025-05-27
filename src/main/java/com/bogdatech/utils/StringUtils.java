@@ -1,5 +1,9 @@
 package com.bogdatech.utils;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -94,4 +98,33 @@ public class StringUtils {
         return  shopName.substring(0, shopName.length() - suffix.length());
     }
 
+
+    /**
+     * 判断白名单内的语言代码是否有大小写，且大小写状态是什么，返回Boolean值
+     * */
+    public static Boolean judgeLanguageUpperCaseCode(String languageCode, String text) {
+        //白名单判断
+        if (!languageCodeSet.contains(languageCode)) {
+            return false;
+        }
+
+        return text.equals(text.toUpperCase());
+    }
+
+    // 名单内的语言代码
+    private static final Set<String> languageCodeSet = new HashSet<>(Arrays.asList(
+            "en", "fr", "es", "it", "pt", "nl", "cs", "pl", "sv", "no", "da", "fi", "vi", "tr", "ro"
+    ));
+
+
+    /**
+     * 将判断要大写的用户， 将小写转换成大写， de 和 tr 要单独处理
+     * */
+    public static String convertLanguageCodeToUpperCase(String languageCode, String text) {
+        if (languageCode.equals("tr")) {
+            return text.toUpperCase(new Locale("tr", "TR"));
+        }
+
+        return text.toUpperCase();
+    }
 }
