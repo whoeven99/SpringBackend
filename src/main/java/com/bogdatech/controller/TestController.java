@@ -4,9 +4,8 @@ package com.bogdatech.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
-import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.DO.TranslatesDO;
-import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -21,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.Scanner;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
@@ -29,6 +27,8 @@ import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
+import static com.bogdatech.utils.StringUtils.convertLanguageCodeToUpperCase;
+import static com.bogdatech.utils.StringUtils.judgeLanguageUpperCaseCode;
 
 @RestController
 public class TestController {
@@ -174,31 +174,12 @@ public class TestController {
         taskService.autoTranslate();
     }
 
-    @GetMapping("/testCharacterCount")
-    public void testCharacterCount() {
-        String shopName = "ciwishop.myshopify.com";
-        TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(shopName);
-        System.out.println("一开始的token数： " + translationCounterDO.getUsedChars());
-        CharacterCountUtils usedCounter = new CharacterCountUtils();
-        usedCounter.addChars(translationCounterDO.getUsedChars());
-        CharacterCountUtils totalCounter = new CharacterCountUtils();
-        totalCounter.addChars(translationCounterDO.getUsedChars());
-        Scanner scanner = new Scanner(System.in);
-
-        while (true){
-            System.out.println("请输入要翻译的字符数");
-            int num = scanner.nextInt();
-            totalCounter.addChars(num);
-            int i = 3;
-            while (i>0){
-                System.out.println("请输入手动翻译的token数");
-                int token = scanner.nextInt();
-                usedCounter.addChars(token);
-                i--;
-            }
-
-            translateService.judgeCounterByOldAndNew(usedCounter, shopName, totalCounter);
+    @GetMapping("/testUpperCase")
+    public String testUpperCase(String target, String text, String targetText) {
+        boolean isUpperCase = judgeLanguageUpperCaseCode(target, text);
+        if (isUpperCase) {
+            targetText = convertLanguageCodeToUpperCase(target, targetText);
         }
-
+        return targetText;
     }
 }

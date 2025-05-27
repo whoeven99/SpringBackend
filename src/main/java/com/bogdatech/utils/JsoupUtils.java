@@ -30,6 +30,8 @@ import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.*;
+import static com.bogdatech.utils.StringUtils.convertLanguageCodeToUpperCase;
+import static com.bogdatech.utils.StringUtils.judgeLanguageUpperCaseCode;
 import static java.lang.Thread.sleep;
 
 @Component
@@ -379,7 +381,7 @@ public class JsoupUtils {
                                            CharacterCountUtils counter, String languagePackId, String translateType) {
         String text = request.getContent();
         //检测text是不是全大写，如果是的话，最后翻译完也全大写
-        boolean isUpperCase = text.equals(text.toUpperCase());
+        boolean isUpperCase = judgeLanguageUpperCaseCode(request.getTarget(), request.getContent());
         String targetString;
         if (translateType.equals(HANDLE)) {
             targetString = translationHandle(request, counter, languagePackId);
@@ -393,7 +395,7 @@ public class JsoupUtils {
 
         targetString = isHtmlEntity(targetString);
         if (isUpperCase) {
-            targetString = targetString.toUpperCase();
+            targetString = convertLanguageCodeToUpperCase(request.getTarget(), targetString);
         }
         addData(request.getTarget(), text, targetString);
         return targetString;
