@@ -254,7 +254,7 @@ public class JsoupUtils {
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
         String prompt;
-
+        try{
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
@@ -279,8 +279,11 @@ public class JsoupUtils {
         if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-        return hunYuanTranslate(content, prompt, counter, targetLanguage, "hunyuan-large");
-
+        return singleTranslate(content, prompt, counter, target);
+        }catch(Exception e){
+            appInsights.trackTrace("checkTranslationModel报错： " + e.getMessage());
+            return content;
+        }
     }
 
     /**
@@ -294,11 +297,12 @@ public class JsoupUtils {
      * @return String 翻译后的文本
      */
     public static String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString, String languagePackId) {
+        
         String target = request.getTarget();
         String content = request.getContent();
         String targetName = getLanguageName(request.getTarget());
         String prompt;
-
+        try{
         if (glossaryString != null) {
             prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
         } else {
@@ -315,7 +319,11 @@ public class JsoupUtils {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
-        return hunYuanTranslate(content, prompt, counter, getLanguageName(target), "hunyuan-large");
+        return singleTranslate(content, prompt, counter, target);
+        }catch(Exception e){
+            appInsights.trackTrace("glossaryTranslationModel报错： " + e.getMessage());
+            return content;
+        }
     }
 
 
@@ -621,6 +629,7 @@ public class JsoupUtils {
      * @return String 翻译后的文本
      */
     public static String translationHandle(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
+        try{
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
@@ -635,6 +644,10 @@ public class JsoupUtils {
         if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-        return hunYuanTranslate(content, prompt, counter, getLanguageName(target), "hunyuan-large");
+        return singleTranslate(content, prompt, counter, target);
+        }catch(Exception e){
+            appInsights.trackTrace("翻译handle数据报错： " + e.getMessage());
+            return content;
+         }
     }
 }
