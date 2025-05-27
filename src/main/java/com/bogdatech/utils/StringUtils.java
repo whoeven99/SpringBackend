@@ -93,4 +93,5 @@ public class StringUtils {
         String suffix = ".myshopify.com";
         return  shopName.substring(0, shopName.length() - suffix.length());
     }
+
 }

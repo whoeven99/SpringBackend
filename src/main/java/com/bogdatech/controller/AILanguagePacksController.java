@@ -1,8 +1,10 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.IAILanguagePacksService;
+import com.bogdatech.logic.AILanguagePackService;
 import com.bogdatech.model.controller.request.UserLanguageRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,10 +13,12 @@ import org.springframework.web.bind.annotation.*;
 public class AILanguagePacksController {
 
     private final IAILanguagePacksService aiLanguagePacksService;
+    private final AILanguagePackService aiLanguagePackService;
 
     @Autowired
-    public AILanguagePacksController(IAILanguagePacksService aiLanguagePacksService) {
+    public AILanguagePacksController(IAILanguagePacksService aiLanguagePacksService, AILanguagePackService aiLanguagePackService) {
         this.aiLanguagePacksService = aiLanguagePacksService;
+        this.aiLanguagePackService = aiLanguagePackService;
     }
 
     //获取AI语言包的数据
@@ -33,5 +37,12 @@ public class AILanguagePacksController {
     @PostMapping("/changeLanguagePack")
     public BaseResponse<Object> changeLanguagePack(@RequestBody UserLanguageRequest userLanguageRequest) {
         return aiLanguagePacksService.changeLanguagePack(userLanguageRequest);
+    }
+
+    //获取用户的beta_description，根据这个由混元生成类目
+    @GetMapping("/getBetaDescription")
+    public BaseResponse<Object> getBetaDescription(String shopName, String accessToken) {
+        String categoryByDescription = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, new CharacterCountUtils());
+        return new BaseResponse().CreateSuccessResponse(categoryByDescription);
     }
 }

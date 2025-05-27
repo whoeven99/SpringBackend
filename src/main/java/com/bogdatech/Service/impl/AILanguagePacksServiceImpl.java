@@ -14,8 +14,14 @@ import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 
 @Service
 public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMapper, AILanguagePacksDO> implements IAILanguagePacksService {
+
+    private final AILanguagePacksMapper aiLanguagePacksMapper;
+
     @Autowired
-    private AILanguagePacksMapper aiLanguagePacksMapper;
+    public AILanguagePacksServiceImpl(AILanguagePacksMapper aiLanguagePacksMapper) {
+        this.aiLanguagePacksMapper = aiLanguagePacksMapper;
+    }
+
     @Override
     public BaseResponse<Object> readAILanguagePacks() {
         AILanguagePacksDO[] aiLanguagePacksDOS = aiLanguagePacksMapper.readAILanguagePacks();
@@ -52,5 +58,22 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
     @Override
     public Integer getPackIdByShopName(String shopName) {
         return baseMapper.getPackIdByShopName(shopName);
+    }
+
+    @Override
+    public String getLanguagePackByShopName(String shopName) {
+        return baseMapper.getLanguagePackByShopName(shopName);
+    }
+
+    @Override
+    public Boolean insertOrUpdateCategory(String shopName, String categoryText) {
+        //先判断数据库里是否有数据 没有就添加 有就更新
+        Boolean flag;
+        if(baseMapper.getAlLanguageByShopName(shopName) == null){
+            flag = baseMapper.insertUserAlLanguagePacks(shopName, categoryText, 4);
+        }else {
+            flag = baseMapper.updateUserAlLanguagePacks(shopName, categoryText);
+        }
+        return flag;
     }
 }

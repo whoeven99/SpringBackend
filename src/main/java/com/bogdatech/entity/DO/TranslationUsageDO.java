@@ -1,5 +1,7 @@
 package com.bogdatech.entity.DO;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @TableName("TranslationUsage")
 public class TranslationUsageDO {
+    @TableId(type = IdType.INPUT)
     private Integer translateId; //翻译项id
     private String shopName; //店铺名称
     private String languageName; //语言代码
