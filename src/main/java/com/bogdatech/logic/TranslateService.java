@@ -1812,6 +1812,14 @@ public class TranslateService {
         //开始翻译,判断是普通文本还是html文本
         try {
             if (isHtml(value)) {
+                //单条翻译html，修改格式
+                if (resourceType.equals(METAFIELD)){
+                    String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, null);
+                    htmlTranslation = normalizeHtml(htmlTranslation);
+                    translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                    appInsights.trackTrace(shopName + "用户，" + value + "HTML单条翻译消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
+                    return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
+                }
                 String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, null);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 appInsights.trackTrace(shopName + "用户，" + value + "HTML单条翻译消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
