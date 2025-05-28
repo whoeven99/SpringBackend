@@ -10,6 +10,8 @@ import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.stereotype.Component;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Component
 public class HunYuanIntegration {
 
@@ -56,7 +58,9 @@ public class HunYuanIntegration {
         ChatCompletionsResponse resp;
         try {
             resp = CLIENT.ChatCompletions(req);
+            appInsights.trackTrace("resp: " + resp.toString());
         } catch (TencentCloudSDKException e) {
+            appInsights.trackTrace("hunyuan error: " + e);
             throw new RuntimeException(e);
         }
 

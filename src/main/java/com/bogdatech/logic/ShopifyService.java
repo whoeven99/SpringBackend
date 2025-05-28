@@ -786,7 +786,7 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("getTranslationItemsInfoAll error: " + e.getMessage());
+            appInsights.trackTrace("shopifyService.saveToShopify error: " + e.getMessage());
         }
         return result;
     }
