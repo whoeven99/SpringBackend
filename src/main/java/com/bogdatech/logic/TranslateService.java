@@ -765,6 +765,8 @@ public class TranslateService {
             TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
             htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId());
 //            System.out.println("htmlTranslation: " + htmlTranslation);
+            //对翻译后的html做格式处理
+
         } catch (Exception e) {
             shopifyService.saveToShopify(value, translation, resourceId, request);
             return;

@@ -279,7 +279,9 @@ public class JsoupUtils {
         if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-        return singleTranslate(content, prompt, counter, target);
+
+         return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
+
         }catch(Exception e){
             appInsights.trackTrace("checkTranslationModel报错： " + e.getMessage());
             return content;
@@ -319,7 +321,7 @@ public class JsoupUtils {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
-        return singleTranslate(content, prompt, counter, target);
+        return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
         }catch(Exception e){
             appInsights.trackTrace("glossaryTranslationModel报错： " + e.getMessage());
             return content;
@@ -645,7 +647,7 @@ public class JsoupUtils {
         if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-        return singleTranslate(content, prompt, counter, target);
+            return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
         }catch(Exception e){
             appInsights.trackTrace("翻译handle数据报错： " + e.getMessage());
             return content;

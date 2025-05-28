@@ -127,4 +127,20 @@ public class StringUtils {
 
         return text.toUpperCase();
     }
+
+    /**
+     * 将string类型数据的换行符等改为空格
+     * */
+    public static String normalizeHtml(String html) {
+        if (html == null) {
+            return null;
+        }
+        // 1. 替换换行符为空格
+        html = html.replaceAll("\\r?\\n", " ");
+
+        // 2. 将多个连续空格替换为单个空格
+        html = html.replaceAll("\\s{2,}", " ");
+
+        return html.trim();
+    }
 }
