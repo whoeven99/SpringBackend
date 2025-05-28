@@ -240,7 +240,7 @@ public class ShopifyController {
     }
 
     //计算被翻译项的总数和已翻译的个数
-    @PostMapping("/shopifyService.saveToShopify")
+    @PostMapping("/getTranslationItemsInfo")
     public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
         Map<String, Map<String, Object>> translationItemsInfo;
         translationItemsInfo = shopifyService.getTranslationItemsInfo(request);
