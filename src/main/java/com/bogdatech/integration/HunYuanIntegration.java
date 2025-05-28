@@ -10,6 +10,8 @@ import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.stereotype.Component;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Component
 public class HunYuanIntegration {
 
@@ -56,7 +58,9 @@ public class HunYuanIntegration {
         ChatCompletionsResponse resp;
         try {
             resp = CLIENT.ChatCompletions(req);
+            appInsights.trackTrace("resp: " + resp.toString() + "resp_id: " + resp.getRequestId());
         } catch (TencentCloudSDKException e) {
+            appInsights.trackTrace("hunyuan error: " + e + " resp_id: " + e.getRequestId());
             throw new RuntimeException(e);
         }
 
@@ -64,10 +68,8 @@ public class HunYuanIntegration {
         String targetText = null;
         if (resp.getChoices() != null && resp.getChoices().length > 0) {
             targetText = resp.getChoices()[0].getMessage().getContent();
-//            System.out.println("targetText: " + targetText);
             int totalToken = resp.getUsage().getTotalTokens().intValue();
             countUtils.addChars(totalToken);
-//            System.out.println("翻译源文本: " + targetText + "counter: " + totalToken);
         }
         return targetText;
     }

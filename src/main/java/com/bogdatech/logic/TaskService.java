@@ -100,7 +100,7 @@ public class TaskService {
         //根据订阅计划信息，判断是否是第一个月的开始，是否要添加额度
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null) {
-            appInsights.trackTrace("addCharsByUserData 定时任务添加额度获取数据失败");
+            appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务添加额度获取数据失败" + " token: " + userPriceRequest.getAccessToken());
             return;
         }
         JSONObject node = root.getJSONObject("node");

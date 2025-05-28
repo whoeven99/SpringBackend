@@ -54,6 +54,7 @@ import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
+import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -696,7 +697,7 @@ public class TranslateService {
 
             //元字段Html翻译
             if (isHtml(value) && !isJson(value)) {
-                htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation);
+                htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation, METAFIELD);
                 continue;
             }
 
@@ -759,12 +760,19 @@ public class TranslateService {
     }
 
     //html的翻译
-    private void htmlTranslate(TranslateContext translateContext, ShopifyRequest request, CharacterCountUtils counter, String target, String value, String source, String resourceId, Map<String, Object> translation) {
+    private void htmlTranslate(TranslateContext translateContext, ShopifyRequest request, CharacterCountUtils counter,
+                               String target, String value, String source, String resourceId,
+                               Map<String, Object> translation, String model) {
         String htmlTranslation;
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
             htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId());
 //            System.out.println("htmlTranslation: " + htmlTranslation);
+            if (model.equals(METAFIELD)){
+                //对翻译后的html做格式处理
+                htmlTranslation = normalizeHtml(htmlTranslation);
+            }
+            //对翻译后的html做格式处理
         } catch (Exception e) {
             shopifyService.saveToShopify(value, translation, resourceId, request);
             return;
@@ -1007,7 +1015,7 @@ public class TranslateService {
             if ("HTML".equals(type) || isHtml(value)) {
                 //存放在html的list集合里面
                 // 解析HTML文档
-                htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation);
+                htmlTranslate(translateContext, request, counter, target, value, source, resourceId, translation, null);
                 continue;
             }
 
@@ -1804,6 +1812,14 @@ public class TranslateService {
         //开始翻译,判断是普通文本还是html文本
         try {
             if (isHtml(value)) {
+                //单条翻译html，修改格式
+                if (resourceType.equals(METAFIELD)){
+                    String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, null);
+                    htmlTranslation = normalizeHtml(htmlTranslation);
+                    translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+                    appInsights.trackTrace(shopName + "用户，" + value + "HTML单条翻译消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
+                    return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
+                }
                 String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, null);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
                 appInsights.trackTrace(shopName + "用户，" + value + "HTML单条翻译消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
