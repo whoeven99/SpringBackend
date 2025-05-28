@@ -68,6 +68,14 @@ public class TestingEnvironmentIntegration {
                 if (attempt >= maxRetries) {
                     throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg() + " after " + attempt + " attempts.");
                 }
+
+                try {
+                    long delay = (long) Math.pow(2, attempt) * 1000L; // milliseconds
+                    Thread.sleep(delay);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt(); // Restore interrupt status
+                    throw new RuntimeException("指数退避失败： Retry interrupted. " + ie.getMessage());
+                }
             }
         }
 

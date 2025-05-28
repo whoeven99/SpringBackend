@@ -24,11 +24,8 @@ import java.time.LocalDateTime;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
-import static com.bogdatech.utils.JsonUtils.isJson;
-import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.StringUtils.convertLanguageCodeToUpperCase;
-import static com.bogdatech.utils.StringUtils.judgeLanguageUpperCaseCode;
+import static com.bogdatech.utils.StringUtils.*;
 
 @RestController
 public class TestController {
@@ -124,48 +121,50 @@ public class TestController {
     @GetMapping("/testHtml")
     public void testHtml() {
         String html = """
-                                
+                        <p><strong>Comment laver la fibre de polyester :</strong></p><ul>
+                         <li><strong>Lavez à l'eau tiède.</strong>La fibre de polyester doit être lavée à l'eau tiède (généralement pas au-delà de 40°C) afin d'éviter tout dommage aux fibres causé par une chaleur excessive.</li>
+                         <li><strong>Utilisez des détergents doux.</strong>Utilisez des détergents doux et évitez le javellisant ou les produits de nettoyage agressifs. Optez pour des détergents neutres ou spécifiquement conçus pour les fibres synthétiques.</li>
+                         <li><strong>Évitez un frottement excessif.</strong>Lors du lavage, évitez de frotter vigoureusement ou de tirer sur le tissu, car cela peut endommager sa structure et son élasticité.</li>
+                         <li><strong>Séchez à basse température.</strong>Il est préférable de faire sécher les pièces en fibres de polyester à l'air en les plaçant à plat ou en les suspendant. Évitez le séchage à haute chaleur dans une machine à laver, car cela pourrait rétrécir ou déformer les fibres.</li>
+                         <li><strong>Évitez la lumière solaire directe :</strong>Une exposition prolongée aux rayons directs du soleil peut provoquer le blanchiment ou la dégradation des fibres de polyester, il est donc préférable d’éviter une exposition solaire prolongée.</li>
+                         <li><strong>Fermentation à basse température.</strong>Si repassage est nécessaire, utilisez une température basse et de préférence un fer à repasser à vapeur pour éviter les dommages dus à la chaleur élevée.</li>
+                        </ul>        
                 """;
-        if (isHtml(html)) {
-            System.out.println("is html");
-        } else {
-            System.out.println("is not html");
-        }
+//        if (isHtml(html)) {
+//            System.out.println("is html");
+//        } else {
+//            System.out.println("is not html");
+//        }
+//
+//        if (isJson(html)) {
+//            System.out.println("is json");
+//        } else {
+//            System.out.println("is not json");
+//        }
 
-        if (isJson(html)) {
-            System.out.println("is json");
-        } else {
-            System.out.println("is not json");
-        }
 //        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
-//        System.out.println("final: " + s);
+        System.out.println("final: " + normalizeHtml(html));
     }
 
     //测试theme判断
     @PostMapping("/testKeyValue")
-    public void testKeyValue(@RequestBody KeyValueDTO keyValueDTO) {
+    public String testKeyValue(@RequestBody KeyValueDTO keyValueDTO) {
         String key = keyValueDTO.getKey();
         String value = keyValueDTO.getValue();
         //通用的不翻译数据
         if (!generalTranslate(key, value)) {
-            System.out.println("不翻译");
-            return;
+            System.out.println();
         }
 
         //如果是theme模块的数据
-
         if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-            System.out.println("不翻译");
-            return;
+            return "不翻译";
         }
         //如果包含对应key和value，则跳过
         if (!shouldTranslate(key, value)) {
-            System.out.println("不翻译");
-            return;
+            return "不翻译";
         }
-
-        System.out.println("需要翻译");
-
+        return "需要翻译";
     }
 
     //测试自动翻译功能
