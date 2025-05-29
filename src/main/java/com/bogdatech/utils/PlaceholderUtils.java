@@ -210,5 +210,11 @@ public class PlaceholderUtils {
         return "Based on the following website description, return which category of e-commerce website this belongs to. Only return the category name.";
     }
 
-
+    /**
+     * 5字符内的数据文本翻译
+     * qwen-max 专用提示词
+     * */
+    public static String getShortPrompt(String target){
+        return "Translate the following text into " + target + ". If it is determined that the text does not need to be translated, please output the original text. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
+    }
 }

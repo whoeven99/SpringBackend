@@ -768,7 +768,7 @@ public class TranslateService {
             TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
             htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId());
 //            System.out.println("htmlTranslation: " + htmlTranslation);
-            if (model.equals(METAFIELD)){
+            if (model.equals(METAFIELD)) {
                 //对翻译后的html做格式处理
                 htmlTranslation = normalizeHtml(htmlTranslation);
             }
@@ -1813,7 +1813,7 @@ public class TranslateService {
         try {
             if (isHtml(value)) {
                 //单条翻译html，修改格式
-                if (resourceType.equals(METAFIELD)){
+                if (resourceType.equals(METAFIELD)) {
                     String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, null);
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
