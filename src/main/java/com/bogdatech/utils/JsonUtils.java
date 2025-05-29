@@ -3,6 +3,7 @@ package com.bogdatech.utils;
 
 import com.bogdatech.exception.ClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.bogdatech.enums.ErrorEnum.JSON_PARSE_ERROR;
@@ -37,5 +38,31 @@ public class JsonUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    //解析JSON数据，获取message消息
+    public static String getMessage(String json) {
+        String message = null;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(json);
+
+            JsonNode messageNode = root
+                    .path("translationsRegister")
+                    .path("userErrors")
+                    .path(0)
+                    .path("message");
+
+            if (!messageNode.isMissingNode()) {
+                System.out.println("Message: " + messageNode.asText());
+                message = messageNode.asText();
+            } else {
+                message = json;
+                System.out.println("Message not found");
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return message;
     }
 }
