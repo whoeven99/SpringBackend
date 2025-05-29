@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
+import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
@@ -75,7 +76,10 @@ public class TestController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
-        JSONObject infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
+        JSONObject infoByShopify = getInfoByShopify(request, body);
+        if (infoByShopify == null) {
+            return null;
+        }
         return infoByShopify.toString();
     }
 
@@ -120,15 +124,7 @@ public class TestController {
 
     @GetMapping("/testHtml")
     public void testHtml() {
-        String html = """
-                        <p><strong>Comment laver la fibre de polyester :</strong></p><ul>
-                         <li><strong>Lavez à l'eau tiède.</strong>La fibre de polyester doit être lavée à l'eau tiède (généralement pas au-delà de 40°C) afin d'éviter tout dommage aux fibres causé par une chaleur excessive.</li>
-                         <li><strong>Utilisez des détergents doux.</strong>Utilisez des détergents doux et évitez le javellisant ou les produits de nettoyage agressifs. Optez pour des détergents neutres ou spécifiquement conçus pour les fibres synthétiques.</li>
-                         <li><strong>Évitez un frottement excessif.</strong>Lors du lavage, évitez de frotter vigoureusement ou de tirer sur le tissu, car cela peut endommager sa structure et son élasticité.</li>
-                         <li><strong>Séchez à basse température.</strong>Il est préférable de faire sécher les pièces en fibres de polyester à l'air en les plaçant à plat ou en les suspendant. Évitez le séchage à haute chaleur dans une machine à laver, car cela pourrait rétrécir ou déformer les fibres.</li>
-                         <li><strong>Évitez la lumière solaire directe :</strong>Une exposition prolongée aux rayons directs du soleil peut provoquer le blanchiment ou la dégradation des fibres de polyester, il est donc préférable d’éviter une exposition solaire prolongée.</li>
-                         <li><strong>Fermentation à basse température.</strong>Si repassage est nécessaire, utilisez une température basse et de préférence un fer à repasser à vapeur pour éviter les dommages dus à la chaleur élevée.</li>
-                        </ul>        
+        String html = """    
                 """;
 //        if (isHtml(html)) {
 //            System.out.println("is html");
@@ -151,18 +147,22 @@ public class TestController {
     public String testKeyValue(@RequestBody KeyValueDTO keyValueDTO) {
         String key = keyValueDTO.getKey();
         String value = keyValueDTO.getValue();
+        if (SUSPICIOUS2_PATTERN.matcher(value).matches()) {
+            return "Metafield不翻译";
+        }
+
         //通用的不翻译数据
         if (!generalTranslate(key, value)) {
-            System.out.println();
+            return "通用不翻译";
         }
 
         //如果是theme模块的数据
         if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-            return "不翻译";
+            return "theme不翻译";
         }
         //如果包含对应key和value，则跳过
         if (!shouldTranslate(key, value)) {
-            return "不翻译";
+            return "theme不翻译";
         }
         return "需要翻译";
     }
