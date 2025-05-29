@@ -343,13 +343,14 @@ public class JsoupUtils {
             appInsights.trackTrace("sleep error： " + e.getMessage());
         }
 
-        String resultTranslation = null;
+        String resultTranslation;
         try {
             if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)){
                 resultTranslation = translateByQwenMt(request.getContent(), source, target, counter);
             }else {
                 //qwen 短文本翻译
-                String prompt = getSimplePrompt(target, languagePackId);
+                String targetLanguage = getLanguageName(target);
+                String prompt = getShortPrompt(targetLanguage);
                 resultTranslation = singleTranslate(request.getContent(), prompt, counter, target);
             }
             return  resultTranslation;
