@@ -45,6 +45,7 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
 import static com.bogdatech.integration.PrivateIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.integration.PrivateIntegration.translatePrivateNewHtml;
+import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.UserTypeTokenService.getUserTranslatedToken;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
@@ -252,7 +253,7 @@ public class PrivateKeyService {
                 try {
                     String env = System.getenv("ApplicationEnv");
                     if ("prod".equals(env) || "dev".equals(env)) {
-                        shopifyData = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
+                        shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, query));
                     } else {
                         shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
                     }
@@ -1079,7 +1080,7 @@ public class PrivateKeyService {
         String env = System.getenv("ApplicationEnv");
         String infoByShopify;
         if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(request, query));
+            infoByShopify = String.valueOf(getInfoByShopify(request, query));
         } else {
             infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
         }

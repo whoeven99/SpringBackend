@@ -8,7 +8,6 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.EmailIntegration;
-import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -62,14 +61,12 @@ import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToS
 //@Transactional
 public class TranslateService {
     private final TranslateApiIntegration translateApiIntegration;
-    private final ShopifyHttpIntegration shopifyApiIntegration;
     private final ShopifyService shopifyService;
     private final ITranslatesService translatesService;
     private final ITranslationCounterService translationCounterService;
     private final ITranslateTextService translateTextService;
     private final IGlossaryService glossaryService;
     private final AILanguagePackService aiLanguagePackService;
-    private final IAILanguagePacksService aiLanguagePacksService;
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
     private final IEmailService emailService;
@@ -80,14 +77,12 @@ public class TranslateService {
     @Autowired
     public TranslateService(
             TranslateApiIntegration translateApiIntegration,
-            ShopifyHttpIntegration shopifyApiIntegration,
             ShopifyService shopifyService,
             ITranslatesService translatesService,
             ITranslationCounterService translationCounterService,
             ITranslateTextService translateTextService,
             IGlossaryService glossaryService,
             AILanguagePackService aiLanguagePackService,
-            IAILanguagePacksService aiLanguagePacksService,
             IUsersService usersService,
             EmailIntegration emailIntegration,
             IEmailService emailService,
@@ -95,14 +90,12 @@ public class TranslateService {
             UserTypeTokenService userTypeTokensService,
             ITranslationUsageService translationUsageService) {
         this.translateApiIntegration = translateApiIntegration;
-        this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.translateTextService = translateTextService;
         this.glossaryService = glossaryService;
         this.aiLanguagePackService = aiLanguagePackService;
-        this.aiLanguagePacksService = aiLanguagePacksService;
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
@@ -499,8 +492,11 @@ public class TranslateService {
 
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();
         String source = translateContext.getSource();
-        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils(), shopifyRequest.getTarget(), source))
+
+        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils(), shopifyRequest.getTarget(), source)) {
             return;
+        }
+
         //定义HashMap存放判断后的对应数据
         // 初始化 judgeData 用于分类存储数据
         Map<String, List<RegisterTransactionRequest>> judgeData = initializeJudgeData();
@@ -587,7 +583,7 @@ public class TranslateService {
             put(GLOSSARY, new ArrayList<>());
             put(OPENAI, new ArrayList<>());
             put(METAFIELD, new ArrayList<>());
-            put(HANDLE, new ArrayList<>());
+//            put(HANDLE, new ArrayList<>());
         }};
     }
 
@@ -1264,6 +1260,7 @@ public class TranslateService {
                 //如果是html放html文本里面
                 if (isHtml(value)) {
                     judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                    continue;
                 }
             }
             //对METAOBJECT字段翻译
@@ -1275,8 +1272,8 @@ public class TranslateService {
 
             //对METAFIELD字段翻译
             if (resourceType.equals(METAFIELD)) {
-                //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。
-                if (SUSPICIOUS_PATTERN.matcher(value).matches()) {
+                //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
+                if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
                     continue;
                 }
                 if (!metaTranslate(value)) {
@@ -1425,6 +1422,9 @@ public class TranslateService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
+            if (infoByShopify == null) {
+                return null;
+            }
             return objectMapper.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
             throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
@@ -1436,6 +1436,9 @@ public class TranslateService {
         JsonNode nextPageData;
         try {
             nextPageData = fetchNextPage(translateContext.getTranslateResource(), translateContext.getShopifyRequest());
+            if (nextPageData == null){
+                return;
+            }
         } catch (Exception e) {
             return;
         }

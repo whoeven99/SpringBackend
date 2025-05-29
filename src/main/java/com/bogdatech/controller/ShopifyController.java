@@ -21,6 +21,8 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
+import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
+import static com.bogdatech.logic.ShopifyService.getShopifyData;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -58,7 +60,7 @@ public class ShopifyController {
         String body = cloudServiceRequest.getBody();
         JSONObject infoByShopify = null;
         try {
-            infoByShopify = shopifyApiIntegration.getInfoByShopify(request, body);
+            infoByShopify = getInfoByShopify(request, body);
         } catch (Exception e) {
 //            throw new RuntimeException(e);
             appInsights.trackTrace("无法获取shopify数据");
@@ -72,7 +74,7 @@ public class ShopifyController {
     //通过测试环境调shopify的API
     @PostMapping("/shopifyApi")
     public BaseResponse<Object> shopifyApi(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(shopifyService.getShopifyData(cloudServiceRequest));
+        return new BaseResponse<>().CreateSuccessResponse(getShopifyData(cloudServiceRequest));
     }
 
     // 用户消耗的字符数
@@ -213,11 +215,16 @@ public class ShopifyController {
         String env = System.getenv("ApplicationEnv");
         //根据新的集合获取这个订阅计划的信息
         if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(new ShopifyRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", null), query));
+            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", null), query));
         } else {
-            infoByShopify = shopifyService.getShopifyData(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", "en", query));
+            infoByShopify = getShopifyData(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", "en", query));
         }
 //        System.out.println("infoByShopify = " + infoByShopify);
+        if (infoByShopify == null) {
+            subscriptionVO.setUserSubscriptionPlan(2);
+            subscriptionVO.setCurrentPeriodEnd(null);
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
         //根据订阅计划信息，判断是否是第一个月的开始，是否要添加额度
         JSONObject root = JSON.parseObject(infoByShopify);
         JSONObject node = root.getJSONObject("node");

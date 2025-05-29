@@ -8,11 +8,11 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import java.util.Map;
 
 public interface ICurrenciesService extends IService<CurrenciesDO> {
-    public BaseResponse<Object> insertCurrency(CurrenciesDO currenciesDO);
+    BaseResponse<Object> insertCurrency(CurrenciesDO currenciesDO);
 
-    public BaseResponse<Object> updateCurrency(CurrencyRequest request);
-    public BaseResponse<Object> deleteCurrency(CurrencyRequest request);
-    public BaseResponse<Object> getCurrencyByShopName(String shopName);
+    BaseResponse<Object> updateCurrency(CurrencyRequest request);
+    BaseResponse<Object> deleteCurrency(CurrencyRequest request);
+    BaseResponse<Object> getCurrencyByShopName(String shopName);
 
     Map<String, Object> getCurrencyWithSymbol(CurrenciesDO request);
 

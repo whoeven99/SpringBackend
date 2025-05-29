@@ -47,6 +47,7 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
+import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -96,7 +97,7 @@ public class ShopifyService {
             String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
             string = sendShopifyPost("test123", requestBody);
         } catch (JsonProcessingException | ClientException e) {
-            throw new ClientException(SHOPIFY_CONNECT_ERROR.getErrMsg());
+            return null;
         }
         return string;
     }
@@ -131,7 +132,7 @@ public class ShopifyService {
         cloudServiceRequest.setBody(query);
         String infoByShopify;
         if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(request, query));
+            infoByShopify = String.valueOf(getInfoByShopify(request, query));
         } else {
             infoByShopify = getShopifyData(cloudServiceRequest);
         }
@@ -566,6 +567,9 @@ public class ShopifyService {
     // 递归处理下一页数据
     private JsonNode translateNextPage(ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResource, CharacterCountUtils translateCounter, String method) {
         JsonNode nextPageData = fetchNextPage(translateResource, request);
+        if (nextPageData == null){
+            return null;
+        }
         translateSingleLineTextFieldsRecursively(nextPageData, request, counter, translateCounter, translateResource, method);
 
         if (hasNextPage(nextPageData)) {
@@ -609,7 +613,7 @@ public class ShopifyService {
         try {
             String env = System.getenv("ApplicationEnv");
             if ("prod".equals(env) || "dev".equals(env)) {
-                infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(request, query));
+                infoByShopify = String.valueOf(getInfoByShopify(request, query));
             } else {
                 infoByShopify = getShopifyData(cloudServiceRequest);
             }
@@ -618,7 +622,7 @@ public class ShopifyService {
             appInsights.trackTrace("fetchNextPage error: " + e.getMessage());
         }
         if (infoByShopify == null) {
-            throw new IllegalArgumentException(String.valueOf(NETWORK_ERROR));
+            return null;
         }
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
@@ -637,14 +641,14 @@ public class ShopifyService {
         shopifyRequest.setAccessToken(registerTransactionRequest.getAccessToken());
         shopifyRequest.setTarget(registerTransactionRequest.getTarget());
         Map<String, Object> variables = getVariables(registerTransactionRequest);
-        return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
+        return registerTransaction(shopifyRequest, variables);
     }
 
     //修改多个文本数据
     public String updateShopifyManyData(ShopifyRequest shopifyRequest, List<RegisterTransactionRequest> registerTransactionRequests) {
         // 将List<RegisterTransactionRequest>处理成variables数据
         Map<String, Object> variables = toVariables(registerTransactionRequests);
-        return shopifyApiIntegration.registerTransaction(shopifyRequest, variables);
+        return registerTransaction(shopifyRequest, variables);
     }
 
     //一次修改多条shopify本地数据
@@ -760,13 +764,16 @@ public class ShopifyService {
                 try {
                     String env = System.getenv("ApplicationEnv");
                     if ("prod".equals(env) || "dev".equals(env)) {
-                        infoByShopify = String.valueOf(shopifyApiIntegration.getInfoByShopify(shopifyRequest, query));
+                        infoByShopify = String.valueOf(getInfoByShopify(shopifyRequest, query));
                     } else {
                         infoByShopify = getShopifyData(cloudServiceRequest);
                     }
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
                     appInsights.trackTrace("getTranslationItemsInfo error: " + e.getMessage());
+                    continue;
+                }
+                if (infoByShopify == null) {
                     continue;
                 }
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
