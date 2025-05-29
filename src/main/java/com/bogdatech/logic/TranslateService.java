@@ -500,6 +500,7 @@ public class TranslateService {
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();
         String source = translateContext.getSource();
         if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils(), shopifyRequest.getTarget(), source))
+        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils(), shopifyRequest.getTarget(), source)) {
             return;
         //定义HashMap存放判断后的对应数据
         // 初始化 judgeData 用于分类存储数据
