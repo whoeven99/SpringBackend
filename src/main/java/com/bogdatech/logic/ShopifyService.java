@@ -50,6 +50,7 @@ import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.getMessage;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
@@ -721,7 +722,7 @@ public class ShopifyService {
         if (string.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
-            return new BaseResponse<>().CreateErrorResponse("insert error");
+            return new BaseResponse<>().CreateErrorResponse(getMessage(string));
         }
     }
 

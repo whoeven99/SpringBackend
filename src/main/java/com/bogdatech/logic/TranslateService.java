@@ -617,9 +617,9 @@ public class TranslateService {
                 case METAFIELD:
                     translateMetafield(entry.getValue(), translateContext);
                     break;
-                case HANDLE:
-                    translateDataByHandle(entry.getValue(), translateContext);
-                    break;
+//                case HANDLE:
+//                    translateDataByHandle(entry.getValue(), translateContext);
+//                    break;
                 default:
                     appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
                     break;
@@ -1239,7 +1239,7 @@ public class TranslateService {
             }
 
             if (type.equals(URI) && key.equals("handle")) {
-                judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+//                judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                 continue;  // 跳过当前循环
             }
             //通用的不翻译数据
