@@ -59,17 +59,31 @@ public class ShopifyHttpIntegration {
     public static JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {
         String response = null;
         int maxRetries = 3;
-        int attempt = 0;
-        while (attempt < maxRetries) {
-            response = sendShopifyPost(shopifyRequest, query, null);
-            if (response != null) {
-                break;
+        int baseDelay = 1000; // 初始延迟 1 秒
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                response = sendShopifyPost(shopifyRequest, query, null);
+                if (response != null) {
+                    break;
+                }
+            } catch (Exception e) {
+                appInsights.trackTrace("Shopify request failed on attempt " + attempt + ": " + e.getMessage());
             }
-            attempt++;
+
+            if (attempt < maxRetries) {
+                int delay = baseDelay * (int)Math.pow(2, attempt - 1); // 指数退避：1s, 2s, 4s, 8s, ...
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
         }
 
         if (response == null) {
             appInsights.trackTrace("Failed to get response from Shopify after " + maxRetries + " attempts.");
+            return null;
         }
 
         JSONObject jsonObject = JSONObject.parseObject(response);
