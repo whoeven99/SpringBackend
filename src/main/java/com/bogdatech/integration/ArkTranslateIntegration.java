@@ -36,7 +36,7 @@ public class ArkTranslateIntegration {
             // 使用建造者模式创建 ArkService 实例，并赋值给成员变量
             arkService = ArkService.builder().apiKey(apiKey).timeout(Duration.ofSeconds(120)).retryTimes(2).build();
         } catch (Exception e) {
-            System.out.println("豆包模型初始化失败！！！" + e.getMessage());
+//            System.out.println("豆包模型初始化失败！！！" + e.getMessage());
             appInsights.trackTrace("豆包模型初始化失败！！！" + e.getMessage());
         }
     }
@@ -87,6 +87,7 @@ public class ArkTranslateIntegration {
 //            System.out.println("翻译源文本: " + "counter: " + totalTokens);
             return response.toString();
         } catch (Exception e) {
+            appInsights.trackTrace("豆包翻译失败 error: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }

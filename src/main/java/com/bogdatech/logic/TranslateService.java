@@ -617,9 +617,9 @@ public class TranslateService {
                 case METAFIELD:
                     translateMetafield(entry.getValue(), translateContext);
                     break;
-                case HANDLE:
-                    translateDataByHandle(entry.getValue(), translateContext);
-                    break;
+//                case HANDLE:
+//                    translateDataByHandle(entry.getValue(), translateContext);
+//                    break;
                 default:
                     appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
                     break;
@@ -768,7 +768,7 @@ public class TranslateService {
             TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
             htmlTranslation = translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId());
 //            System.out.println("htmlTranslation: " + htmlTranslation);
-            if (model.equals(METAFIELD)){
+            if (model.equals(METAFIELD)) {
                 //对翻译后的html做格式处理
                 htmlTranslation = normalizeHtml(htmlTranslation);
             }
@@ -1239,7 +1239,7 @@ public class TranslateService {
             }
 
             if (type.equals(URI) && key.equals("handle")) {
-                judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+//                judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                 continue;  // 跳过当前循环
             }
             //通用的不翻译数据
@@ -1813,7 +1813,7 @@ public class TranslateService {
         try {
             if (isHtml(value)) {
                 //单条翻译html，修改格式
-                if (resourceType.equals(METAFIELD)){
+                if (resourceType.equals(METAFIELD)) {
                     String htmlTranslation = translateNewHtml(value, new TranslateRequest(0, null, null, source, target, value), counter, null);
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
