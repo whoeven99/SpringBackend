@@ -94,7 +94,7 @@ public class ALiYunTranslateIntegration {
 
     //单文本翻译的提示词
     public static String cueWordSingle(String target, String type) {
-        return "Translate the following text into " + target + ". Do not output any notes, annotations, explanations, corrections, or bilingual text.Even if you detect an error in the original, do not mention it—only output the final correct translation.";
+        return "Translate the following text into " + target + ". Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
     }
 
     //单文本翻译的提示词(用具体语言而不是语言代码)
