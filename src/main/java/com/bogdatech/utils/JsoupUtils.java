@@ -54,16 +54,12 @@ public class JsoupUtils {
             }
 
             //根据文本条件翻译
-            //如果字符数低于100字符，用mt和google翻译
-            if (cleanedText.length() <= 100) {
+            //如果字符数低于5字符，用mt和qwen翻译
+            if (cleanedText.length() <= 5) {
                 counter.addChars(googleCalculateToken(cleanedText));
-                Map<String, String> placeholderMap = new HashMap<>();
-                String updateText = extractKeywords(cleanedText, placeholderMap, keyMap1, keyMap0, request.getSource());
-                request.setContent(updateText);
                 String targetString = translateAndCount(request, counter, languagePackId, GENERAL);
-                String finalText = restoreKeywords(targetString, placeholderMap);
-                addData(request.getTarget(), cleanedText, finalText);
-                return finalText;
+                addData(request.getTarget(), cleanedText, targetString);
+                return targetString;
             } else {
                 //如果字符数大于100字符，用大模型翻译
                 String glossaryString = glossaryText(keyMap1, keyMap0, cleanedText);
@@ -206,7 +202,7 @@ public class JsoupUtils {
 
 
     /**
-     * 调用多模型翻译：1，100字符以内用model翻译。2，ar用hunyuan-turbo-latest翻译 3，hi用doubao-1.5-pro-256k翻译
+     * 调用多模型翻译：1，5字符以内用model翻译和qwen翻译。2，ar用hunyuan-large翻译 3，hi用doubao-1.5-pro-256k翻译
      * 根据语言代码切换API翻译
      *
      * @param request 翻译所需要的数据
@@ -215,12 +211,10 @@ public class JsoupUtils {
      * return String       翻译后的文本
      */
     public static String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
-        String target = request.getTarget();
-        String source = request.getSource();
         String sourceText = request.getContent();
 
         //判断是否符合mt翻译 ，是， 调用mt翻译。
-        if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source) && sourceText.length() <= 20 && !hasPlaceholders(request.getContent())) {
+        if (sourceText.length() <= 5) {
             return checkTranslationApi(request, counter, languagePackId);
         }
 
@@ -283,7 +277,7 @@ public class JsoupUtils {
          return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
 
         }catch(Exception e){
-            appInsights.trackTrace("checkTranslationModel报错： " + e.getMessage());
+            appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
             return content;
         }
     }
@@ -323,7 +317,7 @@ public class JsoupUtils {
 
         return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
         }catch(Exception e){
-            appInsights.trackTrace("glossaryTranslationModel报错： " + e.getMessage());
+            appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
             return content;
         }
     }
@@ -335,10 +329,10 @@ public class JsoupUtils {
      *
      * @param request 翻译所需要的数据
      * @param counter 计数器
-     * @param prompt  提示词
+     * @param languagePackId  语言包功能
      *                return String 翻译后的文本
      */
-    public static String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, String prompt) {
+    public static String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
         String target = request.getTarget();
         String source = request.getSource();
         //如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
@@ -346,17 +340,25 @@ public class JsoupUtils {
         try {
             sleep(300);
         } catch (Exception e) {
-            appInsights.trackTrace("sleep错误： " + e.getMessage());
+            appInsights.trackTrace("sleep error： " + e.getMessage());
         }
 
-        String resultTranslation;
+        String resultTranslation = null;
         try {
-            resultTranslation = translateByQwenMt(request.getContent(), source, target, counter);
+            if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)){
+                resultTranslation = translateByQwenMt(request.getContent(), source, target, counter);
+            }else {
+                //qwen 短文本翻译
+                String prompt = getSimplePrompt(target, languagePackId);
+                resultTranslation = singleTranslate(request.getContent(), prompt, counter, target);
+            }
+            return  resultTranslation;
+
         } catch (Exception e) {
             //mt翻译失败的话，用其他大模型翻译
-            resultTranslation = checkTranslationModel(request, counter, prompt);
+            appInsights.trackTrace("短文本翻译 error: " + e.getMessage());
         }
-        return resultTranslation;
+        return request.getContent();
     }
 
     //包装一下调用百炼mt的方法
@@ -369,7 +371,7 @@ public class JsoupUtils {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
-                appInsights.trackTrace("sleep错误： " + ex.getMessage());
+                appInsights.trackTrace("MT sleep error： " + ex.getMessage());
             }
             return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
         }
@@ -506,7 +508,7 @@ public class JsoupUtils {
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("递归处理节点报错： " + e.getMessage());
+            appInsights.trackTrace("递归处理节点报错 error： " + e.getMessage());
         }
     }
 
@@ -649,7 +651,7 @@ public class JsoupUtils {
         }
             return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
         }catch(Exception e){
-            appInsights.trackTrace("翻译handle数据报错： " + e.getMessage());
+            appInsights.trackTrace("翻译handle数据报错 error： " + e.getMessage());
             return content;
          }
     }
