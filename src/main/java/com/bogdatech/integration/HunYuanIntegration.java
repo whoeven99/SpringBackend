@@ -58,7 +58,7 @@ public class HunYuanIntegration {
         ChatCompletionsResponse resp;
         try {
             resp = CLIENT.ChatCompletions(req);
-            appInsights.trackTrace("resp: " + resp.toString() + "resp_id: " + resp.getRequestId());
+//            appInsights.trackTrace("resp: " + resp.toString() + "resp_id: " + resp.getRequestId());
         } catch (TencentCloudSDKException e) {
             appInsights.trackTrace("hunyuan error: " + e + " resp_id: " + e.getRequestId());
             throw new RuntimeException(e);

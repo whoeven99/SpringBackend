@@ -65,12 +65,20 @@ public class TaskService {
         List<UserPriceRequest> usedList = new ArrayList<>();
         for (CharsOrdersDO charsOrdersDO : list
         ) {
+            //根据shopName获取User表对应的accessToken，重新生成一个数据类型  判断是否是卸载，如果卸载， 不计算
+            UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>().eq("shop_name", charsOrdersDO.getShopName()));
+            if (usersDO == null) {
+                continue;
+            }
+            if (usersDO.getUninstallTime() != null && usersDO.getLoginTime() != null && usersDO.getUninstallTime().after(usersDO.getLoginTime())){
+                continue;
+            }
             //根据shopName获取User表对应的accessToken，重新生成一个数据类型
             UserPriceRequest userPriceRequest = new UserPriceRequest();
             userPriceRequest.setShopName(charsOrdersDO.getShopName());
             userPriceRequest.setSubscriptionId(charsOrdersDO.getId());
             userPriceRequest.setCreateAt(charsOrdersDO.getCreatedAt());
-            userPriceRequest.setAccessToken(usersService.getOne(new QueryWrapper<UsersDO>().eq("shop_name", charsOrdersDO.getShopName())).getAccessToken());
+            userPriceRequest.setAccessToken(usersDO.getAccessToken());
             usedList.add(userPriceRequest);
         }
         String env = System.getenv("ApplicationEnv");
