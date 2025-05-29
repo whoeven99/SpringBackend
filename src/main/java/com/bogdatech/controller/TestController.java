@@ -153,7 +153,7 @@ public class TestController {
         String value = keyValueDTO.getValue();
         //通用的不翻译数据
         if (!generalTranslate(key, value)) {
-            System.out.println();
+            return "不翻译";
         }
 
         //如果是theme模块的数据

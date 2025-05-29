@@ -587,7 +587,7 @@ public class TranslateService {
             put(GLOSSARY, new ArrayList<>());
             put(OPENAI, new ArrayList<>());
             put(METAFIELD, new ArrayList<>());
-            put(HANDLE, new ArrayList<>());
+//            put(HANDLE, new ArrayList<>());
         }};
     }
 
