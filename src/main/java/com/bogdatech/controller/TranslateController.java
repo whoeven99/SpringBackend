@@ -32,7 +32,6 @@ import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTransla
 public class TranslateController {
     private final TranslateService translateService;
     private final ITranslatesService translatesService;
-    private final ShopifyHttpIntegration shopifyApiIntegration;
     private final ITranslationCounterService translationCounterService;
     private final IUserTypeTokenService userTypeTokenService;
     private final UserTypeTokenService userTypeTokensService;
@@ -41,12 +40,10 @@ public class TranslateController {
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
-            ShopifyHttpIntegration shopifyApiIntegration,
             ITranslationCounterService translationCounterService,
             IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
-        this.shopifyApiIntegration = shopifyApiIntegration;
         this.translationCounterService = translationCounterService;
         this.userTypeTokenService = userTypeTokenService;
         this.userTypeTokensService = userTypeTokensService;
@@ -176,7 +173,7 @@ public class TranslateController {
             translateModel.removeIf("handle"::equals);
             handleFlag = true;
         }
-
+        appInsights.trackTrace(clickTranslateRequest.getShopName() + "用户要翻译的数据" + clickTranslateRequest.getTranslateSettings3());
         //修改模块的排序
         List<String> translateResourceDTOS = null;
         try {

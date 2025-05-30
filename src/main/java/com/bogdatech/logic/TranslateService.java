@@ -1270,7 +1270,7 @@ public class TranslateService {
             //如果包含相对路径则跳过
             if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
                     || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                    || type.equals(("LIST_URL"))
+                    || "LIST_URL".equals(type)
                     || "JSON".equals(type)
                     || "JSON_STRING".equals(type)
                     || resourceType.equals(SHOP_POLICY)) {

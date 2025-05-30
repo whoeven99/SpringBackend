@@ -5,9 +5,9 @@ import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 
 public interface ITranslationCounterService extends IService<TranslationCounterDO> {
-    public TranslationCounterDO readCharsByShopName(String shopName);
-    public int insertCharsByShopName(TranslationCounterRequest translationCounterRequest);
-    public int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest);
+    TranslationCounterDO readCharsByShopName(String shopName);
+    int insertCharsByShopName(TranslationCounterRequest translationCounterRequest);
+    int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest);
 
     Integer getMaxCharsByShopName(String shopName);
 

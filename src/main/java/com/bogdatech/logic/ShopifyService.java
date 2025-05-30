@@ -134,7 +134,7 @@ public class ShopifyService {
             }
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
         } catch (Exception e) {
-            appInsights.trackTrace("统计字符数失败： " + e.getMessage());
+            appInsights.trackTrace("统计字符数失败 error： " + e.getMessage());
         }
         return counter.getTotalChars();
     }
@@ -164,7 +164,7 @@ public class ShopifyService {
             rootNode = objectMapper.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
 //            System.out.println("解析JSON数据失败： " + translateResource);
-            appInsights.trackTrace("解析JSON数据失败： " + translateResource);
+            appInsights.trackTrace("解析JSON数据失败 error： " + translateResource);
         }
         return rootNode;
     }
