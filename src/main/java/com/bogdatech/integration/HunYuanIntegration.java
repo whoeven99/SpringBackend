@@ -51,10 +51,13 @@ public class HunYuanIntegration {
         // 设置模型名称（请确认具体名称，假设为 "hunyuan-turbo-s"）
         req.setModel(model); //28k token
         // 设置对话消息
-        Message[] messages = new Message[1];
+        Message[] messages = new Message[2];
         messages[0] = new Message();
-        messages[0].setRole("user");
-        messages[0].setContent(prompt + " \n " + sourceText);
+        messages[0].setRole("system");
+        messages[0].setContent(prompt);
+        messages[1] = new Message();
+        messages[1].setRole("user");
+        messages[1].setContent(sourceText);
         req.setMessages(messages);
         req.setStream(false); // 非流式调用，设为 true 可启用流式返回
 
