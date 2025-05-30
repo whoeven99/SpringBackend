@@ -593,7 +593,6 @@ public class TranslateService {
             put(GLOSSARY, new ArrayList<>());
             put(OPENAI, new ArrayList<>());
             put(METAFIELD, new ArrayList<>());
-//            put(HANDLE, new ArrayList<>());
         }};
         if (handleFlag){
             hashMap.put(HANDLE, new ArrayList<>());
