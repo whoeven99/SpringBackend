@@ -97,6 +97,7 @@ public class JudgeTranslateUtils {
     private static final Pattern PURE_NUMBER = Pattern.compile("^\\d+$"); // 纯数字
     public static final Pattern SUSPICIOUS_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])[A-Za-z0-9]{9,}$"); //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。
     public static final Pattern SUSPICIOUS2_PATTERN = Pattern.compile("^(?=.*[A-Z])[A-Za-z0-9]{10}$"); //10位大写和 数字组合
+    public static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"); // UUID
     private static final Pattern DASH_PATTERN = Pattern.compile(
             "^[\\dA-Z+-.]+$" // 仅包含数字、全大写字母、标点符号（+、-、.()）
     );
@@ -182,7 +183,7 @@ public class JudgeTranslateUtils {
         }
 
         //第五步检查value是否为TRUE或FLASE
-        if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
+        if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
             return false;
         }
 
@@ -241,6 +242,11 @@ public class JudgeTranslateUtils {
 
         //如果值为纯数字,小数或负数的话，不翻译
         if (isNumber(value)) {
+            return false;
+        }
+
+        //如果是UUID类别的数据。不翻译
+        if (UUID_PATTERN.matcher(value).matches()) {
             return false;
         }
 
