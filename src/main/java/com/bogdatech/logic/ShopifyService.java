@@ -502,7 +502,7 @@ public class ShopifyService {
     //普通文本计算token
     public static int calculateModelToken(String text) {
         String prompt = getVariablePrompt(text, "enenenen", "eeeeeeeeeeeeeeee");
-        return calculateBaiLianToken(prompt);
+        return calculateBaiLianToken(prompt) * 2;
     }
 
     // 提取需要翻译的文本（包括文本和alt属性）
