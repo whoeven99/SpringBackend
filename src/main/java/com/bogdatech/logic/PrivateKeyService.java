@@ -263,10 +263,12 @@ public class PrivateKeyService {
                     userPrivateService.updateUsedCharsByShopName(request.getShopName(), counter.getTotalChars());
                     continue;
                 }
-                TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), null, apiKey);
+                TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), null, apiKey, null);
                 translateJson(translateContext);
                 // 定期检查是否停止
-                if (checkIsStopped(request.getShopName(), counter)) return;
+                if (checkIsStopped(request.getShopName(), counter)) {
+                    return;
+                }
             }
         }
         iTranslatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);

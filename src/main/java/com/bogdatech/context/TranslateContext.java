@@ -22,4 +22,5 @@ public class TranslateContext {
     private String source;
     private String languagePackId;
     private String apiKey;
+    private Boolean handleFlag;
 }

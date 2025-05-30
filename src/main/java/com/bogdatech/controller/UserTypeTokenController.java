@@ -38,7 +38,7 @@ public class UserTypeTokenController {
         userTypeTokenService.getUserInitToken(request);
     }
 
-    //根据shopName获取初始值
+    //根据shopName从数据库获取获取初始值
     @PostMapping("/getUserInitTokenByShopName")
     public BaseResponse<Object> getUserInitTokenByShopName(@RequestBody TranslateRequest request){
         UserTypeTokenDO userTypeToken = userTypeTokenService.getUserInitTokenByShopName(request.getShopName());

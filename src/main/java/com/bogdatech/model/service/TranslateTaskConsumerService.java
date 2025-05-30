@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.ITranslationUsageService;
+import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.DO.TranslationUsageDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.DTO.TranslateDTO;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.TranslateService;
@@ -33,14 +35,16 @@ public class TranslateTaskConsumerService {
     private final ITranslationCounterService translationCounterService;
     private final ITranslationUsageService translationUsageService;
     private final TencentEmailService tencentEmailService;
+    private final IUsersService usersService;
 
     @Autowired
-    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, ITranslationUsageService translationUsageService, TencentEmailService tencentEmailService) {
+    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, ITranslationUsageService translationUsageService, TencentEmailService tencentEmailService, IUsersService usersService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.translationUsageService = translationUsageService;
         this.tencentEmailService = tencentEmailService;
+        this.usersService = usersService;
     }
 
     /**
@@ -70,11 +74,13 @@ public class TranslateTaskConsumerService {
             int usedChars = request1.getUsedChars();
 
             translatesService.updateTranslateStatus(translateDTO.getShopName(), 2, translateDTO.getTarget(), translateDTO.getSource(), translateDTO.getAccessToken());
+            //从user表里面获取token
+            UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>().eq("shop_name", shopName));
             //初始化计数器
             CharacterCountUtils counter = new CharacterCountUtils();
             counter.addChars(usedChars);
             //autoTranslateException，对异常进行处理
-            TranslateRequest request = new TranslateRequest(0, translateDTO.getShopName(), translateDTO.getAccessToken(), translateDTO.getSource(), translateDTO.getTarget(),null);
+            TranslateRequest request = new TranslateRequest(0, translateDTO.getShopName(), usersDO.getAccessToken(), translateDTO.getSource(), translateDTO.getTarget(),null);
             translateService.autoTranslateException(request, remainingChars, counter, usedChars);
             // 业务处理完成后，手动ACK消息，RabbitMQ可安全移除消息
             channel.basicAck(rawMessage.getMessageProperties().getDeliveryTag(), false);
