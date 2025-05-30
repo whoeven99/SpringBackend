@@ -1277,10 +1277,14 @@ public class TranslateService {
                 continue;
             }
 
-            if (type.equals(URI) && "handle".equals(key) && handleFlag) {
-                judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+            if (handleFlag) {
+                if (type.equals(URI) && "handle".equals(key)){
+                    judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                    continue;
+                }
                 continue;  // 跳过当前循环
             }
+
             //通用的不翻译数据
             if (!generalTranslate(key, value)) {
                 continue;
