@@ -1378,7 +1378,7 @@ public class TranslateService {
     }
 
     //判断是否翻译的通用逻辑
-    private boolean translationLogic(String key, String value, String type, String resourceType) {
+    public static boolean translationLogic(String key, String value, String type, String resourceType) {
         //如果包含相对路径则跳过
         if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
                 || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
