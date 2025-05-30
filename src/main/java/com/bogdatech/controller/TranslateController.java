@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
+import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ModelUtils.translateModel;
@@ -168,10 +169,18 @@ public class TranslateController {
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
 
+        //判断是否有handle
+        boolean handleFlag = false;
+        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
+        if (translateModel.contains("handle")) {
+            translateModel.removeIf("handle"::equals);
+            handleFlag = true;
+        }
+
         //修改模块的排序
         List<String> translateResourceDTOS = null;
         try {
-            translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
+            translateResourceDTOS = translateModel(translateModel);
         } catch (Exception e) {
             appInsights.trackTrace("translateModel error: " + e.getMessage());
         }
@@ -181,7 +190,7 @@ public class TranslateController {
         }
         //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
         translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
-        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS);
+        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS, handleFlag);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
@@ -221,7 +230,7 @@ public class TranslateController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
-        shopifyApiIntegration.registerTransaction(request, body);
+        registerTransaction(request, body);
     }
 
 

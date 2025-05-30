@@ -14,8 +14,6 @@ import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.entity.DO.UserTypeTokenDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.ShopifyHttpIntegration;
-import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -61,8 +59,6 @@ import static com.bogdatech.utils.StringUtils.countWords;
 public class ShopifyService {
 
 
-    private final ShopifyHttpIntegration shopifyApiIntegration;
-    private final TestingEnvironmentIntegration testingEnvironmentIntegration;
     private final IUserTypeTokenService userTypeTokenService;
     private final IUserSubscriptionsService userSubscriptionsService;
     private final IItemsService itemsService;
@@ -70,15 +66,11 @@ public class ShopifyService {
 
     @Autowired
     public ShopifyService(
-            ShopifyHttpIntegration shopifyApiIntegration,
-            TestingEnvironmentIntegration testingEnvironmentIntegration,
             IUserTypeTokenService userTypeTokenService,
             IUserSubscriptionsService userSubscriptionsService,
             IItemsService itemsService,
             ITranslatesService translatesService
     ) {
-        this.shopifyApiIntegration = shopifyApiIntegration;
-        this.testingEnvironmentIntegration = testingEnvironmentIntegration;
         this.userTypeTokenService = userTypeTokenService;
         this.userSubscriptionsService = userSubscriptionsService;
         this.itemsService = itemsService;
@@ -209,7 +201,7 @@ public class ShopifyService {
                 String fieldName = field.getKey();
                 JsonNode fieldValue = field.getValue();
                 //当translates里面有数据时
-                if ("translations".equals(fieldName) && !method.equals("initial")) {
+                if ("translations".equals(fieldName) && !"initial".equals(method)) {
                     strings.set(counterTranslatedContent((ArrayNode) fieldValue));
                 }
                 if ("translatableContent".equals(fieldName)) {
@@ -229,15 +221,6 @@ public class ShopifyService {
             translatedContent.add(contentItemNode.path("key").asText(null));
         }
         return translatedContent;
-    }
-
-    //如果node不为ArrayNode将其转为JsonNode
-    private JsonNode translateArrayNode(ArrayNode arrayNode, ShopifyRequest request, CharacterCountUtils counter, CharacterCountUtils translateCounter) {
-        for (int i = 0; i < arrayNode.size(); i++) {
-            JsonNode element = arrayNode.get(i);
-//            arrayNode.set(i, translateSingleLineTextFieldsRecursively(element, request, counter, translateCounter));
-        }
-        return arrayNode;
     }
 
 
@@ -931,8 +914,8 @@ public class ShopifyService {
                 if (key.contains("metafield:") || key.contains("color")
                         || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
                         || key.contains("carousel_easing") || key.contains("_link") || key.contains("general") || key.contains("css:")
-                        || key.contains("icon:") || type.equals("FILE_REFERENCE")  || type.equals("LINK")
-                        || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
+                        || key.contains("icon:") || "FILE_REFERENCE".equals(type)  || "LINK".equals(type)
+                        || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
                         || type.equals(("LIST_URL"))
                 ) {
                     translatedCounter.addChars(1);
