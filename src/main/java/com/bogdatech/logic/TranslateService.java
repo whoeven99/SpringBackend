@@ -594,7 +594,7 @@ public class TranslateService {
             put(OPENAI, new ArrayList<>());
             put(METAFIELD, new ArrayList<>());
         }};
-        if (handleFlag){
+        if (handleFlag) {
             hashMap.put(HANDLE, new ArrayList<>());
         }
         return hashMap;
@@ -1277,12 +1277,12 @@ public class TranslateService {
                 continue;
             }
 
-            if (handleFlag) {
-                if (type.equals(URI) && "handle".equals(key)){
+            if (type.equals(URI) && "handle".equals(key)) {
+                if (handleFlag) {
                     judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                     continue;
                 }
-                continue;  // 跳过当前循环
+               continue;
             }
 
             //通用的不翻译数据
@@ -1378,7 +1378,7 @@ public class TranslateService {
     }
 
     //判断是否翻译的通用逻辑
-    private boolean translationLogic(String key, String value, String type, String resourceType) {
+    public static boolean translationLogic(String key, String value, String type, String resourceType) {
         //如果包含相对路径则跳过
         if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
                 || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
@@ -1484,7 +1484,7 @@ public class TranslateService {
         JsonNode nextPageData;
         try {
             nextPageData = fetchNextPage(translateContext.getTranslateResource(), translateContext.getShopifyRequest());
-            if (nextPageData == null){
+            if (nextPageData == null) {
                 return;
             }
         } catch (Exception e) {

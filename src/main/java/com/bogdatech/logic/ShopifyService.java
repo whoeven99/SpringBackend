@@ -48,6 +48,7 @@ import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
+import static com.bogdatech.logic.TranslateService.translationLogic;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.getMessage;
 import static com.bogdatech.utils.JsonUtils.isJson;
@@ -276,11 +277,9 @@ public class ShopifyService {
 
             String key = contentItemNode.path("key").asText(null);
             //通用的不翻译数据
-            if (!generalTranslate(key, value)) {
-                continue;
-            }
             String resourceType = translateResourceDTO.getResourceType();
-            if (PRODUCT_OPTION.equals(resourceType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
+            String type = contentItemNode.path("type").asText(null);
+            if (translationLogic(key, value, type, resourceType)) {
                 continue;
             }
 
@@ -440,11 +439,9 @@ public class ShopifyService {
             }
 
             //通用的不翻译数据
-            if (!generalTranslate(key, value)) {
-                continue;
-            }
             String resourceType = translateResourceDTO.getResourceType();
-            if (PRODUCT_OPTION.equals(resourceType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
+            String type = contentItemNode.path("type").asText(null);
+            if (translationLogic(key, value, type, resourceType)) {
                 continue;
             }
 
