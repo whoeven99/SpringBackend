@@ -188,6 +188,10 @@ public class JsoupUtils {
 
     //判断String类型是否是html数据
     public static boolean isHtml(String content) {
+        //如果content里面有html标签，再判断，否则返回false
+        if (!content.contains("<") && !content.contains("</")) {
+            return false;
+        }
         Document doc = Jsoup.parse(content);
         return !doc.body().text().equals(content);
     }
@@ -274,7 +278,7 @@ public class JsoupUtils {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
-         return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
+         return hunYuanTranslate(content, prompt, counter, "hunyuan-large");
 
         }catch(Exception e){
             appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
@@ -315,7 +319,7 @@ public class JsoupUtils {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
-        return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
+        return hunYuanTranslate(content, prompt, counter, "hunyuan-large");
         }catch(Exception e){
             appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
             return content;
@@ -650,7 +654,7 @@ public class JsoupUtils {
         if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-            return hunYuanTranslate(content, prompt, counter, null, "hunyuan-large");
+            return hunYuanTranslate(content, prompt, counter, "hunyuan-large");
         }catch(Exception e){
             appInsights.trackTrace("翻译handle数据报错 error： " + e.getMessage());
             return content;

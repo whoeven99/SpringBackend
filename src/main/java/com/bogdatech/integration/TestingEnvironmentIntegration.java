@@ -41,7 +41,6 @@ public class TestingEnvironmentIntegration {
         String url = "https://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/"+ api;
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
-
         String responseContent = null;
         int maxRetries = 3;  // Maximum number of retry attempts
         int attempt = 0;
@@ -56,7 +55,6 @@ public class TestingEnvironmentIntegration {
                 try {
                     HttpEntity entity = response.getEntity();
                     responseContent = EntityUtils.toString(entity);
-
                     if (response.getStatusLine().getStatusCode() >= 200 && response.getStatusLine().getStatusCode() < 300) {
                         break;  // Exit loop if successful
                     }
