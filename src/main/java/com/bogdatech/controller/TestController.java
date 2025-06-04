@@ -21,11 +21,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
+import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
+import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
 import static com.bogdatech.utils.StringUtils.*;
 
 @RestController
@@ -124,22 +129,25 @@ public class TestController {
 
     @GetMapping("/testHtml")
     public void testHtml() {
-        String html = """    
+        String html = """   
                 """;
-//        if (isHtml(html)) {
-//            System.out.println("is html");
-//        } else {
-//            System.out.println("is not html");
-//        }
-//
-//        if (isJson(html)) {
-//            System.out.println("is json");
-//        } else {
-//            System.out.println("is not json");
-//        }
+        if (isHtml(html)) {
+            System.out.println("is html");
+        } else {
+            System.out.println("is not html");
+        }
 
+        if (isJson(html)) {
+            System.out.println("is json");
+        } else {
+            System.out.println("is not json");
+        }
+        String targetLanguage = getLanguageName("zh-CN");
+        String prompt = getSimplePrompt(targetLanguage, null);
+//        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", "hunyuan-large");
+//        System.out.println("final: " + s);
 //        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
-        System.out.println("final: " + normalizeHtml(html));
+//        System.out.println("final: " + normalizeHtml(html));
     }
 
     //测试theme判断

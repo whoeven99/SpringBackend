@@ -1,0 +1,32 @@
+package com.bogdatech.controller;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.bogdatech.entity.VO.GenerateDescriptionVO;
+import com.bogdatech.logic.GenerateDescriptionService;
+import com.bogdatech.model.controller.response.BaseResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/apg/descriptionGeneration")
+public class APGDescriptionGenerationController {
+
+    private final GenerateDescriptionService generateDescriptionService;
+    @Autowired
+    public APGDescriptionGenerationController(GenerateDescriptionService generateDescriptionService) {
+        this.generateDescriptionService = generateDescriptionService;
+    }
+
+    @PutMapping("/generateDescription")
+    public BaseResponse<Object> generateDescription(String shopName, @RequestBody GenerateDescriptionVO generateDescriptionVO) {
+        // TODO: 实现生成描述的逻辑
+        String description = generateDescriptionService.generateDescription(shopName, generateDescriptionVO);
+        if (description != null){
+            return new BaseResponse<>().CreateSuccessResponse(description);
+        }
+        return new BaseResponse<>().CreateErrorResponse("null");
+    }
+}
