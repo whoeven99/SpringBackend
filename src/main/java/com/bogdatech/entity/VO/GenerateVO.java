@@ -11,4 +11,5 @@ public class GenerateVO {
     private String pageType;
     private String contentType;
     private String description;
+    private String id;
 }
