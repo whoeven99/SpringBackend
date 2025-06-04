@@ -134,21 +134,18 @@ public class ShopifyService {
             infoByShopify = getShopifyData(cloudServiceRequest);
         }
         try {
-            if (infoByShopify == null) {
+            if (infoByShopify == null || infoByShopify.isEmpty()) {
                 return 0;
             }
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
         } catch (Exception e) {
-            appInsights.trackTrace("统计字符数失败 error： " + e.getMessage());
+            appInsights.trackTrace(request.getShopName() + "用户 " + request.getTarget() + "目标 方法： " + method + " 统计字符数失败 error： " + e.getMessage());
         }
         return counter.getTotalChars();
     }
 
     //计数翻译前所需要的总共的字符数
     public void countBeforeTranslateChars(String infoByShopify, ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils counter, CharacterCountUtils translateCounter, String method) {
-        if (infoByShopify == null) {
-            return;
-        }
         JsonNode rootNode = ConvertStringToJsonNode(infoByShopify, translateResource);
         if (rootNode == null) {
             return;
@@ -810,7 +807,7 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("getTranslationItemsInfoAll error: " + e.getMessage());
+            appInsights.trackTrace("getTranslationItemsInfoAll error: 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + e.getMessage());
         }
         return result;
     }
