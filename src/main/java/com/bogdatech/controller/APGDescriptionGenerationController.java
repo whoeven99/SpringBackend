@@ -1,7 +1,7 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
+import com.bogdatech.entity.VO.GenerateVO;
 import com.bogdatech.logic.GenerateDescriptionService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +25,8 @@ public class APGDescriptionGenerationController {
         // TODO: 实现生成描述的逻辑
         String description = generateDescriptionService.generateDescription(shopName, generateDescriptionVO);
         if (description != null){
-            return new BaseResponse<>().CreateSuccessResponse(description);
+            return new BaseResponse<>().CreateSuccessResponse(new GenerateVO(generateDescriptionVO.getPageType(), generateDescriptionVO.getContentType(), description));
         }
-        return new BaseResponse<>().CreateErrorResponse("null");
+        return new BaseResponse<>().CreateErrorResponse(new GenerateVO(generateDescriptionVO.getPageType(), generateDescriptionVO.getContentType(), null));
     }
 }
