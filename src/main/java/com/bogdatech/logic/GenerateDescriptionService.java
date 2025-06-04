@@ -81,7 +81,7 @@ public class GenerateDescriptionService {
         } else {
             // 从数据库中获取(暂定就模板1)
             Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
-            String template = iapgTemplateService.getTemplateById(1L);
+            String template = iapgTemplateService.getTemplateById(templateId);
             template = prompt + "/n " + template;
             description = hunYuanUserTranslate(template, characterCountUtils, "hunyuan-large");
         }
