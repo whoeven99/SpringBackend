@@ -807,7 +807,7 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("getTranslationItemsInfoAll error: " + e.getMessage());
+            appInsights.trackTrace("getTranslationItemsInfoAll error: 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + e.getMessage());
         }
         return result;
     }
