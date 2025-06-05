@@ -76,7 +76,6 @@ public class UserController {
 
     @PostMapping("/checkUserPlan")
     public BaseResponse<Object> checkUserPlan(@RequestBody UserSubscriptionsRequest userSubscriptionsRequest) {
-
         return new BaseResponse<>().CreateSuccessResponse(userService.checkUserPlan(userSubscriptionsRequest.getShopName(), userSubscriptionsRequest.getPlanId()));
     }
 

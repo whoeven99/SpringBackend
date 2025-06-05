@@ -14,6 +14,7 @@ import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import static com.bogdatech.constants.TranslateConstants.HUN_YUAN_MODEL;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanUserTranslate;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getProductsQueryById;
@@ -77,13 +78,13 @@ public class GenerateDescriptionService {
         if (test) {
             String templateId = generateDescriptionVO.getTemplateId();
             templateId = prompt + " /n " + templateId;
-            description = hunYuanUserTranslate(templateId, characterCountUtils, "hunyuan-large");
+            description = hunYuanUserTranslate(templateId, characterCountUtils, HUN_YUAN_MODEL);
         } else {
             // 从数据库中获取(暂定就模板1)
             Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
-            String template = iapgTemplateService.getTemplateById(1L);
+            String template = iapgTemplateService.getTemplateById(templateId);
             template = prompt + "/n " + template;
-            description = hunYuanUserTranslate(template, characterCountUtils, "hunyuan-large");
+            description = hunYuanUserTranslate(template, characterCountUtils, HUN_YUAN_MODEL);
         }
         //根据additionalInformation（暂时不知道是什么）
         //根据language获取生成的语言是什么

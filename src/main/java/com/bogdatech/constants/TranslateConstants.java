@@ -57,4 +57,5 @@ public class TranslateConstants {
     public static final String TOTAL_TOKEN = "totalToken";
     public static final String SHOP_NAME = "shop_name";
     public static final String NOT_TRANSLATE = "No translation needed";
+    public static final String HUN_YUAN_MODEL = "hunyuan-turbos-latest";
 }

@@ -10,8 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogdatech.constants.TranslateConstants.MAX_LENGTH;
-import static com.bogdatech.constants.TranslateConstants.SHOP;
+import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.logic.TranslateService.getShopifyData;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -51,7 +50,7 @@ public class AILanguagePackService {
         //判断description是否为空
         //调用混元生成类目
         String categoryPrompt = getCategoryPrompt();
-        String categoryText = hunYuanTranslate(description, categoryPrompt, counter, "hunyuan-large");
+        String categoryText = hunYuanTranslate(description, categoryPrompt, counter, HUN_YUAN_MODEL);
         appInsights.trackTrace("category counter: " + counter.getTotalChars() + "生成的类目数据为： " + categoryText);
         //如果categoryText字段在255字符里面，存到数据库中
         if (categoryText.length() > 100) {
