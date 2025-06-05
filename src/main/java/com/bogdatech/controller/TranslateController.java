@@ -6,23 +6,26 @@ import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
-import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.model.service.RabbitMqTranslateService;
 import com.bogdatech.utils.CharacterCountUtils;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
+import static com.bogdatech.constants.RabbitMQConstants.*;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
@@ -35,18 +38,22 @@ public class TranslateController {
     private final ITranslationCounterService translationCounterService;
     private final IUserTypeTokenService userTypeTokenService;
     private final UserTypeTokenService userTypeTokensService;
+    private final RabbitMqTranslateService rabbitMqTranslateService;
+    private final AmqpTemplate amqpTemplate;
 
     @Autowired
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
             ITranslationCounterService translationCounterService,
-            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService) {
+            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService, AmqpTemplate amqpTemplate) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.userTypeTokenService = userTypeTokenService;
         this.userTypeTokensService = userTypeTokensService;
+        this.rabbitMqTranslateService = rabbitMqTranslateService;
+        this.amqpTemplate = amqpTemplate;
     }
 
 
@@ -303,4 +310,15 @@ public class TranslateController {
         return translateService.singleTextTranslate(singleTranslateVO);
     }
 
+    /**
+     * RabbitMq手动翻译
+     * */
+    @PutMapping("/rabbitMqTranslate")
+    public BaseResponse<Object> rabbitMqTranslate(String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
+        rabbitMqTranslateService.handleUserRequest(clickTranslateRequest.getShopName());
+        String message = objectToJson(clickTranslateRequest);
+        // 将消息发送到用户的路由 key
+        amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + clickTranslateRequest.getShopName(), message);
+        return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
+    }
 }

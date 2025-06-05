@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
-import com.bogdatech.entity.DTO.TranslateDTO;
+import com.bogdatech.entity.DTO.TaskTranslateDTO;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.service.TranslateTaskPublisherService;
@@ -32,8 +32,6 @@ import static com.bogdatech.utils.JsonUtils.objectToJson;
 public class TaskService {
     private final ICharsOrdersService charsOrdersService;
     private final IUsersService usersService;
-    private final ShopifyHttpIntegration shopifyApiIntegration;
-    private final ShopifyService shopifyService;
     private final ITranslationCounterService translationCounterService;
     private final ISubscriptionPlansService subscriptionPlansService;
 
@@ -44,11 +42,9 @@ public class TaskService {
 
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
-        this.shopifyApiIntegration = shopifyApiIntegration;
-        this.shopifyService = shopifyService;
         this.translationCounterService = translationCounterService;
         this.subscriptionPlansService = subscriptionPlansService;
         this.subscriptionQuotaRecordService = subscriptionQuotaRecordService;
@@ -108,7 +104,7 @@ public class TaskService {
         //根据订阅计划信息，判断是否是第一个月的开始，是否要添加额度
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null) {
-            appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务添加额度获取数据失败" + " token: " + userPriceRequest.getAccessToken());
+            appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务添加字符额度获取数据失败" + " token: " + userPriceRequest.getAccessToken());
             return;
         }
         JSONObject node = root.getJSONObject("node");
@@ -231,10 +227,10 @@ public class TaskService {
                 continue;
             }
 
-            //TODO：修改，发送到定时任务的队列里面
+            //修改，发送到定时任务的队列里面
             //UTC每天凌晨1点翻译，且只翻译product模块
             //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-            TranslateDTO translateDTO = new TranslateDTO(translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
+            TaskTranslateDTO translateDTO = new TaskTranslateDTO(translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
             String json = objectToJson(translateDTO);
             translateTaskPublisherService.sendScheduledTranslateTask(json);
         }
