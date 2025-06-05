@@ -206,7 +206,7 @@ public class JsoupUtils {
 
 
     /**
-     * 调用多模型翻译：1，5字符以内用model翻译和qwen翻译。2，ar用hunyuan-large翻译 3，hi用doubao-1.5-pro-256k翻译
+     * 调用多模型翻译：1，5字符以内用model翻译和qwen翻译。2，ar用HUN_YUAN_MODEL翻译 3，hi用doubao-1.5-pro-256k翻译
      * 根据语言代码切换API翻译
      *
      * @param request 翻译所需要的数据
@@ -278,7 +278,7 @@ public class JsoupUtils {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
-         return hunYuanTranslate(content, prompt, counter, "hunyuan-large");
+         return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
 
         }catch(Exception e){
             appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
@@ -319,7 +319,7 @@ public class JsoupUtils {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
-        return hunYuanTranslate(content, prompt, counter, "hunyuan-large");
+        return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
         }catch(Exception e){
             appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
             return content;
@@ -654,7 +654,7 @@ public class JsoupUtils {
         if (target.equals("hi") || target.equals("th") || target.equals("de")) {
             return douBaoTranslate(target, prompt, content, counter);
         }
-            return hunYuanTranslate(content, prompt, counter, "hunyuan-large");
+            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
         }catch(Exception e){
             appInsights.trackTrace("翻译handle数据报错 error： " + e.getMessage());
             return content;

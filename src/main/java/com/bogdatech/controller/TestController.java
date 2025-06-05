@@ -144,7 +144,7 @@ public class TestController {
         }
         String targetLanguage = getLanguageName("zh-CN");
         String prompt = getSimplePrompt(targetLanguage, null);
-//        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", "hunyuan-large");
+//        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
 //        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
 //        System.out.println("final: " + normalizeHtml(html));
