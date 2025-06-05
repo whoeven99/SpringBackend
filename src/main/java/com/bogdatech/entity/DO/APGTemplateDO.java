@@ -15,4 +15,9 @@ public class APGTemplateDO {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String templateData;
+    private String templateTitle;
+    private Integer templateType;
+    private Integer templateSeo;
+    private String shopName;
+    private String templateDescription;
 }
