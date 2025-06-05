@@ -9,7 +9,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class TranslateDTO implements Serializable {
+public class TaskTranslateDTO implements Serializable {
     private Integer status;
     private String shopName;
     private String accessToken;

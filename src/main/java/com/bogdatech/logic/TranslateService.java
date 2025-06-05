@@ -772,7 +772,7 @@ public class TranslateService {
         } catch (Exception e) {
             //存原数据到shopify本地
             shopifyService.saveToShopify(value, translation, resourceId, request);
-            appInsights.trackTrace("LIST错误原因： " + e.getMessage());
+            appInsights.trackTrace("LIST error错误原因： " + e.getMessage());
 //                    System.out.println("LIST错误原因： " + e.getMessage());
         }
     }
