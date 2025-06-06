@@ -143,6 +143,37 @@ public class ALiYunTranslateIntegration {
         return content;
     }
 
+    public static String QwenTranslate(String text, String prompt, CharacterCountUtils countUtils) {
+        String model = "qwen-max-latest";
+        Generation gen = new Generation();
+
+        Message userMsg = Message.builder()
+                .role(Role.USER.getValue())
+                .content(prompt)
+                .build();
+        GenerationParam param = GenerationParam.builder()
+                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .model(model)
+                .messages(Collections.singletonList(userMsg))
+                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .build();
+        String content = null;
+        Integer totalToken;
+        try {
+            GenerationResult call = gen.call(param);
+            content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            totalToken = call.getUsage().getTotalTokens();
+            countUtils.addChars(totalToken);
+//            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
+        } catch (NoApiKeyException | InputRequiredException e) {
+            appInsights.trackTrace("百炼翻译报错信息 error： " + e.getMessage());
+            return text;
+//            System.out.println("百炼翻译报错信息： " + e.getMessage());
+        }
+        return content;
+    }
+
     /**
      * 用qwen-MT的部分代替google翻译。
      *
