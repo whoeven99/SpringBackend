@@ -257,6 +257,7 @@ public class JsoupUtils {
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
+            appInsights.trackTrace("prompt变量和变量: " + prompt);
             if ("ar".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
@@ -399,8 +400,10 @@ public class JsoupUtils {
 
         String targetString;
         if (translateType.equals(HANDLE)) {
+            appInsights.trackTrace("handle 提示词！");
             targetString = translationHandle(request, counter, languagePackId);
         } else {
+            appInsights.trackTrace("不是 handle 提示词！");
             targetString = translateByModel(request, counter, languagePackId);
         }
 
