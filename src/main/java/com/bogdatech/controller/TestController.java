@@ -143,7 +143,7 @@ public class TestController {
             System.out.println("is not json");
         }
         String targetLanguage = getLanguageName("zh-CN");
-        String prompt = getSimplePrompt(targetLanguage, null);
+        String prompt = getSimplePrompt(targetLanguage, null, html);
 //        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
 //        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");

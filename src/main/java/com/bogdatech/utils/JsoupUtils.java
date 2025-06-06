@@ -17,9 +17,10 @@ import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.callWithMessage;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.singleTranslate;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.*;
+import static com.bogdatech.integration.ArkTranslateIntegration.douBaoPromptTranslate;
 import static com.bogdatech.integration.ArkTranslateIntegration.douBaoTranslate;
+import static com.bogdatech.integration.HunYuanIntegration.hunYuanPromptTranslate;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
@@ -209,10 +210,10 @@ public class JsoupUtils {
      * 调用多模型翻译：1，5字符以内用model翻译和qwen翻译。2，ar用HUN_YUAN_MODEL翻译 3，hi用doubao-1.5-pro-256k翻译
      * 根据语言代码切换API翻译
      *
-     * @param request 翻译所需要的数据
-     * @param counter 计数器
+     * @param request        翻译所需要的数据
+     * @param counter        计数器
      * @param languagePackId 语言包id
-     * return String       翻译后的文本
+     *                       return String       翻译后的文本
      */
     public static String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
         String sourceText = request.getContent();
@@ -242,8 +243,8 @@ public class JsoupUtils {
      * 根据每个模型的条件，翻译文本数据
      * 在翻译的同时计数字符数
      *
-     * @param request      翻译所需要的数据
-     * @param counter      计数器
+     * @param request        翻译所需要的数据
+     * @param counter        计数器
      * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
@@ -257,7 +258,7 @@ public class JsoupUtils {
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
-            appInsights.trackTrace("普通文本variable提示词: " + prompt);
+            appInsights.trackTrace("普通文本： " + content + " variable提示词: " + prompt);
             if ("ar".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
@@ -265,26 +266,26 @@ public class JsoupUtils {
             }
 
         } else {
-            prompt = getSimplePrompt(targetLanguage, languagePackId);
-            appInsights.trackTrace("普通文本Simple提示词: " + prompt);
+            prompt = getSimplePrompt(targetLanguage, languagePackId, content);
+            appInsights.trackTrace("普通文本： Simple提示词: " + prompt);
+            try {
+                //目标语言是中文的，用qwen-max翻译
+                if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+                    return QwenTranslate(content, prompt, counter);
+                }
+
+                //hi用doubao-1.5-pro-256k翻译
+                if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+                    return douBaoPromptTranslate(prompt, content, counter);
+                }
+
+                return hunYuanPromptTranslate(content, prompt, counter, HUN_YUAN_MODEL);
+
+            } catch (Exception e) {
+                appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
+                return singleTranslate(content, prompt, counter, target);
+            }
 //            System.out.println("prompt变量和极简: " + prompt);
-        }
-        try{
-        //目标语言是中文的，用qwen-max翻译
-        if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-            return singleTranslate(content, prompt, counter, target);
-        }
-
-        //hi用doubao-1.5-pro-256k翻译
-        if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
-            return douBaoTranslate(target, prompt, content, counter);
-        }
-
-         return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
-
-        }catch(Exception e){
-            appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
-            return singleTranslate(content, prompt, counter, target);
         }
     }
 
@@ -299,32 +300,49 @@ public class JsoupUtils {
      * @return String 翻译后的文本
      */
     public static String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString, String languagePackId) {
-        
+
         String target = request.getTarget();
         String content = request.getContent();
         String targetName = getLanguageName(request.getTarget());
         String prompt;
         if (glossaryString != null) {
             prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
-            appInsights.trackTrace("普通文本Glossary提示词: " + prompt);
+            appInsights.trackTrace("普通文本： " + content + " Glossary提示词: " + prompt);
         } else {
-            prompt = getSimplePrompt(targetName, languagePackId);
-            appInsights.trackTrace("普通文本Simple提示词: " + prompt);
+            prompt = getSimplePrompt(targetName, languagePackId, content);
+            appInsights.trackTrace("普通文本： Simple提示词: " + prompt);
+            try {
+                //目标语言是中文的，用qwen-max翻译
+                if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+                    return QwenTranslate(content, prompt, counter);
+                }
+
+                //hi用doubao-1.5-pro-256k翻译
+                if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+                    return douBaoPromptTranslate(prompt, content, counter);
+                }
+
+                return hunYuanPromptTranslate(content, prompt, counter, HUN_YUAN_MODEL);
+
+            } catch (Exception e) {
+                appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
+                return singleTranslate(content, prompt, counter, target);
+            }
         }
 
-        try{
-        //目标语言是中文的，用qwen-max翻译
-        if ("en".equals(target)|| "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-            return singleTranslate(content, prompt, counter, target);
-        }
+        try {
+            //目标语言是中文的，用qwen-max翻译
+            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+                return singleTranslate(content, prompt, counter, target);
+            }
 
-        //hi用doubao-1.5-pro-256k翻译
-        if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
-            return douBaoTranslate(target, prompt, content, counter);
-        }
+            //hi用doubao-1.5-pro-256k翻译
+            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+                return douBaoTranslate(target, prompt, content, counter);
+            }
 
-        return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
-        }catch(Exception e){
+            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
+        } catch (Exception e) {
             appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
             return singleTranslate(content, prompt, counter, target);
         }
@@ -335,10 +353,10 @@ public class JsoupUtils {
      * 如果source和target都是QwenMT支持的语言，则调用QwenMT的API。
      * 在翻译的同时计数字符数
      *
-     * @param request 翻译所需要的数据
-     * @param counter 计数器
-     * @param languagePackId  语言包功能
-     *                return String 翻译后的文本
+     * @param request        翻译所需要的数据
+     * @param counter        计数器
+     * @param languagePackId 语言包功能
+     *                       return String 翻译后的文本
      */
     public static String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
         String target = request.getTarget();
@@ -353,16 +371,16 @@ public class JsoupUtils {
 
         String resultTranslation;
         try {
-            if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)){
+            if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
                 resultTranslation = translateByQwenMt(request.getContent(), source, target, counter);
-            }else {
+            } else {
                 //qwen 短文本翻译
                 String targetLanguage = getLanguageName(target);
                 String prompt = getShortPrompt(targetLanguage);
-                appInsights.trackTrace("短文本翻译提示词: " + prompt);
+                appInsights.trackTrace("短文本翻译： " + request.getContent() + " 提示词: " + prompt);
                 resultTranslation = singleTranslate(request.getContent(), prompt, counter, target);
             }
-            return  resultTranslation;
+            return resultTranslation;
 
         } catch (Exception e) {
             //mt翻译失败的话，用其他大模型翻译
@@ -391,11 +409,11 @@ public class JsoupUtils {
     /**
      * 在调用googleTranslateJudgeCode的基础上添加计数功能,并添加到翻译后的文本
      *
-     * @param request 翻译所需要的数据
-     * @param counter 计数器
+     * @param request        翻译所需要的数据
+     * @param counter        计数器
      * @param languagePackId 语言包id
-     * @param translateType 翻译类型
-     * return String 翻译后的文本
+     * @param translateType  翻译类型
+     *                       return String 翻译后的文本
      */
     public static String translateAndCount(TranslateRequest request,
                                            CharacterCountUtils counter, String languagePackId, String translateType) {
@@ -643,27 +661,27 @@ public class JsoupUtils {
      * @return String 翻译后的文本
      */
     public static String translationHandle(TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
-       
+
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
         //handle特供翻译， handle特用提示词
         String prompt = getHandlePrompt(targetLanguage);
-        appInsights.trackTrace("普通文本Handle提示词: " + prompt);
-        try{
-        //目标语言是中文的，用qwen-max翻译
-        if ("en".equals(target)|| "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-            return singleTranslate(content, prompt, counter, target);
-        }
+        appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
+        try {
+            //目标语言是中文的，用qwen-max翻译
+            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+                return singleTranslate(content, prompt, counter, target);
+            }
 
-        //hi用doubao-1.5-pro-256k翻译
-        if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
-            return douBaoTranslate(target, prompt, content, counter);
-        }
+            //hi用doubao-1.5-pro-256k翻译
+            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+                return douBaoTranslate(target, prompt, content, counter);
+            }
             return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
-        }catch(Exception e){
+        } catch (Exception e) {
             appInsights.trackTrace("翻译handle数据报错 error： " + e.getMessage());
             return singleTranslate(content, prompt, counter, target);
-         }
+        }
     }
 }

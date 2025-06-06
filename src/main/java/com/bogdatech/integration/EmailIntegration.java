@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.bogdatech.constants.MailChimpConstants.CC_EMAIL;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -114,7 +115,8 @@ public class EmailIntegration {
             template1.setTemplateID(tencentSendEmailRequest.getTemplateId());
             template1.setTemplateData(templateDataJson);
             req.setTemplate(template1);
-
+            String [] cc1 = {CC_EMAIL};
+            req.setCc(cc1);
             // 返回的resp是一个SendEmailResponse的实例，与请求对象对应
             SendEmailResponse resp = client.SendEmail(req);
             // 输出json格式的字符串回包
