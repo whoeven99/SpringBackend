@@ -252,12 +252,12 @@ public class JsoupUtils {
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
         String prompt;
-        try{
+
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
-            if (target.equals("ar")) {
+            if ("ar".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
                 return douBaoTranslate(targetLanguage, prompt, content, counter);
@@ -267,14 +267,14 @@ public class JsoupUtils {
             prompt = getSimplePrompt(targetLanguage, languagePackId);
 //            System.out.println("prompt变量和极简: " + prompt);
         }
-
+        try{
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar") || target.equals("el")) {
+        if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
             return singleTranslate(content, prompt, counter, target);
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
+        if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
@@ -282,7 +282,7 @@ public class JsoupUtils {
 
         }catch(Exception e){
             appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
-            return content;
+            return singleTranslate(content, prompt, counter, target);
         }
     }
 
@@ -302,27 +302,27 @@ public class JsoupUtils {
         String content = request.getContent();
         String targetName = getLanguageName(request.getTarget());
         String prompt;
-        try{
         if (glossaryString != null) {
             prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
         } else {
             prompt = getSimplePrompt(targetName, languagePackId);
         }
 
+        try{
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar") || target.equals("el")) {
+        if ("en".equals(target)|| "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
             return singleTranslate(content, prompt, counter, target);
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
+        if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
             return douBaoTranslate(target, prompt, content, counter);
         }
 
         return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
         }catch(Exception e){
             appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
-            return content;
+            return singleTranslate(content, prompt, counter, target);
         }
     }
 
@@ -646,18 +646,18 @@ public class JsoupUtils {
         String prompt = getHandlePrompt(targetLanguage);
         try{
         //目标语言是中文的，用qwen-max翻译
-        if (target.equals("zh-CN") || target.equals("zh-TW") || target.equals("fil") || target.equals("ar") || target.equals("el")) {
+        if ("en".equals(target)|| "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
             return singleTranslate(content, prompt, counter, target);
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if (target.equals("hi") || target.equals("th") || target.equals("de")) {
+        if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
             return douBaoTranslate(target, prompt, content, counter);
         }
             return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
         }catch(Exception e){
             appInsights.trackTrace("翻译handle数据报错 error： " + e.getMessage());
-            return content;
+            return singleTranslate(content, prompt, counter, target);
          }
     }
 }
