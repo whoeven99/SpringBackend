@@ -91,4 +91,32 @@ public class ArkTranslateIntegration {
             return sourceText;
         }
     }
+
+    public static String douBaoPromptTranslate(String prompt, String sourceText, CharacterCountUtils countUtils) {
+        try {
+            List<ChatMessage> messages = new ArrayList<>();
+            ChatMessage userMessage = ChatMessage.builder()
+                    .role(ChatMessageRole.USER)
+                    .content(prompt)
+                    .build();
+            messages.add(userMessage);
+
+            ChatCompletionRequest request = ChatCompletionRequest.builder()
+                    .model("doubao-1-5-pro-256k-250115") //256k token
+                    .messages(messages)
+                    .build();
+
+            StringBuilder response = new StringBuilder();
+            ChatCompletionResult chatCompletion = arkService.createChatCompletion(request);
+            chatCompletion.getChoices().forEach(choice -> response.append(choice.getMessage().getContent()));
+            long totalTokens = chatCompletion.getUsage().getTotalTokens();
+            int totalTokensInt = (int) totalTokens;
+            countUtils.addChars(totalTokensInt);
+//            System.out.println("翻译源文本: " + "counter: " + totalTokens);
+            return response.toString();
+        } catch (Exception e) {
+            appInsights.trackTrace("豆包翻译失败 error: " + e.getMessage());
+            return sourceText;
+        }
+    }
 }
