@@ -257,7 +257,7 @@ public class JsoupUtils {
         if (hasPlaceholders(content)) {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
-            appInsights.trackTrace("prompt变量和变量: " + prompt);
+            appInsights.trackTrace("普通文本variable提示词: " + prompt);
             if ("ar".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
@@ -266,6 +266,7 @@ public class JsoupUtils {
 
         } else {
             prompt = getSimplePrompt(targetLanguage, languagePackId);
+            appInsights.trackTrace("普通文本Simple提示词: " + prompt);
 //            System.out.println("prompt变量和极简: " + prompt);
         }
         try{
@@ -305,8 +306,10 @@ public class JsoupUtils {
         String prompt;
         if (glossaryString != null) {
             prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
+            appInsights.trackTrace("普通文本Glossary提示词: " + prompt);
         } else {
             prompt = getSimplePrompt(targetName, languagePackId);
+            appInsights.trackTrace("普通文本Simple提示词: " + prompt);
         }
 
         try{
@@ -356,6 +359,7 @@ public class JsoupUtils {
                 //qwen 短文本翻译
                 String targetLanguage = getLanguageName(target);
                 String prompt = getShortPrompt(targetLanguage);
+                appInsights.trackTrace("短文本翻译提示词: " + prompt);
                 resultTranslation = singleTranslate(request.getContent(), prompt, counter, target);
             }
             return  resultTranslation;
@@ -400,10 +404,8 @@ public class JsoupUtils {
 
         String targetString;
         if (translateType.equals(HANDLE)) {
-            appInsights.trackTrace("handle 提示词！");
             targetString = translationHandle(request, counter, languagePackId);
         } else {
-            appInsights.trackTrace("不是 handle 提示词！");
             targetString = translateByModel(request, counter, languagePackId);
         }
 
@@ -647,6 +649,7 @@ public class JsoupUtils {
         String content = request.getContent();
         //handle特供翻译， handle特用提示词
         String prompt = getHandlePrompt(targetLanguage);
+        appInsights.trackTrace("普通文本Handle提示词: " + prompt);
         try{
         //目标语言是中文的，用qwen-max翻译
         if ("en".equals(target)|| "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {

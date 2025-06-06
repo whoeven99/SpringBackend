@@ -186,21 +186,6 @@ public class PlaceholderUtils {
         return "Translate each word in the following handle into " + target + ". Keep the '-' separators as they are. Output only the translated handle.";
     }
 
-    /**
-     * 根据type类型选择提示词
-     * @param type 类型
-     * @param target 目标语言
-     * @param variable 变量和词汇表数据
-     * @param languagePackId 语言包
-     * @return 提示词
-     */
-    public static String getPrompt(String type, String target, String variable, String languagePackId) {
-        return switch (type) {
-            case "variables" -> getVariablePrompt(target, variable, languagePackId);
-            case "glossary" -> getGlossaryPrompt(target, variable, languagePackId);
-            default -> getSimplePrompt(target, languagePackId);
-        };
-    }
 
     /**
      * handle类型的提示词
