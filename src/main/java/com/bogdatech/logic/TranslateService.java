@@ -1876,9 +1876,9 @@ public class TranslateService {
                 appInsights.trackTrace(shopName + "用户，" + value + "HTML单条翻译消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
-                String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, null, GENERAL);
+                String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, null, null);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                appInsights.trackTrace(shopName + "用户，" + value + "单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
+                appInsights.trackTrace(shopName + "用户，" + "单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }
         } catch (Exception e) {
