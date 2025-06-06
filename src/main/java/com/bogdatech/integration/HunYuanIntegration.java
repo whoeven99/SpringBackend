@@ -106,9 +106,9 @@ public class HunYuanIntegration {
         req.setModel(model); //28k token
         // 设置对话消息
         Message[] messages = new Message[1];
-        messages[1] = new Message();
-        messages[1].setRole("user");
-        messages[1].setContent(prompt);
+        messages[0] = new Message();
+        messages[0].setRole("user");
+        messages[0].setContent(prompt);
         req.setMessages(messages);
         req.setStream(false); // 非流式调用，设为 true 可启用流式返回
 
