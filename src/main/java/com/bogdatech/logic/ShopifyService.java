@@ -16,6 +16,7 @@ import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.model.service.StoringDataPublisherService;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TypeConversionUtils;
@@ -44,18 +45,15 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.cueWordSingle;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
 import static com.bogdatech.logic.TranslateService.translationLogic;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.getMessage;
-import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JsonUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.shouldTranslate;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.PlaceholderUtils.getVariablePrompt;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.countWords;
@@ -68,18 +66,20 @@ public class ShopifyService {
     private final IUserSubscriptionsService userSubscriptionsService;
     private final IItemsService itemsService;
     private final ITranslatesService translatesService;
+    private final StoringDataPublisherService storingDataPublisherService;
 
     @Autowired
     public ShopifyService(
             IUserTypeTokenService userTypeTokenService,
             IUserSubscriptionsService userSubscriptionsService,
             IItemsService itemsService,
-            ITranslatesService translatesService
-    ) {
+            ITranslatesService translatesService,
+            StoringDataPublisherService storingDataPublisherService) {
         this.userTypeTokenService = userTypeTokenService;
         this.userSubscriptionsService = userSubscriptionsService;
         this.itemsService = itemsService;
         this.translatesService = translatesService;
+        this.storingDataPublisherService = storingDataPublisherService;
     }
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
@@ -764,7 +764,7 @@ public class ShopifyService {
         CharacterCountUtils allCounter = new CharacterCountUtils();
         CharacterCountUtils translatedCounter = new CharacterCountUtils();
         try {
-            if (request.getResourceType() == null) {
+            if (request.getResourceType() == null || request.getResourceType().isEmpty()) {
                 return result;
             }
             for (TranslateResourceDTO resource : RESOURCE_MAP.get(request.getResourceType())) {
@@ -807,7 +807,7 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("getTranslationItemsInfoAll error: 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + e.getMessage());
+            appInsights.trackTrace("getTranslationItemsInfoAll error: 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
         }
         return result;
     }
@@ -1125,18 +1125,20 @@ public class ShopifyService {
     }
 
     //将翻译后的数据存shopify本地中
+    @Async
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("resourceId", resourceId);
-//        System.out.println("translatedValueEntitle: " + translatedValue + " other: " + translation);
-        translatedValue = isHtmlEntity(translatedValue);
         translation.put("value", translatedValue);
         Object[] translations = new Object[]{
                 translation // 将HashMap添加到数组中
         };
         variables.put("translations", translations);
-        //将翻译后的内容通过ShopifyAPI记录到shopify本地
-        saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
+        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
+        CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
+        String json = objectToJson(cloudServiceRequest);
+        storingDataPublisherService.storingData(json);
+//        saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
     }
 }
 

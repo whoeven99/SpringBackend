@@ -10,7 +10,7 @@ import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.DO.TranslationUsageDO;
 import com.bogdatech.entity.DO.UsersDO;
-import com.bogdatech.entity.DTO.TranslateDTO;
+import com.bogdatech.entity.DTO.TaskTranslateDTO;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.model.controller.request.TranslateRequest;
@@ -52,8 +52,8 @@ public class TranslateTaskConsumerService {
      */
     @RabbitListener(queues = SCHEDULED_TRANSLATE_QUEUE)
     public void scheduledTranslateTask(String json, Channel channel, Message rawMessage) throws IOException {
-        String deliveryTag = String.valueOf(rawMessage.getMessageProperties().getDeliveryTag());
-        TranslateDTO translateDTO = jsonToObject(json, TranslateDTO.class);
+//        String deliveryTag = String.valueOf(rawMessage.getMessageProperties().getDeliveryTag());
+        TaskTranslateDTO translateDTO = jsonToObject(json, TaskTranslateDTO.class);
         try {
             if (translateDTO == null) {
                 channel.basicAck(rawMessage.getMessageProperties().getDeliveryTag(), false);

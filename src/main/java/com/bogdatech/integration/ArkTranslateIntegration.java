@@ -88,7 +88,7 @@ public class ArkTranslateIntegration {
             return response.toString();
         } catch (Exception e) {
             appInsights.trackTrace("豆包翻译失败 error: " + e.getMessage());
-            throw new RuntimeException(e);
+            return sourceText;
         }
     }
 }

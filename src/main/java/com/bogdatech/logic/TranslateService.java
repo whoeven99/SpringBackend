@@ -772,7 +772,7 @@ public class TranslateService {
         } catch (Exception e) {
             //存原数据到shopify本地
             shopifyService.saveToShopify(value, translation, resourceId, request);
-            appInsights.trackTrace("LIST错误原因： " + e.getMessage());
+            appInsights.trackTrace("LIST error错误原因： " + e.getMessage());
 //                    System.out.println("LIST错误原因： " + e.getMessage());
         }
     }
@@ -1878,7 +1878,7 @@ public class TranslateService {
             } else {
                 String targetString = translateAndCount(new TranslateRequest(0, null, null, source, target, value), counter, null, GENERAL);
                 translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
-                appInsights.trackTrace(shopName + "用户，" + value + "单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
+                appInsights.trackTrace(shopName + "用户，" + "单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }
         } catch (Exception e) {

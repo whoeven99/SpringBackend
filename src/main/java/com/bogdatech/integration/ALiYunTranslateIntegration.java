@@ -137,6 +137,7 @@ public class ALiYunTranslateIntegration {
 //            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 error： " + e.getMessage());
+            return text;
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
         }
         return content;

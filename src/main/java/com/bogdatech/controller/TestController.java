@@ -3,57 +3,57 @@ package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
-import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
-import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TaskService;
 import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
+import com.bogdatech.model.controller.request.CloudInsertRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.service.StoringDataPublisherService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
-import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
-import static com.bogdatech.utils.StringUtils.*;
 
 @RestController
 public class TestController {
     private final TranslatesServiceImpl translatesServiceImpl;
     private final ChatGptIntegration chatGptIntegration;
-    private final ShopifyHttpIntegration shopifyApiIntegration;
     private final TestService testService;
     private final TranslateService translateService;
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
-    private final TranslationCounterServiceImpl translationCounterService;
+    private final StoringDataPublisherService storingDataPublisherService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ShopifyHttpIntegration shopifyApiIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, TranslationCounterServiceImpl translationCounterService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, StoringDataPublisherService storingDataPublisherService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
-        this.shopifyApiIntegration = shopifyApiIntegration;
         this.testService = testService;
         this.translateService = translateService;
         this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
-        this.translationCounterService = translationCounterService;
+        this.storingDataPublisherService = storingDataPublisherService;
     }
 
     @GetMapping("/ping")
@@ -181,12 +181,4 @@ public class TestController {
         taskService.autoTranslate();
     }
 
-    @GetMapping("/testUpperCase")
-    public String testUpperCase(String target, String text, String targetText) {
-        boolean isUpperCase = judgeLanguageUpperCaseCode(target, text);
-        if (isUpperCase) {
-            targetText = convertLanguageCodeToUpperCase(target, targetText);
-        }
-        return targetText;
-    }
 }
