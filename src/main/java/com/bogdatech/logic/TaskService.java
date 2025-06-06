@@ -237,4 +237,8 @@ public class TaskService {
     }
 
 
+    public void freeTrialTask() {
+        //获取所有免费计划不过期的用户
+
+    }
 }
