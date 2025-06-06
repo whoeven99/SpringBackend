@@ -129,7 +129,8 @@ public class TestController {
 
     @GetMapping("/testHtml")
     public void testHtml() {
-        String html = """   
+        String html = """ 
+                啊手动阀手动阀  
                 """;
         if (isHtml(html)) {
             System.out.println("is html");
@@ -144,6 +145,7 @@ public class TestController {
         }
         String targetLanguage = getLanguageName("zh-CN");
         String prompt = getSimplePrompt(targetLanguage, null, html);
+        System.out.println("prompt: " + prompt);
 //        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
 //        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
