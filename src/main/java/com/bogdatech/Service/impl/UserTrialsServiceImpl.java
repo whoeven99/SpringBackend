@@ -15,7 +15,7 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
     @Override
     public boolean insertUserTrial(String shopName) {
         Timestamp now = new Timestamp(System.currentTimeMillis());
-        Timestamp end = new Timestamp(now.getTime() + 5 * 24 * 60 * 60 * 1000); //暂定5天后过期
+        Timestamp end = new Timestamp(now.getTime() + 6 * 60 * 60 * 1000); //暂定5天后过期
         boolean isTrialExpired = false;
         UserTrialsDO userTrialsDO = new UserTrialsDO(null, shopName, now, end, isTrialExpired);
         int insert = baseMapper.insert(userTrialsDO);
