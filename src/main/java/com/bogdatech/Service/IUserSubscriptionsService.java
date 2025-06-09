@@ -8,7 +8,7 @@ public interface IUserSubscriptionsService extends IService<UserSubscriptionsDO>
     Integer addUserSubscription(UserSubscriptionsRequest request);
     Integer getUserSubscriptionPlan(String shopName);
 
-    Boolean updateUserSubscription(UserSubscriptionsRequest request);
+    Boolean updateUserSubscription(String shopName, int planId);
 
     Integer checkUserPlan(String shopName, int planId);
 }
