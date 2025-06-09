@@ -140,7 +140,7 @@ public class TranslateService {
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 translate3Handle(request, counter, begin, remainingChars, usedChars);
                 return;
-            } catch (CannotCreateTransactionException e) {
+            } catch (CannotCreateTransactionException | ConcurrentModificationException  e ) {
                 appInsights.trackTrace("CannotCreateTransactionException Translation task cannot failed error : " + e);
                 //更新初始值
                 translateFailHandle(request, counter);
