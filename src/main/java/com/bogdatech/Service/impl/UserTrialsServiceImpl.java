@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserTrialsService;
 import com.bogdatech.entity.DO.UserTrialsDO;
@@ -19,5 +20,11 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
         UserTrialsDO userTrialsDO = new UserTrialsDO(null, shopName, now, end, isTrialExpired);
         int insert = baseMapper.insert(userTrialsDO);
         return insert > 0;
+    }
+
+    @Override
+    public Boolean queryUserTrialByShopName(String shopName) {
+        UserTrialsDO userTrialsDO = baseMapper.selectOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
+        return userTrialsDO.getTrialStart() != null;
     }
 }

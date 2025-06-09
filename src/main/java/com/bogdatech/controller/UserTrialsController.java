@@ -20,7 +20,7 @@ public class UserTrialsController {
     }
 
     /**
-     * 开启免费计划
+     * 开启免费订阅
      * */
     @PostMapping("/startFreePlan")
     public BaseResponse<Object> startFreePlan(String shopName){
@@ -37,5 +37,22 @@ public class UserTrialsController {
         return new BaseResponse<>().CreateErrorResponse(shopName);
     }
 
+    /**
+     * 查询是否开过免费计划。
+     * */
+    @PostMapping("/isOpenFreePlan")
+    public BaseResponse<Object> isFreePlan(String shopName){
+        boolean result = retryWithParam(
+                userTrialsService::queryUserTrialByShopName,
+                shopName,
+                3,
+                1000,
+                8000
+        );
+        if (result){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
 
 }
