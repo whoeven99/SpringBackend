@@ -183,4 +183,8 @@ public class TestController {
         taskService.autoTranslate();
     }
 
+    @GetMapping("/testFreeTrialTask")
+    public void testFreeTrialTask() {
+        taskService.freeTrialTask();
+    }
 }

@@ -37,17 +37,18 @@ public class ShopifyController {
     private final IUserSubscriptionsService userSubscriptionsService;
     private final ICharsOrdersService charsOrdersService;
     private final IUsersService usersService;
+    private final IUserTrialsService iUserTrialsService;
 
     @Autowired
-    public ShopifyController(ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService, ICharsOrdersService charsOrdersService, IUsersService usersService) {
+    public ShopifyController(ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService, ICharsOrdersService charsOrdersService, IUsersService usersService, IUserTrialsService iUserTrialsService) {
         this.shopifyApiIntegration = shopifyApiIntegration;
         this.shopifyService = shopifyService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.userSubscriptionsService = userSubscriptionsService;
-
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
+        this.iUserTrialsService = iUserTrialsService;
     }
 
     //通过测试环境调shopify的API
@@ -192,6 +193,15 @@ public class ShopifyController {
         //如果是userSubscriptionPlan是1和2，传null
         if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2) {
             subscriptionVO.setCurrentPeriodEnd(null);
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
+        //判断是否是免费计划
+        if (userSubscriptionPlan == 7) {
+            subscriptionVO.setUserSubscriptionPlan(7);
+            //根据shopName获取订阅计划过期的时间
+            UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
+            subscriptionVO.setCurrentPeriodEnd(String.valueOf(userTrialsDO.getTrialEnd()));
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 

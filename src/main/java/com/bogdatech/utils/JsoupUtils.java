@@ -279,11 +279,11 @@ public class JsoupUtils {
                     return douBaoPromptTranslate(prompt, content, counter);
                 }
 
-                return hunYuanPromptTranslate(content, prompt, counter, HUN_YUAN_MODEL);
+                return QwenTranslate(content, prompt, counter);
 
             } catch (Exception e) {
                 appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
-                return singleTranslate(content, prompt, counter, target);
+                return QwenTranslate(content, prompt, counter);
             }
 //            System.out.println("prompt变量和极简: " + prompt);
         }

@@ -24,9 +24,10 @@ public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsM
     }
 
     @Override
-    public Boolean updateUserSubscription(UserSubscriptionsRequest request) {
-        return null;
+    public Boolean updateUserSubscription(String shopName, int planId) {
+        return baseMapper.update(new UpdateWrapper<UserSubscriptionsDO>().set("plan_id", planId).eq("shop_name", shopName)) > 0;
     }
+
 
     @Override
     public Integer checkUserPlan(String shopName, int planId) {
