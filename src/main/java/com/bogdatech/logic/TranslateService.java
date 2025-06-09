@@ -140,14 +140,14 @@ public class TranslateService {
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 translate3Handle(request, counter, begin, remainingChars, usedChars);
                 return;
-            } catch (CannotCreateTransactionException e) {
-                appInsights.trackTrace("Translation task cannot failed: " + e);
+            } catch (CannotCreateTransactionException | ConcurrentModificationException  e ) {
+                appInsights.trackTrace("CannotCreateTransactionException Translation task cannot failed error : " + e);
                 //更新初始值
                 translateFailHandle(request, counter);
                 return;
             } catch (Exception e) {
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
-                appInsights.trackTrace("Translation task failed: " + e);
+                appInsights.trackTrace("start Exception Translation task failed error: " + e);
                 //更新初始值
                 translateFailHandle(request, counter);
                 return;
