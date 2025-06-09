@@ -70,7 +70,7 @@ public class UserController {
 
     //用户初始化检测
     @GetMapping("/InitializationDetection")
-    public BaseResponse<Object> InitializationDetection(String shopName) {
+    public BaseResponse<Object> initializationDetection(String shopName) {
         return new BaseResponse<>().CreateSuccessResponse(userService.InitializationDetection(shopName));
     }
 
@@ -84,8 +84,5 @@ public class UserController {
     public BaseResponse<Object> getEncryptedEmail(@RequestBody UsersDO userRequest) {
         return new BaseResponse<>().CreateSuccessResponse(userService.getEncryptedEmail(userRequest.getShopName()));
     }
-
-    //TODO：判断用户是否被邀请 新建一个表实现
-    //TODO：给用户添加额度
 
 }

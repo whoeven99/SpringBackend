@@ -234,7 +234,12 @@ public class ShopifyService {
                 calculateInitialToken(contentNode, counter, translateResourceDTO, request);
                 break;
             case "tokens":
-                calculateExactToken(contentNode, counter, translatedContent, translateResourceDTO, request);
+                try {
+                    calculateExactToken(contentNode, counter, translatedContent, translateResourceDTO, request);
+                } catch (Exception e) {
+                    appInsights.trackTrace("error 计数失败的原因： " + e.getMessage());
+                    return;
+                }
                 break;
             case "words":
                 estimatedTranslationWords(contentNode, counter, translatedCounter, translatedContent, translateResourceDTO);
@@ -792,7 +797,7 @@ public class ShopifyService {
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);
                 //判断数据库对应语言是否翻译，为1，就满的
                 Integer statusByShopNameAndTargetAndSource = translatesService.getStatusByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
-                if (statusByShopNameAndTargetAndSource == 1) {
+                if (statusByShopNameAndTargetAndSource != null && statusByShopNameAndTargetAndSource == 1) {
                     translatedCounter.addChars(allCounter.getTotalChars());
                 }
 

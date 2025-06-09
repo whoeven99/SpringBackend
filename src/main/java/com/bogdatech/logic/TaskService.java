@@ -3,10 +3,10 @@ package com.bogdatech.logic;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.TaskTranslateDTO;
-import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.service.TranslateTaskPublisherService;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -39,10 +40,12 @@ public class TaskService {
     private final ITranslatesService translatesService;
     private final TranslateService translateService;
     private final TranslateTaskPublisherService translateTaskPublisherService;
-
+    private final IUserTrialsService iUserTrialsService;
+    private final IUserSubscriptionsService iUserSubscriptionsService;
+    private final IWidgetConfigurationsService iWidgetConfigurationsService;
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
@@ -51,6 +54,9 @@ public class TaskService {
         this.translatesService = translatesService;
         this.translateService = translateService;
         this.translateTaskPublisherService = translateTaskPublisherService;
+        this.iUserTrialsService = iUserTrialsService;
+        this.iUserSubscriptionsService = iUserSubscriptionsService;
+        this.iWidgetConfigurationsService = iWidgetConfigurationsService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -237,4 +243,31 @@ public class TaskService {
     }
 
 
+    public void freeTrialTask() {
+        //获取所有免费计划不过期的用户
+        List<UserTrialsDO> notTrialExpired = iUserTrialsService.list(new QueryWrapper<UserTrialsDO>().eq("is_trial_expired", false));
+        //循环检测是否过期
+        for (UserTrialsDO userTrialsDO: notTrialExpired){
+            //判断是否过期
+            Timestamp now = new Timestamp(System.currentTimeMillis());
+            Timestamp trialEnd = userTrialsDO.getTrialEnd();
+
+            // 如果 trialStart + 7天 小于 trialEnd，不做任何操作
+            if (now.after(trialEnd)) {
+                //如果过期，则将状态改为true
+                userTrialsDO.setIsTrialExpired(true);
+                try {
+                    iUserTrialsService.update(userTrialsDO, new UpdateWrapper<UserTrialsDO>().eq("id", userTrialsDO.getId()));
+                    //将用户计划改为2
+                    iUserSubscriptionsService.update(new UpdateWrapper<UserSubscriptionsDO>().eq("shop_name", userTrialsDO.getShopName()).set("plan_id", 2));
+                    //修改用户定时翻译任务
+                    translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", userTrialsDO.getShopName()).set("auto_translate", false));
+                    //修改用户IP开关方法
+                    iWidgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userTrialsDO.getShopName()).set("ip_open", false));
+                } catch (Exception e) {
+                    appInsights.trackTrace(userTrialsDO.getShopName() + "用户  error 修改用户计划失败: " + e.getMessage());
+                }
+            }
+        }
+    }
 }
