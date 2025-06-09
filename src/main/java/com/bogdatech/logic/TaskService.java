@@ -246,6 +246,9 @@ public class TaskService {
     public void freeTrialTask() {
         //获取所有免费计划不过期的用户
         List<UserTrialsDO> notTrialExpired = iUserTrialsService.list(new QueryWrapper<UserTrialsDO>().eq("is_trial_expired", false));
+        if (notTrialExpired == null || notTrialExpired.isEmpty()) {
+            return;
+        }
         //循环检测是否过期
         for (UserTrialsDO userTrialsDO: notTrialExpired){
             //判断是否过期
