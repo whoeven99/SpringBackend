@@ -1131,19 +1131,37 @@ public class ShopifyService {
     }
 
     //将翻译后的数据存shopify本地中
-    @Async
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("resourceId", resourceId);
-        translation.put("value", translatedValue);
-        Object[] translations = new Object[]{
-                translation // 将HashMap添加到数组中
-        };
-        variables.put("translations", translations);
-        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
-        CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
-        String json = objectToJson(cloudServiceRequest);
-        storingDataPublisherService.storingData(json);
+        try {
+            // 创建一个新的映射，避免修改原始的 translation
+            Map<String, Object> newTranslation = new HashMap<>(translation);
+            newTranslation.put("value", translatedValue);
+
+            // 构建 variables 映射
+            Map<String, Object> variables = new HashMap<>();
+            System.out.println("后存储： " + translation);
+            // 创建 translations 数组
+            Object[] translations = new Object[]{newTranslation};
+            CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
+            String json = objectToJson(cloudServiceRequest);
+            // 调用 saveToShopify 方法
+            storingDataPublisherService.storingData(json);
+//
+        } catch (Exception e) {
+            appInsights.trackTrace(request.getShopName() + " save to Shopify error : " + e.getMessage());
+        }
+//                Map<String, Object> variables = new HashMap<>();
+//        variables.put("resourceId", resourceId);
+//        translation.put("value", translatedValue);
+//        System.out.println("后存储： " + translation);
+//        Object[] translations = new Object[]{
+//                translation // 将HashMap添加到数组中
+//        };
+//        variables.put("translations", translations);
+//        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
+//        CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
+//        String json = objectToJson(cloudServiceRequest);
+//        storingDataPublisherService.storingData(json);
 //        saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
     }
 }
