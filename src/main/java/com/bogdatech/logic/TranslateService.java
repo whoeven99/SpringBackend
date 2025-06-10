@@ -104,7 +104,7 @@ public class TranslateService {
         this.translationUsageService = translationUsageService;
     }
 
-    public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
+    public static Map<String, ConcurrentHashMap<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
     public static final ObjectMapper objectMapper = new ObjectMapper();
     //判断是否可以终止翻译流程
     public static Map<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
@@ -1429,16 +1429,22 @@ public class TranslateService {
 
     //将翻译后的数据放入内存中
     public static void addData(String outerKey, String innerKey, String value) {
-        // 获取外层键对应的内层 Map
-        Map<String, String> innerMap = SINGLE_LINE_TEXT.get(outerKey);
+//        // 获取外层键对应的内层 Map
+//        ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.get(outerKey);
+//        // 如果外层键不存在，则创建一个新的内层 Map
+//        if (innerMap == null) {
+//            innerMap = new ConcurrentHashMap<>();
+//            SINGLE_LINE_TEXT.put(outerKey, innerMap);
+//        }
+//        // 将新的键值对添加到内层 Map 中
+//        innerMap.put(innerKey, value);
 
-        // 如果外层键不存在，则创建一个新的内层 Map
-        if (innerMap == null) {
-            innerMap = new HashMap<>();
-            SINGLE_LINE_TEXT.put(outerKey, innerMap);
-        }
+        // 使用 computeIfAbsent 原子地初始化 innerMap
+        ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.computeIfAbsent(
+                outerKey, key -> new ConcurrentHashMap<>()
+        );
 
-        // 将新的键值对添加到内层 Map 中
+        // 安全地放入 innerMap
         innerMap.put(innerKey, value);
     }
 
