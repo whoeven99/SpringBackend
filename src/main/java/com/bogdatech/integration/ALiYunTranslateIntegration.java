@@ -51,46 +51,6 @@ public class ALiYunTranslateIntegration {
         }
     }
 
-    public String aliyunTranslate(TranslateRequest translateRequest) {
-        //将传入的target转为阿里云要用的target
-        String aliTarget = ApiCodeUtils.aliyunTransformCode(translateRequest.getTarget());
-        if (aliTarget.equals("#N/A")) {
-            return "Alibaba Cloud does not support this language";
-        }
-        com.aliyun.alimt20181012.Client client = createClient();
-        com.aliyun.alimt20181012.models.TranslateGeneralRequest translateGeneralRequest = new com.aliyun.alimt20181012.models.TranslateGeneralRequest()
-                .setFormatType("text")
-                .setSourceLanguage(translateRequest.getSource())
-                .setTargetLanguage(aliTarget)
-                .setSourceText(translateRequest.getContent())
-                .setScene("general")
-//                .setContext("")
-                ;
-        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
-        try {
-            // 复制代码运行请自行打印 API 的返回值
-            TranslateGeneralResponse translateGeneralResponse = client.translateGeneralWithOptions(translateGeneralRequest, runtime);
-//            System.out.println("translateGeneralResponse: " + translateGeneralResponse.getBody().getData().translated);
-            return translateGeneralResponse.getBody().getData().translated;
-        } catch (TeaException error) {
-            // 此处仅做打印展示，请谨慎对待异常处理，在工程项目中切勿直接忽略异常。
-            // 错误 message
-//            System.out.println(error.getMessage());
-//            // 诊断地址
-//            System.out.println(error.getData().get("Recommend"));
-            com.aliyun.teautil.Common.assertAsString(error.message);
-            throw new RuntimeException(error);
-        } catch (Exception _error) {
-            TeaException error = new TeaException(_error.getMessage(), _error);
-            // 此处仅做打印展示，请谨慎对待异常处理，在工程项目中切勿直接忽略异常。
-            // 错误 message
-//            System.out.println(error.getMessage());
-//            // 诊断地址
-//            System.out.println(error.getData().get("Recommend"));
-            com.aliyun.teautil.Common.assertAsString(error.message);
-            throw new RuntimeException(error);
-        }
-    }
 
     //单文本翻译的提示词
     public static String cueWordSingle(String target, String type) {
@@ -134,6 +94,9 @@ public class ALiYunTranslateIntegration {
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
+            Integer inputTokens = call.getUsage().getInputTokens();
+            Integer outputTokens = call.getUsage().getOutputTokens();
+            appInsights.trackTrace("token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 error： " + e.getMessage());
@@ -163,9 +126,11 @@ public class ALiYunTranslateIntegration {
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            Integer inputTokens = call.getUsage().getInputTokens();
+            Integer outputTokens = call.getUsage().getOutputTokens();
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
-//            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
+            appInsights.trackTrace("token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 error： " + e.getMessage());
             return text;
@@ -208,6 +173,9 @@ public class ALiYunTranslateIntegration {
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
+            Integer inputTokens = call.getUsage().getInputTokens();
+            Integer outputTokens = call.getUsage().getOutputTokens();
+            appInsights.trackTrace("token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            appInsights.trackTrace("翻译源文本: " + translateText + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
