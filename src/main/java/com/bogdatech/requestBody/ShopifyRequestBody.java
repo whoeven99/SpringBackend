@@ -119,4 +119,14 @@ public class ShopifyRequestBody {
                 "  }\n" +
                 "}";
     }
+    /**
+     * 根据集合id获取对应的数据,目前简单的写就是获取title的值
+     * */
+    public static String getCollectionsQueryById(String collectionId) {
+        return "query {\n" +
+                "  collection(id: \"" + collectionId + "\") {\n" +
+                "    title\n" +
+                "  }\n" +
+                "}";
+    }
 }

@@ -629,7 +629,13 @@ public class TranslateService {
                     translateDataByOPENAI(entry.getValue(), translateContext);
                     break;
                 case METAFIELD:
-                    translateMetafield(entry.getValue(), translateContext);
+                    try {
+                        translateMetafield(entry.getValue(), translateContext);
+                    }catch (ClientException e){
+                        throw e;
+                    } catch (Exception e) {
+                        appInsights.trackTrace(translateContext.getShopifyRequest().getShopName() + " 用户 metafield 翻译 error ：" + e);
+                    }
                     break;
                 case HANDLE:
                     if (translateContext.getHandleFlag()) {

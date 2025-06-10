@@ -17,10 +17,10 @@ import org.springframework.stereotype.Service;
 import static com.bogdatech.constants.TranslateConstants.HUN_YUAN_MODEL;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanUserTranslate;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getCollectionsQueryById;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getProductsQueryById;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.GenerateDescriptionUtils.generatePrompt;
-import static com.bogdatech.utils.GenerateDescriptionUtils.parseShopifyData;
+import static com.bogdatech.utils.GenerateDescriptionUtils.*;
 
 @Service
 public class GenerateDescriptionService {
@@ -49,8 +49,15 @@ public class GenerateDescriptionService {
         APGUsersDO userDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
         APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("shop_name", shopName));
         //根据pageType和contentType决定使用什么方法
+        String query = switch (generateDescriptionVO.getPageType()) {
+            case "product" -> getProductsQueryById(generateDescriptionVO.getId());
+            case "collection" -> getCollectionsQueryById(generateDescriptionVO.getId());
+            default -> null;
+        };
         //根据id获取产品具体信息
-        String query = getProductsQueryById(generateDescriptionVO.getId());
+        if (query == null) {
+            return "not generate";
+        }
         String shopifyData = null;
         try {
             String env = System.getenv("ApplicationEnv");
@@ -65,11 +72,28 @@ public class GenerateDescriptionService {
             appInsights.trackTrace("Failed to get Shopify data: " + e.getMessage());
         }
         //解析shopifyData，获取title等数据
-        String title = parseShopifyData(shopifyData);
+        String title = parseShopifyData(shopifyData, generateDescriptionVO.getPageType());
         if (title == null) {
             return null;
         }
-        String prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
+        String prompt = null;
+        String template = null;
+        //根据contentType判断用seo还是des
+        switch (generateDescriptionVO.getContentType()) {
+            case "Description" :
+                Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
+                template = iapgTemplateService.getTemplateById(templateId);
+                prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
+                template = prompt + template;
+                break;
+            case "SEODescription" :
+                template = generateSeoPrompt(title, generateDescriptionVO.getLanguage());
+                break;
+        };
+        if (template == null ){
+            return "des/seo not generate";
+        }
+//        String prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
         //根据seoKeyword（暂时不知道是什么）
         //根据test的的boolean值 true，使用的是templateId传递的模板数据；false，使用的是templateId传递的字符型数字
         boolean test = Boolean.parseBoolean(generateDescriptionVO.getTest());
@@ -77,13 +101,9 @@ public class GenerateDescriptionService {
         CharacterCountUtils characterCountUtils = new CharacterCountUtils();
         if (test) {
             String templateId = generateDescriptionVO.getTemplateId();
-            templateId = prompt + " /n " + templateId;
             description = hunYuanUserTranslate(templateId, characterCountUtils, HUN_YUAN_MODEL);
         } else {
             // 从数据库中获取(暂定就模板1)
-            Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
-            String template = iapgTemplateService.getTemplateById(templateId);
-            template = prompt + "/n " + template;
             description = hunYuanUserTranslate(template, characterCountUtils, HUN_YUAN_MODEL);
         }
         //根据additionalInformation（暂时不知道是什么）
