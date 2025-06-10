@@ -104,7 +104,7 @@ public class TranslateService {
         this.translationUsageService = translationUsageService;
     }
 
-    public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
+    public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
     public static final ObjectMapper objectMapper = new ObjectMapper();
     //判断是否可以终止翻译流程
     public static Map<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
