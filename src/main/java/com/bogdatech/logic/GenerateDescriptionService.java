@@ -20,8 +20,7 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getCollectionsQueryById;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getProductsQueryById;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.GenerateDescriptionUtils.generatePrompt;
-import static com.bogdatech.utils.GenerateDescriptionUtils.parseShopifyData;
+import static com.bogdatech.utils.GenerateDescriptionUtils.*;
 
 @Service
 public class GenerateDescriptionService {
@@ -77,7 +76,24 @@ public class GenerateDescriptionService {
         if (title == null) {
             return null;
         }
-        String prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
+        String prompt = null;
+        String template = null;
+        //根据contentType判断用seo还是des
+        switch (generateDescriptionVO.getContentType()) {
+            case "Description" :
+                Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
+                template = iapgTemplateService.getTemplateById(templateId);
+                prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
+                template = prompt + " /n " + template;
+                break;
+            case "SEODescription" :
+                template = generateSeoPrompt(title, generateDescriptionVO.getLanguage());
+                break;
+        };
+        if (template == null ){
+            return "des/seo not generate";
+        }
+//        String prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
         //根据seoKeyword（暂时不知道是什么）
         //根据test的的boolean值 true，使用的是templateId传递的模板数据；false，使用的是templateId传递的字符型数字
         boolean test = Boolean.parseBoolean(generateDescriptionVO.getTest());
@@ -85,13 +101,9 @@ public class GenerateDescriptionService {
         CharacterCountUtils characterCountUtils = new CharacterCountUtils();
         if (test) {
             String templateId = generateDescriptionVO.getTemplateId();
-            templateId = prompt + " /n " + templateId;
             description = hunYuanUserTranslate(templateId, characterCountUtils, HUN_YUAN_MODEL);
         } else {
             // 从数据库中获取(暂定就模板1)
-            Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
-            String template = iapgTemplateService.getTemplateById(templateId);
-            template = prompt + "/n " + template;
             description = hunYuanUserTranslate(template, characterCountUtils, HUN_YUAN_MODEL);
         }
         //根据additionalInformation（暂时不知道是什么）
