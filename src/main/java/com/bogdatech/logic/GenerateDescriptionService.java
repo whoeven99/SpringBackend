@@ -84,7 +84,7 @@ public class GenerateDescriptionService {
                 Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
                 template = iapgTemplateService.getTemplateById(templateId);
                 prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
-                template = prompt + " /n " + template;
+                template = prompt + template;
                 break;
             case "SEODescription" :
                 template = generateSeoPrompt(title, generateDescriptionVO.getLanguage());
