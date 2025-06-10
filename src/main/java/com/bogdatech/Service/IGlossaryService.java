@@ -1,8 +1,9 @@
 package com.bogdatech.Service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.bogdatech.entity.DO.GlossaryDO;
 
-public interface IGlossaryService {
+public interface IGlossaryService extends IService<GlossaryDO> {
     Boolean insertGlossaryInfo(GlossaryDO glossaryDO);
 
     boolean deleteGlossaryById(GlossaryDO glossaryDO);
