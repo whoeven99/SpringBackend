@@ -255,7 +255,7 @@ public class TaskService {
             Timestamp now = new Timestamp(System.currentTimeMillis());
             Timestamp trialEnd = userTrialsDO.getTrialEnd();
 
-            // 如果 trialStart + 7天 小于 trialEnd，不做任何操作
+            // 如果 trialStart + 5天 小于 trialEnd，不做任何操作
             if (now.after(trialEnd)) {
                 //如果过期，则将状态改为true
                 userTrialsDO.setIsTrialExpired(true);
