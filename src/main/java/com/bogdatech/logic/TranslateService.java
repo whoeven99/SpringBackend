@@ -104,11 +104,11 @@ public class TranslateService {
         this.translationUsageService = translationUsageService;
     }
 
-    public static Map<String, ConcurrentHashMap<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, ConcurrentHashMap<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
     public static final ObjectMapper objectMapper = new ObjectMapper();
     //判断是否可以终止翻译流程
-    public static Map<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
-    public static Map<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
+    public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
+    public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
     //    private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
@@ -137,17 +137,17 @@ public class TranslateService {
                     translating(request, remainingChars, counter, usedChars, translateSettings3, handleFlag);  // 执行翻译任务
                 }
             } catch (ClientException e) {
-                appInsights.trackTrace("startTranslation " + e.getErrorMessage());
+                appInsights.trackTrace(shopName + " 用户 startTranslation " + e.getErrorMessage());
                 translate3Handle(request, counter, begin, remainingChars, usedChars);
                 return;
             } catch (CannotCreateTransactionException | ConcurrentModificationException e) {
-                appInsights.trackTrace("CannotCreateTransactionException Translation task cannot failed error : " + e.getMessage());
+                appInsights.trackTrace(shopName + " 用户 CannotCreateTransactionException Translation task cannot failed error : " + e);
                 //更新初始值
                 translateFailHandle(request, counter);
                 return;
             } catch (Exception e) {
                 translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
-                appInsights.trackTrace("start Exception Translation task failed error: " + e);
+                appInsights.trackTrace(shopName + " 用户 start Exception Translation task failed error: " + e);
                 //更新初始值
                 translateFailHandle(request, counter);
                 return;
@@ -352,9 +352,8 @@ public class TranslateService {
         CharacterCountUtils usedCharCounter = new CharacterCountUtils();
         usedCharCounter.addChars(usedChars);
         String shopName = request.getShopName();
-        List<TranslateResourceDTO> ALL_RESOURCE = ALL_RESOURCES;
         //循环翻译ALL_RESOURCES里面所有的模块
-        for (TranslateResourceDTO translateResource : ALL_RESOURCE
+        for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
             if (!translateSettings3.contains(translateResource.getResourceType())) {
                 continue;
@@ -374,7 +373,13 @@ public class TranslateService {
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource);
             TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), languagePackId, null, handleFlag);
-            translateJson(translateContext, usedCharCounter);
+            try {
+                translateJson(translateContext, usedCharCounter);
+            } catch (ClientException e) {
+                throw e;
+            } catch (Exception e){
+                appInsights.trackTrace(shopName + " 用户 translateJson failed error : " + e);
+            }
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) {
                 return;
