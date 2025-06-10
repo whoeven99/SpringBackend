@@ -267,6 +267,8 @@ public class TaskService {
                     translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", userTrialsDO.getShopName()).set("auto_translate", false));
                     //修改用户IP开关方法
                     iWidgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userTrialsDO.getShopName()).set("ip_open", false));
+                    //词汇表改为0
+
                 } catch (Exception e) {
                     appInsights.trackTrace(userTrialsDO.getShopName() + "用户  error 修改用户计划失败: " + e.getMessage());
                 }

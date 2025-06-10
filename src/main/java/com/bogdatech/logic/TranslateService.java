@@ -107,8 +107,8 @@ public class TranslateService {
     public static Map<String, Map<String, String>> SINGLE_LINE_TEXT = new HashMap<>();
     public static final ObjectMapper objectMapper = new ObjectMapper();
     //判断是否可以终止翻译流程
-    public static Map<String, Future<?>> userTasks = new HashMap<>(); // 存储每个用户的翻译任务
-    public static Map<String, AtomicBoolean> userStopFlags = new HashMap<>(); // 存储每个用户的停止标志
+    public static Map<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
+    public static Map<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
     //    private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
@@ -140,8 +140,8 @@ public class TranslateService {
                 appInsights.trackTrace("startTranslation " + e.getErrorMessage());
                 translate3Handle(request, counter, begin, remainingChars, usedChars);
                 return;
-            } catch (CannotCreateTransactionException | ConcurrentModificationException  e ) {
-                appInsights.trackTrace("CannotCreateTransactionException Translation task cannot failed error : " + e);
+            } catch (CannotCreateTransactionException | ConcurrentModificationException e) {
+                appInsights.trackTrace("CannotCreateTransactionException Translation task cannot failed error : " + e.getMessage());
                 //更新初始值
                 translateFailHandle(request, counter);
                 return;
@@ -352,8 +352,9 @@ public class TranslateService {
         CharacterCountUtils usedCharCounter = new CharacterCountUtils();
         usedCharCounter.addChars(usedChars);
         String shopName = request.getShopName();
+        List<TranslateResourceDTO> ALL_RESOURCE = ALL_RESOURCES;
         //循环翻译ALL_RESOURCES里面所有的模块
-        for (TranslateResourceDTO translateResource : ALL_RESOURCES
+        for (TranslateResourceDTO translateResource : ALL_RESOURCE
         ) {
             if (!translateSettings3.contains(translateResource.getResourceType())) {
                 continue;
@@ -593,10 +594,8 @@ public class TranslateService {
             put(GLOSSARY, new ArrayList<>());
             put(OPENAI, new ArrayList<>());
             put(METAFIELD, new ArrayList<>());
+            put(HANDLE, new ArrayList<>());
         }};
-        if (handleFlag) {
-            hashMap.put(HANDLE, new ArrayList<>());
-        }
         return hashMap;
     }
 
@@ -628,7 +627,9 @@ public class TranslateService {
                     translateMetafield(entry.getValue(), translateContext);
                     break;
                 case HANDLE:
-                    translateDataByHandle(entry.getValue(), translateContext);
+                    if (translateContext.getHandleFlag()) {
+                        translateDataByHandle(entry.getValue(), translateContext);
+                    }
                     break;
                 default:
                     appInsights.trackTrace("未知的翻译文本： " + entry.getValue());
@@ -1282,7 +1283,7 @@ public class TranslateService {
                     judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
                     continue;
                 }
-               continue;
+                continue;
             }
 
             //通用的不翻译数据
