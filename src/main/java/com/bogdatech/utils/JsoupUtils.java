@@ -266,27 +266,26 @@ public class JsoupUtils {
             }
 
         } else {
-            prompt = getSimplePrompt(targetLanguage, languagePackId, content);
+            prompt = getSimplePrompt(targetLanguage, languagePackId);
             appInsights.trackTrace("普通文本： Simple提示词: " + prompt);
-            try {
-                //目标语言是中文的，用qwen-max翻译
-                if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-                    return QwenTranslate(content, prompt, counter);
-                }
-
-                //hi用doubao-1.5-pro-256k翻译
-                if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
-                    return douBaoPromptTranslate(prompt, content, counter);
-                }
-
-                return QwenTranslate(content, prompt, counter);
-
-            } catch (Exception e) {
-                appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
-                return QwenTranslate(content, prompt, counter);
-            }
-//            System.out.println("prompt变量和极简: " + prompt);
         }
+        try {
+            //目标语言是中文的，用qwen-max翻译
+            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+                return singleTranslate(content, prompt, counter, target);
+            }
+
+            //hi用doubao-1.5-pro-256k翻译
+            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+                return douBaoTranslate(target, prompt, content, counter);
+            }
+
+            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
+        } catch (Exception e) {
+            appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
+            return singleTranslate(content, prompt, counter, target);
+        }
+
     }
 
     /**
@@ -309,25 +308,8 @@ public class JsoupUtils {
             prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
             appInsights.trackTrace("普通文本： " + content + " Glossary提示词: " + prompt);
         } else {
-            prompt = getSimplePrompt(targetName, languagePackId, content);
+            prompt = getSimplePrompt(targetName, languagePackId);
             appInsights.trackTrace("普通文本： Simple提示词: " + prompt);
-            try {
-                //目标语言是中文的，用qwen-max翻译
-                if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-                    return QwenTranslate(content, prompt, counter);
-                }
-
-                //hi用doubao-1.5-pro-256k翻译
-                if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
-                    return douBaoPromptTranslate(prompt, content, counter);
-                }
-
-                return hunYuanPromptTranslate(content, prompt, counter, HUN_YUAN_MODEL);
-
-            } catch (Exception e) {
-                appInsights.trackTrace("checkTranslationModel error： " + e.getMessage());
-                return singleTranslate(content, prompt, counter, target);
-            }
         }
 
         try {
@@ -668,6 +650,7 @@ public class JsoupUtils {
         //handle特供翻译， handle特用提示词
         String prompt = getHandlePrompt(targetLanguage);
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
+        appInsights.trackTrace("普通文本： Simple提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
             if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {

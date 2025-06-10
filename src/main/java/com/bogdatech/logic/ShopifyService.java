@@ -501,7 +501,7 @@ public class ShopifyService {
 
     //普通文本计算token
     public static int calculateModelToken(String text) {
-        String prompt = getSimplePrompt(text, "enen", "eeeeeee");
+        String prompt = getSimplePrompt(text, "enen");
         return calculateBaiLianToken(prompt);
     }
 
