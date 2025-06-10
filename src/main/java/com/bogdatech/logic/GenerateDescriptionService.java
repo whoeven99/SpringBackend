@@ -72,7 +72,7 @@ public class GenerateDescriptionService {
             appInsights.trackTrace("Failed to get Shopify data: " + e.getMessage());
         }
         //解析shopifyData，获取title等数据
-        String title = parseShopifyData(shopifyData);
+        String title = parseShopifyData(shopifyData, generateDescriptionVO.getPageType());
         if (title == null) {
             return null;
         }
