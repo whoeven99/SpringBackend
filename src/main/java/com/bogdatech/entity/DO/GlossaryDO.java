@@ -22,7 +22,7 @@ public class GlossaryDO {
     private String rangeCode;
     private Integer caseSensitive;
     private Integer status;
-    private Timestamp createTime;
+    private Timestamp createDate;
 
     public GlossaryDO(String sourceText, String targetText,  Integer caseSensitive) {
         this.sourceText = sourceText;
