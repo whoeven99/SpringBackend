@@ -96,6 +96,7 @@ public class LiquidHtmlTranslatorUtils {
             }
 
         } catch (Exception e) {
+            appInsights.trackTrace("new html error : " + e);
             return html;
         }
     }

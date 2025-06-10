@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import static com.bogdatech.constants.TranslateConstants.HUN_YUAN_MODEL;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanUserTranslate;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getCollectionsQueryById;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getProductsQueryById;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.GenerateDescriptionUtils.generatePrompt;
@@ -49,8 +50,17 @@ public class GenerateDescriptionService {
         APGUsersDO userDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
         APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("shop_name", shopName));
         //根据pageType和contentType决定使用什么方法
+        String query;
+        switch (generateDescriptionVO.getPageType()) {
+            case "product":
+                 query = getProductsQueryById(generateDescriptionVO.getId());
+                break;
+            case "collection":
+                 query = getCollectionsQueryById(generateDescriptionVO.getId());
+                break;
+        }
         //根据id获取产品具体信息
-        String query = getProductsQueryById(generateDescriptionVO.getId());
+
         String shopifyData = null;
         try {
             String env = System.getenv("ApplicationEnv");
