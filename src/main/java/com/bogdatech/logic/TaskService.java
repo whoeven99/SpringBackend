@@ -43,9 +43,10 @@ public class TaskService {
     private final IUserTrialsService iUserTrialsService;
     private final IUserSubscriptionsService iUserSubscriptionsService;
     private final IWidgetConfigurationsService iWidgetConfigurationsService;
+    private final IGlossaryService iGlossaryService;
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
@@ -57,6 +58,7 @@ public class TaskService {
         this.iUserTrialsService = iUserTrialsService;
         this.iUserSubscriptionsService = iUserSubscriptionsService;
         this.iWidgetConfigurationsService = iWidgetConfigurationsService;
+        this.iGlossaryService = iGlossaryService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -255,7 +257,7 @@ public class TaskService {
             Timestamp now = new Timestamp(System.currentTimeMillis());
             Timestamp trialEnd = userTrialsDO.getTrialEnd();
 
-            // 如果 trialStart + 7天 小于 trialEnd，不做任何操作
+            // 如果 trialStart + 5天 小于 trialEnd，不做任何操作
             if (now.after(trialEnd)) {
                 //如果过期，则将状态改为true
                 userTrialsDO.setIsTrialExpired(true);
@@ -267,6 +269,8 @@ public class TaskService {
                     translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", userTrialsDO.getShopName()).set("auto_translate", false));
                     //修改用户IP开关方法
                     iWidgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userTrialsDO.getShopName()).set("ip_open", false));
+                    //词汇表改为0
+                    iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userTrialsDO.getShopName()).set("status", 0));
                 } catch (Exception e) {
                     appInsights.trackTrace(userTrialsDO.getShopName() + "用户  error 修改用户计划失败: " + e.getMessage());
                 }

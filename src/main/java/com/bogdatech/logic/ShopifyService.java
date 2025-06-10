@@ -54,6 +54,7 @@ import static com.bogdatech.utils.JsonUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.shouldTranslate;
+import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
 import static com.bogdatech.utils.PlaceholderUtils.getVariablePrompt;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.countWords;
@@ -500,8 +501,8 @@ public class ShopifyService {
 
     //普通文本计算token
     public static int calculateModelToken(String text) {
-        String prompt = getVariablePrompt(text, "enenenen", "eeeeeeeeeeeeeeee");
-        return calculateBaiLianToken(prompt) * 2;
+        String prompt = getSimplePrompt(text, "enen");
+        return calculateBaiLianToken(prompt);
     }
 
     // 提取需要翻译的文本（包括文本和alt属性）

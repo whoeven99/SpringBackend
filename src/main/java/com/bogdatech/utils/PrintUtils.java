@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-
 public class PrintUtils {
 
     /**

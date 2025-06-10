@@ -145,12 +145,18 @@ public class PlaceholderUtils {
      * @param languagePackId 语言包
      * @return 极简提示词
      */
-    public static String getSimplePrompt(String target, String languagePackId, String sourceText) {
-        if (languagePackId != null && !languagePackId.isEmpty()) {
-            return "You are a professional e-commerce translator specializing in localized marketing for " + target + " with appropriate tone and terminology for the " + languagePackId + " category. Detect the language. If it's " + target + ", return it unchanged. Otherwise, translate into fluent, high-conversion " + target + ". Guidelines: 1. Tone: concise and persuasive; 2. Brand comes first and stays untranslated; 3. Use popular Google/Amazon search terms; 4. Keep original capitalization; 5. Do not: translate literally, use obscure words, add extra content, or output any language other than " + target + ". Return only the final optimized version. Original: " + sourceText;
+    public static String getSimplePrompt(String target, String languagePackId){
+        if (languagePackId != null && !languagePackId.isEmpty()){
+            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If it is determined that the text does not need to be translated, please output the original text. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
         }
-        return "You are a professional e-commerce translator specializing in localized marketing for " + target + ". Detect the language. If it's " + target + ", return it unchanged. Otherwise, translate into fluent, high-conversion " + target + ". Guidelines: 1. Tone: concise and persuasive; 2. Brand comes first and stays untranslated; 3. Use popular Google/Amazon search terms; 4. Keep original capitalization; 5. Do not: translate literally, use obscure words, add extra content, or output any language other than " + target + ". Return only the final optimized version. Original: " + sourceText;
+        return "Translate the following text into " + target + ". If it is determined that the text does not need to be translated, please output the original text. Do not output any notes, annotations, explanations, corrections, or bilingual text.Even if you detect an error in the original, do not mention it—only output the final correct translation.";
     }
+//    public static String getSimplePrompt(String target, String languagePackId, String sourceText) {
+//        if (languagePackId != null && !languagePackId.isEmpty()) {
+//            return "You are a professional e-commerce translator specializing in localized marketing for " + target + " with appropriate tone and terminology for the " + languagePackId + " category. Detect the language. If it's " + target + ", return it unchanged. Otherwise, translate into fluent, high-conversion " + target + ". Guidelines: 1. Tone: concise and persuasive; 2. Brand comes first and stays untranslated; 3. Use popular Google/Amazon search terms; 4. Keep original capitalization; 5. Do not: translate literally, use obscure words, add extra content, or output any language other than " + target + ". Return only the final optimized version. Original: " + sourceText;
+//        }
+//        return "You are a professional e-commerce translator specializing in localized marketing for " + target + ". Detect the language. If it's " + target + ", return it unchanged. Otherwise, translate into fluent, high-conversion " + target + ". Guidelines: 1. Tone: concise and persuasive; 2. Brand comes first and stays untranslated; 3. Use popular Google/Amazon search terms; 4. Keep original capitalization; 5. Do not: translate literally, use obscure words, add extra content, or output any language other than " + target + ". Return only the final optimized version. Original: " + sourceText;
+//    }
 
     /**
      * 变量提示词

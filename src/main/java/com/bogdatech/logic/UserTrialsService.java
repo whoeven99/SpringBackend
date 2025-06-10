@@ -42,7 +42,7 @@ public class UserTrialsService {
      * */
     public Boolean queryUserTrialByShopName(String shopName){
         //判断是否购买过订阅计划，如果有则返回true
-        List<CharsOrdersDO> charsOrdersDOList = iCharsOrdersService.list(new QueryWrapper<CharsOrdersDO>().eq("shop_name", shopName));
+        List<CharsOrdersDO> charsOrdersDOList = iCharsOrdersService.list(new QueryWrapper<CharsOrdersDO>().eq("shop_name", shopName).like("id", "AppSubscription").eq("status", "ACTIVE"));
         if (charsOrdersDOList != null && !charsOrdersDOList.isEmpty()){
             return true;
         }
