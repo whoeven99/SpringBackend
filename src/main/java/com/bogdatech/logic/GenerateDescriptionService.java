@@ -50,17 +50,15 @@ public class GenerateDescriptionService {
         APGUsersDO userDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
         APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("shop_name", shopName));
         //根据pageType和contentType决定使用什么方法
-        String query;
-        switch (generateDescriptionVO.getPageType()) {
-            case "product":
-                 query = getProductsQueryById(generateDescriptionVO.getId());
-                break;
-            case "collection":
-                 query = getCollectionsQueryById(generateDescriptionVO.getId());
-                break;
-        }
+        String query = switch (generateDescriptionVO.getPageType()) {
+            case "product" -> getProductsQueryById(generateDescriptionVO.getId());
+            case "collection" -> getCollectionsQueryById(generateDescriptionVO.getId());
+            default -> null;
+        };
         //根据id获取产品具体信息
-
+        if (query == null) {
+            return "not generate";
+        }
         String shopifyData = null;
         try {
             String env = System.getenv("ApplicationEnv");
