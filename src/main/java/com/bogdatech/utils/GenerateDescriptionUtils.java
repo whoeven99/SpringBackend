@@ -1,6 +1,7 @@
 package com.bogdatech.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import net.sf.jsqlparser.statement.select.Top;
 
 public class GenerateDescriptionUtils {
     /**
@@ -14,6 +15,16 @@ public class GenerateDescriptionUtils {
     }
 
     /**
+     * 生成seo的提示词
+     * @param productTitle 产品标题
+     * @param language 语言
+     * @return 提示词
+     * */
+    public static String generateSeoPrompt(String productTitle, String language){
+        return "Please generate SEO optimized content for "  + productTitle + " in " + language + ". The format is as follows: Product title + benefits + features + buy now. 40-50 words";
+    }
+
+    /**
      * 解析shopifyData数据
      * */
     public static String parseShopifyData(String shopifyData){
@@ -21,8 +32,7 @@ public class GenerateDescriptionUtils {
             return null;
         }
         JSONObject obj = JSONObject.parseObject(shopifyData);
-        String title = obj.getJSONObject("product").getString("title");
 
-        return title;
+        return obj.getJSONObject("product").getString("title");
     }
 }
