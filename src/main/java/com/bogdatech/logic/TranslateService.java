@@ -631,6 +631,8 @@ public class TranslateService {
                 case METAFIELD:
                     try {
                         translateMetafield(entry.getValue(), translateContext);
+                    }catch (ClientException e){
+                        throw e;
                     } catch (Exception e) {
                         appInsights.trackTrace(translateContext.getShopifyRequest().getShopName() + " 用户 metafield 翻译 error ：" + e);
                     }
