@@ -1141,7 +1141,11 @@ public class ShopifyService {
             Map<String, Object> variables = new HashMap<>();
             System.out.println("后存储： " + translation);
             // 创建 translations 数组
-            Object[] translations = new Object[]{newTranslation};
+            Object[] translations = new Object[]{
+                    translation // 将HashMap添加到数组中
+            };
+            variables.put("translations", translations);
+//        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
             CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
             String json = objectToJson(cloudServiceRequest);
             // 调用 saveToShopify 方法
