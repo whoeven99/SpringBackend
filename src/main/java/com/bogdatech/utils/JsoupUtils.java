@@ -650,7 +650,6 @@ public class JsoupUtils {
         //handle特供翻译， handle特用提示词
         String prompt = getHandlePrompt(targetLanguage);
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
-        appInsights.trackTrace("普通文本： Simple提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
             if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
