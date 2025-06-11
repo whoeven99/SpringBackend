@@ -91,6 +91,7 @@ public class JudgeTranslateUtils {
         URL_PREFIXES.add("http://");
         URL_PREFIXES.add("https://");
         URL_PREFIXES.add("shopify://");
+        URL_PREFIXES.add("gid://shopify");
     }
 
     // 正则表达式
@@ -110,7 +111,8 @@ public class JudgeTranslateUtils {
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     );//包含邮箱
-
+    private static final Pattern BASE64_PATTERN = Pattern.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"); // Base64编码
+    private static final Pattern HASH_PATTERN = Pattern.compile("^[a-fA-F0-9]{64}$"); // 32位十六进制字符串
     // 长度限制常量
     private static final int HASH_PREFIX_MAX_LENGTH = 90;
     private static final int HASH_CONTAINS_MAX_LENGTH = 30;
@@ -247,6 +249,16 @@ public class JudgeTranslateUtils {
 
         //如果是UUID类别的数据。不翻译
         if (UUID_PATTERN.matcher(value).matches()) {
+            return false;
+        }
+
+        //如果是base64编码的数据，不翻译
+        if (BASE64_PATTERN.matcher(value).matches()) {
+            return false;
+        }
+
+        //如果是32位十六进制字符串值，不翻译
+        if (HASH_PATTERN.matcher(value).matches()) {
             return false;
         }
 
