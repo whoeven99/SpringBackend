@@ -106,7 +106,10 @@ public class JudgeTranslateUtils {
             "^[\\dA-Z]*[-—][\\dA-Z]*$" // 包含至少一个-或—，前后为数字或全大写字母
     );
     private static final Pattern PHONE_NUMBER_PATTERN = Pattern.compile(
-            "^[\\d\\s]*(\\(\\+\\d+\\))?[\\d\\s]*$"
+            "\\+\\d{1,3}(?:\\s?(?:\\(\\d+\\)|\\d+))?\\s?\\d[\\d\\s-]{3,13}\\d|" + // 国际号码
+                    "\\+86\\s?1\\d{10}|" +                                                  // 中国大陆手机号码
+                    "00\\d{1,3}\\s?1\\d{10}|" +                                             // 国际拨号前缀
+                    "\\+\\d{8,15}"
     );//包含电话号码
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
