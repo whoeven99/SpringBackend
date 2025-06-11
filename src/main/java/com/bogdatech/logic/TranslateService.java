@@ -377,7 +377,7 @@ public class TranslateService {
                 translateJson(translateContext, usedCharCounter);
             } catch (ClientException e) {
                 throw e;
-            } catch (Exception e){
+            } catch (Exception e) {
                 appInsights.trackTrace(shopName + " 用户 translateJson failed error : " + e);
             }
             // 定期检查是否停止
@@ -986,21 +986,11 @@ public class TranslateService {
             String finalText;
             //其他数据类型，对数据做处理再翻译
             try {
-                if (value.length() <= 100) {
-                    counter.addChars(googleCalculateToken(value));
-                    Map<String, String> placeholderMap = new HashMap<>();
-                    String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0, source);
-                    translateRequest.setContent(updateText);
-                    String targetString = translateAndCount(translateRequest, counter, translateContext.getLanguagePackId(), GENERAL);
-                    finalText = restoreKeywords(targetString, placeholderMap);
-                    addData(request.getTarget(), value, finalText);
-                } else {
-                    //如果字符数大于100字符，用大模型翻译
-                    String glossaryString = glossaryText(keyMap1, keyMap0, value);
-                    //根据关键词生成对应的提示词
-                    finalText = glossaryTranslationModel(translateRequest, counter, glossaryString, translateContext.getLanguagePackId());
-                    addData(request.getTarget(), value, finalText);
-                }
+                //用大模型翻译
+                String glossaryString = glossaryText(keyMap1, keyMap0, value);
+                //根据关键词生成对应的提示词
+                finalText = glossaryTranslationModel(translateRequest, counter, glossaryString, translateContext.getLanguagePackId());
+                addData(request.getTarget(), value, finalText);
                 shopifyService.saveToShopify(finalText, translation, resourceId, request);
                 printTranslation(finalText, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
             } catch (Exception e) {
