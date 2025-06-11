@@ -26,7 +26,7 @@ public class GenerateDescriptionUtils {
      * @return 提示词
      */
     public static String generateSeoPrompt(String productTitle, String language) {
-        return "Please generate SEO optimized content for " + productTitle + " in " + language + ". The format is as follows: Product title + benefits + features + buy now. 40-50 words";
+        return "Generate an SEO-optimized product description (Limit: Maximum 320 characters) in " + language + " for the following product: " + productTitle + ".Format requirements are as follows: ";
     }
 
     /**
