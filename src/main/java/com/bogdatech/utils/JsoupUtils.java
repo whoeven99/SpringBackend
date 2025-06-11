@@ -219,7 +219,7 @@ public class JsoupUtils {
         String sourceText = request.getContent();
 
         //判断是否符合mt翻译 ，是， 调用mt翻译。
-        if (sourceText.length() <= 5) {
+        if (sourceText.length() <= 8) {
             return checkTranslationApi(request, counter, languagePackId);
         }
 
@@ -262,6 +262,7 @@ public class JsoupUtils {
             if ("ar".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
+                content = " " + content + " ";
                 return douBaoTranslate(targetLanguage, prompt, content, counter);
             }
 

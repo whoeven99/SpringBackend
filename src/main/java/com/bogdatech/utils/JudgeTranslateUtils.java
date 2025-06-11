@@ -91,6 +91,7 @@ public class JudgeTranslateUtils {
         URL_PREFIXES.add("http://");
         URL_PREFIXES.add("https://");
         URL_PREFIXES.add("shopify://");
+        URL_PREFIXES.add("gid://shopify");
     }
 
     // 正则表达式
@@ -105,12 +106,16 @@ public class JudgeTranslateUtils {
             "^[\\dA-Z]*[-—][\\dA-Z]*$" // 包含至少一个-或—，前后为数字或全大写字母
     );
     private static final Pattern PHONE_NUMBER_PATTERN = Pattern.compile(
-            "^[\\d\\s]*(\\(\\+\\d+\\))?[\\d\\s]*$"
+            "\\+\\d{1,3}(?:\\s?(?:\\(\\d+\\)|\\d+))?\\s?\\d[\\d\\s-]{3,13}\\d|" + // 国际号码
+                    "\\+86\\s?1\\d{10}|" +                                                  // 中国大陆手机号码
+                    "00\\d{1,3}\\s?1\\d{10}|" +                                             // 国际拨号前缀
+                    "\\+\\d{8,15}"
     );//包含电话号码
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     );//包含邮箱
-
+    private static final Pattern BASE64_PATTERN = Pattern.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"); // Base64编码
+    private static final Pattern HASH_PATTERN = Pattern.compile("^[a-fA-F0-9]{64}$"); // 32位十六进制字符串
     // 长度限制常量
     private static final int HASH_PREFIX_MAX_LENGTH = 90;
     private static final int HASH_CONTAINS_MAX_LENGTH = 30;
@@ -247,6 +252,16 @@ public class JudgeTranslateUtils {
 
         //如果是UUID类别的数据。不翻译
         if (UUID_PATTERN.matcher(value).matches()) {
+            return false;
+        }
+
+        //如果是base64编码的数据，不翻译
+        if (BASE64_PATTERN.matcher(value).matches()) {
+            return false;
+        }
+
+        //如果是32位十六进制字符串值，不翻译
+        if (HASH_PATTERN.matcher(value).matches()) {
             return false;
         }
 
