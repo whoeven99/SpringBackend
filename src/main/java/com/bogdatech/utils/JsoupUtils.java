@@ -262,6 +262,7 @@ public class JsoupUtils {
             if ("ar".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
+                content = " " + content + " ";
                 return douBaoTranslate(targetLanguage, prompt, content, counter);
             }
 
