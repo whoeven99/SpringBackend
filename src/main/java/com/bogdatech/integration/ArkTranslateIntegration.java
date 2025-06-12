@@ -86,7 +86,7 @@ public class ArkTranslateIntegration {
             countUtils.addChars(totalTokensInt);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
-            appInsights.trackTrace("token doubao: " + sourceText + "all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
+            appInsights.trackTrace("token doubao: " + sourceText + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
 //            System.out.println("翻译源文本: " + "counter: " + totalTokens);
             return response.toString();
         } catch (Exception e) {

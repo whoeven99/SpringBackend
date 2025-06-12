@@ -130,7 +130,7 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             totalToken = call.getUsage().getTotalTokens();
             countUtils.addChars(totalToken);
-            appInsights.trackTrace("token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace("token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
             return text;
@@ -175,7 +175,7 @@ public class ALiYunTranslateIntegration {
             countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace("token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            appInsights.trackTrace("翻译源文本: " + translateText + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
