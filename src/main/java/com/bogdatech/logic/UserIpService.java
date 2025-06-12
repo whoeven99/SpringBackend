@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Service
 public class UserIpService {
     private final IUserSubscriptionsService iUserSubscriptionsService;
@@ -50,14 +52,13 @@ public class UserIpService {
         if (userIpDO == null) {
             return false;
         }
-        System.out.println("userIpDO = " + userIpDO);
+        appInsights.trackTrace("userIpDO = " + userIpDO);
 
         long currentTimes = userIpDO.getTimes();
 
         // 判断是否达到90%并发送第一封邮件
         int percent90 = (int) (freeIp * 0.9);
         if (currentTimes >= percent90 && currentTimes < freeIp && !Boolean.TRUE.equals(userIpDO.getFirstEmail())) {
-            System.out.println("到达90%，发送邮件");
             if (tencentEmailService.sendEmailByIpRunningOut(shopName)) {
                 userIpDO.setFirstEmail(true);
                 userIpDO.setTimes(currentTimes + 1);
@@ -68,7 +69,6 @@ public class UserIpService {
 
         // 判断是否达到100%并发送第二封邮件
         if (currentTimes > freeIp && !Boolean.TRUE.equals(userIpDO.getSecondEmail())) {
-            System.out.println("到达100%，发送邮件");
             if (tencentEmailService.sendEmailByIpOut(shopName)) {
                 userIpDO.setSecondEmail(true);
                 userIpDO.setTimes(currentTimes + 1);
@@ -81,7 +81,7 @@ public class UserIpService {
         if (currentTimes > freeIp) {
             //加锁查询检查用户额度是否足够
             TranslationCounterDO translationCounterDO = iTranslationCounterService.getOneForUpdate(shopName);
-            System.out.println("translationCounterDO = " + translationCounterDO);
+            appInsights.trackTrace("translationCounterDO = " + translationCounterDO);
             if (translationCounterDO == null) {
                 return false;
             }
@@ -89,7 +89,6 @@ public class UserIpService {
             Integer maxChars = iTranslationCounterService.getMaxCharsByShopName(shopName);
 
             if (translationCounterDO.getUsedChars() < maxChars) {
-                System.out.println("额度足够，增加次数，增加credit");
                 translationCounterDO.setUsedChars(translationCounterDO.getUsedChars() + 100);
 //                userIpDO.setTimes(currentTimes + 1);
                 userIpDO.setAllTimes(userIpDO.getAllTimes() + 1);
@@ -104,7 +103,6 @@ public class UserIpService {
         // 正常增长次数
         userIpDO.setTimes(currentTimes + 1);
         userIpDO.setAllTimes(userIpDO.getAllTimes() + 1);
-        System.out.println("正常增长次数");
         return iUserIpService.updateById(userIpDO);
     }
 
