@@ -39,9 +39,10 @@ public class HunYuanIntegration {
      * @param prompt     提示词
      * @param countUtils 字符统计工具
      * @param model      模型
+     * @param shopName  店铺名称
      * @return 翻译后的文本
      **/
-    public static String hunYuanTranslate(String sourceText, String prompt, CharacterCountUtils countUtils, String model) {
+    public static String hunYuanTranslate(String sourceText, String prompt, CharacterCountUtils countUtils, String model, String shopName) {
         final int maxRetries = 3;
         final long baseDelayMillis = 1000; // 初始重试延迟为 1 秒
 
@@ -75,7 +76,7 @@ public class HunYuanIntegration {
                     countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
-                    appInsights.trackTrace("token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                    appInsights.trackTrace(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     return targetText;
                 } else {
                     appInsights.trackTrace("重试 Hunyuan errors " + attempt);

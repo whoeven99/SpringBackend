@@ -59,7 +59,7 @@ public class ArkTranslateIntegration {
     /**
      *  调用豆包API
      */
-    public static String douBaoTranslate(String targetCode, String prompt, String sourceText, CharacterCountUtils countUtils) {
+    public static String douBaoTranslate(String shopName, String prompt, String sourceText, CharacterCountUtils countUtils) {
         try {
             List<ChatMessage> messages = new ArrayList<>();
             ChatMessage systemMessage = ChatMessage.builder()
@@ -86,7 +86,7 @@ public class ArkTranslateIntegration {
             countUtils.addChars(totalTokensInt);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
-            appInsights.trackTrace("token doubao: " + sourceText + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
+            appInsights.trackTrace(shopName + " 用户 token doubao: " + sourceText + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
 //            System.out.println("翻译源文本: " + "counter: " + totalTokens);
             return response.toString();
         } catch (Exception e) {

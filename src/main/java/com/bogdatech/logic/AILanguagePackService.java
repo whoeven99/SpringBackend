@@ -50,7 +50,7 @@ public class AILanguagePackService {
         //判断description是否为空
         //调用混元生成类目
         String categoryPrompt = getCategoryPrompt();
-        String categoryText = hunYuanTranslate(description, categoryPrompt, counter, HUN_YUAN_MODEL);
+        String categoryText = hunYuanTranslate(description, categoryPrompt, counter, HUN_YUAN_MODEL, shopName);
         appInsights.trackTrace("category counter: " + counter.getTotalChars() + "生成的类目数据为： " + categoryText);
         //如果categoryText字段在255字符里面，存到数据库中
         if (categoryText.length() > 100) {
