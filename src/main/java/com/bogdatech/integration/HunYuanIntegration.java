@@ -75,7 +75,7 @@ public class HunYuanIntegration {
                     countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
-                    appInsights.trackTrace("token hunyuan: " + sourceText + "all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                    appInsights.trackTrace("token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     return targetText;
                 } else {
                     appInsights.trackTrace("重试 Hunyuan errors " + attempt);

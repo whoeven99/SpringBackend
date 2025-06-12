@@ -272,12 +272,12 @@ public class JsoupUtils {
         }
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("ro".equals(request.getSource()) || "hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
                 return douBaoTranslate(target, prompt, content, counter);
             }
 
@@ -315,12 +315,12 @@ public class JsoupUtils {
 
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("ro".equals(request.getSource()) || "hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
                 return douBaoTranslate(target, prompt, content, counter);
             }
 
@@ -653,12 +653,12 @@ public class JsoupUtils {
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("ro".equals(request.getSource()) || "hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
                 return douBaoTranslate(target, prompt, content, counter);
             }
             return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
