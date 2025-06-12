@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
@@ -36,6 +37,11 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     @Override
     public Boolean updateCharsByShopName(TranslationCounterRequest request) {
         return baseMapper.updateCharsByShopName(request.getShopName(), request.getChars());
+    }
+
+    @Override
+    public TranslationCounterDO getOneForUpdate(String shopName) {
+        return baseMapper.getOneForUpdate(shopName);
     }
 
 }

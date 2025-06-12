@@ -99,7 +99,7 @@ public class ALiYunTranslateIntegration {
             appInsights.trackTrace("token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
-            appInsights.trackTrace("百炼翻译报错信息 error： " + e.getMessage());
+            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
             return text;
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
         }
@@ -132,7 +132,7 @@ public class ALiYunTranslateIntegration {
             countUtils.addChars(totalToken);
             appInsights.trackTrace("token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
         } catch (NoApiKeyException | InputRequiredException e) {
-            appInsights.trackTrace("百炼翻译报错信息 error： " + e.getMessage());
+            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
             return text;
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
         }
@@ -179,7 +179,7 @@ public class ALiYunTranslateIntegration {
 //            appInsights.trackTrace("翻译源文本: " + translateText + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
-            appInsights.trackTrace("百炼翻译报错信息 error： " + e.getMessage());
+            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
         }
         return content;
     }

@@ -10,7 +10,7 @@ import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.TaskService;
 import com.bogdatech.logic.TestService;
 import com.bogdatech.logic.TranslateService;
-import com.bogdatech.model.controller.request.CloudInsertRequest;
+import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.service.StoringDataPublisherService;
@@ -20,17 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
 
+import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.JsonUtils.isJson;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
@@ -44,9 +41,10 @@ public class TestController {
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
     private final StoringDataPublisherService storingDataPublisherService;
+    private final UserTypeTokenService userTypeTokenService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, StoringDataPublisherService storingDataPublisherService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, StoringDataPublisherService storingDataPublisherService, UserTypeTokenService userTypeTokenService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -54,6 +52,7 @@ public class TestController {
         this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
         this.storingDataPublisherService = storingDataPublisherService;
+        this.userTypeTokenService = userTypeTokenService;
     }
 
     @GetMapping("/ping")
@@ -186,5 +185,14 @@ public class TestController {
     @GetMapping("/testFreeTrialTask")
     public void testFreeTrialTask() {
         taskService.freeTrialTask();
+    }
+
+    @PostMapping("/testToken")
+    public void testToken(@RequestBody ShopifyRequest request) {
+        for (String key : TOKEN_MAP.keySet()
+        ) {
+            userTypeTokenService.testTokenCount(request, key);
+        }
+        System.out.println("统计结束！！！");
     }
 }

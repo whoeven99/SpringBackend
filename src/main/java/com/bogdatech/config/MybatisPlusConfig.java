@@ -7,6 +7,8 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -49,4 +51,13 @@ public class MybatisPlusConfig {
         }
         return dataSource;
     }
+
+    /**
+     * 配置事务管理器
+     */
+    @Bean
+    public DataSourceTransactionManager transactionManager(DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
+    }
+
 }

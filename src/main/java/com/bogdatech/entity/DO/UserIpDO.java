@@ -18,4 +18,5 @@ public class UserIpDO {
     private Long times;
     private Boolean firstEmail;
     private Boolean secondEmail;
+    private Long allTimes;
 }

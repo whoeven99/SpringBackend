@@ -23,7 +23,8 @@ public class UserIpServiceImpl extends ServiceImpl<UserIpMapper, UserIpDO> imple
     }
 
     @Override
-    public Boolean checkUserIp(String shopName) {
-        return null;
+    public UserIpDO selectByShopNameForUpdate(String shopName) {
+        return baseMapper.selectByShopNameForUpdate(shopName);
     }
+
 }

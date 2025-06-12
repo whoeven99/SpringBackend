@@ -90,7 +90,7 @@ public class ArkTranslateIntegration {
 //            System.out.println("翻译源文本: " + "counter: " + totalTokens);
             return response.toString();
         } catch (Exception e) {
-            appInsights.trackTrace("豆包翻译失败 error: " + e.getMessage());
+            appInsights.trackTrace("豆包翻译失败 errors : " + e.getMessage());
             return sourceText;
         }
     }
@@ -121,7 +121,7 @@ public class ArkTranslateIntegration {
 //            System.out.println("翻译源文本: " + "counter: " + totalTokens);
             return response.toString();
         } catch (Exception e) {
-            appInsights.trackTrace("豆包翻译失败 error: " + e.getMessage());
+            appInsights.trackTrace("豆包翻译失败 errors : " + e.getMessage());
             return sourceText;
         }
     }
