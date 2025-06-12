@@ -66,9 +66,10 @@ public class ALiYunTranslateIntegration {
      * @param prompt     提示词
      * @param target     目标语言代码
      * @param countUtils 计数器
+     * @param shopName  店铺名称
      * @return 翻译后的文本
      */
-    public static String singleTranslate(String text, String prompt, CharacterCountUtils countUtils, String target) {
+    public static String singleTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName) {
         String model = switchModel(target);
         Generation gen = new Generation();
 
@@ -96,7 +97,7 @@ public class ALiYunTranslateIntegration {
             countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace(shopName + " 用户 token ali: " + content + "all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
