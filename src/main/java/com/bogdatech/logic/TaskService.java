@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -44,9 +46,10 @@ public class TaskService {
     private final IUserSubscriptionsService iUserSubscriptionsService;
     private final IWidgetConfigurationsService iWidgetConfigurationsService;
     private final IGlossaryService iGlossaryService;
+    private final IUserIpService iUserIpService;
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
@@ -59,6 +62,7 @@ public class TaskService {
         this.iUserSubscriptionsService = iUserSubscriptionsService;
         this.iWidgetConfigurationsService = iWidgetConfigurationsService;
         this.iGlossaryService = iGlossaryService;
+        this.iUserIpService = iUserIpService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -85,41 +89,83 @@ public class TaskService {
             userPriceRequest.setAccessToken(usersDO.getAccessToken());
             usedList.add(userPriceRequest);
         }
-        String env = System.getenv("ApplicationEnv");
+
         for (UserPriceRequest userPriceRequest : usedList
         ) {
             try {
-                addCharsByUserData(userPriceRequest, env);
+                addCharsByUserData(userPriceRequest);
             } catch (Exception e) {
-                appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 获取数据失败: " + e.getMessage());
+                appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 获取数据 errors : " + e);
             }
         }
 
+        //判断计划是否过期，如果过期，将状态改为2
+        judgeSubscriptionStatus(usedList);
+
     }
 
-    //获取用户订阅选项并判断是否添加额度
-    public void addCharsByUserData(UserPriceRequest userPriceRequest, String env) {
+    //判断计划是否过期，如果过期，将状态改为2
+    public void judgeSubscriptionStatus(List<UserPriceRequest> usedList) {
+        //获取数据库中所有order为ACTIVE的id集合
+        //对list里面的数据做处理，只留一个shopName对应最近的status为ACTIVE
+        // 2. 使用Map记录每个shopName对应的最新订单
+        Map<String, UserPriceRequest> latestOrderMap = new HashMap<>();
+        for (UserPriceRequest order : usedList) {
+            String shopName = order.getShopName();
+            UserPriceRequest existing = latestOrderMap.get(shopName);
 
+            if (existing == null || order.getCreateAt().isAfter(existing.getCreateAt())) {
+                latestOrderMap.put(shopName, order); // 更新为时间更近的订单
+            }
+        }
+
+        // 3. 获取每个shopName对应的最新订单，并更新状态
+        for (UserPriceRequest order : latestOrderMap.values()) {
+            try {
+                //根据订阅计划信息，判断是否过期，如果过期，将用户计划改为2
+                JSONObject node = analyzeOrderData(order);
+                String status = node.getString("status");
+                if (!"ACTIVE".equals(status)){
+                    //如果过期，将用户计划改为2
+                    boolean i = iUserSubscriptionsService.checkUserPlan(order.getShopName(), 2) > 0;
+                    appInsights.trackTrace(order.getShopName() + " 计划过期，将用户计划改为2 " + " 修改状态: " + i);
+                }
+            } catch (Exception e) {
+                appInsights.trackTrace("用户： " + order.getShopName() + " 获取订阅计划数据 errors : " + e);
+            }
+        }
+    }
+
+    //根据用户accessToken和订单id分析数据，获取数据
+    public JSONObject analyzeOrderData(UserPriceRequest userPriceRequest) {
         String query = getSubscriptionQuery(userPriceRequest.getSubscriptionId());
         String infoByShopify;
+        String env = System.getenv("ApplicationEnv");
         //根据新的集合获取这个订阅计划的信息
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", null), query));
         } else {
             infoByShopify = getShopifyData(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", "en", query));
         }
-
-        //根据订阅计划信息，判断是否是第一个月的开始，是否要添加额度
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null) {
-            appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务添加字符额度获取数据失败" + " token: " + userPriceRequest.getAccessToken());
-            return;
+            appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务根据订单id获取数据失败" + " token: " + userPriceRequest.getAccessToken());
+            return null;
         }
         JSONObject node = root.getJSONObject("node");
         if (node == null) {
             //用户卸载，计划会被取消，但不确定其他情况
-            return;
+            return null;
         }
+        return node;
+    }
+
+
+    //获取用户订阅选项并判断是否添加额度
+    public void addCharsByUserData(UserPriceRequest userPriceRequest) {
+
+        //根据新的集合获取这个订阅计划的信息
+        JSONObject node = analyzeOrderData(userPriceRequest);
         String name = node.getString("name");
         String status = node.getString("status");
         String createdAt = node.getString("createdAt");
@@ -154,6 +200,8 @@ public class TaskService {
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
             appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 添加字符额度：" + chars);
             translationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, userPriceRequest.getShopName(), chars, 0, 0, 0, 0));
+            //将用户免费Ip清零
+            iUserIpService.update(new UpdateWrapper<UserIpDO>().eq("shop_name", userPriceRequest.getShopName()).set("times", 0).set("first_email", 0).set("second_email", 0));
         }
     }
 
@@ -272,7 +320,7 @@ public class TaskService {
                     //词汇表改为0
                     iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userTrialsDO.getShopName()).set("status", 0));
                 } catch (Exception e) {
-                    appInsights.trackTrace(userTrialsDO.getShopName() + "用户  error 修改用户计划失败: " + e.getMessage());
+                    appInsights.trackTrace(userTrialsDO.getShopName() + "用户  errors 修改用户计划失败: " + e.getMessage());
                 }
             }
         }

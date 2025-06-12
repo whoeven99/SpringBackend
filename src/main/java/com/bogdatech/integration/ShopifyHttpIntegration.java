@@ -107,7 +107,7 @@ public class ShopifyHttpIntegration {
                     return jsonObject.getString("data");
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("registerTransaction error: " + "用户： " + request.getShopName() + " 目标： " + request.getTarget() + e.getMessage());
+                appInsights.trackTrace("registerTransaction errors : " + "用户： " + request.getShopName() + " 目标： " + request.getTarget() + e.getMessage());
             }
 
             // 如果没有成功，等待一段时间再重试

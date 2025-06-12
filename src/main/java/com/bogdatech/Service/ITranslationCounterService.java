@@ -1,5 +1,6 @@
 package com.bogdatech.Service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
@@ -13,4 +14,5 @@ public interface ITranslationCounterService extends IService<TranslationCounterD
 
     Boolean updateCharsByShopName(TranslationCounterRequest request);
 
+    TranslationCounterDO getOneForUpdate(String shopName);
 }

@@ -259,7 +259,7 @@ public class JsoupUtils {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
             appInsights.trackTrace("普通文本： " + content + " variable提示词: " + prompt);
-            if ("ar".equals(target)) {
+            if ("ar".equals(target) || "af".equals(target)) {
                 return singleTranslate(content, prompt, counter, target);
             } else {
                 content = " " + content + " ";
@@ -277,13 +277,13 @@ public class JsoupUtils {
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("ro".equals(request.getSource()) || "hi".equals(target) || "th".equals(target) || "de".equals(target)) {
                 return douBaoTranslate(target, prompt, content, counter);
             }
 
             return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
         } catch (Exception e) {
-            appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
+            appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
             return singleTranslate(content, prompt, counter, target);
         }
 
@@ -320,13 +320,13 @@ public class JsoupUtils {
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("ro".equals(request.getSource()) || "hi".equals(target) || "th".equals(target) || "de".equals(target)) {
                 return douBaoTranslate(target, prompt, content, counter);
             }
 
             return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
         } catch (Exception e) {
-            appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
+            appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
             return singleTranslate(content, prompt, counter, target);
         }
     }
@@ -349,7 +349,7 @@ public class JsoupUtils {
         try {
             sleep(300);
         } catch (Exception e) {
-            appInsights.trackTrace("sleep error： " + e.getMessage());
+            appInsights.trackTrace("sleep errors ： " + e.getMessage());
         }
 
         String resultTranslation;
@@ -367,7 +367,7 @@ public class JsoupUtils {
 
         } catch (Exception e) {
             //mt翻译失败的话，用其他大模型翻译
-            appInsights.trackTrace("短文本翻译 error: " + e.getMessage());
+            appInsights.trackTrace("短文本翻译 errors : " + e.getMessage());
         }
         return request.getContent();
     }
@@ -382,7 +382,7 @@ public class JsoupUtils {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
-                appInsights.trackTrace("MT sleep error： " + ex.getMessage());
+                appInsights.trackTrace("MT sleep errors ： " + ex.getMessage());
             }
             return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
         }
@@ -519,7 +519,7 @@ public class JsoupUtils {
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("递归处理节点报错 error： " + e.getMessage());
+            appInsights.trackTrace("递归处理节点报错 errors ： " + e.getMessage());
         }
     }
 
@@ -658,12 +658,12 @@ public class JsoupUtils {
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("ro".equals(request.getSource()) || "hi".equals(target) || "th".equals(target) || "de".equals(target)) {
                 return douBaoTranslate(target, prompt, content, counter);
             }
             return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
         } catch (Exception e) {
-            appInsights.trackTrace("翻译handle数据报错 error： " + e.getMessage());
+            appInsights.trackTrace("翻译handle数据报错 errors ： " + e.getMessage());
             return singleTranslate(content, prompt, counter, target);
         }
     }

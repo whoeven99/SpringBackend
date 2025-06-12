@@ -142,7 +142,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                 appInsights.trackTrace("Exception during update attempt "
                         + attempt + "errorMessage: "
                         + e.getMessage()
-                        + " error: " + e);
+                        + " errors: " + e);
             }
         }
     }
