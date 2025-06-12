@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.EmailDO;
+import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.EmailIntegration;
@@ -41,10 +42,11 @@ public class UserService {
     private final EmailIntegration emailIntegration;
     private final IEmailService emailServicel;
     private final ITranslatesService translatesService;
+    private final IGlossaryService iGlossaryService;
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
 
     @Autowired
-    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService) {
+    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService, IGlossaryService iGlossaryService) {
         this.usersService = usersService;
         this.taskScheduler = taskScheduler;
         this.translationCounterService = translationCounterService;
@@ -53,6 +55,7 @@ public class UserService {
         this.emailIntegration = emailIntegration;
         this.emailServicel = emailServicel;
         this.translatesService = translatesService;
+        this.iGlossaryService = iGlossaryService;
     }
 
     //添加用户
@@ -109,6 +112,8 @@ public class UserService {
                 translatesService.updateAutoTranslateByShopNameToFalse(userRequest.getShopName());
                 //将用户翻译状态改为0
                 translatesService.updateAllStatusTo0(userRequest.getShopName());
+                //将用户ip关掉
+                iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userRequest.getShopName()).set("status", 0));
                 return true;
             } catch (Exception e) {
                 attempt++;

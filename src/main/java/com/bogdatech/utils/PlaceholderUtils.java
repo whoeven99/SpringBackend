@@ -147,9 +147,9 @@ public class PlaceholderUtils {
      */
     public static String getSimplePrompt(String target, String languagePackId){
         if (languagePackId != null && !languagePackId.isEmpty()){
-            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If it is determined that the text does not need to be translated, please output the original text. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
+            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If it is determined that the text does not need to be translated, please output the original text. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. Preserve the original capitalization in the translation.";
         }
-        return "Translate the following text into " + target + ". If it is determined that the text does not need to be translated, please output the original text. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
+        return "Translate the following text into " + target + ". If it is determined that the text does not need to be translated, please output the original text. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. Preserve the original capitalization in the translation.";
     }
 //    public static String getSimplePrompt(String target, String languagePackId, String sourceText) {
 //        if (languagePackId != null && !languagePackId.isEmpty()) {
@@ -168,9 +168,9 @@ public class PlaceholderUtils {
      */
     public static String getVariablePrompt(String target, String variables, String languagePackId) {
         if (languagePackId != null && !languagePackId.isEmpty()) {
-            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Do not translate any content enclosed in " + variables + " —these are variable placeholders and must remain exactly as they are. Output only the translated text.";
+            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Do not translate any content enclosed in " + variables + " —these are variable placeholders and must remain exactly as they are. Output only the translated text. Preserve the original capitalization in the translation.";
         }
-        return "Translate the following text into " + target + ". Do not translate any content enclosed in " + variables + " —these are variable placeholders and must remain exactly as they are. Output only the translated text.";
+        return "Translate the following text into " + target + ". Do not translate any content enclosed in " + variables + " —these are variable placeholders and must remain exactly as they are. Output only the translated text. Preserve the original capitalization in the translation.";
     }
 
     /**
@@ -183,9 +183,9 @@ public class PlaceholderUtils {
      */
     public static String getGlossaryPrompt(String target, String glossary, String languagePackId) {
         if (languagePackId != null && !languagePackId.isEmpty()) {
-            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text.";
+            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text. Preserve the original capitalization in the translation.";
         }
-        return "Translate the following text into " + target + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text.";
+        return "Translate the following text into " + target + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text. Preserve the original capitalization in the translation.";
     }
 
     /**

@@ -147,4 +147,17 @@ public class UserTypeTokenService {
         userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
     }
 
+
+    /**
+     * 异步测试计数功能
+     * */
+    @Async
+    public void testTokenCount(ShopifyRequest request, String key) {
+        int tokens = 0;
+        for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
+            int token = shopifyService.getTotalWords(request, "tokens", translateResourceDTO);
+            tokens += token;
+        }
+        System.out.println(request.getShopName() + " 用户 " + key + " 模块 消耗 tokens: " + tokens);
+    }
 }

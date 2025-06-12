@@ -149,7 +149,7 @@ public class PrivateKeyService {
         try {
             translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
         } catch (Exception e) {
-            appInsights.trackTrace("translateModel error: " + e.getMessage());
+            appInsights.trackTrace("translateModel errors : " + e.getMessage());
         }
 //      翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
@@ -818,7 +818,7 @@ public class PrivateKeyService {
             // 调用 saveToShopify 方法
             saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
         } catch (Exception e) {
-            appInsights.trackTrace(request.getShopName() + " save to Shopify error : " + e.getMessage());
+            appInsights.trackTrace(request.getShopName() + " save to Shopify errors : " + e.getMessage());
         }
     }
 
@@ -860,7 +860,7 @@ public class PrivateKeyService {
             targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
         } catch (Exception e) {
             //打印错误信息
-            appInsights.trackTrace("translateDataByDatabase error: " + e.getMessage());
+            appInsights.trackTrace("translateDataByDatabase errors : " + e.getMessage());
         }
         if (targetText != null) {
             addData(target, value, targetText);

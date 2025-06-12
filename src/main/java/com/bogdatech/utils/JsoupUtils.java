@@ -18,9 +18,7 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.*;
-import static com.bogdatech.integration.ArkTranslateIntegration.douBaoPromptTranslate;
 import static com.bogdatech.integration.ArkTranslateIntegration.douBaoTranslate;
-import static com.bogdatech.integration.HunYuanIntegration.hunYuanPromptTranslate;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
@@ -252,6 +250,7 @@ public class JsoupUtils {
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
+        String shopName = request.getShopName();
         String prompt;
 
         //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
@@ -259,11 +258,11 @@ public class JsoupUtils {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
             appInsights.trackTrace("普通文本： " + content + " variable提示词: " + prompt);
-            if ("ar".equals(target)) {
-                return singleTranslate(content, prompt, counter, target);
+            if ("ar".equals(target) || "af".equals(target)) {
+                return singleTranslate(content, prompt, counter, target, shopName);
             } else {
                 content = " " + content + " ";
-                return douBaoTranslate(targetLanguage, prompt, content, counter);
+                return douBaoTranslate(shopName, prompt, content, counter);
             }
 
         } else {
@@ -272,19 +271,19 @@ public class JsoupUtils {
         }
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-                return singleTranslate(content, prompt, counter, target);
+            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+                return singleTranslate(content, prompt, counter, target, shopName);
             }
 
             //hi用doubao-1.5-pro-256k翻译
             if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
-                return douBaoTranslate(target, prompt, content, counter);
+                return douBaoTranslate(shopName, prompt, content, counter);
             }
 
-            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
+            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName);
         } catch (Exception e) {
-            appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
-            return singleTranslate(content, prompt, counter, target);
+            appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
+            return singleTranslate(content, prompt, counter, target, shopName);
         }
 
     }
@@ -304,6 +303,7 @@ public class JsoupUtils {
         String target = request.getTarget();
         String content = request.getContent();
         String targetName = getLanguageName(request.getTarget());
+        String shopName = request.getShopName();
         String prompt;
         if (glossaryString != null) {
             prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
@@ -315,19 +315,19 @@ public class JsoupUtils {
 
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-                return singleTranslate(content, prompt, counter, target);
+            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+                return singleTranslate(content, prompt, counter, target, shopName);
             }
 
             //hi用doubao-1.5-pro-256k翻译
             if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
-                return douBaoTranslate(target, prompt, content, counter);
+                return douBaoTranslate(shopName, prompt, content, counter);
             }
 
-            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
+            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName);
         } catch (Exception e) {
-            appInsights.trackTrace("glossaryTranslationModel error： " + e.getMessage());
-            return singleTranslate(content, prompt, counter, target);
+            appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
+            return singleTranslate(content, prompt, counter, target, shopName);
         }
     }
 
@@ -349,7 +349,7 @@ public class JsoupUtils {
         try {
             sleep(300);
         } catch (Exception e) {
-            appInsights.trackTrace("sleep error： " + e.getMessage());
+            appInsights.trackTrace("sleep errors ： " + e.getMessage());
         }
 
         String resultTranslation;
@@ -361,13 +361,13 @@ public class JsoupUtils {
                 String targetLanguage = getLanguageName(target);
                 String prompt = getShortPrompt(targetLanguage);
                 appInsights.trackTrace("短文本翻译： " + request.getContent() + " 提示词: " + prompt);
-                resultTranslation = singleTranslate(request.getContent(), prompt, counter, target);
+                resultTranslation = singleTranslate(request.getContent(), prompt, counter, target, request.getShopName());
             }
             return resultTranslation;
 
         } catch (Exception e) {
             //mt翻译失败的话，用其他大模型翻译
-            appInsights.trackTrace("短文本翻译 error: " + e.getMessage());
+            appInsights.trackTrace("短文本翻译 errors : " + e.getMessage());
         }
         return request.getContent();
     }
@@ -382,7 +382,7 @@ public class JsoupUtils {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
-                appInsights.trackTrace("MT sleep error： " + ex.getMessage());
+                appInsights.trackTrace("MT sleep errors ： " + ex.getMessage());
             }
             return callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
         }
@@ -519,7 +519,7 @@ public class JsoupUtils {
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("递归处理节点报错 error： " + e.getMessage());
+            appInsights.trackTrace("递归处理节点报错 errors ： " + e.getMessage());
         }
     }
 
@@ -648,23 +648,24 @@ public class JsoupUtils {
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
+        String shopName = request.getShopName();
         //handle特供翻译， handle特用提示词
         String prompt = getHandlePrompt(targetLanguage);
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-                return singleTranslate(content, prompt, counter, target);
+            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+                return singleTranslate(content, prompt, counter, target,shopName);
             }
 
             //hi用doubao-1.5-pro-256k翻译
             if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
-                return douBaoTranslate(target, prompt, content, counter);
+                return douBaoTranslate(shopName, prompt, content, counter);
             }
-            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL);
+            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName);
         } catch (Exception e) {
-            appInsights.trackTrace("翻译handle数据报错 error： " + e.getMessage());
-            return singleTranslate(content, prompt, counter, target);
+            appInsights.trackTrace("翻译handle数据报错 errors ： " + e.getMessage());
+            return singleTranslate(content, prompt, counter, target, shopName);
         }
     }
 }

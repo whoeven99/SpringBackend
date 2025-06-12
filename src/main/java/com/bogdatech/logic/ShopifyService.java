@@ -140,7 +140,7 @@ public class ShopifyService {
             }
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
         } catch (Exception e) {
-            appInsights.trackTrace(request.getShopName() + "用户 " + request.getTarget() + "目标 方法： " + method + " 统计字符数失败 error： " + e.getMessage());
+            appInsights.trackTrace(request.getShopName() + "用户 " + request.getTarget() + "目标 方法： " + method + " 统计字符数失败 errors ： " + e.getMessage());
         }
         return counter.getTotalChars();
     }
@@ -167,7 +167,7 @@ public class ShopifyService {
             rootNode = objectMapper.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
 //            System.out.println("解析JSON数据失败： " + translateResource);
-            appInsights.trackTrace("解析JSON数据失败 error： " + translateResource);
+            appInsights.trackTrace("解析JSON数据失败 errors： " + translateResource);
         }
         return rootNode;
     }
@@ -238,7 +238,7 @@ public class ShopifyService {
                 try {
                     calculateExactToken(contentNode, counter, translatedContent, translateResourceDTO, request);
                 } catch (Exception e) {
-                    appInsights.trackTrace("error 计数失败的原因： " + e.getMessage());
+                    appInsights.trackTrace("errors 计数失败的原因： " + e.getMessage());
                     return;
                 }
                 break;
@@ -635,7 +635,7 @@ public class ShopifyService {
             }
         } catch (Exception e) {
             //如果出现异常，则跳过, 翻译其他的内容
-            appInsights.trackTrace("fetchNextPage error: " + e.getMessage());
+            appInsights.trackTrace("fetchNextPage errors : " + e.getMessage());
         }
         if (infoByShopify == null) {
             return null;
@@ -789,7 +789,7 @@ public class ShopifyService {
                     }
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
-                    appInsights.trackTrace("getTranslationItemsInfo error: " + e.getMessage());
+                    appInsights.trackTrace("getTranslationItemsInfo errors : " + e.getMessage());
                     continue;
                 }
                 if (infoByShopify == null) {
@@ -813,7 +813,7 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("getTranslationItemsInfoAll error: 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
+            appInsights.trackTrace("getTranslationItemsInfoAll errors : 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
         }
         return result;
     }
@@ -1151,7 +1151,7 @@ public class ShopifyService {
             storingDataPublisherService.storingData(json);
 //
         } catch (Exception e) {
-            appInsights.trackTrace(request.getShopName() + " save to Shopify error : " + e.getMessage());
+            appInsights.trackTrace(request.getShopName() + " save to Shopify errors : " + e.getMessage());
         }
 //                Map<String, Object> variables = new HashMap<>();
 //        variables.put("resourceId", resourceId);

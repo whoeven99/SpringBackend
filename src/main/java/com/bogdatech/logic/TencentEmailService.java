@@ -49,6 +49,32 @@ public class TencentEmailService {
                 new TencentSendEmailRequest(134741L, templateData, ONLINE_NOT_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, "notification@ciwi.ai"));
     }
 
+    /**
+     * 发送IP请求即将不足的邮件
+     * */
+    public Boolean sendEmailByIpRunningOut(String shopName) {
+        UsersDO userByName = usersService.getUserByName(shopName);
+        String name = parseShopName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("user", userByName.getFirstName());
+        templateData.put("shop_name", name);
+        return emailIntegration.sendEmailByTencent(
+                new TencentSendEmailRequest(141470L, templateData, EMAIL_IP_RUNNING_OUT, TENCENT_FROM_EMAIL, userByName.getEmail()));
+    }
+
+    /**
+     * 发送IP请求不足的邮件
+     * */
+    public Boolean sendEmailByIpOut(String shopName) {
+        UsersDO userByName = usersService.getUserByName(shopName);
+        String name = parseShopName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("user", userByName.getFirstName());
+        templateData.put("shop_name", name);
+        return emailIntegration.sendEmailByTencent(
+                new TencentSendEmailRequest(141471L, templateData, EMAIL_IP_OUT, TENCENT_FROM_EMAIL, userByName.getEmail()));
+    }
+
     public Boolean sendAutoTranslateEmail(String shopName) {
         String name = parseShopName(shopName);
         UsersDO usersDO = usersService.getUserByName(shopName);
