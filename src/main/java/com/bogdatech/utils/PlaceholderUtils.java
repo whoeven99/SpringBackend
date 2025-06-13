@@ -195,7 +195,8 @@ public class PlaceholderUtils {
      * @return handle类型的提示词
      */
     public static String getHandlePrompt(String target) {
-        return "Translate each word in the following handle into " + target + ". Keep the '-' separators as they are. Output only the translated handle.";
+        return "Translate the following text into " + target + ". If it is determined that the text does not need to be translated, please output the original text. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. Preserve the original capitalization in the translation.";
+//        return "Translate each word in the following handle into " + target + ". Keep the '-' separators as they are. Output only the translated handle.";
     }
 
 

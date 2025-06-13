@@ -31,6 +31,7 @@ import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
+import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
 @RestController
 public class TestController {
@@ -194,5 +195,10 @@ public class TestController {
             userTypeTokenService.testTokenCount(request, key);
         }
         System.out.println("统计结束！！！");
+    }
+
+    @GetMapping("/testHandle")
+    public String testHandle(String value) {
+        return replaceHyphensWithSpaces(value);
     }
 }
