@@ -138,6 +138,8 @@ public class JudgeTranslateUtils {
             return false;
         }
 
+        //判断icon相关数据，icon同时包含heading，test，json才翻译
+
         //第一步： 检查是否为不翻译的key
         for (String substring : OLD_NO_TRANSLATE) {
             if (key.contains(substring)) {
