@@ -120,7 +120,7 @@ public class JudgeTranslateUtils {
     private static final int HASH_PREFIX_MAX_LENGTH = 90;
     private static final int HASH_CONTAINS_MAX_LENGTH = 30;
     private static final int SLASH_CONTAINS_MAX_LENGTH = 20; // 可改为15
-
+    private static final Pattern ICON_MATH_PATTERN = Pattern.compile(".*\\.icon_\\d+:.*"); // icon_X 类型
 
     /**
      * 判断给定的key是否需要翻译
@@ -138,7 +138,10 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        //判断icon相关数据，icon同时包含heading，test，json才翻译
+        //判断icon相关数据
+        if (ICON_MATH_PATTERN.matcher(key).matches()) {
+            return false;
+        }
 
         //第一步： 检查是否为不翻译的key
         for (String substring : OLD_NO_TRANSLATE) {
