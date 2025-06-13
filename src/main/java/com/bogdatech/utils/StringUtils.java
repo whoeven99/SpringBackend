@@ -143,4 +143,14 @@ public class StringUtils {
 
         return html.trim();
     }
+
+    /**
+     * 将-替换为空格
+     * */
+    public static String replaceHyphensWithSpaces(String input) {
+        if (input == null) {
+            return null;
+        }
+        return input.replace("-", " ");
+    }
 }
