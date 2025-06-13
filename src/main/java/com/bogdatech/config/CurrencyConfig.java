@@ -161,11 +161,26 @@ public class CurrencyConfig {
     public static final Map<String, Object> XOF = new HashMap<>();
     public static final Map<String, Object> YER = new HashMap<>();
     public static final Map<String, Object> ZMW = new HashMap<>();
+    public static final Map<String, Object> STD = new HashMap<>();
+    public static final Map<String, Object> STN = new HashMap<>();
+    public static final String defaultPic = "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/flag-default.webp";
+
     static {
         // AFN
         AFN.put("currency", "Afghan Afghani");
         AFN.put("code", "AFN");
         AFN.put("symbol", "؋");
+
+
+        //STN
+        STN.put("currency", "São Tomé & Príncipe Dobra (2018–present)");
+        STN.put("code", "STN");
+        STN.put("symbol", "Db");
+
+        // STD
+        STD.put("currency", "São Tomé & Príncipe Dobra (1977–2017)");
+        STD.put("code", "STD");
+        STD.put("symbol", "Db");
 
 
         // ALL
@@ -1081,5 +1096,7 @@ public class CurrencyConfig {
         ZMW.put("flag", "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/ZM.webp");
         KID.put("flag", "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/KI.webp");
         LVL.put("flag", "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/LV.webp");
+        STD.put("flag", "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/STD.webp");
+        STN.put("flag", "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/STD.webp");
     }
 }

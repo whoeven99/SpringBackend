@@ -271,7 +271,7 @@ public class JsoupUtils {
         }
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return singleTranslate(content, prompt, counter, target, shopName);
             }
 
@@ -315,7 +315,7 @@ public class JsoupUtils {
 
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return singleTranslate(content, prompt, counter, target, shopName);
             }
 
@@ -654,7 +654,7 @@ public class JsoupUtils {
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return singleTranslate(content, prompt, counter, target,shopName);
             }
 

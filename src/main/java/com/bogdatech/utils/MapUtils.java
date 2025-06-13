@@ -8,6 +8,8 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Component
 public class MapUtils {
     public static Map<String, Object> getCurrencyDOS(CurrenciesDO currenciesDO) {
@@ -23,9 +25,16 @@ public class MapUtils {
         try {
             Field field = CurrencyConfig.class.getField(currenciesDO.getCurrencyCode().toUpperCase());
             Map<String, Object> currencyInfo = (Map<String, Object>) field.get(null);
-            map.put("symbol", currencyInfo.get("symbol"));
+            if (currencyInfo != null){
+                map.put("symbol", currencyInfo.get("symbol"));
+            }else {
+                map.put("symbol", "-");
+                appInsights.trackTrace("符号错误 ： " + currenciesDO.getShopName());
+            }
+
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+            System.out.println(currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
+            appInsights.trackTrace(" currency error :  " + e.getMessage());
         }
         return map;
     }
