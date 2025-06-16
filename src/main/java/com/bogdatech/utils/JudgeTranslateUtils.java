@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.StringUtils.isNumber;
 
@@ -21,6 +22,7 @@ public class JudgeTranslateUtils {
             ONLINE_STORE_THEME_LOCALE_CONTENT
     );
 
+    //白名单数据
     public static final Pattern TRANSLATABLE_KEY_PATTERN =
             Pattern.compile(".*(heading|description|content|title|label|product|faq|header|des|custom_html|text|slide|name|checkout).*");
 
@@ -131,21 +133,25 @@ public class JudgeTranslateUtils {
      */
     public static boolean shouldTranslate(String key, String value) {
         if (value == null || value.trim().isEmpty()) {
+            printTranslateReason(value + " is null or empty");
             return false;
         }
 
         if(key.contains("captions")){
+            printTranslateReason("key包含captions");
             return false;
         }
 
         //判断icon相关数据
         if (ICON_MATH_PATTERN.matcher(key).matches()) {
+            printTranslateReason("icon相关数据");
             return false;
         }
 
         //第一步： 检查是否为不翻译的key
         for (String substring : OLD_NO_TRANSLATE) {
             if (key.contains(substring)) {
+                printTranslateReason("key包含" + substring +"的字符");
                 return false;
             }
         }
@@ -153,6 +159,7 @@ public class JudgeTranslateUtils {
         // 第二步：检查是否为明确不翻译的key
         for (String substring : NO_TRANSLATE_KEYS) {
             if (key.contains(substring)) {
+                printTranslateReason("key包含" + substring +"的字符");
                 return false;
             }
         }
@@ -161,6 +168,7 @@ public class JudgeTranslateUtils {
         if (key.contains(".json")) {
             for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
                 if (key.contains(substring)) {
+                    printTranslateReason("key包含.json且包含" + substring +"的字符");
                     return false;
                 }
             }
@@ -168,6 +176,7 @@ public class JudgeTranslateUtils {
 
         // 第十四步，如果key包含color 但 是html， 翻译
         if (key.contains("color") && !isHtml(value)) {
+            printTranslateReason("key包含color且不是html");
             return false;
         }
 
@@ -185,88 +194,105 @@ public class JudgeTranslateUtils {
      */
     public static boolean generalTranslate(String key, String value) {
         if (isHtml(value)){
+            printTranslateReason(value + "是html");
             return true;
         }
         // 第四步：检查value包含px的情况
         if (value.contains("px")) {
+            printTranslateReason(value + "包含px");
             return false;
         }
 
         //第五步检查value是否为TRUE或FLASE
         if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+            printTranslateReason(value + "是true或false");
             return false;
         }
 
         //第六步，1.以#开头，且长度不超过90  2. 包含#，且长度不超过30
         if (value.startsWith("#") && value.length() <= HASH_PREFIX_MAX_LENGTH) {
+            printTranslateReason(value + "以#开头，且长度不超过90");
             return false;
         }
 
         if (value.contains("#") && value.length() <= HASH_CONTAINS_MAX_LENGTH) {
+            printTranslateReason(value + "包含#，且长度不超过30");
             return false;
         }
 
         // 第七步，纯数字
         if (PURE_NUMBER.matcher(value).matches()) {
+            printTranslateReason(value + "是纯数字");
             return false;
         }
 
         // 第八步，包含http://、https://或shopify://
         for (String prefix : URL_PREFIXES) {
             if (value.contains(prefix)) {
+                printTranslateReason(value + "包含" + prefix);
                 return false;
             }
         }
 
         // 第九步，包含/，且长度不超过20
         if (value.contains("/") && value.length() <= SLASH_CONTAINS_MAX_LENGTH) {
+            printTranslateReason(value + "包含/，且长度不超过20");
             return false;
         }
 
         // 第十步，包含-或—，检查特定模式
         if (value.contains("-") || value.contains("—")) {
             if (DASH_PATTERN.matcher(value).matches()) {
+                printTranslateReason(value + "包含-或—，且符合特定模式");
                 return false;
 
             }
             // 仅包含数字、全大写字母、标点符号，且有-或—
             if (DASH_WITH_HYPHEN.matcher(value).matches()) {
+                printTranslateReason(value + "仅包含数字、全大写字母、标点符号，且有-或—");
                 return false;
             }
         }
 
         // 第十一步，包含<svg>
         if (value.contains("<svg>")) {
+            printTranslateReason(value + "包含<svg>");
             return false;
         }
 
         // 第十二步，包含电话号码
         if (PHONE_NUMBER_PATTERN.matcher(value).matches()) {
+            printTranslateReason(value + "包含电话号码");
             return false;
         }
 
         //第十三步，包含邮箱
         if (EMAIL_PATTERN.matcher(value).matches()) {
+            printTranslateReason(value + "包含邮箱");
             return false;
         }
 
         //如果值为纯数字,小数或负数的话，不翻译
         if (isNumber(value)) {
+            printTranslateReason(value + "是纯数字,小数或负数");
             return false;
         }
 
         //如果是UUID类别的数据。不翻译
         if (UUID_PATTERN.matcher(value).matches()) {
+            printTranslateReason(value + "是UUID类别的数据");
             return false;
         }
 
         //如果是base64编码的数据，不翻译
         if (BASE64_PATTERN.matcher(value).matches()) {
+            printTranslateReason(value + "是base64编码的数据");
             return false;
         }
 
         //如果是32位十六进制字符串值，不翻译
         if (HASH_PATTERN.matcher(value).matches()) {
+            printTranslateReason(value + "是32位十六进制字符串值");
             return false;
         }
 
@@ -280,6 +306,14 @@ public class JudgeTranslateUtils {
      * @return true表示需要翻译，false表示不需要翻译
      */
     public static boolean metaTranslate(String value) {
+        printTranslateReason(value + "是left、right、top、bottom");
         return !value.equals("left") && !value.equals("right") && !value.equals("top") && !value.equals("bottom");
+    }
+
+    /**
+     * 打印被白名单和黑名单命中的理由
+     * */
+    public static void printTranslateReason(String reason) {
+        appInsights.trackTrace("命中的理由： " + reason);
     }
 }
