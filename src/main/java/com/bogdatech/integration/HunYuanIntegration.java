@@ -78,7 +78,7 @@ public class HunYuanIntegration {
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
                     userTranslate.put(shopName, sourceText);
-                    System.out.println(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                    appInsights.trackTrace(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     return targetText;
                 } else {
                     appInsights.trackTrace("重试 Hunyuan errors " + attempt);
