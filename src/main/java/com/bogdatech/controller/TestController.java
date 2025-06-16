@@ -82,7 +82,7 @@ public class TestController {
         request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
         JSONObject infoByShopify = getInfoByShopify(request, body);
-        if (infoByShopify == null) {
+        if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }
         return infoByShopify.toString();

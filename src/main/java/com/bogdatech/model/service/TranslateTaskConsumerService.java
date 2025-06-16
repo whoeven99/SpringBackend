@@ -36,15 +36,17 @@ public class TranslateTaskConsumerService {
     private final ITranslationUsageService translationUsageService;
     private final TencentEmailService tencentEmailService;
     private final IUsersService usersService;
+    private final TranslateTaskPublisherService translateTaskPublisherService;
 
     @Autowired
-    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, ITranslationUsageService translationUsageService, TencentEmailService tencentEmailService, IUsersService usersService) {
+    public TranslateTaskConsumerService(TranslateService translateService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, ITranslationUsageService translationUsageService, TencentEmailService tencentEmailService, IUsersService usersService, TranslateTaskPublisherService translateTaskPublisherService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.translationUsageService = translationUsageService;
         this.tencentEmailService = tencentEmailService;
         this.usersService = usersService;
+        this.translateTaskPublisherService = translateTaskPublisherService;
     }
 
     /**
@@ -64,7 +66,8 @@ public class TranslateTaskConsumerService {
             List<Integer> integers = translatesService.readStatusInTranslatesByShopName(shopName);
             for (Integer integer : integers) {
                 if (integer == 2) {
-                    channel.basicNack(rawMessage.getMessageProperties().getDeliveryTag(), false, true);
+                    channel.basicAck(rawMessage.getMessageProperties().getDeliveryTag(), false);
+                    translateTaskPublisherService.sendScheduledTranslateTask(json);
                     return;
                 }
             }
@@ -72,6 +75,11 @@ public class TranslateTaskConsumerService {
             TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
             Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
             int usedChars = request1.getUsedChars();
+            // 如果字符超限，则直接返回字符超限
+            if (usedChars >= remainingChars) {
+                channel.basicAck(rawMessage.getMessageProperties().getDeliveryTag(), false);
+                return;
+            }
 
             translatesService.updateTranslateStatus(translateDTO.getShopName(), 2, translateDTO.getTarget(), translateDTO.getSource(), translateDTO.getAccessToken());
             //从user表里面获取token

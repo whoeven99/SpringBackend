@@ -16,10 +16,14 @@ public class RabbitMQConfig {
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setHost(System.getenv(RABBIT_MQ_HOST));
+//        connectionFactory.setHost(System.getenv(RABBIT_MQ_HOST));
+//        connectionFactory.setPort(5672);
+//        connectionFactory.setUsername(System.getenv(RABBIT_MQ_USERNAME));
+//        connectionFactory.setPassword(System.getenv(RABBIT_MQ_PASSWORD));
+        connectionFactory.setHost("43.155.137.91");
+        connectionFactory.setUsername("testRabbitMQzz");
+        connectionFactory.setPassword("RMQzztest123");
         connectionFactory.setPort(5672);
-        connectionFactory.setUsername(System.getenv(RABBIT_MQ_USERNAME));
-        connectionFactory.setPassword(System.getenv(RABBIT_MQ_PASSWORD));
         return connectionFactory;
     }
 

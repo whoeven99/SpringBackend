@@ -259,7 +259,7 @@ public class JsoupUtils {
             String variableString = getOuterString(content);
             prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
             appInsights.trackTrace("普通文本： " + content + " variable提示词: " + prompt);
-            if ("ar".equals(target) || "af".equals(target)) {
+            if ("ar".equals(target) || "af".equals(target) || "en".equals(target)) {
                 return singleTranslate(content, prompt, counter, target, shopName);
             } else {
                 content = " " + content + " ";

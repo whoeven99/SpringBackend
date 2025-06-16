@@ -148,7 +148,7 @@ public class ShopifyService {
     //计数翻译前所需要的总共的字符数
     public void countBeforeTranslateChars(String infoByShopify, ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils counter, CharacterCountUtils translateCounter, String method) {
         JsonNode rootNode = ConvertStringToJsonNode(infoByShopify, translateResource);
-        if (rootNode == null) {
+        if (rootNode == null || rootNode.isEmpty()) {
             return;
         }
         translateSingleLineTextFieldsRecursively(rootNode, request, counter, translateCounter, translateResource, method);
@@ -181,7 +181,7 @@ public class ShopifyService {
     public void translateObjectNode(ObjectNode objectNode, ShopifyRequest request, CharacterCountUtils counter,
                                     CharacterCountUtils translateCounter, TranslateResourceDTO translateResource, String method) {
         AtomicReference<List<String>> strings = new AtomicReference<>(new ArrayList<>());
-        if (objectNode == null) {
+        if (objectNode == null || objectNode.isEmpty()) {
             return;
         }
         JsonNode translatableResourcesNode = objectNode.path("translatableResources");
@@ -637,7 +637,7 @@ public class ShopifyService {
             //如果出现异常，则跳过, 翻译其他的内容
             appInsights.trackTrace("fetchNextPage errors : " + e.getMessage());
         }
-        if (infoByShopify == null) {
+        if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }
         ObjectMapper objectMapper = new ObjectMapper();
@@ -792,7 +792,7 @@ public class ShopifyService {
                     appInsights.trackTrace("getTranslationItemsInfo errors : " + e.getMessage());
                     continue;
                 }
-                if (infoByShopify == null) {
+                if (infoByShopify == null || infoByShopify.isEmpty()) {
                     continue;
                 }
                 countAllItemsAndTranslatedItems(infoByShopify, shopifyRequest, resource, allCounter, translatedCounter);

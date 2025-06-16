@@ -10,6 +10,7 @@ import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.stereotype.Component;
 
+import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -76,7 +77,8 @@ public class HunYuanIntegration {
                     countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
-                    appInsights.trackTrace(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                    userTranslate.put(shopName, sourceText);
+                    System.out.println(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     return targetText;
                 } else {
                     appInsights.trackTrace("重试 Hunyuan errors " + attempt);
@@ -96,7 +98,6 @@ public class HunYuanIntegration {
                 throw new RuntimeException("Hunyuan errors Retry interrupted", ie);
             }
         }
-
         return sourceText;
     }
 
@@ -131,7 +132,7 @@ public class HunYuanIntegration {
                     countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
-                    appInsights.trackTrace("token hunyuan: " + sourceText + "all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                    appInsights.trackTrace("token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     return targetText;
                 } else {
                     appInsights.trackTrace("重试 Hunyuan errors " + attempt);
