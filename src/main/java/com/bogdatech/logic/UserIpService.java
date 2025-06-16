@@ -81,7 +81,7 @@ public class UserIpService {
         if (currentTimes > freeIp) {
             //加锁查询检查用户额度是否足够
             TranslationCounterDO translationCounterDO = iTranslationCounterService.getOneForUpdate(shopName);
-            appInsights.trackTrace("translationCounterDO = " + translationCounterDO);
+//            appInsights.trackTrace("translationCounterDO = " + translationCounterDO);
             if (translationCounterDO == null) {
                 return false;
             }

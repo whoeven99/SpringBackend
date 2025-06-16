@@ -529,7 +529,7 @@ public class PrivateKeyService {
             updateCharsWhenExceedLimit(counter, request.getShopName(), remainingChars, new TranslateRequest(0, null, request.getAccessToken(), source, target, null));
 
             String targetText;
-            TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
+            TranslateRequest translateRequest = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, target, value);
             //判断是否为HTML
             if (registerTransactionRequest.getTarget().equals(HTML) || isHtml(value)) {
                 try {
@@ -605,7 +605,7 @@ public class PrivateKeyService {
             // 解析HTML文档
             String htmlTranslation;
             try {
-                TranslateRequest translateRequest = new TranslateRequest(0, null, request.getAccessToken(), source, target, value);
+                TranslateRequest translateRequest = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, target, value);
                 htmlTranslation = translatePrivateNewHtml(value, translateRequest, counter, translateContext.getTranslateResource().getResourceType(), translateContext.getApiKey());
             } catch (Exception e) {
                 saveToShopify(value, translation, resourceId, request);

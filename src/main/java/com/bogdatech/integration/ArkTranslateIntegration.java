@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class ArkTranslateIntegration {
@@ -84,6 +85,7 @@ public class ArkTranslateIntegration {
             long totalTokens = chatCompletion.getUsage().getTotalTokens();
             int totalTokensInt = (int) totalTokens;
             countUtils.addChars(totalTokensInt);
+            userTranslate.put(shopName, sourceText);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
             appInsights.trackTrace(shopName + " 用户 token doubao: " + sourceText + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);

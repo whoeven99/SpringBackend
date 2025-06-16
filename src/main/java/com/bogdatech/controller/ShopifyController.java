@@ -66,7 +66,7 @@ public class ShopifyController {
 //            throw new RuntimeException(e);
             appInsights.trackTrace("无法获取shopify数据");
         }
-        if (infoByShopify == null) {
+        if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }
         return infoByShopify.toString();
@@ -230,7 +230,7 @@ public class ShopifyController {
             infoByShopify = getShopifyData(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", "en", query));
         }
 //        System.out.println("infoByShopify = " + infoByShopify);
-        if (infoByShopify == null) {
+        if (infoByShopify == null || infoByShopify.isEmpty()) {
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
@@ -238,7 +238,7 @@ public class ShopifyController {
         //根据订阅计划信息，判断是否是第一个月的开始，是否要添加额度
         JSONObject root = JSON.parseObject(infoByShopify);
         JSONObject node = root.getJSONObject("node");
-        if (node == null) {
+        if (node == null || node.isEmpty()) {
             //用户卸载，计划会被取消，但不确定其他情况
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);

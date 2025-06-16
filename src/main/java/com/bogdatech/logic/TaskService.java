@@ -148,12 +148,12 @@ public class TaskService {
             infoByShopify = getShopifyData(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", "en", query));
         }
         JSONObject root = JSON.parseObject(infoByShopify);
-        if (root == null) {
+        if (root == null || root.isEmpty()) {
             appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务根据订单id获取数据失败" + " token: " + userPriceRequest.getAccessToken());
             return null;
         }
         JSONObject node = root.getJSONObject("node");
-        if (node == null) {
+        if (node == null || node.isEmpty()) {
             //用户卸载，计划会被取消，但不确定其他情况
             return null;
         }

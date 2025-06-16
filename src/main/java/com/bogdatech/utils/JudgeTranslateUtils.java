@@ -21,6 +21,7 @@ public class JudgeTranslateUtils {
             ONLINE_STORE_THEME_LOCALE_CONTENT
     );
 
+    //白名单数据
     public static final Pattern TRANSLATABLE_KEY_PATTERN =
             Pattern.compile(".*(heading|description|content|title|label|product|faq|header|des|custom_html|text|slide|name|checkout).*");
 

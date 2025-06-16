@@ -24,6 +24,7 @@ import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
+import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.ModelUtils.translateModel;
@@ -180,7 +181,7 @@ public class TranslateController {
             translateModel.removeIf("handle"::equals);
             handleFlag = true;
         }
-        appInsights.trackTrace(clickTranslateRequest.getShopName() + "用户要翻译的数据" + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
+        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
         //修改模块的排序
         List<String> translateResourceDTOS = null;
         try {
@@ -204,13 +205,6 @@ public class TranslateController {
         translateService.stopTranslation(shopName);
     }
 
-    /**
-     *  一键存储数据库流程
-     */
-    @PostMapping("/saveTranslateText")
-    public void saveTranslateText(@RequestBody TranslateRequest request) {
-        translateService.saveTranslateText(request);
-    }
 
     //翻译单个文本数据
     @PostMapping("/translateSingleText")
@@ -308,5 +302,14 @@ public class TranslateController {
         // 将消息发送到用户的路由 key
         amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + clickTranslateRequest.getShopName(), message);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
+    }
+
+    /**
+     * 获取当前用户的value值
+     * */
+    @GetMapping("/getUserValue")
+    public BaseResponse<Object> getUserValue(String shopName) {
+        String value = userTranslate.get(shopName);
+        return new BaseResponse<>().CreateSuccessResponse(value);
     }
 }
