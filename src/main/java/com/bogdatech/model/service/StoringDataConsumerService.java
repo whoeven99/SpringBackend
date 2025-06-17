@@ -33,7 +33,7 @@ public class StoringDataConsumerService {
 
         try {
             CloudInsertRequest cloudInsertRequest = jsonToObject(json, CloudInsertRequest.class);
-            appInsights.trackTrace("接收到存储任务，开始处理： " + cloudInsertRequest);
+//            appInsights.trackTrace("接收到存储任务，开始处理： " + cloudInsertRequest);
             //将翻译后的内容通过ShopifyAPI记录到shopify本地
             // 业务处理
             if (cloudInsertRequest == null) {
