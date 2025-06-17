@@ -55,7 +55,6 @@ import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.shouldTranslate;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
-import static com.bogdatech.utils.PlaceholderUtils.getVariablePrompt;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.countWords;
 
@@ -87,7 +86,7 @@ public class ShopifyService {
     private final int length = 32;
 
     //封装调用云服务器实现获取shopify数据的方法
-    public static String getShopifyData(CloudServiceRequest cloudServiceRequest) {
+    public static String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
         ObjectMapper objectMapper = new ObjectMapper();
         String string;
@@ -132,7 +131,7 @@ public class ShopifyService {
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(getInfoByShopify(request, query));
         } else {
-            infoByShopify = getShopifyData(cloudServiceRequest);
+            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
         }
         try {
             if (infoByShopify == null || infoByShopify.isEmpty()) {
@@ -631,7 +630,7 @@ public class ShopifyService {
             if ("prod".equals(env) || "dev".equals(env)) {
                 infoByShopify = String.valueOf(getInfoByShopify(request, query));
             } else {
-                infoByShopify = getShopifyData(cloudServiceRequest);
+                infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
             }
         } catch (Exception e) {
             //如果出现异常，则跳过, 翻译其他的内容
@@ -785,7 +784,7 @@ public class ShopifyService {
                     if ("prod".equals(env) || "dev".equals(env)) {
                         infoByShopify = String.valueOf(getInfoByShopify(shopifyRequest, query));
                     } else {
-                        infoByShopify = getShopifyData(cloudServiceRequest);
+                        infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
                     }
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容

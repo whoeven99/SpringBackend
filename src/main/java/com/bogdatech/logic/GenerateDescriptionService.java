@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import static com.bogdatech.constants.TranslateConstants.HUN_YUAN_MODEL;
 import static com.bogdatech.integration.HunYuanIntegration.hunYuanUserTranslate;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
+import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getCollectionsQueryById;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getProductsQueryById;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -64,7 +65,7 @@ public class GenerateDescriptionService {
             if ("prod".equals(env) || "dev".equals(env)) {
                 shopifyData = String.valueOf(getInfoByShopify(new ShopifyRequest(shopName, userDO.getAccessToken(), "2025-04", null), query));
             } else {
-                shopifyData = ShopifyService.getShopifyData(new CloudServiceRequest(shopName, userDO.getAccessToken(), "2025-04", null, query));
+                shopifyData = getShopifyDataByCloud(new CloudServiceRequest(shopName, userDO.getAccessToken(), "2025-04", null, query));
             }
         } catch (Exception e) {
             // 如果出现异常，则跳过, 翻译其他的内容

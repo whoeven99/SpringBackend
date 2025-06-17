@@ -306,7 +306,6 @@ public class JudgeTranslateUtils {
      * @return true表示需要翻译，false表示不需要翻译
      */
     public static boolean metaTranslate(String value) {
-        printTranslateReason(value + "是left、right、top、bottom");
         return !value.equals("left") && !value.equals("right") && !value.equals("top") && !value.equals("bottom");
     }
 

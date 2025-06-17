@@ -1,7 +1,9 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.DO.UserSubscriptionsDO;
+import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.model.controller.request.*;
 
 public class TypeConversionUtils {
@@ -103,5 +105,20 @@ public class TypeConversionUtils {
         translateRequest.setShopName(targetListRequest.getShopName());
         translateRequest.setSource(targetListRequest.getSource());
         return translateRequest;
+    }
+
+    //将TranslateContext转化为RabbitMqTranslateVO
+    public static RabbitMqTranslateVO translateContextToRabbitMqTranslateVO(TranslateContext translateContext){
+        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO();
+        rabbitMqTranslateVO.setSource(translateContext.getSource());
+        rabbitMqTranslateVO.setTarget(translateContext.getShopifyRequest().getTarget());
+        rabbitMqTranslateVO.setAccessToken(translateContext.getShopifyRequest().getAccessToken());
+        rabbitMqTranslateVO.setShopName(translateContext.getShopifyRequest().getShopName());
+        rabbitMqTranslateVO.setGlossaryMap(translateContext.getGlossaryMap());
+        rabbitMqTranslateVO.setHandleFlag(translateContext.getHandleFlag());
+        rabbitMqTranslateVO.setLanguagePack(translateContext.getLanguagePackId());
+//        rabbitMqTranslateVO.setShopifyData(translateContext.getShopifyData());
+        rabbitMqTranslateVO.setModeType(translateContext.getTranslateResource().getResourceType());
+        return rabbitMqTranslateVO;
     }
 }

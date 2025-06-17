@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.CannotCreateTransactionException;
@@ -42,8 +41,9 @@ import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
+import static com.bogdatech.logic.RabbitMqTranslateService.getShopifyJsonNode;
+import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
-import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.*;
@@ -319,7 +319,7 @@ public class TranslateService {
             if ("prod".equals(env) || "dev".equals(env)) {
                 shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, query));
             } else {
-                shopifyData = ShopifyService.getShopifyData(cloudServiceRequest);
+                shopifyData = getShopifyDataByCloud(cloudServiceRequest);
             }
         } catch (Exception e) {
             // 如果出现异常，则跳过, 翻译其他的内容
@@ -536,7 +536,7 @@ public class TranslateService {
                 }
             }
         } catch (Exception e) {
-            appInsights.trackTrace("翻译过程中抛出的异常" + e.getMessage());
+            appInsights.trackTrace("翻译过程中抛出的异常 errors " + e.getMessage());
         }
         if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils(), shopifyRequest.getTarget(), source)) {
             return;
@@ -588,7 +588,7 @@ public class TranslateService {
             // 如果 resourceId 和 translatableContent 都已提取，则存储并准备翻译
             if (resourceId != null && translatableContent != null) {
                 judgeAndStoreData(translatableContent, resourceId, judgeData, translateContext.getTranslateResource().getResourceType(),
-                        translatableContentMap, translateContext.getGlossaryMap(), translateContext.getHandleFlag());
+                        translatableContentMap, translateContext.getGlossaryMap(), translateContext.getHandleFlag(), shopifyRequest.getShopName());
             }
         }
     }
@@ -1224,8 +1224,7 @@ public class TranslateService {
     //将获得的TRANSLATION_RESOURCES数据进行判断 存储到不同集合， 对不同集合的数据进行特殊处理
     private void judgeAndStoreData(ArrayNode contentNode, String resourceId, Map<String, List<RegisterTransactionRequest>> judgeData,
                                    String resourceType, Map<String, TranslateTextDO> translatableContentMap, Map<String, Object> glossaryMap
-            , Boolean handleFlag) {
-
+            , Boolean handleFlag, String shopName) {
         for (JsonNode contentItem : contentNode) {
 
             ObjectNode contentItemNode = (ObjectNode) contentItem;
@@ -1286,7 +1285,7 @@ public class TranslateService {
 
             if (type.equals(URI) && "handle".equals(key)) {
                 if (handleFlag) {
-                    judgeData.get(HANDLE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                    judgeData.get(HANDLE).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
                     continue;
                 }
                 continue;
@@ -1306,7 +1305,7 @@ public class TranslateService {
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
                 //如果是html放html文本里面
                 if (isHtml(value)) {
-                    judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                    judgeData.get(HTML).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
                     continue;
                 }
                 if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
@@ -1334,9 +1333,11 @@ public class TranslateService {
                     continue;
                 }
                 if (!metaTranslate(value)) {
+                    printTranslateReason(value + "是left、right、top、bottom");
                     continue;
                 }
-                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+
+                judgeData.get(METAFIELD).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
 
@@ -1347,7 +1348,7 @@ public class TranslateService {
                 for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
                     String glossaryKey = entry.getKey();
                     if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
-                        judgeData.get(GLOSSARY).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+                        judgeData.get(GLOSSARY).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, type));
                         success = true;
                         break;
                     }
@@ -1360,17 +1361,17 @@ public class TranslateService {
             //对从数据库中获取的数据单独处理
             if (isDatabaseResourceType(resourceType)) {
                 //先将type存在target里面
-                judgeData.get(DATABASE).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+                judgeData.get(DATABASE).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
 
             //对product和blog的type用AI翻译
             if (isAiTranslateResourceType(resourceType)) {
                 if (isHtml(value)) {
-                    judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                    judgeData.get(HTML).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
                     continue;
                 }
-                judgeData.get(OPENAI).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));
+                judgeData.get(OPENAI).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
 
@@ -1378,10 +1379,10 @@ public class TranslateService {
             //对value进行判断 plainText
             if ("HTML".equals(type) || isHtml(value)) {
                 //存放在html的list集合里面
-                judgeData.get(HTML).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                judgeData.get(HTML).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
             } else {
                 //存放在plainText的list集合里面
-                judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
             }
         }
 
@@ -1438,16 +1439,6 @@ public class TranslateService {
 
     //将翻译后的数据放入内存中
     public static void addData(String outerKey, String innerKey, String value) {
-//        // 获取外层键对应的内层 Map
-//        ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.get(outerKey);
-//        // 如果外层键不存在，则创建一个新的内层 Map
-//        if (innerMap == null) {
-//            innerMap = new ConcurrentHashMap<>();
-//            SINGLE_LINE_TEXT.put(outerKey, innerMap);
-//        }
-//        // 将新的键值对添加到内层 Map 中
-//        innerMap.put(innerKey, value);
-
         // 使用 computeIfAbsent 原子地初始化 innerMap
         ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.computeIfAbsent(
                 outerKey, key -> new ConcurrentHashMap<>()
@@ -1476,23 +1467,7 @@ public class TranslateService {
         String query = new ShopifyRequestBody().getAfterQuery(translateResource);
         cloudServiceRequest.setBody(query);
 
-        String env = System.getenv("ApplicationEnv");
-        String infoByShopify;
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(request, query));
-        } else {
-            infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
-        }
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            if (infoByShopify == null || infoByShopify.isEmpty()) {
-                return null;
-            }
-            return objectMapper.readTree(infoByShopify);
-        } catch (JsonProcessingException e) {
-            throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
-        }
+        return getShopifyJsonNode(request, cloudServiceRequest, query);
     }
 
     //递归处理下一页数据

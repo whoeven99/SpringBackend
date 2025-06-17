@@ -46,6 +46,7 @@ import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
 import static com.bogdatech.integration.PrivateIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.integration.PrivateIntegration.translatePrivateNewHtml;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
+import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.UserTypeTokenService.getUserTranslatedToken;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
@@ -255,7 +256,7 @@ public class PrivateKeyService {
                     if ("prod".equals(env) || "dev".equals(env)) {
                         shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, query));
                     } else {
-                        shopifyData = shopifyService.getShopifyData(cloudServiceRequest);
+                        shopifyData = getShopifyDataByCloud(cloudServiceRequest);
                     }
                 } catch (Exception e) {
                     // 如果出现异常，则跳过, 翻译其他的内容
@@ -1093,7 +1094,7 @@ public class PrivateKeyService {
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(getInfoByShopify(request, query));
         } else {
-            infoByShopify = shopifyService.getShopifyData(cloudServiceRequest);
+            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
         }
         ObjectMapper objectMapper = new ObjectMapper();
 
