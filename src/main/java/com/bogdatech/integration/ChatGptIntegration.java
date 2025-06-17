@@ -45,7 +45,7 @@ public class ChatGptIntegration {
         prompts.add(messagereq);
         prompts.add(messagersy);
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
-                .setMaxTokens(8)
+                .setMaxTokens(1000)
                 .setTemperature(0.7)
                 .setTopP(0.95)
                 .setFrequencyPenalty(0.0)
