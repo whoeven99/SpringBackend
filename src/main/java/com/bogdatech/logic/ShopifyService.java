@@ -1153,19 +1153,6 @@ public class ShopifyService {
         } catch (Exception e) {
             appInsights.trackTrace(request.getShopName() + " save to Shopify errors : " + e.getMessage());
         }
-//                Map<String, Object> variables = new HashMap<>();
-//        variables.put("resourceId", resourceId);
-//        translation.put("value", translatedValue);
-//        System.out.println("后存储： " + translation);
-//        Object[] translations = new Object[]{
-//                translation // 将HashMap添加到数组中
-//        };
-//        variables.put("translations", translations);
-//        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
-//        CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
-//        String json = objectToJson(cloudServiceRequest);
-//        storingDataPublisherService.storingData(json);
-//        saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
     }
 }
 
