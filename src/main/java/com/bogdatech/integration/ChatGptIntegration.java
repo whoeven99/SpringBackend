@@ -8,6 +8,7 @@ import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.azure.core.exception.HttpResponseException;
+import com.bogdatech.entity.VO.ChatgptVO;
 import com.bogdatech.exception.ClientException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,7 @@ public class ChatGptIntegration {
     @Value("${gpt.deploymentName}")
     private String deploymentName;
 
-    public String chatWithGpt(String prompt) {
+    public ChatgptVO chatWithGpt(String prompt, String sourceText) {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
@@ -36,11 +37,13 @@ public class ChatGptIntegration {
 
         // 模拟聊天交互
         ChatMessage messagereq = new ChatMessage(ChatRole.USER);
-//        ChatMessage messagersy= new ChatMessage(ChatRole.SYSTEM);
-        messagereq.setContent(prompt);
+        ChatMessage messagersy= new ChatMessage(ChatRole.SYSTEM);
+        messagersy.setContent(prompt);
+        messagereq.setContent(sourceText);
 
         List<ChatMessage> prompts = new ArrayList<> ();
         prompts.add(messagereq);
+        prompts.add(messagersy);
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
                 .setMaxTokens(8)
                 .setTemperature(0.7)
@@ -57,9 +60,11 @@ public class ChatGptIntegration {
 
                 ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
                 content = chatCompletions.getChoices().get(0).getMessage().getContent();
-
+                Integer allToken = chatCompletions.getUsage().getTotalTokens();
+                Integer promptToken = chatCompletions.getUsage().getPromptTokens();
+                Integer completionToken = chatCompletions.getUsage().getCompletionTokens();
                 if (content != null && !content.trim().isEmpty()) {
-                    return content;
+                    return new ChatgptVO(content, allToken, promptToken, completionToken);
                 }
             }
             catch (HttpResponseException e) {
@@ -83,7 +88,7 @@ public class ChatGptIntegration {
                     }
             }
         }
-        return content;
+        return new ChatgptVO(content, 0, 0, 0);
     }
 
 
