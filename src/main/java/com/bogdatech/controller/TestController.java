@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
+import com.bogdatech.entity.VO.ChatgptVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.TaskService;
@@ -41,18 +42,16 @@ public class TestController {
     private final TranslateService translateService;
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
-    private final StoringDataPublisherService storingDataPublisherService;
     private final UserTypeTokenService userTypeTokenService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, StoringDataPublisherService storingDataPublisherService, UserTypeTokenService userTypeTokenService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
         this.translateService = translateService;
         this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
-        this.storingDataPublisherService = storingDataPublisherService;
         this.userTypeTokenService = userTypeTokenService;
     }
 
@@ -64,8 +63,8 @@ public class TestController {
     }
 
     @GetMapping("/gpt")
-    public String chat(@RequestParam String prompt) {
-        return chatGptIntegration.chatWithGpt(prompt);
+    public ChatgptVO chat(@RequestParam String prompt, @RequestParam String sourceText) {
+        return chatGptIntegration.chatWithGpt(prompt, sourceText);
     }
 
     @PostMapping("/test/test1")
