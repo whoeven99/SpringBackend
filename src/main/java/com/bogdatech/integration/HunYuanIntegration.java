@@ -1,5 +1,6 @@
 package com.bogdatech.integration;
 
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
@@ -8,6 +9,7 @@ import com.tencentcloudapi.hunyuan.v20230901.HunyuanClient;
 import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsRequest;
 import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.logic.TranslateService.userTranslate;
@@ -15,6 +17,13 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class HunYuanIntegration {
+
+    private final ITranslationCounterService translationCounterService;
+
+    @Autowired
+    public HunYuanIntegration(ITranslationCounterService translationCounterService) {
+        this.translationCounterService = translationCounterService;
+    }
 
     // 静态初始化的 Credential 和 HunyuanClient
     private static final Credential CREDENTIAL;
@@ -43,7 +52,7 @@ public class HunYuanIntegration {
      * @param shopName  店铺名称
      * @return 翻译后的文本
      **/
-    public static String hunYuanTranslate(String sourceText, String prompt, CharacterCountUtils countUtils, String model, String shopName) {
+    public String hunYuanTranslate(String sourceText, String prompt, CharacterCountUtils countUtils, String model, String shopName, Integer limitChars) {
         final int maxRetries = 3;
         final long baseDelayMillis = 1000; // 初始重试延迟为 1 秒
 
@@ -79,6 +88,7 @@ public class HunYuanIntegration {
                     long promptTokens = resp.getUsage().getPromptTokens();
                     userTranslate.put(shopName, sourceText);
                     appInsights.trackTrace(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                    translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
                     return targetText;
                 } else {
                     appInsights.trackTrace("重试 Hunyuan errors " + attempt);

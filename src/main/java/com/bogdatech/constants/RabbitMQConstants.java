@@ -5,7 +5,7 @@ public class RabbitMQConstants {
     public static final String SCHEDULED_TRANSLATE_QUEUE = "scheduled.translate.queue"; //定时任务的队列
     public static final String DEAD_LETTER_QUEUE = "scheduled.translate.dead.letter.queue"; //定时任务死信队列
     public static final String USER_TRANSLATE_DEAD_LETTER_QUEUE = "translate.dead.letter.user.queue"; //用户翻译死信队列
-    public static final String USER_TRANSLATE_QUEUE = "translate.user.queue."; //动态用户翻译队列
+    public static final String USER_TRANSLATE_QUEUE = "translate.user.queue"; //动态用户翻译队列
     public static final String USER_STORE_QUEUE = "translate.user.store.queue"; //用户翻译存储队列
     public static final String USER_STORE_DEAD_LETTER_QUEUE = "translate.user.store.dead.letter.queue"; //用户翻译存储死信队列
 

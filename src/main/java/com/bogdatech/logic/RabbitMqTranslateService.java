@@ -1,19 +1,18 @@
 package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IVocabularyService;
-import com.bogdatech.context.TranslateContext;
-import com.bogdatech.entity.DO.GlossaryDO;
-import com.bogdatech.entity.DO.TranslateResourceDTO;
-import com.bogdatech.entity.DO.TranslateTextDO;
-import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsoupUtils;
+import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -41,7 +40,6 @@ import static com.bogdatech.utils.JsonUtils.stringToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.translateNewHtml;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
@@ -59,9 +57,12 @@ public class RabbitMqTranslateService {
     private final TencentEmailService tencentEmailService;
     private final GlossaryService glossaryService;
     private final AILanguagePackService aiLanguagePackService;
+    private final JsoupUtils jsoupUtils;
+    private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
+    private final ITranslateTasksService translateTasksService;
 
     @Autowired
-    public RabbitMqTranslateService(AmqpTemplate amqpTemplate, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService) {
+    public RabbitMqTranslateService(AmqpTemplate amqpTemplate, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService) {
         this.amqpTemplate = amqpTemplate;
         this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
@@ -70,6 +71,9 @@ public class RabbitMqTranslateService {
         this.tencentEmailService = tencentEmailService;
         this.glossaryService = glossaryService;
         this.aiLanguagePackService = aiLanguagePackService;
+        this.jsoupUtils = jsoupUtils;
+        this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
+        this.translateTasksService = translateTasksService;
     }
 
     /**
@@ -142,7 +146,7 @@ public class RabbitMqTranslateService {
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
 
         //获取目前所使用的AI语言包
-        String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter);
+        String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
         //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
 //        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS);
@@ -211,7 +215,13 @@ public class RabbitMqTranslateService {
 
         //根据模块选择方法调用。
 //        System.out.println("rabbitMqVO: " + rabbitMqTranslateVO);
-        amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO);
+//        amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO);
+        try {
+            String json = objectMapper.writeValueAsString(rabbitMqTranslateVO);
+            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName()));
+        } catch (Exception e) {
+            System.out.println("保存翻译任务失败" + e);
+        }
 
         translateNextPage(rootNode, translateContext, rabbitMqTranslateVO);
     }
@@ -691,7 +701,7 @@ public class RabbitMqTranslateService {
         String source = rabbitMqTranslateVO.getSource();
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
-            htmlTranslation = translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack());
+            htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
         } catch (Exception e) {
             appInsights.trackTrace("html translation errors : " + e.getMessage());
             shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);
@@ -779,7 +789,7 @@ public class RabbitMqTranslateService {
             handleType = HANDLE;
         }
         try {
-            targetString = translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType);
+            targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
         } catch (ClientException e) {
             appInsights.trackTrace("翻译失败 errors ： " + e.getMessage() + " ，继续翻译");
         }
@@ -866,13 +876,13 @@ public class RabbitMqTranslateService {
      */
     public void translateAllGlossaryData(String source, String value, String resourceId, CharacterCountUtils counter
             , Map<String, Object> translation, ShopifyRequest shopifyRequest, Map<String, String> keyMap1, Map<String
-            , String> keyMap0, String languagePack, String modeType) {
+            , String> keyMap0, String languagePack, String modeType, Integer limitChars) {
         String targetText;
         TranslateRequest translateRequest = new TranslateRequest(0, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value);
         //判断是否为HTML
         if (isHtml(value)) {
             try {
-                targetText = translateGlossaryHtml(value, translateRequest, counter, null, keyMap0, keyMap1, languagePack);
+                targetText = jsoupUtils.translateGlossaryHtml(value, translateRequest, counter, null, keyMap0, keyMap1, languagePack, limitChars);
                 targetText = isHtmlEntity(targetText);
             } catch (Exception e) {
                 shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
@@ -889,7 +899,7 @@ public class RabbitMqTranslateService {
             //用大模型翻译
             String glossaryString = glossaryText(keyMap1, keyMap0, value);
             //根据关键词生成对应的提示词
-            finalText = glossaryTranslationModel(translateRequest, counter, glossaryString, languagePack);
+            finalText = jsoupUtils.glossaryTranslationModel(translateRequest, counter, glossaryString, languagePack, limitChars);
             addData(shopifyRequest.getTarget(), value, finalText);
             shopifyService.saveToShopify(finalText, translation, resourceId, shopifyRequest);
             printTranslation(finalText, value, translation, shopifyRequest.getShopName(), modeType, resourceId, source);
@@ -1043,7 +1053,7 @@ public class RabbitMqTranslateService {
             }
 
             //走翻译流程
-            String translatedText = translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType);
+            String translatedText = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
             addData(shopifyRequest.getTarget(), value, targetString);
             shopifyService.saveToShopify(translatedText, translation, resourceId, shopifyRequest);
             printTranslation(translatedText, value, translation, shopifyRequest.getShopName(), type, resourceId, source);
@@ -1067,7 +1077,7 @@ public class RabbitMqTranslateService {
                     String original = resultList.get(i);
                     if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
                         //走翻译流程
-                        String translated = translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType);
+                        String translated = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
                         //将数据填回去
                         resultList.set(i, translated);
                     }

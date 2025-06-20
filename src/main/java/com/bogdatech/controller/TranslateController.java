@@ -296,8 +296,8 @@ public class TranslateController {
      * RabbitMq手动翻译
      * */
     @PutMapping("/rabbitMqTranslate")
-    public BaseResponse<Object> rabbitMqTranslate(String shopName, String mes, @RequestBody ClickTranslateRequest clickTranslateRequest) {
-        rabbitMqTranslateConsumerService.handleUserRequest(clickTranslateRequest.getShopName());
+    public BaseResponse<Object> rabbitMqTranslate(@RequestParam String shopName, String mes, @RequestBody ClickTranslateRequest clickTranslateRequest) {
+//        rabbitMqTranslateConsumerService.handleUserRequest(clickTranslateRequest.getShopName());
         String message = objectToJson(clickTranslateRequest);
         // 将消息发送到用户的路由 key
         amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + clickTranslateRequest.getShopName(), mes);
@@ -308,7 +308,7 @@ public class TranslateController {
      * 获取当前用户的value值
      * */
     @GetMapping("/getUserValue")
-    public BaseResponse<Object> getUserValue(String shopName) {
+    public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
         String value = userTranslate.get(shopName);
         return new BaseResponse<>().CreateSuccessResponse(value);
     }

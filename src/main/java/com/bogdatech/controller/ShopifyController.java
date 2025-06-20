@@ -80,7 +80,7 @@ public class ShopifyController {
 
     // 用户消耗的字符数
     @GetMapping("/getConsumedWords")
-    public BaseResponse<Object> getConsumedWords(String shopName) {
+    public BaseResponse<Object> getConsumedWords(@RequestParam String shopName) {
         TranslationCounterDO translationCounterRequests;
         int retryCount = 3; // 最大重试次数
         int retryDelay = 1000; // 重试间隔时间，单位毫秒
@@ -111,14 +111,14 @@ public class ShopifyController {
 
     //获取用户的状态
     @GetMapping("/getUserStatus")
-    public BaseResponse<Object> getUserStatus(String shopName, String source) {
+    public BaseResponse<Object> getUserStatus(@RequestParam String shopName, @RequestParam String source) {
         List<TranslatesDO> translatesDos = translatesService.readInfoByShopName(shopName, source);
         return new BaseResponse<>().CreateSuccessResponse(translatesDos);
     }
 
     //查询需要翻译的总字数-已翻译字符数. 计算翻译的项数
     @PostMapping("/getTotalWords")
-    public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, String method) {
+    public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, @RequestParam String method) {
 //        TranslateResourceDTO resourceType = new TranslateResourceDTO("PRODUCT","250","","");
         for (String key : TOKEN_MAP.keySet()
         ) {
@@ -141,7 +141,7 @@ public class ShopifyController {
 
     //获取用户的额度字符数 和 已使用的字符
     @GetMapping("/getUserLimitChars")
-    public BaseResponse<Object> getUserLimitChars(String shopName) {
+    public BaseResponse<Object> getUserLimitChars(@RequestParam String shopName) {
         TranslationCounterDO translationCounterRequests;
         int retryCount = 3; // 最大重试次数
         int retryDelay = 1000; // 重试间隔时间，单位毫秒
@@ -182,7 +182,7 @@ public class ShopifyController {
 
     //获取用户订阅计划
     @GetMapping("/getUserSubscriptionPlan")
-    public BaseResponse<Object> getUserSubscriptionPlan(String shopName) {
+    public BaseResponse<Object> getUserSubscriptionPlan(@RequestParam String shopName) {
         //判断shopName的值是否有
         if (shopName == null || shopName.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse("shopName is null");

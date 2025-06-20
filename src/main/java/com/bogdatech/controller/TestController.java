@@ -2,16 +2,17 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
+import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -45,9 +46,10 @@ public class TestController {
     private final UserTypeTokenService userTypeTokenService;
     private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
     private final TencentEmailService tencentEmailService;
+    private final ITranslateTasksService translateTasksService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, RabbitMqTranslateService rabbitMqTranslateService, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, RabbitMqTranslateService rabbitMqTranslateService, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -58,6 +60,7 @@ public class TestController {
         this.userTypeTokenService = userTypeTokenService;
         this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
         this.tencentEmailService = tencentEmailService;
+        this.translateTasksService = translateTasksService;
     }
 
     @GetMapping("/ping")
@@ -202,7 +205,7 @@ public class TestController {
     }
 
     @GetMapping("/testHandle")
-    public String testHandle(String value) {
+    public String testHandle(@RequestParam String value) {
         return replaceHyphensWithSpaces(value);
     }
 
@@ -217,7 +220,7 @@ public class TestController {
 
     @PostMapping("/testMqTranslate")
     public void testMqTranslate(@RequestBody ClickTranslateRequest clickTranslateRequest) {
-        rabbitMqTranslateConsumerService.handleUserRequest(clickTranslateRequest.getShopName());
+//        rabbitMqTranslateConsumerService.handleUserRequest(clickTranslateRequest.getShopName());
         userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
         userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
         rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
@@ -226,12 +229,33 @@ public class TestController {
 
     // 停止mq翻译任务
     @GetMapping("/stopMqTask")
-    public void stopMqTask(String shopName) {
+    public void stopMqTask(@RequestParam String shopName) {
         System.out.println("正在翻译的用户： " + userStopFlags);
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
         if (stopFlag != null) {
             stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
             System.out.println("停止成功");
         }
+    }
+
+    /**
+     * 拆分一个大任务为几个小任务，把小任务的数据放到db里的TranslateTasks里面
+     * */
+    @PostMapping("/testDBTranslate1")
+    public void testDBTranslate1(@RequestBody ClickTranslateRequest clickTranslateRequest) {
+        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
+
+    }
+
+    /**
+     * 输入任务id，实现该任务的翻译
+     * */
+    @GetMapping("/testDBTranslate2")
+    public void testDBTranslate2(@RequestParam String taskId) {
+        //根据id获取数据，转化为规定数据类型
+        RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
+        rabbitMqTranslateConsumerService.processMessage(dataToProcess);
     }
 }

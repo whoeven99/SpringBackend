@@ -1,19 +1,28 @@
 package com.bogdatech.config;
 
+import com.alibaba.fastjson.JSON;
+import com.bogdatech.Service.ITranslatesService;
+import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.entity.VO.RabbitMqTranslateVO;
+import com.bogdatech.exception.ClientException;
+import com.bogdatech.logic.RabbitMqTranslateService;
+import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.bogdatech.constants.RabbitMQConstants.*;
+import static com.bogdatech.constants.TranslateConstants.EMAIL;
+import static com.bogdatech.logic.TranslateService.executorService;
 
 @Configuration
 public class RabbitMQConfig {
@@ -45,6 +54,11 @@ public class RabbitMQConfig {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(jackson2JsonMessageConverter());
         return template;
+    }
+
+    @Bean
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        return new RabbitAdmin(connectionFactory);
     }
 
     //在监听器工厂上添加Jackson2JsonMessageConverter方法
@@ -95,7 +109,7 @@ public class RabbitMQConfig {
     }
     //声明用户翻译队列
     @Bean
-    public Queue userTranslateQueue() {
+    public static Queue userTranslateQueue() {
         return QueueBuilder.durable(USER_TRANSLATE_QUEUE)
                 .withArgument("x-dead-letter-exchange", USER_DEAD_LETTER_EXCHANGE)// 指定死信交换机
                 .withArgument("x-dead-letter-routing-key", USER_DEAD_LETTER_ROUTING_KEY)// 指定死信路由键
@@ -177,4 +191,5 @@ public class RabbitMQConfig {
                 .to(userExchange())
                 .with(USER_TRANSLATE_ROUTING_KEY + "#");
     }
+
 }

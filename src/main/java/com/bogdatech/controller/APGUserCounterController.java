@@ -4,10 +4,7 @@ import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.entity.DO.APGUserCounterDO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
 
@@ -25,7 +22,7 @@ public class APGUserCounterController {
      * 用户计数器初始化
      * */
     @GetMapping("/initUserCounter")
-    public BaseResponse<Object> initUserCounter(String shopName){
+    public BaseResponse<Object> initUserCounter(@RequestParam String shopName){
         boolean result = retryWithParam(
                 iapgUserCounterService::initUserCounter,
                 shopName,
@@ -43,7 +40,7 @@ public class APGUserCounterController {
      * 获取用户计数器信息，4项数据
      * */
     @PostMapping("/getUserCounter")
-    public BaseResponse<Object> getUserCounter(String shopName){
+    public BaseResponse<Object> getUserCounter(@RequestParam String shopName){
         APGUserCounterDO userCounter = iapgUserCounterService.getUserCounter(shopName);
         if (userCounter != null){
             return new BaseResponse<>().CreateSuccessResponse(userCounter);

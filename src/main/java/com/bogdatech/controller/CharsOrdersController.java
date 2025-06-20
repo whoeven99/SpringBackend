@@ -35,7 +35,7 @@ public class CharsOrdersController {
 
     //查询status为PENDING的
     @GetMapping("/getPendingOrders")
-    public BaseResponse<Object> getPendingOrders(String  shopName) {
+    public BaseResponse<Object> getPendingOrders(@RequestParam String shopName) {
         List<String> idByShopName = orderService.getIdByShopName(shopName);
         if (idByShopName != null) {
             return new BaseResponse<>().CreateSuccessResponse(idByShopName);

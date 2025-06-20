@@ -17,10 +17,10 @@ public class RabbitMqTask {
     }
 
     // 每 30 分钟检查一次是否有闲置用户队列
-    @Scheduled(fixedDelay = 1800000)
-//    @Scheduled(fixedDelay = 30000)
-    public void cleanup() {
-        //TODO: 需要判断是否还有任务
-        dynamicQueueService.stopAndCleanupInactiveQueues(3600000); // 超过 30 分钟未使用就清理
-    }
+//    @Scheduled(fixedDelay = 1800000)
+////    @Scheduled(fixedDelay = 30000)
+//    public void cleanup() {
+//        //TODO: 需要判断是否还有任务
+//        dynamicQueueService.stopAndCleanupInactiveQueues(3600000); // 超过 30 分钟未使用就清理
+//    }
 }

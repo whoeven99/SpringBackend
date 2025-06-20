@@ -8,10 +8,7 @@ import com.bogdatech.model.controller.request.MailChampSendEmailRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/email")
@@ -27,7 +24,7 @@ public class EmailController {
     }
 
     @PostMapping("/send")
-    public String sendEmail(String toEmail) {
+    public String sendEmail(@RequestParam String toEmail) {
 //        return emailIntegration.sendEmail(new SendEmailRequest(null, CHARACTER_PURCHASE_SUCCESSFUL, "EMAIL", "daoyee@ciwi.ai",
 //                "Welcome to Ciwi.ai! Unlock a New Language Translation Experience", "support@ciwi.ai", "daoyee@ciwi.ai"));
         return mailChimpService.sendTranslateFailMail(new MailChampSendEmailRequest(null, null,
@@ -54,7 +51,7 @@ public class EmailController {
     }
 
     @PostMapping("/sendOnlineEmail")
-    public BaseResponse<Object> sendEmail(String shopName, String target, String source) {
+    public BaseResponse<Object> sendEmail(@RequestParam String shopName, @RequestParam String target, @RequestParam String source) {
         Boolean b = tencentEmailService.sendEmailByOnline(shopName, target, source);
         if(b){
             return new BaseResponse<>().CreateSuccessResponse(true);

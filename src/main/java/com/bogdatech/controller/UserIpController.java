@@ -6,6 +6,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
@@ -27,7 +28,7 @@ public class UserIpController {
      * 初始化额度UserIp表
      * */
     @PostMapping("/addOrUpdateUserIp")
-    public BaseResponse<Object> addOrUpdateUserIp(String shopName) {
+    public BaseResponse<Object> addOrUpdateUserIp(@RequestParam String shopName) {
         boolean result = retryWithParam(
                 iUserIpService::addOrUpdateUserIp,
                 shopName,
@@ -45,7 +46,7 @@ public class UserIpController {
      * 判断额度是否足够，如果足够，额度+1
      * */
     @PostMapping("/checkUserIp")
-    public BaseResponse<Object> checkUserIp(String shopName) {
+    public BaseResponse<Object> checkUserIp(@RequestParam String shopName) {
         Boolean b = userIpService.checkUserIp(shopName);
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(true);
