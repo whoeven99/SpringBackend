@@ -65,4 +65,16 @@ public class JsonUtils {
         }
         return message;
     }
+
+    /**
+     * 将String数据转化为json数据
+     * */
+    public static JsonNode stringToJson(String str) {
+        try {
+            return objectMapper.readTree(str);
+        }catch (Exception e) {
+            System.out.println("String to Json errors: " + e);
+            throw new RuntimeException(e);
+        }
+    }
 }

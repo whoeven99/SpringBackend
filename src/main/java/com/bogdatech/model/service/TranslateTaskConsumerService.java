@@ -52,7 +52,7 @@ public class TranslateTaskConsumerService {
     /**
      * 接收翻译任务，并执行处理
      */
-    @RabbitListener(queues = SCHEDULED_TRANSLATE_QUEUE)
+    @RabbitListener(queues = SCHEDULED_TRANSLATE_QUEUE,concurrency = "1", ackMode = "MANUAL")
     public void scheduledTranslateTask(String json, Channel channel, Message rawMessage) throws IOException {
 //        String deliveryTag = String.valueOf(rawMessage.getMessageProperties().getDeliveryTag());
         TaskTranslateDTO translateDTO = jsonToObject(json, TaskTranslateDTO.class);

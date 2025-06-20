@@ -7,6 +7,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.bogdatech.logic.TranslateService.userStopFlags;
 
 @Component
 public class TestService {
@@ -45,5 +48,7 @@ public class TestService {
             System.out.println("定时任务已停止");
         }
     }
+
+
 }
 

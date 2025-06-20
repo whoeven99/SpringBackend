@@ -28,7 +28,7 @@ public class StoringDataConsumerService {
     /**
      * 接收存储任务,将翻译好的数据异步mq，存储到shopify本地
      * */
-    @RabbitListener(queues = USER_STORE_QUEUE, concurrency = "3")
+    @RabbitListener(queues = USER_STORE_QUEUE, concurrency = "3", ackMode = "MANUAL")
     public void userStoreData(String json, Channel channel, Message rawMessage) throws IOException {
 
         try {

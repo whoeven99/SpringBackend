@@ -22,7 +22,7 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.ShopifyService.getShopifyData;
+import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -75,7 +75,7 @@ public class ShopifyController {
     //通过测试环境调shopify的API
     @PostMapping("/shopifyApi")
     public BaseResponse<Object> shopifyApi(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(getShopifyData(cloudServiceRequest));
+        return new BaseResponse<>().CreateSuccessResponse(getShopifyDataByCloud(cloudServiceRequest));
     }
 
     // 用户消耗的字符数
@@ -227,7 +227,7 @@ public class ShopifyController {
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", null), query));
         } else {
-            infoByShopify = getShopifyData(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", "en", query));
+            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", "en", query));
         }
 //        System.out.println("infoByShopify = " + infoByShopify);
         if (infoByShopify == null || infoByShopify.isEmpty()) {

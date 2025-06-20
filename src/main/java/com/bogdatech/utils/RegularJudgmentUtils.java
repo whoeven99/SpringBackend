@@ -2,6 +2,7 @@ package com.bogdatech.utils;
 
 import java.util.regex.Pattern;
 
+
 public class RegularJudgmentUtils {
     // 正则表达式：只包含字母、数字和标点符号
     private static final Pattern ALPHA_NUM_PUNCT_PATTERN = Pattern.compile("^[a-zA-Z0-9\\p{Punct}]+$");
@@ -25,19 +26,24 @@ public class RegularJudgmentUtils {
         }
         // 第一步：检查是否是JSON， 只包含字母、数字和标点符号. 数字和标点符号。 纯数字 。 纯标点符号
         if (input.contains("{\"") && input.contains("}")) {
+//            printTranslateReason("是json数据");
             return true;
         }
         if (!ALPHA_NUM_PUNCT_PATTERN.matcher(input).matches()) {
+//            printTranslateReason("只包含字母、数字和标点符号. 数字和标点符号");
             return false;
         }
 
         if (NUM_PUNCT_PATTERN.matcher(input).matches()){
+//            printTranslateReason("数字和标点符号");
             return true;
         }
         if(NUM_PATTERN.matcher(input).matches()) {
+//            printTranslateReason("纯数字");
             return true;
         }
         if (input.startsWith("#") && input.length() <= 10){
+//            printTranslateReason("以#开头，长度为10");
             return true;
         }
         // 第二步：统计标点符号数量

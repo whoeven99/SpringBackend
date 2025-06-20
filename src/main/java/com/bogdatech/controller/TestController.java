@@ -7,25 +7,25 @@ import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
-import com.bogdatech.logic.TaskService;
-import com.bogdatech.logic.TestService;
-import com.bogdatech.logic.TranslateService;
-import com.bogdatech.logic.UserTypeTokenService;
+import com.bogdatech.logic.*;
+import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.service.StoringDataPublisherService;
+import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
-import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
@@ -41,19 +41,23 @@ public class TestController {
     private final TranslateService translateService;
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
-    private final StoringDataPublisherService storingDataPublisherService;
+    private final RabbitMqTranslateService rabbitMqTranslateService;
     private final UserTypeTokenService userTypeTokenService;
+    private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
+    private final TencentEmailService tencentEmailService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, StoringDataPublisherService storingDataPublisherService, UserTypeTokenService userTypeTokenService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, RabbitMqTranslateService rabbitMqTranslateService, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
         this.translateService = translateService;
         this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
-        this.storingDataPublisherService = storingDataPublisherService;
+        this.rabbitMqTranslateService = rabbitMqTranslateService;
         this.userTypeTokenService = userTypeTokenService;
+        this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
+        this.tencentEmailService = tencentEmailService;
     }
 
     @GetMapping("/ping")
@@ -105,7 +109,7 @@ public class TestController {
         CharacterCountUtils characterCount = new CharacterCountUtils();
         characterCount.addChars(100);
         LocalDateTime localDateTime = LocalDateTime.now();
-        translateService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, 1000, "zh-CN", "en");
+        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, 1000, "zh-CN", "en");
     }
 
     //获取汇率
@@ -200,5 +204,34 @@ public class TestController {
     @GetMapping("/testHandle")
     public String testHandle(String value) {
         return replaceHyphensWithSpaces(value);
+    }
+
+    @GetMapping("/testThread")
+    public void logThreadPoolStatus() {
+        if (executorService instanceof ThreadPoolExecutor executor) {
+            System.out.println("线程池状态 => 活跃线程数: " + executor.getActiveCount() + ", 总任务数: " + executor.getTaskCount() +
+                            ", 已完成任务数: " + executor.getCompletedTaskCount() + ", 当前排队任务数: " + executor.getQueue().size()
+            );
+        }
+    }
+
+    @PostMapping("/testMqTranslate")
+    public void testMqTranslate(@RequestBody ClickTranslateRequest clickTranslateRequest) {
+        rabbitMqTranslateConsumerService.handleUserRequest(clickTranslateRequest.getShopName());
+        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
+
+    }
+
+    // 停止mq翻译任务
+    @GetMapping("/stopMqTask")
+    public void stopMqTask(String shopName) {
+        System.out.println("正在翻译的用户： " + userStopFlags);
+        AtomicBoolean stopFlag = userStopFlags.get(shopName);
+        if (stopFlag != null) {
+            stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
+            System.out.println("停止成功");
+        }
     }
 }

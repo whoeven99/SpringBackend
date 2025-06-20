@@ -10,7 +10,7 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.model.service.RabbitMqTranslateService;
+import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ public class TranslateController {
     private final ITranslationCounterService translationCounterService;
     private final IUserTypeTokenService userTypeTokenService;
     private final UserTypeTokenService userTypeTokensService;
-    private final RabbitMqTranslateService rabbitMqTranslateService;
+    private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
     private final AmqpTemplate amqpTemplate;
 
     @Autowired
@@ -47,13 +47,13 @@ public class TranslateController {
             TranslateService translateService,
             ITranslatesService translatesService,
             ITranslationCounterService translationCounterService,
-            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService, AmqpTemplate amqpTemplate) {
+            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, AmqpTemplate amqpTemplate) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.userTypeTokenService = userTypeTokenService;
         this.userTypeTokensService = userTypeTokensService;
-        this.rabbitMqTranslateService = rabbitMqTranslateService;
+        this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
         this.amqpTemplate = amqpTemplate;
     }
 
@@ -296,11 +296,11 @@ public class TranslateController {
      * RabbitMq手动翻译
      * */
     @PutMapping("/rabbitMqTranslate")
-    public BaseResponse<Object> rabbitMqTranslate(String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
-        rabbitMqTranslateService.handleUserRequest(clickTranslateRequest.getShopName());
+    public BaseResponse<Object> rabbitMqTranslate(String shopName, String mes, @RequestBody ClickTranslateRequest clickTranslateRequest) {
+        rabbitMqTranslateConsumerService.handleUserRequest(clickTranslateRequest.getShopName());
         String message = objectToJson(clickTranslateRequest);
         // 将消息发送到用户的路由 key
-        amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + clickTranslateRequest.getShopName(), message);
+        amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + clickTranslateRequest.getShopName(), mes);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
