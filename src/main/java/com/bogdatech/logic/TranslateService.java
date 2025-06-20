@@ -1796,41 +1796,41 @@ public class TranslateService {
         String resourceType = singleTranslateVO.getResourceType();
         String type = singleTranslateVO.getType();
 
-        if (translationLogic(singleTranslateVO.getKey(), singleTranslateVO.getContext(), singleTranslateVO.getType(), singleTranslateVO.getResourceType())) {
-            return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-        }
-
-        //对METAOBJECT字段翻译
-        if (resourceType.equals(METAOBJECT)) {
-            if (isJson(value)) {
-                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-            }
-        }
-
-        if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
-            if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-            }
-            //如果包含对应key和value，则跳过
-            if (!shouldTranslate(key, value)) {
-                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-            }
-        }
-        if (resourceType.equals(METAFIELD)) {
-            if (SUSPICIOUS_PATTERN.matcher(value).matches()) {
-                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-            }
-            if (!metaTranslate(value)) {
-                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-            }
-
-            if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
-                //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
-                if (isValidString(value)) {
-                    return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-                }
-            }
-        }
+//        if (translationLogic(singleTranslateVO.getKey(), singleTranslateVO.getContext(), singleTranslateVO.getType(), singleTranslateVO.getResourceType())) {
+//            return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+//        }
+//
+//        //对METAOBJECT字段翻译
+//        if (resourceType.equals(METAOBJECT)) {
+//            if (isJson(value)) {
+//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+//            }
+//        }
+//
+//        if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
+//            if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
+//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+//            }
+//            //如果包含对应key和value，则跳过
+//            if (!shouldTranslate(key, value)) {
+//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+//            }
+//        }
+//        if (resourceType.equals(METAFIELD)) {
+//            if (SUSPICIOUS_PATTERN.matcher(value).matches()) {
+//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+//            }
+//            if (!metaTranslate(value)) {
+//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+//            }
+//
+//            if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
+//                //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
+//                if (isValidString(value)) {
+//                    return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+//                }
+//            }
+//        }
 
         //获取当前翻译token数
         CharacterCountUtils counter = new CharacterCountUtils();
@@ -1868,7 +1868,7 @@ public class TranslateService {
             appInsights.trackTrace("singleTranslate errors : " + e.getMessage());
         }
 
-        return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+        return new BaseResponse<>().CreateErrorResponse(value);
     }
 }
 
