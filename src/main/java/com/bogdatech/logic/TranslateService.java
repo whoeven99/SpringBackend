@@ -1298,7 +1298,7 @@ public class TranslateService {
             }
 
             if (PRODUCT_OPTION.equals(resourceType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
-                //printTranslateReason(value + " 是颜色和尺寸不翻译，在PRODUCT_OPTION模块");
+                printTranslateReason(value + " 是颜色和尺寸不翻译，在PRODUCT_OPTION模块");
                 continue;
             }
 
@@ -1310,7 +1310,7 @@ public class TranslateService {
                     continue;
                 }
                 if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-                    //printTranslateReason(key + "不在白名单");
+                    printTranslateReason(key + "不在白名单, value: " + value);
                     continue;
                 }
                 //如果包含对应key和value，则跳过
@@ -1321,7 +1321,7 @@ public class TranslateService {
             //对METAOBJECT字段翻译
             if (resourceType.equals(METAOBJECT)) {
                 if (isJson(value)) {
-                    //printTranslateReason(value + " 是json数据不翻译，在METAOBJECT模块");
+                    printTranslateReason(value + " 是json数据不翻译，在METAOBJECT模块");
                     continue;
                 }
             }
@@ -1330,9 +1330,11 @@ public class TranslateService {
             if (resourceType.equals(METAFIELD)) {
                 //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
                 if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + " 如UXxSP8cSm，在METAFIELD模块");
                     continue;
                 }
                 if (!metaTranslate(value)) {
+                    printTranslateReason(value + " 包含top,left,right,bottom，在METAFIELD模块");
                     continue;
                 }
                 judgeData.get(METAFIELD).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, type));

@@ -127,10 +127,10 @@ public class TestController {
 
 
     @GetMapping("/testHtml")
-    public void testHtml() {
-        String html = """ 
-                啊手动阀手动阀  
-                """;
+    public void testHtml(@RequestParam String html) {
+//        String html = """
+//                啊手动阀手动阀
+//                """;
         if (isHtml(html)) {
             System.out.println("is html");
         } else {

@@ -32,6 +32,8 @@ public class JsonUtils {
     //判断一个string类型是不是Json数据
     public static boolean isJson(String str) {
         try {
+            //清除空格
+            str = str.replaceAll(" ", "");
             ObjectMapper mapper = new ObjectMapper();
             mapper.readTree(str);
             return true;
