@@ -374,7 +374,7 @@ public class RabbitMqTranslateService {
         //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
 //        translateTextDataByModeType(stringSetMap1, rabbitMqTranslateVO, countUtils);
         translateMapData(stringSetMap1, rabbitMqTranslateVO, countUtils);
-        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, rabbitMqTranslateVO.getShopName(), 0, countUtils.getTotalChars(), 0, 0, 0));
+//        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, rabbitMqTranslateVO.getShopName(), 0, countUtils.getTotalChars(), 0, 0, 0));
     }
 
     /**
@@ -725,7 +725,7 @@ public class RabbitMqTranslateService {
     private boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
         if (userStopFlags.get(shopName).get()) {
             // 更新数据库中的已使用字符数
-            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+//            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”
             translatesService.updateStatusByShopNameAnd2(shopName);
             return true;
@@ -918,7 +918,7 @@ public class RabbitMqTranslateService {
 
         if (counter.getTotalChars() >= remainingChars) {
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
-            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+//            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
 
             throw new ClientException(CHARACTER_LIMIT);
         }
