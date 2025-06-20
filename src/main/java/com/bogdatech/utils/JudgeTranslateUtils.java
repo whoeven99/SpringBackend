@@ -194,7 +194,6 @@ public class JudgeTranslateUtils {
      */
     public static boolean generalTranslate(String key, String value) {
         if (isHtml(value)){
-            printTranslateReason(value + "是html, key是： " + key);
             return true;
         }
         // 第四步：检查value包含px的情况
