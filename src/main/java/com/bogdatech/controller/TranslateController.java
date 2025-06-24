@@ -236,7 +236,8 @@ public class TranslateController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
-        registerTransaction(request, body);
+        String s = registerTransaction(request, body);
+        appInsights.trackTrace("用户 ： " + cloudServiceRequest.getShopName() +" insertTranslatedText : " + s);
     }
 
 

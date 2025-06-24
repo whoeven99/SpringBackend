@@ -323,7 +323,7 @@ public class JsoupUtils {
                 return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
             }
 
-            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName);
+            return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
         } catch (Exception e) {
             appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);

@@ -4,7 +4,9 @@ import com.bogdatech.model.controller.request.CloudInsertRequest;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -39,14 +41,15 @@ public class StoringDataConsumerService {
      * 接收存储任务,将翻译好的数据异步mq，存储到shopify本地
      */
     @RabbitListener(queues = USER_STORE_QUEUE, concurrency = "3", ackMode = "MANUAL")
-    public void userStoreData(String json, Channel channel, Message rawMessage) {
+    public void userStoreData(String json, Channel channel, Message rawMessage,@Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
+        long safeDeliveryTag = deliveryTag;
         storeExecutorService.execute(() -> {
-            storeData(json, channel, rawMessage);
+            storeData(json, channel, safeDeliveryTag);
         });
 
     }
 
-    public void storeData(String json, Channel channel, Message rawMessage) {
+    public void storeData(String json, Channel channel, long rawMessage) {
         CloudInsertRequest cloudInsertRequest = jsonToObject(json, CloudInsertRequest.class);
         ReentrantLock lock = LOCK_MAP.computeIfAbsent(cloudInsertRequest.getShopName(), k -> new ReentrantLock());
         boolean locked = false;
@@ -56,17 +59,17 @@ public class StoringDataConsumerService {
 
             if (!locked) {
                 appInsights.trackTrace("Could not acquire lock for shopName errors : " + cloudInsertRequest.getShopName());
-                channel.basicNack(rawMessage.getMessageProperties().getDeliveryTag(), false, true); // 重试
+                channel.basicNack(rawMessage, false, true); // 重试
                 return;
             }
 
             // 开始业务处理
             saveToShopify(cloudInsertRequest);
-            channel.basicAck(rawMessage.getMessageProperties().getDeliveryTag(), false);
+            channel.basicAck(rawMessage, false);
         } catch (Exception e) {
             appInsights.trackTrace("Error processing shop errors : " + cloudInsertRequest.getShopName() + ", errors : " + e.getMessage());
             try {
-                channel.basicNack(rawMessage.getMessageProperties().getDeliveryTag(), false, true); // 允许重试
+                channel.basicNack(rawMessage, false, true); // 允许重试
             } catch (IOException ex) {
                 appInsights.trackTrace("errors while nacking message errors : " + ex.getMessage());
             }
