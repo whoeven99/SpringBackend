@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 
 @Service
@@ -25,7 +26,7 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
         try {
             rabbitMqTranslateVO = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
         } catch (JsonProcessingException e) {
-            System.out.println("无法转化");
+            appInsights.trackTrace("无法转化 errors ");
             throw new RuntimeException(e);
         }
         return rabbitMqTranslateVO;

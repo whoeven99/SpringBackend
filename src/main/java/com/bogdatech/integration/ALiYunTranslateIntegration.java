@@ -101,7 +101,6 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace(shopName + " 用户 token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
-            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
             return text;
@@ -157,8 +156,6 @@ public class ALiYunTranslateIntegration {
      * @return 翻译后的文本
      */
     public String callWithMessage(String model, String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars) {
-        System.out.println("翻译源文本: " + translateText);
-
         Generation gen = new Generation();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
