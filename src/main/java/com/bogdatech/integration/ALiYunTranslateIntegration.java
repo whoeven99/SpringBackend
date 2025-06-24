@@ -180,7 +180,7 @@ public class ALiYunTranslateIntegration {
             countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("token ali mt : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace( "用户： " + shopName +" token ali mt : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             userTranslate.put(shopName, translateText);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
         } catch (NoApiKeyException | InputRequiredException e) {

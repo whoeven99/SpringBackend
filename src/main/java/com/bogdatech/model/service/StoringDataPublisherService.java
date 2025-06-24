@@ -39,7 +39,7 @@ public class StoringDataPublisherService {
                         }
                 );
 
-                appInsights.trackTrace("存储任务 消息发送成功：" + message);
+//                appInsights.trackTrace("存储任务 消息发送成功：" + message);
                 return; // 成功发送后，结束重试
             } catch (Exception e) {
                 attempt++;

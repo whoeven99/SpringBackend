@@ -266,7 +266,7 @@ public class JsoupUtils {
 
         } else {
             prompt = getSimplePrompt(targetLanguage, languagePackId);
-            appInsights.trackTrace("普通文本： Simple提示词: " + prompt);
+            appInsights.trackTrace("普通文本：" + content + " Simple提示词: " + prompt);
         }
         try {
             //目标语言是中文的，用qwen-max翻译
@@ -309,7 +309,7 @@ public class JsoupUtils {
             appInsights.trackTrace("普通文本： " + content + " Glossary提示词: " + prompt);
         } else {
             prompt = getSimplePrompt(targetName, languagePackId);
-            appInsights.trackTrace("普通文本： Simple提示词: " + prompt);
+            appInsights.trackTrace("普通文本：" + content + " Simple提示词: " + prompt);
         }
 
         try {
