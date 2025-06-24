@@ -235,6 +235,7 @@ public class JsoupUtils {
         return checkTranslationModel(request, counter, languagePackId, limitChars);
     }
 
+
     /**
      * 根据每个模型的条件，翻译文本数据
      * 在翻译的同时计数字符数
@@ -269,7 +270,7 @@ public class JsoupUtils {
         }
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("es".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
             }
 
@@ -313,7 +314,7 @@ public class JsoupUtils {
 
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("es".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
             }
 
@@ -322,7 +323,7 @@ public class JsoupUtils {
                 return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
             }
 
-            return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
+            return hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName);
         } catch (Exception e) {
             appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
@@ -653,7 +654,7 @@ public class JsoupUtils {
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("es".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target,shopName, limitChars);
             }
 

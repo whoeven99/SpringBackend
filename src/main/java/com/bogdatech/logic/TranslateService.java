@@ -207,7 +207,7 @@ public class TranslateService {
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
-                System.out.println("用户 " + shopName + " 的翻译任务已停止");
+                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
                 //将Task表DB中的status为2的改为3
                 translateTasksService.updateStatus2To3ByShopName(shopName);
 //                 将翻译状态改为“部分翻译” shopName, status=3
@@ -224,7 +224,7 @@ public class TranslateService {
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
-                System.out.println("用户 " + shopName + " 的翻译任务已停止");
+                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
 //                 将翻译状态改为“部分翻译” shopName, status=3
                 translatesService.updateStatusByShopNameAnd2(shopName);
                 return "翻译任务已停止";
@@ -1291,6 +1291,7 @@ public class TranslateService {
                     continue;
                 }
                 if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
+                    printTranslateReason(key + "不在白名单, value: " + value);
                     continue;
                 }
                 //如果包含对应key和value，则跳过
@@ -1309,9 +1310,11 @@ public class TranslateService {
             if (resourceType.equals(METAFIELD)) {
                 //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
                 if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + " 如UXxSP8cSm，在METAFIELD模块");
                     continue;
                 }
                 if (!metaTranslate(value)) {
+                    printTranslateReason(value + " 包含top,left,right,bottom，在METAFIELD模块");
                     continue;
                 }
 
@@ -1576,6 +1579,16 @@ public class TranslateService {
         return registerTransaction(shopifyRequest, variables);
     }
 
+
+    //将数据存入本地Map中
+    //优化策略1： 利用翻译后的数据，对singleLine的数据全局匹配并翻译
+    public String translateSingleLine(String sourceText, String target) {
+        if (SINGLE_LINE_TEXT.get(target) != null) {
+            return SINGLE_LINE_TEXT.get(target).get(sourceText);
+        }
+        return null;
+    }
+
     //将缓存的数据存到数据库中
     public void saveToTranslates() {
         //添加数据
@@ -1709,7 +1722,7 @@ public class TranslateService {
             appInsights.trackTrace("singleTranslate errors : " + e.getMessage());
         }
 
-        return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+        return new BaseResponse<>().CreateErrorResponse(value);
     }
 }
 

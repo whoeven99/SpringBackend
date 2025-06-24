@@ -75,6 +75,5 @@ public class StoringDataConsumerService {
                 lock.unlock();
             }
         }
-
     }
 }

@@ -10,6 +10,7 @@ import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
+import com.bogdatech.entity.VO.ChatgptVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
@@ -79,8 +80,8 @@ public class TestController {
     }
 
     @GetMapping("/gpt")
-    public String chat(@RequestParam String prompt) {
-        return chatGptIntegration.chatWithGpt(prompt);
+    public ChatgptVO chat(@RequestParam String prompt, @RequestParam String sourceText) {
+        return chatGptIntegration.chatWithGpt(prompt, sourceText);
     }
 
     @PostMapping("/test/test1")
@@ -143,10 +144,10 @@ public class TestController {
 
 
     @GetMapping("/testHtml")
-    public void testHtml() {
-        String html = """ 
-                啊手动阀手动阀  
-                """;
+    public void testHtml(@RequestParam String html) {
+//        String html = """
+//                啊手动阀手动阀
+//                """;
         if (isHtml(html)) {
             System.out.println("is html");
         } else {
