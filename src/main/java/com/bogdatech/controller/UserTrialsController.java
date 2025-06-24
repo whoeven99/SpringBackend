@@ -5,6 +5,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
@@ -23,7 +24,7 @@ public class UserTrialsController {
      * 开启免费订阅
      * */
     @PostMapping("/startFreePlan")
-    public BaseResponse<Object> startFreePlan(String shopName){
+    public BaseResponse<Object> startFreePlan(@RequestParam String shopName){
         boolean result = retryWithParam(
                 userTrialsService::insertUserTrial,
                 shopName,
@@ -41,7 +42,7 @@ public class UserTrialsController {
      * 查询是否开过免费计划。
      * */
     @PostMapping("/isOpenFreePlan")
-    public BaseResponse<Object> isFreePlan(String shopName){
+    public BaseResponse<Object> isFreePlan(@RequestParam String shopName){
         boolean result = retryWithParam(
                 userTrialsService::queryUserTrialByShopName,
                 shopName,

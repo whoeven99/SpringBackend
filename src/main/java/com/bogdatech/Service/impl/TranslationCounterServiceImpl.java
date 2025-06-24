@@ -44,4 +44,10 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         return baseMapper.getOneForUpdate(shopName);
     }
 
+    @Override
+    public Boolean updateAddUsedCharsByShopName(String shopName, Integer usedChars, Integer maxChars) {
+        return baseMapper.updateAddUsedCharsByShopName(shopName, usedChars, maxChars);
+    }
+
+
 }

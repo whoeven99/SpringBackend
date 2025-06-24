@@ -1,11 +1,13 @@
 package com.bogdatech.integration;
 
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.volcengine.ark.runtime.model.completion.chat.ChatCompletionRequest;
 import com.volcengine.ark.runtime.model.completion.chat.ChatCompletionResult;
 import com.volcengine.ark.runtime.model.completion.chat.ChatMessage;
 import com.volcengine.ark.runtime.model.completion.chat.ChatMessageRole;
 import com.volcengine.ark.runtime.service.ArkService;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -14,14 +16,21 @@ import java.util.List;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
+@Component
 public class ArkTranslateIntegration {
+
+    private final ITranslationCounterService translationCounterService;
+
 
     // 定义 ArkService 实例变量，用于与外部服务交互
     private static ArkService arkService;
     private static final String DOUBAO_API_KEY = "DOUBAO_API_KEY";
-    // 私有构造方法，防止外部通过 new 创建实例，确保单例性
-    public ArkTranslateIntegration() {
+
+    public ArkTranslateIntegration(ITranslationCounterService translationCounterService) {
+        this.translationCounterService = translationCounterService;
     }
+    // 私有构造方法，防止外部通过 new 创建实例，确保单例性
+
 
     // 初始化方法，由 @Bean 的 initMethod 调用
     // 在 Spring 容器创建 Bean 时执行，用于初始化 ArkService
@@ -32,7 +41,7 @@ public class ArkTranslateIntegration {
             // 检查 API Key 是否为空，若为空则抛出异常，避免服务启动失败
             if (apiKey == null || apiKey.isEmpty()) {
                 appInsights.trackTrace("豆包API Key 未设置:  " + apiKey);
-    //            throw new IllegalStateException("环境变量 ARK_API_KEY 未设置");
+                //            throw new IllegalStateException("环境变量 ARK_API_KEY 未设置");
             }
             // 使用建造者模式创建 ArkService 实例，并赋值给成员变量
             arkService = ArkService.builder().apiKey(apiKey).timeout(Duration.ofSeconds(120)).retryTimes(2).build();
@@ -58,9 +67,9 @@ public class ArkTranslateIntegration {
     }
 
     /**
-     *  调用豆包API
+     * 调用豆包API
      */
-    public static String douBaoTranslate(String shopName, String prompt, String sourceText, CharacterCountUtils countUtils) {
+    public String douBaoTranslate(String shopName, String prompt, String sourceText, CharacterCountUtils countUtils, Integer limitChars) {
         try {
             List<ChatMessage> messages = new ArrayList<>();
             ChatMessage systemMessage = ChatMessage.builder()
@@ -89,8 +98,9 @@ public class ArkTranslateIntegration {
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
             appInsights.trackTrace(shopName + " 用户 token doubao: " + sourceText + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
-//            System.out.println("翻译源文本: " + "counter: " + totalTokens);
+            translationCounterService.updateAddUsedCharsByShopName(shopName, totalTokensInt, limitChars);
             return response.toString();
+//        return sourceText;
         } catch (Exception e) {
             appInsights.trackTrace("豆包翻译失败 errors : " + e.getMessage());
             return sourceText;
@@ -120,7 +130,6 @@ public class ArkTranslateIntegration {
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
             appInsights.trackTrace("token doubao: " + sourceText + "all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
-//            System.out.println("翻译源文本: " + "counter: " + totalTokens);
             return response.toString();
         } catch (Exception e) {
             appInsights.trackTrace("豆包翻译失败 errors : " + e.getMessage());

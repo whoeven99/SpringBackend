@@ -14,6 +14,8 @@ public class TranslateConstants {
     public static final String JSON_TEXT = "JSON_TEXT";
     public static final String GLOSSARY = "GLOSSARY";
     public static final String OPENAI = "OPENAI";
+    public static final String APIVERSION = "2024-10";
+
 
     public static final String PRODUCT = "PRODUCT";
     public static final String PRODUCT_OPTION = "PRODUCT_OPTION";
@@ -45,6 +47,8 @@ public class TranslateConstants {
     public static final String MAX_LENGTH = "250";
     public static final String SINGLE_LINE_TEXT_FIELD = "SINGLE_LINE_TEXT_FIELD";
     public static final String LIST_SINGLE_LINE_TEXT_FIELD = "LIST_SINGLE_LINE_TEXT_FIELD";
+
+    public static final String EMAIL = "EMAIL";
 
     public static final String HAS_TRANSLATED = "The translation task is in progress. Please try translating again later.";
     public static final String CHARACTER_LIMIT = "Character Limit Reached";

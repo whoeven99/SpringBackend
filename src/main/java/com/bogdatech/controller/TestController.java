@@ -2,31 +2,38 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
+import com.bogdatech.entity.DO.TestTableDO;
+import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
+import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.ChatgptVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
-import com.bogdatech.logic.TaskService;
-import com.bogdatech.logic.TestService;
-import com.bogdatech.logic.TranslateService;
-import com.bogdatech.logic.UserTypeTokenService;
+import com.bogdatech.logic.*;
+import com.bogdatech.mapper.TestTableMapper;
+import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.service.StoringDataPublisherService;
+import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
+import com.bogdatech.task.RabbitMqTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
-import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.logic.TranslateService.*;
+import static com.bogdatech.task.RabbitMqTask.SHOP_LOCKS;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
@@ -39,20 +46,30 @@ public class TestController {
     private final TranslatesServiceImpl translatesServiceImpl;
     private final ChatGptIntegration chatGptIntegration;
     private final TestService testService;
-    private final TranslateService translateService;
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
+    private final RabbitMqTranslateService rabbitMqTranslateService;
     private final UserTypeTokenService userTypeTokenService;
+    private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
+    private final TencentEmailService tencentEmailService;
+    private final ITranslateTasksService translateTasksService;
+    private final TestTableMapper testTableMapper;
+    private final RabbitMqTask rabbitMqTask;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TranslateService translateService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, RabbitMqTranslateService rabbitMqTranslateService, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, TestTableMapper testTableMapper, RabbitMqTask rabbitMqTask) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
-        this.translateService = translateService;
         this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
+        this.rabbitMqTranslateService = rabbitMqTranslateService;
         this.userTypeTokenService = userTypeTokenService;
+        this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
+        this.tencentEmailService = tencentEmailService;
+        this.translateTasksService = translateTasksService;
+        this.testTableMapper = testTableMapper;
+        this.rabbitMqTask = rabbitMqTask;
     }
 
     @GetMapping("/ping")
@@ -104,7 +121,7 @@ public class TestController {
         CharacterCountUtils characterCount = new CharacterCountUtils();
         characterCount.addChars(100);
         LocalDateTime localDateTime = LocalDateTime.now();
-        translateService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, 1000, "zh-CN", "en");
+        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, 1000, "zh-CN", "en");
     }
 
     //获取汇率
@@ -197,7 +214,88 @@ public class TestController {
     }
 
     @GetMapping("/testHandle")
-    public String testHandle(String value) {
+    public String testHandle(@RequestParam String value) {
         return replaceHyphensWithSpaces(value);
+    }
+
+    @GetMapping("/testThread")
+    public void logThreadPoolStatus() {
+        if (executorService instanceof ThreadPoolExecutor executor) {
+            System.out.println("锁池： " + SHOP_LOCKS);
+            System.out.println("线程池状态 => 活跃线程数: " + executor.getActiveCount() + ", 总任务数: " + executor.getTaskCount() +
+                            ", 已完成任务数: " + executor.getCompletedTaskCount() + ", 当前排队任务数: " + executor.getQueue().size()
+            );
+        }
+    }
+
+    @PostMapping("/testMqTranslate")
+    public void testMqTranslate(@RequestBody ClickTranslateRequest clickTranslateRequest) {
+//        rabbitMqTranslateConsumerService.handleUserRequest(clickTranslateRequest.getShopName());
+        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
+
+    }
+
+    // 停止mq翻译任务
+    @GetMapping("/stopMqTask")
+    public void stopMqTask(@RequestParam String shopName) {
+        System.out.println("正在翻译的用户： " + userStopFlags);
+        AtomicBoolean stopFlag = userStopFlags.get(shopName);
+        if (stopFlag != null) {
+            stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
+            System.out.println("停止成功");
+        }
+    }
+
+    /**
+     * 拆分一个大任务为几个小任务，把小任务的数据放到db里的TranslateTasks里面
+     * */
+    @PostMapping("/testDBTranslate1")
+    public void testDBTranslate1(@RequestBody ClickTranslateRequest clickTranslateRequest) {
+        TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", clickTranslateRequest.getShopName()));
+        if (name == null) {
+            throw new RuntimeException("shopName不存在");
+        }
+        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
+
+    }
+
+    /**
+     * 输入任务id，实现该任务的翻译
+     * */
+    @GetMapping("/testDBTranslate2")
+    public void testDBTranslate2(@RequestParam String taskId) {
+        //根据id获取数据，转化为规定数据类型
+        RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
+        rabbitMqTranslateConsumerService.processMessage(dataToProcess, new TranslateTasksDO());
+    }
+
+    /**
+     * 修改用户锁集合
+     * */
+    @GetMapping("/testModifyLock")
+    public String testModifyLock(@RequestParam String shopName) {
+        SHOP_LOCKS.put(shopName, false);
+        return SHOP_LOCKS.toString();
+    }
+
+    /**
+     * 启动DB翻译
+     * */
+    @GetMapping("/testDBTranslate")
+    public void testDBTranslate() {
+        rabbitMqTask.scanAndSubmitTasks();
+    }
+
+    /**
+     * 将停止flag换成true
+     * */
+    @GetMapping("/testStopFlagToTure")
+    public String testStopFlagToTure(@RequestParam String shopName) {
+        userStopFlags.put(shopName, new AtomicBoolean(false));
+        return userStopFlags.toString();
     }
 }

@@ -4,10 +4,7 @@ import com.bogdatech.Service.IAPGTemplateService;
 import com.bogdatech.entity.DO.APGTemplateDO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,7 +22,7 @@ public class APGTemplateController {
      * 获取默认数据和用户相关数据
      * */
     @PostMapping("/getAllTemplateData")
-    public BaseResponse<Object> getAllTemplateData(String shopName){
+    public BaseResponse<Object> getAllTemplateData(@RequestParam String shopName){
         List<APGTemplateDO> allTemplateData;
         allTemplateData = iapgTemplateService.getAllTemplateData(shopName);
         if (allTemplateData != null && !allTemplateData.isEmpty()){

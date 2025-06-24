@@ -70,7 +70,7 @@ public class UserController {
 
     //用户初始化检测
     @GetMapping("/InitializationDetection")
-    public BaseResponse<Object> initializationDetection(String shopName) {
+    public BaseResponse<Object> initializationDetection(@RequestParam String shopName) {
         return new BaseResponse<>().CreateSuccessResponse(userService.InitializationDetection(shopName));
     }
 

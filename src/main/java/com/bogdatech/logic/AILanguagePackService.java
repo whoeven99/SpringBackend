@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.IAILanguagePacksService;
 import com.bogdatech.entity.DO.TranslateResourceDTO;
+import com.bogdatech.integration.HunYuanIntegration;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.integration.HunYuanIntegration.hunYuanTranslate;
 import static com.bogdatech.logic.TranslateService.getShopifyData;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.PlaceholderUtils.getCategoryPrompt;
@@ -19,10 +19,12 @@ import static com.bogdatech.utils.PlaceholderUtils.getCategoryPrompt;
 @Component
 public class AILanguagePackService {
     private final IAILanguagePacksService aiLanguagePacksService;
+    private final HunYuanIntegration hunYuanIntegration;
 
     @Autowired
-    public AILanguagePackService(IAILanguagePacksService aiLanguagePacksService) {
+    public AILanguagePackService(IAILanguagePacksService aiLanguagePacksService, HunYuanIntegration hunYuanIntegration) {
         this.aiLanguagePacksService = aiLanguagePacksService;
+        this.hunYuanIntegration = hunYuanIntegration;
     }
 
     /**
@@ -31,7 +33,7 @@ public class AILanguagePackService {
      * @param accessToken 店铺token
      * return true or false
      */
-    public String getCategoryByDescription(String shopName, String accessToken, CharacterCountUtils counter) {
+    public String getCategoryByDescription(String shopName, String accessToken, CharacterCountUtils counter, Integer limitChars) {
         //先判断数据库中是否有数据
         String languagePackId = aiLanguagePacksService.getLanguagePackByShopName(shopName);
         if (languagePackId != null && !languagePackId.isEmpty()) {
@@ -50,7 +52,7 @@ public class AILanguagePackService {
         //判断description是否为空
         //调用混元生成类目
         String categoryPrompt = getCategoryPrompt();
-        String categoryText = hunYuanTranslate(description, categoryPrompt, counter, HUN_YUAN_MODEL, shopName);
+        String categoryText = hunYuanIntegration.hunYuanTranslate(description, categoryPrompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
         appInsights.trackTrace("category counter: " + counter.getTotalChars() + "生成的类目数据为： " + categoryText);
         //如果categoryText字段在255字符里面，存到数据库中
         if (categoryText.length() > 100) {

@@ -5,10 +5,7 @@ import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.RetryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
 
@@ -30,7 +27,7 @@ public class APGUsersController {
      * @return BaseResponse<Object>
      * */
     @PostMapping("/insertOrUpdateApgUser")
-    public BaseResponse<Object> insertOrUpdateApgUser(String shopName, @RequestBody APGUsersDO usersDO){
+    public BaseResponse<Object> insertOrUpdateApgUser(@RequestParam String shopName, @RequestBody APGUsersDO usersDO){
         usersDO.setShopName(shopName);
         boolean result = retryWithParam(
                 iapgUsersService::insertOrUpdateApgUser,  // 方法引用，等同于 input -> service.insertOrUpdateApgUser(input)

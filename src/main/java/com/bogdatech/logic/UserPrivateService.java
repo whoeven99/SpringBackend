@@ -58,7 +58,7 @@ public class UserPrivateService {
                 //更新
                 //openaiKey和googleKey为空则不更新
                 userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(SHOP_NAME, userPrivateDO.getShopName()));
-                //TODO: 更新Azure的keyVault
+                //更新Azure的keyVault
 
             } else {
                 //存入
