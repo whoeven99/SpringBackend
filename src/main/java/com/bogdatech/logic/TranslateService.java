@@ -65,6 +65,7 @@ public class TranslateService {
     private final TencentEmailService tencentEmailService;
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
     private final JsoupUtils jsoupUtils;
+    private final ITranslateTasksService translateTasksService;
 
     @Autowired
     public TranslateService(
@@ -77,7 +78,7 @@ public class TranslateService {
             AILanguagePackService aiLanguagePackService,
             IVocabularyService vocabularyService,
             UserTypeTokenService userTypeTokensService,
-            TencentEmailService tencentEmailService, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, JsoupUtils jsoupUtils) {
+            TencentEmailService tencentEmailService, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, JsoupUtils jsoupUtils, ITranslateTasksService translateTasksService) {
         this.translateApiIntegration = translateApiIntegration;
         this.shopifyService = shopifyService;
         this.translatesService = translatesService;
@@ -90,10 +91,11 @@ public class TranslateService {
         this.userTypeTokensService = userTypeTokensService;
         this.tencentEmailService = tencentEmailService;
         this.jsoupUtils = jsoupUtils;
+        this.translateTasksService = translateTasksService;
     }
 
     public static ConcurrentHashMap<String, ConcurrentHashMap<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
-    public static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     //判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
     public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
@@ -206,6 +208,8 @@ public class TranslateService {
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
                 System.out.println("用户 " + shopName + " 的翻译任务已停止");
+                //将Task表DB中的status为2的改为3
+                translateTasksService.updateStatus2To3ByShopName(shopName);
 //                 将翻译状态改为“部分翻译” shopName, status=3
                 translatesService.updateStatusByShopNameAnd2(shopName);
             }
@@ -420,10 +424,9 @@ public class TranslateService {
 //            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, translateContext.getCharacterCountUtils().getTotalChars(), 0, 0, 0));
             return null;
         }
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
         try {
-            rootNode = objectMapper.readTree(translateContext.getShopifyData());
+            rootNode = OBJECT_MAPPER.readTree(translateContext.getShopifyData());
         } catch (JsonProcessingException e) {
             appInsights.trackTrace("rootNode errors： " + e.getMessage());
             return null;
@@ -749,7 +752,7 @@ public class TranslateService {
         //先将list数据由String转为List<String>，循环判断
         try {
             //如果符合要求，则翻译，不符合要求则返回原值
-            List<String> resultList = objectMapper.readValue(value, new TypeReference<List<String>>() {
+            List<String> resultList = OBJECT_MAPPER.readValue(value, new TypeReference<List<String>>() {
             });
             for (int i = 0; i < resultList.size(); i++) {
                 String original = resultList.get(i);
@@ -761,7 +764,7 @@ public class TranslateService {
                 }
             }
             //将list数据转为String 再存储到shopify本地
-            String translatedValue = objectMapper.writeValueAsString(resultList);
+            String translatedValue = OBJECT_MAPPER.writeValueAsString(resultList);
             shopifyService.saveToShopify(translatedValue, translation, resourceId, request);
             printTranslation(translatedValue, value, translation, request.getShopName(), type, resourceId, source);
         } catch (Exception e) {
@@ -1429,7 +1432,7 @@ public class TranslateService {
         request.setShopName(shopName);
 
         if (counter.getTotalChars() >= remainingChars) {
-            //TODO:获取用户当前的token，
+            //获取用户当前的token，
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
 //            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             throw new ClientException(CHARACTER_LIMIT);
@@ -1469,10 +1472,9 @@ public class TranslateService {
 //    @Async
     public void saveTranslatedData(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
 //        System.out.println("现在存储到： " + translateResourceDTO.getResourceType());
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
         try {
-            rootNode = objectMapper.readTree(objectData);
+            rootNode = OBJECT_MAPPER.readTree(objectData);
             processNodes(rootNode, request, translateResourceDTO);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

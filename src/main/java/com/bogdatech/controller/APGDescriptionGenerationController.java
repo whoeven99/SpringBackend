@@ -21,7 +21,7 @@ public class APGDescriptionGenerationController {
 
     @PostMapping("/generateDescription")
     public BaseResponse<Object> generateDescription(@RequestParam String shopName, @RequestBody GenerateDescriptionVO generateDescriptionVO) {
-        // TODO: 实现生成描述的逻辑
+        // 实现生成描述的逻辑
         appInsights.trackTrace(shopName + " generateDescriptionVO: " + generateDescriptionVO );
         String description = generateDescriptionService.generateDescription(shopName, generateDescriptionVO);
         appInsights.trackTrace(shopName + "generateDescription: " + description);

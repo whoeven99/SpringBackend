@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -26,4 +25,21 @@ public class RabbitMqTranslateVO implements Serializable {
     private Integer startChars; //用户翻译前获取的字符
     private String startTime; //用户翻译开始时间
     private List<String> translateList; //用户翻译列表
+
+    public RabbitMqTranslateVO copy(RabbitMqTranslateVO rabbitMqTranslateVO) {
+        this.shopifyData = rabbitMqTranslateVO.getShopifyData();
+        this.shopName = rabbitMqTranslateVO.getShopName();
+        this.accessToken = rabbitMqTranslateVO.getAccessToken();
+        this.source = rabbitMqTranslateVO.getSource();
+        this.target = rabbitMqTranslateVO.getTarget();
+        this.languagePack = rabbitMqTranslateVO.getLanguagePack();
+        this.handleFlag = rabbitMqTranslateVO.getHandleFlag();
+        this.glossaryMap = rabbitMqTranslateVO.getGlossaryMap();
+        this.modeType = rabbitMqTranslateVO.getModeType();
+        this.limitChars = rabbitMqTranslateVO.getLimitChars();
+        this.startChars = rabbitMqTranslateVO.getStartChars();
+        this.startTime = rabbitMqTranslateVO.getStartTime();
+        this.translateList = rabbitMqTranslateVO.getTranslateList();
+        return this;
+    }
 }

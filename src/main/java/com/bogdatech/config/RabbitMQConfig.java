@@ -1,22 +1,12 @@
 package com.bogdatech.config;
 
-import com.alibaba.fastjson.JSON;
-import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.entity.VO.RabbitMqTranslateVO;
-import com.bogdatech.exception.ClientException;
-import com.bogdatech.logic.RabbitMqTranslateService;
-import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
-import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -107,15 +97,6 @@ public class RabbitMQConfig {
     public Queue userStoreDeadLetterQueue() {
         return QueueBuilder.durable(USER_STORE_DEAD_LETTER_QUEUE).build();
     }
-    //声明用户翻译队列
-    @Bean
-    public static Queue userTranslateQueue() {
-        return QueueBuilder.durable(USER_TRANSLATE_QUEUE)
-                .withArgument("x-dead-letter-exchange", USER_DEAD_LETTER_EXCHANGE)// 指定死信交换机
-                .withArgument("x-dead-letter-routing-key", USER_DEAD_LETTER_ROUTING_KEY)// 指定死信路由键
-                .build();
-    }
-
 
     // 声明定时任务直连交换机
     @Bean
@@ -184,12 +165,5 @@ public class RabbitMQConfig {
                 .with(USER_STORE_DEAD_LETTER_ROUTING_KEY);
     }
 
-    @Bean
-    // 声明一个翻译队列并绑定到翻译交换机
-    public Binding declareQueueAndBinding() {
-        return BindingBuilder.bind(userTranslateQueue())
-                .to(userExchange())
-                .with(USER_TRANSLATE_ROUTING_KEY + "#");
-    }
 
 }

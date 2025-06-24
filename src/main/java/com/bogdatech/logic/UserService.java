@@ -136,7 +136,7 @@ public class UserService {
     //用户卸载应用后48小时后清除数据
     @Async
     public void cleanData(UsersDO userRequest) {
-        //TODO: 测试 这一部分有问题
+        //测试 这一部分有问题
         System.out.println("开始执行定时任务： " + userRequest.getShopName());
         String shopName = userRequest.getShopName();
 //        long delayMillis = TimeUnit.HOURS.toMillis(48); // 48小时转为毫秒

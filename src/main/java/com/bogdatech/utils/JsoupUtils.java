@@ -11,6 +11,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -33,9 +34,17 @@ import static java.lang.Thread.sleep;
 @Component
 public class JsoupUtils {
 
-    ALiYunTranslateIntegration aLiYunTranslateIntegration;
-    ArkTranslateIntegration arkTranslateIntegration;
-    HunYuanIntegration hunYuanIntegration;
+    private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    private final ArkTranslateIntegration arkTranslateIntegration;
+    private final HunYuanIntegration hunYuanIntegration;
+
+    @Autowired
+    public JsoupUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, ArkTranslateIntegration arkTranslateIntegration, HunYuanIntegration hunYuanIntegration) {
+        this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
+        this.arkTranslateIntegration = arkTranslateIntegration;
+        this.hunYuanIntegration = hunYuanIntegration;
+    }
+
     /**
      * 翻译词汇表单行文本，保护变量、URL和符号
      */
@@ -344,7 +353,7 @@ public class JsoupUtils {
         String resultTranslation;
         try {
             if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
-                resultTranslation = translateByQwenMt(request.getContent(), source, target, counter);
+                resultTranslation = translateByQwenMt(request.getContent(), source, target, counter, request.getShopName(), limitChars);
             } else {
                 //qwen 短文本翻译
                 String targetLanguage = getLanguageName(target);
@@ -362,18 +371,18 @@ public class JsoupUtils {
     }
 
     //包装一下调用百炼mt的方法
-    public String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils) {
+    public String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars) {
         String changeSource = qwenMtCode(source);
         String changeTarget = qwenMtCode(target);
         try {
-            return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
+            return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
         } catch (Exception e) {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
                 appInsights.trackTrace("MT sleep errors ： " + ex.getMessage());
             }
-            return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils);
+            return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
         }
 
     }

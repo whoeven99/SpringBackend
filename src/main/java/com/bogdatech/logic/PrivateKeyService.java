@@ -317,10 +317,9 @@ public class PrivateKeyService {
             // 返回默认值或空结果
             return null;
         }
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
         try {
-            rootNode = objectMapper.readTree(translateContext.getShopifyData());
+            rootNode = OBJECT_MAPPER.readTree(translateContext.getShopifyData());
         } catch (JsonProcessingException e) {
             appInsights.trackTrace("rootNode错误： " + e.getMessage());
             return null;
@@ -460,7 +459,7 @@ public class PrivateKeyService {
                 //先将list数据由String转为List<String>，循环判断
                 try {
                     //如果符合要求，则翻译，不符合要求则返回原值
-                    List<String> resultList = objectMapper.readValue(value, new TypeReference<List<String>>() {
+                    List<String> resultList = OBJECT_MAPPER.readValue(value, new TypeReference<List<String>>() {
                     });
                     for (int i = 0; i < resultList.size(); i++) {
                         String original = resultList.get(i);
@@ -472,7 +471,7 @@ public class PrivateKeyService {
                         }
                     }
                     //将list数据转为String 再存储到shopify本地
-                    String translatedValue = objectMapper.writeValueAsString(resultList);
+                    String translatedValue = OBJECT_MAPPER.writeValueAsString(resultList);
                     saveToShopify(translatedValue, translation, resourceId, request);
                 } catch (Exception e) {
                     //存原数据到shopify本地
@@ -548,7 +547,7 @@ public class PrivateKeyService {
             counter.addChars(googleCalculateToken(value));
             String updateText = extractKeywords(value, placeholderMap, keyMap1, keyMap0, source);
             translateRequest.setContent(updateText);
-            //TODO: 修改翻译调用
+            //修改翻译调用
             String translatedText = null;
             try {
                 counter.addChars(value.length());
@@ -585,14 +584,17 @@ public class PrivateKeyService {
         ShopifyRequest request = translateContext.getShopifyRequest();
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
         //判断是否停止翻译
-        if (checkIsStopped(request.getShopName(), counter)) return;
+        if (checkIsStopped(request.getShopName(), counter)) {
+            return;
+        }
 
         int remainingChars = translateContext.getRemainingChars();
         String target = request.getTarget();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
             String value = registerTransactionRequest.getValue();
             String resourceId = registerTransactionRequest.getResourceId();
             String source = registerTransactionRequest.getLocale();
@@ -615,8 +617,9 @@ public class PrivateKeyService {
             saveToShopify(htmlTranslation, translation, resourceId, request);
             printTranslation(htmlTranslation, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId, source);
 
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
         }
     }
 
@@ -773,7 +776,7 @@ public class PrivateKeyService {
 
 //            首选谷歌翻译，翻译不了用AI翻译
             try {
-                //TODO:根据shopName获取对应的google apiKey
+                //根据shopName获取对应的google apiKey
                 translateByUser(counter, value, source, request, resourceId, translation, translateContext.getApiKey(), translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
                 appInsights.trackTrace("翻译失败后的字符数： " + counter.getTotalChars());
@@ -787,7 +790,7 @@ public class PrivateKeyService {
 
     //根据用户的翻译模型选择翻译
     private void translateByUser(CharacterCountUtils counter, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey, String resourceType) {
-        //TODO:根据shopName获取对应的google apiKey
+        //根据shopName获取对应的google apiKey
         //计算用户的token数
         counter.addChars(value.length());
         //对文本进行翻译
@@ -825,7 +828,6 @@ public class PrivateKeyService {
 
     //封装调用云服务器实现将数据存入shopify本地的方法
     public void saveToShopify(CloudInsertRequest cloudServiceRequest) {
-        ObjectMapper objectMapper = new ObjectMapper();
         ShopifyRequest request = new ShopifyRequest();
         request.setShopName(cloudServiceRequest.getShopName());
         request.setAccessToken(cloudServiceRequest.getAccessToken());
@@ -833,7 +835,7 @@ public class PrivateKeyService {
         Map<String, Object> body = cloudServiceRequest.getBody();
 
         try {
-            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
             String env = System.getenv("ApplicationEnv");
             if ("prod".equals(env) || "dev".equals(env)) {
                 shopifyApiIntegration.registerTransaction(request, body);
@@ -855,7 +857,7 @@ public class PrivateKeyService {
             printTranslation(targetCache, value, translation, request.getShopName() + PRIVATE_KEY, "cache", resourceId, source);
             return true;
         }
-        //TODO: 255字符以内才从数据库中获取数据
+        //255字符以内才从数据库中获取数据
         String targetText = null;
         try {
             targetText = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
@@ -1096,10 +1098,9 @@ public class PrivateKeyService {
         } else {
             infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
         }
-        ObjectMapper objectMapper = new ObjectMapper();
 
         try {
-            return objectMapper.readTree(infoByShopify);
+            return OBJECT_MAPPER.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
             throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
         }

@@ -16,8 +16,10 @@ import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.Arrays;
 import java.util.Collections;
+
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.SwitchModelUtils.switchModel;
@@ -64,7 +66,7 @@ public class ALiYunTranslateIntegration {
      * @param prompt     提示词
      * @param target     目标语言代码
      * @param countUtils 计数器
-     * @param shopName  店铺名称
+     * @param shopName   店铺名称
      * @return 翻译后的文本
      */
     public String singleTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars) {
@@ -93,21 +95,25 @@ public class ALiYunTranslateIntegration {
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             userTranslate.put(shopName, text);
             totalToken = call.getUsage().getTotalTokens();
+//        int totalToken = 10;
             countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace(shopName + " 用户 token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken,limitChars);
-//            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
+            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            System.out.println("翻译源文本: " + content + "counter: " + totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
             return text;
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
         }
         return content;
+
+
+//        return text;
     }
 
-    public  String QwenTranslate(String text, String prompt, CharacterCountUtils countUtils) {
+    public String QwenTranslate(String text, String prompt, CharacterCountUtils countUtils) {
         String model = "qwen-max-latest";
         Generation gen = new Generation();
 
@@ -150,15 +156,15 @@ public class ALiYunTranslateIntegration {
      * @param countUtils    计数器
      * @return 翻译后的文本
      */
-    public  String callWithMessage(String model, String translateText, String source, String target, CharacterCountUtils countUtils) {
-//        System.out.println("翻译源文本: " + translateText);
+    public String callWithMessage(String model, String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars) {
+        System.out.println("翻译源文本: " + translateText);
 
         Generation gen = new Generation();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
                 .content(translateText)
                 .build();
-        //TODO: 根据目标语言
+        //根据目标语言
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
                 .apiKey(System.getenv("BAILIAN_API_KEY"))
@@ -173,16 +179,21 @@ public class ALiYunTranslateIntegration {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             totalToken = call.getUsage().getTotalTokens();
+//        int totalToken = 10;
             countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("token ali mt : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-//            appInsights.trackTrace("翻译源文本: " + translateText + "counter: " + totalToken);
+            userTranslate.put(shopName, translateText);
+            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
         } catch (NoApiKeyException | InputRequiredException e) {
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
         }
         return content;
+
+
+//        return translateText;
     }
 
     public static Integer calculateBaiLianToken(String text) {

@@ -7,14 +7,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.bogdatech.enums.ErrorEnum.JSON_PARSE_ERROR;
+import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 
 public class JsonUtils {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // 将对象转换为JSON字符串
     public static String objectToJson(Object obj) {
         try {
-            return obj != null ? objectMapper.writeValueAsString(obj) : null;
+            return obj != null ? OBJECT_MAPPER.writeValueAsString(obj) : null;
         } catch (JsonProcessingException e) {
             throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
         }
@@ -23,7 +23,7 @@ public class JsonUtils {
     // 将JSON字符串转换为对象
     public static <T> T jsonToObject(String json, Class<T> clazz) {
         try {
-            return json != null && !json.isEmpty() ? objectMapper.readValue(json, clazz) : null;
+            return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, clazz) : null;
         } catch (JsonProcessingException e) {
             throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
         }
@@ -32,8 +32,7 @@ public class JsonUtils {
     //判断一个string类型是不是Json数据
     public static boolean isJson(String str) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.readTree(str);
+            OBJECT_MAPPER.readTree(str);
             return true;
         } catch (Exception e) {
             return false;
@@ -44,8 +43,7 @@ public class JsonUtils {
     public static String getMessage(String json) {
         String message = null;
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(json);
+            JsonNode root = OBJECT_MAPPER.readTree(json);
 
             JsonNode messageNode = root
                     .path("translationsRegister")
@@ -71,7 +69,7 @@ public class JsonUtils {
      * */
     public static JsonNode stringToJson(String str) {
         try {
-            return objectMapper.readTree(str);
+            return OBJECT_MAPPER.readTree(str);
         }catch (Exception e) {
             System.out.println("String to Json errors: " + e);
             throw new RuntimeException(e);
