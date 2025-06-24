@@ -9,6 +9,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -18,7 +19,6 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.GENERAL;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsoupUtils.translateAndCount;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 
 @Component
@@ -39,7 +39,13 @@ public class LiquidHtmlTranslatorUtils {
     // 判断是否有 <html> 标签的模式
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
-    public final static Set<String> noTranslateTags = new HashSet<>(Arrays.asList("style", "img", "script"));
+    public final static Set<String> NO_TRANSLATE_TAGS = new HashSet<>(Arrays.asList("style", "img", "script"));
+    private final JsoupUtils jsoupUtils;
+
+    @Autowired
+    public LiquidHtmlTranslatorUtils(JsoupUtils jsoupUtils) {
+        this.jsoupUtils = jsoupUtils;
+    }
 
     /**
      * 主翻译方法
@@ -47,7 +53,7 @@ public class LiquidHtmlTranslatorUtils {
      * @param html 输入的HTML文本
      * @return 翻译后的HTML文本
      */
-    public static String translateNewHtml(String html, TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
+    public String translateNewHtml(String html, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
         // 检查输入是否有效
         if (html == null || html.trim().isEmpty()) {
             return html;
@@ -71,7 +77,7 @@ public class LiquidHtmlTranslatorUtils {
                     htmlTag.attr("lang", request.getTarget());
                 }
 
-                processNode(doc.body(), request, counter, languagePackId);
+                processNode(doc.body(), request, counter, languagePackId, limitChars);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
 //                appInsights.trackTrace("有html标签： "  + result);
 //                System.out.println("有html标签： "  + result);
@@ -81,7 +87,7 @@ public class LiquidHtmlTranslatorUtils {
                 // 如果没有 <html> 标签，作为片段处理
                 Document doc = Jsoup.parseBodyFragment(html);
                 Element body = doc.body();
-                processNode(body, request, counter, languagePackId);
+                processNode(body, request, counter, languagePackId, limitChars);
                 // 只返回子节点内容，不包含 <body>
                 StringBuilder result = new StringBuilder();
                 for (Node child : body.childNodes()) {
@@ -106,7 +112,7 @@ public class LiquidHtmlTranslatorUtils {
      *
      * @param node 当前节点
      */
-    private static void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
+    private void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
         try {
             // 如果是元素节点
             if (node instanceof Element) {
@@ -114,7 +120,7 @@ public class LiquidHtmlTranslatorUtils {
                 String tagName = element.tagName().toLowerCase();
 
                 // 检查是否为不翻译的标签
-                if (noTranslateTags.contains(tagName)) {
+                if (NO_TRANSLATE_TAGS.contains(tagName)) {
                     return;
                 }
 
@@ -124,7 +130,7 @@ public class LiquidHtmlTranslatorUtils {
 
                 // 递归处理子节点
                 for (Node child : element.childNodes()) {
-                    processNode(child, request, counter, languagePackId);
+                    processNode(child, request, counter, languagePackId, limitChars);
                 }
             }
             // 如果是文本节点
@@ -139,7 +145,7 @@ public class LiquidHtmlTranslatorUtils {
 
                 // 使用缓存处理文本
 
-                String translatedText = translateTextWithCache(text, request, counter, languagePackId);
+                String translatedText = translateTextWithCache(text, request, counter, languagePackId, limitChars);
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
@@ -153,7 +159,7 @@ public class LiquidHtmlTranslatorUtils {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private static String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
+    private String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
         // 检查缓存
         String translated = translateSingleLine(text, request.getTarget());
         if (translated != null) {
@@ -161,7 +167,7 @@ public class LiquidHtmlTranslatorUtils {
         }
 
         // 处理文本中的变量和URL
-        String translatedText = translateTextWithProtection(text, request, counter, languagePackId);
+        String translatedText = translateTextWithProtection(text, request, counter, languagePackId, limitChars);
 
         // 存入缓存
         addData(request.getTarget(), text, translatedText);
@@ -174,7 +180,7 @@ public class LiquidHtmlTranslatorUtils {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private static String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String languagePackId) {
+    private String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
         StringBuilder result = new StringBuilder();
         int lastEnd = 0;
 
@@ -218,7 +224,7 @@ public class LiquidHtmlTranslatorUtils {
                         request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本1： " + cleanedText);
-                        targetString = translateAndCount(request, counter, languagePackId, GENERAL);
+                        targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
                         result.append(targetString);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
@@ -249,7 +255,7 @@ public class LiquidHtmlTranslatorUtils {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本2： " + cleanedText);
-                    targetString = translateAndCount(request, counter, languagePackId, GENERAL);
+                    targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
                     result.append(targetString);
                 } catch (ClientException e) {
                     result.append(cleanedText);

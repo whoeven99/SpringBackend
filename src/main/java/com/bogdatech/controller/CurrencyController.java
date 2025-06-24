@@ -40,7 +40,7 @@ public class CurrencyController {
 
     //根据传入的店铺名称获取对应的货币信息
     @GetMapping("/getCurrencyByShopName")
-    public BaseResponse<Object> getCurrencyByShopName(String shopName) {
+    public BaseResponse<Object> getCurrencyByShopName(@RequestParam String shopName) {
         return currencyService.getCurrencyByShopName(shopName);
     }
 
@@ -52,7 +52,7 @@ public class CurrencyController {
 
    //对currency的初始化方法，添加默认代码
     @GetMapping("/initCurrency")
-    public BaseResponse<Object> initCurrency(String shopName) {
+    public BaseResponse<Object> initCurrency(@RequestParam String shopName) {
         return currencyService.initCurrency(shopName);
     }
 

@@ -2,6 +2,7 @@ package com.bogdatech.utils;
 
 import java.util.regex.Pattern;
 
+
 public class RegularJudgmentUtils {
     // 正则表达式：只包含字母、数字和标点符号
     private static final Pattern ALPHA_NUM_PUNCT_PATTERN = Pattern.compile("^[a-zA-Z0-9\\p{Punct}]+$");

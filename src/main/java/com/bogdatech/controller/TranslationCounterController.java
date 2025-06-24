@@ -39,7 +39,7 @@ public class TranslationCounterController {
     }
 
     @GetMapping("/getCharsByShopName")
-    public BaseResponse<Object> getCharsByShopName(String shopName) {
+    public BaseResponse<Object> getCharsByShopName(@RequestParam String shopName) {
        TranslationCounterDO translatesDOS = translationCounterService.readCharsByShopName(shopName);
         if (translatesDOS != null){
             return new BaseResponse().CreateSuccessResponse(translatesDOS);

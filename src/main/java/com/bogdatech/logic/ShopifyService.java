@@ -48,6 +48,7 @@ import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiL
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
+import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.TranslateService.translationLogic;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.*;
@@ -55,7 +56,6 @@ import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.shouldTranslate;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
-import static com.bogdatech.utils.PlaceholderUtils.getVariablePrompt;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.countWords;
 
@@ -87,12 +87,11 @@ public class ShopifyService {
     private final int length = 32;
 
     //封装调用云服务器实现获取shopify数据的方法
-    public static String getShopifyData(CloudServiceRequest cloudServiceRequest) {
+    public static String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
-        ObjectMapper objectMapper = new ObjectMapper();
         String string;
         try {
-            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
             string = sendShopifyPost("test123", requestBody);
         } catch (JsonProcessingException | ClientException e) {
             return null;
@@ -103,12 +102,11 @@ public class ShopifyService {
     //封装调用云服务器实现更新shopify数据的方法
     public String updateShopifyData(RegisterTransactionRequest registerTransactionRequest) {
         // 使用 ObjectMapper 将对象转换为 JSON 字符串
-        ObjectMapper objectMapper = new ObjectMapper();
         String string;
         JSONObject translationsArray;
         JSONArray translationsObject;
         try {
-            String requestBody = objectMapper.writeValueAsString(registerTransactionRequest);
+            String requestBody = OBJECT_MAPPER.writeValueAsString(registerTransactionRequest);
             string = sendShopifyPost("shopify/updateItem", requestBody);
             JSONObject jsonObject = JSON.parseObject(string);
             translationsArray = jsonObject.getJSONObject("translationsRegister");
@@ -132,7 +130,7 @@ public class ShopifyService {
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(getInfoByShopify(request, query));
         } else {
-            infoByShopify = getShopifyData(cloudServiceRequest);
+            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
         }
         try {
             if (infoByShopify == null || infoByShopify.isEmpty()) {
@@ -161,10 +159,9 @@ public class ShopifyService {
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
 //        System.out.println("现在统计到： " + translateResource.getResourceType());
 
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = null;
         try {
-            rootNode = objectMapper.readTree(infoByShopify);
+            rootNode = OBJECT_MAPPER.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
 //            System.out.println("解析JSON数据失败： " + translateResource);
             appInsights.trackTrace("解析JSON数据失败 errors： " + translateResource);
@@ -631,7 +628,7 @@ public class ShopifyService {
             if ("prod".equals(env) || "dev".equals(env)) {
                 infoByShopify = String.valueOf(getInfoByShopify(request, query));
             } else {
-                infoByShopify = getShopifyData(cloudServiceRequest);
+                infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
             }
         } catch (Exception e) {
             //如果出现异常，则跳过, 翻译其他的内容
@@ -640,10 +637,9 @@ public class ShopifyService {
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode;
         try {
-            rootNode = objectMapper.readTree(infoByShopify);
+            rootNode = OBJECT_MAPPER.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -785,7 +781,7 @@ public class ShopifyService {
                     if ("prod".equals(env) || "dev".equals(env)) {
                         infoByShopify = String.valueOf(getInfoByShopify(shopifyRequest, query));
                     } else {
-                        infoByShopify = getShopifyData(cloudServiceRequest);
+                        infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
                     }
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
@@ -1109,7 +1105,6 @@ public class ShopifyService {
 
     //封装调用云服务器实现将数据存入shopify本地的方法
     public static void saveToShopify(CloudInsertRequest cloudServiceRequest) {
-        ObjectMapper objectMapper = new ObjectMapper();
         ShopifyRequest request = new ShopifyRequest();
         request.setShopName(cloudServiceRequest.getShopName());
         request.setAccessToken(cloudServiceRequest.getAccessToken());
@@ -1117,10 +1112,11 @@ public class ShopifyService {
         Map<String, Object> body = cloudServiceRequest.getBody();
 
         try {
-            String requestBody = objectMapper.writeValueAsString(cloudServiceRequest);
+            String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
             String env = System.getenv("ApplicationEnv");
             if ("prod".equals(env) || "dev".equals(env)) {
-                registerTransaction(request, body);
+                String s = registerTransaction(request, body);
+                appInsights.trackTrace("用户： " + cloudServiceRequest.getShopName() + " saveToShopify : " + s);
             } else {
                 sendShopifyPost("translate/insertTranslatedText", requestBody);
             }

@@ -29,7 +29,7 @@ public class AILanguagePacksController {
 
     //默认新增默认语言包
     @PutMapping("/addDefaultLanguagePack")
-    public void addDefaultLanguagePack(String shopName) {
+    public void addDefaultLanguagePack(@RequestParam String shopName) {
         aiLanguagePacksService.addDefaultLanguagePack(shopName);
     }
 
@@ -41,8 +41,8 @@ public class AILanguagePacksController {
 
     //获取用户的beta_description，根据这个由混元生成类目
     @GetMapping("/getBetaDescription")
-    public BaseResponse<Object> getBetaDescription(String shopName, String accessToken) {
-        String categoryByDescription = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, new CharacterCountUtils());
+    public BaseResponse<Object> getBetaDescription(@RequestParam String shopName, @RequestParam String accessToken) {
+        String categoryByDescription = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, new CharacterCountUtils(), 0);
         return new BaseResponse().CreateSuccessResponse(categoryByDescription);
     }
 }

@@ -4,10 +4,7 @@ import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.logic.VocabularyService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -32,7 +29,7 @@ public class VocabularyController {
     }
 
     @PostMapping("/convertDataByCsv")
-    public BaseResponse<Object> convertDataByCsv(String filePath) {
+    public BaseResponse<Object> convertDataByCsv(@RequestParam String filePath) {
         //读csv文件将csv的数据转换为TranslateTextDO类型的List
        for (int i = 2; i < 11; i++) {
            List<TranslateTextDO> list = null;
@@ -53,21 +50,21 @@ public class VocabularyController {
 
     //根据target，value，source获取对应的targetText
     @GetMapping("/getVocabulary")
-    public BaseResponse<Object> getVocabulary(String target, String value, String source ) {
+    public BaseResponse<Object> getVocabulary(@RequestParam String target, @RequestParam String value, @RequestParam String source ) {
         String translateTextDataInVocabulary = vocabularyService.getTranslateTextDataInVocabulary(target, value, source);
         return new BaseResponse<>().CreateSuccessResponse(translateTextDataInVocabulary);
     }
 
     //测试单条更新数据
     @PostMapping("/testInsert")
-    public BaseResponse<Object> testInsert(String target, String value, String source) {
+    public BaseResponse<Object> testInsert(@RequestParam String target, @RequestParam String value, @RequestParam String source) {
         vocabularyService.testInsert(target, value, source);
         return new BaseResponse<>().CreateSuccessResponse(null);
     }
 
     //测试插入单条数据
     @PostMapping("/testInsertOne")
-    public BaseResponse<Object> testInsertOne(String target, String targetValue, String source, String sourceValue) {
+    public BaseResponse<Object> testInsertOne(@RequestParam String target, @RequestParam String targetValue, @RequestParam String source, @RequestParam String sourceValue) {
         Integer i = null;
         if (targetValue.length() <= 255 && isDatabaseLanguage(target) && isDatabaseLanguage(source) && sourceValue.length() <= 255) {
             i = vocabularyService.testInsertOne(target, targetValue, source, sourceValue);

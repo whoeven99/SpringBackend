@@ -1,9 +1,6 @@
 package com.bogdatech.utils;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -152,5 +149,35 @@ public class StringUtils {
             return null;
         }
         return input.replace("-", " ");
+    }
+
+    /**
+     * 判断value是否为空
+     * */
+    public static boolean isValueBlank(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return false;  // 跳过当前项
+        }
+        if (value.matches("\\p{Zs}+")) {
+            return false;
+        }
+        // 匹配仅包含不可见字符，例如 ZWSP、ZWJ、ZWNJ 等
+        // 如果去除所有空白和不可见字符后为空
+        if (value.replaceAll("[^\\u200B]", "").length() == value.length()) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * base64编码问题
+     * */
+    public static boolean isValidBase64(String s) {
+        try {
+            Base64.getDecoder().decode(s);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

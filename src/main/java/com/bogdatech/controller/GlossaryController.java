@@ -55,7 +55,7 @@ public class GlossaryController {
 
     //根据shopName获得glossary数据
     @GetMapping("/getGlossaryByShopName")
-    public BaseResponse<Object> getGlossaryByShopName(String shopName) {
+    public BaseResponse<Object> getGlossaryByShopName(@RequestParam String shopName) {
         return new BaseResponse<>().CreateSuccessResponse(glossaryService.getGlossaryByShopName(shopName));
     }
 

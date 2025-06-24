@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static com.bogdatech.constants.MailChimpConstants.CC_EMAIL;
+import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -89,12 +90,11 @@ public class EmailIntegration {
     //腾讯邮件发送
     public Boolean sendEmailByTencent(TencentSendEmailRequest tencentSendEmailRequest) {
         Map<String, String> templateData = tencentSendEmailRequest.getTemplateData();
-        ObjectMapper objectMapper = new ObjectMapper();
 
         String jsonString = null;
         try {
             Credential cred = new Credential(System.getenv("Tencent_Cloud_KEY_ID"), System.getenv("Tencent_Cloud_KEY"));
-            String templateDataJson = objectMapper.writeValueAsString(templateData);
+            String templateDataJson = OBJECT_MAPPER.writeValueAsString(templateData);
             // 实例化一个http选项，可选的，没有特殊需求可以跳过
             HttpProfile httpProfile = new HttpProfile();
 //            httpProfile.setEndpoint("ses.ap-guangzhou-open.tencentcloudapi.com");

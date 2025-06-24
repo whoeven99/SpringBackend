@@ -26,7 +26,7 @@ import java.util.Map;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.ShopifyService.getShopifyData;
+import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
@@ -145,7 +145,7 @@ public class TaskService {
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", null), query));
         } else {
-            infoByShopify = getShopifyData(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", "en", query));
+            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", "en", query));
         }
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {

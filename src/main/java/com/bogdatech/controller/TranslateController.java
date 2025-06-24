@@ -1,32 +1,32 @@
 package com.bogdatech.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
+import com.bogdatech.entity.DO.TestTableDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
+import com.bogdatech.mapper.TestTableMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.model.service.RabbitMqTranslateService;
 import com.bogdatech.utils.CharacterCountUtils;
-import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.constants.RabbitMQConstants.*;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
@@ -39,22 +39,22 @@ public class TranslateController {
     private final ITranslationCounterService translationCounterService;
     private final IUserTypeTokenService userTypeTokenService;
     private final UserTypeTokenService userTypeTokensService;
+    private final TestTableMapper testTableMapper;
     private final RabbitMqTranslateService rabbitMqTranslateService;
-    private final AmqpTemplate amqpTemplate;
 
     @Autowired
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
             ITranslationCounterService translationCounterService,
-            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService, AmqpTemplate amqpTemplate) {
+            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, TestTableMapper testTableMapper, RabbitMqTranslateService rabbitMqTranslateService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.userTypeTokenService = userTypeTokenService;
         this.userTypeTokensService = userTypeTokensService;
+        this.testTableMapper = testTableMapper;
         this.rabbitMqTranslateService = rabbitMqTranslateService;
-        this.amqpTemplate = amqpTemplate;
     }
 
 
@@ -142,6 +142,7 @@ public class TranslateController {
      */
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody ClickTranslateRequest clickTranslateRequest) {
+
         //判断前端传的数据是否完整，如果不完整，报错
         if (clickTranslateRequest.getShopName() == null || clickTranslateRequest.getShopName().isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
@@ -168,6 +169,13 @@ public class TranslateController {
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
             return new BaseResponse<>().CreateErrorResponse(request);
+        }
+
+        //判断是否是测试用户
+        TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", clickTranslateRequest.getShopName()));
+        if (name != null) {
+            rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
+            return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
         }
 
         //初始化计数器
@@ -201,7 +209,7 @@ public class TranslateController {
 
     //暂停翻译
     @DeleteMapping("/stop")
-    public void stop(String shopName) {
+    public void stop(@RequestParam String shopName) {
         translateService.stopTranslation(shopName);
     }
 
@@ -228,7 +236,8 @@ public class TranslateController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
-        registerTransaction(request, body);
+        String s = registerTransaction(request, body);
+        appInsights.trackTrace("用户 ： " + cloudServiceRequest.getShopName() +" insertTranslatedText : " + s);
     }
 
 
@@ -293,22 +302,10 @@ public class TranslateController {
     }
 
     /**
-     * RabbitMq手动翻译
-     * */
-    @PutMapping("/rabbitMqTranslate")
-    public BaseResponse<Object> rabbitMqTranslate(String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
-        rabbitMqTranslateService.handleUserRequest(clickTranslateRequest.getShopName());
-        String message = objectToJson(clickTranslateRequest);
-        // 将消息发送到用户的路由 key
-        amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + clickTranslateRequest.getShopName(), message);
-        return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
-    }
-
-    /**
      * 获取当前用户的value值
      * */
     @GetMapping("/getUserValue")
-    public BaseResponse<Object> getUserValue(String shopName) {
+    public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
         String value = userTranslate.get(shopName);
         return new BaseResponse<>().CreateSuccessResponse(value);
     }
