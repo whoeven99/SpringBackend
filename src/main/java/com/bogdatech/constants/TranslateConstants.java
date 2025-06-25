@@ -45,6 +45,7 @@ public class TranslateConstants {
     public static final String BLOG = "BLOG";
     public static final String PAGE = "PAGE";
     public static final String MAX_LENGTH = "250";
+    public static final String MIDDLE_LENGTH = "60";
     public static final String SINGLE_LINE_TEXT_FIELD = "SINGLE_LINE_TEXT_FIELD";
     public static final String LIST_SINGLE_LINE_TEXT_FIELD = "LIST_SINGLE_LINE_TEXT_FIELD";
 

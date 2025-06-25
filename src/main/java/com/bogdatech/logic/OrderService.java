@@ -5,6 +5,7 @@ import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.CharsOrdersDO;
+import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
@@ -59,13 +60,15 @@ public class OrderService {
         templateData.put("number_of_credits", formattedNumber + " Credits");
         templateData.put("amount", "$" + String.format("%.2f", purchaseSuccessRequest.getAmount()));
         String suffix = ".myshopify.com";
-        String TargetShop;
-        TargetShop = purchaseSuccessRequest.getShopName().substring(0, purchaseSuccessRequest.getShopName().length() - suffix.length());
-        templateData.put("shop_name", TargetShop);
+        String targetShop;
+        targetShop = purchaseSuccessRequest.getShopName().substring(0, purchaseSuccessRequest.getShopName().length() - suffix.length());
+        templateData.put("shop_name", targetShop);
 
         //获取用户现在总共的值
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(purchaseSuccessRequest.getShopName());
-        String formattedNumber2 = formatter.format(remainingChars);
+        //获取用户已使用的token值
+        Integer usedChars = translationCounterService.getOne(new QueryWrapper<TranslationCounterDO>().eq("shop_name", purchaseSuccessRequest.getShopName())).getUsedChars();
+        String formattedNumber2 = formatter.format(remainingChars-usedChars);
         templateData.put("total_credits_count", formattedNumber2 + " Credits");
 //        return true;
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(138372L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
@@ -87,9 +90,9 @@ public class OrderService {
         String formattedDateTime = userData.getCreatedAt().format(outputFormatter);
         templateData.put("effective_date", formattedDateTime + " UTC");
         String suffix = ".myshopify.com";
-        String TargetShop;
-        TargetShop = usersDO.getShopName().substring(0, usersDO.getShopName().length() - suffix.length());
-        templateData.put("shop_name", TargetShop);
+        String targetShop;
+        targetShop = usersDO.getShopName().substring(0, usersDO.getShopName().length() - suffix.length());
+        templateData.put("shop_name", targetShop);
 
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
