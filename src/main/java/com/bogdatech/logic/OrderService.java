@@ -68,9 +68,13 @@ public class OrderService {
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(purchaseSuccessRequest.getShopName());
         //获取用户已使用的token值
         Integer usedChars = translationCounterService.getOne(new QueryWrapper<TranslationCounterDO>().eq("shop_name", purchaseSuccessRequest.getShopName())).getUsedChars();
-        String formattedNumber2 = formatter.format(remainingChars-usedChars);
-        templateData.put("total_credits_count", formattedNumber2 + " Credits");
-//        return true;
+        //当购买的token大于相减的token，展示购买的token
+        if (purchaseSuccessRequest.getCredit() > (remainingChars - usedChars)) {
+            templateData.put("total_credits_count", purchaseSuccessRequest.getCredit() + " Credits");
+        }else {
+            String formattedNumber2 = formatter.format(remainingChars-usedChars);
+            templateData.put("total_credits_count", formattedNumber2 + " Credits");
+        }
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(138372L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 
