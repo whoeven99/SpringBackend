@@ -112,8 +112,8 @@ public class TranslateService {
         return thread;
     };
     public static ExecutorService executorService = new ThreadPoolExecutor(
-            6,   // 核心线程数（比 vCPU 多一点）
-            12,  // 最大线程数（vCPU * 4）
+            4,   // 核心线程数（比 vCPU 多一点）
+            8,  // 最大线程数（vCPU * 4）
             60L, TimeUnit.SECONDS, // 空闲线程存活时间
             new LinkedBlockingQueue<>(50), // 任务队列（避免内存过载）
             threadFactory,
@@ -1289,15 +1289,20 @@ public class TranslateService {
                     judgeData.get(HTML).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
                     continue;
                 }
-                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-                    printTranslateReason(key + "不在白名单, value: " + value);
-                    continue;
-                }
-                //如果包含对应key和value，则跳过
-                if (!shouldTranslate(key, value)) {
-                    continue;
+//                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
+//                    printTranslateReason(key + "不在白名单, value: " + value);
+//                    continue;
+//                }
+
+                //对key中含section和general的做key值判断
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                    //如果包含对应key和value，则跳过
+                    if (!shouldTranslate(key, value)) {
+                        continue;
+                    }
                 }
             }
+
             //对METAOBJECT字段翻译
             if (resourceType.equals(METAOBJECT)) {
                 if (isJson(value)) {

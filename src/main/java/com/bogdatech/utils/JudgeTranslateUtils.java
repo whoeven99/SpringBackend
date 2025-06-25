@@ -123,6 +123,7 @@ public class JudgeTranslateUtils {
     private static final int HASH_CONTAINS_MAX_LENGTH = 30;
     private static final int SLASH_CONTAINS_MAX_LENGTH = 20; // 可改为15
     private static final Pattern ICON_MATH_PATTERN = Pattern.compile(".*\\.icon_\\d+:.*"); // icon_X 类型
+    public static final Pattern GENERAL_OR_SECTION_PATTERN = Pattern.compile("^(general|section)\\."); // general.开头的key
 
     /**
      * 判断给定的key是否需要翻译
@@ -133,25 +134,25 @@ public class JudgeTranslateUtils {
      */
     public static boolean shouldTranslate(String key, String value) {
         if (value == null || value.trim().isEmpty()) {
-            printTranslateReason(value + " is null or empty");
+            printTranslateReason("general.&section.  " + key + " is null or empty, value是： " + value);
             return false;
         }
 
         if(key.contains("captions")){
-            printTranslateReason(key + "包含captions, value是： " + value);
+            printTranslateReason("general.&section. " + key + "包含captions, value是： " + value);
             return false;
         }
 
         //判断icon相关数据
         if (ICON_MATH_PATTERN.matcher(key).matches()) {
-            printTranslateReason(key + "icon相关数据, value是： " + value);
+            printTranslateReason("general.&section. " + key + "icon相关数据, value是： " + value);
             return false;
         }
 
         //第一步： 检查是否为不翻译的key
         for (String substring : OLD_NO_TRANSLATE) {
             if (key.contains(substring)) {
-                printTranslateReason(key + "包含" + substring +"的字符, value是： " + value);
+                printTranslateReason("general.&section. " + key + "包含" + substring +"的字符, value是： " + value);
                 return false;
             }
         }
@@ -159,7 +160,7 @@ public class JudgeTranslateUtils {
         // 第二步：检查是否为明确不翻译的key
         for (String substring : NO_TRANSLATE_KEYS) {
             if (key.contains(substring)) {
-                printTranslateReason(key + "包含" + substring +"的字符, value是： " + value);
+                printTranslateReason("general.&section. " + key + "包含" + substring +"的字符, value是： " + value);
                 return false;
             }
         }
@@ -168,7 +169,7 @@ public class JudgeTranslateUtils {
         if (key.contains(".json")) {
             for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
                 if (key.contains(substring)) {
-                    printTranslateReason(key + "包含.json且包含 " + substring +" 的字符, value是： " + value);
+                    printTranslateReason("general.&section. " + key + "包含.json且包含 " + substring +" 的字符, value是： " + value);
                     return false;
                 }
             }
@@ -176,7 +177,7 @@ public class JudgeTranslateUtils {
 
         // 第十四步，如果key包含color 但 是html， 翻译
         if (key.contains("color") && !isHtml(value)) {
-            printTranslateReason(key + "包含color且不是html, value是： " + value);
+            printTranslateReason("general.&section. " + key + "包含color且不是html, value是： " + value);
             return false;
         }
 
