@@ -70,7 +70,7 @@ public class OrderService {
         Integer usedChars = translationCounterService.getOne(new QueryWrapper<TranslationCounterDO>().eq("shop_name", purchaseSuccessRequest.getShopName())).getUsedChars();
         //当购买的token大于相减的token，展示购买的token
         if (purchaseSuccessRequest.getCredit() > (remainingChars - usedChars)) {
-            templateData.put("total_credits_count", purchaseSuccessRequest.getCredit() + " Credits");
+            templateData.put("total_credits_count", formattedNumber + " Credits");
         }else {
             String formattedNumber2 = formatter.format(remainingChars-usedChars);
             templateData.put("total_credits_count", formattedNumber2 + " Credits");
