@@ -285,17 +285,17 @@ public class ShopifyService {
 
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
-                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-                    continue;
-                }
-                //如果包含对应key和value，则跳过
-                if (!shouldTranslate(key, value)) {
-                    continue;
-                }
-
                 //如果是html放html文本里面
                 if (isHtml(value)) {
+                    counter.addChars(calculateModelToken(value));
                     continue;
+                }
+                //对key中含section和general的做key值判断
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+                    //如果包含对应key和value，则跳过
+                    if (!shouldTranslate(key, value)) {
+                        continue;
+                    }
                 }
                 counter.addChars(calculateModelToken(value));
                 continue;
@@ -447,17 +447,18 @@ public class ShopifyService {
 
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
-                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-                    continue;
-                }
-                //如果包含对应key和value，则跳过
-                if (!shouldTranslate(key, value)) {
-                    continue;
-                }
 
                 //如果是html放html文本里面
                 if (isHtml(value)) {
+                    counter.addChars(calculateModelToken(value));
                     continue;
+                }
+
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                    //如果包含对应key和value，则跳过
+                    if (!shouldTranslate(key, value)) {
+                        continue;
+                    }
                 }
                 counter.addChars(calculateModelToken(value));
                 continue;
