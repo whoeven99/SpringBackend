@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.TranslateService.userStopFlags;
-import static com.bogdatech.task.RabbitMqTask.SHOP_LOCKS;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
@@ -54,7 +53,6 @@ public class RabbitMqTranslateConsumerService {
                 // 处理翻译功能
                 processMessage(rabbitMqTranslateVO, task);
                 translateTasksService.updateByTaskId(task.getTaskId(), 1);
-                SHOP_LOCKS.remove(rabbitMqTranslateVO.getShopName());
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
@@ -62,7 +60,6 @@ public class RabbitMqTranslateConsumerService {
             appInsights.trackTrace("到达字符限制： " + e1);
         } catch (Exception e) {
             appInsights.trackTrace("处理消息失败 errors : " + e);
-            SHOP_LOCKS.put(rabbitMqTranslateVO.getShopName(), false);
         }
     }
 

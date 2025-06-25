@@ -14,7 +14,7 @@ import static com.bogdatech.constants.TranslateConstants.*;
 public class TranslateResourceDTO {
     // 创建一个静态的 ArrayList 来存储 TranslateResourceDTO 对象
     public static final List<TranslateResourceDTO> TRANSLATION_RESOURCES = new ArrayList<>(Arrays.asList(
-            new TranslateResourceDTO(PRODUCT, MAX_LENGTH, "", "")
+            new TranslateResourceDTO(PRODUCT, MIDDLE_LENGTH, "", "")
             ,
             new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", "")
@@ -32,8 +32,8 @@ public class TranslateResourceDTO {
             ,
             new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(FILTER, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(METAFIELD, MIDDLE_LENGTH, "", ""),
+            new TranslateResourceDTO(METAOBJECT, MIDDLE_LENGTH, "", ""),
 
             new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
@@ -59,7 +59,7 @@ public class TranslateResourceDTO {
     ));
 
     public static final List<TranslateResourceDTO> PRODUCT_RESOURCES = new ArrayList<>(Arrays.asList(
-            new TranslateResourceDTO(PRODUCT, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(PRODUCT, MIDDLE_LENGTH, "", ""),
             new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", "")
     ));
@@ -76,9 +76,9 @@ public class TranslateResourceDTO {
             ,
             new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(FILTER, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")
+            new TranslateResourceDTO(METAFIELD, MIDDLE_LENGTH, "", "")
             ,
-            new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(METAOBJECT, MIDDLE_LENGTH, "", ""),
             new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN_GROUP, MAX_LENGTH, "", ""),
@@ -88,7 +88,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(BLOG, MAX_LENGTH, "", "")
             ,
             new TranslateResourceDTO(PAGE, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(PRODUCT, MAX_LENGTH, "", "")
+            new TranslateResourceDTO(PRODUCT, MIDDLE_LENGTH, "", "")
             ,
             new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", ""),
@@ -111,18 +111,18 @@ public class TranslateResourceDTO {
         RESOURCE_MAP.put("Article", List.of(new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Blog titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, MAX_LENGTH, "")));
         RESOURCE_MAP.put("Filters", List.of(new TranslateResourceDTO(FILTER, MAX_LENGTH, "", "")));
-        RESOURCE_MAP.put("Metaobjects", List.of(new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", "")));
+        RESOURCE_MAP.put("Metaobjects", List.of(new TranslateResourceDTO(METAOBJECT, MIDDLE_LENGTH, "", "")));
         RESOURCE_MAP.put("Pages", List.of(new TranslateResourceDTO(PAGE, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Policies", List.of(new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Products", List.of(
-                new TranslateResourceDTO(PRODUCT, MAX_LENGTH, "", "")
+                new TranslateResourceDTO(PRODUCT, MIDDLE_LENGTH, "", "")
         ));
         RESOURCE_MAP.put("Navigation", Arrays.asList(
                 new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(LINK, MAX_LENGTH, "", "")
         ));
         RESOURCE_MAP.put("Store metadata", List.of(
-                new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")
+                new TranslateResourceDTO(METAFIELD, MIDDLE_LENGTH, "", "")
         ));
         RESOURCE_MAP.put("Shop", List.of(
                 new TranslateResourceDTO(SHOP, MAX_LENGTH, "", "")
@@ -152,15 +152,15 @@ public class TranslateResourceDTO {
         TOKEN_MAP.put("article", List.of(new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("blog_titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("filters", List.of(new TranslateResourceDTO(FILTER, MAX_LENGTH, "", "")));
-        TOKEN_MAP.put("metaobjects", List.of(new TranslateResourceDTO(METAOBJECT, MAX_LENGTH, "", "")));
+        TOKEN_MAP.put("metaobjects", List.of(new TranslateResourceDTO(METAOBJECT, MIDDLE_LENGTH, "", "")));
         TOKEN_MAP.put("pages", List.of(new TranslateResourceDTO(PAGE, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("products", Arrays.asList(
-                new TranslateResourceDTO(PRODUCT, MAX_LENGTH, "", "")
+                new TranslateResourceDTO(PRODUCT, MIDDLE_LENGTH, "", "")
                 ,
                 new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", "")
         ));
-        TOKEN_MAP.put("metadata", List.of(new TranslateResourceDTO(METAFIELD, MAX_LENGTH, "", "")));
+        TOKEN_MAP.put("metadata", List.of(new TranslateResourceDTO(METAFIELD, MIDDLE_LENGTH, "", "")));
         TOKEN_MAP.put("navigation", Arrays.asList(
                 new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(LINK, MAX_LENGTH, "", "")
