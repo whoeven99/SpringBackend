@@ -39,7 +39,6 @@ public class RabbitMqTranslateConsumerService {
     // 启动监听器用于处理该用户的消息
     public void startTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
         try {
-            userStopFlags.put(rabbitMqTranslateVO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
             if (EMAIL.equals(rabbitMqTranslateVO.getShopifyData())) {
                 //获取当前用户翻译状态，先不做
                 // 处理邮件发送功能
