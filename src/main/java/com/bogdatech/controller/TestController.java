@@ -313,4 +313,16 @@ public class TestController {
         userStopFlags.put(shopName, new AtomicBoolean(false));
         return userStopFlags.toString();
     }
+
+    /**
+     * 测试开头为general或section的判断
+     * */
+    @GetMapping("/testGeneralOrSection")
+    public String testGeneralOrSection(@RequestParam String key) {
+        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+            return "true";
+        }else {
+            return "false";
+        }
+    }
 }

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.TaskTranslateDTO;
+import com.bogdatech.mapper.TestTableMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.service.TranslateTaskPublisherService;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -47,9 +48,11 @@ public class TaskService {
     private final IWidgetConfigurationsService iWidgetConfigurationsService;
     private final IGlossaryService iGlossaryService;
     private final IUserIpService iUserIpService;
+    private final TestTableMapper testTableMapper;
+    private final ITranslateTasksService translateTasksService;
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, TestTableMapper testTableMapper, ITranslateTasksService translateTasksService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
@@ -63,6 +66,8 @@ public class TaskService {
         this.iWidgetConfigurationsService = iWidgetConfigurationsService;
         this.iGlossaryService = iGlossaryService;
         this.iUserIpService = iUserIpService;
+        this.testTableMapper = testTableMapper;
+        this.translateTasksService = translateTasksService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -210,9 +215,16 @@ public class TaskService {
     public void translateStatus2WhenSystemRestart() {
         //查找翻译状态为2的任务
         List<TranslatesDO> listData = translatesService.getStatus2Data();
+
         //循环处理获取到的任务，先将状态改为3，然后调用翻译API
         for (TranslatesDO translatesDO : listData
         ) {
+            //查找测试用户数据表
+            TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", translatesDO.getShopName()));
+            if (name != null) {
+                translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", translatesDO.getShopName()).eq("status",2).set("status", 0));
+                continue;
+            }
 //            System.out.println("translatesDO: " + translatesDO);
             translateStatus2WhenSystemRestartComplete(translatesDO);
         }
