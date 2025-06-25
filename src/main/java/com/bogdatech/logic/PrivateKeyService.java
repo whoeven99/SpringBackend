@@ -1012,12 +1012,14 @@ public class PrivateKeyService {
 
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
-                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
+                if (isHtml(value)) {
                     continue;
                 }
-                //如果包含对应key和value，则跳过
-                if (!shouldTranslate(key, value) && !isHtml(value)) {
-                    continue;
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                    //如果包含对应key和value，则跳过
+                    if (!shouldTranslate(key, value)) {
+                        continue;
+                    }
                 }
                 //如果值为纯数字的话，不翻译
                 if (isNumber(value)) {

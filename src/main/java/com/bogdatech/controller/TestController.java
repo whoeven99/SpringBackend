@@ -186,13 +186,13 @@ public class TestController {
         }
 
         //如果是theme模块的数据
-        if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-            return "theme不翻译";
+        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+            //如果包含对应key和value，则跳过
+            if (!shouldTranslate(key, value)) {
+                return "theme不翻译";
+            }
         }
-        //如果包含对应key和value，则跳过
-        if (!shouldTranslate(key, value)) {
-            return "theme不翻译";
-        }
+
         return "需要翻译";
     }
 
@@ -312,5 +312,17 @@ public class TestController {
     public String testStopFlagToTure(@RequestParam String shopName) {
         userStopFlags.put(shopName, new AtomicBoolean(false));
         return userStopFlags.toString();
+    }
+
+    /**
+     * 测试开头为general或section的判断
+     * */
+    @GetMapping("/testGeneralOrSection")
+    public String testGeneralOrSection(@RequestParam String key) {
+        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+            return "true";
+        }else {
+            return "false";
+        }
     }
 }

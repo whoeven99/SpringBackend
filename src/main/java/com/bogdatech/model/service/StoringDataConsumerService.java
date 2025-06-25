@@ -20,7 +20,7 @@ import static com.bogdatech.utils.JsonUtils.jsonToObject;
 
 @Service
 public class StoringDataConsumerService {
-    private final StoringDataPublisherService storingDataPublisherService;
+
 
     public static ExecutorService storeExecutorService = new ThreadPoolExecutor(
             2,   // 核心线程数（比 vCPU 多一点）
@@ -32,10 +32,6 @@ public class StoringDataConsumerService {
 
     public static final ConcurrentHashMap<String, ReentrantLock> LOCK_MAP = new ConcurrentHashMap<>();
 
-    @Autowired
-    public StoringDataConsumerService(StoringDataPublisherService storingDataPublisherService) {
-        this.storingDataPublisherService = storingDataPublisherService;
-    }
 
     /**
      * 接收存储任务,将翻译好的数据异步mq，存储到shopify本地

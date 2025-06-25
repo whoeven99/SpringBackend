@@ -112,8 +112,8 @@ public class TranslateService {
         return thread;
     };
     public static ExecutorService executorService = new ThreadPoolExecutor(
-            6,   // 核心线程数（比 vCPU 多一点）
-            12,  // 最大线程数（vCPU * 4）
+            4,   // 核心线程数（比 vCPU 多一点）
+            8,  // 最大线程数（vCPU * 4）
             60L, TimeUnit.SECONDS, // 空闲线程存活时间
             new LinkedBlockingQueue<>(50), // 任务队列（避免内存过载）
             threadFactory,
@@ -1289,15 +1289,16 @@ public class TranslateService {
                     judgeData.get(HTML).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
                     continue;
                 }
-                if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-                    printTranslateReason(key + "不在白名单, value: " + value);
-                    continue;
-                }
-                //如果包含对应key和value，则跳过
-                if (!shouldTranslate(key, value)) {
-                    continue;
+
+                //对key中含section和general的做key值判断
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                    //如果包含对应key和value，则跳过
+                    if (!shouldTranslate(key, value)) {
+                        continue;
+                    }
                 }
             }
+
             //对METAOBJECT字段翻译
             if (resourceType.equals(METAOBJECT)) {
                 if (isJson(value)) {
@@ -1653,41 +1654,6 @@ public class TranslateService {
         String resourceType = singleTranslateVO.getResourceType();
         String type = singleTranslateVO.getType();
 
-//        if (translationLogic(singleTranslateVO.getKey(), singleTranslateVO.getContext(), singleTranslateVO.getType(), singleTranslateVO.getResourceType())) {
-//            return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-//        }
-//
-//        //对METAOBJECT字段翻译
-//        if (resourceType.equals(METAOBJECT)) {
-//            if (isJson(value)) {
-//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-//            }
-//        }
-//
-//        if (TRANSLATABLE_RESOURCE_TYPES.contains(resourceType)) {
-//            if (!TRANSLATABLE_KEY_PATTERN.matcher(key).matches()) {
-//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-//            }
-//            //如果包含对应key和value，则跳过
-//            if (!shouldTranslate(key, value)) {
-//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-//            }
-//        }
-//        if (resourceType.equals(METAFIELD)) {
-//            if (SUSPICIOUS_PATTERN.matcher(value).matches()) {
-//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-//            }
-//            if (!metaTranslate(value)) {
-//                return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-//            }
-//
-//            if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
-//                //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
-//                if (isValidString(value)) {
-//                    return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
-//                }
-//            }
-//        }
 
         //获取当前翻译token数
         CharacterCountUtils counter = new CharacterCountUtils();
