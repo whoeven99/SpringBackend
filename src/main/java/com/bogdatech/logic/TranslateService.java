@@ -107,7 +107,6 @@ public class TranslateService {
         Thread thread = new Thread(runnable);
         thread.setName("my-thread-" + thread.getId());
         thread.setUncaughtExceptionHandler((t, e) -> {
-            System.err.println("线程 " + t.getName() + " 抛出异常: " + e.getMessage());
             appInsights.trackTrace("线程 " + t.getName() + " 抛出异常: " + e.getMessage());
         });
         return thread;

@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
@@ -34,7 +35,9 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.RabbitMqTask.SHOP_LOCKS;
+import static com.bogdatech.task.RabbitMqTask.unlock;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
@@ -128,7 +131,7 @@ public class TestController {
     @GetMapping("/getRate")
     public void getRate() {
         rateHttpIntegration.getFixerRate();
-        System.out.println("rateMap: " + rateMap.toString());
+        appInsights.trackTrace("rateMap: " + rateMap.toString());
     }
 
     //测试缓存功能
@@ -221,10 +224,22 @@ public class TestController {
     @GetMapping("/testThread")
     public void logThreadPoolStatus() {
         if (executorService instanceof ThreadPoolExecutor executor) {
-            System.out.println("锁池： " + SHOP_LOCKS);
-            System.out.println("线程池状态 => 活跃线程数: " + executor.getActiveCount() + ", 总任务数: " + executor.getTaskCount() +
-                            ", 已完成任务数: " + executor.getCompletedTaskCount() + ", 当前排队任务数: " + executor.getQueue().size()
-            );
+            appInsights.trackTrace(" - 锁池： " + SHOP_LOCKS);
+            appInsights.trackTrace(" - 停止标志： " + userStopFlags);
+            appInsights.trackTrace(" - 线程池状态：");
+            appInsights.trackTrace(" - 核心线程数(corePoolSize): " + executor.getCorePoolSize());
+            appInsights.trackTrace(" - 最大线程数(maximumPoolSize): " + executor.getMaximumPoolSize());
+            appInsights.trackTrace(" - 当前线程池中线程数(poolSize): " + executor.getPoolSize());
+            appInsights.trackTrace(" - 活跃线程数(activeCount): " + executor.getActiveCount());
+            appInsights.trackTrace(" - 已完成任务数(completedTaskCount): " + executor.getCompletedTaskCount());
+            appInsights.trackTrace(" - 总任务数(taskCount): " + executor.getTaskCount());
+            appInsights.trackTrace(" - 当前排队任务数(queue size): " + executor.getQueue().size());
+            appInsights.trackTrace(" - 队列剩余容量(remaining capacity): " + executor.getQueue().remainingCapacity());
+            appInsights.trackTrace(" - 是否允许核心线程超时(allowsCoreThreadTimeOut): " + executor.allowsCoreThreadTimeOut());
+            appInsights.trackTrace(" - 线程空闲存活时间(keepAliveTime): " + executor.getKeepAliveTime(TimeUnit.SECONDS) + " 秒");
+            appInsights.trackTrace(" - 是否已关闭(isShutdown): " + executor.isShutdown());
+            appInsights.trackTrace(" - 是否终止(isTerminated): " + executor.isTerminated());
+            appInsights.trackTrace(" - 正在终止中(isTerminating): " + executor.isTerminating());
         }
     }
 
@@ -240,11 +255,11 @@ public class TestController {
     // 停止mq翻译任务
     @GetMapping("/stopMqTask")
     public void stopMqTask(@RequestParam String shopName) {
-        System.out.println("正在翻译的用户： " + userStopFlags);
+        appInsights.trackTrace("正在翻译的用户： " + userStopFlags);
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
         if (stopFlag != null) {
             stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
-            System.out.println("停止成功");
+            appInsights.trackTrace("停止成功");
         }
     }
 
@@ -278,7 +293,7 @@ public class TestController {
      * */
     @GetMapping("/testModifyLock")
     public String testModifyLock(@RequestParam String shopName) {
-        SHOP_LOCKS.put(shopName, false);
+        unlock(shopName);
         return SHOP_LOCKS.toString();
     }
 

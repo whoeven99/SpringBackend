@@ -135,9 +135,9 @@ public class TencentEmailService {
         templateData.put("user", usersDO.getFirstName());
         // 定义要移除的后缀
         String suffix = ".myshopify.com";
-        String TargetShop;
-        TargetShop = shopName.substring(0, shopName.length() - suffix.length());
-        templateData.put("shop_name", TargetShop);
+        String targetShop;
+        targetShop = shopName.substring(0, shopName.length() - suffix.length());
+        templateData.put("shop_name", targetShop);
         //获取用户已翻译的和未翻译的文本
         //通过shopName获取翻译到那个文本
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
@@ -157,7 +157,7 @@ public class TencentEmailService {
         int costChars = endChars - beginChars;
         String formattedNumber = formatter.format(costChars);
         templateData.put("credit_count", formattedNumber);
-        System.out.println("templateData" + templateData);
+//        System.out.println("templateData" + templateData);
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中

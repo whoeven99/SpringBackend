@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.TranslateService.executorService;
@@ -28,7 +29,7 @@ public class RabbitMqTask {
         this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
         this.translateTasksService = translateTasksService;
     }
-    public static final ConcurrentHashMap<String, Boolean> SHOP_LOCKS = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, ReentrantLock> SHOP_LOCKS = new ConcurrentHashMap<>();
 
     // 每6秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 6000)
@@ -45,21 +46,52 @@ public class RabbitMqTask {
         }
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
-            if (SHOP_LOCKS.putIfAbsent(shopName, true) == null) {
-                //获取TranslateTasks中的RabbitMqTranslateDO
-                RabbitMqTranslateVO rabbitMqTranslateVO = null;
-                try {
-                    rabbitMqTranslateVO = OBJECT_MAPPER.readValue(task.getPayload(), RabbitMqTranslateVO.class);
-                } catch (JsonProcessingException e) {
-                    appInsights.trackTrace("payload 无法转化 errors");
-                    throw new RuntimeException(e);
+            executorService.submit(() -> {
+                if (tryLock(shopName)) {
+                    try {
+                        // 只执行一个线程处理这个 shopName
+                        RabbitMqTranslateVO vo = OBJECT_MAPPER.readValue(task.getPayload(), RabbitMqTranslateVO.class);
+                        rabbitMqTranslateConsumerService.startTranslate(vo, task);
+                    } catch (Exception e) {
+                        System.out.println("处理失败 errors : " + e);
+                        //将该模块状态改为4
+                        translateTasksService.updateByTaskId(task.getTaskId(), 4);
+                    } finally {
+                        unlock(shopName);
+                    }
                 }
+            });
+        }
+    }
 
-                // 加锁成功，提交任务到线程池
-                RabbitMqTranslateVO finalRabbitMqTranslateVO = rabbitMqTranslateVO;
-                executorService.submit(() -> rabbitMqTranslateConsumerService.startTranslate(finalRabbitMqTranslateVO, task));
-                return;
+    /**
+     * 尝试加锁
+     * @param shopName 商品名称（锁标识）
+     * @return true：成功获取锁；false：已被锁定
+     */
+    public static boolean tryLock(String shopName) {
+        // 获取或创建锁对象（非阻塞）
+        ReentrantLock lock = SHOP_LOCKS.computeIfAbsent(shopName, key -> new ReentrantLock());
+
+        // 尝试获取锁（非阻塞）
+        return lock.tryLock();
+    }
+
+    /**
+     * 释放锁
+     * @param shopName 商品名称（锁标识）
+     */
+    public static void unlock(String shopName) {
+        ReentrantLock lock = SHOP_LOCKS.get(shopName);
+        if (lock != null && lock.isHeldByCurrentThread()) {
+            lock.unlock();
+            // 可选：移除不再使用的锁，防止 map 增长过快
+            if (!lock.isLocked()) {
+                SHOP_LOCKS.remove(shopName, lock);
             }
         }
     }
+
+
 }
+
