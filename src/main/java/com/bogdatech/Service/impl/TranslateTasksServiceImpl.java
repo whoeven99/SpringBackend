@@ -54,4 +54,9 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
         //删除status为1的数据
         return baseMapper.deleteBatchIds(statusList);
     }
+
+    @Override
+    public int updateByShopName(String shopName, int i) {
+        return baseMapper.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).set("status", i));
+    }
 }

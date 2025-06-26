@@ -84,11 +84,9 @@ public class RabbitMqTask {
     public static void unlock(String shopName) {
         ReentrantLock lock = SHOP_LOCKS.get(shopName);
         if (lock != null && lock.isHeldByCurrentThread()) {
+            appInsights.trackTrace("unlock before Lock [" + shopName + "] by thread " + Thread.currentThread().getName());
             lock.unlock();
-            // 可选：移除不再使用的锁，防止 map 增长过快
-            if (!lock.isLocked()) {
-                SHOP_LOCKS.remove(shopName, lock);
-            }
+            appInsights.trackTrace("unlock after Lock [" + shopName + "] by thread " + Thread.currentThread().getName());
         }
     }
 
