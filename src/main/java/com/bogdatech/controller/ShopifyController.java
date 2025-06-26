@@ -30,7 +30,6 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RequestMapping("/shopify")
 public class ShopifyController {
 
-    private final ShopifyHttpIntegration shopifyApiIntegration;
     private final ShopifyService shopifyService;
     private final ITranslatesService translatesService;
     private final ITranslationCounterService translationCounterService;
@@ -40,8 +39,7 @@ public class ShopifyController {
     private final IUserTrialsService iUserTrialsService;
 
     @Autowired
-    public ShopifyController(ShopifyHttpIntegration shopifyApiIntegration, ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService, ICharsOrdersService charsOrdersService, IUsersService usersService, IUserTrialsService iUserTrialsService) {
-        this.shopifyApiIntegration = shopifyApiIntegration;
+    public ShopifyController(ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService, ICharsOrdersService charsOrdersService, IUsersService usersService, IUserTrialsService iUserTrialsService) {
         this.shopifyService = shopifyService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;

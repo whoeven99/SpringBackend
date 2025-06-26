@@ -292,7 +292,7 @@ public class RabbitMqTranslateService {
     public void translateByModeType(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
         String modelType = rabbitMqTranslateVO.getModeType();
         appInsights.trackTrace("DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
-        commonTranslate(rabbitMqTranslateVO, countUtils);
+//        commonTranslate(rabbitMqTranslateVO, countUtils);
         //更新用户token
 
     }
@@ -836,6 +836,9 @@ public class RabbitMqTranslateService {
 
         //存到数据库中
         try {
+            if (handleType.equals(HANDLE)){
+                return;
+            }
             // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
             vocabularyService.InsertOne(rabbitMqTranslateVO.getTarget(), targetString, rabbitMqTranslateVO.getSource(), value);
         } catch (Exception e) {
@@ -1064,7 +1067,6 @@ public class RabbitMqTranslateService {
         String source = rabbitMqTranslateVO.getSource();
         String resourceId = translateTextDO.getResourceId();
         String shopName = translateTextDO.getShopName();
-        String targetString = null;
         String handleType = "null";
         String type = translateTextDO.getTextType();
         if (rabbitMqTranslateVO.getHandleFlag()) {
@@ -1084,6 +1086,9 @@ public class RabbitMqTranslateService {
             printTranslation(translatedText, value, translation, shopifyRequest.getShopName(), type, resourceId, source);
             //存到数据库中
             try {
+                if (handleType.equals(HANDLE)){
+                    return;
+                }
                 // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
                 vocabularyService.InsertOne(shopifyRequest.getTarget(), translatedText, translateTextDO.getSourceCode(), value);
             } catch (Exception e) {

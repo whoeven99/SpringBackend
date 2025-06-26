@@ -415,7 +415,11 @@ public class JsoupUtils {
 
         targetString = isHtmlEntity(targetString);
 
-        addData(request.getTarget(), text, targetString);
+        //判断translateType是不是handle，再决定是否添加到缓存
+        if (!translateType.equals(HANDLE)){
+            addData(request.getTarget(), text, targetString);
+        }
+
         return targetString;
     }
 
