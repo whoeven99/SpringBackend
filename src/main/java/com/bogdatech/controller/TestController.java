@@ -160,7 +160,7 @@ public class TestController {
             System.out.println("is not json");
         }
         String targetLanguage = getLanguageName("zh-CN");
-        String prompt = getSimplePrompt(targetLanguage,  html);
+        String prompt = getSimplePrompt(targetLanguage, html);
         System.out.println("prompt: " + prompt);
 //        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
@@ -256,7 +256,7 @@ public class TestController {
 
     /**
      * 输入任务id，实现该任务的翻译
-     * */
+     */
     @GetMapping("/testDBTranslate2")
     public void testDBTranslate2(@RequestParam String taskId) {
         //根据id获取数据，转化为规定数据类型
@@ -268,7 +268,7 @@ public class TestController {
 
     /**
      * 修改用户锁集合
-     * */
+     */
     @GetMapping("/testModifyLock")
     public String testModifyLock(@RequestParam String shopName) {
         ReentrantLock lock = SHOP_LOCKS.get(shopName);
@@ -283,36 +283,36 @@ public class TestController {
 
     /**
      * 启动DB翻译
-     * */
+     */
     @GetMapping("/testDBTranslate")
     public void testDBTranslate() {
         rabbitMqTask.scanAndSubmitTasks();
     }
 
     /**
-     * 将停止flag换成true
-     * */
+     * 修改stopFlag
+     */
     @GetMapping("/testStopFlagToTure")
-    public String testStopFlagToTure(@RequestParam String shopName) {
-        userStopFlags.put(shopName, new AtomicBoolean(true));
+    public String testStopFlagToTure(@RequestParam String shopName, @RequestParam Boolean flag) {
+        userStopFlags.put(shopName, new AtomicBoolean(flag));
         return userStopFlags.toString();
     }
 
     /**
      * 测试开头为general或section的判断
-     * */
+     */
     @GetMapping("/testGeneralOrSection")
     public String testGeneralOrSection(@RequestParam String key) {
-        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
             return "true";
-        }else {
+        } else {
             return "false";
         }
     }
 
     /**
      * 在map里面清除锁，不建议且仅剩使用
-     * */
+     */
     @GetMapping("/testLock")
     public boolean testLock(@RequestParam String shopName) {
         SHOP_LOCKS.remove(shopName); // 强制移除 ReentrantLock 对象

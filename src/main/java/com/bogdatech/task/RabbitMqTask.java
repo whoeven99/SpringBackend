@@ -32,7 +32,7 @@ public class RabbitMqTask {
     public static final ConcurrentHashMap<String, ReentrantLock> SHOP_LOCKS = new ConcurrentHashMap<>();
 
     // 每6秒钟检查一次是否有闲置线程
-    @Scheduled(fixedDelay = 6000)
+//    @Scheduled(fixedDelay = 2000)
     public void scanAndSubmitTasks() {
         //查询 0 状态的记录，过滤掉 shop 已被锁定的
         List<TranslateTasksDO> tasks = new ArrayList<>();
@@ -46,8 +46,15 @@ public class RabbitMqTask {
         }
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
+            //判断SHOP_LOCKS里面是否有该用户且是否加锁，是跳过，否的话，翻译
+            ReentrantLock lock = SHOP_LOCKS.computeIfAbsent(shopName, key -> new ReentrantLock());
+            if (!lock.tryLock()) {
+                System.out.println("Shop " + shopName + " is currently locked, skipping.");
+                continue; // 已有线程在处理这个shopName
+            }
             executorService.submit(() -> {
                 if (tryLock(shopName)) {
+                    System.out.println("Lock [" + shopName + "] by thread " + Thread.currentThread().getName() + "shop: " + SHOP_LOCKS.get(shopName));
                     try {
                         // 只执行一个线程处理这个 shopName
                         RabbitMqTranslateVO vo = OBJECT_MAPPER.readValue(task.getPayload(), RabbitMqTranslateVO.class);

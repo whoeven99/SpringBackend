@@ -46,7 +46,6 @@ public class RabbitMqTranslateConsumerService {
             } else {
                 // 处理翻译功能
                 processMessage(rabbitMqTranslateVO, task);
-                translateTasksService.updateByTaskId(task.getTaskId(), 1);
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
@@ -78,10 +77,13 @@ public class RabbitMqTranslateConsumerService {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
-        appInsights.trackTrace("模块开始翻译前 counter 1: " + counter.getTotalChars());
+        System.out.println("用户 ： " + rabbitMqTranslateVO.getShopName() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
         rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
-        appInsights.trackTrace("模块开始翻译后 counter 2: " + counter.getTotalChars());
-        appInsights.trackTrace("单模块翻译结束。");
+        System.out.println("用户 ： " + rabbitMqTranslateVO.getShopName() + " 模块开始翻译后 counter 2: " + counter.getTotalChars());
+        System.out.println("用户 ： " + rabbitMqTranslateVO.getShopName() + " 单模块翻译结束。");
+        //将用户task改为1
+        System.out.println("task: " + task.getTaskId());
+        translateTasksService.updateByTaskId(task.getTaskId(), 1);
     }
 
 
