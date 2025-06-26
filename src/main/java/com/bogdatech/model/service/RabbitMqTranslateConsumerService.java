@@ -1,6 +1,5 @@
 package com.bogdatech.model.service;
 
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -12,11 +11,7 @@ import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
-import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
