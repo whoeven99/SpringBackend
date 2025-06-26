@@ -270,12 +270,12 @@ public class JsoupUtils {
         }
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("es".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("es".equals(target)|| "de".equals(target)|| "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("hi".equals(target) || "th".equals(target)) {
                 return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
             }
 
@@ -314,12 +314,12 @@ public class JsoupUtils {
 
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("es".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("es".equals(target) || "de".equals(target)|| "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("hi".equals(target) || "th".equals(target)) {
                 return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
             }
 
@@ -654,12 +654,12 @@ public class JsoupUtils {
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
-            if ("es".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            if ("es".equals(target)|| "de".equals(target)|| "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
                 return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target,shopName, limitChars);
             }
 
             //hi用doubao-1.5-pro-256k翻译
-            if ("hi".equals(target) || "th".equals(target) || "de".equals(target)) {
+            if ("hi".equals(target) || "th".equals(target)) {
                 return arkTranslateIntegration.douBaoTranslate(shopName, prompt, fixContent, counter, limitChars);
             }
             return hunYuanIntegration.hunYuanTranslate(fixContent, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);

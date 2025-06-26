@@ -1,6 +1,7 @@
 package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -753,7 +754,9 @@ public class RabbitMqTranslateService {
             // 更新数据库中的已使用字符数
 //            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”
-            translatesService.updateStatusByShopNameAnd2(shopName);
+            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
+            // 将task表数据都改为 5
+            translateTasksService.updateByShopName(shopName, 5);
             return true;
         }
         return false;

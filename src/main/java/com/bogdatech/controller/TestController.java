@@ -2,10 +2,8 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
-import com.bogdatech.entity.DO.TestTableDO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
@@ -15,7 +13,6 @@ import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.mapper.TestTableMapper;
-import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
@@ -29,13 +26,13 @@ import java.time.LocalDateTime;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
-import static com.bogdatech.task.RabbitMqTask.SHOP_LOCKS;
-import static com.bogdatech.task.RabbitMqTask.unlock;
+import static com.bogdatech.task.RabbitMqTask.*;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
@@ -222,34 +219,27 @@ public class TestController {
     }
 
     @GetMapping("/testThread")
-    public void logThreadPoolStatus() {
+    public String logThreadPoolStatus() {
         if (executorService instanceof ThreadPoolExecutor executor) {
-            appInsights.trackTrace(" - 锁池： " + SHOP_LOCKS);
-            appInsights.trackTrace(" - 停止标志： " + userStopFlags);
-            appInsights.trackTrace(" - 线程池状态：");
-            appInsights.trackTrace(" - 核心线程数(corePoolSize): " + executor.getCorePoolSize());
-            appInsights.trackTrace(" - 最大线程数(maximumPoolSize): " + executor.getMaximumPoolSize());
-            appInsights.trackTrace(" - 当前线程池中线程数(poolSize): " + executor.getPoolSize());
-            appInsights.trackTrace(" - 活跃线程数(activeCount): " + executor.getActiveCount());
-            appInsights.trackTrace(" - 已完成任务数(completedTaskCount): " + executor.getCompletedTaskCount());
-            appInsights.trackTrace(" - 总任务数(taskCount): " + executor.getTaskCount());
-            appInsights.trackTrace(" - 当前排队任务数(queue size): " + executor.getQueue().size());
-            appInsights.trackTrace(" - 队列剩余容量(remaining capacity): " + executor.getQueue().remainingCapacity());
-            appInsights.trackTrace(" - 是否允许核心线程超时(allowsCoreThreadTimeOut): " + executor.allowsCoreThreadTimeOut());
-            appInsights.trackTrace(" - 线程空闲存活时间(keepAliveTime): " + executor.getKeepAliveTime(TimeUnit.SECONDS) + " 秒");
-            appInsights.trackTrace(" - 是否已关闭(isShutdown): " + executor.isShutdown());
-            appInsights.trackTrace(" - 是否终止(isTerminated): " + executor.isTerminated());
-            appInsights.trackTrace(" - 正在终止中(isTerminating): " + executor.isTerminating());
+            String locks = (" - 锁池： " + SHOP_LOCKS + "  ");
+            String userStopFlag = (" - 停止标志： " + userStopFlags);
+            String executorServic = (" - 线程池状态：" + executorService + "  ");
+            String crePoolSize = (" - 核心线程数(corePoolSize): " + executor.getCorePoolSize() + "  ");
+            String maximumPoolSize = (" - 最大线程数(maximumPoolSize): " + executor.getMaximumPoolSize() + "  ");
+            String poolSize = (" - 当前线程池中线程数(poolSize): " + executor.getPoolSize() + "  ");
+            String activeCount = (" - 活跃线程数(activeCount): " + executor.getActiveCount() + "  ");
+            String completedTaskCount = (" - 已完成任务数(completedTaskCount): " + executor.getCompletedTaskCount() + "  ");
+            String taskCount = (" - 总任务数(taskCount): " + executor.getTaskCount() + "  ");
+            String queue = (" - 当前排队任务数(queue size): " + executor.getQueue().size() + "  ");
+            String remainingCapacity = (" - 队列剩余容量(remaining capacity): " + executor.getQueue().remainingCapacity() + "  ");
+            String allowsCoreThreadTimeOut = (" - 是否允许核心线程超时(allowsCoreThreadTimeOut): " + executor.allowsCoreThreadTimeOut() + "  ");
+            String keepAliveTime = (" - 线程空闲存活时间(keepAliveTime): " + executor.getKeepAliveTime(TimeUnit.SECONDS) + " 秒" + "  ");
+            String shutdown = (" - 是否已关闭(isShutdown): " + executor.isShutdown() + "  ");
+            String terminated = (" - 是否终止(isTerminated): " + executor.isTerminated() + "  ");
+            String terminating = (" - 正在终止中(isTerminating): " + executor.isTerminating() + "  ");
+            return locks + userStopFlag + executorServic + crePoolSize + maximumPoolSize + poolSize + activeCount + completedTaskCount + taskCount + queue + remainingCapacity + allowsCoreThreadTimeOut + keepAliveTime + shutdown + terminated + terminating;
         }
-    }
-
-    @PostMapping("/testMqTranslate")
-    public void testMqTranslate(@RequestBody ClickTranslateRequest clickTranslateRequest) {
-//        rabbitMqTranslateConsumerService.handleUserRequest(clickTranslateRequest.getShopName());
-        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
-        rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
-
+        return null;
     }
 
     // 停止mq翻译任务
@@ -263,20 +253,6 @@ public class TestController {
         }
     }
 
-    /**
-     * 拆分一个大任务为几个小任务，把小任务的数据放到db里的TranslateTasks里面
-     * */
-    @PostMapping("/testDBTranslate1")
-    public void testDBTranslate1(@RequestBody ClickTranslateRequest clickTranslateRequest) {
-        TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", clickTranslateRequest.getShopName()));
-        if (name == null) {
-            throw new RuntimeException("shopName不存在");
-        }
-        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
-        rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
-
-    }
 
     /**
      * 输入任务id，实现该任务的翻译
@@ -286,6 +262,8 @@ public class TestController {
         //根据id获取数据，转化为规定数据类型
         RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
         rabbitMqTranslateConsumerService.processMessage(dataToProcess, new TranslateTasksDO());
+        translateTasksService.updateByTaskId(taskId, 1);
+        unlock(dataToProcess.getShopName());
     }
 
     /**
@@ -293,7 +271,13 @@ public class TestController {
      * */
     @GetMapping("/testModifyLock")
     public String testModifyLock(@RequestParam String shopName) {
-        unlock(shopName);
+        ReentrantLock lock = SHOP_LOCKS.get(shopName);
+        System.out.println("Trying to unlock " + shopName + " by thread " + Thread.currentThread().getName());
+        if (lock != null && lock.isHeldByCurrentThread()) {
+            lock.unlock();
+        } else {
+            System.out.println("Unlock failed. Not held by current thread.");
+        }
         return SHOP_LOCKS.toString();
     }
 
@@ -310,7 +294,7 @@ public class TestController {
      * */
     @GetMapping("/testStopFlagToTure")
     public String testStopFlagToTure(@RequestParam String shopName) {
-        userStopFlags.put(shopName, new AtomicBoolean(false));
+        userStopFlags.put(shopName, new AtomicBoolean(true));
         return userStopFlags.toString();
     }
 
@@ -324,5 +308,15 @@ public class TestController {
         }else {
             return "false";
         }
+    }
+
+    /**
+     * 在map里面清除锁，不建议且仅剩使用
+     * */
+    @GetMapping("/testLock")
+    public boolean testLock(@RequestParam String shopName) {
+        SHOP_LOCKS.remove(shopName); // 强制移除 ReentrantLock 对象
+        appInsights.trackTrace("SHOP_LOCKS: " + SHOP_LOCKS);
+        return true;
     }
 }
