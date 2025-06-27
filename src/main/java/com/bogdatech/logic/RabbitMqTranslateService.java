@@ -292,7 +292,7 @@ public class RabbitMqTranslateService {
     public void translateByModeType(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
         String modelType = rabbitMqTranslateVO.getModeType();
         appInsights.trackTrace("DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
-//        commonTranslate(rabbitMqTranslateVO, countUtils);
+        commonTranslate(rabbitMqTranslateVO, countUtils);
         //更新用户token
 
     }
