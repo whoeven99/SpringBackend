@@ -1084,7 +1084,6 @@ public class RabbitMqTranslateService {
 
             //走翻译流程
             String translatedText = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
-            addData(shopifyRequest.getTarget(), value, translatedText);
             shopifyService.saveToShopify(translatedText, translation, resourceId, shopifyRequest);
             printTranslation(translatedText, value, translation, shopifyRequest.getShopName(), type, resourceId, source);
             //存到数据库中
