@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -91,7 +92,7 @@ public class ArkTranslateIntegration {
             StringBuilder response = new StringBuilder();
             ChatCompletionResult chatCompletion = arkService.createChatCompletion(request);
             chatCompletion.getChoices().forEach(choice -> response.append(choice.getMessage().getContent()));
-            long totalTokens = chatCompletion.getUsage().getTotalTokens();
+            long totalTokens = (long) (chatCompletion.getUsage().getTotalTokens() * MAGNIFICATION);
             int totalTokensInt = (int) totalTokens;
             countUtils.addChars(totalTokensInt);
             userTranslate.put(shopName, sourceText);
@@ -124,7 +125,7 @@ public class ArkTranslateIntegration {
             StringBuilder response = new StringBuilder();
             ChatCompletionResult chatCompletion = arkService.createChatCompletion(request);
             chatCompletion.getChoices().forEach(choice -> response.append(choice.getMessage().getContent()));
-            long totalTokens = chatCompletion.getUsage().getTotalTokens();
+            long totalTokens = (long) (chatCompletion.getUsage().getTotalTokens() * MAGNIFICATION);
             int totalTokensInt = (int) totalTokens;
             countUtils.addChars(totalTokensInt);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();

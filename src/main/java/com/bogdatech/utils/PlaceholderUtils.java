@@ -157,4 +157,13 @@ public class PlaceholderUtils {
     public static String getShortPrompt(String target) {
         return "Translate the following text into " + target + ". If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
     }
+
+    /**
+     * 完整翻译html的提示词
+     * @param target 目标语言
+     * @param languagePackId 语言包
+     * */
+    public static String getFullHtmlPrompt(String target, String languagePackId) {
+        return "Translate the following HTML content to " + target + "  with " + languagePackId + " appropriate terminology and tone. Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
+    }
 }

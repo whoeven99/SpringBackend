@@ -215,10 +215,10 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        if (value.contains("#") && value.length() <= HASH_CONTAINS_MAX_LENGTH) {
-            printTranslateReason(value + "包含#，且长度不超过30, key是： " + key);
-            return false;
-        }
+//        if (value.contains("#") && value.length() <= HASH_CONTAINS_MAX_LENGTH) {
+//            printTranslateReason(value + "包含#，且长度不超过30, key是： " + key);
+//            return false;
+//        }
 
         // 第七步，纯数字
         if (PURE_NUMBER.matcher(value).matches()) {

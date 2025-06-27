@@ -43,6 +43,7 @@ import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
+import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @Service
@@ -59,6 +60,9 @@ public class RabbitMqTranslateService {
     private final JsoupUtils jsoupUtils;
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
     private final ITranslateTasksService translateTasksService;
+    private static final Set<String> HTML_ENTITY = new HashSet<>(
+            Arrays.asList(PRODUCT, PRODUCT_OPTION_VALUE, PRODUCT_OPTION)
+    );
 
     @Autowired
     public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService) {
@@ -164,7 +168,6 @@ public class RabbitMqTranslateService {
 
             // 定期检查是否停止
             if (checkNeedStopped(request.getShopName(), counter)) {
-                System.out.println();
                 return;
             }
 
@@ -543,6 +546,12 @@ public class RabbitMqTranslateService {
                 continue;
             }
 
+            //判断数据是不是json数据。是的话删除
+            if (isJson(value)) {
+                iterator.remove(); // 根据业务条件删除
+                continue;
+            }
+
             String key = translateTextDO.getTextKey();
             //如果handleFlag为fa;se，则跳过
             if (type.equals(URI) && "handle".equals(key)) {
@@ -728,7 +737,17 @@ public class RabbitMqTranslateService {
         String source = rabbitMqTranslateVO.getSource();
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
-            htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
+            //判断产品模块用完全翻译，其他模块用分段html翻译
+            if (HTML_ENTITY.contains(rabbitMqTranslateVO.getModeType())) {
+                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
+            }else {
+                htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
+            }
+
+            if (rabbitMqTranslateVO.getModeType().equals(METAFIELD)) {
+                //对翻译后的html做格式处理
+                htmlTranslation = normalizeHtml(htmlTranslation);
+            }
         } catch (Exception e) {
             appInsights.trackTrace("html translation errors : " + e.getMessage());
             shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);

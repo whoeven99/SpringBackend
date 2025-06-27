@@ -12,6 +12,7 @@ import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -82,7 +83,7 @@ public class HunYuanIntegration {
                     if (resp.getUsage() != null && resp.getUsage().getTotalTokens() != null) {
                         countUtils.addChars(resp.getUsage().getTotalTokens().intValue());
                     }
-                    int totalToken = resp.getUsage().getTotalTokens().intValue();
+                    int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
                     countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
@@ -139,7 +140,7 @@ public class HunYuanIntegration {
                     if (resp.getUsage() != null && resp.getUsage().getTotalTokens() != null) {
                         countUtils.addChars(resp.getUsage().getTotalTokens().intValue());
                     }
-                    int totalToken = resp.getUsage().getTotalTokens().intValue();
+                    int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
                     countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
@@ -197,7 +198,7 @@ public class HunYuanIntegration {
                     if (resp.getUsage() != null && resp.getUsage().getTotalTokens() != null) {
                         countUtils.addChars(resp.getUsage().getTotalTokens().intValue());
                     }
-                    int totalToken = resp.getUsage().getTotalTokens().intValue();
+                    int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
                     countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
