@@ -868,7 +868,7 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             JsonNode translationsNode = contentItemNode.path("translations");
             JsonNode translatableContentNode = contentItemNode.path("translatableContent");
-            if (ONLINE_STORE_THEME.equals(translateResource.getResourceType())) {
+            if (ONLINE_STORE_THEME.equals(translateResource.getResourceType()) || SHOP.equals(translateResource.getResourceType())) {
                 // 当资源类型为 ONLINE_STORE_THEME 时，调用专门的计数方法
                 countThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
 //                if (counter.getTotalChars() != translatedCounter.getTotalChars()){

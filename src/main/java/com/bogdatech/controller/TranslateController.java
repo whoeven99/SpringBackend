@@ -138,7 +138,7 @@ public class TranslateController {
     }
 
     /**
-     *  通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
+     * 通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody ClickTranslateRequest clickTranslateRequest) {
@@ -171,40 +171,38 @@ public class TranslateController {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
 
-        //判断是否是测试用户
-        TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", clickTranslateRequest.getShopName()));
-        if (name != null) {
-            rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
-            return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
-        }
-
-        //初始化计数器
-        CharacterCountUtils counter = new CharacterCountUtils();
-        counter.addChars(usedChars);
-
-        //判断是否有handle
-        boolean handleFlag = false;
-        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
-        if (translateModel.contains("handle")) {
-            translateModel.removeIf("handle"::equals);
-            handleFlag = true;
-        }
-        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
-        //修改模块的排序
-        List<String> translateResourceDTOS = null;
-        try {
-            translateResourceDTOS = translateModel(translateModel);
-        } catch (Exception e) {
-            appInsights.trackTrace("translateModel error: " + e.getMessage());
-        }
-//      翻译
-        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
-            return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
-        }
-        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
-        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS, handleFlag);
+        //全部走DB翻译
+        rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
+//
+//
+//        //初始化计数器
+//        CharacterCountUtils counter = new CharacterCountUtils();
+//        counter.addChars(usedChars);
+//
+//        //判断是否有handle
+//        boolean handleFlag = false;
+//        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
+//        if (translateModel.contains("handle")) {
+//            translateModel.removeIf("handle"::equals);
+//            handleFlag = true;
+//        }
+//        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
+//        //修改模块的排序
+//        List<String> translateResourceDTOS = null;
+//        try {
+//            translateResourceDTOS = translateModel(translateModel);
+//        } catch (Exception e) {
+//            appInsights.trackTrace("translateModel error: " + e.getMessage());
+//        }
+////      翻译
+//        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
+//            return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
+//        }
+//        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+//        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
+//        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS, handleFlag);
+//        return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
     //暂停翻译
@@ -227,7 +225,7 @@ public class TranslateController {
     }
 
     /**
-     *  将一条数据存shopify本地
+     * 将一条数据存shopify本地
      */
     @PostMapping("/insertTranslatedText")
     public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
@@ -237,7 +235,7 @@ public class TranslateController {
         request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
         String s = registerTransaction(request, body);
-        appInsights.trackTrace("用户 ： " + cloudServiceRequest.getShopName() +" insertTranslatedText : " + s);
+        appInsights.trackTrace("用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
     }
 
 
@@ -292,7 +290,7 @@ public class TranslateController {
     //用户是否选择定时任务的方法
     @PostMapping("/updateAutoTranslateByData")
     public BaseResponse<Object> updateStatusByShopName(@RequestBody AutoTranslateRequest request) {
-        return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(),request.getSource(), request.getTarget());
+        return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(), request.getSource(), request.getTarget());
     }
 
     //单条文本翻译
@@ -303,7 +301,7 @@ public class TranslateController {
 
     /**
      * 获取当前用户的value值
-     * */
+     */
     @GetMapping("/getUserValue")
     public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
         String value = userTranslate.get(shopName);
