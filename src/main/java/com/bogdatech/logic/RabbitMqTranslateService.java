@@ -43,6 +43,7 @@ import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
+import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @Service
@@ -543,6 +544,12 @@ public class RabbitMqTranslateService {
                 continue;
             }
 
+            //判断数据是不是json数据。是的话删除
+            if (isJson(value)) {
+                iterator.remove(); // 根据业务条件删除
+                continue;
+            }
+
             String key = translateTextDO.getTextKey();
             //如果handleFlag为fa;se，则跳过
             if (type.equals(URI) && "handle".equals(key)) {
@@ -728,7 +735,12 @@ public class RabbitMqTranslateService {
         String source = rabbitMqTranslateVO.getSource();
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
-            htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
+            htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
+
+            if (rabbitMqTranslateVO.getModeType().equals(METAFIELD)) {
+                //对翻译后的html做格式处理
+                htmlTranslation = normalizeHtml(htmlTranslation);
+            }
         } catch (Exception e) {
             appInsights.trackTrace("html translation errors : " + e.getMessage());
             shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);
