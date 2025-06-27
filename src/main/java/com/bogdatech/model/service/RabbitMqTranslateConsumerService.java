@@ -1,5 +1,6 @@
 package com.bogdatech.model.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -11,6 +12,9 @@ import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -35,18 +39,24 @@ public class RabbitMqTranslateConsumerService {
     public void startTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
         try {
             if (EMAIL.equals(rabbitMqTranslateVO.getShopifyData())) {
-                //获取当前用户翻译状态，先不做
-                // 处理邮件发送功能
-                try {
-                    rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task);
-                } catch (Exception e) {
-                    appInsights.trackTrace("邮件发送 errors : " + e);
+                // 判断是否需要发送邮件，获取TranslateTasks的所有关于该商店的task，判断是否只剩一条数据了，如果是走邮件发送，如果不是不发邮件
+                List<TranslateTasksDO> shopName = translateTasksService.list(new QueryWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()));
+                if (shopName.size() <= 1) {
+                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 只剩一条数据了，发送邮件");
+                    //获取当前用户翻译状态，先不做
+                    // 处理邮件发送功能
+                    try {
+                        rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task);
+                    } catch (Exception e) {
+                        appInsights.trackTrace("邮件发送 errors : " + e);
+                    }
+                    translateTasksService.updateByTaskId(task.getTaskId(), 1);
+                }else {
+                    System.out.println(rabbitMqTranslateVO.getShopName() + " 还有数据继续翻译");
                 }
-                translateTasksService.updateByTaskId(task.getTaskId(), 1);
             } else {
                 // 处理翻译功能
                 processMessage(rabbitMqTranslateVO, task);
-                translateTasksService.updateByTaskId(task.getTaskId(), 1);
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
@@ -78,10 +88,12 @@ public class RabbitMqTranslateConsumerService {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
-        appInsights.trackTrace("模块开始翻译前 counter 1: " + counter.getTotalChars());
+        appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
         rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
-        appInsights.trackTrace("模块开始翻译后 counter 2: " + counter.getTotalChars());
-        appInsights.trackTrace("单模块翻译结束。");
+        appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars());
+        appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 单模块翻译结束。");
+        //将用户task改为1
+        translateTasksService.updateByTaskId(task.getTaskId(), 1);
     }
 
 

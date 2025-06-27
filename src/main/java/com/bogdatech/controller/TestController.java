@@ -160,7 +160,7 @@ public class TestController {
             System.out.println("is not json");
         }
         String targetLanguage = getLanguageName("zh-CN");
-        String prompt = getSimplePrompt(targetLanguage,  html);
+        String prompt = getSimplePrompt(targetLanguage, html);
         System.out.println("prompt: " + prompt);
 //        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
@@ -218,9 +218,10 @@ public class TestController {
         return replaceHyphensWithSpaces(value);
     }
 
-    @GetMapping("/testThread")
+    @PutMapping("/testThread")
     public String logThreadPoolStatus() {
         if (executorService instanceof ThreadPoolExecutor executor) {
+            String process = (" - 进程Set： " + PROCESSING_SHOPS.toString() + " ");
             String locks = (" - 锁池： " + SHOP_LOCKS + "  ");
             String userStopFlag = (" - 停止标志： " + userStopFlags);
             String executorServic = (" - 线程池状态：" + executorService + "  ");
@@ -237,13 +238,13 @@ public class TestController {
             String shutdown = (" - 是否已关闭(isShutdown): " + executor.isShutdown() + "  ");
             String terminated = (" - 是否终止(isTerminated): " + executor.isTerminated() + "  ");
             String terminating = (" - 正在终止中(isTerminating): " + executor.isTerminating() + "  ");
-            return locks + userStopFlag + executorServic + crePoolSize + maximumPoolSize + poolSize + activeCount + completedTaskCount + taskCount + queue + remainingCapacity + allowsCoreThreadTimeOut + keepAliveTime + shutdown + terminated + terminating;
+            return process + locks + userStopFlag + executorServic + crePoolSize + maximumPoolSize + poolSize + activeCount + completedTaskCount + taskCount + queue + remainingCapacity + allowsCoreThreadTimeOut + keepAliveTime + shutdown + terminated + terminating;
         }
         return null;
     }
 
     // 停止mq翻译任务
-    @GetMapping("/stopMqTask")
+    @PutMapping("/stopMqTask")
     public void stopMqTask(@RequestParam String shopName) {
         appInsights.trackTrace("正在翻译的用户： " + userStopFlags);
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
@@ -256,8 +257,8 @@ public class TestController {
 
     /**
      * 输入任务id，实现该任务的翻译
-     * */
-    @GetMapping("/testDBTranslate2")
+     */
+    @PutMapping("/testDBTranslate2")
     public void testDBTranslate2(@RequestParam String taskId) {
         //根据id获取数据，转化为规定数据类型
         RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
@@ -268,8 +269,9 @@ public class TestController {
 
     /**
      * 修改用户锁集合
-     * */
-    @GetMapping("/testModifyLock")
+     */
+
+    @PutMapping("/testModifyLock")
     public String testModifyLock(@RequestParam String shopName) {
         ReentrantLock lock = SHOP_LOCKS.get(shopName);
         System.out.println("Trying to unlock " + shopName + " by thread " + Thread.currentThread().getName());
@@ -283,40 +285,54 @@ public class TestController {
 
     /**
      * 启动DB翻译
-     * */
-    @GetMapping("/testDBTranslate")
+     */
+    @PutMapping("/testDBTranslate")
     public void testDBTranslate() {
         rabbitMqTask.scanAndSubmitTasks();
     }
 
     /**
-     * 将停止flag换成true
-     * */
-    @GetMapping("/testStopFlagToTure")
-    public String testStopFlagToTure(@RequestParam String shopName) {
-        userStopFlags.put(shopName, new AtomicBoolean(true));
+     * 修改stopFlag
+     */
+    @PutMapping("/testStopFlagToTure")
+    public String testStopFlagToTure(@RequestParam String shopName, @RequestParam Boolean flag) {
+        userStopFlags.put(shopName, new AtomicBoolean(flag));
         return userStopFlags.toString();
     }
 
     /**
      * 测试开头为general或section的判断
-     * */
-    @GetMapping("/testGeneralOrSection")
+     */
+    @PutMapping("/testGeneralOrSection")
     public String testGeneralOrSection(@RequestParam String key) {
-        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
             return "true";
-        }else {
+        } else {
             return "false";
         }
     }
 
     /**
      * 在map里面清除锁，不建议且仅剩使用
-     * */
-    @GetMapping("/testLock")
+     */
+    @PutMapping("/testLock")
     public boolean testLock(@RequestParam String shopName) {
         SHOP_LOCKS.remove(shopName); // 强制移除 ReentrantLock 对象
         appInsights.trackTrace("SHOP_LOCKS: " + SHOP_LOCKS);
         return true;
     }
+
+    /**
+     * 对PROCESSING_SHOPS里面数据进行增删
+     * ture,增； false，改
+     */
+    @PutMapping("/testProcess")
+    public boolean testProcess(@RequestParam String shopName, @RequestParam Boolean flag) {
+        if (flag) {
+            return PROCESSING_SHOPS.add(shopName);
+        }else {
+            return PROCESSING_SHOPS.remove(shopName);
+        }
+    }
+
 }

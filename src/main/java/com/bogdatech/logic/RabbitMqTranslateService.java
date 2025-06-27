@@ -136,7 +136,7 @@ public class RabbitMqTranslateService {
             return;
         }
 
-        appInsights.trackTrace("DB普通翻译开始");
+        appInsights.trackTrace(request.getShopName() + " 用户 的 DB普通翻译开始");
         //将初始化用户翻译value为null
         userTranslate.put(request.getShopName(), " and ");
         //判断是否有同义词
@@ -830,12 +830,18 @@ public class RabbitMqTranslateService {
             shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
             return;
         }
-        addData(shopifyRequest.getTarget(), value, targetString);
+
+        if (!handleType.equals(HANDLE)){
+            addData(shopifyRequest.getTarget(), value, targetString);
+        }
         shopifyService.saveToShopify(targetString, translation, resourceId, shopifyRequest);
         printTranslation(targetString, value, translation, shopName, modeType, resourceId, source);
 
         //存到数据库中
         try {
+            if (handleType.equals(HANDLE)){
+                return;
+            }
             // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
             vocabularyService.InsertOne(rabbitMqTranslateVO.getTarget(), targetString, rabbitMqTranslateVO.getSource(), value);
         } catch (Exception e) {
@@ -1064,7 +1070,6 @@ public class RabbitMqTranslateService {
         String source = rabbitMqTranslateVO.getSource();
         String resourceId = translateTextDO.getResourceId();
         String shopName = translateTextDO.getShopName();
-        String targetString = null;
         String handleType = "null";
         String type = translateTextDO.getTextType();
         if (rabbitMqTranslateVO.getHandleFlag()) {
@@ -1079,11 +1084,13 @@ public class RabbitMqTranslateService {
 
             //走翻译流程
             String translatedText = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
-            addData(shopifyRequest.getTarget(), value, translatedText);
             shopifyService.saveToShopify(translatedText, translation, resourceId, shopifyRequest);
             printTranslation(translatedText, value, translation, shopifyRequest.getShopName(), type, resourceId, source);
             //存到数据库中
             try {
+                if (handleType.equals(HANDLE)){
+                    return;
+                }
                 // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
                 vocabularyService.InsertOne(shopifyRequest.getTarget(), translatedText, translateTextDO.getSourceCode(), value);
             } catch (Exception e) {
