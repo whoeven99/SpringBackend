@@ -225,6 +225,10 @@ public class TaskService {
             //给这些用户添加停止标志符的状态
             userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
             userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+
+            //将该任务的状态改为0
+            translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
+            //
 //            //查找测试用户数据表
 //            TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", translatesDO.getShopName()));
 //            if (name != null) {

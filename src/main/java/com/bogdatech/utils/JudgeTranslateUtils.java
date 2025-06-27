@@ -228,7 +228,7 @@ public class JudgeTranslateUtils {
 
         // 第八步，包含http://、https://或shopify://
         for (String prefix : URL_PREFIXES) {
-            if (value.contains(prefix)) {
+            if (value.startsWith(prefix)) {
                 printTranslateReason(value + "包含" + prefix + ", key是： " + key );
                 return false;
             }

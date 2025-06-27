@@ -1180,7 +1180,7 @@ public class RabbitMqTranslateService {
             //为3，发送部分翻译的邮件
             tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, limitChars, target, source);
         }
-
+        translateTasksService.updateByTaskId(task.getTaskId(), 1);
     }
 
 }

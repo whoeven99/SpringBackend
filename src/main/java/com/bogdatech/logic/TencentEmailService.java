@@ -200,7 +200,7 @@ public class TencentEmailService {
             String formattedNumber2 = formatter.format(remaining);
             templateData.put("remaining_credits", formattedNumber2);
         }
-        System.out.println("templateData" + templateData);
+        appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
         Boolean b;
         if (isTask) {
