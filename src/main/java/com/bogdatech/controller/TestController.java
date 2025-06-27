@@ -221,7 +221,7 @@ public class TestController {
     @PutMapping("/testThread")
     public String logThreadPoolStatus() {
         if (executorService instanceof ThreadPoolExecutor executor) {
-            String process = (" - 进程Set： " + PROCESSING_SHOPS);
+            String process = (" - 进程Set： " + PROCESSING_SHOPS.toString() + " ");
             String locks = (" - 锁池： " + SHOP_LOCKS + "  ");
             String userStopFlag = (" - 停止标志： " + userStopFlags);
             String executorServic = (" - 线程池状态：" + executorService + "  ");
