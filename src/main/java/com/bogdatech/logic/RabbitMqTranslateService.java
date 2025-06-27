@@ -60,9 +60,6 @@ public class RabbitMqTranslateService {
     private final JsoupUtils jsoupUtils;
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
     private final ITranslateTasksService translateTasksService;
-    private static final Set<String> HTML_ENTITY = new HashSet<>(
-            Arrays.asList(PRODUCT, PRODUCT_OPTION_VALUE, PRODUCT_OPTION)
-    );
 
     @Autowired
     public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService) {
@@ -735,10 +732,11 @@ public class RabbitMqTranslateService {
         String htmlTranslation = null;
         String resourceId = translateTextDO.getResourceId();
         String source = rabbitMqTranslateVO.getSource();
+        String key = translateTextDO.getTextKey();
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
             //判断产品模块用完全翻译，其他模块用分段html翻译
-            if (HTML_ENTITY.contains(rabbitMqTranslateVO.getModeType())) {
+            if (rabbitMqTranslateVO.getModeType().equals(PRODUCT) && "body_html".equals(key)) {
                 htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
             }else {
                 htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
