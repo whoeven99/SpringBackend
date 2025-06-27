@@ -164,6 +164,6 @@ public class PlaceholderUtils {
      * @param languagePackId 语言包
      * */
     public static String getFullHtmlPrompt(String target, String languagePackId) {
-        return "Translate the following content into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Please note that only the text is translated, not the HTML tags. Please output the result in HTML format.";
+        return "Translate the following HTML content to " + target + "  with " + languagePackId + " appropriate terminology and tone. Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
     }
 }
