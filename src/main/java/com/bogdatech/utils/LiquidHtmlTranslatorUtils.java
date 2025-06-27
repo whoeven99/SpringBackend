@@ -2,6 +2,7 @@ package com.bogdatech.utils;
 
 
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
@@ -18,12 +19,15 @@ import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.GENERAL;
 import static com.bogdatech.logic.TranslateService.addData;
+import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
+import static com.bogdatech.utils.PlaceholderUtils.getFullHtmlPrompt;
 
 @Component
 public class LiquidHtmlTranslatorUtils {
 
+    private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
 //    // 不翻译的Liquid变量模式
@@ -43,7 +47,8 @@ public class LiquidHtmlTranslatorUtils {
     private final JsoupUtils jsoupUtils;
 
     @Autowired
-    public LiquidHtmlTranslatorUtils(JsoupUtils jsoupUtils) {
+    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, JsoupUtils jsoupUtils) {
+        this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
         this.jsoupUtils = jsoupUtils;
     }
 
@@ -244,7 +249,7 @@ public class LiquidHtmlTranslatorUtils {
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
-//            System.out.println("cleanedText2: " + cleanedText);
+            System.out.println("cleanedText2: " + cleanedText);
             if (cleanedText.matches("\\p{Zs}+")) {
                 result.append(cleanedText);
                 return result.toString();
@@ -305,5 +310,23 @@ public class LiquidHtmlTranslatorUtils {
 
         // 最终结果（无 HTML 实体后直接输出）
         return text;
+    }
+
+    /**
+     * 翻译html文本（整段翻译，需要处理一下）
+     * 目前专门用qwen翻译
+     * */
+    public String fullTranslateHtmlByQwen(String text, String languagePack, CharacterCountUtils counter, String target, String shopName, Integer limitChars) {
+        //选择翻译html的提示词
+        String targetLanguage = getLanguageName(target);
+        String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, languagePack);
+        //调用qwen翻译
+        //返回翻译结果
+        try {
+            return aLiYunTranslateIntegration.singleTranslate(text, fullHtmlPrompt, counter, target, shopName, limitChars);
+        } catch (Exception e) {
+            appInsights.trackTrace("html 翻译失败 errors : " + e);
+            return text;
+        }
     }
 }

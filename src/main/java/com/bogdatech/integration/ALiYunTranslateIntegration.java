@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.SwitchModelUtils.switchModel;
@@ -94,7 +95,7 @@ public class ALiYunTranslateIntegration {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             userTranslate.put(shopName, text);
-            totalToken = call.getUsage().getTotalTokens();
+            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
 //        int totalToken = 10;
             countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
@@ -134,7 +135,7 @@ public class ALiYunTranslateIntegration {
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            totalToken = call.getUsage().getTotalTokens();
+            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             countUtils.addChars(totalToken);
             appInsights.trackTrace("token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
         } catch (NoApiKeyException | InputRequiredException e) {
@@ -175,7 +176,7 @@ public class ALiYunTranslateIntegration {
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            totalToken = call.getUsage().getTotalTokens();
+            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
 //        int totalToken = 10;
             countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();

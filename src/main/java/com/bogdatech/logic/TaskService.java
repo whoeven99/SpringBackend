@@ -24,10 +24,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
+import static com.bogdatech.logic.TranslateService.userEmailStatus;
+import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
@@ -219,14 +222,21 @@ public class TaskService {
         //循环处理获取到的任务，先将状态改为3，然后调用翻译API
         for (TranslatesDO translatesDO : listData
         ) {
-            //查找测试用户数据表
-            TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", translatesDO.getShopName()));
-            if (name != null) {
-                translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", translatesDO.getShopName()).eq("status",2).set("status", 0));
-                continue;
-            }
+            //给这些用户添加停止标志符的状态
+            userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+            userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+
+            //将该任务的状态改为0
+            translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
+            //
+//            //查找测试用户数据表
+//            TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", translatesDO.getShopName()));
+//            if (name != null) {
+//                translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", translatesDO.getShopName()).eq("status",2).set("status", 0));
+//                continue;
+//            }
 //            System.out.println("translatesDO: " + translatesDO);
-            translateStatus2WhenSystemRestartComplete(translatesDO);
+//            translateStatus2WhenSystemRestartComplete(translatesDO);
         }
     }
 

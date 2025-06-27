@@ -50,9 +50,8 @@ public class RabbitMqTranslateConsumerService {
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
                     }
-                    translateTasksService.updateByTaskId(task.getTaskId(), 1);
                 }else {
-                    System.out.println(rabbitMqTranslateVO.getShopName() + " 还有数据继续翻译");
+                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 还有数据继续翻译");
                 }
             } else {
                 // 处理翻译功能

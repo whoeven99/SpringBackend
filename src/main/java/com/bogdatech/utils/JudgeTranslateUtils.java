@@ -215,10 +215,10 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        if (value.contains("#") && value.length() <= HASH_CONTAINS_MAX_LENGTH) {
-            printTranslateReason(value + "包含#，且长度不超过30, key是： " + key);
-            return false;
-        }
+//        if (value.contains("#") && value.length() <= HASH_CONTAINS_MAX_LENGTH) {
+//            printTranslateReason(value + "包含#，且长度不超过30, key是： " + key);
+//            return false;
+//        }
 
         // 第七步，纯数字
         if (PURE_NUMBER.matcher(value).matches()) {
@@ -228,7 +228,7 @@ public class JudgeTranslateUtils {
 
         // 第八步，包含http://、https://或shopify://
         for (String prefix : URL_PREFIXES) {
-            if (value.contains(prefix)) {
+            if (value.startsWith(prefix)) {
                 printTranslateReason(value + "包含" + prefix + ", key是： " + key );
                 return false;
             }
