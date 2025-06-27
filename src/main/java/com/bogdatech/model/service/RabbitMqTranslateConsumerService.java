@@ -51,7 +51,7 @@ public class RabbitMqTranslateConsumerService {
                         appInsights.trackTrace("邮件发送 errors : " + e);
                     }
                 }else {
-                    System.out.println(rabbitMqTranslateVO.getShopName() + " 还有数据继续翻译");
+                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 还有数据继续翻译");
                 }
             } else {
                 // 处理翻译功能
