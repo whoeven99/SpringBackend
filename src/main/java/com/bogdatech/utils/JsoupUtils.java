@@ -129,14 +129,22 @@ public class JsoupUtils {
         for (MatchRange match : matches) {
             if (match.start > lastEnd) {
                 String toTranslate = text.substring(lastEnd, match.start);
-                String cleanedText = cleanTextFormat(toTranslate);
-                if (!cleanedText.isEmpty()) {
-                    if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
-                        result.append(cleanedText); // 纯符号不翻译
+                if (!toTranslate.isEmpty()) {
+                    if (SYMBOL_PATTERN.matcher(toTranslate).matches()) {
+                        result.append(toTranslate); // 纯符号不翻译
                     } else {
-                        result.append(translator.apply(cleanedText)); // 普通文本翻译
+                        result.append(translator.apply(toTranslate)); // 普通文本翻译
                     }
                 }
+
+//                String cleanedText = cleanTextFormat(toTranslate);
+//                if (!cleanedText.isEmpty()) {
+//                    if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
+//                        result.append(cleanedText); // 纯符号不翻译
+//                    } else {
+//                        result.append(translator.apply(cleanedText)); // 普通文本翻译
+//                    }
+//                }
             }
             result.append(match.content); // 保留变量或URL
             lastEnd = match.end;
@@ -144,14 +152,22 @@ public class JsoupUtils {
 
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
-            String cleanedText = cleanTextFormat(remaining);
-            if (!cleanedText.isEmpty()) {
-                if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
-                    result.append(cleanedText);
+            if (!remaining.isEmpty()) {
+                if (SYMBOL_PATTERN.matcher(remaining).matches()) {
+                    result.append(remaining);
                 } else {
-                    result.append(translator.apply(cleanedText));
+                    result.append(translator.apply(remaining));
                 }
             }
+
+//            String cleanedText = cleanTextFormat(remaining);
+//            if (!cleanedText.isEmpty()) {
+//                if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
+//                    result.append(cleanedText);
+//                } else {
+//                    result.append(translator.apply(cleanedText));
+//                }
+//            }
         }
 
         return result.toString();
@@ -580,16 +596,9 @@ public class JsoupUtils {
             // 翻译匹配项之前的文本
             if (match.start > lastEnd) {
                 String toTranslate = text.substring(lastEnd, match.start);
-                String cleanedText = cleanTextFormat(toTranslate); // 清理格式
-                //对特殊符号进行处理
-                if (cleanedText.matches("\\p{Zs}+")) {
-                    result.append(cleanedText);
-                    continue;
-                }
-                if (!cleanedText.trim().isEmpty()) { // 避免翻译空字符串
-                    String targetString;
+                String targetString;
                     try {
-                        request.setContent(cleanedText);
+                        request.setContent(toTranslate);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        System.out.println("要翻译的文本： " + cleanedText);
                         targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
@@ -597,12 +606,32 @@ public class JsoupUtils {
                         result.append(targetString);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
-                        result.append(cleanedText);
+                        result.append(toTranslate);
                         continue;
                     }
-                } else {
-                    result.append(toTranslate); // 保留原始空白
-                }
+//                String cleanedText = cleanTextFormat(toTranslate); // 清理格式
+//                //对特殊符号进行处理
+//                if (cleanedText.matches("\\p{Zs}+")) {
+//                    result.append(cleanedText);
+//                    continue;
+//                }
+//                if (!cleanedText.trim().isEmpty()) { // 避免翻译空字符串
+//                    String targetString;
+//                    try {
+//                        request.setContent(cleanedText);
+////                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
+////                        System.out.println("要翻译的文本： " + cleanedText);
+//                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
+//                        targetString = isHtmlEntity(targetString);
+//                        result.append(targetString);
+//                    } catch (ClientException e) {
+//                        // 如果AI翻译失败，则使用谷歌翻译
+//                        result.append(cleanedText);
+//                        continue;
+//                    }
+//                } else {
+//                    result.append(toTranslate); // 保留原始空白
+//                }
             }
             // 保留匹配到的变量或URL，不翻译
             result.append(match.content);
@@ -612,26 +641,35 @@ public class JsoupUtils {
         // 处理剩余文本
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
-            String cleanedText = cleanTextFormat(remaining); // 清理格式
-            if (cleanedText.matches("\\p{Zs}+")) {
-                result.append(cleanedText);
-                return result.toString();
-            }
-            if (!cleanedText.trim().isEmpty() && !cleanedText.matches("\\s*")) {
-                String targetString;
+            String targetString;
                 try {
-                    request.setContent(cleanedText);
-//                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                    System.out.println("要翻译的文本： " + cleanedText);
+                    request.setContent(remaining);
                     targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);
                 } catch (ClientException e) {
-                    result.append(cleanedText);
+                    result.append(remaining);
                 }
-            } else {
-                result.append(remaining);
-            }
+//            String cleanedText = cleanTextFormat(remaining); // 清理格式
+//            if (cleanedText.matches("\\p{Zs}+")) {
+//                result.append(cleanedText);
+//                return result.toString();
+//            }
+//            if (!cleanedText.trim().isEmpty() && !cleanedText.matches("\\s*")) {
+//                String targetString;
+//                try {
+//                    request.setContent(cleanedText);
+////                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
+////                    System.out.println("要翻译的文本： " + cleanedText);
+//                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
+//                    targetString = isHtmlEntity(targetString);
+//                    result.append(targetString);
+//                } catch (ClientException e) {
+//                    result.append(cleanedText);
+//                }
+//            } else {
+//                result.append(remaining);
+//            }
         }
         return result.toString();
     }
