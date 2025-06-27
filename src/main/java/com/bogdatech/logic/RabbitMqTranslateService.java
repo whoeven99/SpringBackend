@@ -136,7 +136,7 @@ public class RabbitMqTranslateService {
             return;
         }
 
-        appInsights.trackTrace("DB普通翻译开始");
+        appInsights.trackTrace(request.getShopName() + " 用户 的 DB普通翻译开始");
         //将初始化用户翻译value为null
         userTranslate.put(request.getShopName(), " and ");
         //判断是否有同义词
@@ -830,7 +830,10 @@ public class RabbitMqTranslateService {
             shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
             return;
         }
-        addData(shopifyRequest.getTarget(), value, targetString);
+
+        if (!handleType.equals(HANDLE)){
+            addData(shopifyRequest.getTarget(), value, targetString);
+        }
         shopifyService.saveToShopify(targetString, translation, resourceId, shopifyRequest);
         printTranslation(targetString, value, translation, shopName, modeType, resourceId, source);
 

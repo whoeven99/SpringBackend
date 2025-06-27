@@ -1181,7 +1181,10 @@ public class TranslateService {
             shopifyService.saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
         }
-        addData(request.getTarget(), value, targetString);
+        if (!translateType.equals(HANDLE)){
+            addData(request.getTarget(), value, targetString);
+        }
+
         shopifyService.saveToShopify(targetString, translation, registerTransactionRequest.getResourceId(), request);
         printTranslation(targetString, value, translation, request.getShopName(), resourceType, registerTransactionRequest.getResourceId(), source);
         //判断是否是handle再决定是否存到数据库中
