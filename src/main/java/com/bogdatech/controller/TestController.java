@@ -335,4 +335,8 @@ public class TestController {
         }
     }
 
+    @GetMapping("/testMaths")
+    public int testMaths(@RequestParam int a, @RequestParam float b) {
+        return (int) (a * b);
+    }
 }
