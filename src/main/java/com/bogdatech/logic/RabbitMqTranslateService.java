@@ -168,7 +168,6 @@ public class RabbitMqTranslateService {
 
             // 定期检查是否停止
             if (checkNeedStopped(request.getShopName(), counter)) {
-                System.out.println();
                 return;
             }
 
