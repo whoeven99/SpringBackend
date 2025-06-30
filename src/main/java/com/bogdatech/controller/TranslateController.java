@@ -265,6 +265,13 @@ public class TranslateController {
     //用户是否选择定时任务的方法
     @PostMapping("/updateAutoTranslateByData")
     public BaseResponse<Object> updateStatusByShopName(@RequestBody AutoTranslateRequest request) {
+
+        //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", request.getShopName()).eq("source", request.getSource()).eq("target", request.getTarget()));
+        if (one == null){
+            //走同步逻辑
+            translateService.syncShopifyAndDatabase(new TranslateRequest(0, request.getShopName(), null, request.getSource(), request.getTarget(), null));
+        }
         return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(), request.getSource(), request.getTarget());
     }
 
