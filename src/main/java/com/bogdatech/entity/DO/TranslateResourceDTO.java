@@ -178,6 +178,9 @@ public class TranslateResourceDTO {
         TOKEN_MAP.put("delivery", List.of(
                 new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", "")
         ));
+        TOKEN_MAP.put("policies", List.of(
+                new TranslateResourceDTO(SHOP_POLICY, MIDDLE_LENGTH, "", ""))
+        );
     }
 
     public static final Map<String, String> EMAIL_MAP = new HashMap<>();
@@ -207,6 +210,7 @@ public class TranslateResourceDTO {
         EMAIL_MAP.put(SELLING_PLAN_GROUP,"shop");
         EMAIL_MAP.put(PACKING_SLIP_TEMPLATE,"shipping");
         EMAIL_MAP.put(DELIVERY_METHOD_DEFINITION,"delivery");
+        EMAIL_MAP.put(SHOP_POLICY,"policies");
     }
     private String resourceType;
     private String first;

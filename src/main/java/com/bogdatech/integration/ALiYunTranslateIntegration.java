@@ -19,10 +19,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.SwitchModelUtils.switchModel;
 
 @Component
@@ -94,7 +96,8 @@ public class ALiYunTranslateIntegration {
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            userTranslate.put(shopName, text);
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(content, 2);
+            userTranslate.put(shopName, translationStatusMap);
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
 //        int totalToken = 10;
             countUtils.addChars(totalToken);
@@ -182,7 +185,8 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace( "用户： " + shopName +" token ali mt : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            userTranslate.put(shopName, translateText);
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(translateText, 2);
+            userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
         } catch (NoApiKeyException | InputRequiredException e) {
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());

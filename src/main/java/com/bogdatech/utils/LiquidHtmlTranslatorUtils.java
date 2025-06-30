@@ -321,6 +321,7 @@ public class LiquidHtmlTranslatorUtils {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
         String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, languagePack);
+        appInsights.trackTrace("翻译 html 的提示词：" + fullHtmlPrompt);
         //调用qwen翻译
         //返回翻译结果
         try {
@@ -339,6 +340,7 @@ public class LiquidHtmlTranslatorUtils {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
         String fullPolicyHtmlPrompt = getPolicyPrompt(targetLanguage);
+        appInsights.trackTrace("翻译 政策 html 的提示词：" + fullPolicyHtmlPrompt);
         //调用qwen翻译
         //返回翻译结果
         try {

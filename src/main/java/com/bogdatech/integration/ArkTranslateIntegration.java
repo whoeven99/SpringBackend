@@ -12,10 +12,12 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 
 @Component
 public class ArkTranslateIntegration {
@@ -95,7 +97,8 @@ public class ArkTranslateIntegration {
             long totalTokens = (long) (chatCompletion.getUsage().getTotalTokens() * MAGNIFICATION);
             int totalTokensInt = (int) totalTokens;
             countUtils.addChars(totalTokensInt);
-            userTranslate.put(shopName, sourceText);
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+            userTranslate.put(shopName, translationStatusMap);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
             appInsights.trackTrace(shopName + " 用户 token doubao: " + sourceText + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);

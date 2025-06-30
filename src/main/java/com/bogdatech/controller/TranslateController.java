@@ -286,7 +286,7 @@ public class TranslateController {
      */
     @GetMapping("/getUserValue")
     public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
-        String value = userTranslate.get(shopName);
+        Map<String, Object> value = userTranslate.get(shopName);
         return new BaseResponse<>().CreateSuccessResponse(value);
     }
 }
