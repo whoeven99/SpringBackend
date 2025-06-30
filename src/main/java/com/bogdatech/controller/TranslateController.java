@@ -39,7 +39,6 @@ public class TranslateController {
     private final ITranslationCounterService translationCounterService;
     private final IUserTypeTokenService userTypeTokenService;
     private final UserTypeTokenService userTypeTokensService;
-    private final TestTableMapper testTableMapper;
     private final RabbitMqTranslateService rabbitMqTranslateService;
 
     @Autowired
@@ -47,13 +46,12 @@ public class TranslateController {
             TranslateService translateService,
             ITranslatesService translatesService,
             ITranslationCounterService translationCounterService,
-            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, TestTableMapper testTableMapper, RabbitMqTranslateService rabbitMqTranslateService) {
+            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.userTypeTokenService = userTypeTokenService;
         this.userTypeTokensService = userTypeTokensService;
-        this.testTableMapper = testTableMapper;
         this.rabbitMqTranslateService = rabbitMqTranslateService;
     }
 
@@ -143,6 +141,7 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestBody ClickTranslateRequest clickTranslateRequest) {
 
+
         //判断前端传的数据是否完整，如果不完整，报错
         if (clickTranslateRequest.getShopName() == null || clickTranslateRequest.getShopName().isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
@@ -152,7 +151,12 @@ public class TranslateController {
         }
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
-
+        //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", clickTranslateRequest.getShopName()).eq("source", clickTranslateRequest.getSource()).eq("target", clickTranslateRequest.getTarget()));
+        if (one == null){
+            //走同步逻辑
+            translateService.syncShopifyAndDatabase(request);
+        }
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
@@ -174,35 +178,6 @@ public class TranslateController {
         //全部走DB翻译
         rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
-//
-//
-//        //初始化计数器
-//        CharacterCountUtils counter = new CharacterCountUtils();
-//        counter.addChars(usedChars);
-//
-//        //判断是否有handle
-//        boolean handleFlag = false;
-//        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
-//        if (translateModel.contains("handle")) {
-//            translateModel.removeIf("handle"::equals);
-//            handleFlag = true;
-//        }
-//        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
-//        //修改模块的排序
-//        List<String> translateResourceDTOS = null;
-//        try {
-//            translateResourceDTOS = translateModel(translateModel);
-//        } catch (Exception e) {
-//            appInsights.trackTrace("translateModel error: " + e.getMessage());
-//        }
-////      翻译
-//        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
-//            return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
-//        }
-//        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-//        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
-//        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS, handleFlag);
-//        return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
     //暂停翻译
