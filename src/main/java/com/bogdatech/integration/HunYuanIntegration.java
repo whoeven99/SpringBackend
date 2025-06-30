@@ -12,9 +12,12 @@ import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 
 @Component
 public class HunYuanIntegration {
@@ -87,8 +90,8 @@ public class HunYuanIntegration {
                     countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
-                    userTranslate.put(shopName, sourceText);
-
+                    Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+                    userTranslate.put(shopName, translationStatusMap);
                     appInsights.trackTrace(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
                     return targetText;

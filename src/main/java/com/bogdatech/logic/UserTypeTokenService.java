@@ -132,7 +132,7 @@ public class UserTypeTokenService {
             if ("collection".equals(key) || "notifications".equals(key) || "theme".equals(key)
                     || "article".equals(key) || "blog_titles".equals(key) || "filters".equals(key) || "metaobjects".equals(key)
                     || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
-                    || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key)) {
+                    || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key) || "policies".equals(key)) {
                 UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
                 updateWrapper.eq("translation_id", translationId);
 
