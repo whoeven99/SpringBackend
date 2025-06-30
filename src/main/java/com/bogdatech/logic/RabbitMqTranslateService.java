@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -155,7 +156,7 @@ public class RabbitMqTranslateService {
             if (!translateResourceDTOS.contains(translateResource.getResourceType())) {
                 continue;
             }
-            if (translateResource.getResourceType().equals(SHOP_POLICY) || translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
+            if (translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
                 continue;
             }
 
@@ -382,7 +383,7 @@ public class RabbitMqTranslateService {
 
     /**
      * 根据从数据库获取的数据，请求shopify获取数据
-     * */
+     */
     public String getShopifyDataByDb(RabbitMqTranslateVO rabbitMqTranslateVO) {
         CloudServiceRequest cloudServiceRequest = new CloudServiceRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget(), null);
         cloudServiceRequest.setBody(rabbitMqTranslateVO.getShopifyData());
@@ -402,7 +403,6 @@ public class RabbitMqTranslateService {
         }
         return shopifyData;
     }
-
 
 
     /**
@@ -538,7 +538,7 @@ public class RabbitMqTranslateService {
                     || "LIST_URL".equals(type)
                     || "JSON".equals(type)
                     || "JSON_STRING".equals(type)
-                    || modeType.equals(SHOP_POLICY)) {
+            ) {
                 iterator.remove(); // 根据业务条件删除
                 continue;
             }
@@ -578,7 +578,7 @@ public class RabbitMqTranslateService {
                 }
 
                 //对key中含section和general的做key值判断
-                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
                         continue;
@@ -738,7 +738,9 @@ public class RabbitMqTranslateService {
             //判断产品模块用完全翻译，其他模块用分段html翻译
             if (rabbitMqTranslateVO.getModeType().equals(PRODUCT) && "body_html".equals(key)) {
                 htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
-            }else {
+            } else if (rabbitMqTranslateVO.getModeType().equals(SHOP_POLICY)) {
+                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
+            } else {
                 htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
             }
 
@@ -848,7 +850,7 @@ public class RabbitMqTranslateService {
             return;
         }
 
-        if (!handleType.equals(HANDLE)){
+        if (!handleType.equals(HANDLE)) {
             addData(shopifyRequest.getTarget(), value, targetString);
         }
         shopifyService.saveToShopify(targetString, translation, resourceId, shopifyRequest);
@@ -856,7 +858,7 @@ public class RabbitMqTranslateService {
 
         //存到数据库中
         try {
-            if (handleType.equals(HANDLE)){
+            if (handleType.equals(HANDLE)) {
                 return;
             }
             // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
@@ -1105,7 +1107,7 @@ public class RabbitMqTranslateService {
             printTranslation(translatedText, value, translation, shopifyRequest.getShopName(), type, resourceId, source);
             //存到数据库中
             try {
-                if (handleType.equals(HANDLE)){
+                if (handleType.equals(HANDLE)) {
                     return;
                 }
                 // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
@@ -1175,7 +1177,7 @@ public class RabbitMqTranslateService {
         if (nowUserTranslate == 2) {
             //将2改为1， 发送翻译成功的邮件
             translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
-            tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null),counter, startTime, startChars, limitChars, false);
+            tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
         } else if (nowUserTranslate == 3) {
             //为3，发送部分翻译的邮件
             tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, limitChars, target, source);

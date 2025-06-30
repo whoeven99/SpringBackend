@@ -42,7 +42,7 @@ public class RabbitMqTranslateConsumerService {
         try {
             if (EMAIL.equals(rabbitMqTranslateVO.getShopifyData())) {
                 // 判断是否需要发送邮件，获取TranslateTasks的所有关于该商店的task，判断是否只剩一条数据了，如果是走邮件发送，如果不是不发邮件
-                List<TranslateTasksDO> shopName = translateTasksService.list(new QueryWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()));
+                List<TranslateTasksDO> shopName = translateTasksService.list(new QueryWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).and(wrapper -> wrapper.eq("status", 2).or().eq("status", 0)));
                 if (shopName.size() <= 1) {
                     appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 只剩一条数据了，发送邮件");
                     //获取当前用户翻译状态，先不做

@@ -363,7 +363,7 @@ public class TranslateService {
             if (!translateSettings3.contains(translateResource.getResourceType())) {
                 continue;
             }
-            if (translateResource.getResourceType().equals(SHOP_POLICY) || translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
+            if (translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
                 continue;
             }
 
@@ -1268,7 +1268,7 @@ public class TranslateService {
                     || "LIST_URL".equals(type)
                     || "JSON".equals(type)
                     || "JSON_STRING".equals(type)
-                    || resourceType.equals(SHOP_POLICY)) {
+                    ) {
                 continue;
             }
 
@@ -1384,7 +1384,7 @@ public class TranslateService {
                 || type.equals(("LIST_URL"))
                 || "JSON".equals(type)
                 || "JSON_STRING".equals(type)
-                || resourceType.equals(SHOP_POLICY)) {
+                ) {
             return true;
         }
 
