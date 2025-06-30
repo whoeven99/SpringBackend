@@ -14,7 +14,7 @@ public interface ITranslateTasksService extends IService<TranslateTasksDO> {
 
     boolean updateByTaskId(String taskId, Integer status);
 
-    int updateStatus2To3ByShopName(String shopName);
+    int updateStatusAllTo5ByShopName(String shopName);
 
     int deleteStatus1Data();
 

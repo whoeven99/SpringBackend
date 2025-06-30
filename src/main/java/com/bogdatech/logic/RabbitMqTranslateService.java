@@ -82,69 +82,7 @@ public class RabbitMqTranslateService {
      * 读取该用户的shopify数据，然后循环获取模块数据
      */
     @Async
-    public void mqTranslate(ClickTranslateRequest clickTranslateRequest) {
-        //判断前端传的数据是否完整，如果不完整，报错
-        if (clickTranslateRequest.getShopName() == null || clickTranslateRequest.getShopName().isEmpty()
-                || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
-                || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
-                || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().isEmpty()) {
-            return;
-        }
-
-        //将ClickTranslateRequest转换为TranslateRequest
-        TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
-        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
-
-        //将初始化用户翻译value为null
-        Map<String, Object> translationStatusMap = getTranslationStatusMap(" and ", 1);
-        userTranslate.put(request.getShopName(), translationStatusMap);
-
-        //判断字符是否超限
-        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
-        Integer limitChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
-
-//        一个用户当前只能翻译一条语言，根据用户的status判断
-        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request.getShopName());
-        for (Integer integer : integers) {
-            if (integer == 2) {
-                return;
-            }
-        }
-
-        int usedChars = request1.getUsedChars();
-        // 如果字符超限，则直接返回字符超限
-        if (usedChars >= limitChars) {
-            return;
-        }
-
-        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
-
-        //初始化计数器
-        CharacterCountUtils counter = new CharacterCountUtils();
-        counter.addChars(usedChars);
-
-        //判断是否有handle
-        boolean handleFlag = false;
-        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
-        if (translateModel.contains("handle")) {
-            translateModel.removeIf("handle"::equals);
-            handleFlag = true;
-        }
-        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
-        //修改模块的排序
-        List<String> translateResourceDTOS = null;
-        try {
-            translateResourceDTOS = translateModel(translateModel);
-        } catch (Exception e) {
-            appInsights.trackTrace("translateModel errors : " + e.getMessage());
-        }
-//      翻译
-        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
-            return;
-        }
-
-        appInsights.trackTrace(request.getShopName() + " 用户 的 DB普通翻译开始");
+    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag) {
 
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
@@ -153,7 +91,6 @@ public class RabbitMqTranslateService {
         //获取目前所使用的AI语言包
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
         //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS);
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
