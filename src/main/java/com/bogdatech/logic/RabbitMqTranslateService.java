@@ -39,6 +39,7 @@ import static com.bogdatech.utils.JsonUtils.stringToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
@@ -92,6 +93,11 @@ public class RabbitMqTranslateService {
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
+
+        //将初始化用户翻译value为null
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(" and ", 1);
+        userTranslate.put(request.getShopName(), translationStatusMap);
+
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer limitChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
@@ -138,8 +144,7 @@ public class RabbitMqTranslateService {
         }
 
         appInsights.trackTrace(request.getShopName() + " 用户 的 DB普通翻译开始");
-        //将初始化用户翻译value为null
-        userTranslate.put(request.getShopName(), " and ");
+
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);

@@ -44,6 +44,7 @@ import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
@@ -99,7 +100,8 @@ public class TranslateService {
     //判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
     public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
-    public static ConcurrentHashMap<String, String> userTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
+    public static ConcurrentHashMap<String, Map<String, Object>> userTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
+
     //    private final AtomicBoolean emailSent = new AtomicBoolean(false); // 用于同步发送字符限制邮件
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
@@ -346,7 +348,8 @@ public class TranslateService {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         appInsights.trackTrace("普通翻译开始");
         //将初始化用户翻译value为null
-        userTranslate.put(request.getShopName(), " 初始化 ");
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(" and ", 1);
+        userTranslate.put(request.getShopName(), translationStatusMap);
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
