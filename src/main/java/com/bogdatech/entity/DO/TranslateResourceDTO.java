@@ -113,7 +113,7 @@ public class TranslateResourceDTO {
         RESOURCE_MAP.put("Filters", List.of(new TranslateResourceDTO(FILTER, MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Metaobjects", List.of(new TranslateResourceDTO(METAOBJECT, MIDDLE_LENGTH, "", "")));
         RESOURCE_MAP.put("Pages", List.of(new TranslateResourceDTO(PAGE, MAX_LENGTH, "", "")));
-        RESOURCE_MAP.put("Policies", List.of(new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", "")));
+        RESOURCE_MAP.put("Policies", List.of(new TranslateResourceDTO(SHOP_POLICY, MIDDLE_LENGTH, "", "")));
         RESOURCE_MAP.put("Products", List.of(
                 new TranslateResourceDTO(PRODUCT, MIDDLE_LENGTH, "", "")
         ));
