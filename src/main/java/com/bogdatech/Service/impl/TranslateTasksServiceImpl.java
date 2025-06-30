@@ -51,6 +51,9 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
     public int deleteStatus1Data() {
         //获取status为1的数据
         List<TranslateTasksDO> statusList = baseMapper.selectList(new QueryWrapper<TranslateTasksDO>().eq("status", 1));
+        if (statusList.isEmpty()) {
+            return 0;
+        }
         //删除status为1的数据
         return baseMapper.deleteBatchIds(statusList);
     }
