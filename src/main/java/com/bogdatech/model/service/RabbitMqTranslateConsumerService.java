@@ -56,13 +56,15 @@ public class RabbitMqTranslateConsumerService {
             } else {
                 // 处理翻译功能
                 processMessage(rabbitMqTranslateVO, task);
+                //将用户task改为1
+                translateTasksService.updateByTaskId(task.getTaskId(), 1);
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
         } catch (ClientException e1) {
-            appInsights.trackTrace("到达字符限制： " + e1);
+            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
         } catch (Exception e) {
-            appInsights.trackTrace("处理消息失败 errors : " + e);
+            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "处理消息失败 errors : " + e);
         }
     }
 
@@ -76,7 +78,8 @@ public class RabbitMqTranslateConsumerService {
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            appInsights.trackTrace("字符超限 processMessage errors ");
+            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
+            translateTasksService.updateByTaskId(task.getTaskId(), 3);
             return;
         }
         // 修改数据库当前翻译模块的数据
@@ -91,8 +94,7 @@ public class RabbitMqTranslateConsumerService {
         rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
         appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars());
         appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 单模块翻译结束。");
-        //将用户task改为1
-        translateTasksService.updateByTaskId(task.getTaskId(), 1);
+
     }
 
 
