@@ -7,6 +7,7 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.mapper.TranslatesMapper;
 import com.bogdatech.model.controller.request.AutoTranslateRequest;
+import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.stereotype.Service;
@@ -197,6 +198,16 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     public void updateAllStatusTo0(String shopName) {
         if (shopName != null ) {
             baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("status", 0));
+        }
+    }
+
+    @Override
+    public void insertShopTranslateInfoByShopify(ShopifyRequest shopifyRequest, String locale, String source) {
+        //获取shopify店铺信息
+        TranslatesDO translatesDO = baseMapper.selectOne(new QueryWrapper<TranslatesDO>().eq("shop_name", shopifyRequest.getShopName()).eq("source", source).eq("target", locale));
+        if (translatesDO == null) {
+            //插入这条数据
+            baseMapper.insertShopTranslateInfo(source, shopifyRequest.getAccessToken(), locale, shopifyRequest.getShopName(), 0);
         }
     }
 }

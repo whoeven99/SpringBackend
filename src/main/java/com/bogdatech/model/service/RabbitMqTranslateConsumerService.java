@@ -1,10 +1,12 @@
 package com.bogdatech.model.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
+import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
@@ -55,9 +57,20 @@ public class RabbitMqTranslateConsumerService {
                 }
             } else {
                 // 处理翻译功能
-                processMessage(rabbitMqTranslateVO, task);
-                //将用户task改为1
-                translateTasksService.updateByTaskId(task.getTaskId(), 1);
+                try {
+                    processMessage(rabbitMqTranslateVO, task);
+                    //将用户task改为1
+                    translateTasksService.updateByTaskId(task.getTaskId(), 1);
+                } catch (ClientException e1) {
+                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
+                    //将用户task改为3
+                    translateTasksService.updateByTaskId(task.getTaskId(), 3);
+                    //将用户翻译状态也改为3
+                    translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
+                } catch (Exception e) {
+                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "处理消息失败 errors : " + e);
+                    translateTasksService.updateByTaskId(task.getTaskId(), 4);
+                }
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
@@ -80,7 +93,7 @@ public class RabbitMqTranslateConsumerService {
         if (usedChars >= remainingChars) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
             translateTasksService.updateByTaskId(task.getTaskId(), 3);
-            return;
+            throw new ClientException("字符超限");
         }
         // 修改数据库当前翻译模块的数据
         translatesService.updateTranslatesResourceType(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());

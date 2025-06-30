@@ -39,6 +39,7 @@ import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTransla
 import static com.bogdatech.logic.RabbitMqTranslateService.getShopifyJsonNode;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.*;
@@ -1694,6 +1695,50 @@ public class TranslateService {
         }
 
         return new BaseResponse<>().CreateErrorResponse(value);
+    }
+
+    /**
+     * 用户shopify和数据库同步的方法
+     * */
+    public void syncShopifyAndDatabase(TranslateRequest request)  {
+        //获取用户数据
+        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.translateRequestToCloudServiceRequest(request);
+        ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
+        String query = getLanguagesQuery();
+        cloudServiceRequest.setBody(query);
+        String shopifyData = null;
+        try {
+            String env = System.getenv("ApplicationEnv");
+            if ("prod".equals(env) || "dev".equals(env)) {
+                shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, query));
+            } else {
+                shopifyData = getShopifyDataByCloud(cloudServiceRequest);
+            }
+        } catch (Exception e) {
+            // 如果出现异常，则跳过, 翻译其他的内容
+            //更新当前字符数
+            appInsights.trackTrace("Failed to get Shopify data errors : " + e.getMessage());
+        }
+
+        //分析获取到的数据，然后存储到list集合里面
+        JsonNode root = null;
+        try {
+            root = OBJECT_MAPPER.readTree(shopifyData);
+        } catch (JsonProcessingException e) {
+            appInsights.trackTrace("Failed to parse Shopify data errors : " + e.getMessage());
+            return;
+        }
+
+        JsonNode shopLocales = root.path("shopLocales");
+        if (shopLocales.isArray()) {
+            for (JsonNode node : shopLocales) {
+                String locale = node.path("locale").asText(null);
+                if (locale != null) {
+                    //存储到数据库中
+                    translatesService.insertShopTranslateInfoByShopify(shopifyRequest, locale, request.getSource());
+                }
+            }
+        }
     }
 }
 

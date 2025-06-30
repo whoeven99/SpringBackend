@@ -2,21 +2,22 @@ package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.bogdatech.entity.DO.TranslatesDO;
+import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 
 import java.util.List;
 
 public interface ITranslatesService extends IService<TranslatesDO> {
-    public Integer readStatus(TranslateRequest request);
-    public Integer insertShopTranslateInfo(TranslateRequest request, int status);
-    public List<TranslatesDO> readTranslateInfo(Integer status);
-    public int updateTranslateStatus(String shopName, int status, String target, String source, String accessToken);
-    public List<TranslatesDO> readInfoByShopName(String shopName, String source);
-    public List<Integer> readStatusInTranslatesByShopName(String shopName);
+    Integer readStatus(TranslateRequest request);
+    Integer insertShopTranslateInfo(TranslateRequest request, int status);
+    List<TranslatesDO> readTranslateInfo(Integer status);
+    int updateTranslateStatus(String shopName, int status, String target, String source, String accessToken);
+    List<TranslatesDO> readInfoByShopName(String shopName, String source);
+    List<Integer> readStatusInTranslatesByShopName(String shopName);
 
     TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO);
-    public int updateStatusByShopNameAnd2(String shopName);
+    int updateStatusByShopNameAnd2(String shopName);
 
     String getShopName(String shopName, String target, String source);
 
@@ -47,4 +48,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     void insertLanguageStatus(TranslateRequest request);
 
     void updateAllStatusTo0(String shopName);
+
+    void insertShopTranslateInfoByShopify(ShopifyRequest shopifyRequest, String locale, String source);
 }
