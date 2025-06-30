@@ -13,6 +13,7 @@ import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,13 +27,15 @@ public class RabbitMqTranslateConsumerService {
     private final ITranslationCounterService translationCounterService;
     private final ITranslatesService translatesService;
     private final ITranslateTasksService translateTasksService;
+    private final TaskScheduler taskScheduler;
 
     @Autowired
-    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService) {
+    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler) {
         this.rabbitMqTranslateService = rabbitMqTranslateService;
         this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
         this.translateTasksService = translateTasksService;
+        this.taskScheduler = taskScheduler;
     }
 
 
@@ -63,8 +66,8 @@ public class RabbitMqTranslateConsumerService {
                     translateTasksService.updateByTaskId(task.getTaskId(), 1);
                 } catch (ClientException e1) {
                     appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
-                    //将用户task改为3
-                    translateTasksService.updateByTaskId(task.getTaskId(), 3);
+                    //将用户所有task改为3
+                    translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).and(wrapper -> wrapper.eq("status", 2).or().eq("status", 0)).set("status", 3));
                     //将用户翻译状态也改为3
                     translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
                 } catch (Exception e) {
@@ -92,7 +95,8 @@ public class RabbitMqTranslateConsumerService {
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
-            translateTasksService.updateByTaskId(task.getTaskId(), 3);
+            //将用户所有task改为3
+            translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).and(wrapper -> wrapper.eq("status", 2).or().eq("status", 0)).set("status", 3));
             throw new ClientException("字符超限");
         }
         // 修改数据库当前翻译模块的数据

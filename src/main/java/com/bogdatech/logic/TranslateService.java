@@ -210,8 +210,8 @@ public class TranslateService {
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
                 appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
-                //将Task表DB中的status为2的改为3
-                translateTasksService.updateStatus2To3ByShopName(shopName);
+                //将Task表DB中的status改为5
+                translateTasksService.updateStatusAllTo5ByShopName(shopName);
 //                 将翻译状态改为“部分翻译” shopName, status=3
                 translatesService.updateStatusByShopNameAnd2(shopName);
             }
@@ -227,6 +227,8 @@ public class TranslateService {
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
                 appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
+                //将Task表DB中的status改为5
+                translateTasksService.updateStatusAllTo5ByShopName(shopName);
 //                 将翻译状态改为“部分翻译” shopName, status=3
                 translatesService.updateStatusByShopNameAnd2(shopName);
                 return "翻译任务已停止";
@@ -283,6 +285,9 @@ public class TranslateService {
     public void taskTranslating(TranslateRequest request, int remainingChars, CharacterCountUtils counter, List<String> list, boolean handleFlag) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         appInsights.trackTrace("定时任务自动翻译开启");
+        //将初始化用户翻译value为null
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(" and ", 1);
+        userTranslate.put(request.getShopName(), translationStatusMap);
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -406,6 +411,8 @@ public class TranslateService {
 //            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”//
             translatesService.updateStatusByShopNameAnd2(shopName);
+            //将Task表DB中的status改为5
+            translateTasksService.updateStatusAllTo5ByShopName(shopName);
             return true;
         }
         return false;

@@ -43,8 +43,8 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
     }
 
     @Override
-    public int updateStatus2To3ByShopName(String shopName) {
-        return baseMapper.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
+    public int updateStatusAllTo5ByShopName(String shopName) {
+        return baseMapper.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).set("status", 5));
     }
 
     @Override
