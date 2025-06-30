@@ -63,7 +63,6 @@ public class RabbitMqTranslateConsumerService {
             translateTasksService.deleteStatus1Data();
         } catch (ClientException e1) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
-            translateTasksService.updateByTaskId(task.getTaskId(), 3);
         } catch (Exception e) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "处理消息失败 errors : " + e);
         }
@@ -79,7 +78,8 @@ public class RabbitMqTranslateConsumerService {
         int usedChars = request1.getUsedChars();
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            appInsights.trackTrace("字符超限 processMessage errors ");
+            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
+            translateTasksService.updateByTaskId(task.getTaskId(), 3);
             return;
         }
         // 修改数据库当前翻译模块的数据
