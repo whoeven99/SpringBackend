@@ -67,7 +67,7 @@ public class RabbitMqTranslateConsumerService {
                 } catch (ClientException e1) {
                     appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
                     //将用户所有task改为3
-                    translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).and(wrapper -> wrapper.eq("status", 2).or().eq("status", 0)).set("status", 3));
+                    translateTasksService.updateByTaskId(task.getTaskId(), 3);
                     //将用户翻译状态也改为3
                     translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
                 } catch (Exception e) {
@@ -96,7 +96,7 @@ public class RabbitMqTranslateConsumerService {
         if (usedChars >= remainingChars) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
             //将用户所有task改为3
-            translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).and(wrapper -> wrapper.eq("status", 2).or().eq("status", 0)).set("status", 3));
+            translateTasksService.updateByTaskId(task.getTaskId(), 3);
             throw new ClientException("字符超限");
         }
         // 修改数据库当前翻译模块的数据
