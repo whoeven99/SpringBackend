@@ -57,9 +57,10 @@ public class RabbitMqTranslateConsumerService {
                     // 处理邮件发送功能
                     try {
                         appInsights.trackTrace("date1: " + LocalDateTime.now());
-                        //将用户状态改为3，
                         Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
                         userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
+                        //将email的status改为2
+                        translateTasksService.updateByTaskId(task.getTaskId(), 2);
                         triggerSendEmailLater(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
@@ -76,7 +77,7 @@ public class RabbitMqTranslateConsumerService {
                 } catch (ClientException e1) {
                     appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
                     //将用户所有task改为3
-                    translateTasksService.updateByTaskId(task.getTaskId(), 3);
+                    rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
                     //将用户翻译状态也改为3
                     translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
                 } catch (Exception e) {
@@ -105,7 +106,7 @@ public class RabbitMqTranslateConsumerService {
         if (usedChars >= remainingChars) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
             //将用户所有task改为3
-            translateTasksService.updateByTaskId(task.getTaskId(), 3);
+            rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
             throw new ClientException("字符超限");
         }
         // 修改数据库当前翻译模块的数据
@@ -128,10 +129,11 @@ public class RabbitMqTranslateConsumerService {
         Runnable delayedTask = () -> {
             appInsights.trackTrace("date2: " + LocalDateTime.now());
             rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, translationList);
+            translateTasksService.updateByTaskId(task.getTaskId(), 1);
         };
 
         // 设置执行时间为当前时间 + 10分钟（使用 Instant 代替 Date）
-        Instant runAt = Instant.now().plusSeconds(15 * 60);
+        Instant runAt = Instant.now().plusSeconds(8 * 60);
 
         // 使用推荐的 API
         taskScheduler.schedule(delayedTask, runAt);

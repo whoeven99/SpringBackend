@@ -234,7 +234,6 @@ public class RabbitMqTranslateService {
         appInsights.trackTrace("DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
         commonTranslate(rabbitMqTranslateVO, countUtils);
         //更新用户token
-
     }
 
     /**
@@ -909,6 +908,8 @@ public class RabbitMqTranslateService {
 
         if (counter.getTotalChars() >= remainingChars) {
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
+            //将同一个shopNmae的task任务的状态。除邮件发送模块改为3.
+            updateTranslateTasksStatus(shopName);
             throw new ClientException(CHARACTER_LIMIT);
         }
     }
@@ -1127,4 +1128,25 @@ public class RabbitMqTranslateService {
         translateTasksService.updateByTaskId(task.getTaskId(), 1);
     }
 
+    /**
+     * 将同一个shopNmae的task任务的状态。除邮件发送模块改为3.
+     */
+    public void updateTranslateTasksStatus(String shopName) {
+        //获取shopName所有status为0的task
+        List<TranslateTasksDO> list = translateTasksService.list(new QueryWrapper<TranslateTasksDO>().eq("status", 0).eq("shop_name", shopName));
+        //遍历task，然后解析数据，将除email的task都改为3
+        for (TranslateTasksDO translateTasksDO : list
+        ) {
+            //解析数据
+            String payload = translateTasksDO.getPayload();
+            try {
+                RabbitMqTranslateVO rabbitMqTranslateVO = OBJECT_MAPPER.readValue(payload, RabbitMqTranslateVO.class);
+                if (!rabbitMqTranslateVO.getShopifyData().equals(EMAIL)) {
+                    translateTasksService.updateByTaskId(translateTasksDO.getTaskId(), 3);
+                }
+            } catch (JsonProcessingException e) {
+                System.out.println(" errors : " + e);
+            }
+        }
+    }
 }
