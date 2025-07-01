@@ -32,15 +32,14 @@ public class RabbitMqTranslateConsumerService {
     private final ITranslationCounterService translationCounterService;
     private final ITranslatesService translatesService;
     private final ITranslateTasksService translateTasksService;
-    private final TaskScheduler taskScheduler;
+
 
     @Autowired
-    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler) {
+    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService) {
         this.rabbitMqTranslateService = rabbitMqTranslateService;
         this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
         this.translateTasksService = translateTasksService;
-        this.taskScheduler = taskScheduler;
     }
 
 
@@ -61,7 +60,7 @@ public class RabbitMqTranslateConsumerService {
                         userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
                         //将email的status改为2
                         translateTasksService.updateByTaskId(task.getTaskId(), 2);
-                        triggerSendEmailLater(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
+                        rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
                     }
@@ -124,18 +123,5 @@ public class RabbitMqTranslateConsumerService {
 
     }
 
-    public void triggerSendEmailLater(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, List<String> translationList) {
-        // 创建一个任务 Runnable
-        Runnable delayedTask = () -> {
-            appInsights.trackTrace("date2: " + LocalDateTime.now());
-            rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, translationList);
-            translateTasksService.updateByTaskId(task.getTaskId(), 1);
-        };
 
-        // 设置执行时间为当前时间 + 10分钟（使用 Instant 代替 Date）
-        Instant runAt = Instant.now().plusSeconds(8 * 60);
-
-        // 使用推荐的 API
-        taskScheduler.schedule(delayedTask, runAt);
-    }
 }
