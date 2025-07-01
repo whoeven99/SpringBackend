@@ -51,7 +51,7 @@ public class RabbitMqTranslateConsumerService {
                     //获取当前用户翻译状态，先不做
                     // 处理邮件发送功能
                     try {
-                        rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task);
+                        rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
                     }

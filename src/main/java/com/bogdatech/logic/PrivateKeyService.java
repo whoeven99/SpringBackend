@@ -41,6 +41,7 @@ import static com.alibaba.dashscope.utils.Constants.apiKey;
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
 import static com.bogdatech.integration.PrivateIntegration.getGoogleTranslationWithRetry;
@@ -1121,7 +1122,7 @@ public class PrivateKeyService {
         //获取用户已翻译的和未翻译的文本
         //通过shopName获取翻译到那个文本
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
-        TypeSplitResponse typeSplitResponse = splitByType(resourceType);
+        TypeSplitResponse typeSplitResponse = splitByType(resourceType, ALL_RESOURCES);
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
         //获取更新前后的时间

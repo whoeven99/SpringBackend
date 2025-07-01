@@ -36,7 +36,7 @@ public class RabbitMqTask {
     public static final Set<String> PROCESSING_SHOPS = ConcurrentHashMap.newKeySet();
 
     // 每6秒钟检查一次是否有闲置线程
-//    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 10000)
     public void scanAndSubmitTasks() {
         //查询 0 状态的记录，过滤掉 shop 已被锁定的
         List<TranslateTasksDO> tasks = new ArrayList<>();
