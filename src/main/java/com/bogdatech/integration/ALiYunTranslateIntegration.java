@@ -96,7 +96,7 @@ public class ALiYunTranslateIntegration {
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(content, 2);
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(text, 2);
             userTranslate.put(shopName, translationStatusMap);
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
 //        int totalToken = 10;

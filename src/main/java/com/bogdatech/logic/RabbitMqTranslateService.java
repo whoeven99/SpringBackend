@@ -41,6 +41,7 @@ import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.ListUtils.convertALL;
+import static com.bogdatech.utils.ListUtils.sort;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
@@ -1119,7 +1120,8 @@ public class RabbitMqTranslateService {
         } else if (nowUserTranslate == 3) {
             //为3，发送部分翻译的邮件
             //将List<String> 转化位 List<TranslateResourceDTO>
-            List<TranslateResourceDTO> convertALL = convertALL(translationList);
+            List<String> sort = sort(translationList);
+            List<TranslateResourceDTO> convertALL = convertALL(sort);
             tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, convertALL, target, source);
         }
         translateTasksService.updateByTaskId(task.getTaskId(), 1);
