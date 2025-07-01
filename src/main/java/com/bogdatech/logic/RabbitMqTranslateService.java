@@ -121,6 +121,7 @@ public class RabbitMqTranslateService {
                 RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
                 dbTranslateVO.setShopifyData(query);
                 String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
+                System.out.println("json: " + json);
                 translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName()));
             } catch (Exception e) {
                 appInsights.trackTrace("保存翻译任务失败 errors " + e);
@@ -145,7 +146,6 @@ public class RabbitMqTranslateService {
         } catch (Exception e) {
             System.out.println("保存翻译任务失败" + e);
         }
-//        amqpTemplate.convertAndSend(USER_TRANSLATE_EXCHANGE, USER_TRANSLATE_ROUTING_KEY + rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO);
     }
 
 
@@ -173,7 +173,7 @@ public class RabbitMqTranslateService {
         if (translatableResourcesNode.hasNonNull("pageInfo")) {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.path("endCursor");
-//                System.out.println("获取下一页： " + endCursor);
+                System.out.println("获取下一页： " + endCursor);
                 translateContext.setAfter(endCursor.asText(null));
                 translateNextPageData(translateContext, rabbitMqTranslateVO);
             }
