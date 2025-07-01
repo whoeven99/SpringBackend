@@ -1,18 +1,22 @@
 package com.bogdatech.model.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
+import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
@@ -24,13 +28,15 @@ public class RabbitMqTranslateConsumerService {
     private final ITranslationCounterService translationCounterService;
     private final ITranslatesService translatesService;
     private final ITranslateTasksService translateTasksService;
+    private final TaskScheduler taskScheduler;
 
     @Autowired
-    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService) {
+    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler) {
         this.rabbitMqTranslateService = rabbitMqTranslateService;
         this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
         this.translateTasksService = translateTasksService;
+        this.taskScheduler = taskScheduler;
     }
 
 
@@ -40,13 +46,13 @@ public class RabbitMqTranslateConsumerService {
         try {
             if (EMAIL.equals(rabbitMqTranslateVO.getShopifyData())) {
                 // 判断是否需要发送邮件，获取TranslateTasks的所有关于该商店的task，判断是否只剩一条数据了，如果是走邮件发送，如果不是不发邮件
-                List<TranslateTasksDO> shopName = translateTasksService.list(new QueryWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()));
+                List<TranslateTasksDO> shopName = translateTasksService.list(new QueryWrapper<TranslateTasksDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).and(wrapper -> wrapper.eq("status", 2).or().eq("status", 0)));
                 if (shopName.size() <= 1) {
                     appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 只剩一条数据了，发送邮件");
                     //获取当前用户翻译状态，先不做
                     // 处理邮件发送功能
                     try {
-                        rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task);
+                        rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
                     }
@@ -55,9 +61,20 @@ public class RabbitMqTranslateConsumerService {
                 }
             } else {
                 // 处理翻译功能
-                processMessage(rabbitMqTranslateVO, task);
-                //将用户task改为1
-                translateTasksService.updateByTaskId(task.getTaskId(), 1);
+                try {
+                    processMessage(rabbitMqTranslateVO, task);
+                    //将用户task改为1
+                    translateTasksService.updateByTaskId(task.getTaskId(), 1);
+                } catch (ClientException e1) {
+                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
+                    //将用户所有task改为3
+                    translateTasksService.updateByTaskId(task.getTaskId(), 3);
+                    //将用户翻译状态也改为3
+                    translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
+                } catch (Exception e) {
+                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "处理消息失败 errors : " + e);
+                    translateTasksService.updateByTaskId(task.getTaskId(), 4);
+                }
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
@@ -79,8 +96,9 @@ public class RabbitMqTranslateConsumerService {
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
+            //将用户所有task改为3
             translateTasksService.updateByTaskId(task.getTaskId(), 3);
-            return;
+            throw new ClientException("字符超限");
         }
         // 修改数据库当前翻译模块的数据
         translatesService.updateTranslatesResourceType(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());
@@ -97,5 +115,14 @@ public class RabbitMqTranslateConsumerService {
 
     }
 
+    public void triggerSendEmailLater(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, List<String> translationList) {
+        // 创建一个任务 Runnable
+        Runnable delayedTask = () -> {
+            rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, translationList);
+        };
 
+        // 设置执行时间为当前时间 + 10分钟
+        Date runAt = new Date(System.currentTimeMillis() + 10 * 60 * 1000);
+        taskScheduler.schedule(delayedTask, runAt);
+    }
 }

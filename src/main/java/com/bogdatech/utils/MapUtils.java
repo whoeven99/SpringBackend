@@ -38,4 +38,14 @@ public class MapUtils {
         }
         return map;
     }
+
+    /**生成一个用户翻译状态map
+     *
+     * */
+    public static Map<String, Object> getTranslationStatusMap(String content, Integer status){
+        Map<String, Object> map = new HashMap<>();
+            map.put("value", content);
+            map.put("status", status);
+            return map;
+}
 }

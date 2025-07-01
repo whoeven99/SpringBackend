@@ -11,7 +11,6 @@ import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
-import com.bogdatech.mapper.TestTableMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -20,16 +19,17 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
-import static com.bogdatech.logic.TranslateService.userTranslate;
+import static com.bogdatech.logic.TranslateService.*;
+import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
-import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
-import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
+import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @RestController
 @RequestMapping("/translate")
@@ -39,7 +39,6 @@ public class TranslateController {
     private final ITranslationCounterService translationCounterService;
     private final IUserTypeTokenService userTypeTokenService;
     private final UserTypeTokenService userTypeTokensService;
-    private final TestTableMapper testTableMapper;
     private final RabbitMqTranslateService rabbitMqTranslateService;
 
     @Autowired
@@ -47,13 +46,12 @@ public class TranslateController {
             TranslateService translateService,
             ITranslatesService translatesService,
             ITranslationCounterService translationCounterService,
-            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, TestTableMapper testTableMapper, RabbitMqTranslateService rabbitMqTranslateService) {
+            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.userTypeTokenService = userTypeTokenService;
         this.userTypeTokensService = userTypeTokensService;
-        this.testTableMapper = testTableMapper;
         this.rabbitMqTranslateService = rabbitMqTranslateService;
     }
 
@@ -152,7 +150,13 @@ public class TranslateController {
         }
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
-
+        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
+        //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", clickTranslateRequest.getShopName()).eq("source", clickTranslateRequest.getSource()).eq("target", clickTranslateRequest.getTarget()));
+        if (one == null) {
+            //走同步逻辑
+            translateService.syncShopifyAndDatabase(request);
+        }
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
@@ -165,44 +169,49 @@ public class TranslateController {
             }
         }
 
+        //判断字符是否超限
         int usedChars = request1.getUsedChars();
+
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
 
+        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+
+        //初始化计数器
+        CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
+
+        //判断是否有handle
+        boolean handleFlag = false;
+        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
+        if (translateModel.contains("handle")) {
+            translateModel.removeIf("handle"::equals);
+            handleFlag = true;
+        }
+        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
+        //修改模块的排序
+        List<String> translateResourceDTOS = null;
+        try {
+            translateResourceDTOS = translateModel(translateModel);
+        } catch (Exception e) {
+            appInsights.trackTrace("translateModel errors : " + e.getMessage());
+        }
+//      翻译
+        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
+        }
+
+        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+
+        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
+        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //全部走DB翻译
-        rabbitMqTranslateService.mqTranslate(clickTranslateRequest);
+        rabbitMqTranslateService.mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
-//
-//
-//        //初始化计数器
-//        CharacterCountUtils counter = new CharacterCountUtils();
-//        counter.addChars(usedChars);
-//
-//        //判断是否有handle
-//        boolean handleFlag = false;
-//        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
-//        if (translateModel.contains("handle")) {
-//            translateModel.removeIf("handle"::equals);
-//            handleFlag = true;
-//        }
-//        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
-//        //修改模块的排序
-//        List<String> translateResourceDTOS = null;
-//        try {
-//            translateResourceDTOS = translateModel(translateModel);
-//        } catch (Exception e) {
-//            appInsights.trackTrace("translateModel error: " + e.getMessage());
-//        }
-////      翻译
-//        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
-//            return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
-//        }
-//        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-//        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
-//        translateService.startTranslation(request, remainingChars, counter, usedChars, false, translateResourceDTOS, handleFlag);
-//        return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
     //暂停翻译
@@ -290,6 +299,13 @@ public class TranslateController {
     //用户是否选择定时任务的方法
     @PostMapping("/updateAutoTranslateByData")
     public BaseResponse<Object> updateStatusByShopName(@RequestBody AutoTranslateRequest request) {
+
+        //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", request.getShopName()).eq("source", request.getSource()).eq("target", request.getTarget()));
+        if (one == null) {
+            //走同步逻辑
+            translateService.syncShopifyAndDatabase(new TranslateRequest(0, request.getShopName(), null, request.getSource(), request.getTarget(), null));
+        }
         return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(), request.getSource(), request.getTarget());
     }
 
@@ -304,7 +320,7 @@ public class TranslateController {
      */
     @GetMapping("/getUserValue")
     public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
-        String value = userTranslate.get(shopName);
+        Map<String, Object> value = userTranslate.get(shopName);
         return new BaseResponse<>().CreateSuccessResponse(value);
     }
 }

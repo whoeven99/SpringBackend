@@ -129,4 +129,18 @@ public class ShopifyRequestBody {
                 "  }\n" +
                 "}";
     }
+
+    /**
+     * 根据查询语句获取用户所有语言代码
+     * */
+    public static String getLanguagesQuery() {
+        return "query MyQuery {\n" +
+                "  shopLocales {\n" +
+                "    locale\n" +
+                "    name\n" +
+                "    primary\n" +
+                "    published\n" +
+                "  }\n" +
+                "}";
+    }
 }
