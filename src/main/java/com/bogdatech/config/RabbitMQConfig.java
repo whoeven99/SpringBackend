@@ -9,11 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import static com.bogdatech.constants.RabbitMQConstants.*;
-import static com.bogdatech.constants.TranslateConstants.EMAIL;
-import static com.bogdatech.logic.TranslateService.executorService;
-
 @Configuration
 public class RabbitMQConfig {
 
@@ -92,6 +88,19 @@ public class RabbitMQConfig {
     @Bean
     public Queue userStoreDeadLetterQueue() {
         return QueueBuilder.durable(USER_STORE_DEAD_LETTER_QUEUE).build();
+    }
+    //声明用户邮件延迟队列
+    @Bean
+    public Queue userEmailDelayQueue() {
+        return QueueBuilder.durable(USER_EMAIL_DELAY_QUEUE)
+                .withArgument("x-dead-letter-exchange", USER_EMAIL_DLX_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", USER_EMAIL_DLX_ROUTING_KEY)
+                .build();
+    }
+    // 声明用户邮件死信队列（真正消费的队列）
+    @Bean
+    public Queue dlxQueue() {
+        return new Queue(USER_EMAIL_DLX_QUEUE, true);
     }
 
     // 声明定时任务直连交换机

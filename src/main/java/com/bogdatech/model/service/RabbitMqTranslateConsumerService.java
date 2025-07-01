@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
@@ -113,6 +114,4 @@ public class RabbitMqTranslateConsumerService {
         appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 单模块翻译结束。");
 
     }
-
-
 }

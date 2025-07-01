@@ -40,14 +40,11 @@ import static com.bogdatech.utils.JsonUtils.stringToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.ListUtils.convert;
-import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.ModelUtils.translateModel;
+import static com.bogdatech.utils.ListUtils.convertALL;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
-import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @Service
 @EnableAsync
@@ -1122,8 +1119,8 @@ public class RabbitMqTranslateService {
         } else if (nowUserTranslate == 3) {
             //为3，发送部分翻译的邮件
             //将List<String> 转化位 List<TranslateResourceDTO>
-            List<TranslateResourceDTO> convert = convert(translationList);
-            tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, convert, target, source);
+            List<TranslateResourceDTO> convertALL = convertALL(translationList);
+            tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, convertALL, target, source);
         }
         translateTasksService.updateByTaskId(task.getTaskId(), 1);
     }
