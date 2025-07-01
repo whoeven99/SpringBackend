@@ -148,6 +148,8 @@ public class TranslateController {
                 || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
+        userTranslate.put(clickTranslateRequest.getShopName(), translationStatusMap);
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
