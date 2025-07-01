@@ -171,9 +171,9 @@ public class TencentEmailService {
         templateData.put("language", request.getTarget());
         // 定义要移除的后缀
         String suffix = ".myshopify.com";
-        String TargetShop;
-        TargetShop = request.getShopName().substring(0, request.getShopName().length() - suffix.length());
-        templateData.put("shop_name", TargetShop);
+        String targetShop;
+        targetShop = request.getShopName().substring(0, request.getShopName().length() - suffix.length());
+        templateData.put("shop_name", targetShop);
         //获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
 
