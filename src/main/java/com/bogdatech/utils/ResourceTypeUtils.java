@@ -39,17 +39,20 @@ public class ResourceTypeUtils {
         // 分割列表
         before = index > 0 ? resourceList.subList(0, index) : new ArrayList<>();
         after = index < resourceList.size()? resourceList.subList(index, resourceList.size()) : new ArrayList<>();
-
         //根据TranslateResourceDTO来获取展示的类型名，且不重名
-        for (TranslateResourceDTO resource : before) {
-            if (EMAIL_MAP.containsKey(resource.getResourceType())) {
-                beforeSet.add(EMAIL_MAP.get(resource.getResourceType()));
+        if (before.size() > 0){
+            for (TranslateResourceDTO resource : before) {
+                if (EMAIL_MAP.containsKey(resource.getResourceType())) {
+                    beforeSet.add(EMAIL_MAP.get(resource.getResourceType()));
+                }
             }
         }
 
-        for (TranslateResourceDTO resource : after) {
-            if (EMAIL_MAP.containsKey(resource.getResourceType())) {
-                afterSet.add(EMAIL_MAP.get(resource.getResourceType()));
+        if (after.size() > 0){
+            for (TranslateResourceDTO resource : after) {
+                if (EMAIL_MAP.containsKey(resource.getResourceType())) {
+                    afterSet.add(EMAIL_MAP.get(resource.getResourceType()));
+                }
             }
         }
 

@@ -9,7 +9,9 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import static com.bogdatech.constants.RabbitMQConstants.*;
+
 @Configuration
 public class RabbitMQConfig {
 
@@ -61,21 +63,24 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(SCHEDULED_TRANSLATE_QUEUE)
                 .withArgument("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE) // 指定死信交换机
                 .withArgument("x-dead-letter-routing-key", DEAD_LETTER_ROUTING_KEY) // 指定死信路由键
-         .build();
+                .build();
     }
+
     //声明用户死信队列
     @Bean
     public Queue userDeadLetterQueue() {
         return QueueBuilder.durable(USER_TRANSLATE_DEAD_LETTER_QUEUE)
                 .withArgument("x-dead-letter-exchange", USER_DEAD_LETTER_EXCHANGE) // 指定死信交换机
                 .withArgument("x-dead-letter-routing-key", USER_DEAD_LETTER_ROUTING_KEY) // 指定死信路由键
-         .build();
+                .build();
     }
+
     // 声明定时翻译死信队列
     @Bean
     public Queue deadLetterQueue() {
         return QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
     }
+
     //声明用户存储数据队列
     @Bean
     public Queue userStoreQueue() {
@@ -84,23 +89,11 @@ public class RabbitMQConfig {
                 .withArgument("x-dead-letter-routing-key", USER_STORE_DEAD_LETTER_ROUTING_KEY) // 指定死信路由键
                 .build();
     }
+
     //声明用户存储死信队列
     @Bean
     public Queue userStoreDeadLetterQueue() {
         return QueueBuilder.durable(USER_STORE_DEAD_LETTER_QUEUE).build();
-    }
-    //声明用户邮件延迟队列
-    @Bean
-    public Queue userEmailDelayQueue() {
-        return QueueBuilder.durable(USER_EMAIL_DELAY_QUEUE)
-                .withArgument("x-dead-letter-exchange", USER_EMAIL_DLX_EXCHANGE)
-                .withArgument("x-dead-letter-routing-key", USER_EMAIL_DLX_ROUTING_KEY)
-                .build();
-    }
-    // 声明用户邮件死信队列（真正消费的队列）
-    @Bean
-    public Queue dlxQueue() {
-        return new Queue(USER_EMAIL_DLX_QUEUE, true);
     }
 
     // 声明定时任务直连交换机
@@ -108,26 +101,31 @@ public class RabbitMQConfig {
     public DirectExchange scheduledTranslateExchange() {
         return new DirectExchange(SCHEDULED_TRANSLATE_EXCHANGE, true, false);
     }
+
     //声明用户交换机
     @Bean
     public static TopicExchange userExchange() {
         return new TopicExchange(USER_TRANSLATE_EXCHANGE, true, false);
     }
+
     //声明用户死信交换机
     @Bean
     public static TopicExchange userDeadLetterExchange() {
         return new TopicExchange(USER_DEAD_LETTER_EXCHANGE, true, false);
     }
+
     // 声明定时翻译死信交换机
     @Bean
     public DirectExchange deadLetterExchange() {
         return new DirectExchange(DEAD_LETTER_EXCHANGE, true, false);
     }
+
     // 声明用户存储数据交换机
     @Bean
     public DirectExchange userStoreExchange() {
         return new DirectExchange(USER_STORE_EXCHANGE, true, false);
     }
+
     //声明用户存储数据死信交换机
     @Bean
     public DirectExchange userStoreDeadLetterExchange() {
@@ -141,6 +139,7 @@ public class RabbitMQConfig {
                 .to(scheduledTranslateExchange())
                 .with(SCHEDULED_TRANSLATE_ROUTING_KEY);
     }
+
     //用户死信队列绑定用户死信交换机
     @Bean
     public Binding userDeadLetterBinding() {
@@ -148,6 +147,7 @@ public class RabbitMQConfig {
                 .to(userDeadLetterExchange())
                 .with(USER_DEAD_LETTER_ROUTING_KEY);
     }
+
     // 死信定时翻译队列绑定到定时翻译死信交换机
     @Bean
     public Binding deadLetterBinding() {
@@ -155,6 +155,7 @@ public class RabbitMQConfig {
                 .to(deadLetterExchange())
                 .with(DEAD_LETTER_ROUTING_KEY);
     }
+
     // 用户存储数据队列绑定到用户存储数据交换机
     @Bean
     public Binding userStoreBinding() {
@@ -162,6 +163,7 @@ public class RabbitMQConfig {
                 .to(userStoreExchange())
                 .with(USER_STORE_ROUTING_KEY);
     }
+
     // 用户存储数据死信队列绑定到用户存储数据死信交换机
     @Bean
     public Binding userStoreDeadLetterBinding() {
