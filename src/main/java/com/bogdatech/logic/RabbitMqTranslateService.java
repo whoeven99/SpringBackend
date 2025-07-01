@@ -20,13 +20,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
@@ -61,9 +62,10 @@ public class RabbitMqTranslateService {
     private final JsoupUtils jsoupUtils;
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
     private final ITranslateTasksService translateTasksService;
+    private final TaskScheduler taskScheduler;
 
     @Autowired
-    public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService) {
+    public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler) {
         this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
         this.shopifyService = shopifyService;
@@ -74,6 +76,7 @@ public class RabbitMqTranslateService {
         this.jsoupUtils = jsoupUtils;
         this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
         this.translateTasksService = translateTasksService;
+        this.taskScheduler = taskScheduler;
     }
 
     /**
@@ -1116,16 +1119,16 @@ public class RabbitMqTranslateService {
         counter.addChars(nowUserToken);
         if (nowUserTranslate == 2) {
             //将2改为1， 发送翻译成功的邮件
-            translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
-            tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
+            triggerSendEmailLater(shopName, target, source, accessToken, task, counter, startTime, startChars, limitChars);
         } else if (nowUserTranslate == 3) {
             //为3，发送部分翻译的邮件
             //将List<String> 转化位 List<TranslateResourceDTO>
             List<String> sort = sort(translationList);
             List<TranslateResourceDTO> convertALL = convertALL(sort);
             tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, convertALL, target, source);
+            translateTasksService.updateByTaskId(task.getTaskId(), 1);
         }
-        translateTasksService.updateByTaskId(task.getTaskId(), 1);
+
     }
 
     /**
@@ -1148,5 +1151,21 @@ public class RabbitMqTranslateService {
                 System.out.println(" errors : " + e);
             }
         }
+    }
+
+    public void triggerSendEmailLater(String shopName, String target, String source, String accessToken, TranslateTasksDO task, CharacterCountUtils counter, LocalDateTime startTime, Integer startChars, Integer limitChars) {
+        // 创建一个任务 Runnable
+        Runnable delayedTask = () -> {
+            appInsights.trackTrace("date2: " + LocalDateTime.now());
+            translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
+            tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
+            translateTasksService.updateByTaskId(task.getTaskId(), 1);
+        };
+
+        // 设置执行时间为当前时间 + 10分钟（使用 Instant 代替 Date）
+        Instant runAt = Instant.now().plusSeconds(8 * 60);
+
+        // 使用推荐的 API
+        taskScheduler.schedule(delayedTask, runAt);
     }
 }
