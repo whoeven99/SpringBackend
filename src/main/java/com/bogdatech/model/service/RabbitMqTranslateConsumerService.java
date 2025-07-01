@@ -77,6 +77,7 @@ public class RabbitMqTranslateConsumerService {
                     appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
                     //将用户所有task改为3
                     rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
+                    translateTasksService.updateByTaskId(task.getTaskId(), 3);
                     //将用户翻译状态也改为3
                     translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
                 } catch (Exception e) {
