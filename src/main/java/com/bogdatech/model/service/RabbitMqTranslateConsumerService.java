@@ -16,11 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
+import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 
 @Service
 public class RabbitMqTranslateConsumerService {
@@ -52,7 +56,11 @@ public class RabbitMqTranslateConsumerService {
                     //获取当前用户翻译状态，先不做
                     // 处理邮件发送功能
                     try {
-                        rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
+                        appInsights.trackTrace("date1: " + LocalDateTime.now());
+                        //将用户状态改为3，
+                        Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
+                        userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
+                        triggerSendEmailLater(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
                     }
@@ -118,11 +126,14 @@ public class RabbitMqTranslateConsumerService {
     public void triggerSendEmailLater(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, List<String> translationList) {
         // 创建一个任务 Runnable
         Runnable delayedTask = () -> {
+            appInsights.trackTrace("date2: " + LocalDateTime.now());
             rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, translationList);
         };
 
-        // 设置执行时间为当前时间 + 10分钟
-        Date runAt = new Date(System.currentTimeMillis() + 10 * 60 * 1000);
+        // 设置执行时间为当前时间 + 10分钟（使用 Instant 代替 Date）
+        Instant runAt = Instant.now().plusSeconds(15 * 60);
+
+        // 使用推荐的 API
         taskScheduler.schedule(delayedTask, runAt);
     }
 }

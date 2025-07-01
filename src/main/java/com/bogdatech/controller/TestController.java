@@ -26,12 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -124,8 +126,9 @@ public class TestController {
     public void sendEmail() {
         CharacterCountUtils characterCount = new CharacterCountUtils();
         characterCount.addChars(100);
+        List<TranslateResourceDTO> list = new ArrayList<>(ALL_RESOURCES);
         LocalDateTime localDateTime = LocalDateTime.now();
-        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, null, "zh-CN", "en");
+        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, list, "zh-CN", "en");
     }
 
     //获取汇率
