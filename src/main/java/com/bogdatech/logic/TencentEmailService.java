@@ -5,10 +5,7 @@ import com.bogdatech.Service.IEmailService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationUsageService;
 import com.bogdatech.Service.IUsersService;
-import com.bogdatech.entity.DO.EmailDO;
-import com.bogdatech.entity.DO.TranslatesDO;
-import com.bogdatech.entity.DO.TranslationUsageDO;
-import com.bogdatech.entity.DO.UsersDO;
+import com.bogdatech.entity.DO.*;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
@@ -128,7 +125,7 @@ public class TencentEmailService {
     }
 
     //翻译失败后发送邮件
-    public void translateFailEmail(String shopName, CharacterCountUtils counter, LocalDateTime begin, int beginChars, Integer remainingChars, String target, String source) {
+    public void translateFailEmail(String shopName, CharacterCountUtils counter, LocalDateTime begin, int beginChars, List<TranslateResourceDTO> resourceList, String target, String source) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
         templateData.put("language", target);
@@ -141,7 +138,7 @@ public class TencentEmailService {
         //获取用户已翻译的和未翻译的文本
         //通过shopName获取翻译到那个文本
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
-        TypeSplitResponse typeSplitResponse = splitByType(resourceType);
+        TypeSplitResponse typeSplitResponse = splitByType(resourceType, resourceList);
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
         //获取更新前后的时间

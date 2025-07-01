@@ -45,6 +45,7 @@ import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.ListUtils.convert;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
@@ -141,7 +142,8 @@ public class TranslateService {
                 }
             } catch (ClientException e) {
                 appInsights.trackTrace(shopName + " 用户 startTranslation errors " + e.getErrorMessage());
-                translate3Handle(request, counter, begin, remainingChars, usedChars);
+                List<TranslateResourceDTO> convert = convert(translateSettings3);
+                translate3Handle(request, counter, begin, remainingChars, usedChars, convert);
                 return;
             } catch (CannotCreateTransactionException | ConcurrentModificationException e) {
                 appInsights.trackTrace(shopName + " 用户 CannotCreateTransactionException Translation task cannot failed errors : " + e);
@@ -163,12 +165,12 @@ public class TranslateService {
     }
 
     //部分翻译的处理
-    public void translate3Handle(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int remainingChars, int usedChars) {
+    public void translate3Handle(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int remainingChars, int usedChars,List<TranslateResourceDTO> translateSettings3) {
         //更新初始值
 //        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
         //发送报错邮件
-        tencentEmailService.translateFailEmail(request.getShopName(), counter, begin, usedChars, remainingChars, request.getTarget(), request.getSource());
+        tencentEmailService.translateFailEmail(request.getShopName(), counter, begin, usedChars, translateSettings3, request.getTarget(), request.getSource());
         translateFailHandle(request, counter);
     }
 
@@ -263,7 +265,8 @@ public class TranslateService {
             taskTranslating(request, remainingChars, counter, new ArrayList<>(), false);
         } catch (ClientException e) {
             appInsights.trackTrace("startTranslation " + e.getErrorMessage());
-            translate3Handle(request, counter, begin, remainingChars, usedChars);
+            //设置自动翻译模块邮件
+            translate3Handle(request, counter, begin, remainingChars, usedChars, PRODUCT_RESOURCES);
             return;
         } catch (CannotCreateTransactionException e) {
             appInsights.trackTrace("CannotCreateTransactionException Translation task failed: " + e);

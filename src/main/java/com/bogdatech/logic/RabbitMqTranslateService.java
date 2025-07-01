@@ -40,6 +40,7 @@ import static com.bogdatech.utils.JsonUtils.stringToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.ListUtils.convert;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
@@ -121,7 +122,6 @@ public class RabbitMqTranslateService {
                 RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
                 dbTranslateVO.setShopifyData(query);
                 String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
-                System.out.println("json: " + json);
                 translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName()));
             } catch (Exception e) {
                 appInsights.trackTrace("保存翻译任务失败 errors " + e);
@@ -173,7 +173,6 @@ public class RabbitMqTranslateService {
         if (translatableResourcesNode.hasNonNull("pageInfo")) {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.path("endCursor");
-                System.out.println("获取下一页： " + endCursor);
                 translateContext.setAfter(endCursor.asText(null));
                 translateNextPageData(translateContext, rabbitMqTranslateVO);
             }
@@ -1102,7 +1101,7 @@ public class RabbitMqTranslateService {
      * 2，未完成翻译
      * 3，出现错误
      */
-    public void sendTranslateEmail(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
+    public void sendTranslateEmail(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, List<String> translationList) {
         String shopName = rabbitMqTranslateVO.getShopName();
         String source = rabbitMqTranslateVO.getSource();
         String target = rabbitMqTranslateVO.getTarget();
@@ -1122,7 +1121,9 @@ public class RabbitMqTranslateService {
             tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
         } else if (nowUserTranslate == 3) {
             //为3，发送部分翻译的邮件
-            tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, limitChars, target, source);
+            //将List<String> 转化位 List<TranslateResourceDTO>
+            List<TranslateResourceDTO> convert = convert(translationList);
+            tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, convert, target, source);
         }
         translateTasksService.updateByTaskId(task.getTaskId(), 1);
     }

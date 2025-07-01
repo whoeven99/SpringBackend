@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.TranslateTasksDO;
@@ -121,7 +122,7 @@ public class TestController {
         CharacterCountUtils characterCount = new CharacterCountUtils();
         characterCount.addChars(100);
         LocalDateTime localDateTime = LocalDateTime.now();
-        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, 1000, "zh-CN", "en");
+        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, null, "zh-CN", "en");
     }
 
     //获取汇率
@@ -335,4 +336,14 @@ public class TestController {
         }
     }
 
+    /**
+     * 一键式恢复用户翻译
+     * */
+    @PutMapping("/testRecover")
+    public String testRecover(@RequestParam String shopName) {
+        translateTasksService.update( new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
+        SHOP_LOCKS.remove(shopName); // 强制移除 ReentrantLock 对象
+        PROCESSING_SHOPS.remove(shopName);
+        return SHOP_LOCKS.toString() + PROCESSING_SHOPS;
+    }
 }
