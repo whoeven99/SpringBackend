@@ -114,4 +114,15 @@ public class RabbitMqTranslateConsumerService {
         appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 单模块翻译结束。");
 
     }
+
+    public void triggerSendEmailLater(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, List<String> translationList) {
+        // 创建一个任务 Runnable
+        Runnable delayedTask = () -> {
+            rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, translationList);
+        };
+
+        // 设置执行时间为当前时间 + 10分钟
+        Date runAt = new Date(System.currentTimeMillis() + 10 * 60 * 1000);
+        taskScheduler.schedule(delayedTask, runAt);
+    }
 }
