@@ -16,11 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
+import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 
 @Service
 public class RabbitMqTranslateConsumerService {
@@ -28,15 +32,14 @@ public class RabbitMqTranslateConsumerService {
     private final ITranslationCounterService translationCounterService;
     private final ITranslatesService translatesService;
     private final ITranslateTasksService translateTasksService;
-    private final TaskScheduler taskScheduler;
+
 
     @Autowired
-    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler) {
+    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService) {
         this.rabbitMqTranslateService = rabbitMqTranslateService;
         this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
         this.translateTasksService = translateTasksService;
-        this.taskScheduler = taskScheduler;
     }
 
 
@@ -52,6 +55,11 @@ public class RabbitMqTranslateConsumerService {
                     //获取当前用户翻译状态，先不做
                     // 处理邮件发送功能
                     try {
+                        appInsights.trackTrace("date1: " + LocalDateTime.now());
+                        Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
+                        userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
+                        //将email的status改为2
+                        translateTasksService.updateByTaskId(task.getTaskId(), 2);
                         rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
@@ -68,6 +76,7 @@ public class RabbitMqTranslateConsumerService {
                 } catch (ClientException e1) {
                     appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
                     //将用户所有task改为3
+                    rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
                     translateTasksService.updateByTaskId(task.getTaskId(), 3);
                     //将用户翻译状态也改为3
                     translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
@@ -97,7 +106,7 @@ public class RabbitMqTranslateConsumerService {
         if (usedChars >= remainingChars) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
             //将用户所有task改为3
-            translateTasksService.updateByTaskId(task.getTaskId(), 3);
+            rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
             throw new ClientException("字符超限");
         }
         // 修改数据库当前翻译模块的数据
@@ -115,14 +124,5 @@ public class RabbitMqTranslateConsumerService {
 
     }
 
-    public void triggerSendEmailLater(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, List<String> translationList) {
-        // 创建一个任务 Runnable
-        Runnable delayedTask = () -> {
-            rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, translationList);
-        };
 
-        // 设置执行时间为当前时间 + 10分钟
-        Date runAt = new Date(System.currentTimeMillis() + 10 * 60 * 1000);
-        taskScheduler.schedule(delayedTask, runAt);
-    }
 }

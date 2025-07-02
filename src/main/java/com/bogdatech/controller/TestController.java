@@ -26,12 +26,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -43,6 +46,7 @@ import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.ListUtils.convert;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
@@ -124,8 +128,9 @@ public class TestController {
     public void sendEmail() {
         CharacterCountUtils characterCount = new CharacterCountUtils();
         characterCount.addChars(100);
+        List<TranslateResourceDTO> list = new ArrayList<>(ALL_RESOURCES);
         LocalDateTime localDateTime = LocalDateTime.now();
-        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, null, "zh-CN", "en");
+        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, list, "zh-CN", "en");
     }
 
     //获取汇率
@@ -225,6 +230,7 @@ public class TestController {
     @PutMapping("/testThread")
     public String logThreadPoolStatus() {
         if (executorService instanceof ThreadPoolExecutor executor) {
+            String userTranslates = (" - 用户翻译Set： " + userTranslate + " ");
             String process = (" - 进程Set： " + PROCESSING_SHOPS.toString() + " ");
             String locks = (" - 锁池： " + SHOP_LOCKS + "  ");
             String userStopFlag = (" - 停止标志： " + userStopFlags);
@@ -242,7 +248,7 @@ public class TestController {
             String shutdown = (" - 是否已关闭(isShutdown): " + executor.isShutdown() + "  ");
             String terminated = (" - 是否终止(isTerminated): " + executor.isTerminated() + "  ");
             String terminating = (" - 正在终止中(isTerminating): " + executor.isTerminating() + "  ");
-            return process + locks + userStopFlag + executorServic + crePoolSize + maximumPoolSize + poolSize + activeCount + completedTaskCount + taskCount + queue + remainingCapacity + allowsCoreThreadTimeOut + keepAliveTime + shutdown + terminated + terminating;
+            return userTranslates + process + locks + userStopFlag + executorServic + crePoolSize + maximumPoolSize + poolSize + activeCount + completedTaskCount + taskCount + queue + remainingCapacity + allowsCoreThreadTimeOut + keepAliveTime + shutdown + terminated + terminating;
         }
         return null;
     }
@@ -347,6 +353,8 @@ public class TestController {
         translateTasksService.update( new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
         SHOP_LOCKS.remove(shopName); // 强制移除 ReentrantLock 对象
         PROCESSING_SHOPS.remove(shopName);
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(" ", 1);
+        userTranslate.put(shopName,translationStatusMap);
         return SHOP_LOCKS.toString() + PROCESSING_SHOPS;
     }
     /**
