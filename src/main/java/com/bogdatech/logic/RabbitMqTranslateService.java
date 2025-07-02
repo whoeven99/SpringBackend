@@ -550,6 +550,12 @@ public class RabbitMqTranslateService {
                     iterator.remove();
                     continue;
                 }
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
+                    iterator.remove();
+                    continue;
+                }
                 if (isJson(value)) {
                     iterator.remove();
                     continue;

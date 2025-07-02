@@ -135,7 +135,7 @@ public class JudgeTranslateUtils {
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     );//包含邮箱
-    private static final Pattern BASE64_PATTERN = Pattern.compile("^(?=[A-Za-z0-9+/]*[A-Z])(?=[A-Za-z0-9+/]*[a-z])(?=[A-Za-z0-9+/]*[0-9])(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"); // Base64编码
+    public static final Pattern BASE64_PATTERN = Pattern.compile("^(?=[A-Za-z0-9+/]*[A-Z])(?=[A-Za-z0-9+/]*[a-z])(?=[A-Za-z0-9+/]*[0-9])(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"); // Base64编码
     private static final Pattern HASH_PATTERN = Pattern.compile("^[a-fA-F0-9]{64}$"); // 32位十六进制字符串
     // 长度限制常量
     private static final int HASH_PREFIX_MAX_LENGTH = 90;
@@ -165,6 +165,12 @@ public class JudgeTranslateUtils {
         // 包含/，且长度不超过20
         if (value.contains("/") && value.length() <= SLASH_CONTAINS_MAX_LENGTH) {
             printTranslateReason(value + "包含/，且长度不超过20, key是： " + key);
+            return false;
+        }
+
+        //如果是base64编码的数据，不翻译
+        if (BASE64_PATTERN.matcher(value).matches()) {
+            printTranslateReason(value + "是base64编码的数据, key是： " + key);
             return false;
         }
 
@@ -298,11 +304,6 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        //如果是base64编码的数据，不翻译
-        if (BASE64_PATTERN.matcher(value).matches()) {
-            printTranslateReason(value + "是base64编码的数据, key是： " + key);
-            return false;
-        }
 
         //如果是32位十六进制字符串值，不翻译
         if (HASH_PATTERN.matcher(value).matches()) {

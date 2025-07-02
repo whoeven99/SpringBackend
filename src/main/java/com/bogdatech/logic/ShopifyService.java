@@ -322,6 +322,11 @@ public class ShopifyService {
                 if (!metaTranslate(value)) {
                     continue;
                 }
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
+                    continue;
+                }
                 counter.addChars(calculateModelToken(value));
                 continue;
             }
@@ -488,6 +493,11 @@ public class ShopifyService {
                     continue;
                 }
                 if (!metaTranslate(value)) {
+                    continue;
+                }
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
                     continue;
                 }
                 counter.addChars(calculateModelToken(value));
