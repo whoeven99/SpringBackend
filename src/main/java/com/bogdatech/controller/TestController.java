@@ -193,6 +193,10 @@ public class TestController {
 
         //如果是theme模块的数据
         if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+            //进行白名单的确认
+            if (whiteListTranslate(key)){
+                return "白名单翻译";
+            }
             //如果包含对应key和value，则跳过
             if (!shouldTranslate(key, value)) {
                 return "theme不翻译";
