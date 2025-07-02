@@ -521,7 +521,7 @@ public class RabbitMqTranslateService {
                 //对key中含section和general的做key值判断
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                     //进行白名单的确认
-                    if (whiteListTranslate(key)){
+                    if (whiteListTranslate(key)) {
                         continue;
                     }
 
@@ -688,9 +688,10 @@ public class RabbitMqTranslateService {
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
             //判断产品模块用完全翻译，其他模块用分段html翻译
-            if (rabbitMqTranslateVO.getModeType().equals(PRODUCT) && "body_html".equals(key)) {
-                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
-            } else if (rabbitMqTranslateVO.getModeType().equals(SHOP_POLICY)) {
+//            if (rabbitMqTranslateVO.getModeType().equals(PRODUCT) && "body_html".equals(key)) {
+//                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
+//            } else
+            if (rabbitMqTranslateVO.getModeType().equals(SHOP_POLICY)) {
                 htmlTranslation = liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
             } else {
                 htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
@@ -723,7 +724,7 @@ public class RabbitMqTranslateService {
     private boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
         if (userStopFlags.get(shopName).get()) {
             // 更新数据库中的已使用字符数
-            appInsights.trackTrace( shopName + " 用户 消耗的token ： "  + counter.getTotalChars());
+            appInsights.trackTrace(shopName + " 用户 消耗的token ： " + counter.getTotalChars());
 //            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”
             translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
@@ -1161,7 +1162,7 @@ public class RabbitMqTranslateService {
                     translateTasksService.updateByTaskId(translateTasksDO.getTaskId(), 3);
                 }
             } catch (JsonProcessingException e) {
-                System.out.println(" errors : " + e);
+                appInsights.trackTrace(" errors : " + e);
             }
         }
     }

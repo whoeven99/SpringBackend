@@ -102,6 +102,9 @@ public class RabbitMqTranslateConsumerService {
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(rabbitMqTranslateVO.getShopName());
         Integer remainingChars = rabbitMqTranslateVO.getLimitChars();
         int usedChars = request1.getUsedChars();
+        //初始化计数器
+        CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
@@ -113,10 +116,6 @@ public class RabbitMqTranslateConsumerService {
         translatesService.updateTranslatesResourceType(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());
         // 修改数据库的模块翻译状态
         translateTasksService.updateByTaskId(task.getTaskId(), 2);
-        rabbitMqTranslateVO.setLimitChars(remainingChars);
-        //初始化计数器
-        CharacterCountUtils counter = new CharacterCountUtils();
-        counter.addChars(usedChars);
         appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
         rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
         appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars());

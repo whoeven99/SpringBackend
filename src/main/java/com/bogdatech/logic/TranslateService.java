@@ -343,8 +343,7 @@ public class TranslateService {
 
     public static final Set<String> EXCLUDED_SHOPS = new HashSet<>(Arrays.asList(
             "qnxrrk-2n.myshopify.com",
-            "gemxco.myshopify.com",
-            "ciwishop.myshopify.com"
+            "gemxco.myshopify.com"
     ));
 
     public static final Set<String> PRODUCT_MODEL = new HashSet<>(Arrays.asList(
