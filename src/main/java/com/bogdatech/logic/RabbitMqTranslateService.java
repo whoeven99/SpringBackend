@@ -520,6 +520,11 @@ public class RabbitMqTranslateService {
 
                 //对key中含section和general的做key值判断
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+                    //进行白名单的确认
+                    if (whiteListTranslate(key)) {
+                        continue;
+                    }
+
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
                         continue;
@@ -542,6 +547,12 @@ public class RabbitMqTranslateService {
                     continue;
                 }
                 if (!metaTranslate(value)) {
+                    iterator.remove();
+                    continue;
+                }
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
                     iterator.remove();
                     continue;
                 }
@@ -677,9 +688,10 @@ public class RabbitMqTranslateService {
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
             //判断产品模块用完全翻译，其他模块用分段html翻译
-            if (rabbitMqTranslateVO.getModeType().equals(PRODUCT) && "body_html".equals(key)) {
-                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
-            } else if (rabbitMqTranslateVO.getModeType().equals(SHOP_POLICY)) {
+//            if (rabbitMqTranslateVO.getModeType().equals(PRODUCT) && "body_html".equals(key)) {
+//                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
+//            } else
+            if (rabbitMqTranslateVO.getModeType().equals(SHOP_POLICY)) {
                 htmlTranslation = liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
             } else {
                 htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
@@ -712,6 +724,7 @@ public class RabbitMqTranslateService {
     private boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
         if (userStopFlags.get(shopName).get()) {
             // 更新数据库中的已使用字符数
+            appInsights.trackTrace(shopName + " 用户 消耗的token ： " + counter.getTotalChars());
 //            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”
             translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
@@ -910,6 +923,7 @@ public class RabbitMqTranslateService {
         request.setShopName(shopName);
 
         if (counter.getTotalChars() >= remainingChars) {
+            appInsights.trackTrace("shopName 用户 消耗的token : " + shopName + " totalChars : " + counter.getTotalChars() + " limitChars : " + remainingChars);
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
             //将同一个shopNmae的task任务的状态。除邮件发送模块改为3.
             updateTranslateTasksStatus(shopName);
@@ -1148,7 +1162,7 @@ public class RabbitMqTranslateService {
                     translateTasksService.updateByTaskId(translateTasksDO.getTaskId(), 3);
                 }
             } catch (JsonProcessingException e) {
-                System.out.println(" errors : " + e);
+                appInsights.trackTrace(" errors : " + e);
             }
         }
     }

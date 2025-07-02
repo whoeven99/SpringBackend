@@ -343,8 +343,7 @@ public class TranslateService {
 
     public static final Set<String> EXCLUDED_SHOPS = new HashSet<>(Arrays.asList(
             "qnxrrk-2n.myshopify.com",
-            "gemxco.myshopify.com",
-            "ciwishop.myshopify.com"
+            "gemxco.myshopify.com"
     ));
 
     public static final Set<String> PRODUCT_MODEL = new HashSet<>(Arrays.asList(
@@ -1312,6 +1311,12 @@ public class TranslateService {
 
                 //对key中含section和general的做key值判断
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                    //进行白名单的确认
+                    if (whiteListTranslate(key)){
+                        judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
+                        continue;
+                    }
+
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
                         continue;
@@ -1337,7 +1342,11 @@ public class TranslateService {
                     printTranslateReason(value + " 包含top,left,right,bottom，在METAFIELD模块");
                     continue;
                 }
-
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
+                    continue;
+                }
                 judgeData.get(METAFIELD).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }

@@ -22,7 +22,6 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jsoup.Jsoup;
@@ -292,6 +291,11 @@ public class ShopifyService {
                 }
                 //对key中含section和general的做key值判断
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+                    //进行白名单的确认
+                    if (whiteListTranslate(key)){
+                        counter.addChars(calculateModelToken(value));
+                        continue;
+                    }
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
                         continue;
@@ -316,6 +320,11 @@ public class ShopifyService {
                     continue;
                 }
                 if (!metaTranslate(value)) {
+                    continue;
+                }
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
                     continue;
                 }
                 counter.addChars(calculateModelToken(value));
@@ -455,6 +464,11 @@ public class ShopifyService {
                 }
 
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                    //进行白名单的确认
+                    if (whiteListTranslate(key)){
+                        counter.addChars(calculateModelToken(value));
+                        continue;
+                    }
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
                         continue;
@@ -479,6 +493,11 @@ public class ShopifyService {
                     continue;
                 }
                 if (!metaTranslate(value)) {
+                    continue;
+                }
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
                     continue;
                 }
                 counter.addChars(calculateModelToken(value));
