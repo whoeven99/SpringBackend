@@ -1343,7 +1343,11 @@ public class TranslateService {
                     printTranslateReason(value + " 包含top,left,right,bottom，在METAFIELD模块");
                     continue;
                 }
-
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
+                    continue;
+                }
                 judgeData.get(METAFIELD).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, type));
                 continue;
             }
