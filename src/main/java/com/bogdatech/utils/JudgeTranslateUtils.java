@@ -60,7 +60,7 @@ public class JudgeTranslateUtils {
         JSON_NO_TRANSLATE_SUBSTRINGS.add("font");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("templates.404.subtext");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("date_formats");
-        JSON_NO_TRANSLATE_SUBSTRINGS.add("css");
+//        JSON_NO_TRANSLATE_SUBSTRINGS.add("css");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("grid_");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("variant_");
         JSON_NO_TRANSLATE_SUBSTRINGS.add("code");
@@ -76,7 +76,7 @@ public class JudgeTranslateUtils {
         OLD_NO_TRANSLATE.add("phone_text");
         OLD_NO_TRANSLATE.add("email_text");
         OLD_NO_TRANSLATE.add("carousel_easing");
-        OLD_NO_TRANSLATE.add("_link");
+//        OLD_NO_TRANSLATE.add("_link");
         OLD_NO_TRANSLATE.add("rtl");
         OLD_NO_TRANSLATE.add("css:");
         OLD_NO_TRANSLATE.add("icon:");
@@ -94,6 +94,25 @@ public class JudgeTranslateUtils {
         URL_PREFIXES.add("https://");
         URL_PREFIXES.add("shopify://");
         URL_PREFIXES.add("gid://shopify");
+    }
+
+    // 白名单单词集合
+    private static final Set<String> WHITELIST_WORDS = new HashSet<>();
+    static {
+        WHITELIST_WORDS.add("heading");
+        WHITELIST_WORDS.add("text");
+        WHITELIST_WORDS.add("description");
+        WHITELIST_WORDS.add("content");
+        WHITELIST_WORDS.add("title");
+        WHITELIST_WORDS.add("label");
+        WHITELIST_WORDS.add("product");
+        WHITELIST_WORDS.add("faq");
+        WHITELIST_WORDS.add("header");
+        WHITELIST_WORDS.add("des");
+        WHITELIST_WORDS.add("custom_html");
+        WHITELIST_WORDS.add("slide");
+        WHITELIST_WORDS.add("name");
+        WHITELIST_WORDS.add("checkout");
     }
 
     // 正则表达式
@@ -126,7 +145,7 @@ public class JudgeTranslateUtils {
     public static final Pattern GENERAL_OR_SECTION_PATTERN = Pattern.compile("^(general|section)\\."); // general.开头的key
 
     /**
-     * 判断给定的key是否需要翻译
+     * theme模块判断给定的key是否需要翻译
      *
      * @param key   要检查的key
      * @param value 对应的value，可能为null
@@ -140,6 +159,12 @@ public class JudgeTranslateUtils {
 
         if(key.contains("captions")){
             printTranslateReason("general.&section. " + key + "包含captions, value是： " + value);
+            return false;
+        }
+
+        // 包含/，且长度不超过20
+        if (value.contains("/") && value.length() <= SLASH_CONTAINS_MAX_LENGTH) {
+            printTranslateReason(value + "包含/，且长度不超过20, key是： " + key);
             return false;
         }
 
@@ -209,16 +234,11 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        //第六步，1.以#开头，且长度不超过90  2. 包含#，且长度不超过30
+        //第六步，1.以#开头，且长度不超过90
         if (value.startsWith("#") && value.length() <= HASH_PREFIX_MAX_LENGTH) {
             printTranslateReason(value + "以#开头，且长度不超过90, key是： " + key);
             return false;
         }
-
-//        if (value.contains("#") && value.length() <= HASH_CONTAINS_MAX_LENGTH) {
-//            printTranslateReason(value + "包含#，且长度不超过30, key是： " + key);
-//            return false;
-//        }
 
         // 第七步，纯数字
         if (PURE_NUMBER.matcher(value).matches()) {
@@ -232,12 +252,6 @@ public class JudgeTranslateUtils {
                 printTranslateReason(value + "包含" + prefix + ", key是： " + key );
                 return false;
             }
-        }
-
-        // 第九步，包含/，且长度不超过20
-        if (value.contains("/") && value.length() <= SLASH_CONTAINS_MAX_LENGTH) {
-            printTranslateReason(value + "包含/，且长度不超过20, key是： " + key);
-            return false;
         }
 
         // 第十步，包含-或—，检查特定模式
@@ -306,7 +320,7 @@ public class JudgeTranslateUtils {
      * @return true表示需要翻译，false表示不需要翻译
      */
     public static boolean metaTranslate(String value) {
-        return !value.equals("left") && !value.equals("right") && !value.equals("top") && !value.equals("bottom");
+        return !"left".equals(value) && !"right".equals(value) && !"top".equals(value) && !"bottom".equals(value);
     }
 
     /**
@@ -315,4 +329,20 @@ public class JudgeTranslateUtils {
     public static void printTranslateReason(String reason) {
         appInsights.trackTrace("命中的理由： " + reason);
     }
+
+    /**
+     * 在主题翻译黑名单前添加一个白名单规则，命中后直接翻译
+     * */
+    public static boolean whiteListTranslate(String key) {
+        String prefix = key.split(":")[0];
+        for (String text: WHITELIST_WORDS
+             ) {
+            if (prefix.endsWith(text)) {
+                System.out.println("以 " + text + " 结尾");
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

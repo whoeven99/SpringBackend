@@ -520,6 +520,11 @@ public class RabbitMqTranslateService {
 
                 //对key中含section和general的做key值判断
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+                    //进行白名单的确认
+                    if (whiteListTranslate(key)){
+                        continue;
+                    }
+
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
                         continue;

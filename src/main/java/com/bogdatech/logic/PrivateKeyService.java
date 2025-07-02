@@ -1017,6 +1017,11 @@ public class PrivateKeyService {
                     continue;
                 }
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                    //进行白名单的确认
+                    if (whiteListTranslate(key)){
+                        judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(null, null, locale, key, value, translatableContentDigest, resourceId, null));
+                        continue;
+                    }
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
                         continue;
