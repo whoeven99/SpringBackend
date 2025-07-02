@@ -59,7 +59,7 @@ public class RabbitMqTranslateConsumerService {
                         Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
                         userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
                         //将email的status改为2
-                        translateTasksService.updateByTaskId(task.getTaskId(), 2);
+                        translateTasksService.removeById(task.getTaskId());
                         rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
@@ -88,9 +88,9 @@ public class RabbitMqTranslateConsumerService {
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
         } catch (ClientException e1) {
-            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
+            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 到达字符限制： " + e1);
         } catch (Exception e) {
-            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "处理消息失败 errors : " + e);
+            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 处理消息失败 errors : " + e);
         }
     }
 
