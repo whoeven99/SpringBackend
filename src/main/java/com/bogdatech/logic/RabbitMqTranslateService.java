@@ -717,6 +717,7 @@ public class RabbitMqTranslateService {
     private boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
         if (userStopFlags.get(shopName).get()) {
             // 更新数据库中的已使用字符数
+            appInsights.trackTrace( shopName + " 用户 消耗的token ： "  + counter.getTotalChars());
 //            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”
             translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
@@ -915,6 +916,7 @@ public class RabbitMqTranslateService {
         request.setShopName(shopName);
 
         if (counter.getTotalChars() >= remainingChars) {
+            appInsights.trackTrace("shopName 用户 消耗的token : " + shopName + " totalChars : " + counter.getTotalChars() + " limitChars : " + remainingChars);
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
             //将同一个shopNmae的task任务的状态。除邮件发送模块改为3.
             updateTranslateTasksStatus(shopName);
