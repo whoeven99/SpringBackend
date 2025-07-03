@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.TaskTranslateDTO;
-import com.bogdatech.mapper.TestTableMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.service.TranslateTaskPublisherService;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -51,11 +50,10 @@ public class TaskService {
     private final IWidgetConfigurationsService iWidgetConfigurationsService;
     private final IGlossaryService iGlossaryService;
     private final IUserIpService iUserIpService;
-    private final TestTableMapper testTableMapper;
     private final ITranslateTasksService translateTasksService;
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, TestTableMapper testTableMapper, ITranslateTasksService translateTasksService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
@@ -69,7 +67,6 @@ public class TaskService {
         this.iWidgetConfigurationsService = iWidgetConfigurationsService;
         this.iGlossaryService = iGlossaryService;
         this.iUserIpService = iUserIpService;
-        this.testTableMapper = testTableMapper;
         this.translateTasksService = translateTasksService;
     }
 
@@ -326,6 +323,13 @@ public class TaskService {
             //判断是否过期
             Timestamp now = new Timestamp(System.currentTimeMillis());
             Timestamp trialEnd = userTrialsDO.getTrialEnd();
+            //如果用户购买计划，将状态改为true，然后跳过
+            List<CharsOrdersDO> shopNameAndId = charsOrdersService.getCharsOrdersDoByShopName(userTrialsDO.getShopName());
+            if (shopNameAndId != null && !shopNameAndId.isEmpty()) {
+                userTrialsDO.setIsTrialExpired(true);
+                iUserTrialsService.update(userTrialsDO, new UpdateWrapper<UserTrialsDO>().eq("id", userTrialsDO.getId()));
+                continue;
+            }
 
             // 如果 trialStart + 5天 小于 trialEnd，不做任何操作
             if (now.after(trialEnd)) {
