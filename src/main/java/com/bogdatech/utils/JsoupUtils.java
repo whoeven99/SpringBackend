@@ -414,8 +414,21 @@ public class JsoupUtils {
     public String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, Integer limitChars) {
         String target = request.getTarget();
         String source = request.getSource();
+        String content = request.getContent();
         //如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
         //目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.3s. 后面请求解决限制后，删掉这段代码。
+        if (hasPlaceholders(content)) {
+            String variableString = getOuterString(content);
+            String VPrompt = getVariablePrompt(getLanguageName(target), variableString, null);
+            appInsights.trackTrace("普通文本： " + content + " variable提示词: " + VPrompt);
+            if ("ar".equals(target) || "af".equals(target) || "en".equals(target)) {
+                return aLiYunTranslateIntegration.singleTranslate(content, VPrompt, counter, target, request.getShopName(), limitChars);
+            } else {
+                content = " " + content + " ";
+                return arkTranslateIntegration.douBaoTranslate(request.getShopName(), VPrompt, content, counter, limitChars);
+            }
+        }
+
         try {
             sleep(300);
         } catch (Exception e) {
