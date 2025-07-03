@@ -1130,7 +1130,13 @@ public class RabbitMqTranslateService {
         counter.addChars(nowUserToken);
         if (nowUserTranslate == 2) {
             //将2改为1， 发送翻译成功的邮件
-            triggerSendEmailLater(shopName, target, source, accessToken, task, counter, startTime, startChars, limitChars);
+            if ("ciwishop.myshopify.com".equals(shopName)){
+                translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
+                tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
+                translateTasksService.updateByTaskId(task.getTaskId(), 1);
+            }else {
+                triggerSendEmailLater(shopName, target, source, accessToken, task, counter, startTime, startChars, limitChars);
+            }
         } else if (nowUserTranslate == 3) {
             //为3，发送部分翻译的邮件
             //将List<String> 转化位 List<TranslateResourceDTO>
