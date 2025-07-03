@@ -112,8 +112,6 @@ public class ALiYunTranslateIntegration {
         }
         return content;
 
-
-//        return text;
     }
 
     public String QwenTranslate(String text, String prompt, CharacterCountUtils countUtils) {
@@ -175,7 +173,7 @@ public class ALiYunTranslateIntegration {
                 .parameter("translation_options", "{\"source_lang\":\"" + source + "\",\"target_lang\":\"" + target + "\"}")
                 .build();
         String content = null;
-        Integer totalToken;
+        int totalToken;
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
@@ -194,8 +192,6 @@ public class ALiYunTranslateIntegration {
         }
         return content;
 
-
-//        return translateText;
     }
 
     public static Integer calculateBaiLianToken(String text) {
