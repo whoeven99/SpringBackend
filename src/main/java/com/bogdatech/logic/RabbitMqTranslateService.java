@@ -527,6 +527,7 @@ public class RabbitMqTranslateService {
 
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
+                        iterator.remove();
                         continue;
                     }
                 }
