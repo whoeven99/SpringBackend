@@ -81,7 +81,7 @@ public class RabbitMqTranslateConsumerService {
                     //将用户翻译状态也改为3
                     translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
                 } catch (Exception e) {
-                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "处理消息失败 errors : " + e);
+                    appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 处理消息失败 errors : " + e);
                     translateTasksService.updateByTaskId(task.getTaskId(), 4);
                 }
             }

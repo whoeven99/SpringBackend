@@ -92,12 +92,16 @@ public class PlaceholderUtils {
         }
         return "Translate the following text into " + target + ". If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
     }
-//    public static String getSimplePrompt(String target, String languagePackId, String sourceText) {
-//        if (languagePackId != null && !languagePackId.isEmpty()) {
-//            return "You are a professional e-commerce translator specializing in localized marketing for " + target + " with appropriate tone and terminology for the " + languagePackId + " category. Detect the language. If it's " + target + ", return it unchanged. Otherwise, translate into fluent, high-conversion " + target + ". Guidelines: 1. Tone: concise and persuasive; 2. Brand comes first and stays untranslated; 3. Use popular Google/Amazon search terms; 4. Keep original capitalization; 5. Do not: translate literally, use obscure words, add extra content, or output any language other than " + target + ". Return only the final optimized version. Original: " + sourceText;
-//        }
-//        return "You are a professional e-commerce translator specializing in localized marketing for " + target + ". Detect the language. If it's " + target + ", return it unchanged. Otherwise, translate into fluent, high-conversion " + target + ". Guidelines: 1. Tone: concise and persuasive; 2. Brand comes first and stays untranslated; 3. Use popular Google/Amazon search terms; 4. Keep original capitalization; 5. Do not: translate literally, use obscure words, add extra content, or output any language other than " + target + ". Return only the final optimized version. Original: " + sourceText;
-//    }
+
+    /**
+     * key值提示词
+     * */
+    public static String getKeyPrompt(String target, String languagePackId, String key) {
+        if (languagePackId != null && !languagePackId.isEmpty()) {
+            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+        }
+        return "Translate the following " + key + " into " + target + " . If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+    }
 
     /**
      * 变量提示词
