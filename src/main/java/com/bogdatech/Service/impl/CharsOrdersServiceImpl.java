@@ -30,4 +30,13 @@ public class CharsOrdersServiceImpl extends ServiceImpl<CharsOrdersMapper, Chars
                 .like(CharsOrdersDO::getId, "AppSubscription")
         );
     }
+
+    @Override
+    public List<CharsOrdersDO> getCharsOrdersDoByShopName(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().select(CharsOrdersDO::getShopName, CharsOrdersDO::getId, CharsOrdersDO::getCreatedAt)
+                .eq(CharsOrdersDO::getStatus, "ACTIVE")
+                .eq(CharsOrdersDO::getShopName, shopName)
+                .like(CharsOrdersDO::getId, "AppSubscription")
+        );
+    }
 }
