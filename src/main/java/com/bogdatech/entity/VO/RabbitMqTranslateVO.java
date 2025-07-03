@@ -25,6 +25,7 @@ public class RabbitMqTranslateVO implements Serializable {
     private Integer startChars; //用户翻译前获取的字符
     private String startTime; //用户翻译开始时间
     private List<String> translateList; //用户翻译列表
+    private String translationModel; //用户翻译模型
 
     public RabbitMqTranslateVO copy(RabbitMqTranslateVO rabbitMqTranslateVO) {
         this.shopifyData = rabbitMqTranslateVO.getShopifyData();
