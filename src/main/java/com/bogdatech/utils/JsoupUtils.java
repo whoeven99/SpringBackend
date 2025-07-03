@@ -260,7 +260,7 @@ public class JsoupUtils {
         } else {
             //根据key选择提示词使用的key值
             prompt = getKeyPrompt(targetLanguage, languagePackId, key);
-            appInsights.trackTrace("模块文本：" + content + " Simple提示词: " + prompt);
+            appInsights.trackTrace("模块文本：" + content + " key提示词: " + prompt);
         }
         try {
             //目标语言是中文的，用qwen-max翻译
@@ -283,7 +283,7 @@ public class JsoupUtils {
 
     /**
      * 根据Product key选择提示词使用的key值
-     * */
+     */
     public static String getProductKeyByKey(String key) {
         return switch (key) {
             case "title" -> "product title";
@@ -296,7 +296,7 @@ public class JsoupUtils {
 
     /**
      * 根据ARTICLE key选择提示词使用的key值
-     * */
+     */
     public static String getArticleKeyByKey(String key) {
         return switch (key) {
             case "title" -> "article title";
@@ -483,7 +483,11 @@ public class JsoupUtils {
 
         String targetString;
         if (translateType.equals(HANDLE)) {
-            targetString = translationHandle(request, counter, languagePackId, limitChars);
+            if (text.length() <= 20) {
+                targetString = checkTranslationApi(request, counter, limitChars);
+            } else {
+                targetString = translationHandle(request, counter, languagePackId, limitChars);
+            }
         } else {
             targetString = translateByModel(request, counter, languagePackId, limitChars);
         }
