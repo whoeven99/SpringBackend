@@ -826,7 +826,7 @@ public class RabbitMqTranslateService {
             handleType = HANDLE;
         }
         try {
-            //TODO：在这里做模块判断用什么模型翻译
+            //在这里做模块判断用什么模型翻译
             targetString = translateTextDataByModeType(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest, handleType);
 //            targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
         } catch (ClientException e) {
