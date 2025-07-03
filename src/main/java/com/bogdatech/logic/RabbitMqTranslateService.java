@@ -833,6 +833,10 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace("翻译失败 errors ： " + e.getMessage() + " ，继续翻译");
         }
 
+        if (Objects.equals(targetString, METAFIELD)){
+            return;
+        }
+
         if (targetString == null) {
             appInsights.trackTrace("翻译失败后的字符 errors ： " + translateTextDO);
             shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
@@ -1014,7 +1018,7 @@ public class RabbitMqTranslateService {
             case ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS:
             case ONLINE_STORE_THEME_LOCALE_CONTENT, EMAIL_TEMPLATE, SHOP, SHOP_POLICY:
                 //翻译主题
-                jsoupUtils.translateAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
+                return jsoupUtils.translateAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
             case PRODUCT:
                 //产品
                 return productTranslate(rabbitMqTranslateVO, counter, translateTextDO, handleType);
@@ -1027,6 +1031,7 @@ public class RabbitMqTranslateService {
             case METAFIELD:
                 //元字段
                 translateMetafieldTextData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
+                return METAFIELD;
             case METAOBJECT:
                 //机器翻译
                 return jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars());
