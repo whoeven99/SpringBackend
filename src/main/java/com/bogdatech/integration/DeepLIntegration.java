@@ -66,6 +66,13 @@ public class DeepLIntegration {
         }
     }
 
+//    public void translateByDeepL() {
+//        String authKey = "f63c02c5-f056-...";  // Replace with your key
+//        translator = new Translator(authKey);
+//        TextResult result =
+//                translator.translateText("Hello, world!", null, "fr");
+//        System.out.println(result.getText()); // "Bonjour, le monde !"
+//    }
     // 解析 JSON 响应
     private static String parseTranslatedText(String json) throws IOException {
         JsonNode root = OBJECT_MAPPER.readTree(json);
