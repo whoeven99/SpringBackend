@@ -178,7 +178,6 @@ public class TranslateService {
     public void translateFailHandle(TranslateRequest request, CharacterCountUtils counter) {
         //更新初始值
         try {
-//            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
             userTypeTokensService.startTokenCount(request);
         } catch (Exception e) {
             appInsights.trackTrace("重新更新token值失败！！！" + e.getMessage());

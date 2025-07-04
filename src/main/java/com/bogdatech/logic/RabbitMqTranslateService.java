@@ -2,10 +2,7 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.bogdatech.Service.ITranslateTasksService;
-import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.Service.IVocabularyService;
+import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
@@ -63,9 +60,10 @@ public class RabbitMqTranslateService {
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
     private final ITranslateTasksService translateTasksService;
     private final TaskScheduler taskScheduler;
+    private final UserTypeTokenService userTypeTokenService;
 
     @Autowired
-    public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler) {
+    public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler, UserTypeTokenService userTypeTokenService1) {
         this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
         this.shopifyService = shopifyService;
@@ -77,6 +75,7 @@ public class RabbitMqTranslateService {
         this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
         this.translateTasksService = translateTasksService;
         this.taskScheduler = taskScheduler;
+        this.userTypeTokenService = userTypeTokenService1;
     }
 
     /**
@@ -806,7 +805,6 @@ public class RabbitMqTranslateService {
                 translateGeneralTextData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
             } catch (Exception e) {
                 appInsights.trackTrace("value : " + value + " 翻译失败 errors ：" + e.getMessage());
-                throw new RuntimeException(e);
             }
         }
     }
@@ -1194,4 +1192,12 @@ public class RabbitMqTranslateService {
         taskScheduler.schedule(delayedTask, runAt);
     }
 
+    public void countAfterTranslated(TranslateRequest request) {
+        //更新初始值
+        try {
+            userTypeTokenService.startTokenCount(request);
+        } catch (Exception e) {
+            appInsights.trackTrace("重新更新token值失败！！！ errors : " + e.getMessage());
+        }
+    }
 }

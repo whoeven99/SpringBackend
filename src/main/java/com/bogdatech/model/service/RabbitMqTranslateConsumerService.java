@@ -11,12 +11,10 @@ import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
+import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +59,7 @@ public class RabbitMqTranslateConsumerService {
                         //将email的status改为2
                         translateTasksService.removeById(task.getTaskId());
                         rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
+                        rabbitMqTranslateService.countAfterTranslated(new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget(), null));
                     } catch (Exception e) {
                         appInsights.trackTrace("邮件发送 errors : " + e);
                     }
