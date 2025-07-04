@@ -177,7 +177,7 @@ public class ALiYunTranslateIntegration {
         try {
             GenerationResult call = gen.call(param);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            totalToken =  call.getUsage().getTotalTokens();
 //        int totalToken = 10;
             countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
