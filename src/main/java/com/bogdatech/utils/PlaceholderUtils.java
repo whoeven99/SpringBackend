@@ -88,9 +88,9 @@ public class PlaceholderUtils {
      */
     public static String getSimplePrompt(String target, String languagePackId){
         if (languagePackId != null && !languagePackId.isEmpty()){
-            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
         }
-        return "Translate the following text into " + target + ". If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+        return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
     }
 
     /**
@@ -98,9 +98,9 @@ public class PlaceholderUtils {
      * */
     public static String getKeyPrompt(String target, String languagePackId, String key) {
         if (languagePackId != null && !languagePackId.isEmpty()) {
-            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
         }
-        return "Translate the following " + key + " into " + target + " . If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+        return "Translate the following " + key + " into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
     }
 
     /**
@@ -140,7 +140,7 @@ public class PlaceholderUtils {
      * @return handle类型的提示词
      */
     public static String getHandlePrompt(String target) {
-        return "Translate the following text into " + target + ". If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+        return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
 //        return "Translate each word in the following handle into " + target + ". Keep the '-' separators as they are. Output only the translated handle.";
     }
 
@@ -159,7 +159,7 @@ public class PlaceholderUtils {
      * qwen-max 专用提示词
      */
     public static String getShortPrompt(String target) {
-        return "Translate the following text into " + target + ". If the text is already written in " + target + ", do not translate it—just output it exactly as it is. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
+        return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
     }
 
     /**
