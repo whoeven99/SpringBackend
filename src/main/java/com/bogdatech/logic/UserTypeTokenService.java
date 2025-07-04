@@ -108,8 +108,8 @@ public class UserTypeTokenService {
             if (status != 2) {
                 getUserTranslatedToken(request, translationId, userTypeTokenService, shopifyService);
             }
-        } catch (IllegalArgumentException e) {
-            appInsights.trackTrace("错误原因： " + e.getMessage());
+        } catch (Exception e) {
+            appInsights.trackTrace("错误原因 errors ： " + e.getMessage());
         }
     }
 

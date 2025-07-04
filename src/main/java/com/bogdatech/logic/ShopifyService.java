@@ -92,7 +92,7 @@ public class ShopifyService {
         try {
             String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
             string = sendShopifyPost("test123", requestBody);
-        } catch (JsonProcessingException | ClientException e) {
+        } catch (Exception e) {
             return null;
         }
         return string;

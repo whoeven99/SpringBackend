@@ -276,7 +276,7 @@ public class JsoupUtils {
             return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
         } catch (Exception e) {
             appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
+            return translateSingleLineWithProtection(request, counter, limitChars, key , languagePackId);
         }
 
     }
@@ -524,7 +524,6 @@ public class JsoupUtils {
      */
     public String translateKeyModelAndCount(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String key) {
         String text = request.getContent();
-        //检测text是不是全大写，如果是的话，最后翻译完也全大写
         String targetString;
         targetString = translateByKeyPrompt(request, counter, languagePackId, limitChars, key);
 
@@ -786,6 +785,33 @@ public class JsoupUtils {
         } catch (Exception e) {
             appInsights.trackTrace("翻译handle数据报错 errors ： " + e.getMessage());
             return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target, shopName, limitChars);
+        }
+    }
+
+    /**
+     * 对于ali出现400的问题（主要是内容不适），先用机器翻译，随后用豆包大模型翻译
+     * */
+    public String translateSingleLineWithProtection(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String key, String languagePackId) {
+        String target = request.getTarget();
+        String source = request.getSource();
+        String targetLanguage = getLanguageName(target);
+        String prompt = getKeyPrompt(targetLanguage,languagePackId, key);
+        String resultTranslation;
+        try {
+            if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
+                resultTranslation = translateByQwenMt(request.getContent(), request.getSource(), request.getTarget(), counter, request.getShopName(), limitChars);
+            } else {
+                //qwen 短文本翻译
+                appInsights.trackTrace("400翻译 errors : " + request.getContent() + " key 提示词: " + prompt);
+                resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt,  request.getContent(), counter, limitChars);
+            }
+            return resultTranslation;
+
+        } catch (Exception e) {
+            //mt翻译失败的话，用其他大模型翻译
+            appInsights.trackTrace("400翻译 errors : " + e.getMessage());
+            resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt, request.getContent(), counter, limitChars);
+            return resultTranslation;
         }
     }
 }
