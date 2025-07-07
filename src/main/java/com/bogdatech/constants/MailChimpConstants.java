@@ -13,6 +13,7 @@ public class MailChimpConstants {
     public static final String SUCCESSFUL_TRANSLATION_SUBJECT = "Your Shopify Translation is Complete!｜Ciwi-translator";
     public static final String SUCCESSFUL_AUTO_TRANSLATION_SUBJECT = "Ciwi.ai:Automatic translation completed｜Ciwi-translator";
     public static final String TRANSLATION_FAILED_SUBJECT = "Your Shopify Translation Task Could Not Be Completed｜Ciwi-translator";
+    public static final String SUBSCRIBE_SUCCESSFUL_SUBJECT = "Your Credits Have Been Added!｜Ciwi-translator";
     public static final String CHARACTER_QUOTA_USED_UP_SUBJECT = "Reminder: Your Character Balance Has Run Out — Top Up Now!｜Ciwi-translator";
     public static final String CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT = "Confirmation of Successful Credits Purchase｜Ciwi-translator";
     public static final String ONLINE_NOT_TRANSLATION_SUBJECT = "Translate Task Reminder Not Complete｜Ciwi-translator";

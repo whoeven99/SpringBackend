@@ -6,6 +6,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.EmailDO;
 import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.entity.DO.UsersDO;
+import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
@@ -43,10 +44,11 @@ public class UserService {
     private final IEmailService emailServicel;
     private final ITranslatesService translatesService;
     private final IGlossaryService iGlossaryService;
+    private final IWidgetConfigurationsService widgetConfigurationsService;
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
 
     @Autowired
-    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService, IGlossaryService iGlossaryService) {
+    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService, IGlossaryService iGlossaryService, IWidgetConfigurationsService widgetConfigurationsService) {
         this.usersService = usersService;
         this.taskScheduler = taskScheduler;
         this.translationCounterService = translationCounterService;
@@ -56,6 +58,7 @@ public class UserService {
         this.emailServicel = emailServicel;
         this.translatesService = translatesService;
         this.iGlossaryService = iGlossaryService;
+        this.widgetConfigurationsService = widgetConfigurationsService;
     }
 
     //添加用户
@@ -113,7 +116,9 @@ public class UserService {
                 //将用户翻译状态改为0
                 translatesService.updateAllStatusTo0(userRequest.getShopName());
                 //将用户ip关掉
+                //将词汇表改为0
                 iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userRequest.getShopName()).set("status", 0));
+                widgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userRequest.getShopName()).set("ip_open", false));
                 return true;
             } catch (Exception e) {
                 attempt++;
