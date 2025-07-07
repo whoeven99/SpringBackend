@@ -17,6 +17,7 @@ import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.UserPriceRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.RabbitMqTask;
@@ -63,10 +64,9 @@ public class TestController {
     private final TencentEmailService tencentEmailService;
     private final ITranslateTasksService translateTasksService;
     private final RabbitMqTask rabbitMqTask;
-    private final ITranslatesService translateService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, ITranslatesService translateService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -77,7 +77,7 @@ public class TestController {
         this.tencentEmailService = tencentEmailService;
         this.translateTasksService = translateTasksService;
         this.rabbitMqTask = rabbitMqTask;
-        this.translateService = translateService;
+
     }
 
     @GetMapping("/ping")
@@ -361,18 +361,15 @@ public class TestController {
         userTranslate.put(shopName,translationStatusMap);
         return SHOP_LOCKS.toString() + PROCESSING_SHOPS;
     }
-    /**
-     * 对文本进行分割
-     * */
-    @GetMapping("/testSplit")
-    public void testSplit(@RequestParam String shopName, @RequestBody List<String> translateSettings3) {
-        String resourceType = translateService.getResourceTypeByshopNameAndTargetAndSource("ciwishop.myshopify.com", "ar", "en");
-        System.out.println("resourceType: " + resourceType);
-        List<TranslateResourceDTO> convert = convert(translateSettings3);
-        System.out.println("convert: " + convert);
-        TypeSplitResponse typeSplitResponse = splitByType(resourceType, convert);
-        System.out.println("translated_content: " + typeSplitResponse.getBefore().toString());
-        System.out.println("remaining_content: " +  typeSplitResponse.getAfter().toString());
-    }
 
+
+    /**
+     * 用户发送订阅成功邮件
+     * */
+    @GetMapping("/testSendEmail")
+    public void testSendEmail(@RequestBody UserPriceRequest userPriceRequest) {
+        LocalDateTime now = LocalDateTime.now();
+        userPriceRequest.setCreateAt(now);
+        taskService.addCharsByUserData(userPriceRequest);
+    }
 }

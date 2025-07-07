@@ -1,10 +1,7 @@
 package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogdatech.Service.IEmailService;
-import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.Service.ITranslationUsageService;
-import com.bogdatech.Service.IUsersService;
+import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
@@ -36,13 +33,15 @@ public class TencentEmailService {
     private final IUsersService usersService;
     private final ITranslationUsageService translationUsageService;
     private final ITranslatesService translatesService;
+    private final ITranslationCounterService translationCounterService;
     @Autowired
-    public TencentEmailService(EmailIntegration emailIntegration, IEmailService emailService, IUsersService usersService, ITranslationUsageService translationUsageService, ITranslatesService translatesService) {
+    public TencentEmailService(EmailIntegration emailIntegration, IEmailService emailService, IUsersService usersService, ITranslationUsageService translationUsageService, ITranslatesService translatesService, ITranslationCounterService translationCounterService) {
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
         this.usersService = usersService;
         this.translationUsageService = translationUsageService;
         this.translatesService = translatesService;
+        this.translationCounterService = translationCounterService;
     }
 
     //由腾讯发送邮件
@@ -226,5 +225,32 @@ public class TencentEmailService {
         } catch (Exception e) {
             appInsights.trackTrace("自动翻译存储数据失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 发送订阅计划付费后的邮件
+     * */
+    public void sendSubscribeEmail(String shopName, Integer numberOfCredits) {
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("user", usersDO.getFirstName());
+        // 定义要移除的后缀
+        String suffix = ".myshopify.com";
+        String targetShop;
+        targetShop = shopName.substring(0, shopName.length() - suffix.length());
+        templateData.put("shop_name", targetShop);
+        // 获得用户总的token数
+        TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(shopName);
+        Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
+        Integer totalCreditsCount = maxCharsByShopName - translationCounterDO.getUsedChars();
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        templateData.put("number_of_credits",  formatter.format(numberOfCredits));
+        templateData.put("total_credits_count",  formatter.format(totalCreditsCount));
+        //共消耗的字符数
+//        System.out.println("templateData" + templateData);
+        //由腾讯发送邮件
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(143058L, templateData, SUBSCRIBE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        //存入数据库中
+        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUBSCRIBE_SUCCESSFUL_SUBJECT, b ? 1 : 0));
     }
 }
