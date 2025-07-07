@@ -361,18 +361,13 @@ public class TestController {
         userTranslate.put(shopName,translationStatusMap);
         return SHOP_LOCKS.toString() + PROCESSING_SHOPS;
     }
-    /**
-     * 对文本进行分割
-     * */
-    @GetMapping("/testSplit")
-    public void testSplit(@RequestParam String shopName, @RequestBody List<String> translateSettings3) {
-        String resourceType = translateService.getResourceTypeByshopNameAndTargetAndSource("ciwishop.myshopify.com", "ar", "en");
-        System.out.println("resourceType: " + resourceType);
-        List<TranslateResourceDTO> convert = convert(translateSettings3);
-        System.out.println("convert: " + convert);
-        TypeSplitResponse typeSplitResponse = splitByType(resourceType, convert);
-        System.out.println("translated_content: " + typeSplitResponse.getBefore().toString());
-        System.out.println("remaining_content: " +  typeSplitResponse.getAfter().toString());
-    }
 
+
+    /**
+     * 用户发送订阅成功邮件
+     * */
+    @GetMapping("/testSendEmail")
+    public void testSendEmail() {
+        tencentEmailService.sendSubscribeEmail("ciwishop.myshopify.com", 10000);
+    }
 }

@@ -83,8 +83,7 @@ public class RabbitMqTranslateService {
      * 读取该用户的shopify数据，然后循环获取模块数据
      */
     @Async
-    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel) {
-
+    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover) {
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -92,7 +91,7 @@ public class RabbitMqTranslateService {
         //获取目前所使用的AI语言包
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
         //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel);
+        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover);
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
@@ -339,7 +338,7 @@ public class RabbitMqTranslateService {
     public void commonTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
         //根据DB的请求语句获取对应shopify值
         String shopifyDataByDb = getShopifyDataByDb(rabbitMqTranslateVO);
-        Set<TranslateTextDO> needTranslatedData = translatedDataParse(stringToJson(shopifyDataByDb), rabbitMqTranslateVO.getShopName());
+        Set<TranslateTextDO> needTranslatedData = translatedDataParse(stringToJson(shopifyDataByDb), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getIsCover());
         if (needTranslatedData == null) {
             return;
         }
@@ -379,7 +378,7 @@ public class RabbitMqTranslateService {
     /**
      * 解析shopifyData数据，分析数据是否可用，然后判断出可翻译数据
      */
-    public static Set<TranslateTextDO> translatedDataParse(JsonNode shopDataJson, String shopName) {
+    public static Set<TranslateTextDO> translatedDataParse(JsonNode shopDataJson, String shopName, Boolean isCover) {
         Set<TranslateTextDO> doubleTranslateTextDOSet = new HashSet<>();
         try {
             // 获取 translatableResources 节点
@@ -396,7 +395,7 @@ public class RabbitMqTranslateService {
             ArrayNode nodesArray = (ArrayNode) nodesNode;
             for (JsonNode nodeElement : nodesArray) {
                 if (nodeElement.isObject()) {
-                    Set<TranslateTextDO> stringTranslateTextDOSet = needTranslatedSet(nodeElement, shopName);
+                    Set<TranslateTextDO> stringTranslateTextDOSet = needTranslatedSet(nodeElement, shopName, isCover);
                     doubleTranslateTextDOSet.addAll(stringTranslateTextDOSet);
                 }
             }
@@ -409,7 +408,7 @@ public class RabbitMqTranslateService {
     /**
      * 分析用户需要翻译的数据
      */
-    public static Set<TranslateTextDO> needTranslatedSet(JsonNode shopDataJson, String shopName) {
+    public static Set<TranslateTextDO> needTranslatedSet(JsonNode shopDataJson, String shopName, Boolean isCover) {
         String resourceId;
         Iterator<Map.Entry<String, JsonNode>> fields = shopDataJson.fields();
         while (fields.hasNext()) {
@@ -425,7 +424,7 @@ public class RabbitMqTranslateService {
                 resourceId = fieldValue.asText(null);
                 // 提取翻译内容映射
                 Map<String, TranslateTextDO> partTranslateTextDOMap = extractTranslationsByResourceId(shopDataJson, resourceId, shopName);
-                Map<String, TranslateTextDO> partTranslatedTextDOMap = extractTranslatedDataByResourceId(shopDataJson, partTranslateTextDOMap);
+                Map<String, TranslateTextDO> partTranslatedTextDOMap = extractTranslatedDataByResourceId(shopDataJson, partTranslateTextDOMap, isCover);
                 Set<TranslateTextDO> notNeedTranslatedSet = new HashSet<>(partTranslatedTextDOMap.values());
                 return new HashSet<>(notNeedTranslatedSet);
             }
@@ -466,9 +465,9 @@ public class RabbitMqTranslateService {
     /**
      * 获取所有的resourceId下的已翻译数据
      */
-    public static Map<String, TranslateTextDO> extractTranslatedDataByResourceId(JsonNode shopDataJson, Map<String, TranslateTextDO> partTranslateTextDOSet) {
+    public static Map<String, TranslateTextDO> extractTranslatedDataByResourceId(JsonNode shopDataJson, Map<String, TranslateTextDO> partTranslateTextDOSet, Boolean isCover) {
         JsonNode contentNode = shopDataJson.path("translations");
-        if (contentNode.isArray() && !contentNode.isEmpty()) {
+        if (contentNode.isArray() && !contentNode.isEmpty() && !isCover) {
             contentNode.forEach(content -> {
                 if (partTranslateTextDOSet == null) {
                     return;

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
-import com.bogdatech.entity.DO.TestTableDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
@@ -148,6 +147,9 @@ public class TranslateController {
                 || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
+        if (clickTranslateRequest.getIsCover() == null) {
+            clickTranslateRequest.setIsCover(false);
+        }
         Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
         userTranslate.put(clickTranslateRequest.getShopName(), translationStatusMap);
         //将ClickTranslateRequest转换为TranslateRequest
@@ -193,7 +195,7 @@ public class TranslateController {
             translateModel.removeIf("handle"::equals);
             handleFlag = true;
         }
-        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
+        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
         //修改模块的排序
         List<String> translateResourceDTOS = null;
         try {
@@ -212,7 +214,7 @@ public class TranslateController {
         appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
         translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //全部走DB翻译
-        rabbitMqTranslateService.mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings2());
+        rabbitMqTranslateService.mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings2(), clickTranslateRequest.getIsCover());
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
