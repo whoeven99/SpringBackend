@@ -51,9 +51,10 @@ public class TaskService {
     private final IGlossaryService iGlossaryService;
     private final IUserIpService iUserIpService;
     private final ITranslateTasksService translateTasksService;
+    private final TencentEmailService tencentEmailService;
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService, TencentEmailService tencentEmailService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
@@ -68,6 +69,7 @@ public class TaskService {
         this.iGlossaryService = iGlossaryService;
         this.iUserIpService = iUserIpService;
         this.translateTasksService = translateTasksService;
+        this.tencentEmailService = tencentEmailService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -205,6 +207,7 @@ public class TaskService {
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
             appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars);
             translationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, userPriceRequest.getShopName(), chars, 0, 0, 0, 0));
+            tencentEmailService.sendSubscribeEmail(name, chars);
             //将用户免费Ip清零
             iUserIpService.update(new UpdateWrapper<UserIpDO>().eq("shop_name", userPriceRequest.getShopName()).set("times", 0).set("first_email", 0).set("second_email", 0));
         }

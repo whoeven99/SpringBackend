@@ -17,6 +17,7 @@ import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.UserPriceRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.RabbitMqTask;
@@ -63,10 +64,9 @@ public class TestController {
     private final TencentEmailService tencentEmailService;
     private final ITranslateTasksService translateTasksService;
     private final RabbitMqTask rabbitMqTask;
-    private final ITranslatesService translateService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, ITranslatesService translateService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -77,7 +77,7 @@ public class TestController {
         this.tencentEmailService = tencentEmailService;
         this.translateTasksService = translateTasksService;
         this.rabbitMqTask = rabbitMqTask;
-        this.translateService = translateService;
+
     }
 
     @GetMapping("/ping")
@@ -367,7 +367,9 @@ public class TestController {
      * 用户发送订阅成功邮件
      * */
     @GetMapping("/testSendEmail")
-    public void testSendEmail() {
-        tencentEmailService.sendSubscribeEmail("ciwishop.myshopify.com", 10000);
+    public void testSendEmail(@RequestBody UserPriceRequest userPriceRequest) {
+        LocalDateTime now = LocalDateTime.now();
+        userPriceRequest.setCreateAt(now);
+        taskService.addCharsByUserData(userPriceRequest);
     }
 }
