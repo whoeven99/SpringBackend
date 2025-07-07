@@ -156,7 +156,7 @@ public class TaskService {
         }
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
-            appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务根据订单id获取数据失败" + " token: " + userPriceRequest.getAccessToken());
+            appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务根据订单id: " + userPriceRequest.getSubscriptionId() + "获取数据失败" + " token: " + userPriceRequest.getAccessToken());
             return null;
         }
         JSONObject node = root.getJSONObject("node");
@@ -207,7 +207,7 @@ public class TaskService {
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
             appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars);
             translationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, userPriceRequest.getShopName(), chars, 0, 0, 0, 0));
-            tencentEmailService.sendSubscribeEmail(name, chars);
+            tencentEmailService.sendSubscribeEmail(userPriceRequest.getShopName(), chars);
             //将用户免费Ip清零
             iUserIpService.update(new UpdateWrapper<UserIpDO>().eq("shop_name", userPriceRequest.getShopName()).set("times", 0).set("first_email", 0).set("second_email", 0));
         }
