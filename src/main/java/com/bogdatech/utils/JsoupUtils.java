@@ -525,7 +525,11 @@ public class JsoupUtils {
     public String translateKeyModelAndCount(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String key, String customKey) {
         String text = request.getContent();
         String targetString;
-        targetString = translateByKeyPrompt(request, counter, languagePackId, limitChars, key, customKey);
+        if (key != null){
+            targetString = translateByKeyPrompt(request, counter, languagePackId, limitChars, key, customKey);
+        }else {
+            targetString = translateByModel(request, counter, languagePackId, limitChars);
+        }
 
         if (targetString == null) {
             return text;

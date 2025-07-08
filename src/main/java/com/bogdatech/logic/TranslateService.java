@@ -793,7 +793,7 @@ public class TranslateService {
         String htmlTranslation;
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, target, value);
-            htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId(), translateContext.getRemainingChars());
+            htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId(), translateContext.getRemainingChars(), null, null);
 //            System.out.println("htmlTranslation: " + htmlTranslation);
             if (model.equals(METAFIELD)) {
                 //对翻译后的html做格式处理
@@ -907,7 +907,7 @@ public class TranslateService {
             String htmlTranslation;
             try {
                 TranslateRequest translateRequest = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), translateContext.getSource(), request.getTarget(), value);
-                htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId(), translateContext.getRemainingChars());
+                htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId(), translateContext.getRemainingChars(), null, null);
                 shopifyService.saveToShopify(htmlTranslation, translation, resourceId, request);
                 printTranslation(htmlTranslation, value, translation, request.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
                 return true;
@@ -1087,7 +1087,7 @@ public class TranslateService {
             String htmlTranslation;
             try {
                 TranslateRequest translateRequest = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, target, value);
-                htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId(), translateContext.getRemainingChars());
+                htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId(), translateContext.getRemainingChars(), null, null);
             } catch (Exception e) {
                 appInsights.trackTrace("html translation errors : " + e.getMessage());
                 shopifyService.saveToShopify(value, translation, resourceId, request);
@@ -1698,12 +1698,12 @@ public class TranslateService {
             if (isHtml(value)) {
                 //单条翻译html，修改格式
                 if (resourceType.equals(METAFIELD)) {
-                    String htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, new TranslateRequest(0, shopName, null, source, target, value), counter, null, remainingChars);
+                    String htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, new TranslateRequest(0, shopName, null, source, target, value), counter, null, remainingChars, null, null);
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     appInsights.trackTrace(shopName + " 用户，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                     return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
                 }
-                String htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, new TranslateRequest(0, shopName, null, source, target, value), counter, null, remainingChars);
+                String htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, new TranslateRequest(0, shopName, null, source, target, value), counter, null, remainingChars, null, null);
                 appInsights.trackTrace(shopName + " 用户，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {

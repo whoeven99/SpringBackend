@@ -99,16 +99,22 @@ public class PlaceholderUtils {
     public static String getKeyPrompt(String target, String languagePackId, String key, String customKey) {
         boolean hasLanguagePackId = languagePackId != null && !languagePackId.isEmpty();
         boolean hasCustomKey = customKey != null && !customKey.isEmpty();
-        if (hasLanguagePackId && hasCustomKey) {
+        boolean hasKey = key != null && !key.isEmpty();
+        if (hasLanguagePackId && hasCustomKey && hasKey) {
             //判断CustomKey里面是否包含using terminology and tone appropriate for 则使用customKey里面的文本。
             if (customKey.contains("using terminology and tone appropriate for")) {
                 return "Translate the following " + key + " into " + target + ". " + customKey + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
             }
             return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". " + customKey + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        } else if (hasLanguagePackId) {
+        } else if (hasLanguagePackId && hasKey) {
             return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        } else if (hasCustomKey) {
+        } else if (hasCustomKey && hasKey) {
             return "Translate the following " + key + " into " + target + ". " + customKey + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+        }else if (!hasKey) {
+            if (languagePackId != null && !languagePackId.isEmpty()){
+                return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+            }
+            return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
         }
         return "Translate the following " + key + " into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
     }
