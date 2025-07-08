@@ -173,7 +173,7 @@ public class TestController {
 //        System.out.println("prompt: " + prompt);
 //        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
-        String s = liquidHtmlTranslatorUtils.translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en", 1000);
+        String s = liquidHtmlTranslatorUtils.translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en", 1000, null, null);
 //        System.out.println("final: " + normalizeHtml(html));
     }
 

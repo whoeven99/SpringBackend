@@ -721,11 +721,14 @@ public class RabbitMqTranslateService {
 //            if (rabbitMqTranslateVO.getModeType().equals(PRODUCT) && "body_html".equals(key)) {
 //                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
 //            } else
-            if (rabbitMqTranslateVO.getModeType().equals(SHOP_POLICY)) {
-                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
-            } else {
-                htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
-            }
+            htmlTranslation = switch (rabbitMqTranslateVO.getModeType()) {
+                case SHOP_POLICY ->
+                        liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
+                case PRODUCT, ARTICLE ->
+                        liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getCustomKey());
+                default ->
+                        liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), null, null);
+            };
 
             if (rabbitMqTranslateVO.getModeType().equals(METAFIELD)) {
                 //对翻译后的html做格式处理
