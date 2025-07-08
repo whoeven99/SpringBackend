@@ -214,7 +214,7 @@ public class TranslateController {
         appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
         translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //全部走DB翻译
-        rabbitMqTranslateService.mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings2(), clickTranslateRequest.getIsCover());
+        rabbitMqTranslateService.mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings2(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey());
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 

@@ -83,7 +83,7 @@ public class RabbitMqTranslateService {
      * 读取该用户的shopify数据，然后循环获取模块数据
      */
     @Async
-    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover) {
+    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey) {
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -91,7 +91,7 @@ public class RabbitMqTranslateService {
         //获取目前所使用的AI语言包
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
         //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover);
+        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
@@ -259,7 +259,7 @@ public class RabbitMqTranslateService {
         String productKeyByKey = getProductKeyByKey(translateTextDO.getTextKey());
         return switch (textKey) {
             case "title", "body_html", "meta_description", "meta_title" ->
-                    jsoupUtils.translateKeyModelAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), productKeyByKey);
+                    jsoupUtils.translateKeyModelAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), productKeyByKey, rabbitMqTranslateVO.getCustomKey());
             case "handle", "product_type" ->
                     jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars());
             default ->
@@ -302,7 +302,7 @@ public class RabbitMqTranslateService {
         String articleKeyByKey = getArticleKeyByKey(translateTextDO.getTextKey());
         return switch (textKey) {
             case "title", "body_html", "meta_description", "meta_title", "summary_html" ->
-                    jsoupUtils.translateKeyModelAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), articleKeyByKey);
+                    jsoupUtils.translateKeyModelAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), articleKeyByKey, rabbitMqTranslateVO.getCustomKey());
             case "handle" ->
                     jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars());
             default ->

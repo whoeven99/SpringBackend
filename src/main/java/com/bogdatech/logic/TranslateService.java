@@ -198,7 +198,7 @@ public class TranslateService {
             }
             userTypeTokensService.startTokenCount(request);
         } catch (Exception e) {
-            appInsights.trackTrace("重新更新token值失败！！！" + e.getMessage());
+            appInsights.trackTrace("errors 重新更新token值失败！！！" + e.getMessage());
         }
     }
 
