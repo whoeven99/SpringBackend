@@ -281,8 +281,8 @@ public class LiquidHtmlTranslatorUtils {
      */
     public static String cleanTextFormat(String text) {
         // 去除首尾的换行符和多余空格，保留内部有效内容
-//        return text.trim().replaceAll("[\\r\\n]+", "").replaceAll("\\s+", " ");
-        return text.replaceAll("[\\r\\n]+", "");
+        return text.trim().replaceAll("[\\r\\n]+", "").replaceAll("\\s+", " ");
+//        return text.replaceAll("[\\r\\n]+", "");
     }
 
     // 辅助类用于保存匹配范围
