@@ -363,13 +363,4 @@ public class TestController {
     }
 
 
-    /**
-     * 用户发送订阅成功邮件
-     * */
-    @GetMapping("/testSendEmail")
-    public void testSendEmail(@RequestBody UserPriceRequest userPriceRequest) {
-        LocalDateTime now = LocalDateTime.now();
-        userPriceRequest.setCreateAt(now);
-        taskService.addCharsByUserData(userPriceRequest);
-    }
 }
