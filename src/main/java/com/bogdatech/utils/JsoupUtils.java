@@ -238,7 +238,7 @@ public class JsoupUtils {
     /**
      * 根据模块关键词，选择相应提示词翻译
      */
-    public String translateByKeyPrompt(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String key) {
+    public String translateByKeyPrompt(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String key, String customKey) {
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
@@ -259,7 +259,7 @@ public class JsoupUtils {
 
         } else {
             //根据key选择提示词使用的key值
-            prompt = getKeyPrompt(targetLanguage, languagePackId, key);
+            prompt = getKeyPrompt(targetLanguage, languagePackId, key, customKey);
             appInsights.trackTrace("模块文本：" + content + " key提示词: " + prompt);
         }
         try {
@@ -276,7 +276,7 @@ public class JsoupUtils {
             return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
         } catch (Exception e) {
             appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
-            return translateSingleLineWithProtection(request, counter, limitChars, key , languagePackId);
+            return translateSingleLineWithProtection(request, counter, limitChars, key , languagePackId, customKey);
         }
 
     }
@@ -522,10 +522,14 @@ public class JsoupUtils {
     /**
      * 根据模块key选择提示词，进行翻译
      */
-    public String translateKeyModelAndCount(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String key) {
+    public String translateKeyModelAndCount(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String key, String customKey) {
         String text = request.getContent();
         String targetString;
-        targetString = translateByKeyPrompt(request, counter, languagePackId, limitChars, key);
+        if (key != null){
+            targetString = translateByKeyPrompt(request, counter, languagePackId, limitChars, key, customKey);
+        }else {
+            targetString = translateByModel(request, counter, languagePackId, limitChars);
+        }
 
         if (targetString == null) {
             return text;
@@ -791,11 +795,11 @@ public class JsoupUtils {
     /**
      * 对于ali出现400的问题（主要是内容不适），先用机器翻译，随后用豆包大模型翻译
      * */
-    public String translateSingleLineWithProtection(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String key, String languagePackId) {
+    public String translateSingleLineWithProtection(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String key, String languagePackId, String customKey) {
         String target = request.getTarget();
         String source = request.getSource();
         String targetLanguage = getLanguageName(target);
-        String prompt = getKeyPrompt(targetLanguage,languagePackId, key);
+        String prompt = getKeyPrompt(targetLanguage,languagePackId, key, customKey);
         String resultTranslation;
         try {
             if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
