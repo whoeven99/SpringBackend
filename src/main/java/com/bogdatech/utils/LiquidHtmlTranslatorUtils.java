@@ -44,7 +44,10 @@ public class LiquidHtmlTranslatorUtils {
     // 判断是否有 <html> 标签的模式
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
-    public final static Set<String> NO_TRANSLATE_TAGS = new HashSet<>(Arrays.asList("style", "img", "script"));
+    public final static Set<String> NO_TRANSLATE_TAGS = Set.of("script", "style", "meta", "svg", "canvas", "link");
+    private final static Set<String> INLINE_TAGS = Set.of(
+            "strong"
+    );
     private final JsoupUtils jsoupUtils;
 
     @Autowired
@@ -230,14 +233,8 @@ public class LiquidHtmlTranslatorUtils {
                         request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本1： " + cleanedText);
-                        if (model.equals(PRODUCT)){
-                            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "product description", customKey);
-                        }else if (model.equals(ARTICLE)){
-                            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "article content", customKey);
-                        }else {
-                            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, null, customKey);
-                        }
-
+//                        targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
+                        targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey);
                         result.append(targetString);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
@@ -267,14 +264,10 @@ public class LiquidHtmlTranslatorUtils {
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
+//                    System.out.println("要翻译的文本2： " + cleanedText);
+//                    targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
+                    targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey);
 //                        System.out.println("要翻译的文本2： " + cleanedText);
-                    if (model.equals(PRODUCT)){
-                        targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "product description", customKey);
-                    }else if (model.equals(ARTICLE)){
-                        targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "article content", customKey);
-                    }else {
-                        targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, null, customKey);
-                    }
                     result.append(targetString);
                 } catch (ClientException e) {
                     result.append(cleanedText);
@@ -294,8 +287,8 @@ public class LiquidHtmlTranslatorUtils {
      */
     public static String cleanTextFormat(String text) {
         // 去除首尾的换行符和多余空格，保留内部有效内容
-        return text.trim().replaceAll("[\\r\\n]+", "").replaceAll("\\s+", " ");
-//        return text.replaceAll("[\\r\\n]+", "");
+//        return text.trim().replaceAll("[\\r\\n]+", "").replaceAll("\\s+", " ");
+        return text.replaceAll("[\\r\\n]+", "");
     }
 
     // 辅助类用于保存匹配范围
@@ -363,5 +356,65 @@ public class LiquidHtmlTranslatorUtils {
             appInsights.trackTrace("html 翻译失败 errors : " + e);
             return text;
         }
+    }
+
+    /**
+     * 手动添加空格
+     */
+    public String addSpaceAfterTranslated(String sourceText, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String model, String customKey) {
+        // Step 1: 记录开头和结尾的空格数量
+        int leadingSpaces = countLeadingSpaces(sourceText);
+        int trailingSpaces = countTrailingSpaces(sourceText);
+
+        // Step 2: 去除首尾空格，准备翻译
+        String textToTranslate = sourceText.trim();
+
+        // Step 3: 翻译操作
+        request.setContent(textToTranslate);
+        String targetString;
+        if (model.equals(PRODUCT)){
+            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "product description", customKey);
+        }else if (model.equals(ARTICLE)){
+            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "article content", customKey);
+        }else {
+            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, null, customKey);
+        }
+//        String targetString = textToTranslate + 1;
+        // Step 4: 恢复开头和结尾空格
+        StringBuilder finalResult = new StringBuilder();
+        for (int i = 0; i < leadingSpaces; i++) {
+            finalResult.append(" ");
+        }
+        finalResult.append(targetString);
+        for (int i = 0; i < trailingSpaces; i++) {
+            finalResult.append(" ");
+        }
+//        System.out.println("finalResult: " + "'" + finalResult.toString() + "'");
+
+        return finalResult.toString();
+    }
+
+    private static int countLeadingSpaces(String s) {
+        int count = 0;
+        for (char c : s.toCharArray()) {
+            if (c == ' ') {
+                count++;
+            } else {
+                break;
+            }
+        }
+        return count;
+    }
+
+    private static int countTrailingSpaces(String s) {
+        int count = 0;
+        for (int i = s.length() - 1; i >= 0; i--) {
+            if (s.charAt(i) == ' ') {
+                count++;
+            } else {
+                break;
+            }
+        }
+        return count;
     }
 }

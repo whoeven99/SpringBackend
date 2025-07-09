@@ -41,13 +41,9 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.RabbitMqTask.*;
-import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.isJson;
-import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
@@ -153,28 +149,21 @@ public class TestController {
 
 
     @GetMapping("/testHtml")
-    public void testHtml(@RequestParam String html) {
-//        String html = """
-//                啊手动阀手动阀
-//                """;
-        if (isHtml(html)) {
-            System.out.println("is html");
-        } else {
-            System.out.println("is not html");
-        }
+    public void testHtml() {
+        String html = """
 
-        if (isJson(html)) {
-            System.out.println("is json");
-        } else {
-            System.out.println("is not json");
-        }
-        String targetLanguage = getLanguageName("zh-CN");
+
+
+
+                """;
+
+//        String targetLanguage = getLanguageName("zh-CN");
 //        String prompt = getSimplePrompt(targetLanguage, html);
 //        System.out.println("prompt: " + prompt);
 //        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
-        String s = liquidHtmlTranslatorUtils.translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en", 1000, null, null);
-//        System.out.println("final: " + normalizeHtml(html));
+        String s = liquidHtmlTranslatorUtils.translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en", 1000);
+        System.out.println("final: " + normalizeHtml(s));
     }
 
     //测试theme判断
