@@ -45,7 +45,7 @@ public class LiquidHtmlTranslatorUtils {
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
     public final static Set<String> NO_TRANSLATE_TAGS = Set.of("script", "style", "meta", "svg", "canvas", "link");
-    private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00-\uDFFF])+");
+    private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00\uDFFF])+");
     private final JsoupUtils jsoupUtils;
 
     @Autowired
