@@ -372,12 +372,14 @@ public class LiquidHtmlTranslatorUtils {
         // Step 3: 翻译操作
         request.setContent(textToTranslate);
         String targetString;
-        if (model.equals(PRODUCT)){
+        if (model != null && customKey != null && model.equals(PRODUCT)){
             targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "product description", customKey);
-        }else if (model.equals(ARTICLE)){
+        }else if (model != null && customKey != null && model.equals(ARTICLE)){
             targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "article content", customKey);
-        }else {
+        }else if (model != null && customKey != null){
             targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, null, customKey);
+        }else {
+            targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL,limitChars);
         }
 //        String targetString = textToTranslate + 1;
         // Step 4: 恢复开头和结尾空格
