@@ -234,15 +234,7 @@ public class LiquidHtmlTranslatorUtils {
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
 //                            System.out.println("要翻译的文本1： " + cleanedText);
 //                        targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
-                        targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars);
-                        if (model.equals(PRODUCT)){
-                            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "product description", customKey);
-                        }else if (model.equals(ARTICLE)){
-                            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "article content", customKey);
-                        }else {
-                            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, null, customKey);
-                        }
-
+                        targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey);
                         result.append(targetString);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
@@ -274,15 +266,8 @@ public class LiquidHtmlTranslatorUtils {
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                    System.out.println("要翻译的文本2： " + cleanedText);
 //                    targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
-                    targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars);
+                    targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey);
 //                        System.out.println("要翻译的文本2： " + cleanedText);
-                    if (model.equals(PRODUCT)){
-                        targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "product description", customKey);
-                    }else if (model.equals(ARTICLE)){
-                        targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "article content", customKey);
-                    }else {
-                        targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, null, customKey);
-                    }
                     result.append(targetString);
                 } catch (ClientException e) {
                     result.append(cleanedText);
@@ -376,7 +361,7 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 手动添加空格
      */
-    public String addSpaceAfterTranslated(String sourceText, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
+    public String addSpaceAfterTranslated(String sourceText, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String model, String customKey) {
         // Step 1: 记录开头和结尾的空格数量
         int leadingSpaces = countLeadingSpaces(sourceText);
         int trailingSpaces = countTrailingSpaces(sourceText);
@@ -386,7 +371,14 @@ public class LiquidHtmlTranslatorUtils {
 
         // Step 3: 翻译操作
         request.setContent(textToTranslate);
-        String targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
+        String targetString;
+        if (model.equals(PRODUCT)){
+            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "product description", customKey);
+        }else if (model.equals(ARTICLE)){
+            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "article content", customKey);
+        }else {
+            targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, null, customKey);
+        }
 //        String targetString = textToTranslate + 1;
         // Step 4: 恢复开头和结尾空格
         StringBuilder finalResult = new StringBuilder();
