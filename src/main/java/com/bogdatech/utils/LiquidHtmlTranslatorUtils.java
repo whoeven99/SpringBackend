@@ -40,7 +40,7 @@ public class LiquidHtmlTranslatorUtils {
 //    // 数组变量模式：[ product[1]] 等
 //    public static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
     // 纯符号模式：匹配单独的 -、×、+、= 等符号（不含字母数字）
-    public static final Pattern SYMBOL_PATTERN = Pattern.compile("^[\\-×\\+=×*/|!@#$%^&()_]+$", Pattern.MULTILINE);
+    public static final Pattern SYMBOL_PATTERN = Pattern.compile("^[\\+=×*/|!@#$%^&()_]+$", Pattern.MULTILINE);
     // 判断是否有 <html> 标签的模式
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
