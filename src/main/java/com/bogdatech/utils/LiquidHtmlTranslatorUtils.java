@@ -45,9 +45,7 @@ public class LiquidHtmlTranslatorUtils {
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
     public final static Set<String> NO_TRANSLATE_TAGS = Set.of("script", "style", "meta", "svg", "canvas", "link");
-    private final static Set<String> INLINE_TAGS = Set.of(
-            "strong"
-    );
+    private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00-\uDFFF])+");
     private final JsoupUtils jsoupUtils;
 
     @Autowired
@@ -196,11 +194,8 @@ public class LiquidHtmlTranslatorUtils {
         // 合并所有需要保护的模式
         List<Pattern> patterns = Arrays.asList(
                 URL_PATTERN,
-//                VARIABLE_PATTERN,
-//                CUSTOM_VAR_PATTERN,
-//                LIQUID_CONDITION_PATTERN,
-//                ARRAY_VAR_PATTERN,
-                SYMBOL_PATTERN
+                SYMBOL_PATTERN,
+                EMOJI_PATTERN
         );
 
         List<MatchRange> matches = new ArrayList<>();
@@ -267,7 +262,6 @@ public class LiquidHtmlTranslatorUtils {
 //                    System.out.println("要翻译的文本2： " + cleanedText);
 //                    targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
                     targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey);
-//                        System.out.println("要翻译的文本2： " + cleanedText);
                     result.append(targetString);
                 } catch (ClientException e) {
                     result.append(cleanedText);
