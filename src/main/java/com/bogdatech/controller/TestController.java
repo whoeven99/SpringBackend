@@ -4,7 +4,6 @@ package com.bogdatech.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
-import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
@@ -17,11 +16,12 @@ import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.request.UserPriceRequest;
-import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.RabbitMqTask;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -41,15 +41,10 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.RabbitMqTask.*;
-import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.isJson;
-import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.ListUtils.convert;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
-import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
+import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
 @RestController
@@ -64,9 +59,10 @@ public class TestController {
     private final TencentEmailService tencentEmailService;
     private final ITranslateTasksService translateTasksService;
     private final RabbitMqTask rabbitMqTask;
+    private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -77,7 +73,7 @@ public class TestController {
         this.tencentEmailService = tencentEmailService;
         this.translateTasksService = translateTasksService;
         this.rabbitMqTask = rabbitMqTask;
-
+        this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
     }
 
     @GetMapping("/ping")
@@ -153,28 +149,21 @@ public class TestController {
 
 
     @GetMapping("/testHtml")
-    public void testHtml(@RequestParam String html) {
-//        String html = """
-//                啊手动阀手动阀
-//                """;
-        if (isHtml(html)) {
-            System.out.println("is html");
-        } else {
-            System.out.println("is not html");
-        }
+    public void testHtml() {
+        String html = """
 
-        if (isJson(html)) {
-            System.out.println("is json");
-        } else {
-            System.out.println("is not json");
-        }
-        String targetLanguage = getLanguageName("zh-CN");
-        String prompt = getSimplePrompt(targetLanguage, html);
-        System.out.println("prompt: " + prompt);
+
+
+
+                """;
+
+//        String targetLanguage = getLanguageName("zh-CN");
+//        String prompt = getSimplePrompt(targetLanguage, html);
+//        System.out.println("prompt: " + prompt);
 //        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
-//        String s = translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en");
-//        System.out.println("final: " + normalizeHtml(html));
+        String s = liquidHtmlTranslatorUtils.translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en", 1000, null, null);
+        System.out.println("final: " + normalizeHtml(s));
     }
 
     //测试theme判断
@@ -363,13 +352,4 @@ public class TestController {
     }
 
 
-    /**
-     * 用户发送订阅成功邮件
-     * */
-    @GetMapping("/testSendEmail")
-    public void testSendEmail(@RequestBody UserPriceRequest userPriceRequest) {
-        LocalDateTime now = LocalDateTime.now();
-        userPriceRequest.setCreateAt(now);
-        taskService.addCharsByUserData(userPriceRequest);
-    }
 }
