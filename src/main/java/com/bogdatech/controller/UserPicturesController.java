@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 import static com.bogdatech.integration.HunYuanBucketIntegration.uploadFile;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -53,7 +55,7 @@ public class UserPicturesController {
         if (afterUrl != null && b) {
             return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
         } else {
-            return new BaseResponse<>().CreateErrorResponse("null");
+            return new BaseResponse<>().CreateErrorResponse(false);
         }
     }
 
@@ -62,15 +64,23 @@ public class UserPicturesController {
      */
     @PostMapping("/getPictureDataByShopNameAndResourceIdAndPictureId")
     public BaseResponse<Object> getPictureDataByShopNameAndResourceIdAndPictureId(@RequestParam("shopName") String shopName, @RequestBody UserPicturesDO userPicturesDO) {
-        String imageAfterUrl = iUserPicturesService.getOne(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("image_id", userPicturesDO.getImageId()).eq("image_before_url", userPicturesDO.getImageBeforeUrl()).eq("language_code", userPicturesDO.getLanguageCode())).getImageAfterUrl();
-        if (imageAfterUrl != null) {
-            return new BaseResponse<>().CreateSuccessResponse(imageAfterUrl);
+        List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("image_id", userPicturesDO.getImageId()).eq("language_code", userPicturesDO.getLanguageCode()).eq("is_delete", false));
+        if (list != null) {
+            return new BaseResponse<>().CreateSuccessResponse(list);
         }
-        return new BaseResponse<>().CreateErrorResponse("null");
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 
     /**
      * 软删除用户图片数据
      * */
-//    @PostMapping("/deletePictureData")
+    @PostMapping("/deletePictureData")
+    public BaseResponse<Object> deletePictureData(@RequestParam("shopName") String shopName, @RequestBody UserPicturesDO userPicturesDO) {
+        boolean b = iUserPicturesService.deletePictureData(shopName, userPicturesDO.getImageId(), userPicturesDO.getImageBeforeUrl(), userPicturesDO.getLanguageCode());
+        if (b){
+            userPicturesDO.setIsDelete(true);
+            return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
 }
