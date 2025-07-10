@@ -42,21 +42,29 @@ public class UserPicturesController {
         } catch (JsonProcessingException e) {
             appInsights.trackTrace("userPicturesDoJson 解析失败 errors " + e);
         }
-        //先将图片接受到后,存储到腾讯云服务器上面
-        if (userPicturesDO == null || userPicturesDO.getImageId() == null) {
-            return new BaseResponse<>().CreateErrorResponse("data is null");
+        //先判断是否有图片,有图片做上传和插入更新数据;没有图片,做插入和更新数据
+        if (!file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {
+            //将图片上传到腾讯云
+            String afterUrl = uploadFile(file, shopName, userPicturesDO);
+            userPicturesDO.setImageAfterUrl(afterUrl);
+            //再将图片相关数据存到数据库中
+            userPicturesDO.setShopName(shopName);
+            boolean b = iUserPicturesService.insertPictureData(userPicturesDO);
+            //数据库做上传和插入更新数据
+            if (afterUrl != null && b) {
+                return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
+            } else {
+                return new BaseResponse<>().CreateErrorResponse(false);
+            }
+        }else if (file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {
+            boolean b = iUserPicturesService.insertPictureData(userPicturesDO);
+            if (b) {
+                return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
+            } else {
+                return new BaseResponse<>().CreateErrorResponse(false);
+            }
         }
-        String afterUrl = uploadFile(file, shopName, userPicturesDO);
-        userPicturesDO.setImageAfterUrl(afterUrl);
-        //再将图片相关数据存到数据库中
-        userPicturesDO.setShopName(shopName);
-        boolean b = iUserPicturesService.insertPictureData(userPicturesDO);
-        //返回请求是否成功
-        if (afterUrl != null && b) {
-            return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
-        } else {
-            return new BaseResponse<>().CreateErrorResponse(false);
-        }
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 
     /**
