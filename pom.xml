@@ -219,6 +219,18 @@
 			<artifactId>tencentcloud-sdk-java-hunyuan</artifactId>
 			<version>3.1.1229</version>
 		</dependency>
+		<!-- deepL翻译模型sdk -->
+		<dependency>
+			<groupId>com.deepl.api</groupId>
+			<artifactId>deepl-java</artifactId>
+			<version>1.10.1</version>
+		</dependency>
+		<!--腾讯云存储sdk -->
+		<dependency>
+			<groupId>com.qcloud</groupId>
+			<artifactId>cos_api</artifactId>
+			<version>5.6.227</version>
+		</dependency>
 	</dependencies>
 
 	<build>
