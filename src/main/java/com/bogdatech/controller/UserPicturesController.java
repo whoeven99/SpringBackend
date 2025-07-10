@@ -30,6 +30,14 @@ public class UserPicturesController {
         this.userPicturesService = userPicturesService;
     }
 
+    private List<String> allowedMimeTypes = List.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/heic",
+            "image/gif"
+    );
+
     /**
      * 存储图片到数据库和腾讯云服务器上面
      */
@@ -44,6 +52,10 @@ public class UserPicturesController {
         }
         //先判断是否有图片,有图片做上传和插入更新数据;没有图片,做插入和更新数据
         if (!file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {
+            //做图片的限制
+            if (!allowedMimeTypes.contains(file.getContentType())) {
+                return new BaseResponse<>().CreateErrorResponse("Image format error");
+            }
             //将图片上传到腾讯云
             String afterUrl = uploadFile(file, shopName, userPicturesDO);
             userPicturesDO.setImageAfterUrl(afterUrl);
