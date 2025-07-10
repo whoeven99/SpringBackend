@@ -13,6 +13,7 @@ import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.ChatgptVO;
 import com.bogdatech.integration.ChatGptIntegration;
+import com.bogdatech.integration.DeepLIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
@@ -21,9 +22,11 @@ import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.RabbitMqTask;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.deepl.api.DeepLException;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,6 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
+import static com.bogdatech.integration.HunYuanBucketIntegration.uploadFile;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
@@ -64,9 +68,10 @@ public class TestController {
     private final ITranslateTasksService translateTasksService;
     private final RabbitMqTask rabbitMqTask;
     private final ITranslatesService translateService;
+    private final DeepLIntegration deepLIntegration;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, ITranslatesService translateService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, ITranslatesService translateService, DeepLIntegration deepLIntegration) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -78,6 +83,7 @@ public class TestController {
         this.translateTasksService = translateTasksService;
         this.rabbitMqTask = rabbitMqTask;
         this.translateService = translateService;
+        this.deepLIntegration = deepLIntegration;
     }
 
     @GetMapping("/ping")
@@ -373,6 +379,14 @@ public class TestController {
         TypeSplitResponse typeSplitResponse = splitByType(resourceType, convert);
         System.out.println("translated_content: " + typeSplitResponse.getBefore().toString());
         System.out.println("remaining_content: " +  typeSplitResponse.getAfter().toString());
+    }
+
+    /**
+     * deepL test
+     * */
+    @GetMapping("/testDeepL")
+    public void testDeepL(@RequestParam String sourceText, @RequestParam String targetCode) {
+        deepLIntegration.translateByDeepL(sourceText, targetCode, new CharacterCountUtils(), "", 1);
     }
 
 }

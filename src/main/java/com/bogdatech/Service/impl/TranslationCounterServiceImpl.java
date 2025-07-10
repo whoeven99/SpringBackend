@@ -46,6 +46,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
 
     @Override
     public Boolean updateAddUsedCharsByShopName(String shopName, Integer usedChars, Integer maxChars) {
+        //TODO:做重试机制
         return baseMapper.updateAddUsedCharsByShopName(shopName, usedChars, maxChars);
     }
 
