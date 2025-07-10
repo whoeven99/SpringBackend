@@ -185,7 +185,7 @@ public class ApiCodeUtils {
         languageMap.put("sa", "Sanskrit");
         languageMap.put("sc", "Sardinian");
         languageMap.put("gd", "Scottish Gaelic");
-        languageMap.put("sr", "Serbian");
+        languageMap.put("sr", "Serbian (Latin)");
         languageMap.put("sn", "Shona");
         languageMap.put("ii", "Sichuan Yi");
         languageMap.put("sd", "Sindhi");
