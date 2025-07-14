@@ -247,7 +247,9 @@ public class PrivateKeyService {
             for (TranslateResourceDTO translateResource : translateResourceList
             ) {
                 // 定期检查是否停止
-                if (checkIsStopped(request.getShopName(), counter)) return;
+                if (checkIsStopped(request.getShopName(), counter)) {
+                    return;
+                }
                 translateResource.setTarget(request.getTarget());
                 String query = new ShopifyRequestBody().getFirstQuery(translateResource);
                 cloudServiceRequest.setBody(query);
@@ -352,8 +354,9 @@ public class PrivateKeyService {
     private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
 
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();
-        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils()))
+        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils())) {
             return;
+        }
         //定义HashMap存放判断后的对应数据
         // 初始化 judgeData 用于分类存储数据
         Map<String, List<RegisterTransactionRequest>> judgeData = initializeJudgeData();
@@ -375,8 +378,9 @@ public class PrivateKeyService {
                 processNodeElement(nodeElement, shopifyRequest, translateContext, judgeData);
             }
         }
-        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils()))
+        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils())) {
             return;
+        }
         //对judgeData数据进行翻译和存入shopify,除了html
         try {
             translateAndSaveData(judgeData, translateContext);
@@ -389,8 +393,9 @@ public class PrivateKeyService {
 
     private void translateAndSaveData(Map<String, List<RegisterTransactionRequest>> judgeData, TranslateContext translateContext) {
         for (Map.Entry<String, List<RegisterTransactionRequest>> entry : judgeData.entrySet()) {
-            if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils()))
+            if (checkIsStopped(translateContext.getShopifyRequest().getShopName(), translateContext.getCharacterCountUtils())) {
                 return;
+            }
             switch (entry.getKey()) {
                 case PLAIN_TEXT:
                     translateDataByAPI(entry.getValue(), translateContext);
@@ -420,14 +425,17 @@ public class PrivateKeyService {
         ShopifyRequest request = translateContext.getShopifyRequest();
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
         //判断是否停止翻译
-        if (checkIsStopped(request.getShopName(), counter)) return;
+        if (checkIsStopped(request.getShopName(), counter)) {
+            return;
+        }
 
         int remainingChars = translateContext.getRemainingChars();
         String target = request.getTarget();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
             String value = registerTransactionRequest.getValue();
             String translatableContentDigest = registerTransactionRequest.getTranslatableContentDigest();
             String key = registerTransactionRequest.getKey();
@@ -481,8 +489,9 @@ public class PrivateKeyService {
 //                    System.out.println("LIST错误原因： " + e.getMessage());
                 }
             }
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
         }
     }
 
@@ -494,7 +503,9 @@ public class PrivateKeyService {
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
 
         //判断是否停止翻译
-        if (checkIsStopped(request.getShopName(), counter)) return;
+        if (checkIsStopped(request.getShopName(), counter)) {
+            return;
+        }
         int remainingChars = translateContext.getRemainingChars();
         Map<String, Object> glossaryMap = translateContext.getGlossaryMap();
         String target = request.getTarget();
@@ -518,8 +529,9 @@ public class PrivateKeyService {
         //对caseSensitiveMap集合中的数据进行翻译
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
             String value = registerTransactionRequest.getValue();
             String source = registerTransactionRequest.getLocale();
             String resourceId = registerTransactionRequest.getResourceId();
@@ -563,8 +575,9 @@ public class PrivateKeyService {
             printTranslation(translatedText, value, translation, request.getShopName() + PRIVATE_KEY, translateContext.getTranslateResource().getResourceType(), resourceId, source);
             addData(request.getTarget(), value, translatedText);
 
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
         }
     }
 
@@ -757,10 +770,13 @@ public class PrivateKeyService {
 
         int remainingChars = translateContext.getRemainingChars();
         String target = request.getTarget();
-        if (checkIsStopped(request.getShopName(), counter)) return;
+        if (checkIsStopped(request.getShopName(), counter)) {
+            return;
+        }
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
             String value = registerTransactionRequest.getValue();
             String resourceId = registerTransactionRequest.getResourceId();
             String source = registerTransactionRequest.getLocale();
@@ -784,8 +800,9 @@ public class PrivateKeyService {
                 userPrivateService.updateUsedCharsByShopName(request.getShopName(), counter.getTotalChars());
                 saveToShopify(value, translation, resourceId, request);
             }
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
         }
     }
 
@@ -881,20 +898,24 @@ public class PrivateKeyService {
         ShopifyRequest request = translateContext.getShopifyRequest();
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
         //判断是否停止翻译
-        if (checkIsStopped(request.getShopName(), counter)) return;
+        if (checkIsStopped(request.getShopName(), counter)) {
+            return;
+        }
         String target = request.getTarget();
         Map<String, Object> translation = new HashMap<>();
         for (RegisterTransactionRequest registerTransactionRequest : registerTransactionRequests) {
             //判断是否停止翻译
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
             translation.put("locale", target);
             translation.put("key", registerTransactionRequest.getKey());
             translation.put("translatableContentDigest", registerTransactionRequest.getTranslatableContentDigest());
             //直接存放到shopify本地
             saveToShopify(registerTransactionRequest.getValue(), translation, registerTransactionRequest.getResourceId(), request);
-            if (checkIsStopped(request.getShopName(), counter))
+            if (checkIsStopped(request.getShopName(), counter)) {
                 return;
+            }
         }
     }
 
@@ -917,8 +938,9 @@ public class PrivateKeyService {
         ArrayNode translatableContent = null;
         Map<String, TranslateTextDO> translatableContentMap = null;
 
-        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils()))
+        if (checkIsStopped(shopifyRequest.getShopName(), translateContext.getCharacterCountUtils())) {
             return;
+        }
         // 遍历字段，提取 resourceId 和 translatableContent
         Iterator<Map.Entry<String, JsonNode>> fields = nodeElement.fields();
         while (fields.hasNext()) {
@@ -1004,8 +1026,8 @@ public class PrivateKeyService {
             if (key.contains("metafield:") || key.contains("color")
                     || key.contains("formId:") || key.contains("phone_text") || key.contains("email_text")
                     || key.contains("carousel_easing") || key.contains("_link") || key.contains("general") || key.contains("css:")
-                    || key.contains("icon:") || type.equals("FILE_REFERENCE") || type.equals("LINK")
-                    || type.equals("LIST_FILE_REFERENCE") || type.equals("LIST_LINK")
+                    || key.contains("icon:") || "FILE_REFERENCE".equals(type) || "LINK".equals(type)
+                    || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
                     || type.equals(("LIST_URL"))
                     || resourceType.equals(SHOP_POLICY)) {
                 continue;
@@ -1201,7 +1223,7 @@ public class PrivateKeyService {
 
         for (GlossaryDO glossaryDO : glossaryDOS) {
             // 判断语言范围是否符合
-            if (glossaryDO.getRangeCode().equals(request.getTarget()) || glossaryDO.getRangeCode().equals("ALL")) {
+            if (glossaryDO.getRangeCode().equals(request.getTarget()) || "ALL".equals(glossaryDO.getRangeCode())) {
                 // 判断术语是否启用
                 if (glossaryDO.getStatus() != 1) {
                     continue;

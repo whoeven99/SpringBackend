@@ -100,11 +100,11 @@ public class ALiYunTranslateIntegration {
             userTranslate.put(shopName, translationStatusMap);
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
 //        int totalToken = 10;
-            countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace(shopName + " 用户 token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
             return text;
@@ -179,13 +179,13 @@ public class ALiYunTranslateIntegration {
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             totalToken =  call.getUsage().getTotalTokens();
 //        int totalToken = 10;
-            countUtils.addChars(totalToken);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace( "用户： " + shopName +" token ali mt : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(translateText, 2);
             userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
 //            System.out.println("百炼翻译报错信息： " + e.getMessage());
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
