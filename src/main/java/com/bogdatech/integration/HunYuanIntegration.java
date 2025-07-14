@@ -87,13 +87,13 @@ public class HunYuanIntegration {
                         countUtils.addChars(resp.getUsage().getTotalTokens().intValue());
                     }
                     int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
-                    countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
                     Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
                     userTranslate.put(shopName, translationStatusMap);
                     appInsights.trackTrace(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+                    countUtils.addChars(totalToken);
                     return targetText;
                 } else {
                     appInsights.trackTrace("重试 Hunyuan errors " + attempt);
@@ -144,9 +144,9 @@ public class HunYuanIntegration {
                         countUtils.addChars(resp.getUsage().getTotalTokens().intValue());
                     }
                     int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
-                    countUtils.addChars(totalToken);
                     long completionTokens = resp.getUsage().getCompletionTokens();
                     long promptTokens = resp.getUsage().getPromptTokens();
+
                     appInsights.trackTrace("token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     return targetText;
                 } else {
