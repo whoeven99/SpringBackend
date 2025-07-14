@@ -261,6 +261,7 @@ public class JsoupUtils {
             //对模型进行判断 , 1,ciwi 2,openai 3,deepL
              switch (translationModel) {
                 case OPENAI_MODEL :
+                    prompt = getOpenaiKeyPrompt(targetLanguage, languagePackId, key, customKey);
                     return chatGptIntegration.chatWithGpt(prompt, content, request, counter, limitChars);
                 case DEEPL_MODEL :
                     if (!deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)){
