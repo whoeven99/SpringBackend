@@ -15,7 +15,7 @@ public class TranslateConstants {
     public static final String GLOSSARY = "GLOSSARY";
     public static final String OPENAI = "OPENAI";
     public static final String APIVERSION = "2024-10";
-
+    public static final String DEEPL_API_KEY = "DEEPL_API_KEY";
 
     public static final String PRODUCT = "PRODUCT";
     public static final String PRODUCT_OPTION = "PRODUCT_OPTION";
@@ -64,5 +64,8 @@ public class TranslateConstants {
     public static final String NOT_TRANSLATE = "No translation needed";
     public static final String HUN_YUAN_MODEL = "hunyuan-turbos-latest";
 
+    public static final String DEEPL_MODEL = "3";
+    public static final String OPENAI_MODEL = "2";
     public static final float MAGNIFICATION = 1.5f;
+    public static final int OTHER_MAGNIFICATION = 4;
 }

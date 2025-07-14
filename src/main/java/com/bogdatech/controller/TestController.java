@@ -10,7 +10,6 @@ import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
-import com.bogdatech.entity.VO.ChatgptVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.DeepLIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
@@ -18,15 +17,14 @@ import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.model.controller.request.UserPriceRequest;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.RabbitMqTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
+import com.deepl.api.DeepLException;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,7 +37,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
-import static com.bogdatech.integration.HunYuanBucketIntegration.uploadFile;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
@@ -89,8 +86,8 @@ public class TestController {
     }
 
     @GetMapping("/gpt")
-    public ChatgptVO chat(@RequestParam String prompt, @RequestParam String sourceText) {
-        return chatGptIntegration.chatWithGpt(prompt, sourceText);
+    public String chat(@RequestParam String prompt, @RequestParam String sourceText) {
+        return chatGptIntegration.chatWithGpt(prompt, sourceText, new TranslateRequest(), new CharacterCountUtils(), null);
     }
 
     @PostMapping("/test/test1")
@@ -167,7 +164,7 @@ public class TestController {
 //        System.out.println("prompt: " + prompt);
 //        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
 //        System.out.println("final: " + s);
-        String s = liquidHtmlTranslatorUtils.translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en", 1000, null, null);
+        String s = liquidHtmlTranslatorUtils.translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en", 1000, null, null, null);
         System.out.println("final: " + normalizeHtml(s));
     }
 
@@ -229,7 +226,7 @@ public class TestController {
     public String logThreadPoolStatus() {
         if (executorService instanceof ThreadPoolExecutor executor) {
             String userTranslates = (" - 用户翻译Set： " + userTranslate + " ");
-            String process = (" - 进程Set： " + PROCESSING_SHOPS.toString() + " ");
+            String process = (" - 进程Set： " + PROCESSING_SHOPS + " ");
             String locks = (" - 锁池： " + SHOP_LOCKS + "  ");
             String userStopFlag = (" - 停止标志： " + userStopFlags);
             String executorServic = (" - 线程池状态：" + executorService + "  ");
@@ -361,8 +358,9 @@ public class TestController {
      * deepL test
      * */
     @GetMapping("/testDeepL")
-    public void testDeepL(@RequestParam String sourceText, @RequestParam String targetCode) {
-        deepLIntegration.translateByDeepL(sourceText, targetCode, new CharacterCountUtils(), "", 1);
+    public void testDeepL() throws DeepLException, InterruptedException {
+        System.out.println("deep: " +  deepLIntegration.isDeepLEnough());
+
     }
 
 }
