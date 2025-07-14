@@ -829,7 +829,7 @@ public class RabbitMqTranslateService {
         Map<String, String> keyMap0 = new HashMap<>();
         //将glossaryMap中所有caseSensitive为1的数据存到一个Map集合里面
         for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
-            GlossaryDO glossaryDO = OBJECT_MAPPER.convertValue(entry, GlossaryDO.class);
+            GlossaryDO glossaryDO = OBJECT_MAPPER.convertValue(entry.getValue(), GlossaryDO.class);
             appInsights.trackTrace("shopName : " + shopName + " , glossaryDO : " + glossaryDO);
 //            GlossaryDO glossaryDO = (GlossaryDO) entry.getValue();
             if (glossaryDO.getCaseSensitive() == 1) {
