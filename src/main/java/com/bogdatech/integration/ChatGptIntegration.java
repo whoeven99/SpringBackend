@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.constants.TranslateConstants.OTHER_MAGNIFICATION;
+import static com.bogdatech.constants.TranslateConstants.OPENAI_MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
@@ -72,7 +72,7 @@ public class ChatGptIntegration {
 
                 ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
                 content = chatCompletions.getChoices().get(0).getMessage().getContent();
-                int allToken = chatCompletions.getUsage().getTotalTokens() * OTHER_MAGNIFICATION;
+                int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
                 int promptToken = chatCompletions.getUsage().getPromptTokens();
                 int completionToken = chatCompletions.getUsage().getCompletionTokens();
                 appInsights.trackTrace( "用户： " + request.getShopName() + " 翻译的文本： " + sourceText + " token openai : " + request.getTarget() + " all: " + allToken + " promptToken : " + promptToken + " completionToken : " + completionToken);

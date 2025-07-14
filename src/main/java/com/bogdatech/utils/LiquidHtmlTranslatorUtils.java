@@ -3,6 +3,8 @@ package com.bogdatech.utils;
 
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.ChatGptIntegration;
+import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
@@ -47,11 +49,13 @@ public class LiquidHtmlTranslatorUtils {
     public final static Set<String> NO_TRANSLATE_TAGS = Set.of("script", "style", "meta", "svg", "canvas", "link");
     private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00\uDFFF])+");
     private final JsoupUtils jsoupUtils;
+    private final ChatGptIntegration chatGptIntegration;
 
     @Autowired
-    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, JsoupUtils jsoupUtils) {
+    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, JsoupUtils jsoupUtils, ChatGptIntegration chatGptIntegration) {
         this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
         this.jsoupUtils = jsoupUtils;
+        this.chatGptIntegration = chatGptIntegration;
     }
 
     /**
@@ -318,7 +322,7 @@ public class LiquidHtmlTranslatorUtils {
      * 翻译html文本（整段翻译，需要处理一下）
      * 目前专门用qwen翻译
      * */
-    public String fullTranslateHtmlByQwen(String text, String languagePack, CharacterCountUtils counter, String target, String shopName, Integer limitChars) {
+    public String fullTranslateHtmlByQwen(String text, String languagePack, CharacterCountUtils counter, String target, String shopName, Integer limitChars, String translateModel, String source) {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
         String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, languagePack);
@@ -326,6 +330,9 @@ public class LiquidHtmlTranslatorUtils {
         //调用qwen翻译
         //返回翻译结果
         try {
+            if (translateModel != null && translateModel.equals(OPENAI_MODEL)){
+                return chatGptIntegration.chatWithGpt(fullHtmlPrompt, text, new TranslateRequest(0,shopName, null, source, target, text), counter ,limitChars);
+            }
             return aLiYunTranslateIntegration.singleTranslate(text, fullHtmlPrompt, counter, target, shopName, limitChars);
         } catch (Exception e) {
             appInsights.trackTrace("html 翻译失败 errors : " + e);
