@@ -39,6 +39,7 @@ public class DeepLIntegration {
         try {
             String target = DEEPL_LANGUAGE_MAP.get(targetCode);
             result = client.translateText(sourceText, null, target);
+            appInsights.trackTrace("result: " + result);
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * OTHER_MAGNIFICATION;
             appInsights.trackTrace( "用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);

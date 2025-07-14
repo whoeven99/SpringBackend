@@ -120,6 +120,32 @@ public class PlaceholderUtils {
     }
 
     /**
+     * openai key 提示词
+     * */
+    public static String getOpenaiKeyPrompt(String target, String languagePackId, String key, String customKey) {
+        boolean hasLanguagePackId = languagePackId != null && !languagePackId.isEmpty();
+        boolean hasCustomKey = customKey != null && !customKey.isEmpty();
+        boolean hasKey = key != null && !key.isEmpty();
+        if (hasLanguagePackId && hasCustomKey && hasKey) {
+            //判断CustomKey里面是否包含using terminology and tone appropriate for 则使用customKey里面的文本。
+            if (customKey.contains("using terminology and tone appropriate for")) {
+                return "Translate the following " + key + " into " + target + " " + customKey + " If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
+            }
+            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". " + customKey + " If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
+        } else if (hasLanguagePackId && hasKey) {
+            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
+        } else if (hasCustomKey && hasKey) {
+            return "Translate the following " + key + " into " + target + ". " + customKey + " If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
+        }else if (!hasKey) {
+            if (languagePackId != null && !languagePackId.isEmpty()){
+                return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
+            }
+            return "Translate the following text into " + target + ". If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
+        }
+        return "Translate the following " + key + " into " + target + ". If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
+    }
+
+    /**
      * 变量提示词
      *
      * @param target         目标语言

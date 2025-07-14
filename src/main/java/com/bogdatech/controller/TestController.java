@@ -9,6 +9,7 @@ import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
+import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.DeepLIntegration;
@@ -85,9 +86,9 @@ public class TestController {
         return "Ping Successful!";
     }
 
-    @GetMapping("/gpt")
-    public String chat(@RequestParam String prompt, @RequestParam String sourceText) {
-        return chatGptIntegration.chatWithGpt(prompt, sourceText, new TranslateRequest(), new CharacterCountUtils(), null);
+    @PostMapping("/gpt")
+    public String chat(@RequestBody GptVO gptVO) {
+        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", gptVO.getSourceText()), new CharacterCountUtils(), 2000000);
     }
 
     @PostMapping("/test/test1")
