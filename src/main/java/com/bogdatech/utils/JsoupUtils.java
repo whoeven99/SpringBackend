@@ -262,6 +262,7 @@ public class JsoupUtils {
              switch (translationModel) {
                 case OPENAI_MODEL :
                     prompt = getOpenaiKeyPrompt(targetLanguage, languagePackId, key, customKey);
+                    appInsights.trackTrace("模块文本：" + content + " openai key提示词: " + prompt);
                     return chatGptIntegration.chatWithGpt(prompt, content, request, counter, limitChars);
                 case DEEPL_MODEL :
                     if (!deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)){
