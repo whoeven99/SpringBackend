@@ -8,6 +8,7 @@ import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
+import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
@@ -22,11 +23,11 @@ import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.RabbitMqTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
-import com.deepl.api.DeepLException;
 import com.microsoft.applicationinsights.TelemetryClient;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,7 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.RabbitMqTask.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.HTML_TAG_PATTERN;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
@@ -356,12 +358,52 @@ public class TestController {
 
 
     /**
-     * deepL test
+     * 对html翻译的新问题
      * */
-    @GetMapping("/testDeepL")
-    public void testDeepL() throws DeepLException, InterruptedException {
-        System.out.println("deep: " +  deepLIntegration.isDeepLEnough());
+    @GetMapping("/testHtml2")
+    public String testHtml2() {
+        String html = """
+                
+                
+                """;
+        boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
+        Document originalDoc;
+        if (hasHtmlTag) {
+             originalDoc = Jsoup.parse(html);
+        }else {
+             originalDoc = Jsoup.parseBodyFragment(html);
+        }
 
+        // 2. 提取样式并标记 ID
+        Map<String, FullAttributeSnapshotDTO> attrMap = liquidHtmlTranslatorUtils.tagElementsAndSaveFullAttributes(originalDoc);
+        System.out.println("styleMap : " + attrMap);
+
+        // 3. 获取清洗后的 HTML（无样式）
+        liquidHtmlTranslatorUtils.removeAllAttributesExceptMarker(originalDoc);
+        System.out.println("originalDoc : " + originalDoc);
+        // 3. 翻译文本
+//        translateTextNodes(doc.body(), text -> translateToChinese(text)); // 自定义翻译逻辑
+        String cleanedHtml = originalDoc.body().html();
+        System.out.println("cleanedHtml : " + cleanedHtml);
+//        String targetLanguage = getLanguageName("zh-CN");
+//        String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, "Home Goods");
+//        System.out.println("fullHtmlPrompt : " + fullHtmlPrompt);
+//        String s = chatGptIntegration.chatWithGpt(fullHtmlPrompt, cleanedHtml, new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", cleanedHtml), new CharacterCountUtils(), 5000000);
+//        System.out.println("s : " + s);
+
+
+        // 第四步：解析翻译后的 HTML
+        Document translatedDoc;
+        if (hasHtmlTag) {
+//            translatedDoc = Jsoup.parse(s);
+            translatedDoc = Jsoup.parse(cleanedHtml);
+        }else {
+//            translatedDoc = Jsoup.parseBodyFragment(s);
+            translatedDoc = Jsoup.parseBodyFragment(cleanedHtml);
+        }
+        // 第五步：将样式还原到翻译后的 HTML 中
+        liquidHtmlTranslatorUtils.restoreFullAttributes(translatedDoc, attrMap);
+        System.out.println("doc 1 : " + translatedDoc.body().html());
+        return translatedDoc.body().html();
     }
-
 }
