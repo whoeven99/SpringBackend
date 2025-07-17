@@ -1,10 +1,10 @@
 package com.bogdatech.utils;
 
 
+import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ChatGptIntegration;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
