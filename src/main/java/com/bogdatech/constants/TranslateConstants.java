@@ -67,5 +67,6 @@ public class TranslateConstants {
     public static final String DEEPL_MODEL = "3";
     public static final String OPENAI_MODEL = "2";
     public static final float MAGNIFICATION = 1.5f;
-    public static final int OTHER_MAGNIFICATION = 4;
+    public static final int OPENAI_MAGNIFICATION = 3;
+    public static final int DEEPL_MAGNIFICATION = 4;
 }

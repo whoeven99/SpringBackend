@@ -808,7 +808,4 @@ public class JsoupUtils {
         return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
     }
 
-    /**
-     * mt 模型翻译
-     * */
 }
