@@ -1,21 +1,22 @@
 package com.bogdatech.utils;
 
 
+import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
+import org.jsoup.nodes.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.addData;
@@ -31,11 +32,11 @@ public class LiquidHtmlTranslatorUtils {
     private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
-//    // 不翻译的Liquid变量模式
+    //    // 不翻译的Liquid变量模式
 //    public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
     // 自定义变量模式：%{ order.name } 等
     public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\w+\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]");
-//    // Liquid条件语句模式：{% if order.po_number != blank %} 等
+    //    // Liquid条件语句模式：{% if order.po_number != blank %} 等
 //    public static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
 //    // 数组变量模式：[ product[1]] 等
 //    public static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
@@ -46,16 +47,20 @@ public class LiquidHtmlTranslatorUtils {
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
     public final static Set<String> NO_TRANSLATE_TAGS = Set.of("script", "style", "meta", "svg", "canvas", "link");
     private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00\uDFFF])+");
+    private static final String STYLE_TEXT = "data-id";
     private final JsoupUtils jsoupUtils;
+    private final ChatGptIntegration chatGptIntegration;
 
     @Autowired
-    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, JsoupUtils jsoupUtils) {
+    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, JsoupUtils jsoupUtils, ChatGptIntegration chatGptIntegration) {
         this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
         this.jsoupUtils = jsoupUtils;
+        this.chatGptIntegration = chatGptIntegration;
     }
 
     /**
      * 主翻译方法
+     *
      * @param
      * @param html 输入的HTML文本
      * @return 翻译后的HTML文本
@@ -317,16 +322,37 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 翻译html文本（整段翻译，需要处理一下）
      * 目前专门用qwen翻译
-     * */
-    public String fullTranslateHtmlByQwen(String text, String languagePack, CharacterCountUtils counter, String target, String shopName, Integer limitChars) {
+     */
+    public String fullTranslateHtmlByQwen(String text, String languagePack, CharacterCountUtils counter, String target, String shopName, Integer limitChars, String translateModel, String source) {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
         String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, languagePack);
         appInsights.trackTrace("翻译 html 的提示词：" + fullHtmlPrompt);
-        //调用qwen翻译
+
+        boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(text).find();
+        Document originalDoc;
+        if (hasHtmlTag) {
+            originalDoc = Jsoup.parse(text);
+        }else {
+            originalDoc = Jsoup.parseBodyFragment(text);
+        }
+
+        // 2. 提取样式并标记 ID
+        Map<String, FullAttributeSnapshotDTO> attrMap = tagElementsAndSaveFullAttributes(originalDoc);
+
+        // 3. 获取清洗后的 HTML（无样式）
+        removeAllAttributesExceptMarker(originalDoc);
+
+        String cleanedHtml = originalDoc.body().html();
         //返回翻译结果
         try {
-            return aLiYunTranslateIntegration.singleTranslate(text, fullHtmlPrompt, counter, target, shopName, limitChars);
+            if (translateModel != null && translateModel.equals(OPENAI_MODEL)) {
+                String chatGptString = chatGptIntegration.chatWithGpt(fullHtmlPrompt, cleanedHtml, new TranslateRequest(0, shopName, null, source, target, cleanedHtml), counter, limitChars);
+                return processTranslationResult(chatGptString, attrMap, hasHtmlTag);
+            }
+            String aLiString = aLiYunTranslateIntegration.singleTranslate(cleanedHtml, fullHtmlPrompt, counter, target, shopName, limitChars);
+            return processTranslationResult(aLiString, attrMap, hasHtmlTag);
+
         } catch (Exception e) {
             appInsights.trackTrace("html 翻译失败 errors : " + e);
             return text;
@@ -334,9 +360,24 @@ public class LiquidHtmlTranslatorUtils {
     }
 
     /**
+     * 对大模型翻译后的数据进行处理并返回
+     * */
+    public String processTranslationResult(String translatedText, Map<String, FullAttributeSnapshotDTO> attrMap, boolean hasHtmlTag){
+        Document translatedDoc;
+        if (hasHtmlTag) {
+            translatedDoc = Jsoup.parse(translatedText);
+        }else {
+            translatedDoc = Jsoup.parseBodyFragment(translatedText);
+        }
+        // 第五步：将样式还原到翻译后的 HTML 中
+        restoreFullAttributes(translatedDoc, attrMap);
+        return translatedDoc.body().html();
+    }
+
+    /**
      * 翻译html文本（整段翻译，需要处理一下）
      * 目前专门用qwen翻译
-     * */
+     */
     public String fullTranslatePolicyHtmlByQwen(String text, CharacterCountUtils counter, String target, String shopName, Integer limitChars) {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
@@ -366,14 +407,14 @@ public class LiquidHtmlTranslatorUtils {
         // Step 3: 翻译操作
         request.setContent(textToTranslate);
         String targetString;
-        if (model != null && customKey != null && model.equals(PRODUCT)){
+        if (model != null && customKey != null && model.equals(PRODUCT)) {
             targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "product description", customKey, translationModel);
-        }else if (model != null && customKey != null && model.equals(ARTICLE)){
+        } else if (model != null && customKey != null && model.equals(ARTICLE)) {
             targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, "article content", customKey, translationModel);
-        }else if (model != null && customKey != null){
+        } else if (model != null && customKey != null) {
             targetString = jsoupUtils.translateKeyModelAndCount(request, counter, languagePackId, limitChars, null, customKey, translationModel);
-        }else {
-            targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL,limitChars);
+        } else {
+            targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
         }
 //        String targetString = textToTranslate + 1;
         // Step 4: 恢复开头和结尾空格
@@ -413,4 +454,88 @@ public class LiquidHtmlTranslatorUtils {
         }
         return count;
     }
+
+
+    /**
+     * 给所有含保留属性的元素打上唯一 data-id，并保存这些属性
+     *
+     * @param doc HTML 文档
+     * @return 属性快照映射表
+     */
+    public Map<String, FullAttributeSnapshotDTO> tagElementsAndSaveFullAttributes(Document doc) {
+        Map<String, FullAttributeSnapshotDTO> attrMap = new LinkedHashMap<>();
+        AtomicInteger idGen = new AtomicInteger(0);
+
+        for (Element el : doc.getAllElements()) {
+            // 排除我们自己用于标记的属性
+            List<Attribute> attrList = el.attributes().asList().stream()
+                    .filter(attr -> !attr.getKey().equals(STYLE_TEXT))
+                    .toList();
+
+            // 拼接为完整属性字符串
+            if (!attrList.isEmpty()) {
+                String id = "attr-" + idGen.getAndIncrement();
+                el.attr(STYLE_TEXT, id); // 添加唯一标识
+
+                String fullAttrs = attrList.stream()
+                        .map(attr -> attr.getKey() + "=\"" + attr.getValue() + "\"")
+                        .collect(Collectors.joining(" "));
+
+                FullAttributeSnapshotDTO dto = new FullAttributeSnapshotDTO();
+                dto.fullAttributes = fullAttrs;
+                attrMap.put(id, dto);
+            }
+        }
+
+        return attrMap;
+    }
+
+
+    /**
+     * 移除所有保存的属性（包括 style, class, data-* 等），只保留 data-id
+     */
+    public void removeAllAttributesExceptMarker(Document doc) {
+        for (Element el : doc.getAllElements()) {
+            List<String> attrKeys = el.attributes().asList().stream()
+                    .map(Attribute::getKey)
+                    .filter(key -> !key.equals(STYLE_TEXT))
+                    .toList();
+
+            attrKeys.forEach(el::removeAttr);
+        }
+    }
+
+    /**
+     * 还原之前保存的属性信息
+     */
+    public void restoreFullAttributes(Document doc, Map<String, FullAttributeSnapshotDTO> attrMap) {
+        for (Element el : doc.select("[" + STYLE_TEXT + "]")) {
+            String id = el.attr(STYLE_TEXT);
+            FullAttributeSnapshotDTO snapshot = attrMap.get(id);
+
+            if (snapshot != null) {
+                // 将原始属性还原为字符串（覆盖属性）
+                String fakeOuterHtml = "<" + el.tagName() + " " + snapshot.fullAttributes + ">" + el.html() + "</" + el.tagName() + ">";
+                Element restored = Jsoup.parseBodyFragment(fakeOuterHtml).body().child(0);
+
+                // 替换所有属性
+                el.clearAttributes(); // 先清除
+                restored.attributes().forEach(attr -> el.attr(attr.getKey(), attr.getValue()));
+            }
+
+            el.removeAttr(STYLE_TEXT); // 可选：删除还原标记
+        }
+    }
+
+
+    /**
+     * 清除所有 style 和 class 属性，准备翻译
+     */
+    // 清除所有 style 和 class 属性
+    public String removeStyles(Document doc) {
+        doc.select("[style]").forEach(el -> el.removeAttr("style"));
+        doc.select("[class]").forEach(el -> el.removeAttr("class"));
+        return doc.body().html();  // 返回清理后的 HTML
+    }
+
 }

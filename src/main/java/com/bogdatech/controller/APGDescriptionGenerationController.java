@@ -24,7 +24,7 @@ public class APGDescriptionGenerationController {
         // 实现生成描述的逻辑
         appInsights.trackTrace(shopName + " generateDescriptionVO: " + generateDescriptionVO );
         String description = generateDescriptionService.generateDescription(shopName, generateDescriptionVO);
-        appInsights.trackTrace(shopName + "generateDescription: " + description);
+        appInsights.trackTrace(shopName + " generateDescription: " + description);
         if (description != null){
             return new BaseResponse<>().CreateSuccessResponse(new GenerateVO(generateDescriptionVO.getPageType(), generateDescriptionVO.getContentType(), description, generateDescriptionVO.getId()));
         }
