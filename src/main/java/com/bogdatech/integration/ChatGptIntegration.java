@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.constants.TranslateConstants.OTHER_MAGNIFICATION;
+import static com.bogdatech.constants.TranslateConstants.OPENAI_MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
@@ -57,7 +57,7 @@ public class ChatGptIntegration {
         prompts.add(messagereq);
         prompts.add(messagersy);
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
-                .setMaxTokens(1000)
+                .setMaxTokens(16000)
                 .setTemperature(0.7)
                 .setTopP(0.95)
                 .setFrequencyPenalty(0.0)
@@ -72,7 +72,7 @@ public class ChatGptIntegration {
 
                 ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
                 content = chatCompletions.getChoices().get(0).getMessage().getContent();
-                int allToken = chatCompletions.getUsage().getTotalTokens() * OTHER_MAGNIFICATION;
+                int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
                 int promptToken = chatCompletions.getUsage().getPromptTokens();
                 int completionToken = chatCompletions.getUsage().getCompletionTokens();
                 appInsights.trackTrace( "用户： " + request.getShopName() + " 翻译的文本： " + sourceText + " token openai : " + request.getTarget() + " all: " + allToken + " promptToken : " + promptToken + " completionToken : " + completionToken);
@@ -84,10 +84,9 @@ public class ChatGptIntegration {
             } catch (Exception e) {
                 retryCount++;
                 appInsights.trackTrace("Error occurred while calling GPT: " + e.getMessage());
-                System.out.println("Error occurred while calling GPT: " + e.getMessage());
                 if (retryCount >= 2){
                         // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
-                        throw new ClientException("Translation exception");
+                        throw new ClientException("Translation openai exception errors ");
                     }
             }
         }

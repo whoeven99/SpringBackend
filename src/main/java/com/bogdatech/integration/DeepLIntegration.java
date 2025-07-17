@@ -9,8 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogdatech.constants.TranslateConstants.DEEPL_API_KEY;
-import static com.bogdatech.constants.TranslateConstants.OTHER_MAGNIFICATION;
+import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
@@ -41,7 +40,7 @@ public class DeepLIntegration {
             result = client.translateText(sourceText, null, target);
             appInsights.trackTrace("result: " + result);
             String targetText = result.getText();
-            int totalToken = result.getBilledCharacters() * OTHER_MAGNIFICATION;
+            int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
             appInsights.trackTrace( "用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
             userTranslate.put(shopName, translationStatusMap);
