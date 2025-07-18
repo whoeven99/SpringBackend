@@ -8,17 +8,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@TableName("APG_Template")
-public class APGTemplateDO {
+@AllArgsConstructor
+@TableName("APG_User_Product")
+public class APGUserProductDO {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String templateData;
-    private String templateTitle;
-    private Integer templateType;
-    private Integer templateSeo;
+    private String productId;
     private Long userId;
-    private String templateDescription;
-    private boolean isDelete;
+    private Integer createVision;
+    private Boolean isDelete;
+
 }

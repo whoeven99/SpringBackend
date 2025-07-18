@@ -8,17 +8,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@TableName("APG_Template")
-public class APGTemplateDO {
+@AllArgsConstructor
+@TableName("APG_Official_Template")
+public class APGOfficialTemplateDO {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String templateData;
     private String templateTitle;
-    private Integer templateType;
-    private Integer templateSeo;
-    private Long userId;
+    private String templateType;
     private String templateDescription;
-    private boolean isDelete;
+    private Integer usedTimes;
+
 }

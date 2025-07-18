@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class APGUserCounterDO {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String shopName;
+    private Long userId;
     private Integer productCounter;
     private Integer productSeoCounter;
     private Integer collectionCounter;
