@@ -2,8 +2,9 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUsersDO;
+import com.bogdatech.logic.APGTemplateService;
+import com.bogdatech.logic.APGUserService;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.RetryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,12 +13,11 @@ import static com.bogdatech.utils.RetryUtils.retryWithParam;
 @RestController
 @RequestMapping("/apg/users")
 public class APGUsersController {
-
-    private final IAPGUsersService iapgUsersService;
+    private final APGUserService apgUserService;
 
     @Autowired
-    public APGUsersController(IAPGUsersService iapgUsersService) {
-        this.iapgUsersService = iapgUsersService;
+    public APGUsersController(APGUserService apgUserService) {
+        this.apgUserService = apgUserService;
     }
 
     /**
@@ -30,7 +30,7 @@ public class APGUsersController {
     public BaseResponse<Object> insertOrUpdateApgUser(@RequestParam String shopName, @RequestBody APGUsersDO usersDO){
         usersDO.setShopName(shopName);
         boolean result = retryWithParam(
-                iapgUsersService::insertOrUpdateApgUser,  // 方法引用，等同于 input -> service.insertOrUpdateApgUser(input)
+                apgUserService::insertOrUpdateApgUser,  // 方法引用，等同于 input -> service.insertOrUpdateApgUser(input)
                 usersDO,
                 3,        // 最大重试次数
                 1000,     // 初始延迟时间：1秒

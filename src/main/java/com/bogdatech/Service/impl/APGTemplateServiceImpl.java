@@ -18,6 +18,9 @@ public class APGTemplateServiceImpl extends ServiceImpl<APGTemplateMapper, APGTe
 
     @Override
     public List<APGTemplateDO> getAllTemplateData(String shopName) {
-        return baseMapper.selectList(new QueryWrapper<APGTemplateDO>().eq("shop_name", shopName).or().eq("shop_name", "system"));
+        if ("system".equals(shopName)){
+            return baseMapper.selectList(new QueryWrapper<APGTemplateDO>().eq("user_id", 0));
+        }
+        return baseMapper.getAllTemplateData(shopName);
     }
 }

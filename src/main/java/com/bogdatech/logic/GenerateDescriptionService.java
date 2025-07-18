@@ -45,10 +45,12 @@ public class GenerateDescriptionService {
      * @return 产品描述
      */
     public String generateDescription(String shopName, GenerateDescriptionVO generateDescriptionVO) {
+        //TODO: 数据类型问题等后面将页面接口都完成后再改
+        // 每次生成都要更新一下版本记录
         // 生成产品描述(简单的做，尝试一下) 用混元先生成
         //根据shopName获取accessToken数据
         APGUsersDO userDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
-        APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("shop_name", shopName));
+        APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", userDO.getId()));
         //根据pageType和contentType决定使用什么方法
         String query = switch (generateDescriptionVO.getPageType()) {
             case "product" -> getProductsQueryById(generateDescriptionVO.getId());
@@ -82,6 +84,7 @@ public class GenerateDescriptionService {
         //根据contentType判断用seo还是des
         switch (generateDescriptionVO.getContentType()) {
             case "Description" :
+
                 Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
                 template = iapgTemplateService.getTemplateById(templateId);
                 prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
@@ -114,7 +117,7 @@ public class GenerateDescriptionService {
         //根据language获取生成的语言是什么
         //根据model选择对应的模型（暂定混元）
         //将消耗的数据记录到数据库中，目前都是产品
-        boolean update = iapgUserCounterService.update(new UpdateWrapper<APGUserCounterDO>().eq("shop_name", shopName)
+        boolean update = iapgUserCounterService.update(new UpdateWrapper<APGUserCounterDO>().eq("user_id", userDO.getId())
                 .set("user_token", counterDO.getUserToken() + characterCountUtils.getTotalChars())
                 .set("product_counter", counterDO.getProductCounter() + 1));
         if (!update) {
