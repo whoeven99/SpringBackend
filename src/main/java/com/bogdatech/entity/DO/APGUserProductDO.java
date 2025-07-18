@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,5 +20,6 @@ public class APGUserProductDO {
     private Long userId;
     private Integer createVision;
     private Boolean isDelete;
+    private Timestamp updateTime;
 
 }
