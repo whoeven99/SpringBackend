@@ -20,5 +20,7 @@ public class APGTemplateDO {
     private Integer templateSeo;
     private Long userId;
     private String templateDescription;
+    private String templateModel; //模板类型(product or collection)
+    private String templateSubtype; //模板子类型 （title， seo， description）
     private boolean isDelete;
 }
