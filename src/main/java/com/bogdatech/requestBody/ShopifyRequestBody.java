@@ -143,4 +143,30 @@ public class ShopifyRequestBody {
                 "  }\n" +
                 "}";
     }
+
+    /**
+     * 根据产品id获取对应信息
+     * */
+    public static String getProductDataQuery(String productId) {
+        return "{\n" +
+                "  product(id: \"" + productId + "\") {\n" +
+                "    description\n" +
+                "    id\n" +
+                "    media(first: 1) {\n" +
+                "      edges {\n" +
+                "        node {\n" +
+                "          ... on MediaImage {\n" +
+                "            image {\n" +
+                "              url\n" +
+                "              altText\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "    productType\n" +
+                "    title\n" +
+                "  }\n" +
+                "}";
+    }
 }

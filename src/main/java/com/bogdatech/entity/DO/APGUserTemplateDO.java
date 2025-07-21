@@ -1,0 +1,29 @@
+package com.bogdatech.entity.DO;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@TableName("APG_User_Template")
+public class APGUserTemplateDO {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    @NotBlank(message = "userId is null")
+    private Long userId;
+    @NotBlank(message = "templateData is null")
+    private String templateData;
+    @NotBlank(message = "templateDescription is null")
+    private String templateDescription;
+    @NotBlank(message = "templateTitle is null")
+    private String templateTitle;
+    @NotBlank(message = "templateType is null")
+    private String templateType;
+    private Boolean isDelete;
+}

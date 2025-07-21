@@ -74,7 +74,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
             }
         }
 
-        appInsights.trackTrace("更新失败，重试" + maxRetries + "次后仍未成功，shopName=" + shopName);
+        appInsights.trackTrace("更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + shopName);
         return false;
     }
 

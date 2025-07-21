@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.IAPGTemplateService;
 import com.bogdatech.entity.DO.APGTemplateDO;
+import com.bogdatech.entity.DO.APGUserTemplateDO;
 import com.bogdatech.entity.DTO.TemplateDTO;
 import com.bogdatech.logic.APGTemplateService;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -43,6 +44,30 @@ public class APGTemplateController {
         List<TemplateDTO> templateByShopName = apgTemplateService.getTemplateByShopName(shopName);
         if (templateByShopName != null && !templateByShopName.isEmpty()){
             return new BaseResponse<>().CreateSuccessResponse(templateByShopName);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    /**
+     * 用户创建自定义模板
+     * */
+    @PostMapping("/createUserTemplate")
+    public BaseResponse<Object> createUserTemplate(@RequestParam String shopName, @RequestBody APGUserTemplateDO apgUserTemplateDO){
+        Boolean result = apgTemplateService.createUserTemplate(shopName, apgUserTemplateDO);
+        if (result){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    /**
+     * 软删除用户模板数据
+     * */
+    @PostMapping("/deleteUserTemplate")
+    public BaseResponse<Object> deleteUserTemplate(@RequestParam String shopName, @RequestBody TemplateDTO templateDTO){
+        Boolean result = apgTemplateService.deleteUserTemplate(shopName, templateDTO);
+        if (result){
+            return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }

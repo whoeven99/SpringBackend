@@ -3,14 +3,15 @@ package com.bogdatech.logic;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IAPGOfficialTemplateService;
 import com.bogdatech.Service.IAPGUserTemplateMappingService;
+import com.bogdatech.Service.IAPGUserTemplateService;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGOfficialTemplateDO;
+import com.bogdatech.entity.DO.APGUserTemplateDO;
 import com.bogdatech.entity.DO.APGUserTemplateMappingDO;
 import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.DTO.TemplateDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,12 +20,14 @@ public class APGTemplateService {
     private final IAPGUserTemplateMappingService iapgUserTemplateMappingService;
     private final IAPGUsersService iapgUsersService;
     private final IAPGOfficialTemplateService iapgOfficialTemplateService;
+    private final IAPGUserTemplateService iapgUserTemplateService;
 
     @Autowired
-    public APGTemplateService(IAPGUserTemplateMappingService iapgUserTemplateMappingService, IAPGUsersService iapgUsersService, IAPGOfficialTemplateService iapgOfficialTemplateService) {
+    public APGTemplateService(IAPGUserTemplateMappingService iapgUserTemplateMappingService, IAPGUsersService iapgUsersService, IAPGOfficialTemplateService iapgOfficialTemplateService, IAPGUserTemplateService iapgUserTemplateService) {
         this.iapgUserTemplateMappingService = iapgUserTemplateMappingService;
         this.iapgUsersService = iapgUsersService;
         this.iapgOfficialTemplateService = iapgOfficialTemplateService;
+        this.iapgUserTemplateService = iapgUserTemplateService;
     }
 
     public List<TemplateDTO> getTemplateByShopName(String shopName) {
@@ -83,18 +86,38 @@ public class APGTemplateService {
     /**
      * 初始化默认模板数据，前4条
      * */
-    public boolean InitializeDefaultTemplate(String shopName) {
+    public boolean initializeDefaultTemplate(Long userId) {
+        //初始化5条官方模板数据
+        boolean save = false;
+        for (long i = 2; i <= 5; i++) {
+            save = iapgUserTemplateMappingService.save(new APGUserTemplateMappingDO(null, userId, i, false, false));
+        }
+
+        return save;
+    }
+
+    public Boolean createUserTemplate(String shopName, APGUserTemplateDO apgUserTemplateDO) {
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
             return false;
         }
 
-        //初始化5条官方模板数据
-        boolean save = false;
-        for (long i = 2; i <= 5; i++) {
-            save = iapgUserTemplateMappingService.save(new APGUserTemplateMappingDO(null, userDO.getId(), i, false, false));
+        //将用户自定义模板保存到数据库
+        apgUserTemplateDO.setUserId(userDO.getId());
+        return iapgUserTemplateService.save(apgUserTemplateDO);
+    }
+
+    public Boolean deleteUserTemplate(String shopName, TemplateDTO templateDTO) {
+        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        if (userDO == null) {
+            return false;
         }
 
-        return save;
+        //根据传入数据删除用户模板
+        APGUserTemplateMappingDO apgUserTemplateMappingDO = new APGUserTemplateMappingDO();
+        apgUserTemplateMappingDO.setId(templateDTO.getId());
+        apgUserTemplateMappingDO.setUserId(userDO.getId());
+        apgUserTemplateMappingDO.setIsDelete(true);
+        return iapgUserTemplateMappingService.update(apgUserTemplateMappingDO, new LambdaQueryWrapper<APGUserTemplateMappingDO>().eq(APGUserTemplateMappingDO::getUserId, userDO.getId()).eq(APGUserTemplateMappingDO::getId, templateDTO.getId()));
     }
 }

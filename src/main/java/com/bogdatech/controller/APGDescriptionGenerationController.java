@@ -1,9 +1,13 @@
 package com.bogdatech.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.bogdatech.Service.IAPGUserPlanService;
+import com.bogdatech.Service.IAPGUsersService;
+import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
-import com.bogdatech.entity.VO.GenerateVO;
 import com.bogdatech.logic.GenerateDescriptionService;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,20 +18,34 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 public class APGDescriptionGenerationController {
 
     private final GenerateDescriptionService generateDescriptionService;
+    private final IAPGUsersService iapgUsersService;
+    private final IAPGUserPlanService iapgUserPlanService;
     @Autowired
-    public APGDescriptionGenerationController(GenerateDescriptionService generateDescriptionService) {
+    public APGDescriptionGenerationController(GenerateDescriptionService generateDescriptionService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService) {
         this.generateDescriptionService = generateDescriptionService;
+        this.iapgUsersService = iapgUsersService;
+        this.iapgUserPlanService = iapgUserPlanService;
     }
 
+    /**
+     * 单条生成商品描述
+     * */
     @PostMapping("/generateDescription")
     public BaseResponse<Object> generateDescription(@RequestParam String shopName, @RequestBody GenerateDescriptionVO generateDescriptionVO) {
+        // 根据shopName获取用户数据
+        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        // 获取用户最大额度限制
+        Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
+        //判断额度是否足够，然后决定是否继续调用
+
+
         // 实现生成描述的逻辑
-        appInsights.trackTrace(shopName + " generateDescriptionVO: " + generateDescriptionVO );
-        String description = generateDescriptionService.generateDescription(shopName, generateDescriptionVO);
+        String description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit);
         appInsights.trackTrace(shopName + " generateDescription: " + description);
+        System.out.println(shopName + " generateDescription: " + description);
         if (description != null){
-            return new BaseResponse<>().CreateSuccessResponse(new GenerateVO(generateDescriptionVO.getPageType(), generateDescriptionVO.getContentType(), description, generateDescriptionVO.getId()));
+            return new BaseResponse<>().CreateSuccessResponse(description);
         }
-        return new BaseResponse<>().CreateErrorResponse(new GenerateVO(generateDescriptionVO.getPageType(), generateDescriptionVO.getContentType(), null, generateDescriptionVO.getId()));
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 }
