@@ -1,8 +1,11 @@
 package com.bogdatech.utils;
 
 import com.bogdatech.context.TranslateContext;
+import com.bogdatech.entity.DO.APGOfficialTemplateDO;
+import com.bogdatech.entity.DO.APGUserTemplateDO;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.DO.UserSubscriptionsDO;
+import com.bogdatech.entity.DTO.TemplateDTO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.model.controller.request.*;
 
@@ -16,12 +19,6 @@ public class TypeConversionUtils {
         return shopifyRequest;
     }
 
-    public static TranslationCounterRequest convertTranslateRequestToTranslationCounterRequest(TranslateRequest request) {
-        TranslationCounterRequest translationCounterRequest = new TranslationCounterRequest();
-        translationCounterRequest.setShopName(request.getShopName());
-        return translationCounterRequest;
-    }
-
     public static TranslateRequest registerTransactionRequestToTranslateRequest(RegisterTransactionRequest request) {
         TranslateRequest translateRequest = new TranslateRequest();
         translateRequest.setAccessToken(request.getAccessToken());
@@ -30,30 +27,6 @@ public class TypeConversionUtils {
         translateRequest.setContent(request.getValue());
         translateRequest.setSource(request.getLocale());
         return translateRequest;
-    }
-
-    public static TranslateTextRequest registerTransactionRequestToTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        TranslateTextRequest request = new TranslateTextRequest();
-        request.setShopName(registerTransactionRequest.getShopName());
-        request.setTargetText(registerTransactionRequest.getValue());
-        request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
-        request.setTargetCode(registerTransactionRequest.getTarget());
-        request.setResourceId(registerTransactionRequest.getResourceId());
-        request.setSourceCode(registerTransactionRequest.getLocale());
-        request.setTextKey(registerTransactionRequest.getKey());
-        return request;
-    }
-
-    public static TranslateTextDO registerTransactionRequestToTranslateTextDO(RegisterTransactionRequest registerTransactionRequest) {
-        TranslateTextDO request = new TranslateTextDO();
-        request.setShopName(registerTransactionRequest.getShopName());
-        request.setTargetText(registerTransactionRequest.getValue());
-        request.setDigest(registerTransactionRequest.getTranslatableContentDigest());
-        request.setTargetCode(registerTransactionRequest.getTarget());
-        request.setResourceId(registerTransactionRequest.getResourceId());
-        request.setSourceCode(registerTransactionRequest.getLocale());
-        request.setTextKey(registerTransactionRequest.getKey());
-        return request;
     }
 
     public static CloudServiceRequest shopifyToCloudServiceRequest(ShopifyRequest request) {
@@ -90,13 +63,6 @@ public class TypeConversionUtils {
         return userSubscriptionsDO;
     }
 
-    public static ShopifyRequest RegisterTransactionRequestToShopifyRequest(RegisterTransactionRequest transaction){
-        ShopifyRequest shopifyRequest = new ShopifyRequest();
-        shopifyRequest.setShopName(transaction.getShopName());
-        shopifyRequest.setAccessToken(transaction.getAccessToken());
-        shopifyRequest.setTarget(transaction.getTarget());
-        return shopifyRequest;
-    }
 
     public static TranslateRequest ClickTranslateRequestToTranslateRequest(ClickTranslateRequest request){
         TranslateRequest translateRequest = new TranslateRequest();
@@ -115,18 +81,29 @@ public class TypeConversionUtils {
         return translateRequest;
     }
 
-    //将TranslateContext转化为RabbitMqTranslateVO
-    public static RabbitMqTranslateVO translateContextToRabbitMqTranslateVO(TranslateContext translateContext){
-        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO();
-        rabbitMqTranslateVO.setSource(translateContext.getSource());
-        rabbitMqTranslateVO.setTarget(translateContext.getShopifyRequest().getTarget());
-        rabbitMqTranslateVO.setAccessToken(translateContext.getShopifyRequest().getAccessToken());
-        rabbitMqTranslateVO.setShopName(translateContext.getShopifyRequest().getShopName());
-        rabbitMqTranslateVO.setGlossaryMap(translateContext.getGlossaryMap());
-        rabbitMqTranslateVO.setHandleFlag(translateContext.getHandleFlag());
-        rabbitMqTranslateVO.setLanguagePack(translateContext.getLanguagePackId());
-        rabbitMqTranslateVO.setShopifyData(translateContext.getShopifyData());
-        rabbitMqTranslateVO.setModeType(translateContext.getTranslateResource().getResourceType());
-        return rabbitMqTranslateVO;
+
+    //将用户模板转化为通用模板
+    public static TemplateDTO userTemplateToTemplateDTO(APGUserTemplateDO templateDO){
+        TemplateDTO templateDTO = new TemplateDTO();
+        templateDTO.setId(templateDO.getId());
+        templateDTO.setTemplateType(templateDO.getTemplateType());
+        templateDTO.setTemplateData(templateDO.getTemplateData());
+        templateDTO.setTemplateTitle(templateDO.getTemplateTitle());
+        templateDTO.setTemplateDescription(templateDO.getTemplateDescription());
+        templateDTO.setTemplateClass(true);
+        return templateDTO;
     }
+
+    //将官方模板转化为通用模板
+    public static TemplateDTO officialTemplateToTemplateDTO(APGOfficialTemplateDO templateDO){
+        TemplateDTO templateDTO = new TemplateDTO();
+        templateDTO.setId(templateDO.getId());
+        templateDTO.setTemplateType(templateDO.getTemplateType());
+        templateDTO.setTemplateData(templateDO.getTemplateData());
+        templateDTO.setTemplateTitle(templateDO.getTemplateTitle());
+        templateDTO.setTemplateDescription(templateDO.getTemplateDescription());
+        templateDTO.setTemplateClass(false);
+        return templateDTO;
+    }
+
 }

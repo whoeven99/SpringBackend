@@ -13,5 +13,5 @@ public class TemplateDTO {
     private String templateTitle;
     private String templateType;
     private String templateDescription;
-    private Boolean templateClass;
+    private Boolean templateClass; //是否为公共模板
 }

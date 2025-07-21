@@ -1,130 +1,130 @@
 package com.bogdatech.logic;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.bogdatech.Service.IAPGTemplateService;
-import com.bogdatech.Service.IAPGUserCounterService;
-import com.bogdatech.Service.IAPGUsersService;
+import com.bogdatech.Service.*;
+import com.bogdatech.entity.DO.APGOfficialTemplateDO;
 import com.bogdatech.entity.DO.APGUserCounterDO;
+import com.bogdatech.entity.DO.APGUserTemplateDO;
 import com.bogdatech.entity.DO.APGUsersDO;
+import com.bogdatech.entity.DTO.ProductDTO;
+import com.bogdatech.entity.DTO.TemplateDTO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import static com.bogdatech.constants.TranslateConstants.HUN_YUAN_MODEL;
-import static com.bogdatech.integration.HunYuanIntegration.hunYuanUserTranslate;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
-import static com.bogdatech.requestBody.ShopifyRequestBody.getCollectionsQueryById;
-import static com.bogdatech.requestBody.ShopifyRequestBody.getProductsQueryById;
+import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
+import static com.bogdatech.requestBody.ShopifyRequestBody.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.GenerateDescriptionUtils.*;
+import static com.bogdatech.utils.PlaceholderUtils.buildDescriptionPrompt;
+import static com.bogdatech.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
+import static com.bogdatech.utils.TypeConversionUtils.userTemplateToTemplateDTO;
 
 @Service
 public class GenerateDescriptionService {
 
-    private final IAPGTemplateService iapgTemplateService;
-    private final IAPGUsersService iapgUsersService;
     private final IAPGUserCounterService iapgUserCounterService;
-
+    private final IAPGUserTemplateService iapgUserTemplateService;
+    private final IAPGOfficialTemplateService iapgOfficialTemplateService;
+    private final IAPGUserProductService iapgUserProductService;
+    private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
-    public GenerateDescriptionService(IAPGTemplateService iapgTemplateService, IAPGUsersService iapgUsersService, IAPGUserCounterService iapgUserCounterService) {
-        this.iapgTemplateService = iapgTemplateService;
-        this.iapgUsersService = iapgUsersService;
+    public GenerateDescriptionService(IAPGUserCounterService iapgUserCounterService, IAPGUserTemplateService iapgUserTemplateService, IAPGOfficialTemplateService iapgOfficialTemplateService, IAPGUserProductService iapgUserProductService, ALiYunTranslateIntegration aLiYunTranslateIntegration) {
         this.iapgUserCounterService = iapgUserCounterService;
+        this.iapgUserTemplateService = iapgUserTemplateService;
+        this.iapgOfficialTemplateService = iapgOfficialTemplateService;
+        this.iapgUserProductService = iapgUserProductService;
+        this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
     }
 
     /**
      * 生成产品描述
      *
-     * @param shopName              店铺名称
+     * @param usersDO              用户数据
      * @param generateDescriptionVO 生成描述参数
      * @return 产品描述
      */
-    public String generateDescription(String shopName, GenerateDescriptionVO generateDescriptionVO) {
-        //TODO: 数据类型问题等后面将页面接口都完成后再改
-        // 每次生成都要更新一下版本记录
-        // 生成产品描述(简单的做，尝试一下) 用混元先生成
-        //根据shopName获取accessToken数据
-        APGUsersDO userDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
-        APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", userDO.getId()));
-        //根据pageType和contentType决定使用什么方法
-        String query = switch (generateDescriptionVO.getPageType()) {
-            case "product" -> getProductsQueryById(generateDescriptionVO.getId());
-            case "collection" -> getCollectionsQueryById(generateDescriptionVO.getId());
-            default -> null;
-        };
-        //根据id获取产品具体信息
-        if (query == null) {
-            return "not generate";
-        }
-        String shopifyData = null;
+    public String generateDescription(APGUsersDO usersDO, GenerateDescriptionVO generateDescriptionVO, CharacterCountUtils counter, Integer userMaxLimit) {
+        // 根据产品id获取相关数据，为翻译做铺垫
+        ProductDTO product = getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
+        // 根据模板id获取模板数据
+        TemplateDTO templateById = getTemplateById(generateDescriptionVO.getTemplateId(), usersDO.getId(), generateDescriptionVO.getTemplateType());
+        // 根据 ProductDTO 和传入的 GenerateDescriptionVO进行描述生成(暂定qwen模型 图片理解)
+        APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
+        counter.addChars(counterDO.getUserToken());
+        //生成提示词
+        String prompt = buildDescriptionPrompt(product.getProductTitle(), product.getProductType(), product.getProductDescription(), generateDescriptionVO.getSeoKeywords(), product.getImageUrl(), product.getImageAltText(), generateDescriptionVO.getTextTone(), templateById.getTemplateType(), generateDescriptionVO.getBrandTone(), templateById.getTemplateData(), generateDescriptionVO.getLanguage());
+        //调用大模型翻译
+        String des = aLiYunTranslateIntegration.callWithPicMess(prompt, usersDO.getId(), counter, product.getImageUrl(), userMaxLimit);
+        //每次生成都要更新一下版本记录
+        iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId());
+        return des;
+    }
+
+    /**
+     * 根据产品id获取相关数据，为翻译做铺垫
+     * */
+    public ProductDTO getProductsQueryByProductId(String productId, String shopName, String accessToken) {
+        String productDataQuery = getProductDataQuery(productId);
+        String productData = getShopifyDataByEnv(shopName, accessToken, productDataQuery);
+        ProductDTO productDTO = new ProductDTO();
+        // 对productData进行解析，输出productDTO类型数据
         try {
-            String env = System.getenv("ApplicationEnv");
-            if ("prod".equals(env) || "dev".equals(env)) {
-                shopifyData = String.valueOf(getInfoByShopify(new ShopifyRequest(shopName, userDO.getAccessToken(), "2025-04", null), query));
-            } else {
-                shopifyData = getShopifyDataByCloud(new CloudServiceRequest(shopName, userDO.getAccessToken(), "2025-04", null, query));
-            }
+            JsonNode root = OBJECT_MAPPER.readTree(productData);
+            productDTO.setProductDescription(root.at("/product/description").asText(null));
+            productDTO.setId(root.at("/product/id").asText());
+            productDTO.setProductType(root.at("/product/productType").asText(null));
+            productDTO.setImageUrl(root.at("/product/media/edges/0/node/image/url").asText(null));
+            productDTO.setImageAltText(root.at("/product/media/edges/0/node/image/altText").asText(null));
+            productDTO.setProductTitle(root.at("/product/title").asText(null));
+            return productDTO;
         } catch (Exception e) {
-            // 如果出现异常，则跳过, 翻译其他的内容
-            //更新当前字符数
-            appInsights.trackTrace("Failed to get Shopify data: " + e.getMessage());
-        }
-        //解析shopifyData，获取title等数据
-        String title = parseShopifyData(shopifyData, generateDescriptionVO.getPageType());
-        if (title == null) {
+            appInsights.trackTrace("getProductsQueryByProductId errors : " + e);
+            appInsights.trackException(e);
             return null;
         }
-        String prompt = null;
-        String template = null;
-        //根据contentType判断用seo还是des
-        switch (generateDescriptionVO.getContentType()) {
-            case "Description" :
+    }
 
-                Long templateId = Long.parseLong(generateDescriptionVO.getTemplateId());
-                template = iapgTemplateService.getTemplateById(templateId);
-                prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
-                template = prompt + template;
-                break;
-            case "SEODescription" :
-                Long templateIdSeo = Long.parseLong(generateDescriptionVO.getTemplateId());
-                template = iapgTemplateService.getTemplateById(templateIdSeo);
-                prompt = generateSeoPrompt(title, generateDescriptionVO.getLanguage());
-                template = prompt + template;
-                break;
-        };
-        if (template == null ){
-            return "des/seo not generate";
-        }
-//        String prompt = generatePrompt(title, generateDescriptionVO.getLanguage());
-        //根据seoKeyword（暂时不知道是什么）
-        //根据test的的boolean值 true，使用的是templateId传递的模板数据；false，使用的是templateId传递的字符型数字
-        boolean test = Boolean.parseBoolean(generateDescriptionVO.getTest());
-        String description;
-        CharacterCountUtils characterCountUtils = new CharacterCountUtils();
-        if (test) {
-            String templateId = generateDescriptionVO.getTemplateId();
-            description = hunYuanUserTranslate(templateId, characterCountUtils, HUN_YUAN_MODEL);
+    /**
+     *  包装下调用获取shopify数据的接口
+     **/
+    public String getShopifyDataByEnv(String shopName, String accessToken, String query) {
+        String env = System.getenv("ApplicationEnv");
+        String infoByShopify;
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(shopName);
+        request.setAccessToken(accessToken);
+        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
+        cloudServiceRequest.setShopName(shopName);
+        cloudServiceRequest.setBody(query);
+        cloudServiceRequest.setAccessToken(accessToken);
+        if ("prod".equals(env) || "dev".equals(env)) {
+            infoByShopify = String.valueOf(getInfoByShopify(request, query));
         } else {
-            // 从数据库中获取(暂定就模板1)
-            description = hunYuanUserTranslate(template, characterCountUtils, HUN_YUAN_MODEL);
+            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
         }
-        //根据additionalInformation（暂时不知道是什么）
-        //根据language获取生成的语言是什么
-        //根据model选择对应的模型（暂定混元）
-        //将消耗的数据记录到数据库中，目前都是产品
-        boolean update = iapgUserCounterService.update(new UpdateWrapper<APGUserCounterDO>().eq("user_id", userDO.getId())
-                .set("user_token", counterDO.getUserToken() + characterCountUtils.getTotalChars())
-                .set("product_counter", counterDO.getProductCounter() + 1));
-        if (!update) {
-            //更新失败，记录日志 \
-            appInsights.trackTrace("更新失败: " + shopName + " userToken: " + characterCountUtils.getTotalChars());
-        }
+        return infoByShopify;
+    }
 
-        return description;
+    /**
+     * 根据模板id获取模板数据
+     * */
+    public TemplateDTO getTemplateById(Long templateId, Long userId, Boolean templateType) {
+        //根据templateType选择官方或用户模板
+        if (templateType) {
+            //获取用户模板
+            APGUserTemplateDO one = iapgUserTemplateService.getOne(new LambdaQueryWrapper<APGUserTemplateDO>().eq(APGUserTemplateDO::getUserId, userId).eq(APGUserTemplateDO::getId, templateId));
+            return userTemplateToTemplateDTO(one);
+        }else {
+            //获取官方模板
+            APGOfficialTemplateDO one = iapgOfficialTemplateService.getOne(new LambdaQueryWrapper<APGOfficialTemplateDO>().eq(APGOfficialTemplateDO::getId, templateId));
+            return officialTemplateToTemplateDTO(one);
+        }
     }
 }
