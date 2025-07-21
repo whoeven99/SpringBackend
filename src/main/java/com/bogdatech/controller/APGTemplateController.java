@@ -9,6 +9,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -27,10 +28,21 @@ public class APGTemplateController {
      * 获取默认数据和用户相关数据
      * */
     @PostMapping("/getAllTemplateData")
-    public BaseResponse<Object> getAllTemplateData(@RequestParam String shopName){
-        List<APGTemplateDO> allTemplateData;
-        allTemplateData = iapgTemplateService.getAllTemplateData(shopName);
-        if (allTemplateData != null && !allTemplateData.isEmpty()){
+    public BaseResponse<Object> getAllTemplateData(@RequestParam String shopName, @RequestBody TemplateDTO templateDTO){
+        List<TemplateDTO> allTemplateData = new ArrayList<>();
+        //先获取用户模板映射关系，获取官方的模板，获取用户个人的模板
+        List<TemplateDTO> templateByShopName = apgTemplateService.getAllOfficialTemplateData(templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype());
+        if (templateByShopName != null){
+            allTemplateData.addAll(templateByShopName);
+        }
+
+        //获取用户模板
+        List<TemplateDTO> allUserTemplateData = apgTemplateService.getAllUserTemplateData(shopName, templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype());
+        if (allUserTemplateData != null){
+            allTemplateData.addAll(allUserTemplateData);
+        }
+
+        if (!allTemplateData.isEmpty()){
             return new BaseResponse<>().CreateSuccessResponse(allTemplateData);
         }
         return new BaseResponse<>().CreateErrorResponse(allTemplateData);

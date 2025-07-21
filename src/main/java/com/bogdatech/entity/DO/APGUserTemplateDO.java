@@ -25,5 +25,9 @@ public class APGUserTemplateDO {
     private String templateTitle;
     @NotBlank(message = "templateType is null")
     private String templateType;
+    @NotBlank(message = "templateSubtype is null")
+    private String templateModel;//模板类型(product or collection)
+    @NotBlank(message = "templateSubtype is null")
+    private String templateSubtype; //模板子类型 （title， seo， description）
     private Boolean isDelete;
 }

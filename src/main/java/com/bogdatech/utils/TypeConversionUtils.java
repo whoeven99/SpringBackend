@@ -90,6 +90,8 @@ public class TypeConversionUtils {
         templateDTO.setTemplateData(templateDO.getTemplateData());
         templateDTO.setTemplateTitle(templateDO.getTemplateTitle());
         templateDTO.setTemplateDescription(templateDO.getTemplateDescription());
+        templateDTO.setTemplateModel(templateDO.getTemplateModel());
+        templateDTO.setTemplateSubtype(templateDO.getTemplateSubtype());
         templateDTO.setTemplateClass(true);
         return templateDTO;
     }
@@ -97,12 +99,16 @@ public class TypeConversionUtils {
     //将官方模板转化为通用模板
     public static TemplateDTO officialTemplateToTemplateDTO(APGOfficialTemplateDO templateDO){
         TemplateDTO templateDTO = new TemplateDTO();
+        templateDTO.setIsPayment(templateDO.getIsPayment());
         templateDTO.setId(templateDO.getId());
         templateDTO.setTemplateType(templateDO.getTemplateType());
         templateDTO.setTemplateData(templateDO.getTemplateData());
         templateDTO.setTemplateTitle(templateDO.getTemplateTitle());
         templateDTO.setTemplateDescription(templateDO.getTemplateDescription());
+        templateDTO.setTemplateModel(templateDO.getTemplateModel());
+        templateDTO.setTemplateSubtype(templateDO.getTemplateSubtype());
         templateDTO.setTemplateClass(false);
+
         return templateDTO;
     }
 

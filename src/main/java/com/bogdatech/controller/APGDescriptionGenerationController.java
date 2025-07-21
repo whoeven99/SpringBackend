@@ -5,12 +5,14 @@ import com.bogdatech.Service.IAPGUserPlanService;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
+import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.GenerateDescriptionService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
@@ -36,13 +38,17 @@ public class APGDescriptionGenerationController {
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         // 获取用户最大额度限制
         Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
-        //判断额度是否足够，然后决定是否继续调用
-
 
         // 实现生成描述的逻辑
-        String description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit);
-        appInsights.trackTrace(shopName + " generateDescription: " + description);
-        System.out.println(shopName + " generateDescription: " + description);
+        String description = null;
+        try {
+            description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit);
+            appInsights.trackTrace(shopName + " generateDescription: " + description);
+            System.out.println(shopName + " generateDescription: " + description);
+        } catch (ClientException e) {
+            appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
+            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+        }
         if (description != null){
             return new BaseResponse<>().CreateSuccessResponse(description);
         }

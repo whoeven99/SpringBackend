@@ -10,6 +10,7 @@ import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.DTO.ProductDTO;
 import com.bogdatech.entity.DTO.TemplateDTO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
+import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
@@ -17,6 +18,8 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
@@ -51,12 +54,17 @@ public class GenerateDescriptionService {
      * @return 产品描述
      */
     public String generateDescription(APGUsersDO usersDO, GenerateDescriptionVO generateDescriptionVO, CharacterCountUtils counter, Integer userMaxLimit) {
+        //判断额度是否足够，然后决定是否继续调用
+        APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
+        if (counterDO.getUserToken() >= userMaxLimit) {
+            throw new ClientException(CHARACTER_LIMIT);
+        }
         // 根据产品id获取相关数据，为翻译做铺垫
         ProductDTO product = getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
         // 根据模板id获取模板数据
         TemplateDTO templateById = getTemplateById(generateDescriptionVO.getTemplateId(), usersDO.getId(), generateDescriptionVO.getTemplateType());
         // 根据 ProductDTO 和传入的 GenerateDescriptionVO进行描述生成(暂定qwen模型 图片理解)
-        APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
+
         counter.addChars(counterDO.getUserToken());
         //生成提示词
         String prompt = buildDescriptionPrompt(product.getProductTitle(), product.getProductType(), product.getProductDescription(), generateDescriptionVO.getSeoKeywords(), product.getImageUrl(), product.getImageAltText(), generateDescriptionVO.getTextTone(), templateById.getTemplateType(), generateDescriptionVO.getBrandTone(), templateById.getTemplateData(), generateDescriptionVO.getLanguage());
