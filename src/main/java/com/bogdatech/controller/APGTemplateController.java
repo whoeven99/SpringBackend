@@ -30,17 +30,20 @@ public class APGTemplateController {
     @PostMapping("/getAllTemplateData")
     public BaseResponse<Object> getAllTemplateData(@RequestParam String shopName, @RequestBody TemplateDTO templateDTO){
         List<TemplateDTO> allTemplateData = new ArrayList<>();
-        //先获取用户模板映射关系，获取官方的模板，获取用户个人的模板
-        List<TemplateDTO> templateByShopName = apgTemplateService.getAllOfficialTemplateData(templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype());
-        if (templateByShopName != null){
-            allTemplateData.addAll(templateByShopName);
+        if (templateDTO.getTemplateClass()){
+            //获取用户模板
+            List<TemplateDTO> allUserTemplateData = apgTemplateService.getAllUserTemplateData(shopName, templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype(), templateDTO.getTemplateType());
+            if (allUserTemplateData != null){
+                allTemplateData.addAll(allUserTemplateData);
+            }
+        }else {
+            //先获取用户模板映射关系，获取官方的模板，获取用户个人的模板
+            List<TemplateDTO> templateByShopName = apgTemplateService.getAllOfficialTemplateData(templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype(), templateDTO.getTemplateType());
+            if (templateByShopName != null){
+                allTemplateData.addAll(templateByShopName);
+            }
         }
 
-        //获取用户模板
-        List<TemplateDTO> allUserTemplateData = apgTemplateService.getAllUserTemplateData(shopName, templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype());
-        if (allUserTemplateData != null){
-            allTemplateData.addAll(allUserTemplateData);
-        }
 
         if (!allTemplateData.isEmpty()){
             return new BaseResponse<>().CreateSuccessResponse(allTemplateData);

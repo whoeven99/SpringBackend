@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class APGUserProductServiceImpl extends ServiceImpl<APGUserProductMapper, APGUserProductDO> implements IAPGUserProductService {
     @Override
-    public Boolean updateProductVersion(Long userId, String productId) {
-        return baseMapper.updateProductVersion(userId, productId);
+    public Boolean updateProductVersion(Long userId, String productId, String des) {
+        return baseMapper.updateProductVersion(userId, productId, des);
     }
 }

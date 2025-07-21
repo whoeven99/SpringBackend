@@ -34,7 +34,7 @@ public class APGTemplateService {
     }
 
     /**
-     * 根据用户shopName获取官方模板数据
+     * 根据用户shopName获取官方模板数据 和 他自己的模板数据
      * */
     public List<TemplateDTO> getTemplateByShopName(String shopName) {
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
@@ -51,7 +51,8 @@ public class APGTemplateService {
      */
     public List<TemplateDTO> convertToOfficialTemplateVO(List<APGUserTemplateMappingDO> mappingList) {
         //获取官方模板的数据并返回
-        List<Long> listId = new ArrayList<>();
+        List<Long> listOfficeId = new ArrayList<>();
+        List<Long> listUserId = new ArrayList<>();
         if (mappingList == null || mappingList.isEmpty()) {
             return null;
         }
@@ -59,36 +60,40 @@ public class APGTemplateService {
         ) {
             //templateType为false时，为官方模板
             if (!apgUserTemplateMappingDO.getTemplateType()) {
-                listId.add(apgUserTemplateMappingDO.getTemplateId());
+                listOfficeId.add(apgUserTemplateMappingDO.getTemplateId());
+            }else {
+                listUserId.add(apgUserTemplateMappingDO.getTemplateId());
             }
         }
         //通过listId获取官方模板
-        List<APGOfficialTemplateDO> apgOfficialTemplates = iapgOfficialTemplateService.listByIds(listId);
+        List<APGOfficialTemplateDO> apgOfficialTemplates = iapgOfficialTemplateService.listByIds(listOfficeId);
+        if (apgOfficialTemplates == null || apgOfficialTemplates.isEmpty()){
+            return null;
+        }
+
         List<TemplateDTO> templates = new ArrayList<>();
         //将官方模板转化为 TemplateDTO
         for (APGOfficialTemplateDO apgOfficialTemplateDO : apgOfficialTemplates
         ) {
-            TemplateDTO templateDTO = convertOfficialToTemplateDTO(apgOfficialTemplateDO);
+            TemplateDTO templateDTO = officialTemplateToTemplateDTO(apgOfficialTemplateDO);
+            templates.add(templateDTO);
+        }
+
+        //获取用户模板
+        if (listUserId.isEmpty()){
+            return templates;
+        }
+        List<APGUserTemplateDO> userTemplates = iapgUserTemplateService.listByIds(listUserId);
+        if (userTemplates == null || userTemplates.isEmpty()){
+            return templates;
+        }
+
+        for (APGUserTemplateDO userTemplateDO : userTemplates){
+            TemplateDTO templateDTO = userTemplateToTemplateDTO(userTemplateDO);
             templates.add(templateDTO);
         }
 
         return templates;
-    }
-
-    /**
-     * 将APGOfficialTemplateDO转化为TemplateDTO
-     */
-    public TemplateDTO convertOfficialToTemplateDTO(APGOfficialTemplateDO apgOfficialTemplateDO) {
-        TemplateDTO templateDTO = new TemplateDTO();
-        templateDTO.setId(apgOfficialTemplateDO.getId());
-        templateDTO.setTemplateData(apgOfficialTemplateDO.getTemplateData());
-        templateDTO.setTemplateDescription(apgOfficialTemplateDO.getTemplateDescription());
-        templateDTO.setTemplateType(apgOfficialTemplateDO.getTemplateType());
-        templateDTO.setTemplateTitle(apgOfficialTemplateDO.getTemplateTitle());
-        templateDTO.setTemplateClass(false);
-        templateDTO.setTemplateModel(apgOfficialTemplateDO.getTemplateModel());
-        templateDTO.setTemplateSubtype(apgOfficialTemplateDO.getTemplateSubtype());
-        return templateDTO;
     }
 
     /**
@@ -132,7 +137,7 @@ public class APGTemplateService {
     /**
      * 获取官方所有模板
      * */
-    public List<TemplateDTO> getAllOfficialTemplateData(String templateModel, String templateSubtype) {
+    public List<TemplateDTO> getAllOfficialTemplateData(String templateModel, String templateSubtype, String templateType) {
         // 对templateModel 和 templateSubtype 做null判断，然后选择对应查询方法
         LambdaQueryWrapper<APGOfficialTemplateDO> queryWrapper = new LambdaQueryWrapper<>();
 
@@ -141,6 +146,9 @@ public class APGTemplateService {
         }
         if (templateSubtype != null) {
             queryWrapper.eq(APGOfficialTemplateDO::getTemplateSubtype, templateSubtype);
+        }
+        if (templateType != null) {
+            queryWrapper.eq(APGOfficialTemplateDO::getTemplateType, templateType);
         }
         List<APGOfficialTemplateDO> officialTemplates = iapgOfficialTemplateService.list(queryWrapper);
         List<APGOfficialTemplateDO> officialTemplateDOS = new ArrayList<>(officialTemplates);
@@ -158,7 +166,7 @@ public class APGTemplateService {
        return templateDTOS;
     }
 
-    public List<TemplateDTO> getAllUserTemplateData(String shopName, String templateModel, String templateSubtype) {
+    public List<TemplateDTO> getAllUserTemplateData(String shopName, String templateModel, String templateSubtype, String templateType) {
         //获取用户id
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
@@ -173,6 +181,9 @@ public class APGTemplateService {
         }
         if (templateSubtype != null) {
             queryWrapper.eq(APGUserTemplateDO::getTemplateSubtype, templateSubtype);
+        }
+        if (templateType != null) {
+            queryWrapper.eq(APGUserTemplateDO::getTemplateType, templateType);
         }
         List<APGUserTemplateDO> officialTemplates = iapgUserTemplateService.list(queryWrapper);
         List<APGUserTemplateDO> officialTemplateDOS = new ArrayList<>(officialTemplates);
