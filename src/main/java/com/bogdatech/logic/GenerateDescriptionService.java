@@ -70,8 +70,8 @@ public class GenerateDescriptionService {
         String prompt = buildDescriptionPrompt(product.getProductTitle(), product.getProductType(), product.getProductDescription(), generateDescriptionVO.getSeoKeywords(), product.getImageUrl(), product.getImageAltText(), generateDescriptionVO.getTextTone(), templateById.getTemplateType(), generateDescriptionVO.getBrandTone(), templateById.getTemplateData(), generateDescriptionVO.getLanguage());
         //调用大模型翻译
         String des = aLiYunTranslateIntegration.callWithPicMess(prompt, usersDO.getId(), counter, product.getImageUrl(), userMaxLimit);
-        //每次生成都要更新一下版本记录
-        iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId());
+        //每次生成都要更新一下版本记录和生成数据
+        iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des);
         return des;
     }
 

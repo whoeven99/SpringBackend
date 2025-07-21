@@ -20,6 +20,7 @@ public class APGUserProductDO {
     private Long userId;
     private Integer createVision;
     private Boolean isDelete;
+    private String generateContent;
     private Timestamp updateTime;
 
 }
