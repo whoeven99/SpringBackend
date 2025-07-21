@@ -86,6 +86,8 @@ public class APGTemplateService {
         templateDTO.setTemplateType(apgOfficialTemplateDO.getTemplateType());
         templateDTO.setTemplateTitle(apgOfficialTemplateDO.getTemplateTitle());
         templateDTO.setTemplateClass(false);
+        templateDTO.setTemplateModel(apgOfficialTemplateDO.getTemplateModel());
+        templateDTO.setTemplateSubtype(apgOfficialTemplateDO.getTemplateSubtype());
         return templateDTO;
     }
 
