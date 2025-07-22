@@ -86,4 +86,12 @@ public class APGTemplateController {
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
+
+    /**
+     * TODO: 添加官方模板到映射表，返回模板id
+     * */
+    @PostMapping("/addOfficialTemplate")
+    public BaseResponse<Object> addOfficialTemplate(@RequestParam String shopName, @RequestParam Long templateId){
+        apgTemplateService.addOfficialTemplate(shopName, templateId);
+    }
 }
