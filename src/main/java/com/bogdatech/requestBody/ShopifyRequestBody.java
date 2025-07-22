@@ -150,7 +150,7 @@ public class ShopifyRequestBody {
     public static String getProductDataQuery(String productId) {
         return "{\n" +
                 "  product(id: \"" + productId + "\") {\n" +
-                "    description\n" +
+                "    descriptionHtml\n" +
                 "    id\n" +
                 "    media(first: 1) {\n" +
                 "      edges {\n" +

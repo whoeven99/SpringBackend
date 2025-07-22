@@ -207,7 +207,7 @@ public class APGTemplateService {
         return templateDTOS;
     }
 
-    public Boolean addOfficialOrTemplate(String shopName, Long templateId, Boolean templateType) {
+    public Boolean addOfficialOrUserTemplate(String shopName, Long templateId, Boolean templateType) {
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
             return false;

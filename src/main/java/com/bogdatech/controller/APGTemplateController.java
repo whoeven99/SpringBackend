@@ -100,9 +100,9 @@ public class APGTemplateController {
     /**
      * 添加官方模板或用户模板到映射表，返回模板id
      * */
-    @PostMapping("/addOfficialOrTemplate")
-    public BaseResponse<Object> addOfficialOrTemplate(@RequestParam String shopName, @RequestBody APGUserTemplateMappingDO apgUserTemplateMappingDO){
-        Boolean result = apgTemplateService.addOfficialOrTemplate(shopName, apgUserTemplateMappingDO.getTemplateId(), apgUserTemplateMappingDO.getTemplateType());
+    @PostMapping("/addOfficialOrUserTemplate")
+    public BaseResponse<Object> addOfficialOrUserTemplate(@RequestParam String shopName, @RequestBody APGUserTemplateMappingDO apgUserTemplateMappingDO){
+        Boolean result = apgTemplateService.addOfficialOrUserTemplate(shopName, apgUserTemplateMappingDO.getTemplateId(), apgUserTemplateMappingDO.getTemplateType());
         if (result){
             return new BaseResponse<>().CreateSuccessResponse(apgUserTemplateMappingDO.getTemplateId());
         }
