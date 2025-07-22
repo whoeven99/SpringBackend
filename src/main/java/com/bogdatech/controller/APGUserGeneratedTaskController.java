@@ -1,7 +1,11 @@
 package com.bogdatech.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUserGeneratedTaskDO;
+import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
+import com.bogdatech.entity.VO.GenerateDescriptionsVO;
 import com.bogdatech.logic.APGUserGeneratedTaskService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +49,8 @@ public class APGUserGeneratedTaskController {
      * 批量生成描述
      * */
     @PutMapping("/batchGenerateDescription")
-    public BaseResponse<Object> batchGenerateDescription(@RequestParam String shopName, @RequestBody GenerateDescriptionVO generateDescriptionVO){
-
-
+    public BaseResponse<Object> batchGenerateDescription(@RequestParam String shopName, @RequestBody GenerateDescriptionsVO generateDescriptionsVO){
+        apgUserGeneratedTaskService.batchGenerateDescription(shopName, generateDescriptionsVO);
 
         return null;
     }

@@ -134,7 +134,7 @@ public class APGTemplateService {
         apgUserTemplateMappingDO.setUserId(userDO.getId());
         apgUserTemplateMappingDO.setTemplateType(templateDTO.getTemplateClass());
         apgUserTemplateMappingDO.setIsDelete(true);
-        return iapgUserTemplateMappingService.update(apgUserTemplateMappingDO, new LambdaQueryWrapper<APGUserTemplateMappingDO>().eq(APGUserTemplateMappingDO::getUserId, userDO.getId()).eq(APGUserTemplateMappingDO::getId, templateDTO.getId()));
+        return iapgUserTemplateMappingService.update(apgUserTemplateMappingDO, new LambdaQueryWrapper<APGUserTemplateMappingDO>().eq(APGUserTemplateMappingDO::getUserId, userDO.getId()).eq(APGUserTemplateMappingDO::getTemplateId, templateDTO.getId()));
     }
 
     /**
