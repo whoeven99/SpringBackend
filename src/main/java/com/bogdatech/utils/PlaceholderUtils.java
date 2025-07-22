@@ -220,4 +220,70 @@ public class PlaceholderUtils {
     public static String getPolicyPrompt(String target) {
         return "Translate the following shop policy HTML content into " + target + ". Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
     }
+
+    /**
+     * 构建描述生成提示词的动态方法
+     * */
+    public static String buildDescriptionPrompt(
+            String productName,
+            String productCategory,
+            String productDescription,
+            String seoKeywords,
+            String image,
+            String imageDescription,
+            String tone,
+            String contentType,
+            String brand,
+            String templateStructure,
+            String language
+    ) {
+        System.out.println("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("You are a professional e-commerce content creator who specializes in writing high-converting product descriptions for shopify in ");
+        prompt.append(language);
+        prompt.append(". Please generate a product description based on the following information and structure requirements. Strictly follow the format, return only the final product description without any extra explanation.\n\n[BASIC INFORMATION]\n");
+        buildSection(prompt, buildNonNullMap(new Object[][]{
+                {"Product Name", productName},
+                {"Product Category", productCategory},
+                {"Product Description", productDescription},
+                {"SEO Keywords", seoKeywords},
+                {"Image", image},
+                {"Image Description", imageDescription}
+        }));
+        prompt.append("\n[WRITING STYLE]\n");
+        buildSection(prompt, buildNonNullMap(new Object[][]{
+                        {"Tone", tone},
+                        {"Content Type", contentType},
+                        {"Brand Tone Reference", brand},
+                }));
+        prompt.append("\n[STRUCTURE TEMPLATE]\n");
+        prompt.append(templateStructure != null ? templateStructure.trim() : "");
+        return prompt.toString();
+    }
+
+    /**
+     * 判断动态构成提示词
+     * */
+    private static void buildSection(StringBuilder builder, Map<String, String> fields) {
+        System.out.println("fields: " + fields);
+        fields.forEach((label, value) -> {
+            if (isNotBlank(value)) {
+                builder.append("- ").append(label).append(": ").append(value.trim()).append("\n");
+            }
+        });
+    }
+
+    private static boolean isNotBlank(String str) {
+        return str != null && !str.trim().isEmpty();
+    }
+
+    public static Map<String, String> buildNonNullMap(Object[][] pairs) {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (Object[] pair : pairs) {
+            String key = (String) pair[0];
+            String value = (String) pair[1];
+            if (value != null) map.put(key, value);
+        }
+        return map;
+    }
 }

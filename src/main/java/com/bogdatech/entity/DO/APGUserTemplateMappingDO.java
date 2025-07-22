@@ -7,19 +7,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("APG_User_Counter")
-public class APGUserCounterDO {
-    @TableId(type = IdType.AUTO)
+@Data
+@TableName("APG_User_Template_Mapping")
+public class APGUserTemplateMappingDO {
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
     private Long userId;
-    private Integer productCounter;
-    private Integer productSeoCounter;
-    private Integer collectionCounter;
-    private Integer collectionSeoCounter;
-    private Integer allCounter;
-    private Integer extraCounter;
-    private Integer userToken;
+    private Long templateId;
+    private Boolean templateType;
+    private Boolean isDelete;
 }

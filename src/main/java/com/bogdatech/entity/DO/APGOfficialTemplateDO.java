@@ -8,19 +8,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@TableName("APG_Template")
-public class APGTemplateDO {
+@AllArgsConstructor
+@TableName("APG_Official_Template")
+public class APGOfficialTemplateDO {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String templateData;
     private String templateTitle;
-    private Integer templateType;
-    private Integer templateSeo;
-    private Long userId;
+    private String templateType;
     private String templateDescription;
-    private String templateModel; //模板类型(product or collection)
+    private String templateModel;//模板类型(product or collection)
     private String templateSubtype; //模板子类型 （title， seo， description）
-    private boolean isDelete;
+    private Boolean isPayment; //是否是付费模板
+    private Integer usedTimes;
+
 }

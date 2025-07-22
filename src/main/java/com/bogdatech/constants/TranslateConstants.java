@@ -69,4 +69,6 @@ public class TranslateConstants {
     public static final float MAGNIFICATION = 1.5f;
     public static final int OPENAI_MAGNIFICATION = 3;
     public static final int DEEPL_MAGNIFICATION = 4;
+    public static final String API_VERSION_LAST = "2025-07";
+    public static final String QWEN_VL_LAST = "qwen-vl-max-latest";
 }

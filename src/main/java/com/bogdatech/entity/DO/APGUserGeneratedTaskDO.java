@@ -10,16 +10,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("APG_User_Counter")
-public class APGUserCounterDO {
+@TableName("APG_User_Generated_Task")
+public class APGUserGeneratedTaskDO {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
-    private Integer productCounter;
-    private Integer productSeoCounter;
-    private Integer collectionCounter;
-    private Integer collectionSeoCounter;
-    private Integer allCounter;
-    private Integer extraCounter;
-    private Integer userToken;
+    private Integer taskStatus;
+    private String taskModel;
 }

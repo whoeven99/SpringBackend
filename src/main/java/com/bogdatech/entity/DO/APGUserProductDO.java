@@ -7,19 +7,20 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@TableName("APG_User_Counter")
-public class APGUserCounterDO {
+@AllArgsConstructor
+@TableName("APG_User_Product")
+public class APGUserProductDO {
     @TableId(type = IdType.AUTO)
     private Long id;
+    private String productId;
     private Long userId;
-    private Integer productCounter;
-    private Integer productSeoCounter;
-    private Integer collectionCounter;
-    private Integer collectionSeoCounter;
-    private Integer allCounter;
-    private Integer extraCounter;
-    private Integer userToken;
+    private Integer createVision;
+    private Boolean isDelete;
+    private String generateContent;
+    private Timestamp updateTime;
+
 }
