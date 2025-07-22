@@ -1,6 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.entity.DO.APGUserGeneratedTaskDO;
+import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.logic.APGUserGeneratedTaskService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,5 +39,16 @@ public class APGUserGeneratedTaskController {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
         return new BaseResponse<>().CreateSuccessResponse(userData);
+    }
+
+    /**
+     * 批量生成描述
+     * */
+    @PutMapping("/batchGenerateDescription")
+    public BaseResponse<Object> batchGenerateDescription(@RequestParam String shopName, @RequestBody GenerateDescriptionVO generateDescriptionVO){
+
+
+
+        return null;
     }
 }

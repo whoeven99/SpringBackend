@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.bogdatech.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
 import static com.bogdatech.utils.TypeConversionUtils.userTemplateToTemplateDTO;
@@ -130,6 +132,7 @@ public class APGTemplateService {
         APGUserTemplateMappingDO apgUserTemplateMappingDO = new APGUserTemplateMappingDO();
         apgUserTemplateMappingDO.setId(templateDTO.getId());
         apgUserTemplateMappingDO.setUserId(userDO.getId());
+        apgUserTemplateMappingDO.setTemplateType(templateDTO.getTemplateClass());
         apgUserTemplateMappingDO.setIsDelete(true);
         return iapgUserTemplateMappingService.update(apgUserTemplateMappingDO, new LambdaQueryWrapper<APGUserTemplateMappingDO>().eq(APGUserTemplateMappingDO::getUserId, userDO.getId()).eq(APGUserTemplateMappingDO::getId, templateDTO.getId()));
     }
@@ -137,7 +140,7 @@ public class APGTemplateService {
     /**
      * 获取官方所有模板
      * */
-    public List<TemplateDTO> getAllOfficialTemplateData(String templateModel, String templateSubtype, String templateType) {
+    public List<TemplateDTO> getAllOfficialTemplateData(Long userId, String templateModel, String templateSubtype, String templateType) {
         // 对templateModel 和 templateSubtype 做null判断，然后选择对应查询方法
         LambdaQueryWrapper<APGOfficialTemplateDO> queryWrapper = new LambdaQueryWrapper<>();
 
@@ -150,32 +153,35 @@ public class APGTemplateService {
         if (templateType != null) {
             queryWrapper.eq(APGOfficialTemplateDO::getTemplateType, templateType);
         }
-        List<APGOfficialTemplateDO> officialTemplates = iapgOfficialTemplateService.list(queryWrapper);
-        List<APGOfficialTemplateDO> officialTemplateDOS = new ArrayList<>(officialTemplates);
 
+        List<APGOfficialTemplateDO> officialTemplateDOS = new ArrayList<>(iapgOfficialTemplateService.list(queryWrapper));
+        // 获取用户映射关系，用于判断官方模板数据是否被添加过
+        List<APGUserTemplateMappingDO> mappingList = iapgUserTemplateMappingService.list(new LambdaQueryWrapper<APGUserTemplateMappingDO>().eq(APGUserTemplateMappingDO::getUserId, userId).eq(APGUserTemplateMappingDO::getIsDelete, false));
         if (officialTemplateDOS.isEmpty()){
             return null;
         }
-        List<TemplateDTO> templateDTOS = new ArrayList<>();
+        // 将用户已使用的模板ID提取出来（官方模板对应的 mapping 是 templateType == false）
+        Set<Long> userUsedTemplateIds = mappingList.stream()
+                .filter(mapping -> Boolean.FALSE.equals(mapping.getTemplateType()))
+                .map(APGUserTemplateMappingDO::getTemplateId)
+                .collect(Collectors.toSet());
+
+
         //将官方模板转化为 TemplateDTO
-        for (APGOfficialTemplateDO apgOfficialTemplateDO: officialTemplateDOS
-             ) {
-            TemplateDTO templateDTO = officialTemplateToTemplateDTO(apgOfficialTemplateDO);
-            templateDTOS.add(templateDTO);
-        }
-       return templateDTOS;
+        return officialTemplateDOS.stream().map(templateDO -> {
+            TemplateDTO dto = officialTemplateToTemplateDTO(templateDO);
+            dto.setIsUserUsed(userUsedTemplateIds.contains(dto.getId()));
+            return dto;
+        }).collect(Collectors.toList());
     }
 
-    public List<TemplateDTO> getAllUserTemplateData(String shopName, String templateModel, String templateSubtype, String templateType) {
-        //获取用户id
-        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
-        if (userDO == null) {
-            return null;
-        }
+    public List<TemplateDTO> getAllUserTemplateData(Long userId, String templateModel, String templateSubtype, String templateType) {
 
         //获取用户相关模板
         LambdaQueryWrapper<APGUserTemplateDO> queryWrapper = new LambdaQueryWrapper<>();
-
+        if (userId != null) {
+            queryWrapper.eq(APGUserTemplateDO::getUserId, userId);
+        }
         if (templateModel != null) {
             queryWrapper.eq(APGUserTemplateDO::getTemplateModel, templateModel);
         }
@@ -201,7 +207,7 @@ public class APGTemplateService {
         return templateDTOS;
     }
 
-    public Boolean addOfficialTemplate(String shopName, Long templateId, Boolean templateType) {
+    public Boolean addOfficialOrTemplate(String shopName, Long templateId, Boolean templateType) {
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
             return false;
