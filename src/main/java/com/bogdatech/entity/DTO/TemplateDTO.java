@@ -17,4 +17,5 @@ public class TemplateDTO {
     private String templateModel; //模板类型(product or collection)
     private String templateSubtype; //模板子类型 （title， seo， description）
     private Boolean isPayment; //是否付费
+    private Boolean isUserUsed; //是否被用户添加过
 }
