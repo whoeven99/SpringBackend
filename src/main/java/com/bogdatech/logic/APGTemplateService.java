@@ -201,12 +201,15 @@ public class APGTemplateService {
         return templateDTOS;
     }
 
-    public Boolean addOfficialTemplate(String shopName, Long templateId) {
+    public Boolean addOfficialTemplate(String shopName, Long templateId, Boolean templateType) {
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
             return false;
         }
-
-        return true;
+        APGUserTemplateMappingDO apgUserTemplateMappingDO = new APGUserTemplateMappingDO();
+        apgUserTemplateMappingDO.setTemplateId(templateId);
+        apgUserTemplateMappingDO.setUserId(userDO.getId());
+        apgUserTemplateMappingDO.setTemplateType(templateType);
+        return iapgUserTemplateMappingService.save(apgUserTemplateMappingDO);
     }
 }

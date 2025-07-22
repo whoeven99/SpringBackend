@@ -1,8 +1,8 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.IAPGTemplateService;
-import com.bogdatech.entity.DO.APGTemplateDO;
 import com.bogdatech.entity.DO.APGUserTemplateDO;
+import com.bogdatech.entity.DO.APGUserTemplateMappingDO;
 import com.bogdatech.entity.DTO.TemplateDTO;
 import com.bogdatech.logic.APGTemplateService;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -88,11 +88,14 @@ public class APGTemplateController {
     }
 
     /**
-     * TODO: 添加官方模板到映射表，返回模板id
+     * 添加官方模板到映射表，返回模板id
      * */
     @PostMapping("/addOfficialTemplate")
-    public BaseResponse<Object> addOfficialTemplate(@RequestParam String shopName, @RequestParam Long templateId){
-        apgTemplateService.addOfficialTemplate(shopName, templateId);
-        return null;
+    public BaseResponse<Object> addOfficialTemplate(@RequestParam String shopName, @RequestBody APGUserTemplateMappingDO apgUserTemplateMappingDO){
+        Boolean result = apgTemplateService.addOfficialTemplate(shopName, apgUserTemplateMappingDO.getTemplateId(), apgUserTemplateMappingDO.getTemplateType());
+        if (result){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 }
