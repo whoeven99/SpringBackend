@@ -93,5 +93,6 @@ public class APGTemplateController {
     @PostMapping("/addOfficialTemplate")
     public BaseResponse<Object> addOfficialTemplate(@RequestParam String shopName, @RequestParam Long templateId){
         apgTemplateService.addOfficialTemplate(shopName, templateId);
+        return null;
     }
 }
