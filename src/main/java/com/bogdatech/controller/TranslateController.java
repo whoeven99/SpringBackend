@@ -213,7 +213,11 @@ public class TranslateController {
 
         //修改自定义提示词
         String fixCustomKey = clickTranslateRequest.getCustomKey();
-        String cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
+        String cleanedText = null;
+        if (fixCustomKey != null){
+            cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
+        }
+
 
         appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
         translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
