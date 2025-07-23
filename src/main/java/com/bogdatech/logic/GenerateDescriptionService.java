@@ -24,6 +24,7 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.requestBody.ShopifyRequestBody.*;
+import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.PlaceholderUtils.buildDescriptionPrompt;
 import static com.bogdatech.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
@@ -59,8 +60,9 @@ public class GenerateDescriptionService {
         if (counterDO.getUserToken() >= userMaxLimit) {
             throw new ClientException(CHARACTER_LIMIT);
         }
-        // 根据产品id获取相关数据，为翻译做铺垫
+        // 根据产品id获取相关数据，为生成做铺垫
         ProductDTO product = getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
+        GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
         // 根据模板id获取模板数据
         TemplateDTO templateById = getTemplateById(generateDescriptionVO.getTemplateId(), usersDO.getId(), generateDescriptionVO.getTemplateType());
         // 根据 ProductDTO 和传入的 GenerateDescriptionVO进行描述生成(暂定qwen模型 图片理解)
