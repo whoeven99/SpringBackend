@@ -12,7 +12,7 @@ public class APGUserProductServiceImpl extends ServiceImpl<APGUserProductMapper,
     @Override
     public Boolean updateProductVersion(Long userId, String productId, String des) {
         //如果productId查询不到，创建一个新的
-        APGUserProductDO apgUserProductDO = baseMapper.selectOne(new LambdaQueryWrapper<APGUserProductDO>().eq(APGUserProductDO::getProductId, productId).eq(APGUserProductDO::getUserId, userId));
+        APGUserProductDO apgUserProductDO = baseMapper.selectOne(new LambdaQueryWrapper<APGUserProductDO>().eq(APGUserProductDO::getProductId, productId).eq(APGUserProductDO::getUserId, userId).eq(APGUserProductDO::getIsDelete, false));
         if (apgUserProductDO == null) {
             APGUserProductDO newDO = new APGUserProductDO();
             newDO.setProductId(productId);

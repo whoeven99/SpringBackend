@@ -17,4 +17,5 @@ public class APGUserGeneratedTaskDO {
     private Long userId;
     private Integer taskStatus;
     private String taskModel;
+    private String taskData;
 }

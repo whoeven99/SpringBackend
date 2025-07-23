@@ -32,6 +32,9 @@ public interface APGUserCounterMapper extends BaseMapper<APGUserCounterDO> {
             """)
     APGUserCounterDO selectUserCounterByShopName(String shopName);
 
-    @Update("UPDATE APG_User_Counter WITH (UPDLOCK, ROWLOCK) SET user_token = user_token + #{counter} WHERE user_id = #{userId} AND user_token <= #{maxLimit}")
+    @Update("UPDATE APG_User_Counter WITH (UPDLOCK, ROWLOCK) SET user_token = user_token + #{counter}, chars = chars + #{counter} WHERE user_id = #{userId} AND user_token <= #{maxLimit}")
     int updateUserUsedCount(Long userId, Integer counter, Integer maxLimit);
+
+    @Update("UPDATE APG_User_Counter WITH (UPDLOCK, ROWLOCK) SET chars = 0 WHERE user_id = #{userId}")
+    int updateCharsByUserId(Long userId);
 }

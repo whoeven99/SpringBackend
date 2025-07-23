@@ -18,4 +18,6 @@ public class GenerateDescriptionsVO {
     private String seoKeywords; //SEO 关键词
     private String brandWord; //品牌词
     private String brandSlogan; //品牌口号
+    private String pageType; //pro col类型
+    private String contentType; //title seo类型
 }
