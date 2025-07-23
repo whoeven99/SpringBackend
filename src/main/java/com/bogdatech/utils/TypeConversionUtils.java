@@ -6,6 +6,8 @@ import com.bogdatech.entity.DO.APGUserTemplateDO;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.DO.UserSubscriptionsDO;
 import com.bogdatech.entity.DTO.TemplateDTO;
+import com.bogdatech.entity.VO.GenerateDescriptionVO;
+import com.bogdatech.entity.VO.GenerateDescriptionsVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.model.controller.request.*;
 
@@ -112,4 +114,19 @@ public class TypeConversionUtils {
         return templateDTO;
     }
 
+    //将generateDescriptionsVO转化为generateDescriptionVO
+    public static GenerateDescriptionVO generateDescriptionsVOToGenerateDescriptionVO(String productId,GenerateDescriptionsVO generateDescriptionsVO){
+        GenerateDescriptionVO generateDescriptionVO = new GenerateDescriptionVO();
+        generateDescriptionVO.setTemplateType(generateDescriptionsVO.getTemplateType());
+        generateDescriptionVO.setTemplateId(generateDescriptionsVO.getTemplateId());
+        generateDescriptionVO.setModel(generateDescriptionsVO.getModel());
+        generateDescriptionVO.setLanguage(generateDescriptionsVO.getLanguage());
+        generateDescriptionVO.setBrandSlogan(generateDescriptionsVO.getBrandSlogan());
+        generateDescriptionVO.setBrandTone(generateDescriptionsVO.getBrandTone());
+        generateDescriptionVO.setBrandWord(generateDescriptionsVO.getBrandWord());
+        generateDescriptionVO.setSeoKeywords(generateDescriptionsVO.getSeoKeywords());
+        generateDescriptionVO.setTextTone(generateDescriptionsVO.getTextTone());
+        generateDescriptionVO.setProductId(productId);
+        return generateDescriptionVO;
+    }
 }
