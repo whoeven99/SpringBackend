@@ -205,7 +205,7 @@ public class ALiYunTranslateIntegration {
             System.out.println("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
-            //TODO：更新用户产品计数
+            //更新用户产品计数
             counter.addChars(totalToken);
             System.out.println("counter: " + counter.getTotalChars());
             System.out.println("content: " + content);

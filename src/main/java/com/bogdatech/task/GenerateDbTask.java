@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogdatech.logic.TranslateService.executorService;
+import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
@@ -33,7 +32,8 @@ public class GenerateDbTask {
     private final IAPGUserPlanService iapgUserPlanService;
     private final IAPGUserCounterService iapgUserCounterService;
     private final IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
-    private static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
+    public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
+    public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
     @Autowired
     public GenerateDbTask(IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService, GenerateDescriptionService generateDescriptionService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService, IAPGUserCounterService iapgUserCounterService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService) {
         this.iapgUserGeneratedSubtaskService = iapgUserGeneratedSubtaskService;
@@ -83,8 +83,7 @@ public class GenerateDbTask {
      * */
     public void fixGenerateSubtask(APGUserGeneratedSubtaskDO subtaskDO) {
         // 修改子任务状态为2
-        Boolean b = iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
-//        System.out.println("修改子任务状态为2是否正确：" + b);
+        iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
         // 获取用户数据
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getId, subtaskDO.getUserId()));
         // 获取用户最大额度
@@ -133,11 +132,9 @@ public class GenerateDbTask {
             return;
         }
 
-
         //将payload转化为GenerateEmailVO类型数据
         try {
-            Boolean b = iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
-            System.out.println("修改子任务状态为2是否正确：" + b);
+            iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
 
             GenerateEmailVO generateEmailVO = OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateEmailVO.class);
             //根据用户id，获取对应数据

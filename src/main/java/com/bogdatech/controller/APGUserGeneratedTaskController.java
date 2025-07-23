@@ -1,22 +1,20 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUserGeneratedTaskDO;
 import com.bogdatech.entity.DO.APGUsersDO;
-import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateDescriptionsVO;
-import com.bogdatech.exception.ClientException;
+import com.bogdatech.entity.VO.GenerateProgressBarVO;
 import com.bogdatech.logic.APGUserGeneratedTaskService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
+import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
@@ -24,10 +22,12 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @EnableAsync
 public class APGUserGeneratedTaskController {
     private final APGUserGeneratedTaskService apgUserGeneratedTaskService;
+    private final IAPGUsersService iapgUsersService;
 
     @Autowired
-    public APGUserGeneratedTaskController(APGUserGeneratedTaskService apgUserGeneratedTaskService) {
+    public APGUserGeneratedTaskController(APGUserGeneratedTaskService apgUserGeneratedTaskService, IAPGUsersService iapgUsersService) {
         this.apgUserGeneratedTaskService = apgUserGeneratedTaskService;
+        this.iapgUsersService = iapgUsersService;
     }
 
     /**
@@ -44,10 +44,11 @@ public class APGUserGeneratedTaskController {
 
     /**
      * 获取用户相关数据
+     * 再额外返回用户翻译总数和还未翻译数量
      */
     @GetMapping("/getUserData")
     public BaseResponse<Object> getUserData(@RequestParam String shopName) {
-        APGUserGeneratedTaskDO userData = apgUserGeneratedTaskService.getUserData(shopName);
+        GenerateProgressBarVO userData = apgUserGeneratedTaskService.getUserData(shopName);
         if (userData == null) {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
@@ -75,6 +76,25 @@ public class APGUserGeneratedTaskController {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
         apgUserGeneratedTaskService.batchGenerateDescriptionException(shopName, generateDescriptionsVO);
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    /**
+     * 查看GENERATE_SHOP里面的用户数据
+     * */
+    @GetMapping("/getGenerateShop")
+    public BaseResponse<Object> getGenerateShop() {
+        return new BaseResponse<>().CreateSuccessResponse(GENERATE_SHOP);
+    }
+
+    /**
+     * 删除Generate_shop里面的用户数据
+     * */
+    @GetMapping("/deleteGenerateShop")
+    public BaseResponse<Object> deleteGenerateShop(@RequestParam String shopName) {
+        //根据shopName，获取userId
+        APGUsersDO usersDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
+        GENERATE_SHOP.remove(usersDO.getId());
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 }
