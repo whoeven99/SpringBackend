@@ -1,5 +1,7 @@
 package com.bogdatech.controller;
 
+import com.azure.core.annotation.Put;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUserGeneratedTaskDO;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
+import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
@@ -96,5 +99,30 @@ public class APGUserGeneratedTaskController {
         APGUsersDO usersDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
         GENERATE_SHOP.remove(usersDO.getId());
         return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    /**
+     * 停止用户批量翻译
+     * */
+    @PutMapping("/stopBatchGenerateDescription")
+    public BaseResponse<Object> stopBatchGenerateDescription(@RequestParam String shopName) {
+        //根据shopName，获取userId
+        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        Boolean result = GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
+        //将任务和子任务的状态改为1
+        Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
+        if (Boolean.TRUE.equals(result) && Boolean.TRUE.equals(updateFlag)) {
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
+    }
+
+    /**
+     * 查看用户停止状态
+     * */
+    @GetMapping("/getStopFlag")
+    public BaseResponse<Object> getStopFlag() {
+        return new BaseResponse<>().CreateSuccessResponse(GENERATE_SHOP_STOP_FLAG);
     }
 }

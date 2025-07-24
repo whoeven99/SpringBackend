@@ -5,4 +5,6 @@ import com.bogdatech.entity.DO.APGUserGeneratedSubtaskDO;
 
 public interface IAPGUserGeneratedSubtaskService extends IService<APGUserGeneratedSubtaskDO> {
     Boolean updateStatusById(String subtaskId, int i);
+
+    Boolean updateAllStatusByUserId(Long id, int i);
 }
