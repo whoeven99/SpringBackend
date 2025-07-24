@@ -78,8 +78,7 @@ public class APGUserGeneratedTaskController {
         if (!apgUserGeneratedTaskService.isTaskRunning(shopName)) {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
-        apgUserGeneratedTaskService.batchGenerateDescriptionException(shopName, generateDescriptionsVO);
-        return new BaseResponse<>().CreateSuccessResponse(true);
+        return apgUserGeneratedTaskService.batchGenerateDescriptionException(shopName, generateDescriptionsVO);
     }
 
     /**

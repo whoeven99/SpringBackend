@@ -4,15 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
-import com.bogdatech.entity.DO.APGUserCounterDO;
-import com.bogdatech.entity.DO.APGUserGeneratedSubtaskDO;
-import com.bogdatech.entity.DO.APGUserGeneratedTaskDO;
-import com.bogdatech.entity.DO.APGUsersDO;
+import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateDescriptionsVO;
 import com.bogdatech.entity.VO.GenerateEmailVO;
 import com.bogdatech.entity.VO.GenerateProgressBarVO;
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.model.controller.response.BaseResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -96,37 +94,41 @@ public class APGUserGeneratedTaskService {
     /**
      * 对批量生成的异常捕捉处理
      * */
-    @Async
-    public void batchGenerateDescriptionException(String shopName, GenerateDescriptionsVO generateDescriptionsVO){
+    public BaseResponse<Object> batchGenerateDescriptionException(String shopName, GenerateDescriptionsVO generateDescriptionsVO){
         try {
-            batchGenerateDescription(shopName, generateDescriptionsVO);
+            // 根据shopName获取用户数据
+            APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+            // 获取用户最大额度限制
+            Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
+            //判断额度是否足够，然后决定是否继续调用
+            APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
+            if (counterDO.getUserToken() >= userMaxLimit) {
+                //修改状态
+                initOrUpdateData(shopName, 3, null, null);
+                throw new ClientException(CHARACTER_LIMIT);
+            }
+            batchGenerateDescription(usersDO, shopName, generateDescriptionsVO);
         }catch (ClientException e1){
             //发送对应邮件
             //修改状态
             appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
             System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e1);
             appInsights.trackException(e1);
+            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件
             appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
             System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e);
             appInsights.trackException(e);
+            return new BaseResponse<>().CreateErrorResponse(false);
         }
+        return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
-    public void batchGenerateDescription(String shopName, GenerateDescriptionsVO generateDescriptionsVO) {
-        // 根据shopName获取用户数据
-        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
-        // 获取用户最大额度限制
-        Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
-        //判断额度是否足够，然后决定是否继续调用
-        APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
-        if (counterDO.getUserToken() >= userMaxLimit) {
-            //修改状态
-            initOrUpdateData(shopName, 3, null, null);
-            throw new ClientException(CHARACTER_LIMIT);
-        }
+    @Async
+    public void batchGenerateDescription(APGUsersDO usersDO, String shopName, GenerateDescriptionsVO generateDescriptionsVO) {
+
 
         //按productIds将其分为一个个小任务及传入的数据存到APG_User_Generated_SubTask中
         for (String productId : generateDescriptionsVO.getProductIds()) {
