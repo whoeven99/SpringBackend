@@ -130,11 +130,7 @@ public class GenerateDbTask {
         // 如果额度超限，发超限邮件
         APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, subtaskDO.getUserId()));
         if (taskDO.getTaskStatus() == 3) {
-            //删除状态为2的子任务
-            APGUserGeneratedSubtaskDO gs = iapgUserGeneratedSubtaskService.getById(subtaskDO.getSubtaskId());
-            if (gs.getStatus() == 2) {
-                iapgUserGeneratedSubtaskService.removeById(subtaskDO.getSubtaskId());
-            }
+            iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 3);
             //删除限制
             GENERATE_SHOP.remove(subtaskDO.getUserId());
             return;
