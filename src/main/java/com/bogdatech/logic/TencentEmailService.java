@@ -269,7 +269,7 @@ public class TencentEmailService {
     /**
      * 发送生成描述成功的邮件
      * */
-    public void sendAPGSuccessEmail(String shopName, Integer costChars, Integer remainingChars, Boolean isTask) {
+    public void sendAPGSuccessEmail() {
 
     }
 }

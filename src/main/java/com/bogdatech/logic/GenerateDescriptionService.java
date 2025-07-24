@@ -81,7 +81,7 @@ public class GenerateDescriptionService {
         }
 
 //        每次生成都要更新一下版本记录和生成数据
-        iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des);
+        iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des, generateDescriptionVO.getPageType() + " " + generateDescriptionVO.getContentType());
         return des;
     }
 
