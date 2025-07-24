@@ -34,14 +34,16 @@ public class TencentEmailService {
     private final ITranslationUsageService translationUsageService;
     private final ITranslatesService translatesService;
     private final ITranslationCounterService translationCounterService;
+    private final IAPGEmailService iapgEmailService;
     @Autowired
-    public TencentEmailService(EmailIntegration emailIntegration, IEmailService emailService, IUsersService usersService, ITranslationUsageService translationUsageService, ITranslatesService translatesService, ITranslationCounterService translationCounterService) {
+    public TencentEmailService(EmailIntegration emailIntegration, IEmailService emailService, IUsersService usersService, ITranslationUsageService translationUsageService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IAPGEmailService iapgEmailService) {
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
         this.usersService = usersService;
         this.translationUsageService = translationUsageService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
+        this.iapgEmailService = iapgEmailService;
     }
 
     //由腾讯发送邮件
@@ -252,5 +254,22 @@ public class TencentEmailService {
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(143058L, templateData, SUBSCRIBE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUBSCRIBE_SUCCESSFUL_SUBJECT, b ? 1 : 0));
+    }
+
+    /**
+     * 发送APG应用初始化邮件
+     */
+    public void sendApgInitEmail(String email, Long userId) {
+        //由腾讯发送邮件
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144208L, null, APG_INIT_EMAIL, TENCENT_FROM_EMAIL, email));
+        //存入数据库中
+        iapgEmailService.saveEmail(new APGEmailDO(null, userId, TENCENT_FROM_EMAIL, email, APG_INIT_EMAIL, b));
+    }
+
+    /**
+     * 发送生成描述成功的邮件
+     * */
+    public void sendAPGSuccessEmail(String shopName, Integer costChars, Integer remainingChars, Boolean isTask) {
+
     }
 }

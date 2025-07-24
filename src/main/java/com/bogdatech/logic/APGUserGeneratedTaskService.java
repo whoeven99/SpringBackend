@@ -163,4 +163,16 @@ public class APGUserGeneratedTaskService {
         APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
         return taskDO.getTaskStatus() != 2;
     }
+
+    /**
+     * 用户点击暂停。
+     * 以及用户卸载
+     * */
+    public Boolean updateTaskStatusTo1(Long id) {
+        //将任务改为状态改为1
+        Boolean b = iapgUserGeneratedTaskService.updateStatusByUserId(id, 1);
+        //将子任务改成5
+        Boolean b1 = iapgUserGeneratedSubtaskService.updateAllStatusByUserId(id, 5);
+        return b && b1;
+    }
 }

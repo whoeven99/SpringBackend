@@ -9,4 +9,7 @@ import org.apache.ibatis.annotations.Update;
 public interface APGUserGeneratedSubtaskMapper extends BaseMapper<APGUserGeneratedSubtaskDO> {
     @Update("UPDATE APG_User_Generated_Subtask SET status = #{i} WHERE subtask_id = #{subtaskId}")
     Boolean updateStatusById(String subtaskId, int i);
+
+    @Update("UPDATE APG_User_Generated_Subtask SET status = #{i} WHERE user_id = #{id}")
+    Boolean updateAllStatusByUserId(Long id, int i);
 }

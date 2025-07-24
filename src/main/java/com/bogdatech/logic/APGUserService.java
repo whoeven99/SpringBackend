@@ -16,12 +16,14 @@ public class APGUserService {
     private final IAPGUsersService iapgUsersService;
     private final APGTemplateService apgTemplateService;
     private final IAPGUserPlanService iapgUserPlanService;
+    private final TencentEmailService tencentEmailService;
 
     @Autowired
-    public APGUserService(IAPGUsersService iapgUsersService, APGTemplateService apgTemplateService, IAPGUserPlanService iapgUserPlanService) {
+    public APGUserService(IAPGUsersService iapgUsersService, APGTemplateService apgTemplateService, IAPGUserPlanService iapgUserPlanService, TencentEmailService tencentEmailService) {
         this.iapgUsersService = iapgUsersService;
         this.apgTemplateService = apgTemplateService;
         this.iapgUserPlanService = iapgUserPlanService;
+        this.tencentEmailService = tencentEmailService;
     }
 
     public Boolean insertOrUpdateApgUser(APGUsersDO usersDO) {
@@ -38,6 +40,7 @@ public class APGUserService {
             apgTemplateService.initializeDefaultTemplate(userDO.getId());
             //初始化免费计划（20w token额度）
             iapgUserPlanService.initializeFreePlan(userDO.getId());
+            tencentEmailService.sendApgInitEmail(userDO.getEmail(), usersDO.getId());
         }else {
 
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());

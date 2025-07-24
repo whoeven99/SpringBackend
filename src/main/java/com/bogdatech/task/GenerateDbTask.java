@@ -34,6 +34,7 @@ public class GenerateDbTask {
     private final IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
     public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
     public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
+    public static final ConcurrentHashMap<Long, Boolean> GENERATE_SHOP_STOP_FLAG = new ConcurrentHashMap<>(); //判断用户是否停止生成描述
     @Autowired
     public GenerateDbTask(IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService, GenerateDescriptionService generateDescriptionService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService, IAPGUserCounterService iapgUserCounterService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService) {
         this.iapgUserGeneratedSubtaskService = iapgUserGeneratedSubtaskService;
@@ -129,6 +130,13 @@ public class GenerateDbTask {
         // 如果额度超限，发超限邮件
         APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, subtaskDO.getUserId()));
         if (taskDO.getTaskStatus() == 3) {
+            //删除状态为2的子任务
+            APGUserGeneratedSubtaskDO gs = iapgUserGeneratedSubtaskService.getById(subtaskDO.getSubtaskId());
+            if (gs.getStatus() == 2) {
+                iapgUserGeneratedSubtaskService.removeById(subtaskDO.getSubtaskId());
+            }
+            //删除限制
+            GENERATE_SHOP.remove(subtaskDO.getUserId());
             return;
         }
 
