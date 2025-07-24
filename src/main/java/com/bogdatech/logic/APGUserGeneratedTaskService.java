@@ -128,8 +128,8 @@ public class APGUserGeneratedTaskService {
 
     @Async
     public void batchGenerateDescription(APGUsersDO usersDO, String shopName, GenerateDescriptionsVO generateDescriptionsVO) {
-
-
+        //将任务id改为2
+        iapgUserGeneratedTaskService.updateStatusTo2(usersDO.getId());
         //按productIds将其分为一个个小任务及传入的数据存到APG_User_Generated_SubTask中
         for (String productId : generateDescriptionsVO.getProductIds()) {
             GenerateDescriptionVO generateDescriptionVO = generateDescriptionsVOToGenerateDescriptionVO(productId, generateDescriptionsVO);
