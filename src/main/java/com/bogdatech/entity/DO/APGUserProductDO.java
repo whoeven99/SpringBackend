@@ -22,5 +22,5 @@ public class APGUserProductDO {
     private Boolean isDelete;
     private String generateContent;
     private Timestamp updateTime;
-
+    private String productType;
 }
