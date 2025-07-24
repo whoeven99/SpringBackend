@@ -79,7 +79,9 @@ public class APGUserGeneratedTaskService {
         try {
             GenerateDescriptionsVO generateDescriptionsVO = OBJECT_MAPPER.readValue(taskDO.getTaskData(), GenerateDescriptionsVO.class);
             Integer totalCount = generateDescriptionsVO.getProductIds().length;
-            Integer unfinishedCount = iapgUserGeneratedSubtaskService.list(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>().eq(APGUserGeneratedSubtaskDO::getStatus, 0).eq(APGUserGeneratedSubtaskDO::getUserId, userDO.getId())).size();
+            Integer unfinishedCount = iapgUserGeneratedSubtaskService.list(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>()
+                    .in(APGUserGeneratedSubtaskDO::getStatus, Arrays.asList(0, 3, 4))
+                    .eq(APGUserGeneratedSubtaskDO::getUserId, userDO.getId())).size();
             generateProgressBarVO = apgUserGeneratedTaskDOToGenerateProgressBarVO(taskDO, totalCount, unfinishedCount);
             generateProgressBarVO.setProductTitle(GENERATE_SHOP_BAR.get(userDO.getId()));
             //获取产品标题
