@@ -44,7 +44,7 @@ public class APGDescriptionGenerationController {
         try {
             description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit);
             appInsights.trackTrace(shopName + " generateDescription: " + description);
-            System.out.println(shopName + " generateDescription: " + description);
+//            System.out.println(shopName + " generateDescription: " + description);
         } catch (ClientException e) {
             appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
