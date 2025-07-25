@@ -127,7 +127,7 @@ public class TypeConversionUtils {
         generateDescriptionVO.setSeoKeywords(generateDescriptionsVO.getSeoKeywords());
         generateDescriptionVO.setTextTone(generateDescriptionsVO.getTextTone());
         generateDescriptionVO.setProductId(productId);
-        generateDescriptionVO.setContentType(generateDescriptionVO.getContentType());
+        generateDescriptionVO.setContentType(generateDescriptionsVO.getContentType());
         generateDescriptionVO.setPageType(generateDescriptionsVO.getPageType());
         return generateDescriptionVO;
     }
