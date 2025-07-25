@@ -24,6 +24,7 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.requestBody.ShopifyRequestBody.*;
+import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.PlaceholderUtils.buildDescriptionPrompt;
 import static com.bogdatech.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
@@ -59,8 +60,9 @@ public class GenerateDescriptionService {
         if (counterDO.getUserToken() >= userMaxLimit) {
             throw new ClientException(CHARACTER_LIMIT);
         }
-        // 根据产品id获取相关数据，为翻译做铺垫
+        // 根据产品id获取相关数据，为生成做铺垫
         ProductDTO product = getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
+        GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
         // 根据模板id获取模板数据
         TemplateDTO templateById = getTemplateById(generateDescriptionVO.getTemplateId(), usersDO.getId(), generateDescriptionVO.getTemplateType());
         // 根据 ProductDTO 和传入的 GenerateDescriptionVO进行描述生成(暂定qwen模型 图片理解)
@@ -68,10 +70,18 @@ public class GenerateDescriptionService {
         counter.addChars(counterDO.getUserToken());
         //生成提示词
         String prompt = buildDescriptionPrompt(product.getProductTitle(), product.getProductType(), product.getProductDescription(), generateDescriptionVO.getSeoKeywords(), product.getImageUrl(), product.getImageAltText(), generateDescriptionVO.getTextTone(), templateById.getTemplateType(), generateDescriptionVO.getBrandTone(), templateById.getTemplateData(), generateDescriptionVO.getLanguage());
+        appInsights.trackTrace(usersDO.getShopName() + " 用户 " + product.getId() + " 的提示词为 ： " + prompt);
         //调用大模型翻译
-        String des = aLiYunTranslateIntegration.callWithPicMess(prompt, usersDO.getId(), counter, product.getImageUrl(), userMaxLimit);
-        //每次生成都要更新一下版本记录和生成数据
-        iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des);
+        //如果产品图片为空，换模型生成
+        String des = null;
+        if (product.getImageUrl() == null || product.getImageUrl().isEmpty()) {
+             des = aLiYunTranslateIntegration.callWithQwenMaxToDes(prompt, counter, usersDO.getId(), userMaxLimit);
+        }else {
+             des = aLiYunTranslateIntegration.callWithPicMess(prompt, usersDO.getId(), counter, product.getImageUrl(), userMaxLimit);
+        }
+
+//        每次生成都要更新一下版本记录和生成数据
+        iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des, generateDescriptionVO.getPageType() , generateDescriptionVO.getContentType());
         return des;
     }
 
@@ -85,7 +95,7 @@ public class GenerateDescriptionService {
         // 对productData进行解析，输出productDTO类型数据
         try {
             JsonNode root = OBJECT_MAPPER.readTree(productData);
-            productDTO.setProductDescription(root.at("/product/description").asText(null));
+            productDTO.setProductDescription(root.at("/product/descriptionHtml").asText(null));
             productDTO.setId(root.at("/product/id").asText());
             productDTO.setProductType(root.at("/product/productType").asText(null));
             productDTO.setImageUrl(root.at("/product/media/edges/0/node/image/url").asText(null));

@@ -10,17 +10,13 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("APG_User_Counter")
-public class APGUserCounterDO {
+@TableName("APG_Email")
+public class APGEmailDO {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
-    private Integer chars;
-    private Integer productCounter;
-    private Integer productSeoCounter;
-    private Integer collectionCounter;
-    private Integer collectionSeoCounter;
-    private Integer allCounter;
-    private Integer extraCounter;
-    private Integer userToken;
+    private String fromSend;
+    private String toSend;
+    private String subject;
+    private Boolean flag;
 }

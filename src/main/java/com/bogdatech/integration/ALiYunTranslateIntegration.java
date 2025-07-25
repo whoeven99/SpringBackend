@@ -189,8 +189,7 @@ public class ALiYunTranslateIntegration {
                         Collections.singletonMap("text", prompt))).build();
 
         MultiModalConversationParam param = MultiModalConversationParam.builder()
-//                .apiKey(System.getenv("BAILIAN_API_KEY"))
-                .apiKey("sk-f19edb7ec87f46d2913cf50eb44e1781")
+                .apiKey(System.getenv("BAILIAN_API_KEY"))
                 .model(QWEN_VL_LAST)
                 .message(userMessage)
                 .build();
@@ -204,10 +203,9 @@ public class ALiYunTranslateIntegration {
             appInsights.trackTrace("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             System.out.println("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
-            iapgUserCounterService.updateUserUsedCount(userId, counter, userMaxLimit);
-            //TODO：更新用户产品计数
+            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
+            //更新用户产品计数
             counter.addChars(totalToken);
-            System.out.println("content: " + content);
             return (String) content.get(0).get("text");
         } catch (Exception e) {
             appInsights.trackTrace("调用百炼视觉模型报错信息 errors ： " + e.getMessage());
@@ -215,4 +213,44 @@ public class ALiYunTranslateIntegration {
             return null;
         }
     }
+
+    /**
+     * 调用qwen-max用户产品描述图片为空的情况
+     * */
+    public String callWithQwenMaxToDes(String prompt, CharacterCountUtils countUtils, Long userId, Integer userMaxLimit) {
+        Generation gen = new Generation();
+        Message userMsg = Message.builder()
+                .role(Role.USER.getValue())
+                .content(prompt)
+                .build();
+        GenerationParam param = GenerationParam.builder()
+                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .model("qwen-max-latest")
+                .messages(Collections.singletonList(userMsg))
+                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .build();
+        String content;
+        int totalToken;
+        try {
+            GenerationResult call = gen.call(param);
+            content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+//        int totalToken = 10;
+            Integer inputTokens = call.getUsage().getInputTokens();
+            Integer outputTokens = call.getUsage().getOutputTokens();
+            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
+            appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+//            System.out.println("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
+            countUtils.addChars(totalToken);
+        } catch (NoApiKeyException | InputRequiredException e) {
+            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
+            return null;
+//            System.out.println("百炼翻译报错信息： " + e.getMessage());
+        }
+        return content;
+
+    }
+
 }

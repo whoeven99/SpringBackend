@@ -1,8 +1,11 @@
 package com.bogdatech.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IAPGTemplateService;
-import com.bogdatech.entity.DO.APGTemplateDO;
+import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUserTemplateDO;
+import com.bogdatech.entity.DO.APGUserTemplateMappingDO;
+import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.DTO.TemplateDTO;
 import com.bogdatech.logic.APGTemplateService;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -17,11 +20,13 @@ import java.util.List;
 public class APGTemplateController {
     private final IAPGTemplateService iapgTemplateService;
     private final APGTemplateService apgTemplateService;
+    private final IAPGUsersService iapgUsersService;
 
     @Autowired
-    public APGTemplateController(IAPGTemplateService iapgTemplateService, APGTemplateService apgTemplateService) {
+    public APGTemplateController(IAPGTemplateService iapgTemplateService, APGTemplateService apgTemplateService, IAPGUsersService iapgUsersService) {
         this.iapgTemplateService = iapgTemplateService;
         this.apgTemplateService = apgTemplateService;
+        this.iapgUsersService = iapgUsersService;
     }
 
     /**
@@ -30,15 +35,20 @@ public class APGTemplateController {
     @PostMapping("/getAllTemplateData")
     public BaseResponse<Object> getAllTemplateData(@RequestParam String shopName, @RequestBody TemplateDTO templateDTO){
         List<TemplateDTO> allTemplateData = new ArrayList<>();
+        //获取用户id
+        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        if (userDO == null) {
+            return null;
+        }
         if (templateDTO.getTemplateClass()){
             //获取用户模板
-            List<TemplateDTO> allUserTemplateData = apgTemplateService.getAllUserTemplateData(shopName, templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype(), templateDTO.getTemplateType());
+            List<TemplateDTO> allUserTemplateData = apgTemplateService.getAllUserTemplateData(userDO.getId(), templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype(), templateDTO.getTemplateType());
             if (allUserTemplateData != null){
                 allTemplateData.addAll(allUserTemplateData);
             }
         }else {
             //先获取用户模板映射关系，获取官方的模板，获取用户个人的模板
-            List<TemplateDTO> templateByShopName = apgTemplateService.getAllOfficialTemplateData(templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype(), templateDTO.getTemplateType());
+            List<TemplateDTO> templateByShopName = apgTemplateService.getAllOfficialTemplateData(userDO.getId(),templateDTO.getTemplateModel(), templateDTO.getTemplateSubtype(), templateDTO.getTemplateType());
             if (templateByShopName != null){
                 allTemplateData.addAll(templateByShopName);
             }
@@ -52,7 +62,7 @@ public class APGTemplateController {
     }
 
     /**
-     * 从映射表里面获取用户对应模板
+     * 从映射表里面获取用户对应官方和用户模板
      * */
     @PostMapping("/getTemplateByShopName")
     public BaseResponse<Object> getTemplateByShopName(@RequestParam String shopName){
@@ -88,11 +98,14 @@ public class APGTemplateController {
     }
 
     /**
-     * TODO: 添加官方模板到映射表，返回模板id
+     * 添加官方模板或用户模板到映射表，返回模板id
      * */
-    @PostMapping("/addOfficialTemplate")
-    public BaseResponse<Object> addOfficialTemplate(@RequestParam String shopName, @RequestParam Long templateId){
-        apgTemplateService.addOfficialTemplate(shopName, templateId);
-        return null;
+    @PostMapping("/addOfficialOrUserTemplate")
+    public BaseResponse<Object> addOfficialOrUserTemplate(@RequestParam String shopName, @RequestBody APGUserTemplateMappingDO apgUserTemplateMappingDO){
+        Boolean result = apgTemplateService.addOfficialOrUserTemplate(shopName, apgUserTemplateMappingDO.getTemplateId(), apgUserTemplateMappingDO.getTemplateType());
+        if (result){
+            return new BaseResponse<>().CreateSuccessResponse(apgUserTemplateMappingDO.getTemplateId());
+        }
+        return new BaseResponse<>().CreateErrorResponse(apgUserTemplateMappingDO.getTemplateId());
     }
 }

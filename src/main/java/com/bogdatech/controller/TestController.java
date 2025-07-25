@@ -28,16 +28,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -47,7 +44,6 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.HTML_TAG_PATTERN;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
 @RestController
@@ -63,10 +59,9 @@ public class TestController {
     private final ITranslateTasksService translateTasksService;
     private final RabbitMqTask rabbitMqTask;
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
-    private final DeepLIntegration deepLIntegration;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, DeepLIntegration deepLIntegration) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -78,7 +73,6 @@ public class TestController {
         this.translateTasksService = translateTasksService;
         this.rabbitMqTask = rabbitMqTask;
         this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
-        this.deepLIntegration = deepLIntegration;
     }
 
     @GetMapping("/ping")
@@ -127,11 +121,8 @@ public class TestController {
     //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
     public void sendEmail() {
-        CharacterCountUtils characterCount = new CharacterCountUtils();
-        characterCount.addChars(100);
-        List<TranslateResourceDTO> list = new ArrayList<>(ALL_RESOURCES);
-        LocalDateTime localDateTime = LocalDateTime.now();
-        tencentEmailService.translateFailEmail("ciwishop.myshopify.com", characterCount, localDateTime, 0, list, "zh-CN", "en");
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        tencentEmailService.sendAPGSuccessEmail("daoyee@ciwi.ai", 1L,"product","daoyee",now,9989, 10, 100001);
     }
 
     //获取汇率
@@ -150,25 +141,6 @@ public class TestController {
     @GetMapping("/testAddCache")
     public void testAddCache(String target, String value, String targetText) {
         addData(target, value, targetText);
-    }
-
-
-    @GetMapping("/testHtml")
-    public void testHtml() {
-        String html = """
-
-
-
-
-                """;
-
-//        String targetLanguage = getLanguageName("zh-CN");
-//        String prompt = getSimplePrompt(targetLanguage, html);
-//        System.out.println("prompt: " + prompt);
-//        String s = hunYuanTranslate(html, prompt, new CharacterCountUtils(), "zh-CN", HUN_YUAN_MODEL);
-//        System.out.println("final: " + s);
-        String s = liquidHtmlTranslatorUtils.translateNewHtml(html, new TranslateRequest(0, "shop", "token", "en", "zh-CN", ""), new CharacterCountUtils(), "en", 1000, null, null, null);
-        System.out.println("final: " + normalizeHtml(s));
     }
 
     //测试theme判断

@@ -35,7 +35,7 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
     }
 
     @Override
-    public Boolean updateUserUsedCount(Long userId, CharacterCountUtils counter, Integer maxLimit) {
+    public Boolean updateUserUsedCount(Long userId, Integer counter, Integer maxLimit) {
         final int maxRetries = 3;
         final long retryDelayMillis = 500;
         int retryCount = 0;
@@ -43,7 +43,7 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
         while (retryCount < maxRetries) {
             try {
 
-                Boolean b = baseMapper.updateUserUsedCount(userId, counter.getTotalChars(), maxLimit) > 0;
+                Boolean b = baseMapper.updateUserUsedCount(userId, counter, maxLimit) > 0;
                 if (Boolean.TRUE.equals(b)) {
                     return true;
                 } else {
@@ -66,6 +66,11 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
         appInsights.trackTrace("更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + userId);
         return false;
 
+    }
+
+    @Override
+    public Boolean updateCharsByUserId(Long id) {
+        return baseMapper.updateCharsByUserId(id) > 0;
     }
 
 }

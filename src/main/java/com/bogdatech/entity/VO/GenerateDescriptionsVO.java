@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GenerateDescriptionVO {
-    private String productId; // 产品id
+public class GenerateDescriptionsVO {
+    private String[] productIds; // 产品id
     private String textTone; //语言风格
     private String brandTone; //品牌文案风格
     private Long templateId; //文案模板

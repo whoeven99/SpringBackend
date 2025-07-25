@@ -22,5 +22,6 @@ public class APGUserProductDO {
     private Boolean isDelete;
     private String generateContent;
     private Timestamp updateTime;
-
+    private String pageType; //pro col类型
+    private String contentType; //title seo类型
 }

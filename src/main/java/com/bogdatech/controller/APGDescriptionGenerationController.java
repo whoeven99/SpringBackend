@@ -40,11 +40,11 @@ public class APGDescriptionGenerationController {
         Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
 
         // 实现生成描述的逻辑
-        String description = null;
+        String description;
         try {
             description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit);
             appInsights.trackTrace(shopName + " generateDescription: " + description);
-            System.out.println(shopName + " generateDescription: " + description);
+//            System.out.println(shopName + " generateDescription: " + description);
         } catch (ClientException e) {
             appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
