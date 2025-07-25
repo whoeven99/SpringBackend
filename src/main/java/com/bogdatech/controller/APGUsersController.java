@@ -42,4 +42,13 @@ public class APGUsersController {
         return new BaseResponse<>().CreateErrorResponse(usersDO);
     }
 
+    /**
+     * 用户卸载对应方法
+     * */
+    @DeleteMapping("/uninstallUser")
+    public BaseResponse<Object> uninstallUser(@RequestParam String shopName){
+        apgUserService.uninstallUser(shopName);
+        return null;
+    }
+
 }
