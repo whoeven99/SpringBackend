@@ -1,7 +1,6 @@
 package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
@@ -9,20 +8,14 @@ import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateDescriptionsVO;
 import com.bogdatech.entity.VO.GenerateEmailVO;
 import com.bogdatech.entity.VO.GenerateProgressBarVO;
-import com.bogdatech.exception.ClientException;
-import com.bogdatech.model.controller.response.BaseResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
 import java.util.Arrays;
-
-import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
-import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
 import static com.bogdatech.utils.TypeConversionUtils.generateDescriptionsVOToGenerateDescriptionVO;
@@ -91,45 +84,6 @@ public class APGUserGeneratedTaskService {
         }
         //获取
         return generateProgressBarVO;
-    }
-
-    /**
-     * 对批量生成的异常捕捉处理
-     * */
-    public BaseResponse<Object> batchGenerateDescriptionException(String shopName, GenerateDescriptionsVO generateDescriptionsVO){
-        try {
-            // 根据shopName获取用户数据
-            APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
-            //将用户暂停标志改为false
-            GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), false);
-            // 获取用户最大额度限制
-            Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
-            //判断额度是否足够，然后决定是否继续调用
-            APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
-            if (counterDO.getUserToken() >= userMaxLimit) {
-                //修改状态
-                initOrUpdateData(shopName, 3, null, null);
-                throw new ClientException(CHARACTER_LIMIT);
-            }
-            //将该用户的状态3，4改为9 （问题数据）
-            iapgUserGeneratedSubtaskService.update34StatusTo9(usersDO.getId());
-            batchGenerateDescription(usersDO, shopName, generateDescriptionsVO);
-        }catch (ClientException e1){
-            //发送对应邮件
-            //修改状态
-            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
-//            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e1);
-            appInsights.trackException(e1);
-            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
-        } catch (Exception e) {
-            //修改状态
-            //发送邮件
-            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
-//            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e);
-            appInsights.trackException(e);
-            return new BaseResponse<>().CreateErrorResponse(false);
-        }
-        return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
     @Async
