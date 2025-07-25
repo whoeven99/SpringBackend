@@ -27,6 +27,11 @@ public class APGUserProductService {
             return null;
         }
 
+        //对listId做判断，listID中为空，直接返回
+        if (listId == null || listId.isEmpty()) {
+            return null;
+        }
+
         //根据用户的userId获取对应产品的数据
         return iAPGUserProductService.list(new LambdaQueryWrapper<APGUserProductDO>().in(APGUserProductDO::getProductId, listId).eq(APGUserProductDO::getUserId, userData.getId()).eq(APGUserProductDO::getIsDelete, false));
     }

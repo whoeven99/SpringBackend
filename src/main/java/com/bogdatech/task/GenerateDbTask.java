@@ -10,6 +10,7 @@ import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateEmailVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.GenerateDescriptionService;
+import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,20 +33,22 @@ public class GenerateDbTask {
     private final IAPGUserPlanService iapgUserPlanService;
     private final IAPGUserCounterService iapgUserCounterService;
     private final IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
+    private final TencentEmailService tencentEmailService;
     public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
     public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
     public static final ConcurrentHashMap<Long, Boolean> GENERATE_SHOP_STOP_FLAG = new ConcurrentHashMap<>(); //判断用户是否停止生成描述
     @Autowired
-    public GenerateDbTask(IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService, GenerateDescriptionService generateDescriptionService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService, IAPGUserCounterService iapgUserCounterService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService) {
+    public GenerateDbTask(IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService, GenerateDescriptionService generateDescriptionService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService, IAPGUserCounterService iapgUserCounterService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService, TencentEmailService tencentEmailService) {
         this.iapgUserGeneratedSubtaskService = iapgUserGeneratedSubtaskService;
         this.generateDescriptionService = generateDescriptionService;
         this.iapgUsersService = iapgUsersService;
         this.iapgUserPlanService = iapgUserPlanService;
         this.iapgUserCounterService = iapgUserCounterService;
         this.iapgUserGeneratedTaskService = iapgUserGeneratedTaskService;
+        this.tencentEmailService = tencentEmailService;
     }
 
-    // 每1秒钟检查一次是否有闲置线程
+    // 每3秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 3000)
     public void scanAndGenerateSubtask() {
         // 获取所有status为0的数据
@@ -139,7 +142,6 @@ public class GenerateDbTask {
         //将payload转化为GenerateEmailVO类型数据
         try {
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
-
             GenerateEmailVO generateEmailVO = OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateEmailVO.class);
             //根据用户id，获取对应数据
             APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getId, subtaskDO.getUserId()));
@@ -147,12 +149,20 @@ public class GenerateDbTask {
             //获取该用户这一次任务的所有token值
             APGUserCounterDO userCounter = iapgUserCounterService.getUserCounter(usersDO.getShopName());
 
-            //TODO: 调用发送邮件接口
+            //调用发送邮件接口
+            //对taskDO的taskModel做处理，获取空格前的数据
+            String taskModel = taskDO.getTaskModel();
+            if (taskModel.contains(" ")) {
+                taskModel = taskModel.substring(0, taskModel.indexOf(" "));
+            }
+            //获取用户最大额度限制
+            Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
+            tencentEmailService.sendAPGSuccessEmail(usersDO.getEmail(), usersDO.getId(), taskModel, usersDO.getFirstName(), subtaskDO.getCreateTime(), userCounter.getChars(), generateEmailVO.getProductIds().length, userMaxLimit);
             System.out.println("发送邮件， " + generateEmailVO.getEmail() + " 消耗token：" + userCounter.getChars());
             //将这次任务的token数清零
             iapgUserCounterService.updateCharsByUserId(usersDO.getId());
         } catch (Exception e) {
-            appInsights.trackTrace( subtaskDO.getUserId() + " 用户 发送邮件接口 errors ：" + e);
+            appInsights.trackTrace(subtaskDO.getUserId() + " 用户 发送邮件接口 errors ：" + e);
             //删除限制
             GENERATE_SHOP.remove(subtaskDO.getUserId());
             // 将状态改为4

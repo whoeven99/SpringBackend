@@ -11,8 +11,10 @@ import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -258,6 +260,8 @@ public class TencentEmailService {
 
     /**
      * 发送APG应用初始化邮件
+     * @param email 接收人的邮箱
+     * @param userId 接收人的商店id
      */
     public void sendApgInitEmail(String email, Long userId) {
         //由腾讯发送邮件
@@ -267,9 +271,27 @@ public class TencentEmailService {
     }
 
     /**
-     * 发送生成描述成功的邮件
+     * 发送生成描述成功的邮件 144209
+     * @param email 接收人的邮箱
+     * @param userId 接收人的商店id
      * */
-    public void sendAPGSuccessEmail() {
+    public void sendAPGSuccessEmail(String email, Long userId, String taskType, String userName, Timestamp createTime, Integer totalToken, Integer products, Integer remaining) {
+        //根据用户的id获取生成模块的相关数据
 
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("task_type", taskType); // taskType: product, collection
+        templateData.put("username", userName);
+        templateData.put("product_count", String.valueOf(products));
+        Instant now = Instant.now();
+        Instant created = createTime.toInstant();
+
+        long seconds = Duration.between(created, now).getSeconds();
+        templateData.put("duration", String.valueOf(seconds));
+        templateData.put("credit_used", String.valueOf(totalToken));
+        templateData.put("credit_remaining", String.valueOf(remaining));
+        //设置参数
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144209L, templateData, APG_GENERATE_SUCCESS, TENCENT_FROM_EMAIL, email));
+        //存入数据库中
+        iapgEmailService.saveEmail(new APGEmailDO(null, userId, TENCENT_FROM_EMAIL, email, APG_GENERATE_SUCCESS, b));
     }
 }
