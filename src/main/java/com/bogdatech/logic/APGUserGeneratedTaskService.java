@@ -87,6 +87,7 @@ public class APGUserGeneratedTaskService {
             return generateProgressBarVO;
         } catch (Exception e) {
             appInsights.trackTrace(shopName + " 用户 " + userDO.getId() + " 的taskData有问题 errors ： " + e);
+            appInsights.trackException(e);
         }
         //获取
         return generateProgressBarVO;
@@ -110,19 +111,21 @@ public class APGUserGeneratedTaskService {
                 initOrUpdateData(shopName, 3, null, null);
                 throw new ClientException(CHARACTER_LIMIT);
             }
+            //将该用户的状态3，4改为9 （问题数据）
+            iapgUserGeneratedSubtaskService.update34StatusTo9(usersDO.getId());
             batchGenerateDescription(usersDO, shopName, generateDescriptionsVO);
         }catch (ClientException e1){
             //发送对应邮件
             //修改状态
             appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
-            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e1);
+//            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e1);
             appInsights.trackException(e1);
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件
             appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
-            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e);
+//            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e);
             appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
@@ -143,6 +146,7 @@ public class APGUserGeneratedTaskService {
             } catch (Exception e) {
                 appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
 //                System.out.println(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
+                appInsights.trackException(e);
             }
         }
 
@@ -154,6 +158,7 @@ public class APGUserGeneratedTaskService {
             iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, email, usersDO.getId(), null));
         } catch (JsonProcessingException e) {
             appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
+            appInsights.trackException(e);
 //            System.out.println("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
         }
     }

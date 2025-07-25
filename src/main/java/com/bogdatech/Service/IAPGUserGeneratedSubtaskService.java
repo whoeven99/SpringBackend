@@ -7,4 +7,6 @@ public interface IAPGUserGeneratedSubtaskService extends IService<APGUserGenerat
     Boolean updateStatusById(String subtaskId, int i);
 
     Boolean updateAllStatusByUserId(Long id, int i);
+
+    Boolean update34StatusTo9(Long id);
 }

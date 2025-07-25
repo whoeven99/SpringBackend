@@ -46,4 +46,9 @@ public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGener
     public Boolean updateAllStatusByUserId(Long id, int i) {
         return baseMapper.updateAllStatusByUserId(id, i);
     }
+
+    @Override
+    public Boolean update34StatusTo9(Long id) {
+        return baseMapper.update34StatusTo9(id);
+    }
 }
