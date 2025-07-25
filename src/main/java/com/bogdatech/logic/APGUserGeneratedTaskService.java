@@ -22,6 +22,7 @@ import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
+import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
 import static com.bogdatech.utils.TypeConversionUtils.generateDescriptionsVOToGenerateDescriptionVO;
@@ -98,6 +99,8 @@ public class APGUserGeneratedTaskService {
         try {
             // 根据shopName获取用户数据
             APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+            //将用户暂停标志改为false
+            GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), false);
             // 获取用户最大额度限制
             Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
             //判断额度是否足够，然后决定是否继续调用
@@ -139,7 +142,7 @@ public class APGUserGeneratedTaskService {
                 iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, json, usersDO.getId(), null));
             } catch (Exception e) {
                 appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
-                System.out.println(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
+//                System.out.println(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
             }
         }
 
@@ -151,7 +154,7 @@ public class APGUserGeneratedTaskService {
             iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, email, usersDO.getId(), null));
         } catch (JsonProcessingException e) {
             appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
-            System.out.println("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
+//            System.out.println("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
         }
     }
 
@@ -174,7 +177,7 @@ public class APGUserGeneratedTaskService {
      * */
     public Boolean updateTaskStatusTo1(Long id) {
         //将任务改为状态改为1
-        Boolean b = iapgUserGeneratedTaskService.updateStatusByUserId(id, 1);
+        Boolean b = iapgUserGeneratedTaskService.updateStatusByUserId(id, 0);
         //将子任务改成5
         Boolean b1 = iapgUserGeneratedSubtaskService.updateAllStatusByUserId(id, 5);
         return b && b1;

@@ -57,12 +57,13 @@ public class GenerateDbTask {
         for (APGUserGeneratedSubtaskDO subtaskDO : list
              ) {
             // 一个用户同一时间只能翻译一个
-            System.out.println("用户 " + subtaskDO.getUserId() + " 开始遍历 子任务： " + subtaskDO.getSubtaskId());
+//            System.out.println("用户 " + subtaskDO.getUserId() + " 开始遍历 子任务： " + subtaskDO.getSubtaskId());
             if (!GENERATE_SHOP.contains(subtaskDO.getUserId())) {
                 GENERATE_SHOP.add(subtaskDO.getUserId());
 
                     executorService.submit(() -> {
-                        System.out.println("用户 " + subtaskDO.getUserId() + " 开始生成 子任务： " + subtaskDO.getSubtaskId());
+//                        System.out.println("用户 " + subtaskDO.getUserId() + " 开始生成 子任务： " + subtaskDO.getSubtaskId());
+                        appInsights.trackTrace("用户 " + subtaskDO.getUserId() + " 开始生成 子任务： " + subtaskDO.getSubtaskId());
                         try {
                             // 做判断，是邮件还是生成任务
                             if (subtaskDO.getPayload().contains("\"email\":\"EMAIL\"")) {
@@ -73,7 +74,7 @@ public class GenerateDbTask {
                             // 调用单条生成接口
                             fixGenerateSubtask(subtaskDO);
                         } catch (Exception e) {
-                            System.err.println(e);
+//                            System.err.println(e);
                             appInsights.trackTrace("用户 " + subtaskDO.getUserId() + " 生成 子任务： " + subtaskDO.getSubtaskId() + " errors ：" + e);
                         }
                     });
@@ -97,6 +98,9 @@ public class GenerateDbTask {
         GenerateDescriptionVO gvo;
         CharacterCountUtils counter = new CharacterCountUtils();
         try {
+            if (GENERATE_SHOP_STOP_FLAG.get(usersDO.getId())){
+                return;
+            }
             gvo = OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateDescriptionVO.class);
             generateDescriptionService.generateDescription(usersDO, gvo, counter, userMaxLimit);
         } catch (JsonProcessingException e) {
