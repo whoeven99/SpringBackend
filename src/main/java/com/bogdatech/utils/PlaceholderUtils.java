@@ -237,7 +237,7 @@ public class PlaceholderUtils {
             String templateStructure,
             String language
     ) {
-        System.out.println("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
+//        System.out.println("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a professional e-commerce content creator who specializes in writing high-converting product descriptions for shopify in ");
         prompt.append(language);

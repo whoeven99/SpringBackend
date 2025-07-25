@@ -95,7 +95,7 @@ public class GenerateDescriptionService {
         // 对productData进行解析，输出productDTO类型数据
         try {
             JsonNode root = OBJECT_MAPPER.readTree(productData);
-            productDTO.setProductDescription(root.at("/product/description").asText(null));
+            productDTO.setProductDescription(root.at("/product/descriptionHtml").asText(null));
             productDTO.setId(root.at("/product/id").asText());
             productDTO.setProductType(root.at("/product/productType").asText(null));
             productDTO.setImageUrl(root.at("/product/media/edges/0/node/image/url").asText(null));

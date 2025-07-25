@@ -12,4 +12,7 @@ public interface APGUserGeneratedSubtaskMapper extends BaseMapper<APGUserGenerat
 
     @Update("UPDATE APG_User_Generated_Subtask SET status = #{i} WHERE user_id = #{id}")
     Boolean updateAllStatusByUserId(Long id, int i);
+
+    @Update("UPDATE APG_User_Generated_Subtask SET status = 9 WHERE subtask_id = #{id}  AND status IN (3, 4)")
+    Boolean update34StatusTo9(Long id);
 }
