@@ -62,7 +62,7 @@ public class APGTemplateController {
     }
 
     /**
-     * 从映射表里面获取用户对应模板
+     * 从映射表里面获取用户对应官方和用户模板
      * */
     @PostMapping("/getTemplateByShopName")
     public BaseResponse<Object> getTemplateByShopName(@RequestParam String shopName){

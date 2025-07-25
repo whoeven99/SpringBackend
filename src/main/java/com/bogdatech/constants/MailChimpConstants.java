@@ -21,6 +21,7 @@ public class MailChimpConstants {
     public static final String EMAIL_IP_RUNNING_OUT = "IP Geolocation Quota is Running Low｜Ciwi-translator";
     public static final String EMAIL_IP_OUT = "IP Geolocation Limit Reached｜Ciwi-translator";
     public static final String APG_INIT_EMAIL = "Create High-Converting Product Descriptions in 10 Seconds | Ciwi.ai-Product Content";
+    public static final String APG_GENERATE_SUCCESS = "Your content generation task has been successfully completed | Ciwi.ai-Product Content";
     //from_email
     public static final String FROM_EMAIL = "support@ciwi.ai";
     public static final String CC_EMAIL = "feynman@ciwi.ai";
