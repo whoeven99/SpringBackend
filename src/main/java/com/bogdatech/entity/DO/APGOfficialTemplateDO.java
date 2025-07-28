@@ -21,6 +21,7 @@ public class APGOfficialTemplateDO {
     private String templateModel;//模板类型(product or collection)
     private String templateSubtype; //模板子类型 （title， seo， description）
     private Boolean isPayment; //是否是付费模板
-    private Integer usedTimes;
+    private Integer usedTimes; //使用次数
+    private String exampleDate; //示例数据
 
 }
