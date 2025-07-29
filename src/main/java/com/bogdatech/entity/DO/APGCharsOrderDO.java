@@ -10,10 +10,10 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("APG_chars_Order")
+@TableName("APG_Chars_Order")
 public class APGCharsOrderDO {
     private String id;
-    private String shopName;
+    private Long userId;
     private Double amount;
     private String name;
     private LocalDateTime createdAt;
