@@ -37,4 +37,7 @@ public interface APGUserCounterMapper extends BaseMapper<APGUserCounterDO> {
 
     @Update("UPDATE APG_User_Counter WITH (UPDLOCK, ROWLOCK) SET chars = 0 WHERE user_id = #{userId}")
     int updateCharsByUserId(Long userId);
+
+    @Update("UPDATE APG_User_Counter WITH (UPDLOCK, ROWLOCK) SET extra_counter = extra_counter + #{token} WHERE user_id = #{userId}")
+    int updateUserToken(Long userId, Integer token);
 }
