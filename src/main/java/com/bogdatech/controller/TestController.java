@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
-import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
@@ -13,13 +12,13 @@ import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ChatGptIntegration;
-import com.bogdatech.integration.DeepLIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
+import com.bogdatech.model.service.StoringDataPublisherService;
 import com.bogdatech.task.RabbitMqTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
@@ -59,9 +58,10 @@ public class TestController {
     private final ITranslateTasksService translateTasksService;
     private final RabbitMqTask rabbitMqTask;
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
+    private final StoringDataPublisherService storingDataPublisherService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, StoringDataPublisherService storingDataPublisherService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -73,6 +73,7 @@ public class TestController {
         this.translateTasksService = translateTasksService;
         this.rabbitMqTask = rabbitMqTask;
         this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
+        this.storingDataPublisherService = storingDataPublisherService;
     }
 
     @GetMapping("/ping")
@@ -378,4 +379,14 @@ public class TestController {
         System.out.println("doc 1 : " + translatedDoc.body().html());
         return translatedDoc.body().html();
     }
+
+    /**
+     * 测试发送延迟队列方法
+     * */
+@GetMapping("/testDelayQueue")
+    public String testDelayQueue() {
+    storingDataPublisherService.storingData("12312");
+    return "true";
+}
+
 }

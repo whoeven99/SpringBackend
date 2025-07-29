@@ -19,6 +19,7 @@ public class RabbitMQConstants {
     public static final String USER_STORE_DEAD_LETTER_EXCHANGE = "translate.user.store.dead.letter.exchange"; //用户翻译存储死信交换机
     public static final String USER_EMAIL_DELAY_EXCHANGE = "user.email.delay.exchange"; //用户邮件延迟交换机
     public static final String USER_EMAIL_DLX_EXCHANGE = "user.email.dlx.exchange"; //用户邮件死信交换机
+    public static final String USER_STORE_DELAY_QUEUE = "translate.user.store.delay.queue"; //用户翻译存储延迟队列
 
     //路由键
     public static final String SCHEDULED_TRANSLATE_ROUTING_KEY = "scheduled.translate.routing.key";//定时任务的key
