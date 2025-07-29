@@ -6,6 +6,8 @@ import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.*;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 public class APGCharsOrderService {
     private final IAPGCharsOrderService charsOrdersService;
@@ -17,12 +19,13 @@ public class APGCharsOrderService {
     }
 
     public Boolean insertOrUpdateOrder(String shopName, APGCharsOrderDO charsOrdersDO) {
-        APGCharsOrderDO charsOrdersServiceById = charsOrdersService.getById(charsOrdersDO.getId());
+        //获取用户id
+        APGUsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGCharsOrderDO charsOrdersServiceById = charsOrdersService.getById(usersDO.getId());
         if (charsOrdersServiceById == null) {
             return charsOrdersService.save(charsOrdersDO);
         }else {
-            //获取用户id
-            APGUsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+
             return charsOrdersService.updateStatusByShopName(usersDO.getId(), charsOrdersDO.getStatus());
         }
     }

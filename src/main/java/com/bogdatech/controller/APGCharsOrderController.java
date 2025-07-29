@@ -23,7 +23,7 @@ public class APGCharsOrderController {
     public BaseResponse<Object> insertOrUpdateOrder(@RequestParam String shopName, @RequestBody APGCharsOrderDO charsOrdersDO) {
         Boolean b = orderService.insertOrUpdateOrder(shopName, charsOrdersDO);
         if (b) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
+            return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }

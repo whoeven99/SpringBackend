@@ -73,4 +73,9 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
         return baseMapper.updateCharsByUserId(id) > 0;
     }
 
+    @Override
+    public Boolean updateUserToken(Long userId, Integer token) {
+        return baseMapper.updateUserToken(userId, token) > 0;
+    }
+
 }
