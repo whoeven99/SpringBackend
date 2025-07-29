@@ -1142,7 +1142,7 @@ public class ShopifyService {
             }
 
         } catch (JsonProcessingException | ClientException e) {
-            appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
+            appInsights.trackTrace("Failed to save to Shopify errors : " + e.getMessage());
         }
     }
 
@@ -1162,10 +1162,12 @@ public class ShopifyService {
             variables.put("translations", translations);
 //        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
             CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
-            String json = objectToJson(cloudServiceRequest);
-            // 调用 saveToShopify 方法
-            storingDataPublisherService.storingData(json);
-//
+
+            //            String json = objectToJson(cloudServiceRequest);
+//            // 调用 saveToShopify 方法
+//            storingDataPublisherService.storingData(json);
+
+            saveToShopify(cloudServiceRequest);
         } catch (Exception e) {
             appInsights.trackTrace(request.getShopName() + " save to Shopify errors : " + e.getMessage());
         }
