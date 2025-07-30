@@ -2,11 +2,13 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.azure.core.annotation.Get;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
+import com.bogdatech.entity.DO.UserTranslationDataDO;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
@@ -29,11 +31,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -59,9 +63,10 @@ public class TestController {
     private final RabbitMqTask rabbitMqTask;
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
     private final StoringDataPublisherService storingDataPublisherService;
+    private final UserTranslationDataService userTranslationDataService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, StoringDataPublisherService storingDataPublisherService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, StoringDataPublisherService storingDataPublisherService, UserTranslationDataService userTranslationDataService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -74,6 +79,7 @@ public class TestController {
         this.rabbitMqTask = rabbitMqTask;
         this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
         this.storingDataPublisherService = storingDataPublisherService;
+        this.userTranslationDataService = userTranslationDataService;
     }
 
     @GetMapping("/ping")
@@ -123,7 +129,7 @@ public class TestController {
     @GetMapping("/sendEmail")
     public void sendEmail() {
         Timestamp now = new Timestamp(System.currentTimeMillis());
-        tencentEmailService.sendAPGSuccessEmail("daoyee@ciwi.ai", 1L,"product","daoyee",now,9989, 10, 100001);
+        tencentEmailService.sendAPGSuccessEmail("daoyee@ciwi.ai", 1L, "product", "daoyee", now, 9989, 10, 100001);
     }
 
     //获取汇率
@@ -161,7 +167,7 @@ public class TestController {
         //如果是theme模块的数据
         if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
             //进行白名单的确认
-            if (whiteListTranslate(key)){
+            if (whiteListTranslate(key)) {
                 return "白名单翻译";
             }
             //如果包含对应key和value，则跳过
@@ -311,40 +317,40 @@ public class TestController {
     public boolean testProcess(@RequestParam String shopName, @RequestParam Boolean flag) {
         if (flag) {
             return PROCESSING_SHOPS.add(shopName);
-        }else {
+        } else {
             return PROCESSING_SHOPS.remove(shopName);
         }
     }
 
     /**
      * 一键式恢复用户翻译
-     * */
+     */
     @PutMapping("/testRecover")
     public String testRecover(@RequestParam String shopName) {
-        translateTasksService.update( new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
+        translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
         SHOP_LOCKS.remove(shopName); // 强制移除 ReentrantLock 对象
         PROCESSING_SHOPS.remove(shopName);
         Map<String, Object> translationStatusMap = getTranslationStatusMap(" ", 1);
-        userTranslate.put(shopName,translationStatusMap);
+        userTranslate.put(shopName, translationStatusMap);
         return SHOP_LOCKS.toString() + PROCESSING_SHOPS;
     }
 
 
     /**
      * 对html翻译的新问题
-     * */
+     */
     @GetMapping("/testHtml2")
     public String testHtml2() {
         String html = """
-                
-                
+                                
+                                
                 """;
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
         Document originalDoc;
         if (hasHtmlTag) {
-             originalDoc = Jsoup.parse(html);
-        }else {
-             originalDoc = Jsoup.parseBodyFragment(html);
+            originalDoc = Jsoup.parse(html);
+        } else {
+            originalDoc = Jsoup.parseBodyFragment(html);
         }
 
         // 2. 提取样式并标记 ID
@@ -370,7 +376,7 @@ public class TestController {
         if (hasHtmlTag) {
 //            translatedDoc = Jsoup.parse(s);
             translatedDoc = Jsoup.parse(cleanedHtml);
-        }else {
+        } else {
 //            translatedDoc = Jsoup.parseBodyFragment(s);
             translatedDoc = Jsoup.parseBodyFragment(cleanedHtml);
         }
@@ -382,11 +388,28 @@ public class TestController {
 
     /**
      * 测试发送延迟队列方法
-     * */
-@GetMapping("/testDelayQueue")
+     */
+    @GetMapping("/testDelayQueue")
     public String testDelayQueue() {
-    storingDataPublisherService.storingData("12312");
-    return "true";
-}
+        storingDataPublisherService.storingData("12312");
+        return "true";
+    }
 
+    /**
+     * 测试插入方法
+     * */
+    @GetMapping("/testInserdata")
+    public Boolean testInsert(@RequestParam String data, @RequestParam String shopName){
+       return userTranslationDataService.insertTranslationData(data,shopName);
+    }
+
+    @GetMapping("/testReadList")
+    public List<UserTranslationDataDO> testreadList(){
+        return userTranslationDataService.selectTranslationDataList();
+    }
+
+    @GetMapping("/testRemove")
+    public boolean testRemove(@RequestParam String taskId){
+        return userTranslationDataService.updateStatusTo2(taskId,2);
+    }
 }
