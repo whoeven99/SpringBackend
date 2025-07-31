@@ -2,9 +2,11 @@ package com.bogdatech.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IAPGUserCounterService;
+import com.bogdatech.Service.IAPGUserPlanService;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUserCounterDO;
 import com.bogdatech.entity.DO.APGUsersDO;
+import com.bogdatech.entity.VO.APGTokenVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -16,11 +18,13 @@ import static com.bogdatech.utils.RetryUtils.retryWithParam;
 public class APGUserCounterController {
     private final IAPGUserCounterService iapgUserCounterService;
     private final IAPGUsersService iapgUsersService;
+    private final IAPGUserPlanService iapgUserPlanService;
 
     @Autowired
-    public APGUserCounterController(IAPGUserCounterService iapgUserCounterService, IAPGUsersService iapgUsersService) {
+    public APGUserCounterController(IAPGUserCounterService iapgUserCounterService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService) {
         this.iapgUserCounterService = iapgUserCounterService;
         this.iapgUsersService = iapgUsersService;
+        this.iapgUserPlanService = iapgUserPlanService;
     }
 
     /**
@@ -47,10 +51,13 @@ public class APGUserCounterController {
     @PostMapping("/getUserCounter")
     public BaseResponse<Object> getUserCounter(@RequestParam String shopName){
         APGUserCounterDO userCounter = iapgUserCounterService.getUserCounter(shopName);
-        if (userCounter != null){
-            return new BaseResponse<>().CreateSuccessResponse(userCounter);
-        }
-        return new BaseResponse<>().CreateErrorResponse(shopName);
+        //获取总共的额度
+        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        Integer allToken = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
+        APGTokenVO apgTokenVO = new APGTokenVO();
+        apgTokenVO.setUserToken(userCounter.getUserToken());
+        apgTokenVO.setAllToken(allToken);
+        return new BaseResponse<>().CreateSuccessResponse(apgTokenVO);
     }
 
     /**
