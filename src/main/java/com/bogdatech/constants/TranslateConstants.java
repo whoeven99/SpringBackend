@@ -49,7 +49,9 @@ public class TranslateConstants {
     public static final String SINGLE_LINE_TEXT_FIELD = "SINGLE_LINE_TEXT_FIELD";
     public static final String LIST_SINGLE_LINE_TEXT_FIELD = "LIST_SINGLE_LINE_TEXT_FIELD";
 
-    public static final String EMAIL = "EMAIL";
+    public static final String EMAIL = "EMAIL"; //手动翻译邮件标识
+    public static final String EMAIL_AUTO = "EMAIL_AUTO"; //自动翻译邮件标识
+    public static final String EMAIL_TRANSLATE = "EMAIL_TRANSLATE"; //邮件翻译标识
 
     public static final String HAS_TRANSLATED = "The translation task is in progress. Please try translating again later.";
     public static final String CHARACTER_LIMIT = "Character Limit Reached";
