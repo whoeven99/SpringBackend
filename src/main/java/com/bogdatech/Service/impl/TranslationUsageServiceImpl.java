@@ -40,11 +40,8 @@ public class TranslationUsageServiceImpl extends ServiceImpl<TranslationUsageMap
     public Boolean judgeSendAutoEmail(List<TranslatesDO> translatesDOList, String shopName) {
         //判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
         List<TranslationUsageDO> translationUsageDOS = baseMapper.selectList(new QueryWrapper<TranslationUsageDO>().eq("shop_name", shopName).eq("status", 1));
-        if (translationUsageDOS.size() == translatesDOList.size()) {
-            //发送邮件
-            return true;
-        }
-        return false;
+        //发送邮件
+        return translationUsageDOS.size() == translatesDOList.size();
     }
 
     @Override

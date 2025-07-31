@@ -1,5 +1,6 @@
 package com.bogdatech.logic;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
@@ -79,11 +80,32 @@ public class RabbitMqTranslateService {
     }
 
     /**
-     * MQ翻译
-     * 读取该用户的shopify数据，然后循环获取模块数据
+     * 加一层包装MQ翻译，用于自动翻译按顺序添加任务
      */
     @Async
-    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey) {
+    public void mqTranslateWrapper(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType) {
+        mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, limitChars, usedChars, handleFlag, translationModel, isCover, customKey, emailType);
+    }
+
+    /**
+     * MQ翻译
+     * 读取该用户的shopify数据，然后循环获取模块数据
+     * 根据翻译类型选择不同的邮件发送方式: true-> 手动； false-> 自动
+     *
+     * @param shopifyRequest        shopify请求参数
+     * @param counter               字符计数器
+     * @param translateResourceDTOS 翻译模块顺序
+     * @param request               翻译请求参数
+     * @param limitChars            限制字符
+     * @param usedChars             已使用字符
+     * @param handleFlag            是否handle翻译
+     * @param translationModel      翻译模型
+     * @param isCover               是否覆盖
+     * @param customKey             自定义key
+     * @param emailType             邮件类型
+     */
+//    @Async
+    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType) {
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -130,15 +152,25 @@ public class RabbitMqTranslateService {
         }
         rabbitMqTranslateVO.setTranslateList(translateResourceDTOS);
         //当模块都发送后，发送邮件模块
-        sendEmailTranslate(rabbitMqTranslateVO);
+        sendEmailTranslate(rabbitMqTranslateVO, emailType);
     }
 
     /**
      * 当模块都发送完后，发送邮件模块
+     *
+     * @Param rabbitMqTranslateVO MQ翻译参数
+     * @Param emailType 邮件类型
+     * 根据emailType填入不同的邮件类型
      */
-    public void sendEmailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO) {
+    public void sendEmailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, Boolean emailType) {
         //邮件相关参数
-        rabbitMqTranslateVO.setShopifyData(EMAIL);
+        if (emailType) {
+            rabbitMqTranslateVO.setShopifyData(EMAIL);
+        } else {
+            rabbitMqTranslateVO.setShopifyData(EMAIL_AUTO);
+            rabbitMqTranslateVO.setCustomKey(EMAIL_TRANSLATE);
+        }
+
         try {
             String json = OBJECT_MAPPER.writeValueAsString(rabbitMqTranslateVO);
             translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName()));
@@ -231,12 +263,11 @@ public class RabbitMqTranslateService {
 
     /**
      * 根据模块选择翻译方法
-     * */
+     */
     public void translateByModeType(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
         String modelType = rabbitMqTranslateVO.getModeType();
         appInsights.trackTrace("DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
         commonTranslate(rabbitMqTranslateVO, countUtils);
-        //更新用户token
     }
 
     /**
@@ -781,7 +812,7 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace("翻译失败 errors ： " + e.getMessage() + " ，继续翻译");
         }
 
-        if (Objects.equals(targetString, METAFIELD)){
+        if (Objects.equals(targetString, METAFIELD)) {
             return;
         }
 
@@ -821,7 +852,7 @@ public class RabbitMqTranslateService {
         ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, APIVERSION, target);
 
         Map<String, Object> glossaryMap = rabbitMqTranslateVO.getGlossaryMap();
-        if (glossaryMap== null || glossaryMap.isEmpty()) {
+        if (glossaryMap == null || glossaryMap.isEmpty()) {
             return;
         }
 
@@ -915,10 +946,19 @@ public class RabbitMqTranslateService {
         TranslationCounterRequest request = new TranslationCounterRequest();
         request.setShopName(shopName);
 
-        if (counter.getTotalChars() >= remainingChars) {
-            appInsights.trackTrace("shopName 用户 消耗的token : " + shopName + " totalChars : " + counter.getTotalChars() + " limitChars : " + remainingChars);
+        // 获取这个用户的已使用token数
+        TranslationCounterDO translationCounterDO = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
+        //已经使用的字符数
+        Integer usedChars;
+        if (translationCounterDO != null) {
+            usedChars = translationCounterDO.getUsedChars();
+        } else {
+            usedChars = counter.getTotalChars();
+        }
+        if (usedChars >= remainingChars) {
+            appInsights.trackTrace("shopName 用户 消耗的token : " + shopName + " totalChars : " + usedChars + " limitChars : " + remainingChars);
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
-            //将同一个shopNmae的task任务的状态。除邮件发送模块改为3.
+            //将同一个shopName的task任务的状态。除邮件发送模块改为3.
             updateTranslateTasksStatus(shopName);
             throw new ClientException(CHARACTER_LIMIT);
         }
@@ -1089,11 +1129,11 @@ public class RabbitMqTranslateService {
         counter.addChars(nowUserToken);
         if (nowUserTranslate == 2) {
             //将2改为1， 发送翻译成功的邮件
-            if ("ciwishop.myshopify.com".equals(shopName)){
+            if ("ciwishop.myshopify.com".equals(shopName)) {
                 translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
                 tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
                 translateTasksService.updateByTaskId(task.getTaskId(), 1);
-            }else {
+            } else {
                 triggerSendEmailLater(shopName, target, source, accessToken, task, counter, startTime, startChars, limitChars);
             }
         } else if (nowUserTranslate == 3) {
@@ -1120,11 +1160,15 @@ public class RabbitMqTranslateService {
             String payload = translateTasksDO.getPayload();
             try {
                 RabbitMqTranslateVO rabbitMqTranslateVO = OBJECT_MAPPER.readValue(payload, RabbitMqTranslateVO.class);
-                if (!rabbitMqTranslateVO.getShopifyData().equals(EMAIL)) {
-                    translateTasksService.updateByTaskId(translateTasksDO.getTaskId(), 3);
+                if (rabbitMqTranslateVO.getShopifyData().equals(EMAIL)) {
+                    continue;
                 }
-            } catch (JsonProcessingException e) {
-                appInsights.trackTrace(" errors : " + e);
+                if (rabbitMqTranslateVO.getShopifyData().equals(EMAIL_AUTO)){
+                    continue;
+                }
+                translateTasksService.updateByTaskId(translateTasksDO.getTaskId(), 3);
+            } catch (Exception e) {
+                appInsights.trackTrace(shopName + " errors : " + e);
             }
         }
     }
@@ -1150,7 +1194,7 @@ public class RabbitMqTranslateService {
 
     /**
      * 更新用户token计数
-     * */
+     */
     public void countAfterTranslated(TranslateRequest request) {
         //更新初始值
         try {

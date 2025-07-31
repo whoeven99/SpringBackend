@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -176,7 +177,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public List<TranslatesDO> readAllTranslates() {
-        return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("auto_translate", true));
+        //获取所有auto_translate为true，按shop_name降序排序
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getAutoTranslate, true).orderByDesc(TranslatesDO::getShopName));
     }
 
 

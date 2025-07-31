@@ -154,7 +154,7 @@ public class APGUserGeneratedTaskController {
         Boolean result = GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
         //将任务和子任务的状态改为1
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
-        if (Boolean.TRUE.equals(result) && Boolean.TRUE.equals(updateFlag)) {
+        if (Boolean.TRUE.equals(result) && updateFlag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {
             return new BaseResponse<>().CreateErrorResponse(false);
