@@ -155,7 +155,6 @@ public class APGUserGeneratedTaskController {
         appInsights.trackTrace("result : " + result);
         //将任务和子任务的状态改为1
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
-        appInsights.trackTrace("updateFlag : " + updateFlag);
         if (Boolean.TRUE.equals(result) && updateFlag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {
