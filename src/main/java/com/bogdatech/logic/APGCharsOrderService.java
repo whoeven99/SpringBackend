@@ -23,9 +23,9 @@ public class APGCharsOrderService {
         APGUsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         APGCharsOrderDO charsOrdersServiceById = charsOrdersService.getById(usersDO.getId());
         if (charsOrdersServiceById == null) {
+            charsOrdersDO.setUserId(usersDO.getId());
             return charsOrdersService.save(charsOrdersDO);
         }else {
-
             return charsOrdersService.updateStatusByShopName(usersDO.getId(), charsOrdersDO.getStatus());
         }
     }
