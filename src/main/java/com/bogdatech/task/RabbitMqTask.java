@@ -4,7 +4,6 @@ import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -61,9 +60,10 @@ public class RabbitMqTask {
                             RabbitMqTranslateVO vo = OBJECT_MAPPER.readValue(task.getPayload(), RabbitMqTranslateVO.class);
                             rabbitMqTranslateConsumerService.startTranslate(vo, task);
                         } catch (Exception e) {
-                            appInsights.trackTrace("处理失败 errors : " + e);
+                            appInsights.trackTrace(shopName + " 处理失败 errors : " + e);
                             //将该模块状态改为4
                             translateTasksService.updateByTaskId(task.getTaskId(), 4);
+                            appInsights.trackException(e);
                         } finally {
                             unlock(shopName);
                             PROCESSING_SHOPS.remove(shopName);

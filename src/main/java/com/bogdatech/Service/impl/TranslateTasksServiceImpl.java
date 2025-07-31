@@ -62,4 +62,11 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
     public int updateByShopName(String shopName, int i) {
         return baseMapper.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).set("status", i));
     }
+
+    @Override
+    public Boolean listBeforeEmailTask(String shopName, String taskId) {
+        int i = baseMapper.listBeforeEmailTask(shopName, taskId);
+//        System.out.println("taskId 之前的task数是： " + i);
+        return i == 0;
+    }
 }

@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
-import com.bogdatech.entity.DTO.TaskTranslateDTO;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.service.TranslateTaskPublisherService;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -25,14 +24,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 
 @Component
 public class TaskService {
@@ -52,9 +52,11 @@ public class TaskService {
     private final IUserIpService iUserIpService;
     private final ITranslateTasksService translateTasksService;
     private final TencentEmailService tencentEmailService;
+    private final RabbitMqTranslateService rabbitMqTranslateService;
+
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService, TencentEmailService tencentEmailService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService, TencentEmailService tencentEmailService, RabbitMqTranslateService rabbitMqTranslateService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
@@ -70,6 +72,7 @@ public class TaskService {
         this.iUserIpService = iUserIpService;
         this.translateTasksService = translateTasksService;
         this.tencentEmailService = tencentEmailService;
+        this.rabbitMqTranslateService = rabbitMqTranslateService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -277,7 +280,6 @@ public class TaskService {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         for (TranslatesDO translatesDO : translatesDOList
         ) {
-
 //            System.out.println("translatesDO: " + translatesDO);
             String shopName = translatesDO.getShopName();
 
@@ -286,10 +288,8 @@ public class TaskService {
             if (usersDO.getUninstallTime() != null) {
                 //如果用户卸载了，但有登陆时间，需要判断两者的前后
                 if (usersDO.getLoginTime() == null) {
-//                    System.out.println("该用户已卸载，不翻译了");
                     continue;
                 } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
-//                    System.out.println("该用户已卸载，不翻译了");
                     continue;
                 }
             }
@@ -306,15 +306,35 @@ public class TaskService {
             }
 
             //修改，发送到定时任务的队列里面
-            //UTC每天凌晨1点翻译，且只翻译product模块
+            //UTC每天凌晨1点翻译，且翻译product模块和主题文章，
             //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-            TaskTranslateDTO translateDTO = new TaskTranslateDTO(translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
-            String json = objectToJson(translateDTO);
-            translateTaskPublisherService.sendScheduledTranslateTask(json);
+
+            //将任务存到数据库等待翻译
+            //初始化用户状态
+            userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+            userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+
+            //初始化计数器
+            CharacterCountUtils counter = new CharacterCountUtils();
+            counter.addChars(usedChars);
+
+            //调用DB翻译逻辑
+            rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
+                    , translatesDO.getTarget()), counter, AUTO_TRANSLATE_MAP
+                    , new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(),null)
+                    , remainingChars, usedChars, false, "1", false, EMAIL_TRANSLATE, false);
+
+
+
+//            TaskTranslateDTO translateDTO = new TaskTranslateDTO(translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
+//            String json = objectToJson(translateDTO);
+//            translateTaskPublisherService.sendScheduledTranslateTask(json);
         }
     }
 
-
+    /**
+     * 获取所有计划不过期的用户，判断是否过期
+     */
     public void freeTrialTask() {
         //获取所有免费计划不过期的用户
         List<UserTrialsDO> notTrialExpired = iUserTrialsService.list(new QueryWrapper<UserTrialsDO>().eq("is_trial_expired", false));

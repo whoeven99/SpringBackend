@@ -343,7 +343,7 @@ public class JudgeTranslateUtils {
         for (String text: WHITELIST_WORDS
              ) {
             if (prefix.endsWith(text)) {
-                System.out.println("以 " + text + " 结尾");
+                appInsights.trackTrace("以 " + text + " 结尾");
                 return true;
             }
         }

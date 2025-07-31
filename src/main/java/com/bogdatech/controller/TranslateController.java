@@ -208,9 +208,6 @@ public class TranslateController {
             return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
         }
 
-        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
-
         //修改自定义提示词
         String fixCustomKey = clickTranslateRequest.getCustomKey();
         String cleanedText = null;
@@ -218,11 +215,10 @@ public class TranslateController {
             cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
         }
 
-
         appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
         translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //全部走DB翻译
-        rabbitMqTranslateService.mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText);
+        rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 

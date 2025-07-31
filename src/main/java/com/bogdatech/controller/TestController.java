@@ -249,7 +249,7 @@ public class TestController {
     public void testDBTranslate2(@RequestParam String taskId) {
         //根据id获取数据，转化为规定数据类型
         RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
-        rabbitMqTranslateConsumerService.processMessage(dataToProcess, new TranslateTasksDO());
+        rabbitMqTranslateConsumerService.processMessage(dataToProcess, new TranslateTasksDO(), false);
         translateTasksService.updateByTaskId(taskId, 1);
         unlock(dataToProcess.getShopName());
     }
@@ -300,7 +300,7 @@ public class TestController {
     }
 
     /**
-     * 在map里面清除锁，不建议且仅剩使用
+     * 在map里面清除锁，不建议且谨慎使用
      */
     @PutMapping("/testLock")
     public boolean testLock(@RequestParam String shopName) {
