@@ -11,4 +11,6 @@ public interface IAPGUserCounterService extends IService<APGUserCounterDO> {
     Boolean updateUserUsedCount(Long userId, Integer counter, Integer maxLimit);
 
     Boolean updateCharsByUserId(Long id);
+
+    Boolean updateUserToken(Long id, Integer token);
 }

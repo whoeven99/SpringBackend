@@ -30,8 +30,7 @@ public class StoringDataPublisherService {
         while (attempt < MAX_RETRY_ATTEMPTS) {
             try {
                 rabbitTemplate.convertAndSend(
-                        USER_STORE_EXCHANGE,
-                        USER_STORE_ROUTING_KEY,
+                        USER_STORE_DELAY_QUEUE,
                         message,
                         msg -> {
                             msg.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);

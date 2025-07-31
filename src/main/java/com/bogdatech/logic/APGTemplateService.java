@@ -119,7 +119,12 @@ public class APGTemplateService {
 
         //将用户自定义模板保存到数据库
         apgUserTemplateDO.setUserId(userDO.getId());
-        return iapgUserTemplateService.save(apgUserTemplateDO);
+        boolean save = iapgUserTemplateService.save(apgUserTemplateDO);
+
+        //将模板和用户绑定
+        APGUserTemplateMappingDO apgUserTemplateMappingDO = new APGUserTemplateMappingDO(null, userDO.getId(), apgUserTemplateDO.getId(), true, false);
+        boolean binding = iapgUserTemplateMappingService.save(apgUserTemplateMappingDO);
+        return binding && save;
     }
 
     public Boolean deleteUserTemplate(String shopName, TemplateDTO templateDTO) {
@@ -212,10 +217,17 @@ public class APGTemplateService {
         if (userDO == null) {
             return false;
         }
+
+        //修改templateId对应的使用次数
+        iapgOfficialTemplateService.updateUsedTime(templateId);
         APGUserTemplateMappingDO apgUserTemplateMappingDO = new APGUserTemplateMappingDO();
         apgUserTemplateMappingDO.setTemplateId(templateId);
         apgUserTemplateMappingDO.setUserId(userDO.getId());
         apgUserTemplateMappingDO.setTemplateType(templateType);
         return iapgUserTemplateMappingService.save(apgUserTemplateMappingDO);
+    }
+
+    public String previewExampleDataByTemplateId(String shopName, Long templateId) {
+        return iapgOfficialTemplateService.getOne(new LambdaQueryWrapper<APGOfficialTemplateDO>().eq(APGOfficialTemplateDO::getId, templateId)).getExampleDate();
     }
 }

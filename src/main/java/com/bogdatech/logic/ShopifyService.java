@@ -67,6 +67,7 @@ public class ShopifyService {
     private final IItemsService itemsService;
     private final ITranslatesService translatesService;
     private final StoringDataPublisherService storingDataPublisherService;
+    private final UserTranslationDataService userTranslationDataService;
 
     @Autowired
     public ShopifyService(
@@ -74,12 +75,13 @@ public class ShopifyService {
             IUserSubscriptionsService userSubscriptionsService,
             IItemsService itemsService,
             ITranslatesService translatesService,
-            StoringDataPublisherService storingDataPublisherService) {
+            StoringDataPublisherService storingDataPublisherService, UserTranslationDataService userTranslationDataService) {
         this.userTypeTokenService = userTypeTokenService;
         this.userSubscriptionsService = userSubscriptionsService;
         this.itemsService = itemsService;
         this.translatesService = translatesService;
         this.storingDataPublisherService = storingDataPublisherService;
+        this.userTranslationDataService = userTranslationDataService;
     }
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
@@ -292,7 +294,7 @@ public class ShopifyService {
                 //对key中含section和general的做key值判断
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                     //进行白名单的确认
-                    if (whiteListTranslate(key)){
+                    if (whiteListTranslate(key)) {
                         counter.addChars(calculateModelToken(value));
                         continue;
                     }
@@ -463,9 +465,9 @@ public class ShopifyService {
                     continue;
                 }
 
-                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                     //进行白名单的确认
-                    if (whiteListTranslate(key)){
+                    if (whiteListTranslate(key)) {
                         counter.addChars(calculateModelToken(value));
                         continue;
                     }
@@ -1142,7 +1144,7 @@ public class ShopifyService {
             }
 
         } catch (JsonProcessingException | ClientException e) {
-            appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
+            appInsights.trackTrace("Failed to save to Shopify errors : " + e.getMessage());
         }
     }
 
@@ -1163,9 +1165,12 @@ public class ShopifyService {
 //        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
             CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
             String json = objectToJson(cloudServiceRequest);
-            // 调用 saveToShopify 方法
-            storingDataPublisherService.storingData(json);
-//
+//            // 调用 saveToShopify 方法
+//            storingDataPublisherService.storingData(json);
+//            saveToShopify(cloudServiceRequest);
+
+            //存到数据库中
+            userTranslationDataService.insertTranslationData(json, request.getShopName());
         } catch (Exception e) {
             appInsights.trackTrace(request.getShopName() + " save to Shopify errors : " + e.getMessage());
         }

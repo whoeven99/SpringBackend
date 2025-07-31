@@ -10,6 +10,9 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.bogdatech.constants.RabbitMQConstants.*;
 
 @Configuration
@@ -94,6 +97,17 @@ public class RabbitMQConfig {
     @Bean
     public Queue userStoreDeadLetterQueue() {
         return QueueBuilder.durable(USER_STORE_DEAD_LETTER_QUEUE).build();
+    }
+
+    //声明存储延迟队列
+    @Bean
+    public Queue userStoredelayQueue() {
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-dead-letter-exchange", USER_STORE_EXCHANGE); // 死信转发到原 exchange
+        args.put("x-dead-letter-routing-key", USER_STORE_ROUTING_KEY); // 用原 routingKey
+        args.put("x-message-ttl", 10000); // 延迟10秒
+
+        return new Queue(USER_STORE_DELAY_QUEUE, true, false, false, args);
     }
 
     // 声明定时任务直连交换机

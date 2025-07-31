@@ -152,8 +152,10 @@ public class APGUserGeneratedTaskController {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         Boolean result = GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
+        appInsights.trackTrace("result : " + result);
         //将任务和子任务的状态改为1
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
+        appInsights.trackTrace("updateFlag : " + updateFlag);
         if (Boolean.TRUE.equals(result) && updateFlag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {

@@ -31,12 +31,17 @@ public class StoringDataConsumerService {
     );
 
     public static final ConcurrentHashMap<String, ReentrantLock> LOCK_MAP = new ConcurrentHashMap<>();
+    private final StoringDataPublisherService storingDataPublisherService;
 
+    @Autowired
+    public StoringDataConsumerService(StoringDataPublisherService storingDataPublisherService) {
+        this.storingDataPublisherService = storingDataPublisherService;
+    }
 
     /**
      * 接收存储任务,将翻译好的数据异步mq，存储到shopify本地
      */
-    @RabbitListener(queues = USER_STORE_QUEUE, concurrency = "6", ackMode = "MANUAL")
+    @RabbitListener(queues = USER_STORE_QUEUE, concurrency = "5", ackMode = "MANUAL")
     public void userStoreData(String json, Channel channel, Message rawMessage,@Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         //打印当前的线程
         appInsights.trackTrace(Thread.currentThread().getName() + " receive message : " + json);
@@ -57,7 +62,9 @@ public class StoringDataConsumerService {
 
             if (!locked) {
                 appInsights.trackTrace("Could not acquire lock for shopName errors : " + cloudInsertRequest.getShopName());
-                channel.basicNack(deliveryTag, false, true); // 重试
+                channel.basicAck(deliveryTag, false);
+                //重新发送到延迟队列中
+                storingDataPublisherService.storingData(json);
                 return;
             }
 
