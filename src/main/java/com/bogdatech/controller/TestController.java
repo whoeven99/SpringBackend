@@ -412,4 +412,9 @@ public class TestController {
     public boolean testRemove(@RequestParam String taskId){
         return userTranslationDataService.updateStatusTo2(taskId,2);
     }
+
+    @PutMapping("/testInitUser")
+    public void testInitUser(){
+        taskService.initUserStatus();
+    }
 }
