@@ -501,7 +501,7 @@ public class RabbitMqTranslateService {
             }
 
             String key = translateTextDO.getTextKey();
-            //如果handleFlag为fa;se，则跳过
+            //如果handleFlag为false，则跳过
             if (type.equals(URI) && "handle".equals(key)) {
                 if (!rabbitMqTranslateVO.getHandleFlag()) {
                     iterator.remove();
