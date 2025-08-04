@@ -232,15 +232,6 @@ public class TaskService {
 
             //将该任务的状态改为0
             translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
-            //
-//            //查找测试用户数据表
-//            TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", translatesDO.getShopName()));
-//            if (name != null) {
-//                translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", translatesDO.getShopName()).eq("status",2).set("status", 0));
-//                continue;
-//            }
-//            System.out.println("translatesDO: " + translatesDO);
-//            translateStatus2WhenSystemRestartComplete(translatesDO);
         }
     }
 

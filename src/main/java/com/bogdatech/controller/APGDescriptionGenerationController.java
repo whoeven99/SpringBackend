@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IAPGUserPlanService;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUsersDO;
+import com.bogdatech.entity.DTO.ProductDTO;
+import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.GenerateDescriptionService;
@@ -41,16 +43,20 @@ public class APGDescriptionGenerationController {
 
         // 实现生成描述的逻辑
         String description;
+        ProductDTO product;
         try {
-            description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit);
+            product = generateDescriptionService.getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
+            description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit, product);
             appInsights.trackTrace(shopName + " generateDescription: " + description);
-//            System.out.println(shopName + " generateDescription: " + description);
         } catch (ClientException e) {
             appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         }
-        if (description != null){
-            return new BaseResponse<>().CreateSuccessResponse(description);
+        //计算相关生成数据
+        APGAnalyzeDataVO apgAnalyzeDataVO = generateDescriptionService.analyzeDescriptionData(description, product.getProductDescription(), generateDescriptionVO.getSeoKeywords());
+        apgAnalyzeDataVO.setGenerateText(description);
+        if (description != null) {
+            return new BaseResponse<>().CreateSuccessResponse(apgAnalyzeDataVO);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
