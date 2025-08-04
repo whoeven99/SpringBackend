@@ -6,6 +6,7 @@ import com.bogdatech.entity.DO.APGUserCounterDO;
 import com.bogdatech.entity.DO.APGUserGeneratedSubtaskDO;
 import com.bogdatech.entity.DO.APGUserGeneratedTaskDO;
 import com.bogdatech.entity.DO.APGUsersDO;
+import com.bogdatech.entity.DTO.ProductDTO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateEmailVO;
 import com.bogdatech.exception.ClientException;
@@ -102,7 +103,8 @@ public class GenerateDbTask {
                 return;
             }
             gvo = OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateDescriptionVO.class);
-            generateDescriptionService.generateDescription(usersDO, gvo, counter, userMaxLimit);
+            ProductDTO product = generateDescriptionService.getProductsQueryByProductId(gvo.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
+            generateDescriptionService.generateDescription(usersDO, gvo, counter, userMaxLimit, product);
         } catch (JsonProcessingException e) {
             appInsights.trackTrace(usersDO.getShopName() + " 用户 fixGenerateSubtask errors ：" + e);
             //将该任务状态改为4

@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -231,15 +232,6 @@ public class TaskService {
 
             //将该任务的状态改为0
             translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
-            //
-//            //查找测试用户数据表
-//            TestTableDO name = testTableMapper.selectOne(new QueryWrapper<TestTableDO>().eq("name", translatesDO.getShopName()));
-//            if (name != null) {
-//                translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", translatesDO.getShopName()).eq("status",2).set("status", 0));
-//                continue;
-//            }
-//            System.out.println("translatesDO: " + translatesDO);
-//            translateStatus2WhenSystemRestartComplete(translatesDO);
         }
     }
 
@@ -372,6 +364,44 @@ public class TaskService {
                     appInsights.trackTrace(userTrialsDO.getShopName() + "用户  errors 修改用户计划失败: " + e.getMessage());
                 }
             }
+        }
+    }
+
+    /**
+     * 获取所有的自动翻译用户，初始化用户状态
+     * */
+    @PostConstruct
+    public void initUserStatus() {
+        //获取所有使用自动翻译的用户
+        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        for (TranslatesDO translatesDO : translatesDOList
+        ) {
+            String shopName = translatesDO.getShopName();
+
+            //判断这些用户是否卸载了，卸载了就不管了
+            UsersDO usersDO = usersService.getUserByName(shopName);
+            if (usersDO.getUninstallTime() != null) {
+                //如果用户卸载了，但有登陆时间，需要判断两者的前后
+                if (usersDO.getLoginTime() == null) {
+                    continue;
+                } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+                    continue;
+                }
+            }
+
+            //判断该用户剩余token数是否足够，不够就不管了
+            //判断字符是否超限
+            TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+            Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+            int usedChars = request1.getUsedChars();
+            // 如果字符超限，则直接返回字符超限
+            if (usedChars >= remainingChars) {
+                continue;
+            }
+
+            //初始化用户状态
+            userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
+            userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
         }
     }
 }

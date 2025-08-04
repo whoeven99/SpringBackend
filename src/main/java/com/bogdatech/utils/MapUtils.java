@@ -25,9 +25,9 @@ public class MapUtils {
         try {
             Field field = CurrencyConfig.class.getField(currenciesDO.getCurrencyCode().toUpperCase());
             Map<String, Object> currencyInfo = (Map<String, Object>) field.get(null);
-            if (currencyInfo != null){
+            if (currencyInfo != null) {
                 map.put("symbol", currencyInfo.get("symbol"));
-            }else {
+            } else {
                 map.put("symbol", "-");
                 appInsights.trackTrace("符号错误 ： " + currenciesDO.getShopName());
             }
@@ -39,13 +39,13 @@ public class MapUtils {
         return map;
     }
 
-    /**生成一个用户翻译状态map
-     *
-     * */
-    public static Map<String, Object> getTranslationStatusMap(String content, Integer status){
+    /**
+     * 生成一个用户翻译状态map
+     */
+    public static Map<String, Object> getTranslationStatusMap(String content, Integer status) {
         Map<String, Object> map = new HashMap<>();
-            map.put("value", content);
-            map.put("status", status);
-            return map;
-}
+        map.put("value", content);
+        map.put("status", status);
+        return map;
+    }
 }
