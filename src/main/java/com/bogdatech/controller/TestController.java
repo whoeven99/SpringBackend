@@ -336,65 +336,6 @@ public class TestController {
 
 
     /**
-     * 对html翻译的新问题
-     */
-    @GetMapping("/testHtml2")
-    public String testHtml2() {
-        String html = """
-                                
-                                
-                """;
-        boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
-        Document originalDoc;
-        if (hasHtmlTag) {
-            originalDoc = Jsoup.parse(html);
-        } else {
-            originalDoc = Jsoup.parseBodyFragment(html);
-        }
-
-        // 2. 提取样式并标记 ID
-        Map<String, FullAttributeSnapshotDTO> attrMap = liquidHtmlTranslatorUtils.tagElementsAndSaveFullAttributes(originalDoc);
-        System.out.println("styleMap : " + attrMap);
-
-        // 3. 获取清洗后的 HTML（无样式）
-        liquidHtmlTranslatorUtils.removeAllAttributesExceptMarker(originalDoc);
-        System.out.println("originalDoc : " + originalDoc);
-        // 3. 翻译文本
-//        translateTextNodes(doc.body(), text -> translateToChinese(text)); // 自定义翻译逻辑
-        String cleanedHtml = originalDoc.body().html();
-        System.out.println("cleanedHtml : " + cleanedHtml);
-//        String targetLanguage = getLanguageName("zh-CN");
-//        String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, "Home Goods");
-//        System.out.println("fullHtmlPrompt : " + fullHtmlPrompt);
-//        String s = chatGptIntegration.chatWithGpt(fullHtmlPrompt, cleanedHtml, new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", cleanedHtml), new CharacterCountUtils(), 5000000);
-//        System.out.println("s : " + s);
-
-
-        // 第四步：解析翻译后的 HTML
-        Document translatedDoc;
-        if (hasHtmlTag) {
-//            translatedDoc = Jsoup.parse(s);
-            translatedDoc = Jsoup.parse(cleanedHtml);
-        } else {
-//            translatedDoc = Jsoup.parseBodyFragment(s);
-            translatedDoc = Jsoup.parseBodyFragment(cleanedHtml);
-        }
-        // 第五步：将样式还原到翻译后的 HTML 中
-        liquidHtmlTranslatorUtils.restoreFullAttributes(translatedDoc, attrMap);
-        System.out.println("doc 1 : " + translatedDoc.body().html());
-        return translatedDoc.body().html();
-    }
-
-    /**
-     * 测试发送延迟队列方法
-     */
-    @GetMapping("/testDelayQueue")
-    public String testDelayQueue() {
-        storingDataPublisherService.storingData("12312");
-        return "true";
-    }
-
-    /**
      * 测试插入方法
      */
     @GetMapping("/testInserdata")
@@ -410,5 +351,14 @@ public class TestController {
     @GetMapping("/testRemove")
     public boolean testRemove(@RequestParam String taskId) {
         return userTranslationDataService.updateStatusTo2(taskId, 2);
+    }
+
+    /**
+     * 往缓存中插入数据
+     * */
+    @GetMapping("/testInsertCache")
+    public void testInsertCache(@RequestParam String shopName, @RequestParam String value) {
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(value, 2);
+        userTranslate.put(shopName, translationStatusMap);
     }
 }

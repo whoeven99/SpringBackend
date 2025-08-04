@@ -328,7 +328,17 @@ public class TranslateController {
      */
     @GetMapping("/getUserValue")
     public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
+        //获取当前用户前一次的value值
+        Map<String, Object> map = beforeUserTranslate.get(shopName);
         Map<String, Object> value = userTranslate.get(shopName);
+        if (map == null) {
+            beforeUserTranslate.put(shopName, value);
+        }else {
+            //判断beforeUserTranslate与userTranslate里面的数据是否相同，相同的话，返回
+            if (map.get("value").equals(value.get("value"))) {
+                value.put("value", "Searching for content to translate…");
+            }
+        }
         return new BaseResponse<>().CreateSuccessResponse(value);
     }
 }
