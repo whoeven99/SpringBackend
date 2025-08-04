@@ -411,5 +411,4 @@ public class TestController {
     public boolean testRemove(@RequestParam String taskId) {
         return userTranslationDataService.updateStatusTo2(taskId, 2);
     }
-
 }
