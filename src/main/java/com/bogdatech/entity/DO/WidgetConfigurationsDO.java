@@ -26,4 +26,5 @@ public class WidgetConfigurationsDO {
     private String optionBorderColor;
     private String selectorPosition;
     private String positionData;
+    private Boolean isTransparent;
 }
