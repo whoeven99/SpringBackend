@@ -104,11 +104,11 @@ public class RabbitMqTranslateConsumerService {
         translateTasksService.updateByTaskId(task.getTaskId(), 2);
         appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
         try {
-            if (isTranslationAuto){
+            if (isTranslationAuto) {
                 rabbitMqTranslateVO.setCustomKey(null);
             }
             rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
-            appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars()+ " 单模块翻译结束。");
+            appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
         } catch (ClientException e1) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
             //将用户所有task改为3
@@ -226,16 +226,22 @@ public class RabbitMqTranslateConsumerService {
     private void handleEmailTask(String shopifyData, RabbitMqTranslateVO vo, TranslateTasksDO task) {
         String shopName = vo.getShopName();
         boolean canSendEmail = translateTasksService.listBeforeEmailTask(shopName, task.getTaskId());
-        System.out.println("canSendEmail: " + canSendEmail);
+//        System.out.println("canSendEmail: " + canSendEmail);
         if (canSendEmail) {
             if (EMAIL.equals(shopifyData)) {
                 emailTranslate(vo, task);
             } else if (EMAIL_AUTO.equals(shopifyData)) {
                 emailAutoTranslate(vo, task);
             }
+
+            //将翻译项中的模块改为null
+            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                    .eq(TranslatesDO::getSource, vo.getSource())
+                    .eq(TranslatesDO::getTarget, vo.getTarget())
+                    .set(TranslatesDO::getResourceType, null));
         } else {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
-            System.out.println(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
+//            System.out.println(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
         }
     }
 }
