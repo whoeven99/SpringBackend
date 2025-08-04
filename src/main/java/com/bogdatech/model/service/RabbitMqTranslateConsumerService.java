@@ -160,6 +160,8 @@ public class RabbitMqTranslateConsumerService {
      * DB翻译
      */
     public void dbTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, boolean isTranslationAuto) {
+        Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
+        userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
         // 处理翻译功能
         processMessage(rabbitMqTranslateVO, task, isTranslationAuto);
         //将用户task改为1
