@@ -215,7 +215,6 @@ public class TranslateController {
             cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
         }
 
-        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag);
         translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
         //全部走DB翻译
         rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true);
@@ -331,10 +330,19 @@ public class TranslateController {
         //获取当前用户前一次的value值
         Map<String, Object> map = beforeUserTranslate.get(shopName);
         Map<String, Object> value = userTranslate.get(shopName);
+        if (value == null) {
+            Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
+            return new BaseResponse<>().CreateSuccessResponse(translationStatusMap);
+        }
+        if (value.get("value") == null){
+            Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
+            return new BaseResponse<>().CreateSuccessResponse(translationStatusMap);
+        }
         if (map == null) {
             beforeUserTranslate.put(shopName, value);
         }else {
             //判断beforeUserTranslate与userTranslate里面的数据是否相同，相同的话，返回
+            value.putIfAbsent("value", "Searching for content to translate…");
             if (map.get("value").equals(value.get("value"))) {
                 value.put("value", "Searching for content to translate…");
             }
