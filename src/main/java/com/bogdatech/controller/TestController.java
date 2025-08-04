@@ -2,7 +2,6 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.azure.core.annotation.Get;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
@@ -397,24 +396,24 @@ public class TestController {
 
     /**
      * 测试插入方法
-     * */
+     */
     @GetMapping("/testInserdata")
-    public Boolean testInsert(@RequestParam String data, @RequestParam String shopName){
-       return userTranslationDataService.insertTranslationData(data,shopName);
+    public Boolean testInsert(@RequestParam String data, @RequestParam String shopName) {
+        return userTranslationDataService.insertTranslationData(data, shopName);
     }
 
     @GetMapping("/testReadList")
-    public List<UserTranslationDataDO> testreadList(){
+    public List<UserTranslationDataDO> testreadList() {
         return userTranslationDataService.selectTranslationDataList();
     }
 
     @GetMapping("/testRemove")
-    public boolean testRemove(@RequestParam String taskId){
-        return userTranslationDataService.updateStatusTo2(taskId,2);
+    public boolean testRemove(@RequestParam String taskId) {
+        return userTranslationDataService.updateStatusTo2(taskId, 2);
     }
 
     @PutMapping("/testInitUser")
-    public void testInitUser(){
+    public void testInitUser() {
         taskService.initUserStatus();
     }
 }
