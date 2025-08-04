@@ -412,8 +412,4 @@ public class TestController {
         return userTranslationDataService.updateStatusTo2(taskId, 2);
     }
 
-    @PutMapping("/testInitUser")
-    public void testInitUser() {
-        taskService.initUserStatus();
-    }
 }
