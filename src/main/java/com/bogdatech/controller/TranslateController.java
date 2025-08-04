@@ -334,7 +334,7 @@ public class TranslateController {
             Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
             return new BaseResponse<>().CreateSuccessResponse(translationStatusMap);
         }
-        if (value.get("value") == null){
+        if (value.get("value") == null && value.get("status").equals(2)) {
             Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
             return new BaseResponse<>().CreateSuccessResponse(translationStatusMap);
         }
