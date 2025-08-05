@@ -341,7 +341,7 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         templateData.put("credit_balance",  formatter.format(creditBalance));
         templateData.put("completed_count", String.valueOf(completedCount));
-        templateData.put("remaining_Count", String.valueOf(remainingCount));
+        templateData.put("remaining_count", String.valueOf(remainingCount));
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144923L, templateData, APG_TASK_INTERRUPT_EMAIL, TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
         //存入数据库中

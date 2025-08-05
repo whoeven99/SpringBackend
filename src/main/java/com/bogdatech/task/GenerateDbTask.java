@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.validation.constraints.Email;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -207,18 +209,21 @@ public class GenerateDbTask {
             //获取状态为3的任务id
             List<APGUserGeneratedSubtaskDO> status3List = iapgUserGeneratedSubtaskService.list(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>().eq(APGUserGeneratedSubtaskDO::getUserId, usersDO.getId()).eq(APGUserGeneratedSubtaskDO::getStatus, 3));
             Iterator<APGUserGeneratedSubtaskDO> iterator = status3List.iterator();
+            int completeProductsSize = 0;
             while (iterator.hasNext()) {
                 APGUserGeneratedSubtaskDO subtask = iterator.next();
+                if (subtask.getPayload().contains(EMAIL)) {
+                    continue;
+                }
                 //解析payload，获取里面的productId
                 GenerateDescriptionVO generateDescriptionVO = OBJECT_MAPPER.readValue(subtask.getPayload(), GenerateDescriptionVO.class);
                 if (productIds.contains(generateDescriptionVO.getProductId())) {
-                    iterator.remove();
+                    completeProductsSize++;
                     break;
                 }
             }
 
             //计数list的数量
-            int completeProductsSize = status3List.size();
             tencentEmailService.sendAPGTaskInterruptEmail(usersDO, completeProductsSize, productIds.size() - completeProductsSize, userCounter.getChars());
         } catch (Exception e) {
             appInsights.trackTrace("用户 " + usersDO.getShopName() + "  发送失败邮件接口 errors ：" + e);
