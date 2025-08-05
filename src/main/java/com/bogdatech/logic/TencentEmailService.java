@@ -21,7 +21,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.bogdatech.constants.MailChimpConstants.*;
+import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
+import static com.bogdatech.constants.MailChimpConstants.APG_PURCHASE_EMAIL;
+import static com.bogdatech.constants.MailChimpConstants.APG_TASK_INTERRUPT_EMAIL;
+import static com.bogdatech.constants.MailChimpConstants.ONLINE_NOT_TRANSLATION_SUBJECT;
+import static com.bogdatech.constants.MailChimpConstants.EMAIL_IP_RUNNING_OUT;
+import static com.bogdatech.constants.MailChimpConstants.EMAIL_IP_OUT;
+import static com.bogdatech.constants.MailChimpConstants.SUCCESSFUL_AUTO_TRANSLATION_SUBJECT;
+import static com.bogdatech.constants.MailChimpConstants.SUCCESSFUL_TRANSLATION_SUBJECT;
+import static com.bogdatech.constants.MailChimpConstants.SUBSCRIBE_SUCCESSFUL_SUBJECT;
+import static com.bogdatech.constants.MailChimpConstants.TRANSLATION_FAILED_SUBJECT;
+import static com.bogdatech.constants.MailChimpConstants.APG_INIT_EMAIL;
+import static com.bogdatech.constants.MailChimpConstants.APG_GENERATE_SUCCESS;
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
@@ -89,6 +100,9 @@ public class TencentEmailService {
                 new TencentSendEmailRequest(141471L, templateData, EMAIL_IP_OUT, TENCENT_FROM_EMAIL, userByName.getEmail()));
     }
 
+    /**
+     * 发送自动翻译后邮件
+     * */
     public Boolean sendAutoTranslateEmail(String shopName) {
         String name = parseShopName(shopName);
         UsersDO usersDO = usersService.getUserByName(shopName);
@@ -216,7 +230,9 @@ public class TencentEmailService {
         }
     }
 
-    //自动翻译发送逻辑
+    /**
+     * 自动翻译发送逻辑
+     */
     public void autoTranslateSendEmail(TranslateRequest request, int costChars, long costTime, int remaining) {
         try {
             String shopName = request.getShopName();
@@ -281,7 +297,6 @@ public class TencentEmailService {
      * */
     public void sendAPGSuccessEmail(String email, Long userId, String taskType, String userName, Timestamp createTime, Integer totalToken, Integer products, Integer remaining) {
         //根据用户的id获取生成模块的相关数据
-
         Map<String, String> templateData = new HashMap<>();
         templateData.put("task_type", taskType); // taskType: product, collection
         templateData.put("username", userName);
@@ -297,5 +312,39 @@ public class TencentEmailService {
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144209L, templateData, APG_GENERATE_SUCCESS, TENCENT_FROM_EMAIL, email));
         //存入数据库中
         iapgEmailService.saveEmail(new APGEmailDO(null, userId, TENCENT_FROM_EMAIL, email, APG_GENERATE_SUCCESS, b));
+    }
+
+    /**
+     * 发送APG应用购买成功的邮件
+     * */
+    public Integer sendAPGPurchaseEmail(APGUsersDO apgUsersDO, Integer numberOfCredits, Double creditAmount, Integer creditBalance) {
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("username", apgUsersDO.getFirstName());
+        // 获得用户总的token数
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        templateData.put("purchase_amount",  formatter.format(numberOfCredits));
+        templateData.put("credit_amount",  formatter.format(creditAmount));
+        templateData.put("credit_balance",  formatter.format(creditBalance));
+        //由腾讯发送邮件
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144922L, templateData, APG_PURCHASE_EMAIL, TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
+        //存入数据库中
+        return iapgEmailService.saveEmail(new APGEmailDO(null, apgUsersDO.getId(), TENCENT_FROM_EMAIL, apgUsersDO.getEmail(), APG_PURCHASE_EMAIL, b)) ? 1 : 0;
+    }
+
+    /**
+     * 发送APG应用任务中断的邮件
+     * */
+    public void sendAPGTaskInterruptEmail(APGUsersDO apgUsersDO, Integer completedCount, Integer remainingCount, Integer creditBalance) {
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("username", apgUsersDO.getFirstName());
+        //存用户翻译任务等数据
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        templateData.put("credit_balance",  formatter.format(creditBalance));
+        templateData.put("completed_count", String.valueOf(completedCount));
+        templateData.put("remaining_Count", String.valueOf(remainingCount));
+        //由腾讯发送邮件
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144923L, templateData, APG_TASK_INTERRUPT_EMAIL, TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
+        //存入数据库中
+        iapgEmailService.saveEmail(new APGEmailDO(null, apgUsersDO.getId(), TENCENT_FROM_EMAIL, apgUsersDO.getEmail(), APG_TASK_INTERRUPT_EMAIL, b));
     }
 }

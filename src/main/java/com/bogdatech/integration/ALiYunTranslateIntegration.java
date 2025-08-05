@@ -13,7 +13,6 @@ import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.*;
 import com.alibaba.dashscope.tokenizers.Tokenizer;
 import com.alibaba.dashscope.tokenizers.TokenizerFactory;
-import com.alibaba.dashscope.utils.JsonUtils;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -201,7 +200,7 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = result.getUsage().getOutputTokens();
             int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
             appInsights.trackTrace("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            System.out.println("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+//            System.out.println("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             //更新用户产品计数
@@ -242,7 +241,6 @@ public class ALiYunTranslateIntegration {
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            System.out.println("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
