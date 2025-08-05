@@ -196,8 +196,8 @@ public class GenerateDbTask {
      * */
     public void sendAPGTaskInterruptEmail(APGUsersDO usersDO) {
         //获取用户主任务的taskId，然后获取子任务所有状态3，做遍历对比，获取已完成的产品数，剩余产品数
-        APGUserGeneratedTaskDO byId = iapgUserGeneratedTaskService.getById(usersDO.getId());
-        String taskData = byId.getTaskData();
+        APGUserGeneratedTaskDO apgUserGeneratedTaskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, usersDO.getId()));
+        String taskData = apgUserGeneratedTaskDO.getTaskData();
         //获取用户消耗数据
         APGUserCounterDO userCounter = iapgUserCounterService.getUserCounter(usersDO.getShopName());
         //转化数据类型
