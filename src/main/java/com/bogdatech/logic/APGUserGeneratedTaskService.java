@@ -24,16 +24,12 @@ import static com.bogdatech.utils.TypeConversionUtils.generateDescriptionsVOToGe
 public class APGUserGeneratedTaskService {
     private final IAPGUsersService iapgUsersService;
     private final IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
-    private final IAPGUserPlanService iapgUserPlanService;
-    private final IAPGUserCounterService iapgUserCounterService;
     private final IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
 
     @Autowired
-    public APGUserGeneratedTaskService(IAPGUsersService iapgUsersService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService, IAPGUserPlanService iapgUserPlanService, IAPGUserCounterService iapgUserCounterService, IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService) {
+    public APGUserGeneratedTaskService(IAPGUsersService iapgUsersService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService, IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService) {
         this.iapgUsersService = iapgUsersService;
         this.iapgUserGeneratedTaskService = iapgUserGeneratedTaskService;
-        this.iapgUserPlanService = iapgUserPlanService;
-        this.iapgUserCounterService = iapgUserCounterService;
         this.iapgUserGeneratedSubtaskService = iapgUserGeneratedSubtaskService;
     }
 

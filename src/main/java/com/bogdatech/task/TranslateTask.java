@@ -20,7 +20,6 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-//        System.out.println("应用已准备好，执行启动逻辑...");
         // 执行业务代码
         taskService.translateStatus2WhenSystemRestart();
     }
