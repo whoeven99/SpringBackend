@@ -107,16 +107,6 @@ public class TestController {
         return infoByShopify.toString();
     }
 
-    @GetMapping("/clickTranslate")
-    public void clickTranslate() {
-        testService.startTask();
-    }
-
-    @GetMapping("/stop")
-    public void stop() {
-        testService.stopTask();
-    }
-
 
     //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
@@ -363,5 +353,10 @@ public class TestController {
     public boolean userMaxLimit(@RequestParam String shopName) {
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         return GENERATE_SHOP.add(usersDO.getId());
+    }
+
+    @GetMapping("/testAuto")
+    public void testAuto() {
+        taskService.autoTranslate();
     }
 }
