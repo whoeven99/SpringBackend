@@ -25,6 +25,7 @@ public class TranslationUsageServiceImpl extends ServiceImpl<TranslationUsageMap
         //没有就插入， 有就更新
         TranslationUsageDO translationUsageDO1 = baseMapper.selectOne(new QueryWrapper<TranslationUsageDO>().eq("translate_id", translationUsageDO.getTranslateId()).eq("language_name", translationUsageDO.getLanguageName()));
         if (translationUsageDO1 == null) {
+            //获取用户该语言的id
             baseMapper.insert(translationUsageDO);
         }else {
             baseMapper.update(new UpdateWrapper<TranslationUsageDO>().eq("translate_id", translationUsageDO.getTranslateId())
