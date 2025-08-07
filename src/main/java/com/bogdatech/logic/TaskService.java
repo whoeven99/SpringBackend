@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
@@ -54,10 +55,10 @@ public class TaskService {
     private final ITranslateTasksService translateTasksService;
     private final TencentEmailService tencentEmailService;
     private final RabbitMqTranslateService rabbitMqTranslateService;
-
+    private final ITranslationUsageService iTranslationUsageService;
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService, TencentEmailService tencentEmailService, RabbitMqTranslateService rabbitMqTranslateService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService, TencentEmailService tencentEmailService, RabbitMqTranslateService rabbitMqTranslateService, ITranslationUsageService iTranslationUsageService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
@@ -74,6 +75,7 @@ public class TaskService {
         this.translateTasksService = translateTasksService;
         this.tencentEmailService = tencentEmailService;
         this.rabbitMqTranslateService = rabbitMqTranslateService;
+        this.iTranslationUsageService = iTranslationUsageService;
     }
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -297,9 +299,11 @@ public class TaskService {
                 continue;
             }
 
-            //修改，发送到定时任务的队列里面
-            //UTC每天凌晨1点翻译，且翻译product模块和主题文章，
-            //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
+            //判断这条翻译项在Usage表中是否存在，在的话跳过，不在的话插入
+            TranslationUsageDO usageServiceOne = iTranslationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>().eq(TranslationUsageDO::getShopName, shopName).eq(TranslationUsageDO::getLanguageName, translatesDO.getTarget()));
+            if (usageServiceOne == null) {
+                iTranslationUsageService.save(new TranslationUsageDO(translatesDO.getId(), translatesDO.getShopName(), translatesDO.getTarget(),0,0,0,0));
+            }
 
             //将任务存到数据库等待翻译
             //初始化用户状态

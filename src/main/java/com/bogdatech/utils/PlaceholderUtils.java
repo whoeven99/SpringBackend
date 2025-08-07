@@ -269,7 +269,7 @@ public class PlaceholderUtils {
         prompt.append("- No text in languages other than **").append(language).append("** should appear in the final output.\n");
         prompt.append("- All valid details from the Base Description (e.g., materials, sizes, care instructions, composition) must be retained and integrated.\n");
         prompt.append("- Structured data (e.g., tables, bullet points) must be preserved, but surrounding text should be rewritten for clarity, tone, and fluency.\n");
-        prompt.append("\n**Return only the final product description in HTML format. No explanations or extra text.**\n");
+        prompt.append("\n**Return only the final product description wrapped in a <html> tag. No explanation or additional content.**\n");
 
         return prompt.toString();
     }

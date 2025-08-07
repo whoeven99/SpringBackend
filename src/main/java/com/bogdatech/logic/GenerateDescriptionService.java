@@ -156,15 +156,15 @@ public class GenerateDescriptionService {
         //根据生成前数据和生成后数据分析
         double desInt = countWords(description);
         double proDesInt = countWords(generation);
+        int seoKeywordsInt = countWords(seoKeywords);
         APGAnalyzeDataVO apgAnalyzeDataVO = new APGAnalyzeDataVO();
         apgAnalyzeDataVO.setWordCount(proDesInt);
-        apgAnalyzeDataVO.setWordGap((proDesInt / desInt) - 1);
+        apgAnalyzeDataVO.setWordGap((double) Math.round(((proDesInt / desInt) - 1) * 10000) / 10000);
         if (seoKeywords != null && !seoKeywords.isEmpty()) {
-            double seoDouble = countWords(seoKeywords);
-            double keywordPercent = countWords(seoKeywords) / desInt;
+            double keywordPercent = (double) Math.round((seoKeywordsInt / desInt) * 10000) / 10000;
             apgAnalyzeDataVO.setKeywordStrong(seoKeywords);
             apgAnalyzeDataVO.setKeywordPercent(keywordPercent);
-            double keywordCompare = (double) Math.round((seoDouble / (desInt - proDesInt)) * 10000) / 10000;
+            double keywordCompare = (double) Math.round(((double) seoKeywordsInt / (desInt - proDesInt)) * 10000) / 10000;
             apgAnalyzeDataVO.setKeywordCompare(keywordCompare);
         }
         Random random = new Random();
@@ -172,6 +172,7 @@ public class GenerateDescriptionService {
         int ctrIncrease = random.nextInt(5,55);
         apgAnalyzeDataVO.setCtrIncrease(ctrIncrease);
         apgAnalyzeDataVO.setTextPercent(textPercent);
+        apgAnalyzeDataVO.setGenerateText(generation);
         return apgAnalyzeDataVO;
     }
 }
