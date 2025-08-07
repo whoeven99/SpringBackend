@@ -191,17 +191,6 @@ public class RabbitMqTranslateConsumerService {
         try {
             String shopName = rabbitMqTranslateVO.getShopName();
             //判断数据库里面是否存在该语言
-            TranslationUsageDO usageServiceOne = translationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>().eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName()).eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget()));
-            if (usageServiceOne == null) {
-                //获取这个翻译的一个id
-                TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>()
-                        .select("TOP 1 id")
-                        .eq("shop_name", shopName)
-                        .eq("target", rabbitMqTranslateVO.getTarget())
-                );
-                //插入这条数据
-                translationUsageService.save(new TranslationUsageDO(one.getId(), shopName, rabbitMqTranslateVO.getTarget(), 0, 0, 0, 0));
-            }
             //使用自动翻译的发送邮件逻辑
             //将status改为2
             translateTasksService.updateByTaskId(task.getTaskId(), 2);

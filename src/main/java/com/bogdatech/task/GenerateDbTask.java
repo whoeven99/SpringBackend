@@ -28,6 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
+import static com.bogdatech.logic.APGUserGeneratedTaskService.GENERATE_STATE_BAR;
+import static com.bogdatech.logic.APGUserGeneratedTaskService.INITIALIZATION;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -74,6 +76,7 @@ public class GenerateDbTask {
                         if (subtaskDO.getPayload().contains("\"email\":\"EMAIL\"")) {
                             // 调用发送邮件接口
                             sendDescriptionsEmail(subtaskDO);
+                            GENERATE_STATE_BAR.remove(subtaskDO.getUserId());
                             return;
                         }
                         // 调用单条生成接口
@@ -95,6 +98,7 @@ public class GenerateDbTask {
         iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
         // 获取用户数据
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getId, subtaskDO.getUserId()));
+        GENERATE_STATE_BAR.put(usersDO.getId(), INITIALIZATION);
         // 获取用户最大额度
         Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
         // 将String数据，处理成 GenerateDescriptionVO数据
@@ -224,6 +228,7 @@ public class GenerateDbTask {
             }
 
             //计数list的数量
+            GENERATE_STATE_BAR.remove(usersDO.getId());
             tencentEmailService.sendAPGTaskInterruptEmail(usersDO, completeProductsSize, productIds.size() - completeProductsSize, userCounter.getChars());
         } catch (Exception e) {
             appInsights.trackTrace("用户 " + usersDO.getShopName() + "  发送失败邮件接口 errors ：" + e);

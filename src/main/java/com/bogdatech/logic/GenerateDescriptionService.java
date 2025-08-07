@@ -24,6 +24,7 @@ import java.util.Random;
 
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
+import static com.bogdatech.logic.APGUserGeneratedTaskService.*;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.requestBody.ShopifyRequestBody.*;
@@ -77,6 +78,7 @@ public class GenerateDescriptionService {
         //调用大模型翻译
         //如果产品图片为空，换模型生成
         String des;
+        GENERATE_STATE_BAR.put(usersDO.getId(), GENERATING);
         if (product.getImageUrl() == null || product.getImageUrl().isEmpty()) {
              des = aLiYunTranslateIntegration.callWithQwenMaxToDes(prompt, counter, usersDO.getId(), userMaxLimit);
         }else {
@@ -85,6 +87,7 @@ public class GenerateDescriptionService {
 
 //        每次生成都要更新一下版本记录和生成数据
         iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des, generateDescriptionVO.getPageType() , generateDescriptionVO.getContentType());
+        GENERATE_STATE_BAR.put(usersDO.getId(), FINISHED);
         return des;
     }
 
@@ -161,7 +164,7 @@ public class GenerateDescriptionService {
             double keywordPercent = countWords(seoKeywords) / desInt;
             apgAnalyzeDataVO.setKeywordStrong(seoKeywords);
             apgAnalyzeDataVO.setKeywordPercent(keywordPercent);
-            double keywordCompare = seoDouble / (desInt - proDesInt);
+            double keywordCompare = (double) Math.round((seoDouble / (desInt - proDesInt)) * 10000) / 10000;
             apgAnalyzeDataVO.setKeywordCompare(keywordCompare);
         }
         Random random = new Random();
