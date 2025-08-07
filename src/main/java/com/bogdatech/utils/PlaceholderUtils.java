@@ -258,11 +258,11 @@ public class PlaceholderUtils {
         }));
         prompt.append("\n## Writing Instructions\n");
         buildSection(prompt, buildNonNullMap(new Object[][]{
-                        {"Tone:", tone},
-                        {"Reference Brand:", brand},
-                        {"Structure Template:", templateStructure != null ? templateStructure.trim() : ""},
+                        {"Tone", tone},
+                        {"Reference Brand", brand},
+                        {"Structure Template", templateStructure != null ? templateStructure.trim() : ""},
                 }));
-        prompt.append("Format: HTML");
+//        prompt.append("Format: HTML");
         prompt.append("\n## Must-Follow Rules\n");
         prompt.append("- The entire output must be written in fluent **").append(language).append("**.\n");
         prompt.append("- Titles, slogans, CTAs, and any source content in other languages must be fully translated.\n");
@@ -278,7 +278,7 @@ public class PlaceholderUtils {
      * 判断动态构成提示词
      * */
     private static void buildSection(StringBuilder builder, Map<String, String> fields) {
-        System.out.println("fields: " + fields);
+//        System.out.println("fields: " + fields);
         fields.forEach((label, value) -> {
             if (isNotBlank(value)) {
                 builder.append("- ").append(label).append(": ").append(value.trim()).append("\n");

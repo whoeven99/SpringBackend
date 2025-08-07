@@ -247,7 +247,7 @@ public class TencentEmailService {
                     .orElse(null);
             translationUsageService.insertOrUpdateSingleData(new TranslationUsageDO(targetId, shopName, request.getTarget(), costChars, (int) costTime, remaining, 1));
         } catch (Exception e) {
-            appInsights.trackTrace("自动翻译存储数据失败：" + e.getMessage());
+            appInsights.trackTrace("自动翻译存储数据失败 errors ：" + e.getMessage());
         }
     }
 
@@ -306,8 +306,10 @@ public class TencentEmailService {
 
         long seconds = Duration.between(created, now).getSeconds();
         templateData.put("duration", String.valueOf(seconds));
-        templateData.put("credit_used", String.valueOf(totalToken));
-        templateData.put("credit_remaining", String.valueOf(remaining));
+        //将下面数据改为千分位
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        templateData.put("credit_used", formatter.format(totalToken));
+        templateData.put("credit_remaining", formatter.format(remaining));
         //设置参数
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144209L, templateData, APG_GENERATE_SUCCESS, TENCENT_FROM_EMAIL, email));
         //存入数据库中

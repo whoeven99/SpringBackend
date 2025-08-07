@@ -2,8 +2,12 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.bogdatech.Service.*;
-import com.bogdatech.entity.DO.*;
+import com.bogdatech.Service.IAPGUserGeneratedSubtaskService;
+import com.bogdatech.Service.IAPGUserGeneratedTaskService;
+import com.bogdatech.Service.IAPGUsersService;
+import com.bogdatech.entity.DO.APGUserGeneratedSubtaskDO;
+import com.bogdatech.entity.DO.APGUserGeneratedTaskDO;
+import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateDescriptionsVO;
 import com.bogdatech.entity.VO.GenerateEmailVO;
@@ -12,7 +16,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
@@ -25,7 +32,10 @@ public class APGUserGeneratedTaskService {
     private final IAPGUsersService iapgUsersService;
     private final IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
     private final IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
-
+    public static final ConcurrentHashMap<Long, Integer> GENERATE_STATE_BAR = new ConcurrentHashMap<>();
+    public static final Integer INITIALIZATION = 1;
+    public static final Integer GENERATING = 2;
+    public static final Integer FINISHED = 3;
     @Autowired
     public APGUserGeneratedTaskService(IAPGUsersService iapgUsersService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService, IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService) {
         this.iapgUsersService = iapgUsersService;
@@ -44,7 +54,7 @@ public class APGUserGeneratedTaskService {
 
         //获取用户任务状态
         APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
-        APGUserGeneratedTaskDO apgUserGeneratedTaskDO = new APGUserGeneratedTaskDO(null, userDO.getId(), null ,taskModel, taskData);
+        APGUserGeneratedTaskDO apgUserGeneratedTaskDO = new APGUserGeneratedTaskDO(null, userDO.getId(), null ,taskModel, taskData, null);
         if (taskDO == null){
             //插入对应数据
             return iapgUserGeneratedTaskService.save(apgUserGeneratedTaskDO);
@@ -72,6 +82,8 @@ public class APGUserGeneratedTaskService {
                     .eq(APGUserGeneratedSubtaskDO::getUserId, userDO.getId())).size();
             generateProgressBarVO = apgUserGeneratedTaskDOToGenerateProgressBarVO(taskDO, totalCount, unfinishedCount);
             generateProgressBarVO.setProductTitle(GENERATE_SHOP_BAR.get(userDO.getId()));
+            generateProgressBarVO.setStatus(GENERATE_STATE_BAR.get(userDO.getId()));
+            generateProgressBarVO.setTaskTime(taskDO.getCreateTime());//获取对应的时间
             //获取产品标题
             return generateProgressBarVO;
         } catch (Exception e) {
