@@ -12,6 +12,7 @@ import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UserTranslationDataDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
+import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ChatGptIntegration;
@@ -58,9 +59,10 @@ public class TestController {
     private final RabbitMqTask rabbitMqTask;
     private final UserTranslationDataService userTranslationDataService;
     private final IAPGUsersService iapgUsersService;
+    private final GenerateDescriptionService generateDescriptionService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -73,6 +75,7 @@ public class TestController {
         this.rabbitMqTask = rabbitMqTask;
         this.userTranslationDataService = userTranslationDataService;
         this.iapgUsersService = iapgUsersService;
+        this.generateDescriptionService = generateDescriptionService;
     }
 
     @GetMapping("/ping")
@@ -358,5 +361,17 @@ public class TestController {
     @GetMapping("/testAuto")
     public void testAuto() {
         taskService.autoTranslate();
+    }
+
+    /**
+     * 测试analyzeDescriptionData是否可行
+     * */
+    @GetMapping("/testAnalyze")
+    public APGAnalyzeDataVO testAnalyze() {
+        String gen = """
+                """;
+        String des = """
+                """;
+        return generateDescriptionService.analyzeDescriptionData(des, gen, "123");
     }
 }
