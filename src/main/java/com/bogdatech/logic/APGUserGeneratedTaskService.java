@@ -83,7 +83,7 @@ public class APGUserGeneratedTaskService {
             generateProgressBarVO = apgUserGeneratedTaskDOToGenerateProgressBarVO(taskDO, totalCount, unfinishedCount);
             generateProgressBarVO.setProductTitle(GENERATE_SHOP_BAR.get(userDO.getId()));
             generateProgressBarVO.setStatus(GENERATE_STATE_BAR.get(userDO.getId()));
-            generateProgressBarVO.setTaskTime(taskDO.getCreateTime());//获取对应的时间
+            generateProgressBarVO.setTaskTime(taskDO.getUpdateTime());//获取对应的时间
             //获取产品标题
             return generateProgressBarVO;
         } catch (Exception e) {

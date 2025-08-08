@@ -20,5 +20,5 @@ public class APGUserGeneratedTaskDO {
     private Integer taskStatus;
     private String taskModel;
     private String taskData;
-    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }
