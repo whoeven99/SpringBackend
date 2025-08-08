@@ -1,7 +1,6 @@
 package com.bogdatech.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogdatech.Service.IAPGTemplateService;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUserTemplateDO;
 import com.bogdatech.entity.DO.APGUserTemplateMappingDO;
@@ -18,13 +17,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/apg/template")
 public class APGTemplateController {
-    private final IAPGTemplateService iapgTemplateService;
     private final APGTemplateService apgTemplateService;
     private final IAPGUsersService iapgUsersService;
 
     @Autowired
-    public APGTemplateController(IAPGTemplateService iapgTemplateService, APGTemplateService apgTemplateService, IAPGUsersService iapgUsersService) {
-        this.iapgTemplateService = iapgTemplateService;
+    public APGTemplateController(APGTemplateService apgTemplateService, IAPGUsersService iapgUsersService) {
         this.apgTemplateService = apgTemplateService;
         this.iapgUsersService = iapgUsersService;
     }

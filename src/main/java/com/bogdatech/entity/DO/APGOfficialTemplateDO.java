@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,5 +25,5 @@ public class APGOfficialTemplateDO {
     private Boolean isPayment; //是否是付费模板
     private Integer usedTimes; //使用次数
     private String exampleDate; //示例数据
-
+    private LocalDateTime updateTime;
 }

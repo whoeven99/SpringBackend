@@ -43,7 +43,7 @@ public class APGTemplateService {
         if (userDO == null) {
             return null;
         }
-        List<APGUserTemplateMappingDO> mappingList = iapgUserTemplateMappingService.list(new LambdaQueryWrapper<APGUserTemplateMappingDO>().eq(APGUserTemplateMappingDO::getUserId, userDO.getId()).eq(APGUserTemplateMappingDO::getIsDelete, 0));
+        List<APGUserTemplateMappingDO> mappingList = iapgUserTemplateMappingService.list(new LambdaQueryWrapper<APGUserTemplateMappingDO>().eq(APGUserTemplateMappingDO::getUserId, userDO.getId()).eq(APGUserTemplateMappingDO::getIsDelete, 0).orderByDesc(APGUserTemplateMappingDO::getUpdateTime));
         //对List<APGUserTemplateMappingDO>数据进行分析，转化为List<TemplateVO>方法
         return convertToOfficialTemplateVO(mappingList);
     }
@@ -58,6 +58,7 @@ public class APGTemplateService {
         if (mappingList == null || mappingList.isEmpty()) {
             return null;
         }
+
         for (APGUserTemplateMappingDO apgUserTemplateMappingDO : mappingList
         ) {
             //templateType为false时，为官方模板
@@ -67,31 +68,40 @@ public class APGTemplateService {
                 listUserId.add(apgUserTemplateMappingDO.getTemplateId());
             }
         }
+
         //通过listId获取官方模板
-        List<APGOfficialTemplateDO> apgOfficialTemplates = iapgOfficialTemplateService.listByIds(listOfficeId);
+        List<APGOfficialTemplateDO> apgOfficialTemplates = iapgOfficialTemplateService.list(
+                new LambdaQueryWrapper<APGOfficialTemplateDO>()
+                .in(APGOfficialTemplateDO::getId, listOfficeId)
+                .orderByDesc(APGOfficialTemplateDO::getUpdateTime));
+
         if (apgOfficialTemplates == null || apgOfficialTemplates.isEmpty()){
             return null;
         }
 
         List<TemplateDTO> templates = new ArrayList<>();
-        //将官方模板转化为 TemplateDTO
-        for (APGOfficialTemplateDO apgOfficialTemplateDO : apgOfficialTemplates
-        ) {
-            TemplateDTO templateDTO = officialTemplateToTemplateDTO(apgOfficialTemplateDO);
-            templates.add(templateDTO);
-        }
 
         //获取用户模板
         if (listUserId.isEmpty()){
             return templates;
         }
-        List<APGUserTemplateDO> userTemplates = iapgUserTemplateService.listByIds(listUserId);
+        List<APGUserTemplateDO> userTemplates = iapgUserTemplateService.list(
+                new LambdaQueryWrapper<APGUserTemplateDO>()
+                        .in(APGUserTemplateDO::getId, listUserId)
+                        .orderByDesc(APGUserTemplateDO::getUpdateTime));
         if (userTemplates == null || userTemplates.isEmpty()){
             return templates;
         }
 
         for (APGUserTemplateDO userTemplateDO : userTemplates){
             TemplateDTO templateDTO = userTemplateToTemplateDTO(userTemplateDO);
+            templates.add(templateDTO);
+        }
+
+        //将官方模板转化为 TemplateDTO
+        for (APGOfficialTemplateDO apgOfficialTemplateDO : apgOfficialTemplates
+        ) {
+            TemplateDTO templateDTO = officialTemplateToTemplateDTO(apgOfficialTemplateDO);
             templates.add(templateDTO);
         }
 
@@ -105,7 +115,7 @@ public class APGTemplateService {
         //初始化5条官方模板数据
         boolean save = false;
         for (long i = 2; i <= 5; i++) {
-            save = iapgUserTemplateMappingService.save(new APGUserTemplateMappingDO(null, userId, i, false, false));
+            save = iapgUserTemplateMappingService.save(new APGUserTemplateMappingDO(null, userId, i, false, false, null));
         }
 
         return save;
@@ -122,7 +132,7 @@ public class APGTemplateService {
         boolean save = iapgUserTemplateService.save(apgUserTemplateDO);
 
         //将模板和用户绑定
-        APGUserTemplateMappingDO apgUserTemplateMappingDO = new APGUserTemplateMappingDO(null, userDO.getId(), apgUserTemplateDO.getId(), true, false);
+        APGUserTemplateMappingDO apgUserTemplateMappingDO = new APGUserTemplateMappingDO(null, userDO.getId(), apgUserTemplateDO.getId(), true, false, null);
         boolean binding = iapgUserTemplateMappingService.save(apgUserTemplateMappingDO);
         return binding && save;
     }
