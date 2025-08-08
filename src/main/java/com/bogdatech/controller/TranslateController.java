@@ -1,12 +1,14 @@
 package com.bogdatech.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.entity.VO.TranslatingStopVO;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
@@ -39,19 +41,21 @@ public class TranslateController {
     private final IUserTypeTokenService userTypeTokenService;
     private final UserTypeTokenService userTypeTokensService;
     private final RabbitMqTranslateService rabbitMqTranslateService;
+    private final ITranslateTasksService iTranslateTasksService;
 
     @Autowired
     public TranslateController(
             TranslateService translateService,
             ITranslatesService translatesService,
             ITranslationCounterService translationCounterService,
-            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService) {
+            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService, ITranslateTasksService iTranslateTasksService) {
         this.translateService = translateService;
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.userTypeTokenService = userTypeTokenService;
         this.userTypeTokensService = userTypeTokensService;
         this.rabbitMqTranslateService = rabbitMqTranslateService;
+        this.iTranslateTasksService = iTranslateTasksService;
     }
 
 
@@ -348,5 +352,25 @@ public class TranslateController {
             }
         }
         return new BaseResponse<>().CreateSuccessResponse(value);
+    }
+
+    /**
+     * 停止翻译按钮
+     * 将所有状态0和状态2的任务改成7
+     */
+    @PutMapping("/stopTranslatingTask")
+    public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
+        appInsights.trackTrace("正在翻译的用户： " + userStopFlags);
+        AtomicBoolean stopFlag = userStopFlags.get(shopName);
+        stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
+        userStopFlags.put(shopName, stopFlag);
+        //将所有状态0和状态2的任务改成7
+        translatesService.updateTranslateStatus(shopName, 7, translatingStopVO.getTarget(), translatingStopVO.getSource(), translatingStopVO.getAccessToken());
+        Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
+        if (flag && stopFlag.get()) {
+            appInsights.trackTrace(shopName + " 停止成功");
+            return new BaseResponse<>().CreateSuccessResponse(stopFlag);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 }

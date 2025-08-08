@@ -1,6 +1,7 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslateTasksService;
@@ -68,5 +69,13 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
         int i = baseMapper.listBeforeEmailTask(shopName, taskId);
 //        System.out.println("taskId 之前的task数是： " + i);
         return i == 0;
+    }
+
+    @Override
+    public Boolean updateStatus0And2To7(String shopName) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslateTasksDO>()
+                .eq(TranslateTasksDO::getShopName, shopName)
+                .and(wrapper -> wrapper.eq(TranslateTasksDO::getStatus, 0).or().eq(TranslateTasksDO::getStatus, 2))
+                .set(TranslateTasksDO::getStatus, 7)) > 0;
     }
 }
