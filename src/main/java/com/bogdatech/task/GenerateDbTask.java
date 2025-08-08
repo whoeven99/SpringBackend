@@ -169,7 +169,12 @@ public class GenerateDbTask {
             }
             //获取用户最大额度限制
             Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
-            tencentEmailService.sendAPGSuccessEmail(usersDO.getEmail(), usersDO.getId(), taskModel, usersDO.getFirstName(), subtaskDO.getCreateTime(), userCounter.getChars(), generateEmailVO.getProductIds().length, userMaxLimit);
+            //获取用户剩余额度
+            Integer userSurplusLimit = userMaxLimit - userCounter.getUserToken();
+            if (userSurplusLimit < 0) {
+                userSurplusLimit = 0;
+            }
+            tencentEmailService.sendAPGSuccessEmail(usersDO.getEmail(), usersDO.getId(), taskModel, usersDO.getFirstName(), subtaskDO.getCreateTime(), userCounter.getChars(), generateEmailVO.getProductIds().length, userSurplusLimit);
             appInsights.trackTrace("用户 " + usersDO.getShopName() + "  发送邮件， " + generateEmailVO.getEmail() + " 消耗token：" + userCounter.getChars());
             //将这次任务的token数清零
             iapgUserCounterService.updateCharsByUserId(usersDO.getId());
