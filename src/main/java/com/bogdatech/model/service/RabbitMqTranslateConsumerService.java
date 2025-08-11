@@ -127,30 +127,43 @@ public class RabbitMqTranslateConsumerService {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 处理消息失败 errors : " + e);
             translateTasksService.updateByTaskId(task.getTaskId(), 4);
         } finally {
-            if (isTranslationAuto) {
-                // 获取消耗的token值
-                int totalChars = counter.getTotalChars();
-                int translatedChars = totalChars - usedChars;
-                // 获取结束时间
-                Instant end = Instant.now();
-                // 计算耗时
-                Duration duration = Duration.between(start, end);
-                long seconds = duration.getSeconds();
-                //先获取目前已消耗的字符数和剩余字数数
-                TranslationCounterDO one = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, rabbitMqTranslateVO.getShopName()));
-                //修改自动翻译邮件数据，将消耗的字符数，剩余字符数
-                TranslationUsageDO usageServiceOne = translationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>()
-                        .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
-                        .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget()));
+            statisticalAutomaticTranslationData(isTranslationAuto, counter, usedChars, start, rabbitMqTranslateVO);
+        }
+
+    }
+
+    /**
+     * 判断是否是自动翻译任务，然后记录相关数据
+     * */
+    public void statisticalAutomaticTranslationData(Boolean isTranslationAuto, CharacterCountUtils counter, int usedChars, Instant start, RabbitMqTranslateVO rabbitMqTranslateVO){
+        if (isTranslationAuto) {
+            // 获取消耗的token值
+            int totalChars = counter.getTotalChars();
+            int translatedChars = totalChars - usedChars;
+            // 获取结束时间
+            Instant end = Instant.now();
+            // 计算耗时
+            Duration duration = Duration.between(start, end);
+            long seconds = duration.getSeconds();
+            //先获取目前已消耗的字符数和剩余字数数
+            TranslationCounterDO one = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, rabbitMqTranslateVO.getShopName()));
+
+            //修改自动翻译邮件数据，将消耗的字符数，剩余字符数
+            TranslationUsageDO usageServiceOne = translationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>()
+                    .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
+                    .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget()));
+
+            try {
                 translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
                         .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
                         .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget())
                         .set(TranslationUsageDO::getConsumedTime, usageServiceOne.getConsumedTime() + seconds)
                         .set(TranslationUsageDO::getRemainingCredits, rabbitMqTranslateVO.getLimitChars() - one.getUsedChars())
                         .set(TranslationUsageDO::getCreditCount, usageServiceOne.getCreditCount() + translatedChars));
+            } catch (Exception e) {
+                appInsights.trackException(e);
             }
         }
-
     }
 
     /**
