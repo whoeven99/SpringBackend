@@ -353,6 +353,7 @@ public class LiquidHtmlTranslatorUtils {
             return processTranslationResult(aLiString, attrMap, hasHtmlTag);
 
         } catch (Exception e) {
+            appInsights.trackException(e);
             appInsights.trackTrace("html 翻译失败 errors : " + e);
             return text;
         }
@@ -513,16 +514,33 @@ public class LiquidHtmlTranslatorUtils {
             FullAttributeSnapshotDTO snapshot = attrMap.get(id);
 
             if (snapshot != null) {
-                // 将原始属性还原为字符串（覆盖属性）
-                String fakeOuterHtml = "<" + el.tagName() + " " + snapshot.fullAttributes + ">" + el.html() + "</" + el.tagName() + ">";
-                Element restored = Jsoup.parseBodyFragment(fakeOuterHtml).body().child(0);
+                // 安全处理 null
+                String fullAttrs = snapshot.fullAttributes != null ? snapshot.fullAttributes.trim() : "";
+                String innerHtml = el.html() != null ? el.html() : "";
 
-                // 替换所有属性
-                el.clearAttributes(); // 先清除
-                restored.attributes().forEach(attr -> el.attr(attr.getKey(), attr.getValue()));
+                // 构造 fakeOuterHtml
+                String fakeOuterHtml = "<" + el.tagName() + " " + fullAttrs + ">" + innerHtml + "</" + el.tagName() + ">";
+
+                // 解析并安全获取第一个子节点
+                Element body = Jsoup.parseBodyFragment(fakeOuterHtml).body();
+                if (body.childrenSize() > 0) {
+                    Element restored = body.child(0);
+
+                    // 替换所有属性
+                    el.clearAttributes();
+                    restored.attributes().forEach(attr -> el.attr(attr.getKey(), attr.getValue()));
+                } else {
+                    // 记录异常情况，方便排查
+                    appInsights.trackTrace(
+                            "[restoreFullAttributes] 无法解析出有效子节点, id=" + id +
+                                    ", tag=" + el.tagName() +
+                                    ", fakeOuterHtml=" + fakeOuterHtml
+                    );
+                }
             }
 
-            el.removeAttr(STYLE_TEXT); // 可选：删除还原标记
+            // 可选：删除还原标记
+            el.removeAttr(STYLE_TEXT);
         }
     }
 
