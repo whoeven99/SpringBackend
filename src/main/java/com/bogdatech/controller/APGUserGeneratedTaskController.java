@@ -81,7 +81,6 @@ public class APGUserGeneratedTaskController {
             apgUserGeneratedTaskService.initOrUpdateData(shopName, 0, generateDescriptionsVO.getPageType() + " " + generateDescriptionsVO.getContentType(), json);
         } catch (JsonProcessingException e) {
             appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
-//            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e);
             appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);
         }

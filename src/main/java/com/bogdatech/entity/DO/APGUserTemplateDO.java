@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -30,4 +32,5 @@ public class APGUserTemplateDO {
     @NotBlank(message = "templateSubtype is null")
     private String templateSubtype; //模板子类型 （title， seo， description）
     private Boolean isDelete;
+    private LocalDateTime updateTime;
 }

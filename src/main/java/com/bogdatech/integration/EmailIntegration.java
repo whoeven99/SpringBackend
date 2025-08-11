@@ -129,8 +129,9 @@ public class EmailIntegration {
             throw new RuntimeException(e);
         }
         //判断服务的返回值是否含有RequestId
-
-        assert jsonString != null;
+        if (jsonString == null) {
+            return false;
+        }
         return jsonString.contains("RequestId");
         }
     }

@@ -2,14 +2,17 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
+import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UserTranslationDataDO;
-import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
+import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ChatGptIntegration;
@@ -19,16 +22,11 @@ import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
-import com.bogdatech.model.service.StoringDataPublisherService;
 import com.bogdatech.task.RabbitMqTask;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +34,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
-
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
+import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.task.RabbitMqTask.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.HTML_TAG_PATTERN;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
@@ -60,12 +57,12 @@ public class TestController {
     private final TencentEmailService tencentEmailService;
     private final ITranslateTasksService translateTasksService;
     private final RabbitMqTask rabbitMqTask;
-    private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
-    private final StoringDataPublisherService storingDataPublisherService;
     private final UserTranslationDataService userTranslationDataService;
+    private final IAPGUsersService iapgUsersService;
+    private final GenerateDescriptionService generateDescriptionService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, StoringDataPublisherService storingDataPublisherService, UserTranslationDataService userTranslationDataService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.testService = testService;
@@ -76,9 +73,9 @@ public class TestController {
         this.tencentEmailService = tencentEmailService;
         this.translateTasksService = translateTasksService;
         this.rabbitMqTask = rabbitMqTask;
-        this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
-        this.storingDataPublisherService = storingDataPublisherService;
         this.userTranslationDataService = userTranslationDataService;
+        this.iapgUsersService = iapgUsersService;
+        this.generateDescriptionService = generateDescriptionService;
     }
 
     @GetMapping("/ping")
@@ -111,16 +108,6 @@ public class TestController {
             return null;
         }
         return infoByShopify.toString();
-    }
-
-    @GetMapping("/clickTranslate")
-    public void clickTranslate() {
-        testService.startTask();
-    }
-
-    @GetMapping("/stop")
-    public void stop() {
-        testService.stopTask();
     }
 
 
@@ -360,5 +347,31 @@ public class TestController {
     public void testInsertCache(@RequestParam String shopName, @RequestParam String value) {
         Map<String, Object> translationStatusMap = getTranslationStatusMap(value, 2);
         userTranslate.put(shopName, translationStatusMap);
+    }
+
+    /**
+     * 暂停APG应用的生成任务
+     * */
+    @GetMapping("/testAPGStop")
+    public boolean userMaxLimit(@RequestParam String shopName) {
+        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        return GENERATE_SHOP.add(usersDO.getId());
+    }
+
+    @GetMapping("/testAuto")
+    public void testAuto() {
+        taskService.autoTranslate();
+    }
+
+    /**
+     * 测试analyzeDescriptionData是否可行
+     * */
+    @GetMapping("/testAnalyze")
+    public APGAnalyzeDataVO testAnalyze() {
+        String gen = """
+                """;
+        String des = """
+                """;
+        return generateDescriptionService.analyzeDescriptionData(des, gen, "123");
     }
 }

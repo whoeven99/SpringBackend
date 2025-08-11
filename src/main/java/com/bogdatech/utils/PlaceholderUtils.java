@@ -232,32 +232,45 @@ public class PlaceholderUtils {
             String image,
             String imageDescription,
             String tone,
-            String contentType,
+            String templateType,
             String brand,
             String templateStructure,
-            String language
+            String language,
+            String contentType,
+            String brandWord,
+            String brandSlogan
     ) {
 //        System.out.println("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
         StringBuilder prompt = new StringBuilder();
-        prompt.append("You are a professional e-commerce content creator who specializes in writing high-converting product descriptions for shopify in ");
-        prompt.append(language);
-        prompt.append(". Please generate a product description based on the following information and structure requirements. Strictly follow the format, return only the final product description without any extra explanation.\n\n[BASIC INFORMATION]\n");
+        prompt.append("You are a professional e-commerce ") ;
+        prompt.append(templateType);
+        prompt.append(" content creator specialized in writing ");
+        prompt.append(contentType);
+        prompt.append(" for Shopify. Generate high-converting, brand-aligned product descriptions that are SEO-optimized and customer-focused.\n\n");
+        prompt.append("## Product Info\n");
         buildSection(prompt, buildNonNullMap(new Object[][]{
-                {"Product Name", productName},
-                {"Product Category", productCategory},
-                {"Product Description", productDescription},
+                {"Title", productName},
+                {"Base Description", productDescription},
+                {"Product Type", productCategory},
+                {"Brand Name", brandWord},
+                {"Brand Slogan", brandSlogan},
                 {"SEO Keywords", seoKeywords},
-                {"Image", image},
-                {"Image Description", imageDescription}
         }));
-        prompt.append("\n[WRITING STYLE]\n");
+        prompt.append("\n## Writing Instructions\n");
         buildSection(prompt, buildNonNullMap(new Object[][]{
                         {"Tone", tone},
-                        {"Content Type", contentType},
-                        {"Brand Tone Reference", brand},
+                        {"Reference Brand", brand},
+                        {"Structure Template", templateStructure != null ? templateStructure.trim() : ""},
                 }));
-        prompt.append("\n[STRUCTURE TEMPLATE]\n");
-        prompt.append(templateStructure != null ? templateStructure.trim() : "");
+//        prompt.append("Format: HTML");
+        prompt.append("\n## Must-Follow Rules\n");
+        prompt.append("- The entire output must be written in fluent **").append(language).append("**.\n");
+        prompt.append("- Titles, slogans, CTAs, and any source content in other languages must be fully translated.\n");
+        prompt.append("- No text in languages other than **").append(language).append("** should appear in the final output.\n");
+        prompt.append("- All valid details from the Base Description (e.g., materials, sizes, care instructions, composition) must be retained and integrated.\n");
+        prompt.append("- Structured data (e.g., tables, bullet points) must be preserved, but surrounding text should be rewritten for clarity, tone, and fluency.\n");
+        prompt.append("\n**Return only the final product description wrapped in a <html> tag. No explanation or additional content.**\n");
+
         return prompt.toString();
     }
 
@@ -265,7 +278,7 @@ public class PlaceholderUtils {
      * 判断动态构成提示词
      * */
     private static void buildSection(StringBuilder builder, Map<String, String> fields) {
-        System.out.println("fields: " + fields);
+//        System.out.println("fields: " + fields);
         fields.forEach((label, value) -> {
             if (isNotBlank(value)) {
                 builder.append("- ").append(label).append(": ").append(value.trim()).append("\n");

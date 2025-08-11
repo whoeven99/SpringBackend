@@ -14,6 +14,8 @@ import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -50,6 +52,7 @@ public class APGDescriptionGenerationController {
             appInsights.trackTrace(shopName + " generateDescription: " + description);
         } catch (ClientException e) {
             appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
+//            System.out.println("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         }
         //计算相关生成数据

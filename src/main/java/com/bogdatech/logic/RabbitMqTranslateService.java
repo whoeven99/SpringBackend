@@ -528,6 +528,13 @@ public class RabbitMqTranslateService {
                     continue;
                 }
 
+                //对key中包含slide  slideshow  general.lange 的数据不翻译
+                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
+                    printTranslateReason(value + "是包含slide,slideshow和general.lange的key是： " + key);
+                    iterator.remove();
+                    continue;
+                }
+
                 //对key中含section和general的做key值判断
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                     //进行白名单的确认

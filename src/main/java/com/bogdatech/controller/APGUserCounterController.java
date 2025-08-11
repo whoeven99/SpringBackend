@@ -2,11 +2,13 @@ package com.bogdatech.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IAPGUserCounterService;
+import com.bogdatech.Service.IAPGUserGeneratedTaskService;
 import com.bogdatech.Service.IAPGUserPlanService;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUserCounterDO;
 import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.VO.APGTokenVO;
+import com.bogdatech.logic.APGCharsOrderService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +21,16 @@ public class APGUserCounterController {
     private final IAPGUserCounterService iapgUserCounterService;
     private final IAPGUsersService iapgUsersService;
     private final IAPGUserPlanService iapgUserPlanService;
+    private final APGCharsOrderService apgCharsOrderService;
+    private final IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
 
     @Autowired
-    public APGUserCounterController(IAPGUserCounterService iapgUserCounterService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService) {
+    public APGUserCounterController(IAPGUserCounterService iapgUserCounterService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService, APGCharsOrderService apgCharsOrderService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService) {
         this.iapgUserCounterService = iapgUserCounterService;
         this.iapgUsersService = iapgUsersService;
         this.iapgUserPlanService = iapgUserPlanService;
+        this.apgCharsOrderService = apgCharsOrderService;
+        this.iapgUserGeneratedTaskService = iapgUserGeneratedTaskService;
     }
 
     /**
@@ -68,10 +74,24 @@ public class APGUserCounterController {
         //获取用户的id
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         Boolean result = iapgUserCounterService.updateUserToken(usersDO.getId(), token);
+        //将部分翻译状态改为6
+        iapgUserGeneratedTaskService.updateStatusByUserId(usersDO.getId(), 6);
         if (result) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
+    }
+
+    /**
+     * 购买成功的邮件
+     * */
+    @PostMapping("/sendAPGPurchaseEmail")
+    public BaseResponse<Object> sendAPGPurchaseEmail(@RequestParam String shopName, @RequestParam Integer token, @RequestParam Double amount){
+        boolean flag = apgCharsOrderService.sendAPGPurchaseEmail(shopName, token, amount) > 0 ;
+        if (flag){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 }

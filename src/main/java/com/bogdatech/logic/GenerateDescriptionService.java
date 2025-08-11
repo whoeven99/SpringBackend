@@ -24,6 +24,7 @@ import java.util.Random;
 
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
+import static com.bogdatech.logic.APGUserGeneratedTaskService.*;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.requestBody.ShopifyRequestBody.*;
@@ -72,11 +73,12 @@ public class GenerateDescriptionService {
 
         counter.addChars(counterDO.getUserToken());
         //生成提示词
-        String prompt = buildDescriptionPrompt(product.getProductTitle(), product.getProductType(), product.getProductDescription(), generateDescriptionVO.getSeoKeywords(), product.getImageUrl(), product.getImageAltText(), generateDescriptionVO.getTextTone(), templateById.getTemplateType(), generateDescriptionVO.getBrandTone(), templateById.getTemplateData(), generateDescriptionVO.getLanguage());
+        String prompt = buildDescriptionPrompt(product.getProductTitle(), product.getProductType(), product.getProductDescription(), generateDescriptionVO.getSeoKeywords(), product.getImageUrl(), product.getImageAltText(), generateDescriptionVO.getTextTone(), templateById.getTemplateType(), generateDescriptionVO.getBrandTone(), templateById.getTemplateData(), generateDescriptionVO.getLanguage(), generateDescriptionVO.getContentType(), generateDescriptionVO.getBrandWord(), generateDescriptionVO.getBrandSlogan());
         appInsights.trackTrace(usersDO.getShopName() + " 用户 " + product.getId() + " 的提示词为 ： " + prompt);
         //调用大模型翻译
         //如果产品图片为空，换模型生成
         String des;
+        GENERATE_STATE_BAR.put(usersDO.getId(), GENERATING);
         if (product.getImageUrl() == null || product.getImageUrl().isEmpty()) {
              des = aLiYunTranslateIntegration.callWithQwenMaxToDes(prompt, counter, usersDO.getId(), userMaxLimit);
         }else {
@@ -85,6 +87,7 @@ public class GenerateDescriptionService {
 
 //        每次生成都要更新一下版本记录和生成数据
         iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des, generateDescriptionVO.getPageType() , generateDescriptionVO.getContentType());
+        GENERATE_STATE_BAR.put(usersDO.getId(), FINISHED);
         return des;
     }
 
@@ -153,15 +156,15 @@ public class GenerateDescriptionService {
         //根据生成前数据和生成后数据分析
         double desInt = countWords(description);
         double proDesInt = countWords(generation);
+        int seoKeywordsInt = countWords(seoKeywords);
         APGAnalyzeDataVO apgAnalyzeDataVO = new APGAnalyzeDataVO();
         apgAnalyzeDataVO.setWordCount(proDesInt);
-        apgAnalyzeDataVO.setWordGap((proDesInt / desInt) - 1);
+        apgAnalyzeDataVO.setWordGap((double) Math.round(((proDesInt / desInt) - 1) * 10000) / 10000);
         if (seoKeywords != null && !seoKeywords.isEmpty()) {
-            double seoDouble = countWords(seoKeywords);
-            double keywordPercent = countWords(seoKeywords) / desInt;
+            double keywordPercent = (double) Math.round((seoKeywordsInt / desInt) * 10000) / 10000;
             apgAnalyzeDataVO.setKeywordStrong(seoKeywords);
             apgAnalyzeDataVO.setKeywordPercent(keywordPercent);
-            double keywordCompare = seoDouble / (desInt - proDesInt);
+            double keywordCompare = (double) Math.round(((double) seoKeywordsInt / (desInt - proDesInt)) * 10000) / 10000;
             apgAnalyzeDataVO.setKeywordCompare(keywordCompare);
         }
         Random random = new Random();
@@ -169,6 +172,7 @@ public class GenerateDescriptionService {
         int ctrIncrease = random.nextInt(5,55);
         apgAnalyzeDataVO.setCtrIncrease(ctrIncrease);
         apgAnalyzeDataVO.setTextPercent(textPercent);
+        apgAnalyzeDataVO.setGenerateText(generation);
         return apgAnalyzeDataVO;
     }
 }
