@@ -531,9 +531,6 @@ public class LiquidHtmlTranslatorUtils {
                     restored.attributes().forEach(attr -> el.attr(attr.getKey(), attr.getValue()));
                 } else {
                     // 记录异常情况，方便排查
-                    System.out.println( "[restoreFullAttributes] 无法解析出有效子节点, id=" + id +
-                            ", tag=" + el.tagName() +
-                            ", fakeOuterHtml=" + fakeOuterHtml);
                     appInsights.trackTrace(
                             "[restoreFullAttributes] 无法解析出有效子节点, id=" + id +
                                     ", tag=" + el.tagName() +
