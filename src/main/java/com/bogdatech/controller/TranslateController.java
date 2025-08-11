@@ -18,6 +18,7 @@ import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -331,6 +332,12 @@ public class TranslateController {
      */
     @GetMapping("/getUserValue")
     public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
+        if (beforeUserTranslate.isEmpty()){
+            beforeUserTranslate.put(shopName, getTranslationStatusMap("Searching for content to translate…", 2));
+        }
+        if (userTranslate.isEmpty()){
+            userTranslate.put(shopName, getTranslationStatusMap("Searching for content to translate…", 2));
+        }
         //获取当前用户前一次的value值
         Map<String, Object> map = beforeUserTranslate.get(shopName);
         Map<String, Object> value = userTranslate.get(shopName);
