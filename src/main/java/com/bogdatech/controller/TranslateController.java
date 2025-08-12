@@ -113,8 +113,8 @@ public class TranslateController {
                 i++;
             }
             //判断任务表里面是否存在该任务，存在将flag改为true
-            TranslateTasksDO one = iTranslateTasksService.getOne(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
-            if (one != null) {
+            List<TranslateTasksDO> list = iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
+            if (!list.isEmpty()) {
                 flag = true;
             }
             translateArrayVO.setTranslatesDOResult(translatesDOResult);
