@@ -1,13 +1,16 @@
 package com.bogdatech.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
+import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.entity.VO.TranslateArrayVO;
 import com.bogdatech.entity.VO.TranslatingStopVO;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.TranslateService;
@@ -99,14 +102,24 @@ public class TranslateController {
     @PostMapping("/readTranslateDOByArray")
     public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO[] translatesDOS) {
         if (translatesDOS != null && translatesDOS.length > 0) {
+            TranslateArrayVO translateArrayVO = new TranslateArrayVO();
             TranslatesDO[] translatesDOResult = new TranslatesDO[translatesDOS.length];
             int i = 0;
+            //初始化 flag用于判断前端是否要继续请求
+            boolean flag = false;
             for (TranslatesDO translatesDO : translatesDOS
             ) {
                 translatesDOResult[i] = translatesService.readTranslateDOByArray(translatesDO);
                 i++;
             }
-            return new BaseResponse<>().CreateSuccessResponse(translatesDOResult);
+            //判断任务表里面是否存在该任务，存在将flag改为true
+            TranslateTasksDO one = iTranslateTasksService.getOne(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
+            if (one != null) {
+                flag = true;
+            }
+            translateArrayVO.setTranslatesDOResult(translatesDOResult);
+            translateArrayVO.setFlag(flag);
+            return new BaseResponse<>().CreateSuccessResponse(translateArrayVO);
         } else {
             return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
         }
@@ -215,7 +228,12 @@ public class TranslateController {
             cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
         }
 
-        //改为循环遍历
+        //改为循环遍历，将相关target状态改为2
+        for (String target: clickTranslateRequest.getTarget()
+             ) {
+            translatesService.updateTranslateStatus(request.getShopName(), 2, target, request.getSource(), request.getAccessToken());
+        }
+
         //全部走DB翻译
         rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true, clickTranslateRequest.getTarget());
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
