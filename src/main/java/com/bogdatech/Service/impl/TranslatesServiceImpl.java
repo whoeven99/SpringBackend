@@ -2,6 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslatesService;
@@ -182,7 +183,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
 
-
     @Override
     public void updateAutoTranslateByShopNameToFalse(String shopName) {
         baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("auto_translate", false));
@@ -198,7 +198,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public void updateAllStatusTo0(String shopName) {
-        if (shopName != null ) {
+        if (shopName != null) {
             baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("status", 0));
         }
     }
@@ -211,5 +211,16 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
             //插入这条数据
             baseMapper.insertShopTranslateInfo(source, shopifyRequest.getAccessToken(), locale, shopifyRequest.getShopName(), 0);
         }
+    }
+
+    @Override
+    public void updateStopStatus(String shopName, String source, String accessToken) {
+        baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>()
+                .eq(TranslatesDO::getShopName, shopName)
+                .eq(TranslatesDO::getSource, source)
+                .eq(TranslatesDO::getStatus, 2)
+                .set(TranslatesDO::getStatus, 7)
+                .set(TranslatesDO::getAccessToken, accessToken));
+
     }
 }

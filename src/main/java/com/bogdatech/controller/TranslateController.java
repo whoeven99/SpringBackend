@@ -366,8 +366,9 @@ public class TranslateController {
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
         stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
         userStopFlags.put(shopName, stopFlag);
-        //将所有状态0和状态2的任务改成7
-        translatesService.updateTranslateStatus(shopName, 7, translatingStopVO.getTarget(), translatingStopVO.getSource(), translatingStopVO.getAccessToken());
+        //将所有状态2的任务改成7
+        translatesService.updateStopStatus(shopName, translatingStopVO.getSource(), translatingStopVO.getAccessToken());
+        //将所有状态为0和2的子任务，改为7
         Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
         if (flag && stopFlag.get()) {
             appInsights.trackTrace(shopName + " 停止成功");
