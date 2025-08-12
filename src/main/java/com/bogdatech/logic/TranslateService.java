@@ -1,6 +1,7 @@
 package com.bogdatech.logic;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.*;
@@ -1761,6 +1762,21 @@ public class TranslateService {
                     //存储到数据库中
                     translatesService.insertShopTranslateInfoByShopify(shopifyRequest, locale, request.getSource());
                 }
+            }
+        }
+    }
+
+    /**
+     * 循环遍历数据库中是否有该条数据
+     * */
+    public void isExistInDatabase(String shopName, ClickTranslateRequest clickTranslateRequest, TranslateRequest request){
+        for (String target: clickTranslateRequest.getTarget()
+             ) {
+            request.setTarget(target);
+            TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("source", clickTranslateRequest.getSource()).eq("target", request.getTarget()));
+            if (one == null) {
+                //走同步逻辑
+                syncShopifyAndDatabase(request);
             }
         }
     }

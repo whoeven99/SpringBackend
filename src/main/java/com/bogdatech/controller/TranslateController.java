@@ -158,11 +158,9 @@ public class TranslateController {
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
-        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("source", clickTranslateRequest.getSource()).eq("target", clickTranslateRequest.getTarget()));
-        if (one == null) {
-            //走同步逻辑
-            translateService.syncShopifyAndDatabase(request);
-        }
+        //循环同步
+        translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
+
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
