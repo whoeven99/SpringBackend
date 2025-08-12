@@ -88,7 +88,6 @@ public class RabbitMqTranslateService {
              ) {
             request.setTarget(target);
             shopifyRequest.setTarget(target);
-            translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
             mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, limitChars, usedChars, handleFlag, translationModel, isCover, customKey, emailType);
         }
 
@@ -119,7 +118,6 @@ public class RabbitMqTranslateService {
 
         //获取目前所使用的AI语言包
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
-        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
