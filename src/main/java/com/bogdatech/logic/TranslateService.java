@@ -400,7 +400,7 @@ public class TranslateService {
             }
         }
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
-        appInsights.trackTrace("用户的手动翻译token：" + usedCharCounter.getTotalChars());
+        appInsights.trackTrace("用户的手动翻译token： " + usedCharCounter.getTotalChars());
         appInsights.trackTrace("用户翻译token： " + counter.getTotalChars());
         System.out.println("翻译结束");
     }
@@ -1689,7 +1689,7 @@ public class TranslateService {
         if (type.equals(URI) && "handle".equals(key)) {
             // 如果 key 为 "handle"，这里是要处理的代码
             String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars);
-            appInsights.trackTrace(shopName + " 用户，" + value + " 单条翻译 handle模块： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
+            appInsights.trackTrace(shopName + " 用户 ，" + value + " 单条翻译 handle模块： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
             return new BaseResponse<>().CreateSuccessResponse(targetString);
         }
 
@@ -1701,20 +1701,21 @@ public class TranslateService {
 //                    String htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, new TranslateRequest(0, shopName, null, source, target, value), counter, null, remainingChars, null, null, null);
                     String htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(value, "General", counter, target, shopName, remainingChars, "1", source);
                     htmlTranslation = normalizeHtml(htmlTranslation);
-                    appInsights.trackTrace(shopName + " 用户，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
+                    appInsights.trackTrace(shopName + " 用户 ，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                     return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
                 }
 //                String htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, new TranslateRequest(0, shopName, null, source, target, value), counter, null, remainingChars, null, null, null);
                 String htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(value, "General", counter, target, shopName, remainingChars, "1", source);
-                appInsights.trackTrace(shopName + " 用户，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
+                appInsights.trackTrace(shopName + " 用户 ，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
                 String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, GENERAL, remainingChars);
-                appInsights.trackTrace(shopName + " 用户，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
+                appInsights.trackTrace(shopName + " 用户 ，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }
         } catch (Exception e) {
             appInsights.trackTrace("singleTranslate errors : " + e.getMessage());
+            appInsights.trackException(e);
         }
 
         return new BaseResponse<>().CreateErrorResponse(value);
