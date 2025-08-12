@@ -131,8 +131,9 @@ public class TranslateController {
     @PostMapping("/getTranslateDOByShopNameAndSource")
     public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
         if (request != null) {
-            TranslatesDO translatesDO = translatesService.selectLatestOne(request);
-            return new BaseResponse<>().CreateSuccessResponse(translatesDO);
+            //改为返回状态为2的所有相关数据
+            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2));
+            return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
     }
