@@ -149,7 +149,7 @@ public class TranslateController {
         if (clickTranslateRequest.getShopName() == null || clickTranslateRequest.getShopName().isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
                 || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
-                || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().isEmpty()) {
+                || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().length == 0) {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
         if (clickTranslateRequest.getIsCover() == null) {
@@ -220,9 +220,9 @@ public class TranslateController {
             cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
         }
 
-        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
+        //改为循环遍历
         //全部走DB翻译
-        rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true);
+        rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true, clickTranslateRequest.getTarget());
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
