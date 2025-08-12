@@ -67,7 +67,7 @@ public class TypeConversionUtils {
     public static TranslateRequest ClickTranslateRequestToTranslateRequest(ClickTranslateRequest request){
         TranslateRequest translateRequest = new TranslateRequest();
         translateRequest.setSource(request.getSource());
-        translateRequest.setTarget(request.getTarget());
+        translateRequest.setTarget(request.getTarget()[0]);
         translateRequest.setAccessToken(request.getAccessToken());
         translateRequest.setShopName(request.getShopName());
         return translateRequest;
