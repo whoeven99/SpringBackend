@@ -17,12 +17,9 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
@@ -143,10 +140,10 @@ public class TranslateController {
      * 通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @PutMapping("/clickTranslation")
-    public BaseResponse<Object> clickTranslation(@RequestBody ClickTranslateRequest clickTranslateRequest) {
-
+    public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
+        appInsights.trackTrace("clickTranslation : " + clickTranslateRequest);
         //判断前端传的数据是否完整，如果不完整，报错
-        if (clickTranslateRequest.getShopName() == null || clickTranslateRequest.getShopName().isEmpty()
+        if (shopName == null || shopName.isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
                 || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
                 || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().length == 0) {
@@ -156,12 +153,12 @@ public class TranslateController {
             clickTranslateRequest.setIsCover(false);
         }
         Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
-        userTranslate.put(clickTranslateRequest.getShopName(), translationStatusMap);
+        userTranslate.put(shopName, translationStatusMap);
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
-        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", clickTranslateRequest.getShopName()).eq("source", clickTranslateRequest.getSource()).eq("target", clickTranslateRequest.getTarget()));
+        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("source", clickTranslateRequest.getSource()).eq("target", clickTranslateRequest.getTarget()));
         if (one == null) {
             //走同步逻辑
             translateService.syncShopifyAndDatabase(request);
@@ -186,8 +183,8 @@ public class TranslateController {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
 
-        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
 
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
@@ -200,7 +197,7 @@ public class TranslateController {
             translateModel.removeIf("handle"::equals);
             handleFlag = true;
         }
-        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
+        appInsights.trackTrace(shopName + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
         //修改模块的排序
         List<String> translateResourceDTOS = null;
         try {
