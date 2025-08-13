@@ -175,6 +175,9 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         int endChars = counter.getTotalChars();
         int costChars = endChars - beginChars;
+        if (costChars <= 0){
+            costChars = 0;
+        }
         String formattedNumber = formatter.format(costChars);
         templateData.put("credit_count", formattedNumber);
 //        System.out.println("templateData" + templateData);
