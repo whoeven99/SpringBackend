@@ -135,7 +135,8 @@ public class TranslateController {
             List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2));
             if (list.isEmpty()) {
                 TranslatesDO translatesDO = translatesService.selectLatestOne(request);
-                return new BaseResponse<>().CreateSuccessResponse(translatesDO);
+                list.add(translatesDO);
+                return new BaseResponse<>().CreateSuccessResponse(list);
             }
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
