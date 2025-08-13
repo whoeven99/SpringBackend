@@ -1157,6 +1157,7 @@ public class RabbitMqTranslateService {
             translateTasksService.updateByTaskId(task.getTaskId(), 1);
             //修改后面发生失败的邮件消耗字数。
             translateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0)).forEach(translateTasksDO -> {
+                appInsights.trackTrace("修改前的数据为： " + translateTasksDO);
                 if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
                     //将这条数据里面的startChars改为现在的usedChars
                     try {
@@ -1165,6 +1166,7 @@ public class RabbitMqTranslateService {
                         String json = OBJECT_MAPPER.writeValueAsString(rabbitMqTranslateVO);
                         translateTasksDO.setPayload(json);
                         //存回
+                        appInsights.trackTrace("修改后的数据为： " + translateTasksDO);
                         translateTasksService.updateById(translateTasksDO);
                     } catch (JsonProcessingException e) {
                         appInsights.trackException(e);
