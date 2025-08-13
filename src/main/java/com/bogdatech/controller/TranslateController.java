@@ -1,13 +1,16 @@
 package com.bogdatech.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
+import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.entity.VO.TranslateArrayVO;
 import com.bogdatech.entity.VO.TranslatingStopVO;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.TranslateService;
@@ -17,12 +20,9 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
@@ -102,14 +102,24 @@ public class TranslateController {
     @PostMapping("/readTranslateDOByArray")
     public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO[] translatesDOS) {
         if (translatesDOS != null && translatesDOS.length > 0) {
+            TranslateArrayVO translateArrayVO = new TranslateArrayVO();
             TranslatesDO[] translatesDOResult = new TranslatesDO[translatesDOS.length];
             int i = 0;
+            //初始化 flag用于判断前端是否要继续请求
+            boolean flag = false;
             for (TranslatesDO translatesDO : translatesDOS
             ) {
                 translatesDOResult[i] = translatesService.readTranslateDOByArray(translatesDO);
                 i++;
             }
-            return new BaseResponse<>().CreateSuccessResponse(translatesDOResult);
+            //判断任务表里面是否存在该任务，存在将flag改为true
+            List<TranslateTasksDO> list = iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
+            if (!list.isEmpty()) {
+                flag = true;
+            }
+            translateArrayVO.setTranslatesDOResult(translatesDOResult);
+            translateArrayVO.setFlag(flag);
+            return new BaseResponse<>().CreateSuccessResponse(translateArrayVO);
         } else {
             return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
         }
@@ -121,8 +131,14 @@ public class TranslateController {
     @PostMapping("/getTranslateDOByShopNameAndSource")
     public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
         if (request != null) {
-            TranslatesDO translatesDO = translatesService.selectLatestOne(request);
-            return new BaseResponse<>().CreateSuccessResponse(translatesDO);
+            //改为返回状态为2的所有相关数据
+            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2));
+            if (list.isEmpty()) {
+                TranslatesDO translatesDO = translatesService.selectLatestOne(request);
+                list.add(translatesDO);
+                return new BaseResponse<>().CreateSuccessResponse(list);
+            }
+            return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
     }
@@ -143,29 +159,30 @@ public class TranslateController {
      * 通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
      */
     @PutMapping("/clickTranslation")
-    public BaseResponse<Object> clickTranslation(@RequestBody ClickTranslateRequest clickTranslateRequest) {
-
+    public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
+        appInsights.trackTrace("clickTranslation : " + clickTranslateRequest);
         //判断前端传的数据是否完整，如果不完整，报错
-        if (clickTranslateRequest.getShopName() == null || clickTranslateRequest.getShopName().isEmpty()
+        if (shopName == null || shopName.isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
                 || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
-                || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().isEmpty()) {
+                || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().length == 0) {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
+        }
+        if (clickTranslateRequest.getTarget().length > 5) {
+            return new BaseResponse<>().CreateErrorResponse("Please select no more than 5 languages to translate.");
         }
         if (clickTranslateRequest.getIsCover() == null) {
             clickTranslateRequest.setIsCover(false);
         }
         Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
-        userTranslate.put(clickTranslateRequest.getShopName(), translationStatusMap);
+        userTranslate.put(shopName, translationStatusMap);
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
-        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", clickTranslateRequest.getShopName()).eq("source", clickTranslateRequest.getSource()).eq("target", clickTranslateRequest.getTarget()));
-        if (one == null) {
-            //走同步逻辑
-            translateService.syncShopifyAndDatabase(request);
-        }
+        //循环同步
+        translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
+
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
@@ -186,8 +203,8 @@ public class TranslateController {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
 
-        userEmailStatus.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(clickTranslateRequest.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
+        userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
 
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
@@ -200,7 +217,7 @@ public class TranslateController {
             translateModel.removeIf("handle"::equals);
             handleFlag = true;
         }
-        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
+        appInsights.trackTrace(shopName + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
         //修改模块的排序
         List<String> translateResourceDTOS = null;
         try {
@@ -220,9 +237,14 @@ public class TranslateController {
             cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
         }
 
-        translatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
+        //改为循环遍历，将相关target状态改为2
+        for (String target: clickTranslateRequest.getTarget()
+             ) {
+            translatesService.updateTranslateStatus(request.getShopName(), 2, target, request.getSource(), request.getAccessToken());
+        }
+
         //全部走DB翻译
-        rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true);
+        rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true, clickTranslateRequest.getTarget());
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
@@ -371,8 +393,9 @@ public class TranslateController {
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
         stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
         userStopFlags.put(shopName, stopFlag);
-        //将所有状态0和状态2的任务改成7
-        translatesService.updateTranslateStatus(shopName, 7, translatingStopVO.getTarget(), translatingStopVO.getSource(), translatingStopVO.getAccessToken());
+        //将所有状态2的任务改成7
+        translatesService.updateStopStatus(shopName, translatingStopVO.getSource(), translatingStopVO.getAccessToken());
+        //将所有状态为0和2的子任务，改为7
         Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
         if (flag && stopFlag.get()) {
             appInsights.trackTrace(shopName + " 停止成功");

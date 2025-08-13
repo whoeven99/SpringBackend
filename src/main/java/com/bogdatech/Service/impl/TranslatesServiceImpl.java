@@ -2,6 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslatesService;
@@ -123,28 +124,17 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         while (attempt < maxRetries && !success) {
             attempt++;
             try {
-                QueryWrapper<TranslatesDO> wrapper = new QueryWrapper<>();
-                wrapper.select(
-                        "TOP 1 source, access_token, target, shop_name, status, resource_type"
-                );
-                wrapper.eq(SHOP_NAME, shopName); // shopName 是参数
-                wrapper.orderByDesc("update_at");
-                TranslatesDO getOneTranslate = baseMapper.selectOne(wrapper);
-                getOneTranslate.setStatus(6);
-                int affectedRows = baseMapper.update(getOneTranslate, new UpdateWrapper<TranslatesDO>()
-                        .eq(SHOP_NAME, shopName)
-                        .eq("status", 3)
-                        .eq("source", getOneTranslate.getSource())
-                        .eq("target", getOneTranslate.getTarget())
+                //将所有状态3都改为6
+                int affectedRows = baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>()
+                        .eq(TranslatesDO::getShopName, shopName)
+                        .eq(TranslatesDO::getStatus, 3)
+                        .set(TranslatesDO::getStatus, 6)
                 );
                 if (affectedRows > 0) {
                     success = true;
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("Exception during update attempt "
-                        + attempt + "errorMessage: "
-                        + e.getMessage()
-                        + " errors: " + e);
+                appInsights.trackException(e);
             }
         }
     }
@@ -182,7 +172,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
 
-
     @Override
     public void updateAutoTranslateByShopNameToFalse(String shopName) {
         baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("auto_translate", false));
@@ -198,7 +187,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public void updateAllStatusTo0(String shopName) {
-        if (shopName != null ) {
+        if (shopName != null) {
             baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("status", 0));
         }
     }
@@ -211,5 +200,16 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
             //插入这条数据
             baseMapper.insertShopTranslateInfo(source, shopifyRequest.getAccessToken(), locale, shopifyRequest.getShopName(), 0);
         }
+    }
+
+    @Override
+    public void updateStopStatus(String shopName, String source, String accessToken) {
+        baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>()
+                .eq(TranslatesDO::getShopName, shopName)
+                .eq(TranslatesDO::getSource, source)
+                .eq(TranslatesDO::getStatus, 2)
+                .set(TranslatesDO::getStatus, 7)
+                .set(TranslatesDO::getAccessToken, accessToken));
+
     }
 }

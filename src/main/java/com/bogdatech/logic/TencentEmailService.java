@@ -1,13 +1,16 @@
 package com.bogdatech.logic;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +37,7 @@ import static com.bogdatech.constants.MailChimpConstants.TRANSLATION_FAILED_SUBJ
 import static com.bogdatech.constants.MailChimpConstants.APG_INIT_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_GENERATE_SUCCESS;
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
+import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.parseShopName;
@@ -48,8 +52,9 @@ public class TencentEmailService {
     private final ITranslatesService translatesService;
     private final ITranslationCounterService translationCounterService;
     private final IAPGEmailService iapgEmailService;
+    private final ITranslateTasksService iTranslateTasksService;
     @Autowired
-    public TencentEmailService(EmailIntegration emailIntegration, IEmailService emailService, IUsersService usersService, ITranslationUsageService translationUsageService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IAPGEmailService iapgEmailService) {
+    public TencentEmailService(EmailIntegration emailIntegration, IEmailService emailService, IUsersService usersService, ITranslationUsageService translationUsageService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IAPGEmailService iapgEmailService, ITranslateTasksService iTranslateTasksService) {
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
         this.usersService = usersService;
@@ -57,6 +62,7 @@ public class TencentEmailService {
         this.translatesService = translatesService;
         this.translationCounterService = translationCounterService;
         this.iapgEmailService = iapgEmailService;
+        this.iTranslateTasksService = iTranslateTasksService;
     }
 
     //由腾讯发送邮件
@@ -173,13 +179,31 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         int endChars = counter.getTotalChars();
         int costChars = endChars - beginChars;
+        if (costChars <= 0){
+            costChars = 0;
+        }
         String formattedNumber = formatter.format(costChars);
         templateData.put("credit_count", formattedNumber);
-//        System.out.println("templateData" + templateData);
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
+        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0)).forEach(translateTasksDO -> {
+            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
+                //将这条数据里面的startChars改为现在的usedChars
+                try {
+                    RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
+                    data.setStartChars(counter.getTotalChars());
+                    String json = OBJECT_MAPPER.writeValueAsString(data);
+                    translateTasksDO.setPayload(json);
+                    //存回
+                    appInsights.trackTrace("修改后的数据为： " + translateTasksDO);
+                    iTranslateTasksService.updateById(translateTasksDO);
+                } catch (JsonProcessingException e) {
+                    appInsights.trackException(e);
+                }
+            }
+        });
     }
 
     //翻译成功后发送邮件
@@ -228,6 +252,22 @@ public class TencentEmailService {
             //存入数据库中
             emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
         }
+        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0)).forEach(translateTasksDO -> {
+            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
+                //将这条数据里面的startChars改为现在的usedChars
+                try {
+                    RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
+                    data.setStartChars(counter.getTotalChars());
+                    String json = OBJECT_MAPPER.writeValueAsString(data);
+                    translateTasksDO.setPayload(json);
+                    //存回
+                    appInsights.trackTrace("修改后的数据为： " + translateTasksDO);
+                    iTranslateTasksService.updateById(translateTasksDO);
+                } catch (JsonProcessingException e) {
+                    appInsights.trackException(e);
+                }
+            }
+        });
     }
 
     /**

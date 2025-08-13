@@ -83,8 +83,14 @@ public class RabbitMqTranslateService {
      * 加一层包装MQ翻译，用于自动翻译按顺序添加任务
      */
     @Async
-    public void mqTranslateWrapper(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType) {
-        mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, limitChars, usedChars, handleFlag, translationModel, isCover, customKey, emailType);
+    public void mqTranslateWrapper(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType, String[] targets) {
+        for (String target : targets
+             ) {
+            request.setTarget(target);
+            shopifyRequest.setTarget(target);
+            mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, limitChars, usedChars, handleFlag, translationModel, isCover, customKey, emailType);
+        }
+
     }
 
     /**
@@ -112,7 +118,6 @@ public class RabbitMqTranslateService {
 
         //获取目前所使用的AI语言包
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
-        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
@@ -1150,6 +1155,7 @@ public class RabbitMqTranslateService {
             List<TranslateResourceDTO> convertALL = convertALL(sort);
             tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, convertALL, target, source);
             translateTasksService.updateByTaskId(task.getTaskId(), 1);
+            //修改后面发生失败的邮件消耗字数。
         }
 
     }

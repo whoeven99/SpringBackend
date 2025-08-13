@@ -14,7 +14,7 @@ public class ClickTranslateRequest {
     private String shopName;
     private String accessToken;
     private String source; //原语言
-    private String target; //目标语言
+    private String[] target; //目标语言
     private String content; //要翻译的文本
     private Boolean isCover; //是否覆盖
     private String translateSettings1; //模型 前端定的参数

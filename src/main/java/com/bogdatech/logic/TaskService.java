@@ -86,6 +86,9 @@ public class TaskService {
         List<UserPriceRequest> usedList = new ArrayList<>();
         for (CharsOrdersDO charsOrdersDO : list
         ) {
+            if ("Starter".equals(charsOrdersDO.getName())){
+                continue;
+            }
             //根据shopName获取User表对应的accessToken，重新生成一个数据类型  判断是否是卸载，如果卸载， 不计算
             UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>().eq("shop_name", charsOrdersDO.getShopName()));
             if (usersDO == null) {

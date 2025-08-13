@@ -93,6 +93,8 @@ public class RabbitMqTranslateConsumerService {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
+            //将用户翻译状态也改为3
+            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
             throw new ClientException("字符超限");
         }
         // 修改数据库当前翻译模块的数据
@@ -208,7 +210,7 @@ public class RabbitMqTranslateConsumerService {
             //将status改为2
             translateTasksService.updateByTaskId(task.getTaskId(), 2);
             boolean update = translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                    .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
+                    .eq(TranslationUsageDO::getShopName, shopName)
                     .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget())
                     .set(TranslationUsageDO::getStatus, 1));
             if (update) {
@@ -219,7 +221,7 @@ public class RabbitMqTranslateConsumerService {
             List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", task.getShopName()).eq("auto_translate", true));
             Boolean b = translationUsageService.judgeSendAutoEmail(list, rabbitMqTranslateVO.getShopName());
             if (b) {
-                tencentEmailService.sendAutoTranslateEmail(rabbitMqTranslateVO.getShopName());
+                tencentEmailService.sendAutoTranslateEmail(shopName);
                 //将所有status, remaining，consumed， credit都改为0
                 translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
                         .eq(TranslationUsageDO::getShopName, task.getShopName())
