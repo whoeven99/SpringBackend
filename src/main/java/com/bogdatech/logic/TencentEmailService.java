@@ -158,7 +158,9 @@ public class TencentEmailService {
         templateData.put("shop_name", targetShop);
         //获取用户已翻译的和未翻译的文本
         //通过shopName获取翻译到那个文本
+        appInsights.trackTrace("email shopName: " + shopName + " target: " + target + " source: " + source);
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
+        appInsights.trackTrace("email resourceType: " + resourceType);
         TypeSplitResponse typeSplitResponse = splitByType(resourceType, resourceList);
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());

@@ -1154,6 +1154,7 @@ public class RabbitMqTranslateService {
             List<String> sort = sort(translationList);
             List<TranslateResourceDTO> convertALL = convertALL(sort);
             tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, convertALL, target, source);
+            //TODO: 发完邮件后再修改状态
             translateTasksService.updateByTaskId(task.getTaskId(), 1);
         }
 
