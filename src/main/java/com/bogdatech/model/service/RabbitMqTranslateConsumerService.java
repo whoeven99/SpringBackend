@@ -208,7 +208,7 @@ public class RabbitMqTranslateConsumerService {
             //将status改为2
             translateTasksService.updateByTaskId(task.getTaskId(), 2);
             boolean update = translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                    .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
+                    .eq(TranslationUsageDO::getShopName, shopName)
                     .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget())
                     .set(TranslationUsageDO::getStatus, 1));
             if (update) {
@@ -219,7 +219,7 @@ public class RabbitMqTranslateConsumerService {
             List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", task.getShopName()).eq("auto_translate", true));
             Boolean b = translationUsageService.judgeSendAutoEmail(list, rabbitMqTranslateVO.getShopName());
             if (b) {
-                tencentEmailService.sendAutoTranslateEmail(rabbitMqTranslateVO.getShopName());
+                tencentEmailService.sendAutoTranslateEmail(shopName);
                 //将所有status, remaining，consumed， credit都改为0
                 translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
                         .eq(TranslationUsageDO::getShopName, task.getShopName())
