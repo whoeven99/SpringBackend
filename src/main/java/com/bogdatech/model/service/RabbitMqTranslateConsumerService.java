@@ -93,6 +93,8 @@ public class RabbitMqTranslateConsumerService {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
+            //将用户翻译状态也改为3
+            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
             throw new ClientException("字符超限");
         }
         // 修改数据库当前翻译模块的数据
