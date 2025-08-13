@@ -252,6 +252,22 @@ public class TencentEmailService {
             //存入数据库中
             emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
         }
+        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0)).forEach(translateTasksDO -> {
+            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
+                //将这条数据里面的startChars改为现在的usedChars
+                try {
+                    RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
+                    data.setStartChars(counter.getTotalChars());
+                    String json = OBJECT_MAPPER.writeValueAsString(data);
+                    translateTasksDO.setPayload(json);
+                    //存回
+                    appInsights.trackTrace("修改后的数据为： " + translateTasksDO);
+                    iTranslateTasksService.updateById(translateTasksDO);
+                } catch (JsonProcessingException e) {
+                    appInsights.trackException(e);
+                }
+            }
+        });
     }
 
     /**
