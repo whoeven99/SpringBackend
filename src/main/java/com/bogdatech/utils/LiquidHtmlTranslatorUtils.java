@@ -362,7 +362,7 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 对大模型翻译后的数据进行处理并返回
      * */
-    public String processTranslationResult(String translatedText, Map<String, FullAttributeSnapshotDTO> attrMap, boolean hasHtmlTag){
+    public static String processTranslationResult(String translatedText, Map<String, FullAttributeSnapshotDTO> attrMap, boolean hasHtmlTag){
         Document translatedDoc;
         if (hasHtmlTag) {
             translatedDoc = Jsoup.parse(translatedText);
@@ -462,7 +462,7 @@ public class LiquidHtmlTranslatorUtils {
      * @param doc HTML 文档
      * @return 属性快照映射表
      */
-    public Map<String, FullAttributeSnapshotDTO> tagElementsAndSaveFullAttributes(Document doc) {
+    public static Map<String, FullAttributeSnapshotDTO> tagElementsAndSaveFullAttributes(Document doc) {
         Map<String, FullAttributeSnapshotDTO> attrMap = new LinkedHashMap<>();
         AtomicInteger idGen = new AtomicInteger(0);
 
@@ -494,7 +494,7 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 移除所有保存的属性（包括 style, class, data-* 等），只保留 data-id
      */
-    public void removeAllAttributesExceptMarker(Document doc) {
+    public static void removeAllAttributesExceptMarker(Document doc) {
         for (Element el : doc.getAllElements()) {
             List<String> attrKeys = el.attributes().asList().stream()
                     .map(Attribute::getKey)
@@ -508,7 +508,7 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 还原之前保存的属性信息
      */
-    public void restoreFullAttributes(Document doc, Map<String, FullAttributeSnapshotDTO> attrMap) {
+    public static void restoreFullAttributes(Document doc, Map<String, FullAttributeSnapshotDTO> attrMap) {
         for (Element el : doc.select("[" + STYLE_TEXT + "]")) {
             String id = el.attr(STYLE_TEXT);
             FullAttributeSnapshotDTO snapshot = attrMap.get(id);

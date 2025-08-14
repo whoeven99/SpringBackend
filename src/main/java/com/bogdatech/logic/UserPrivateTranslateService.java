@@ -7,12 +7,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.IUserPrivateTranslateService;
 import com.bogdatech.entity.DO.UserPrivateTranslateDO;
 import com.bogdatech.integration.ChatGptByOpenaiIntegration;
+import com.bogdatech.integration.PrivateIntegration;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.openai.client.OpenAIClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import static com.bogdatech.integration.PrivateIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.utils.UserPrivateUtils.getApiKey;
 import static com.bogdatech.utils.UserPrivateUtils.maskString;
 
@@ -21,12 +20,14 @@ public class UserPrivateTranslateService {
     private final IUserPrivateTranslateService iUserPrivateTranslateService;
     private final SecretClient secretClient;
     private final ChatGptByOpenaiIntegration chatGptByOpenaiIntegration;
+    private final PrivateIntegration privateIntegration;
 
     @Autowired
-    public UserPrivateTranslateService(IUserPrivateTranslateService iUserPrivateTranslateService, SecretClient secretClient, ChatGptByOpenaiIntegration chatGptByOpenaiIntegration) {
+    public UserPrivateTranslateService(IUserPrivateTranslateService iUserPrivateTranslateService, SecretClient secretClient, ChatGptByOpenaiIntegration chatGptByOpenaiIntegration, PrivateIntegration privateIntegration) {
         this.iUserPrivateTranslateService = iUserPrivateTranslateService;
         this.secretClient = secretClient;
         this.chatGptByOpenaiIntegration = chatGptByOpenaiIntegration;
+        this.privateIntegration = privateIntegration;
     }
 
     public Boolean configPrivateModel(String shopName, UserPrivateTranslateDO data) {
@@ -80,12 +81,12 @@ public class UserPrivateTranslateService {
     /**
      * 根据apiName，返回对应的值
      * */
-    public String getGenerateText(String shopName, Integer apiName, String text, String apiKey, String target, String model, CharacterCountUtils counter, Integer limitChars, OpenAIClient client) {
+    public String getGenerateText(String shopName, Integer apiName, String text, String apiKey, String target, String model, CharacterCountUtils counter, Long limitChars, OpenAIClient client) {
         //暂时先写两个，Google和openAI
         return switch (apiName) {
             case 0 ->
                 //google
-                    getGoogleTranslationWithRetry(text, apiKey, target);
+                    privateIntegration.getGoogleTranslationWithRetry(text, apiKey, target, shopName, limitChars);
             case 1 ->
                 //openAI
                     chatGptByOpenaiIntegration.chatWithGptOpenai(text, model, counter, limitChars, client, shopName);

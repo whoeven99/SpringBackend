@@ -66,7 +66,6 @@ public class ShopifyService {
     private final IUserSubscriptionsService userSubscriptionsService;
     private final IItemsService itemsService;
     private final ITranslatesService translatesService;
-    private final StoringDataPublisherService storingDataPublisherService;
     private final UserTranslationDataService userTranslationDataService;
 
     @Autowired
@@ -75,12 +74,11 @@ public class ShopifyService {
             IUserSubscriptionsService userSubscriptionsService,
             IItemsService itemsService,
             ITranslatesService translatesService,
-            StoringDataPublisherService storingDataPublisherService, UserTranslationDataService userTranslationDataService) {
+            UserTranslationDataService userTranslationDataService) {
         this.userTypeTokenService = userTypeTokenService;
         this.userSubscriptionsService = userSubscriptionsService;
         this.itemsService = itemsService;
         this.translatesService = translatesService;
-        this.storingDataPublisherService = storingDataPublisherService;
         this.userTranslationDataService = userTranslationDataService;
     }
 

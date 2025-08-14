@@ -328,7 +328,7 @@ public class RabbitMqTranslateService {
         if (needTranslatedData == null) {
             return;
         }
-        Set<TranslateTextDO> filterTranslateData = filterNeedTranslateSet(rabbitMqTranslateVO, needTranslatedData);
+        Set<TranslateTextDO> filterTranslateData = filterNeedTranslateSet(rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getHandleFlag(), needTranslatedData);
         //将翻译的数据分类，提示词，普通文本，html
         Map<String, Set<TranslateTextDO>> stringSetMap = initTranslateMap();
         //将筛选好的数据分类
@@ -472,9 +472,8 @@ public class RabbitMqTranslateService {
     /**
      * 遍历needTranslatedSet, 对Set集合进行通用规则的筛选，返回筛选后的数据
      */
-    public static Set<TranslateTextDO> filterNeedTranslateSet(RabbitMqTranslateVO rabbitMqTranslateVO, Set<TranslateTextDO> needTranslateSet) {
+    public static Set<TranslateTextDO> filterNeedTranslateSet(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet) {
         Iterator<TranslateTextDO> iterator = needTranslateSet.iterator();
-        String modeType = rabbitMqTranslateVO.getModeType();
         while (iterator.hasNext()) {
             TranslateTextDO translateTextDO = iterator.next();
 //            System.out.println("translateTextDO: " + translateTextDO);
@@ -508,7 +507,7 @@ public class RabbitMqTranslateService {
             String key = translateTextDO.getTextKey();
             //如果handleFlag为false，则跳过
             if (type.equals(URI) && "handle".equals(key)) {
-                if (!rabbitMqTranslateVO.getHandleFlag()) {
+                if (!handleFlag) {
                     iterator.remove();
                     continue;
                 }
@@ -710,9 +709,6 @@ public class RabbitMqTranslateService {
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
             //判断产品模块用完全翻译，其他模块用分段html翻译
-//            if (rabbitMqTranslateVO.getModeType().equals(PRODUCT) && "body_html".equals(key)) {
-//                htmlTranslation = liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
-//            } else
             htmlTranslation = switch (rabbitMqTranslateVO.getModeType()) {
                 case SHOP_POLICY ->
                         liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());

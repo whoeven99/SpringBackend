@@ -1,17 +1,23 @@
 package com.bogdatech.integration;
 
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.ChatModel;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.bogdatech.utils.UserPrivateUtils.getApiKey;
+
 @Component
 public class ChatGptByOpenaiIntegration {
+
     /**
      * 初始化
      * */
@@ -22,7 +28,7 @@ public class ChatGptByOpenaiIntegration {
     /**
      * gptSDK调用
      */
-    public String chatWithGptOpenai(String prompt, String model, CharacterCountUtils counter, Integer limitChars, OpenAIClient client, String shopName) {
+    public String chatWithGptOpenai(String prompt, String model, CharacterCountUtils counter, Long limitChars, OpenAIClient client, String shopName) {
         // 创建 OpenAI 客户端，连接 DashScope 的兼容接口
 //        OpenAIClient client = OpenAIOkHttpClient.builder().apiKey("xxx").build();
         // 创建 ChatCompletion 参数

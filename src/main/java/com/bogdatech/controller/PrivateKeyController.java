@@ -9,10 +9,7 @@ import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.UserPrivateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.integration.PrivateIntegration.googleTranslate;
@@ -34,8 +31,8 @@ public class PrivateKeyController {
 
     //用户通过私有key翻译
     @PutMapping("/translate")
-    public BaseResponse<Object> translate(@RequestBody ClickTranslateRequest clickTranslateRequest) {
-        return privateKeyService.judgePrivateKey(clickTranslateRequest);
+    public BaseResponse<Object> translate(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
+        return privateKeyService.judgePrivateKey(shopName, clickTranslateRequest);
     }
 
 

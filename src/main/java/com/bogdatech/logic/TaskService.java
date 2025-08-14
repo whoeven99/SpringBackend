@@ -45,8 +45,6 @@ public class TaskService {
 
     private final ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
     private final ITranslatesService translatesService;
-    private final TranslateService translateService;
-    private final TranslateTaskPublisherService translateTaskPublisherService;
     private final IUserTrialsService iUserTrialsService;
     private final IUserSubscriptionsService iUserSubscriptionsService;
     private final IWidgetConfigurationsService iWidgetConfigurationsService;
@@ -58,15 +56,13 @@ public class TaskService {
     private final ITranslationUsageService iTranslationUsageService;
 
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, TranslateService translateService, TranslateTaskPublisherService translateTaskPublisherService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService, TencentEmailService tencentEmailService, RabbitMqTranslateService rabbitMqTranslateService, ITranslationUsageService iTranslationUsageService) {
+    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService, TencentEmailService tencentEmailService, RabbitMqTranslateService rabbitMqTranslateService, ITranslationUsageService iTranslationUsageService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.translationCounterService = translationCounterService;
         this.subscriptionPlansService = subscriptionPlansService;
         this.subscriptionQuotaRecordService = subscriptionQuotaRecordService;
         this.translatesService = translatesService;
-        this.translateService = translateService;
-        this.translateTaskPublisherService = translateTaskPublisherService;
         this.iUserTrialsService = iUserTrialsService;
         this.iUserSubscriptionsService = iUserSubscriptionsService;
         this.iWidgetConfigurationsService = iWidgetConfigurationsService;
@@ -237,28 +233,6 @@ public class TaskService {
 
             //将该任务的状态改为0
             translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
-        }
-    }
-
-    //服务器重启的完整翻译方法
-    public void translateStatus2WhenSystemRestartComplete(TranslatesDO translatesDO) {
-        //准备开始翻译，判断是否符合翻译条件
-        //判断字符是否超限
-        String shopName = translatesDO.getShopName();
-        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
-        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-        int usedChars = request1.getUsedChars();
-        // 如果字符超限，则直接返回字符超限
-
-        if (usedChars < remainingChars) {
-            //初始化计数器
-            CharacterCountUtils counter = new CharacterCountUtils();
-            counter.addChars(usedChars);
-            //开始翻译状态为2的翻译
-            //服务器重启后，将所有都翻译
-            List<TranslateResourceDTO> list = ALL_RESOURCES.stream().toList();
-            List<String> list1 = list.stream().map(TranslateResourceDTO::getResourceType).toList();
-            translateService.startTranslation(new TranslateRequest(0, translatesDO.getShopName(), translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null), remainingChars, counter, usedChars, false, list1, false);
         }
     }
 
