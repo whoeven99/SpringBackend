@@ -33,6 +33,13 @@ public class ResourceTypeUtils {
         // 如果没找到目标 type，返回空集合并打印错误信息
         if (index == -1) {
             appInsights.trackTrace("errors 错误：未找到 type 为 '" + targetType + "' 的资源");
+            after =  resourceList;
+            for (TranslateResourceDTO resource : after) {
+                afterSet.add(EMAIL_MAP.get(resource.getResourceType()));
+            }
+            for (String resource : afterSet) {
+                afterType.append(resource).append(",");
+            }
             return new TypeSplitResponse(beforeType, afterType);
         }
 
