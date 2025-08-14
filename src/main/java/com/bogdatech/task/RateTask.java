@@ -26,13 +26,13 @@ public class RateTask {
     @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")
     public void getRateEveryHour() {
-//        System.out.println(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
+//        appInsights.trackTrace(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
         //改为存储在缓存中（后面存储到redis中）
         try {
             rateHttpIntegration.getFixerRate();
         } catch (Exception e) {
             appInsights.trackTrace("获取汇率失败: " + e.getMessage());
         }
-        System.out.println("rateMap: " + rateMap.toString());
+        appInsights.trackTrace("rateMap: " + rateMap.toString());
     }
 }

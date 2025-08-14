@@ -114,7 +114,7 @@ public class ALiYunTranslateIntegration {
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
             return text;
-//            System.out.println("百炼翻译报错信息： " + e.getMessage());
+//            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
         }
         return content;
 
@@ -160,7 +160,7 @@ public class ALiYunTranslateIntegration {
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
-//            System.out.println("百炼翻译报错信息： " + e.getMessage());
+//            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
         }
         return content;
@@ -200,7 +200,7 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = result.getUsage().getOutputTokens();
             int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
             appInsights.trackTrace("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-//            System.out.println("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+//            appInsights.trackTrace("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             //更新用户产品计数
@@ -240,12 +240,12 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-//            System.out.println("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+//            appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
             appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
             return null;
-//            System.out.println("百炼翻译报错信息： " + e.getMessage());
+//            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
         }
         return content;
 

@@ -46,7 +46,6 @@ import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.ListUtils.convert;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
@@ -124,46 +123,6 @@ public class TranslateService {
             threadFactory,
             new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
     );
-
-    // 启动翻译任务
-    public void startTranslation(TranslateRequest request, int remainingChars, CharacterCountUtils counter, int usedChars, Boolean isTask, List<String> translateSettings3, boolean handleFlag) {
-        // 创建并启动翻译任务
-        String shopName = request.getShopName();
-        String source = request.getSource();
-        String target = request.getTarget();
-        Future<?> future = executorService.submit(() -> {
-            LocalDateTime begin = LocalDateTime.now();
-            appInsights.trackTrace("Task submitted at: " + begin + " for shop: " + shopName + " and source: " + source + " and target: " + target);
-            try {
-                if (isTask) {
-                    //定时任务的翻译任务
-                    taskTranslating(request, remainingChars, counter, translateSettings3, handleFlag);
-                } else {
-                    translating(request, remainingChars, counter, usedChars, translateSettings3, handleFlag);  // 执行翻译任务
-                }
-            } catch (ClientException e) {
-                appInsights.trackTrace(shopName + " 用户 startTranslation errors " + e.getErrorMessage());
-                List<TranslateResourceDTO> convert = convert(translateSettings3);
-                translate3Handle(request, counter, begin, remainingChars, usedChars, convert);
-                return;
-            } catch (CannotCreateTransactionException | ConcurrentModificationException e) {
-                appInsights.trackTrace(shopName + " 用户 CannotCreateTransactionException Translation task cannot failed errors : " + e);
-                //更新初始值
-                translateFailHandle(request, counter);
-                return;
-            } catch (Exception e) {
-                translatesService.updateTranslateStatus(shopName, 3, target, source, request.getAccessToken());
-                appInsights.trackTrace(shopName + " 用户 start Exception Translation task failed errors : " + e);
-                //更新初始值
-                translateFailHandle(request, counter);
-                return;
-            }
-            translateSuccessHandle(request, counter, begin, remainingChars, usedChars, isTask);
-        });
-        userTasks.put(shopName, future);  // 存储用户的任务
-        userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
-    }
 
     //部分翻译的处理
     public void translate3Handle(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int remainingChars, int usedChars,List<TranslateResourceDTO> translateSettings3) {
@@ -309,7 +268,7 @@ public class TranslateService {
             }
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource);
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), null, null, handleFlag);
+            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), null, null, handleFlag, null, null, null, null);
             translateJson(translateContext, usedCharCounter);
             // 定期检查是否停止
             if (checkIsStopped(request.getShopName(), counter, request.getTarget(), request.getSource())) {
@@ -317,7 +276,7 @@ public class TranslateService {
             }
         }
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
-        System.out.println("翻译结束");
+        appInsights.trackTrace("翻译结束");
     }
 
     //获取用户对应模块的文本数据
@@ -387,7 +346,7 @@ public class TranslateService {
             }
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource);
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), languagePackId, null, handleFlag);
+            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, remainingChars, glossaryMap, request.getSource(), languagePackId, null, handleFlag, null, null, null, null);
             try {
                 translateJson(translateContext, usedCharCounter);
             } catch (ClientException e) {
@@ -403,7 +362,7 @@ public class TranslateService {
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
         appInsights.trackTrace("用户的手动翻译token： " + usedCharCounter.getTotalChars());
         appInsights.trackTrace("用户翻译token： " + counter.getTotalChars());
-        System.out.println("翻译结束");
+        appInsights.trackTrace("翻译结束");
     }
 
     //判断翻译是否要停止
@@ -783,7 +742,7 @@ public class TranslateService {
             //存原数据到shopify本地
             shopifyService.saveToShopify(value, translation, resourceId, request);
             appInsights.trackTrace("LIST errors 错误原因： " + e.getMessage());
-//                    System.out.println("LIST错误原因： " + e.getMessage());
+//                    appInsights.trackTrace("LIST错误原因： " + e.getMessage());
         }
     }
 
@@ -795,7 +754,7 @@ public class TranslateService {
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, target, value);
             htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId(), translateContext.getRemainingChars(), null, null, null);
-//            System.out.println("htmlTranslation: " + htmlTranslation);
+//            appInsights.trackTrace("htmlTranslation: " + htmlTranslation);
             if (model.equals(METAFIELD)) {
                 //对翻译后的html做格式处理
                 htmlTranslation = normalizeHtml(htmlTranslation);
@@ -1503,7 +1462,7 @@ public class TranslateService {
     // 将翻译后的数据存储到数据库中
 //    @Async
     public void saveTranslatedData(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
-//        System.out.println("现在存储到： " + translateResourceDTO.getResourceType());
+//        appInsights.trackTrace("现在存储到： " + translateResourceDTO.getResourceType());
         JsonNode rootNode;
         try {
             rootNode = OBJECT_MAPPER.readTree(objectData);
@@ -1530,7 +1489,7 @@ public class TranslateService {
             }
             Map<String, TranslateTextDO> translationsMap = extractTranslations(node, resourceId, request.getShopName());
             translatableContentMap = extractTranslatableContent(node, translationsMap);
-//            System.out.println("合并后的map数据为： " + translatableContentMap);
+//            appInsights.trackTrace("合并后的map数据为： " + translatableContentMap);
 
         }
         if (translatableContentMap != null) {

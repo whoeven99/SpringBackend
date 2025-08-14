@@ -47,6 +47,7 @@ public class UserPrivateTranslateController {
 
     /**
      * 根据传传入的值，选择不同的模型测试是否是正常的
+     * TODO：放到后面再做
      * */
     @PostMapping("/testPrivateModel")
     public BaseResponse<Object> testPrivateModel(@RequestParam String shopName, @RequestParam Integer apiName, @RequestBody String data) {

@@ -79,7 +79,7 @@ public class TranslateTextServiceImpl extends ServiceImpl<TranslateTextMapper, T
                     .collect(Collectors.toList());
 
             if (!newEntitiesInBatch.isEmpty()) {
-//                System.out.println("newEntitiesInBatch:" + newEntitiesInBatch.stream().toList());
+//                appInsights.trackTrace("newEntitiesInBatch:" + newEntitiesInBatch.stream().toList());
                 this.saveBatch(newEntitiesInBatch);
             }
         }

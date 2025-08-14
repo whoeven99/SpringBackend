@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 public class CsvUtils {
 
     public static List<TranslateTextDO> readCsv(String filePath) {
@@ -22,25 +24,25 @@ public class CsvUtils {
             Iterator<CSVRecord> iterator = records.iterator();
             if (iterator.hasNext()) {
                 CSVRecord firstRecord = iterator.next();
-//                System.out.println("CSV Headers: " + firstRecord.toMap().keySet());
+//                appInsights.trackTrace("CSV Headers: " + firstRecord.toMap().keySet());
             }
 
 //            Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(reader);
             for (CSVRecord record : records) {
                 TranslateTextDO vocabulary = new TranslateTextDO();
-//                System.out.println("record: " + record);
+//                appInsights.trackTrace("record: " + record);
                 vocabulary.setSourceCode(record.get("source_code"));
-//                System.out.println("source_code: " + record.get("source_code"));
+//                appInsights.trackTrace("source_code: " + record.get("source_code"));
                 vocabulary.setSourceText(record.get("source_text"));
-//                System.out.println("source_text: " + record.get("source_text"));
+//                appInsights.trackTrace("source_text: " + record.get("source_text"));
                 vocabulary.setTargetText(record.get("target_text"));
-//                System.out.println("target_text: " + record.get("target_txte"));
+//                appInsights.trackTrace("target_text: " + record.get("target_txte"));
                 vocabulary.setTargetCode(record.get("target_code"));
-//                System.out.println("target_code: " + record.get("target_code"));
+//                appInsights.trackTrace("target_code: " + record.get("target_code"));
                 vocabularyList.add(vocabulary);
             }
         } catch (FileNotFoundException e) {
-            System.out.println("错误原因： " + e.getMessage());
+            appInsights.trackTrace("错误原因： " + e.getMessage());
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);

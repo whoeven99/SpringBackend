@@ -123,14 +123,14 @@ public class KlaviyoIntegration {
             // 设置请求体
             StringEntity input = new StringEntity(query.toString(), "UTF-8");
             httpPost.setEntity(input);
-//            System.out.println("query: " + query);
+//            appInsights.trackTrace("query: " + query);
             // 执行请求
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 // 获取响应实体并转换为JSON格式
                 if (response.getEntity() == null){
                     return true;
                 }
-//                System.out.println("jsonObject: " + EntityUtils.toString(response.getEntity()));
+//                appInsights.trackTrace("jsonObject: " + EntityUtils.toString(response.getEntity()));
                 // 获取"data"对象
                 response.close();
                 httpClient.close();

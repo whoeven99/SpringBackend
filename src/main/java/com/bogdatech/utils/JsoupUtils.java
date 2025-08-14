@@ -194,7 +194,7 @@ public class JsoupUtils {
             }
 
         } catch (Exception e) {
-//            System.out.println("This text is not a valid HTML element: " + translatedTextMap.values());
+//            appInsights.trackTrace("This text is not a valid HTML element: " + translatedTextMap.values());
             throw new ClientException("This text is not a valid HTML element");
         }
     }
@@ -502,7 +502,7 @@ public class JsoupUtils {
 
 
     // 定义google翻译不了的语言代码集合
-    private static final Set<String> LANGUAGE_CODES = new HashSet<>(Arrays.asList(
+    public static final Set<String> LANGUAGE_CODES = new HashSet<>(Arrays.asList(
             "ce", "kw", "fo", "ia", "kl", "ks", "ki", "lu", "gv", "nd", "pt",
             "se", "nb", "nn", "os", "rm", "sc", "ii", "bo", "to", "wo", "ar-EG"
     ));
@@ -669,7 +669,7 @@ public class JsoupUtils {
                     try {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                        System.out.println("要翻译的文本： " + cleanedText);
+//                        appInsights.trackTrace("要翻译的文本： " + cleanedText);
                         targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
                         targetString = isHtmlEntity(targetString);
                         result.append(targetString);
@@ -700,7 +700,7 @@ public class JsoupUtils {
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                    System.out.println("要翻译的文本： " + cleanedText);
+//                    appInsights.trackTrace("要翻译的文本： " + cleanedText);
                     targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);

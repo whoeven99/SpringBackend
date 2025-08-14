@@ -131,7 +131,7 @@ public class UserPrivateService {
             shopName = replaceDot(shopName);
             secretClient.getDeletedSecret(shopName + "-" + GOOGLE);
         } catch (Exception e) {
-//            System.out.println("删除用户在keyVault里面的数据失败：" + e.getMessage());
+//            appInsights.trackTrace("删除用户在keyVault里面的数据失败：" + e.getMessage());
             appInsights.trackTrace("删除用户在keyVault里面的数据失败：" + e.getMessage());
         }
 
