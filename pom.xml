@@ -127,7 +127,31 @@
 			<artifactId>tea-openapi</artifactId>
 			<version>0.2.5</version>
 		</dependency>
-
+		<!-- deepSeek-->
+		<!-- https://mvnrepository.com/artifact/com.alibaba/dashscope-sdk-java -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>dashscope-sdk-java</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-simple</artifactId>
+				</exclusion>
+			</exclusions>
+			<version>2.21.2</version>
+		</dependency>
+		<!-- openai-->
+		<dependency>
+			<groupId>com.openai</groupId>
+			<artifactId>openai-java</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-simple</artifactId>
+				</exclusion>
+			</exclusions>
+			<version>1.6.0</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.volcengine/volc-sdk-java -->
 		<dependency>
 			<groupId>com.volcengine</groupId>
@@ -194,18 +218,6 @@
 				</exclusion>
 			</exclusions>
 			<version>1.10.0</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.alibaba/dashscope-sdk-java -->
-		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>dashscope-sdk-java</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-simple</artifactId>
-				</exclusion>
-			</exclusions>
-			<version>2.16.2</version>
 		</dependency>
 		<!-- 火山模型sdk-->
 		<dependency>

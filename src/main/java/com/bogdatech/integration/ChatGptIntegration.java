@@ -14,11 +14,9 @@ import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.constants.TranslateConstants.OPENAI_MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -40,6 +38,9 @@ public class ChatGptIntegration {
         this.translationCounterService = translationCounterService;
     }
 
+    /**
+     * Azure服务器调用gpt
+     * */
     public String chatWithGpt(String prompt, String sourceText, TranslateRequest request, CharacterCountUtils counter, Integer limitChars) {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
@@ -92,6 +93,5 @@ public class ChatGptIntegration {
         }
         return content;
     }
-
 
 }

@@ -76,16 +76,15 @@ public class PrivateIntegration {
      * 调用google接口进行对话，并返回回复文本
      *
      * @param text   用户的文本信息
-     * @param source 源语言
      * @param apiKey google 密钥
      * @param target 目标语言
      * @return GPT 回复的文本
      */
-    public static String googleTranslate(String text, String source, String apiKey, String target) {
+    public static String googleTranslate(String text, String apiKey, String target) {
         String encodedQuery = URLEncoder.encode(text, StandardCharsets.UTF_8);
         String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
                 "&q=" + encodedQuery +
-                "&source=" + source +
+//                "&source=" + source +
                 "&target=" + target +
                 "&model=base";
         String result = null;
@@ -110,7 +109,7 @@ public class PrivateIntegration {
     }
 
     //对谷歌翻译API做重试机制
-    public static String getGoogleTranslationWithRetry(String text, String source, String apiKey, String target) {
+    public static String getGoogleTranslationWithRetry(String text, String apiKey, String target) {
         int maxRetries = 3; // 最大重试次数
         int retryCount = 0; // 当前重试次数
         int baseDelay = 1000; // 初始等待时间（1秒）
@@ -118,7 +117,7 @@ public class PrivateIntegration {
 
         do {
             try {
-                translatedText = googleTranslate(text, source, apiKey, target);
+                translatedText = googleTranslate(text, apiKey, target);
                 if (translatedText != null) {
                     return translatedText; // 成功获取翻译，直接返回
                 }
@@ -320,7 +319,7 @@ public class PrivateIntegration {
                 if (!cleanedText.trim().isEmpty()) { // 避免翻译空字符串
                     String targetString;
                     try {
-                        targetString = getGoogleTranslationWithRetry(cleanedText, resourceType, apiKey, request.getTarget());
+                        targetString = getGoogleTranslationWithRetry(cleanedText, apiKey, request.getTarget());
                         result.append(targetString);
                         addData(request.getTarget(), cleanedText, targetString);
 //                        System.out.println("cleanedText: " + cleanedText);
@@ -351,7 +350,7 @@ public class PrivateIntegration {
                 String targetString;
                 try {
                     //AI翻译
-                    targetString = getGoogleTranslationWithRetry(cleanedText, resourceType, apiKey, request.getTarget());
+                    targetString = getGoogleTranslationWithRetry(cleanedText, apiKey, request.getTarget());
                     result.append(targetString);
                     addData(request.getTarget(), cleanedText, targetString);
 //                    System.out.println("cleanedText: " + cleanedText);
