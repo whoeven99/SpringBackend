@@ -113,6 +113,7 @@ public class PrivateKeyService {
      */
     public BaseResponse<Object> judgePrivateKey(String shopName, ClickTranslateRequest clickTranslateRequest) {
         //做数据检验
+        appInsights.trackTrace("click: " + clickTranslateRequest);
         //判断前端传的数据是否完整，如果不完整，报错
         if (shopName == null || shopName.isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
@@ -120,23 +121,24 @@ public class PrivateKeyService {
                 || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().length == 0) {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
-
 //        将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         Integer apiName = Integer.valueOf(clickTranslateRequest.getTranslateSettings1());
         //判断是google还是openai
-        Integer modelFlag = judgeModelByValue(clickTranslateRequest.getTranslateSettings2());
+        Integer modelFlag = judgeModelByValue(clickTranslateRequest.getTranslateSettings1());
+        appInsights.trackTrace("modelFlag: " + modelFlag);
         if (modelFlag < 0) {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
 
         //判断Google等机器模型的语言
-        if (modelFlag.equals(GOOGLE_MODEL) && !LANGUAGE_CODES.contains(clickTranslateRequest.getSource())) {
+        if (modelFlag.equals(GOOGLE_MODEL) && LANGUAGE_CODES.contains(clickTranslateRequest.getSource())) {
            return new BaseResponse<>().CreateErrorResponse("Google cannot translate this language");
         }
+
         String apiKey;
+        String userKey = getApiKey(shopName, apiName);
         try {
-            String userKey = getApiKey(shopName, apiName);
             KeyVaultSecret keyVaultSecret = secretClient.getSecret(userKey);
             apiKey = keyVaultSecret.getValue();
 //            Object aiClient = initAiModel(clickTranslateRequest.getTranslateSettings1(), apiKey);
@@ -149,7 +151,7 @@ public class PrivateKeyService {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
         //判断字符是否超限
-        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiKey, apiKey));
+        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiKey, userKey));
         Long remainingChars = privateData.getTokenLimit();
         Long usedChars = privateData.getUsedToken();
         // 如果字符超限，则直接返回字符超限
@@ -165,8 +167,13 @@ public class PrivateKeyService {
             }
         }
 
-        //通过判断status和字符判断后 就将状态改为2，则开始翻译流程
-        iTranslatesService.updateTranslateStatus(request.getShopName(), 2, request.getTarget(), request.getSource(), request.getAccessToken());
+        boolean handleFlag = false;
+        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
+        if (translateModel.contains("handle")) {
+            translateModel.removeIf("handle"::equals);
+            handleFlag = true;
+        }
+
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(Math.toIntExact(usedChars));
@@ -182,7 +189,7 @@ public class PrivateKeyService {
             return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
         }
         //私有key翻译
-        startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey, translateResourceDTOS, clickTranslateRequest.getIsCover(), modelFlag, privateData.getApiModel(), privateData.getPromptWord());
+        startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey, translateResourceDTOS, clickTranslateRequest.getIsCover(), modelFlag, privateData.getApiModel(), privateData.getPromptWord(), handleFlag);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
@@ -217,7 +224,7 @@ public class PrivateKeyService {
      * @param counter        字符计数器
      * @param usedChars      已使用字符数
      */
-    public void startPrivateTranslation(TranslateRequest request, Long remainingChars, CharacterCountUtils counter, Long usedChars, String apiKey, List<String> translateResourceDTOS, boolean isCover, Integer modelFlag, String apiModel, String userPrompt) {
+    public void startPrivateTranslation(TranslateRequest request, Long remainingChars, CharacterCountUtils counter, Long usedChars, String apiKey, List<String> translateResourceDTOS, boolean isCover, Integer modelFlag, String apiModel, String userPrompt, boolean handleFlag) {
         // 创建并启动翻译任务
         String shopName = request.getShopName();
         String source = request.getSource();
@@ -226,7 +233,7 @@ public class PrivateKeyService {
             LocalDateTime begin = LocalDateTime.now();
             appInsights.trackTrace("Task submitted at: " + begin + " for shop: " + shopName);
             try {
-                translating(request, remainingChars, counter, apiKey, translateResourceDTOS, isCover, modelFlag, apiModel, userPrompt);  // 执行翻译任务
+                translating(request, remainingChars, counter, apiKey, translateResourceDTOS, isCover, modelFlag, apiModel, userPrompt, handleFlag);  // 执行翻译任务
             } catch (ClientException e) {
                 if (e.getErrorMessage().equals(HAS_TRANSLATED)) {
                     userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
@@ -271,7 +278,7 @@ public class PrivateKeyService {
         userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
     }
 
-    private void translating(TranslateRequest request, Long remainingChars, CharacterCountUtils counter, String apiKey, List<String> translateResourceDTOS, boolean isCover, Integer modelFlag, String apiModel, String userPrompt) {
+    private void translating(TranslateRequest request, Long remainingChars, CharacterCountUtils counter, String apiKey, List<String> translateResourceDTOS, boolean isCover, Integer modelFlag, String apiModel, String userPrompt, boolean handleFlag) {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
 
         //判断是否有同义词
@@ -297,12 +304,12 @@ public class PrivateKeyService {
             }
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource);
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, Math.toIntExact(remainingChars), glossaryMap, request.getSource(), null, apiKey, null, isCover, modelFlag, apiModel, userPrompt);
+            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, Math.toIntExact(remainingChars), glossaryMap, request.getSource(), null, apiKey, handleFlag, isCover, modelFlag, apiModel, userPrompt);
             translateJson(translateContext);
 
         }
         iTranslatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
-        System.out.println("翻译结束");
+        appInsights.trackTrace("翻译结束");
     }
 
     //更新初始值
@@ -350,7 +357,7 @@ public class PrivateKeyService {
     public Future<Void> translateJson(TranslateContext translateContext) {
         String resourceType = translateContext.getTranslateResource().getResourceType();
         ShopifyRequest request = translateContext.getShopifyRequest();
-        System.out.println("现在翻译到： " + resourceType);
+        appInsights.trackTrace("现在翻译到： " + resourceType);
         //将目前的状态，添加到数据库中，前端要用这个数据做进度条功能
         iTranslatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), translateContext.getSource(), resourceType);
 
@@ -576,7 +583,7 @@ public class PrivateKeyService {
                         appInsights.trackTrace("私有 普通文本：" + value + " Simple提示词: " + prompt);
                     }
                     //目前改为openai翻译
-                    String finalText = privateIntegration.translateByGpt(value, translateContext.getApiModel(), translateContext.getApiKey(), prompt);
+                    String finalText = privateIntegration.translateByGpt(value, translateContext.getApiModel(), translateContext.getApiKey(), prompt, shopName, Long.valueOf(translateContext.getRemainingChars()));
                     addData(shopifyRequest.getTarget(), value, finalText);
                     shopifyService.saveToShopify(finalText, translation, resourceId, shopifyRequest);
                     printTranslation(finalText, value, translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
@@ -608,7 +615,8 @@ public class PrivateKeyService {
         String target = shopifyRequest.getTarget();
         String accessToken = shopifyRequest.getAccessToken();
 
-        if (Objects.equals(translateContext.getModel(), GOOGLE_MODEL)) {
+        if (translateContext.getModel().equals(GOOGLE_MODEL)) {
+            appInsights.trackTrace("google skip!!!");
             return;
         }
 
@@ -637,7 +645,7 @@ public class PrivateKeyService {
                 }
 
                 //大模型 html翻译
-                String modelHtml = privateIntegration.translatePrivateNewHtml(translateTextDO.getSourceText(), target, translateContext.getApiKey(), translateContext.getApiModel());
+                String modelHtml = privateIntegration.translatePrivateNewHtml(translateTextDO.getSourceText(), target, translateContext.getApiKey(), translateContext.getApiModel(), shopName, Long.valueOf(translateContext.getRemainingChars()));
                 if (translateContext.getTranslateResource().getResourceType().equals(METAFIELD)) {
                     //对翻译后的html做格式处理
                     modelHtml = normalizeHtml(modelHtml);
@@ -847,7 +855,7 @@ public class PrivateKeyService {
         if (translateContext.getModel().equals(GOOGLE_MODEL)) {
             return privateIntegration.getGoogleTranslationWithRetry(value, apiKey, request.getTarget(), request.getShopName(), Long.valueOf(translateContext.getRemainingChars()));
         } else if (translateContext.getModel().equals(OPENAI_MODEL)) {
-            return privateIntegration.translateByGpt(value, translateContext.getApiModel(), apiKey, translateContext.getUserPrompt());
+            return privateIntegration.translateByGpt(value, translateContext.getApiModel(), apiKey, translateContext.getUserPrompt(), translateContext.getShopifyRequest().getShopName(), Long.valueOf(translateContext.getRemainingChars()));
         } else {
             appInsights.trackTrace(request.getShopName() + " 用户 model : " + translateContext.getModel() + " 不存在");
             return null;

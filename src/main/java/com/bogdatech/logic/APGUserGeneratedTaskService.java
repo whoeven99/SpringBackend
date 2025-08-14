@@ -107,7 +107,7 @@ public class APGUserGeneratedTaskService {
                 iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, json, usersDO.getId(), null));
             } catch (Exception e) {
                 appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
-//                System.out.println(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
+//                appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
                 appInsights.trackException(e);
             }
         }
@@ -121,7 +121,7 @@ public class APGUserGeneratedTaskService {
         } catch (JsonProcessingException e) {
             appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
             appInsights.trackException(e);
-//            System.out.println("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
+//            appInsights.trackTrace("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
         }
     }
 

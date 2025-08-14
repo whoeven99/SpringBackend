@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, VocabularyDO> implements IVocabularyService {
@@ -135,7 +136,7 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
     @Override
     public String getTranslateTextDataInVocabulary(String target, String value, String source) {
         if (!(value.length() <= 255) || !isDatabaseLanguage(source) || !isDatabaseLanguage(target)){
-//            System.out.println("被拦截了！！！");
+//            appInsights.trackTrace("被拦截了！！！");
             return null;
         }
         // 构造查询条件
@@ -166,34 +167,34 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
 //        vocabularyDO.setZhCN("翻译结果");  // 假设 zhCN 作为 targetCode
         int updateResult = baseMapper.update(vocabularyDO, new QueryWrapper<VocabularyDO>()
                 .eq(LANGUAGE_CODE_TO_FIELD.get(source), value));
-        System.out.println("updateResult: " + updateResult);
+        appInsights.trackTrace("updateResult: " + updateResult);
     }
 
     @Override
     public Integer InsertOne(String target, String targetValue, String source, String sourceValue) {
         if (targetValue.length() > 255 || !isDatabaseLanguage(target) || !isDatabaseLanguage(source) || sourceValue.length() > 255) {
-//            System.out.println("targetValue: " + targetValue + " sourceValue: " + sourceValue + " source" + source + " target: " + target);
+//            appInsights.trackTrace("targetValue: " + targetValue + " sourceValue: " + sourceValue + " source" + source + " target: " + target);
             return null;
         }
         String oldSource = source;
         if (source.equals("pt-BR") || source.equals("pt-PT") || source.equals("zh-CN") || source.equals("zh-TW")) {
             source = source.replace("-", "_");
         }
-//        System.out.println("source: " + source + " sourceValue: " + sourceValue + " target: " + target + " targetValue: " + targetValue);
+//        appInsights.trackTrace("source: " + source + " sourceValue: " + sourceValue + " target: " + target + " targetValue: " + targetValue);
         VocabularyDO existingVocabulary = baseMapper.selectOne(new QueryWrapper<VocabularyDO>()
                 .select("TOP 1 vid, en, es, fr, de, pt_BR, pt_PT, zh_CN, zh_TW, ja, it, ru, ko, nl, da, hi, bg, cs, el, fi, hr, hu, id, lt, nb, pl, ro, sk, sl, sv, th, tr, vi, ar, no, uk, lv, et")
                 .eq(source, sourceValue)
         );
-//        System.out.println("existingVocabulary: " + existingVocabulary);
+//        appInsights.trackTrace("existingVocabulary: " + existingVocabulary);
         if (existingVocabulary == null) {
             VocabularyDO newVocabulary = new VocabularyDO();
             setTargetLanguageText(newVocabulary, oldSource, sourceValue);
             setTargetLanguageText(newVocabulary, target, targetValue);
-//            System.out.println("newVocabulary: " + newVocabulary);
+//            appInsights.trackTrace("newVocabulary: " + newVocabulary);
             return baseMapper.insert(newVocabulary);
         } else {
             setTargetLanguageText(existingVocabulary, target, targetValue);
-//            System.out.println("existingVocabulary: " + existingVocabulary);
+//            appInsights.trackTrace("existingVocabulary: " + existingVocabulary);
             return baseMapper.update(existingVocabulary, new QueryWrapper<VocabularyDO>()
                     .eq(source, sourceValue));
         }
@@ -417,7 +418,7 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
                 vocabulary.setEt(targetValue);
                 break;
             default:
-                System.out.println("Unexpected value: " + targetCode);
+                appInsights.trackTrace("Unexpected value: " + targetCode);
         }
     }
 }

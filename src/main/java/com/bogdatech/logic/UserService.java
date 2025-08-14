@@ -142,7 +142,7 @@ public class UserService {
     @Async
     public void cleanData(UsersDO userRequest) {
         //测试 这一部分有问题
-        System.out.println("开始执行定时任务： " + userRequest.getShopName());
+        appInsights.trackTrace("开始执行定时任务： " + userRequest.getShopName());
         String shopName = userRequest.getShopName();
 //        long delayMillis = TimeUnit.HOURS.toMillis(48); // 48小时转为毫秒
         long delayMillis = TimeUnit.SECONDS.toMillis(10);

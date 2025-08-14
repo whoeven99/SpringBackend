@@ -243,7 +243,7 @@ public class PlaceholderUtils {
             String brandWord,
             String brandSlogan
     ) {
-//        System.out.println("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
+//        appInsights.trackTrace("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a professional e-commerce ") ;
         prompt.append(templateType);
@@ -281,7 +281,7 @@ public class PlaceholderUtils {
      * 判断动态构成提示词
      * */
     private static void buildSection(StringBuilder builder, Map<String, String> fields) {
-//        System.out.println("fields: " + fields);
+//        appInsights.trackTrace("fields: " + fields);
         fields.forEach((label, value) -> {
             if (isNotBlank(value)) {
                 builder.append("- ").append(label).append(": ").append(value.trim()).append("\n");

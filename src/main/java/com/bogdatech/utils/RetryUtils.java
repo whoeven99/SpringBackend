@@ -3,6 +3,8 @@ package com.bogdatech.utils;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 public class RetryUtils {
 
     /**
@@ -30,7 +32,7 @@ public class RetryUtils {
                 }
 
                 if (attempt < maxRetries) {
-                    System.out.println("第 " + attempt + " 次失败，等待 " + delay + " 毫秒后重试...");
+                    appInsights.trackTrace("第 " + attempt + " 次失败，等待 " + delay + " 毫秒后重试...");
                     Thread.sleep(delay);
                     delay = Math.min(delay * 2, maxDelayMillis);
                 }

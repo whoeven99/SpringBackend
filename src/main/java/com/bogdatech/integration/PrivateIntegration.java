@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.bogdatech.logic.PrivateKeyService.GOOGLE_MODEL;
+import static com.bogdatech.logic.PrivateKeyService.OPENAI_MODEL;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
@@ -46,7 +47,7 @@ public class PrivateIntegration {
      * @param systemPrompt 系统提示文本
      * @return GPT 回复的文本
      */
-    public String translateByGpt(String prompt, String model, String apiKey, String systemPrompt) {
+    public String translateByGpt(String prompt, String model, String apiKey, String systemPrompt, String shopName, Long limit) {
         // 创建 OpenAI 客户端
         String url = "https://api.openai.com/v1/chat/completions";
         HttpHeaders headers = new HttpHeaders();
@@ -63,7 +64,7 @@ public class PrivateIntegration {
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
         //TODO: 将翻译数据存储到数据库中
-
+        iUserPrivateTranslateService.updateUserUsedCount(OPENAI_MODEL, prompt.length(), shopName, limit);
         return response.getBody();
     }
 
@@ -116,7 +117,7 @@ public class PrivateIntegration {
                 if (translatedText != null) {
                     //将字符数存到数据库中
                     iUserPrivateTranslateService.updateUserUsedCount(GOOGLE_MODEL, text.length(), shopName, limit);
-                    appInsights.trackTrace(shopName + " 用户 翻译 ：" + text + " google  all: " + text.length());
+                    appInsights.trackTrace(shopName + " 用户 翻译为 ：" + translatedText + " google  all: " + text.length());
                     return translatedText; // 成功获取翻译，直接返回
                 }
             } catch (Exception e) {
@@ -146,7 +147,7 @@ public class PrivateIntegration {
      * @param html 输入的HTML文本
      * @return 翻译后的HTML文本
      */
-    public  String translatePrivateNewHtml(String html, String target, String apiKey, String model) {
+    public  String translatePrivateNewHtml(String html, String target, String apiKey, String model, String shopName, Long limit) {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
         String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, null);
@@ -170,7 +171,7 @@ public class PrivateIntegration {
 
         //暂时先用openai翻译
         try {
-            String chatGptString = translateByGpt(cleanedHtml, model, apiKey, fullHtmlPrompt);
+            String chatGptString = translateByGpt(cleanedHtml, model, apiKey, fullHtmlPrompt, shopName, limit);
             return processTranslationResult(chatGptString, attrMap, hasHtmlTag);
         } catch (Exception e) {
             appInsights.trackException(e);

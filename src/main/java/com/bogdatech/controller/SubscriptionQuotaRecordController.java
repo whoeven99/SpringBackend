@@ -32,9 +32,9 @@ public class SubscriptionQuotaRecordController {
 
         //如果数据库中含有这条数据，就不插入了
         SubscriptionQuotaRecordDO byId = subscriptionQuotaRecordService.getOne(new QueryWrapper<SubscriptionQuotaRecordDO>().eq("subscription_id", subscriptionQuotaRecordDO.getSubscriptionId()).eq("billing_cycle", 1));
-        System.out.println("byId: " + byId);
+        appInsights.trackTrace("byId: " + byId);
         if (byId != null){
-            System.out.println("数据库中含有这条数据，就不插入了");
+            appInsights.trackTrace("数据库中含有这条数据，就不插入了");
             return;
         }
         // 重试逻辑

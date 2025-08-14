@@ -91,7 +91,7 @@ public class LiquidHtmlTranslatorUtils {
                 processNode(doc.body(), request, counter, languagePackId, limitChars, model, customKey, translationModel);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
 //                appInsights.trackTrace("有html标签： "  + result);
-//                System.out.println("有html标签： "  + result);
+//                appInsights.trackTrace("有html标签： "  + result);
                 result = isHtmlEntity(result);
                 return result;
             } else {
@@ -107,7 +107,7 @@ public class LiquidHtmlTranslatorUtils {
 
                 String output = result.toString();
 //                appInsights.trackTrace("没有html标签： "  + output);
-//                System.out.println("没有html标签： "  + output);
+//                appInsights.trackTrace("没有html标签： "  + output);
                 output = isHtmlEntity(output);
                 return output;
             }
@@ -219,10 +219,10 @@ public class LiquidHtmlTranslatorUtils {
             if (match.start > lastEnd) {
                 String toTranslate = text.substring(lastEnd, match.start);
                 String cleanedText = cleanTextFormat(toTranslate); // 清理格式
-//                System.out.println("cleanedText1: " + cleanedText);
+//                appInsights.trackTrace("cleanedText1: " + cleanedText);
                 //对特殊符号进行处理
                 if (cleanedText.matches("\\p{Zs}+")) {
-//                    System.out.println("要翻译的空白1： " + cleanedText);
+//                    appInsights.trackTrace("要翻译的空白1： " + cleanedText);
                     result.append(cleanedText);
                     continue;
                 }
@@ -231,7 +231,7 @@ public class LiquidHtmlTranslatorUtils {
                     try {
                         request.setContent(cleanedText);
 //                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
-//                            System.out.println("要翻译的文本1： " + cleanedText);
+//                            appInsights.trackTrace("要翻译的文本1： " + cleanedText);
 //                        targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
                         targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey, translationModel);
                         result.append(targetString);
@@ -253,7 +253,7 @@ public class LiquidHtmlTranslatorUtils {
         if (lastEnd < text.length()) {
             String remaining = text.substring(lastEnd);
             String cleanedText = cleanTextFormat(remaining); // 清理格式
-//            System.out.println("cleanedText2: " + cleanedText);
+//            appInsights.trackTrace("cleanedText2: " + cleanedText);
             if (cleanedText.matches("\\p{Zs}+")) {
                 result.append(cleanedText);
                 return result.toString();
@@ -263,7 +263,7 @@ public class LiquidHtmlTranslatorUtils {
                 try {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                    System.out.println("要翻译的文本2： " + cleanedText);
+//                    appInsights.trackTrace("要翻译的文本2： " + cleanedText);
 //                    targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
                     targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey, translationModel);
                     result.append(targetString);
@@ -426,7 +426,7 @@ public class LiquidHtmlTranslatorUtils {
         for (int i = 0; i < trailingSpaces; i++) {
             finalResult.append(" ");
         }
-//        System.out.println("finalResult: " + "'" + finalResult.toString() + "'");
+//        appInsights.trackTrace("finalResult: " + "'" + finalResult.toString() + "'");
 
         return finalResult.toString();
     }

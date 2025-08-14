@@ -276,7 +276,7 @@ public class TranslateService {
             }
         }
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
-        System.out.println("翻译结束");
+        appInsights.trackTrace("翻译结束");
     }
 
     //获取用户对应模块的文本数据
@@ -362,7 +362,7 @@ public class TranslateService {
         translatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
         appInsights.trackTrace("用户的手动翻译token： " + usedCharCounter.getTotalChars());
         appInsights.trackTrace("用户翻译token： " + counter.getTotalChars());
-        System.out.println("翻译结束");
+        appInsights.trackTrace("翻译结束");
     }
 
     //判断翻译是否要停止
@@ -742,7 +742,7 @@ public class TranslateService {
             //存原数据到shopify本地
             shopifyService.saveToShopify(value, translation, resourceId, request);
             appInsights.trackTrace("LIST errors 错误原因： " + e.getMessage());
-//                    System.out.println("LIST错误原因： " + e.getMessage());
+//                    appInsights.trackTrace("LIST错误原因： " + e.getMessage());
         }
     }
 
@@ -754,7 +754,7 @@ public class TranslateService {
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, target, value);
             htmlTranslation = liquidHtmlTranslatorUtils.translateNewHtml(value, translateRequest, counter, translateContext.getLanguagePackId(), translateContext.getRemainingChars(), null, null, null);
-//            System.out.println("htmlTranslation: " + htmlTranslation);
+//            appInsights.trackTrace("htmlTranslation: " + htmlTranslation);
             if (model.equals(METAFIELD)) {
                 //对翻译后的html做格式处理
                 htmlTranslation = normalizeHtml(htmlTranslation);
@@ -1462,7 +1462,7 @@ public class TranslateService {
     // 将翻译后的数据存储到数据库中
 //    @Async
     public void saveTranslatedData(String objectData, ShopifyRequest request, TranslateResourceDTO translateResourceDTO) {
-//        System.out.println("现在存储到： " + translateResourceDTO.getResourceType());
+//        appInsights.trackTrace("现在存储到： " + translateResourceDTO.getResourceType());
         JsonNode rootNode;
         try {
             rootNode = OBJECT_MAPPER.readTree(objectData);
@@ -1489,7 +1489,7 @@ public class TranslateService {
             }
             Map<String, TranslateTextDO> translationsMap = extractTranslations(node, resourceId, request.getShopName());
             translatableContentMap = extractTranslatableContent(node, translationsMap);
-//            System.out.println("合并后的map数据为： " + translatableContentMap);
+//            appInsights.trackTrace("合并后的map数据为： " + translatableContentMap);
 
         }
         if (translatableContentMap != null) {

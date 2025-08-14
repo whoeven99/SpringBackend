@@ -476,7 +476,7 @@ public class RabbitMqTranslateService {
         Iterator<TranslateTextDO> iterator = needTranslateSet.iterator();
         while (iterator.hasNext()) {
             TranslateTextDO translateTextDO = iterator.next();
-//            System.out.println("translateTextDO: " + translateTextDO);
+//            appInsights.trackTrace("translateTextDO: " + translateTextDO);
             String value = translateTextDO.getSourceText();
 
             // 当 value 为空时跳过

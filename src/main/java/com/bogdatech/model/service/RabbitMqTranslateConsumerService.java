@@ -242,7 +242,7 @@ public class RabbitMqTranslateConsumerService {
     private void handleEmailTask(String shopifyData, RabbitMqTranslateVO vo, TranslateTasksDO task) {
         String shopName = vo.getShopName();
         boolean canSendEmail = translateTasksService.listBeforeEmailTask(shopName, task.getTaskId());
-//        System.out.println("canSendEmail: " + canSendEmail);
+//        appInsights.trackTrace("canSendEmail: " + canSendEmail);
         if (canSendEmail) {
             if (EMAIL.equals(shopifyData)) {
                 emailTranslate(vo, task);
@@ -257,7 +257,7 @@ public class RabbitMqTranslateConsumerService {
                     .set(TranslatesDO::getResourceType, null));
         } else {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
-//            System.out.println(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
+//            appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
         }
     }
 }

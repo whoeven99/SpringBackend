@@ -227,7 +227,7 @@ public class ShopifyController {
         } else {
             infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", "en", query));
         }
-//        System.out.println("infoByShopify = " + infoByShopify);
+//        appInsights.trackTrace("infoByShopify = " + infoByShopify);
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);

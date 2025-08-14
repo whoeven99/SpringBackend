@@ -110,14 +110,14 @@ public class APGUserGeneratedTaskController {
             //发送对应邮件
             //修改状态
             appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
-//            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e1);
+//            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
             appInsights.trackException(e1);
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件
             appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
-//            System.out.println(shopName + " 用户 batchGenerateDescription errors ：" + e);
+//            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
             appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);
         }

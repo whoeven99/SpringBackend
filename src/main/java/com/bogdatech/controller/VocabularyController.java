@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import static com.bogdatech.utils.ApiCodeUtils.isDatabaseLanguage;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.CsvUtils.readCsv;
 
 @RestController
@@ -36,7 +37,7 @@ public class VocabularyController {
            try {
                list = readCsv("src/main/java/com/bogdatech/requestBody/" + filePath + i + ".csv");
            } catch (Exception e) {
-               System.out.println("第" + i + "个文件读取失败");
+               appInsights.trackTrace("第" + i + "个文件读取失败");
                continue;
 //               throw new RuntimeException(e);
            }

@@ -194,19 +194,19 @@ public class TaskService {
 
         // 只处理活跃、非试用、且还在本期内的订阅
         if (!"ACTIVE".equals(status) || now.isAfter(end)) {
-//            System.out.println("不满足条件");
+//            appInsights.trackTrace("不满足条件");
             return;
         }
 
         //计算当前是第几个月
         int billingCycle = (int) ChronoUnit.DAYS.between(buyCreateInstant, now) / 30 + 1;
-//        System.out.println("billingCycle = " + billingCycle);
+//        appInsights.trackTrace("billingCycle = " + billingCycle);
 
         // 如果这一周期还没发放过额度，则发放并记录
         SubscriptionQuotaRecordDO quotaRecordDO = subscriptionQuotaRecordService.getOne(new QueryWrapper<SubscriptionQuotaRecordDO>().eq("subscription_id", userPriceRequest.getSubscriptionId()).eq("billing_cycle", billingCycle));
         if (quotaRecordDO == null) {
             // 满足条件，执行添加字符的逻辑
-//            System.out.println("满足条件，执行添加字符的逻辑");
+//            appInsights.trackTrace("满足条件，执行添加字符的逻辑");
             // 根据计划获取对应的字符
             Integer chars = subscriptionPlansService.getCharsByPlanName(name);
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
@@ -251,7 +251,7 @@ public class TaskService {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         for (TranslatesDO translatesDO : translatesDOList
         ) {
-//            System.out.println("translatesDO: " + translatesDO);
+//            appInsights.trackTrace("translatesDO: " + translatesDO);
             String shopName = translatesDO.getShopName();
 
             //判断这些用户是否卸载了，卸载了就不管了
@@ -272,7 +272,7 @@ public class TaskService {
             int usedChars = request1.getUsedChars();
             // 如果字符超限，则直接返回字符超限
             if (usedChars >= remainingChars) {
-//                System.out.println("该用户字符超限，不翻译了");
+//                appInsights.trackTrace("该用户字符超限，不翻译了");
                 continue;
             }
 

@@ -52,7 +52,7 @@ public class PrivateKeyController {
         //根据模型切换存储方法
         Integer i = null;
         String googleKey = shopName + "-" + GOOGLE;
-//        System.out.println("shopName: " + shopName);
+//        appInsights.trackTrace("shopName: " + shopName);
         if (userPrivateRequest.getModel().equals(GOOGLE) && userPrivateRequest.getAmount()!=null && userPrivateRequest.getSecret() != null) {
             //新增或修改google相关方法
             i = userPrivateService.addOrUpdateGoogleUserData(userPrivateRequest.getShopName(), googleKey, userPrivateRequest.getAmount());

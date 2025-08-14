@@ -158,6 +158,6 @@ public class UserTypeTokenService {
             int token = shopifyService.getTotalWords(request, "tokens", translateResourceDTO);
             tokens += token;
         }
-        System.out.println(request.getShopName() + " 用户 " + key + " 模块 消耗 tokens: " + tokens);
+        appInsights.trackTrace(request.getShopName() + " 用户 " + key + " 模块 消耗 tokens: " + tokens);
     }
 }

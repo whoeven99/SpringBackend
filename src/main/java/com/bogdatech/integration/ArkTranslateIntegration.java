@@ -49,7 +49,7 @@ public class ArkTranslateIntegration {
             // 使用建造者模式创建 ArkService 实例，并赋值给成员变量
             arkService = ArkService.builder().apiKey(apiKey).timeout(Duration.ofSeconds(120)).retryTimes(2).build();
         } catch (Exception e) {
-//            System.out.println("豆包模型初始化失败！！！" + e.getMessage());
+//            appInsights.trackTrace("豆包模型初始化失败！！！" + e.getMessage());
             appInsights.trackTrace("豆包模型初始化失败！！！" + e.getMessage());
         }
     }

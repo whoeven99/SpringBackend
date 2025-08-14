@@ -15,6 +15,7 @@ import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
+import com.bogdatech.integration.ChatGptByOpenaiIntegration;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
@@ -25,6 +26,7 @@ import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.RabbitMqTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
+import com.openai.client.OpenAIClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
@@ -49,7 +51,7 @@ import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 public class TestController {
     private final TranslatesServiceImpl translatesServiceImpl;
     private final ChatGptIntegration chatGptIntegration;
-    private final TestService testService;
+    private final ChatGptByOpenaiIntegration chatGptByOpenaiIntegration;
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
     private final UserTypeTokenService userTypeTokenService;
@@ -62,10 +64,10 @@ public class TestController {
     private final GenerateDescriptionService generateDescriptionService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TestService testService, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ChatGptByOpenaiIntegration chatGptByOpenaiIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
-        this.testService = testService;
+        this.chatGptByOpenaiIntegration = chatGptByOpenaiIntegration;
         this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
         this.userTypeTokenService = userTypeTokenService;
@@ -182,7 +184,7 @@ public class TestController {
         ) {
             userTypeTokenService.testTokenCount(request, key);
         }
-        System.out.println("统计结束！！！");
+        appInsights.trackTrace("统计结束！！！");
     }
 
     @GetMapping("/testHandle")
@@ -247,11 +249,11 @@ public class TestController {
     @PutMapping("/testModifyLock")
     public String testModifyLock(@RequestParam String shopName) {
         ReentrantLock lock = SHOP_LOCKS.get(shopName);
-        System.out.println("Trying to unlock " + shopName + " by thread " + Thread.currentThread().getName());
+        appInsights.trackTrace("Trying to unlock " + shopName + " by thread " + Thread.currentThread().getName());
         if (lock != null && lock.isHeldByCurrentThread()) {
             lock.unlock();
         } else {
-            System.out.println("Unlock failed. Not held by current thread.");
+            appInsights.trackTrace("Unlock failed. Not held by current thread.");
         }
         return SHOP_LOCKS.toString();
     }
@@ -374,4 +376,5 @@ public class TestController {
                 """;
         return generateDescriptionService.analyzeDescriptionData(des, gen, "123");
     }
+
 }

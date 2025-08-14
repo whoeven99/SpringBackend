@@ -12,6 +12,8 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.openai.client.OpenAIClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.UserPrivateUtils.getApiKey;
 import static com.bogdatech.utils.UserPrivateUtils.maskString;
 
@@ -36,9 +38,11 @@ public class UserPrivateTranslateService {
         UserPrivateTranslateDO dbData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>()
                 .eq(UserPrivateTranslateDO::getShopName, shopName)
                 .eq(UserPrivateTranslateDO::getApiName, data.getApiName()));
-
+        String userKey = getApiKey(shopName, data.getApiName());
         if (dbData != null) {
             //仅更新 api_model，prompt_word，token_limit ，is_selected
+            appInsights.trackTrace("userKey: " + userKey);
+            KeyVaultSecret keyVaultSecret = secretClient.setSecret(userKey, data.getApiKey());
             return iUserPrivateTranslateService.update(new LambdaUpdateWrapper<UserPrivateTranslateDO>()
                     .eq(UserPrivateTranslateDO::getShopName, shopName)
                     .eq(UserPrivateTranslateDO::getApiName, data.getApiName())
@@ -47,8 +51,9 @@ public class UserPrivateTranslateService {
                     .set(UserPrivateTranslateDO::getTokenLimit, data.getTokenLimit())
                     .set(UserPrivateTranslateDO::getIsSelected, data.getIsSelected()));
         }
-        String userKey = getApiKey(shopName, data.getApiName());
+
         //将数据存到Azure服务器里面
+        appInsights.trackTrace("userKey: " + userKey);
         KeyVaultSecret keyVaultSecret = secretClient.setSecret(userKey, data.getApiKey());
 
         //将数据存到数据库中
@@ -89,7 +94,7 @@ public class UserPrivateTranslateService {
                     privateIntegration.getGoogleTranslationWithRetry(text, apiKey, target, shopName, limitChars);
             case 1 ->
                 //openAI
-                    chatGptByOpenaiIntegration.chatWithGptOpenai(text, model, counter, limitChars, client, shopName);
+                    chatGptByOpenaiIntegration.chatWithGptOpenai(text, model, limitChars, client, shopName);
             default -> text;
         };
     }

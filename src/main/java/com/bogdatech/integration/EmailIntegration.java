@@ -38,10 +38,10 @@ public class EmailIntegration {
 
     public  String sendEmail(MailChampSendEmailRequest sendEmailRequest) {
         sendEmailRequest.setEmailKey(mailChimpKey);
-//        System.out.println("mailChimpKey: " + mailChimpKey);
+//        appInsights.trackTrace("mailChimpKey: " + mailChimpKey);
         EmailRequestBody emailRequestBody = new EmailRequestBody();
         String sendEmail = emailRequestBody.sendEmail(sendEmailRequest);
-//        System.out.println("sendEmail: " + sendEmail);
+//        appInsights.trackTrace("sendEmail: " + sendEmail);
         String url = "https://mandrillapp.com/api/1.0/messages/send-template";
         // 重试次数
         int maxRetries = 3;
