@@ -54,6 +54,29 @@ public class DeepLIntegration {
     }
 
     /**
+     * 用于用户deepL翻译
+     * */
+    public String privateTranslateByDeepL(String sourceText , String targetCode, CharacterCountUtils counter, String shopName, Integer limitChars, DeepLClient client) {
+        TextResult result;
+        try {
+            String target = DEEPL_LANGUAGE_MAP.get(targetCode);
+            result = client.translateText(sourceText, null, target);
+            String targetText = result.getText();
+            int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
+            appInsights.trackTrace( "用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+            userTranslate.put(shopName, translationStatusMap);
+            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            counter.addChars(totalToken);
+            return targetText;
+        } catch (Exception e) {
+            appInsights.trackTrace("DeepL翻译失败 errors : " + e);
+        }
+        return sourceText;
+    }
+
+
+    /**
      * 在翻译前判断deepL额度是否足够,是继续翻译,不是改为ciwi翻译
      * */
     public Boolean isDeepLEnough(){

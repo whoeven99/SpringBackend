@@ -22,14 +22,12 @@ import static com.bogdatech.utils.StringUtils.replaceDot;
 @RequestMapping("/privateKey")
 public class PrivateKeyController {
     private final PrivateKeyService privateKeyService;
-    private final ITranslatesService translatesService;
     private final SecretClient secretClient;
     private final IUserPrivateService userPrivateService;
 
     @Autowired
-    public PrivateKeyController(PrivateKeyService privateKeyService, ITranslatesService translatesService, SecretClient secretClient, IUserPrivateService userPrivateService) {
+    public PrivateKeyController(PrivateKeyService privateKeyService, SecretClient secretClient, IUserPrivateService userPrivateService) {
         this.privateKeyService = privateKeyService;
-        this.translatesService = translatesService;
         this.secretClient = secretClient;
         this.userPrivateService = userPrivateService;
     }
@@ -46,7 +44,7 @@ public class PrivateKeyController {
     public BaseResponse<Object> saveGoogleKey(@RequestBody UserPrivateRequest userPrivateRequest) {
         //调一次google接口， 用于判断key值是否有效
         try {
-            googleTranslate("a", "en", userPrivateRequest.getSecret(), "zh-CN");
+            googleTranslate("a",  userPrivateRequest.getSecret(), "zh-CN");
         } catch (Exception e) {
             return new BaseResponse<>().CreateErrorResponse("key_error");
         }

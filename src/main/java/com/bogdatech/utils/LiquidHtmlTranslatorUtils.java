@@ -353,6 +353,7 @@ public class LiquidHtmlTranslatorUtils {
             return processTranslationResult(aLiString, attrMap, hasHtmlTag);
 
         } catch (Exception e) {
+            appInsights.trackException(e);
             appInsights.trackTrace("html 翻译失败 errors : " + e);
             return text;
         }

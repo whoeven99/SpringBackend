@@ -458,7 +458,7 @@ public class PrivateKeyService {
                 }
 
                 //走翻译流程
-                String translatedText = getGoogleTranslationWithRetry(value, source, apiKey, request.getTarget());
+                String translatedText = getGoogleTranslationWithRetry(value, apiKey, request.getTarget());
                 addData(request.getTarget(), value, translatedText);
                 saveToShopify(translatedText, translation, resourceId, request);
                 continue;
@@ -474,7 +474,7 @@ public class PrivateKeyService {
                         String original = resultList.get(i);
                         if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
                             //走翻译流程
-                            String translated = getGoogleTranslationWithRetry(original, source, apiKey, request.getTarget());
+                            String translated = getGoogleTranslationWithRetry(original, apiKey, request.getTarget());
                             //将数据填回去
                             resultList.set(i, translated);
                         }
@@ -565,7 +565,7 @@ public class PrivateKeyService {
             try {
                 counter.addChars(value.length());
                 //对文本进行翻译
-                translatedText = getGoogleTranslationWithRetry(value, source, translateContext.getApiKey(), request.getTarget());
+                translatedText = getGoogleTranslationWithRetry(value, translateContext.getApiKey(), request.getTarget());
 //                translatedText = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, request.getTarget(), value));
             } catch (Exception e) {
                 appInsights.trackTrace("翻译问题： " + e.getMessage());
@@ -693,7 +693,7 @@ public class PrivateKeyService {
             String updateText = extractKeywords(cleanedText, placeholderMap, keyMap, keyMap0, request.getSource());
             request.setContent(updateText);
             //String targetString = translateApiIntegration.microsoftTranslate(request);
-            String targetString = getGoogleTranslationWithRetry(updateText, request.getSource(), apiKey, request.getTarget());
+            String targetString = getGoogleTranslationWithRetry(updateText, apiKey, request.getTarget());
 //            String targetString = translateAndCount(request,counter, resourceType);
             String finalText = restoreKeywords(targetString, placeholderMap);
             addData(request.getTarget(), cleanedText, finalText);
@@ -812,7 +812,7 @@ public class PrivateKeyService {
         //计算用户的token数
         counter.addChars(value.length());
         //对文本进行翻译
-        String targetValue = getGoogleTranslationWithRetry(value, source, apiKey, request.getTarget());
+        String targetValue = getGoogleTranslationWithRetry(value, apiKey, request.getTarget());
         addData(request.getTarget(), value, targetValue);
 //        String targetValue = translateApiIntegration.microsoftTranslate(new TranslateRequest(0, request.getShopName(), request.getAccessToken(), source, request.getTarget(), value));
         //翻译成功后，将翻译后的数据存shopify本地中

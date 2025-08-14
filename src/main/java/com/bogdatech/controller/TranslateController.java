@@ -199,7 +199,7 @@ public class TranslateController {
             translateModel.removeIf("handle"::equals);
             handleFlag = true;
         }
-        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
+        appInsights.trackTrace(clickTranslateRequest.getShopName() + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover() + " target : " + clickTranslateRequest.getTarget() + " model : " + clickTranslateRequest.getTranslateSettings2());
         //修改模块的排序
         List<String> translateResourceDTOS = null;
         try {
