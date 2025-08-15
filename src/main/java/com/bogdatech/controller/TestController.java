@@ -381,7 +381,7 @@ public class TestController {
      * 单纯的打印信息
      * */
     @GetMapping("/frontEndPrinting")
-    public void frontEndPrinting(@RequestParam String data) {
+    public void frontEndPrinting(@RequestBody String data) {
         appInsights.trackTrace(data);
     }
 }
