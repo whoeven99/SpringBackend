@@ -6,6 +6,9 @@ import com.bogdatech.logic.UserPrivateTranslateService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import static com.bogdatech.logic.PrivateKeyService.GOOGLE_MODEL;
+import static com.bogdatech.logic.PrivateKeyService.OPENAI_MODEL;
 import static com.bogdatech.utils.UserPrivateUtils.maskString;
 
 @RestController
@@ -23,6 +26,9 @@ public class UserPrivateTranslateController {
      * */
     @PostMapping("/configPrivateModel")
     public BaseResponse<Object> configPrivateModel(@RequestParam String shopName, @RequestBody UserPrivateTranslateDO data) {
+        if (data.getApiKey().contains("*")){
+            return new BaseResponse<>().CreateErrorResponse("Please enter the correct key");
+        }
         Boolean b = userPrivateTranslateService.configPrivateModel(shopName, data);
         if (b) {
             //修改用户的key，只返回前4位和后4位，中间用*表示
@@ -39,6 +45,9 @@ public class UserPrivateTranslateController {
      * */
     @PostMapping("/getUserPrivateData")
     public BaseResponse<Object> getUserPrivateData(@RequestParam String shopName, @RequestParam Integer apiName) {
+        if (!apiName.equals(GOOGLE_MODEL) || apiName.equals(OPENAI_MODEL)){
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
         UserPrivateTranslateDO userPrivateData = userPrivateTranslateService.getUserPrivateData(shopName, apiName);
         if (userPrivateData != null) {
             return new BaseResponse<>().CreateSuccessResponse(userPrivateData);
