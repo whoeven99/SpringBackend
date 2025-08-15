@@ -25,9 +25,11 @@ import java.util.regex.Pattern;
 
 import static com.bogdatech.logic.PrivateKeyService.GOOGLE_MODEL;
 import static com.bogdatech.logic.PrivateKeyService.OPENAI_MODEL;
+import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PlaceholderUtils.getFullHtmlPrompt;
 
 @Component
@@ -70,7 +72,8 @@ public class PrivateIntegration {
         String content;
         if (responseBody != null && responseBody.contains("content") && responseBody.contains("total_tokens")) {
             JSONObject obj = JSON.parseObject(response.getBody());
-
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(prompt, 2);
+            userTranslate.put(shopName, translationStatusMap);
             // 获取 content
             JSONArray choices = obj.getJSONArray("choices");
             JSONObject firstChoice = choices.getJSONObject(0);
@@ -118,6 +121,7 @@ public class PrivateIntegration {
             JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -135,6 +139,8 @@ public class PrivateIntegration {
             try {
                 translatedText = googleTranslate(text, apiKey, target);
                 if (translatedText != null) {
+                    Map<String, Object> translationStatusMap = getTranslationStatusMap(text, 2);
+                    userTranslate.put(shopName, translationStatusMap);
                     //将字符数存到数据库中
                     iUserPrivateTranslateService.updateUserUsedCount(GOOGLE_MODEL, text.length(), shopName, limit);
                     appInsights.trackTrace(shopName + " 用户 私有key google翻译为 ：" + translatedText + " google  all: " + text.length());
