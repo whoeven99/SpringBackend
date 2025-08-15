@@ -63,7 +63,6 @@ public class UserPrivateTranslateService {
     }
 
 
-
     public UserPrivateTranslateDO getUserPrivateData(String shopName, Integer apiName) {
         String userKey = getApiKey(shopName, apiName);
         KeyVaultSecret keyVaultSecret = secretClient.getSecret(userKey);
@@ -77,25 +76,37 @@ public class UserPrivateTranslateService {
     }
 
     /**
-     * 暂时先不做 等后面再说
-     * */
-    public void testPrivateModel(String shopName, Integer apiName, String data) {
-
+     * TODO： 根据传入的参数，调用不同的模型测试
+     */
+    public String testPrivateModel(String shopName, Integer apiName, String data, String target) {
+        return getGenerateText(shopName, apiName, data, target);
     }
 
     /**
      * 根据apiName，返回对应的值
-     * */
-    public String getGenerateText(String shopName, Integer apiName, String text, String apiKey, String target, String model, CharacterCountUtils counter, Long limitChars, OpenAIClient client) {
+     */
+    public String getGenerateText(String shopName, Integer apiName, String text, String target) {
         //暂时先写两个，Google和openAI
-        return switch (apiName) {
-            case 0 ->
+        //获取用户db中存储的提示词
+        UserPrivateTranslateDO userPrivateTranslateDO = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiName, apiName));
+        Long limitChars = userPrivateTranslateDO.getTokenLimit();
+        String systemPrompt = userPrivateTranslateDO.getPromptWord();
+        String model = userPrivateTranslateDO.getApiModel();
+        //根据数据库的值获取
+        String apiKey = userPrivateTranslateDO.getApiKey();
+        KeyVaultSecret keyVaultSecret = secretClient.getSecret(apiKey);
+        apiKey = keyVaultSecret.getValue();
+        String targetText = null;
+        switch (apiName) {
+            case 0:
                 //google
-                    privateIntegration.getGoogleTranslationWithRetry(text, apiKey, target, shopName, limitChars);
-            case 1 ->
+                targetText = privateIntegration.getGoogleTranslationWithRetry(text, apiKey, target, shopName, limitChars);
+                break;
+            case 1:
                 //openAI
-                    chatGptByOpenaiIntegration.chatWithGptOpenai(text, model, limitChars, client, shopName);
-            default -> text;
-        };
+                targetText = privateIntegration.translateByGpt(text, model, apiKey, systemPrompt, shopName, limitChars);
+                break;
+        }
+        return targetText;
     }
 }
