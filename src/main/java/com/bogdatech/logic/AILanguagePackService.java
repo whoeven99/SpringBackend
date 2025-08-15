@@ -89,9 +89,9 @@ public class AILanguagePackService {
             }
 
         } catch (JsonProcessingException e) {
-            System.out.println("JSON 解析错误: " + e);
+            appInsights.trackTrace("JSON 解析错误: " + e);
         } catch (Exception e) {
-            System.out.println("处理过程中抛出异常: " + e);
+            appInsights.trackTrace("处理过程中抛出异常: " + e);
         }
 
         return null;

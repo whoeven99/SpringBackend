@@ -65,7 +65,7 @@ public class StringUtils {
         }
         // 用正则表达式匹配单词
         String[] words = text.trim().split("[\\s\\p{Punct}]+");
-//        System.out.println("words: " + Arrays.toString(words));
+//        appInsights.trackTrace("words: " + Arrays.toString(words));
         return words.length;
     }
 

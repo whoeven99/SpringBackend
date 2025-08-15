@@ -52,7 +52,7 @@ public class APGDescriptionGenerationController {
             appInsights.trackTrace(shopName + " generateDescription: " + description);
         } catch (ClientException e) {
             appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
-//            System.out.println("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
+//            appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         }
         //计算相关生成数据

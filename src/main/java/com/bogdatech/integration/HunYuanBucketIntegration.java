@@ -56,7 +56,7 @@ public class HunYuanBucketIntegration {
      * 进度条展示
      * */
     private static void showTransferProgress(Transfer transfer) {
-        System.out.println(transfer.getDescription());
+        appInsights.trackTrace(transfer.getDescription());
         do {
             try {
                 Thread.sleep(2000);
@@ -69,7 +69,7 @@ public class HunYuanBucketIntegration {
             double pct = progress.getPercentTransferred();
             System.out.printf("[%d / %d] = %.02f%%\n", soFar, total, pct);
         } while (transfer.isDone() == false);
-        System.out.println(transfer.getState());
+        appInsights.trackTrace(String.valueOf(transfer.getState()));
     }
 
     /**
@@ -97,9 +97,9 @@ public class HunYuanBucketIntegration {
                 showTransferProgress(upload);
                 UploadResult uploadResult = upload.waitForUploadResult();
 //                long endTime = System.currentTimeMillis();
-//                System.out.println("used time: " + (endTime - startTime) / 1000);
-//                System.out.println(uploadResult.getETag());
-//                System.out.println(uploadResult.getCrc64Ecma());
+//                appInsights.trackTrace("used time: " + (endTime - startTime) / 1000);
+//                appInsights.trackTrace(uploadResult.getETag());
+//                appInsights.trackTrace(uploadResult.getCrc64Ecma());
                 transferManager.shutdownNow();
                 return afterUrl; // 上传成功直接返回true
             } catch (Exception e) {

@@ -52,7 +52,7 @@ public class CalculateTokenUtils {
         // 按空白字符分割并过滤空字符串
         String[] words = value.trim().split("\\s+");
         // 打印方式
-//        System.out.println("Words array: " + Arrays.toString(words));
+//        appInsights.trackTrace("Words array: " + Arrays.toString(words));
         return words.length * 2;
     }
 }

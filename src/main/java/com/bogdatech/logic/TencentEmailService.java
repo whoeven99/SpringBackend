@@ -138,11 +138,11 @@ public class TencentEmailService {
             divBuilder.append("</div>");
         }
         templateData.put("html_data", String.valueOf(divBuilder));
-//        System.out.println("templateData" + templateData);
+//        appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
         //判断邮件代码divBuilder里面是否为空，空就不发送邮件
         if (divBuilder.toString().isEmpty()){
-//            System.out.println("divBuilder is empty");
+//            appInsights.trackTrace("divBuilder is empty");
             return true;
         }
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
@@ -242,7 +242,7 @@ public class TencentEmailService {
             String formattedNumber2 = formatter.format(remaining);
             templateData.put("remaining_credits", formattedNumber2);
         }
-        appInsights.trackTrace("templateData" + templateData);
+        appInsights.trackTrace(shopName + "  templateData ： " + templateData);
         //由腾讯发送邮件
         Boolean b;
         if (isTask) {
@@ -311,7 +311,7 @@ public class TencentEmailService {
         templateData.put("number_of_credits",  formatter.format(numberOfCredits));
         templateData.put("total_credits_count",  formatter.format(totalCreditsCount));
         //共消耗的字符数
-//        System.out.println("templateData" + templateData);
+//        appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(143058L, templateData, SUBSCRIBE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中

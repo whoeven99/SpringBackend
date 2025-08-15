@@ -210,6 +210,9 @@ public class PlaceholderUtils {
      * @param languagePackId 语言包
      * */
     public static String getFullHtmlPrompt(String target, String languagePackId) {
+        if (languagePackId == null) {
+            return "Translate the following HTML content to " + target  + ". Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
+        }
         return "Translate the following HTML content to " + target + "  with " + languagePackId + " appropriate terminology and tone. Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
     }
 
@@ -240,7 +243,7 @@ public class PlaceholderUtils {
             String brandWord,
             String brandSlogan
     ) {
-//        System.out.println("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
+//        appInsights.trackTrace("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a professional e-commerce ") ;
         prompt.append(templateType);
@@ -278,7 +281,7 @@ public class PlaceholderUtils {
      * 判断动态构成提示词
      * */
     private static void buildSection(StringBuilder builder, Map<String, String> fields) {
-//        System.out.println("fields: " + fields);
+//        appInsights.trackTrace("fields: " + fields);
         fields.forEach((label, value) -> {
             if (isNotBlank(value)) {
                 builder.append("- ").append(label).append(": ").append(value.trim()).append("\n");

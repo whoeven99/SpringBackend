@@ -47,7 +47,7 @@ public class TranslateApiIntegration {
     public String baiDuTranslate(TranslateRequest request) {
         //创建URL
         String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
-//        System.out.println("encodedQuery: " + encodedQuery);
+//        appInsights.trackTrace("encodedQuery: " + encodedQuery);
         Random random = new Random();
         String salt = String.valueOf(random.nextInt(10000));
         String sign = DigestUtils.md5DigestAsHex((apiUrl + request.getContent() + salt + secret).getBytes());
@@ -152,7 +152,7 @@ public class TranslateApiIntegration {
         String requestBody = "[{\n" +
                 "    \"Text\": \"" + request.getContent() + "\"\n" +
                 "}]";
-//        System.out.println("requestBody" + requestBody);
+//        appInsights.trackTrace("requestBody" + requestBody);
         // 发送请求
         String responseContent = null;
         String result = null;
@@ -164,7 +164,7 @@ public class TranslateApiIntegration {
             responseContent = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             // 获取翻译结果
             appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
-//            System.out.println("翻译错误信息：" + responseContent);
+//            appInsights.trackTrace("翻译错误信息：" + responseContent);
             JSONArray jsonArray = JSON.parseArray(responseContent);
             for (int i = 0; i < jsonArray.size(); i++) {
                 // 获取当前的 JSONObject
@@ -197,7 +197,7 @@ public class TranslateApiIntegration {
 
         //对火山翻译API的语言进行处理
         String huoShanTarget = ApiCodeUtils.huoShanTransformCode(request.getTarget());
-//        System.out.println("huoShanTarget: " + huoShanTarget);
+//        appInsights.trackTrace("huoShanTarget: " + huoShanTarget);
         // translate text
         TranslateTextResponse translateText = null;
         String translation = null;
@@ -210,7 +210,7 @@ public class TranslateApiIntegration {
             translateText = translateService.translateText(translateTextRequest);
             // 将JSON字符串解析为JSONObject对象
             String jsonString = JSON.toJSONString(translateText);
-//            System.out.println("translateText: " + jsonString);
+//            appInsights.trackTrace("translateText: " + jsonString);
             JSONObject jsonResponse = JSON.parseObject(jsonString);
 
             // 直接从jsonResponse中获取TranslationList的第一个元素
@@ -219,7 +219,7 @@ public class TranslateApiIntegration {
                 JSONObject firstTranslationItem = translationList.getJSONObject(0);
                 translation = firstTranslationItem.getString("Translation");
             } else {
-                System.out.println("Translation list is empty or not present.");
+                appInsights.trackTrace("Translation list is empty or not present.");
             }
         } catch (Exception e) {
             appInsights.trackTrace("huoShanTranslate " + e.getMessage());

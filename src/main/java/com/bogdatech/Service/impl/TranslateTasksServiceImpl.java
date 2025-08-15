@@ -67,7 +67,7 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
     @Override
     public Boolean listBeforeEmailTask(String shopName, String taskId) {
         int i = baseMapper.listBeforeEmailTask(shopName, taskId);
-//        System.out.println("taskId 之前的task数是： " + i);
+//        appInsights.trackTrace("taskId 之前的task数是： " + i);
         return i == 0;
     }
 

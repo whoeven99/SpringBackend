@@ -33,7 +33,7 @@ public class MapUtils {
             }
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            System.out.println(currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
+            appInsights.trackTrace(currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
             appInsights.trackTrace(" currency error :  " + e.getMessage());
         }
         return map;

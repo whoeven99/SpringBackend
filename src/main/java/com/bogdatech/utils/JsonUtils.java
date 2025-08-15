@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.bogdatech.enums.ErrorEnum.JSON_PARSE_ERROR;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class JsonUtils {
 
@@ -54,11 +55,11 @@ public class JsonUtils {
                     .path("message");
 
             if (!messageNode.isMissingNode()) {
-                System.out.println("Message: " + messageNode.asText());
+                appInsights.trackTrace("Message: " + messageNode.asText());
                 message = messageNode.asText();
             } else {
                 message = json;
-                System.out.println("Message not found");
+                appInsights.trackTrace("Message not found");
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -73,7 +74,7 @@ public class JsonUtils {
         try {
             return OBJECT_MAPPER.readTree(str);
         }catch (Exception e) {
-            System.out.println("String to Json errors: " + e);
+            appInsights.trackTrace("String to Json errors: " + e);
             throw new RuntimeException(e);
         }
     }
