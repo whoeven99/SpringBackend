@@ -189,6 +189,7 @@ public class PrivateKeyService {
             return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
         }
         //私有key翻译
+        translatesService.updateTranslateStatus(request.getShopName(), 2, clickTranslateRequest.getTarget()[0], request.getSource(), request.getAccessToken());
         startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey, translateResourceDTOS, clickTranslateRequest.getIsCover(), modelFlag, privateData.getApiModel(), privateData.getPromptWord(), handleFlag);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
