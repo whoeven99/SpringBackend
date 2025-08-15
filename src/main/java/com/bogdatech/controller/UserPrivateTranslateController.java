@@ -1,6 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.entity.DO.UserPrivateTranslateDO;
+import com.bogdatech.entity.VO.TestPrivateModelVO;
 import com.bogdatech.logic.UserPrivateTranslateService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,13 +48,14 @@ public class UserPrivateTranslateController {
 
     /**
      * 根据传传入的值，选择不同的模型测试是否是正常的
-     * TODO：放到后面再做
      * */
     @PostMapping("/testPrivateModel")
-    public BaseResponse<Object> testPrivateModel(@RequestParam String shopName, @RequestParam Integer apiName, @RequestBody String data) {
-        userPrivateTranslateService.testPrivateModel(shopName, apiName, data);
-
-        return null;
+    public BaseResponse<Object> testPrivateModel(@RequestParam String shopName, @RequestBody TestPrivateModelVO data) {
+        String s = userPrivateTranslateService.testPrivateModel(shopName, data.getApiName(), data.getSourceText(), data.getTargetCode());
+        if (s != null) {
+            return new BaseResponse<>().CreateSuccessResponse(s);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 
 }

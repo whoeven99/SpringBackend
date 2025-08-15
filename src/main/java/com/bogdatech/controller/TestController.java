@@ -377,4 +377,11 @@ public class TestController {
         return generateDescriptionService.analyzeDescriptionData(des, gen, "123");
     }
 
+    /**
+     * 单纯的打印信息
+     * */
+    @GetMapping("/frontEndPrinting")
+    public void frontEndPrinting(@RequestParam String data) {
+        appInsights.trackTrace(data);
+    }
 }
