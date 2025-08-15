@@ -78,6 +78,7 @@ public class PrivateIntegration {
 
             // 获取 total_tokens
             int totalTokens = obj.getJSONObject("usage").getIntValue("total_tokens");
+            appInsights.trackTrace(shopName + " 用户 openai 私有key翻译 all: " + totalTokens + " text: " + content);
             iUserPrivateTranslateService.updateUserUsedCount(OPENAI_MODEL, totalTokens, shopName, limit);
         }else {
             appInsights.trackTrace("errors openai 翻译失败 ： " +  responseBody);
@@ -136,7 +137,7 @@ public class PrivateIntegration {
                 if (translatedText != null) {
                     //将字符数存到数据库中
                     iUserPrivateTranslateService.updateUserUsedCount(GOOGLE_MODEL, text.length(), shopName, limit);
-                    appInsights.trackTrace(shopName + " 用户 翻译为 ：" + translatedText + " google  all: " + text.length());
+                    appInsights.trackTrace(shopName + " 用户 私有key google翻译为 ：" + translatedText + " google  all: " + text.length());
                     return translatedText; // 成功获取翻译，直接返回
                 }
             } catch (Exception e) {
