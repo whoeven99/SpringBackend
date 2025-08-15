@@ -116,8 +116,8 @@ public class TranslateService {
         return thread;
     };
     public static ExecutorService executorService = new ThreadPoolExecutor(
-            4,   // 核心线程数（比 vCPU 多一点）
-            8,  // 最大线程数（vCPU * 4）
+            5,   // 核心线程数（比 vCPU 多一点）
+            10,  // 最大线程数（vCPU * 4）
             60L, TimeUnit.SECONDS, // 空闲线程存活时间
             new LinkedBlockingQueue<>(50), // 任务队列（避免内存过载）
             threadFactory,
