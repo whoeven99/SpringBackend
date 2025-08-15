@@ -1,5 +1,6 @@
 package com.bogdatech.integration;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUserPrivateTranslateService;
@@ -63,9 +64,27 @@ public class PrivateIntegration {
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-        //TODO: 将翻译数据存储到数据库中
-        iUserPrivateTranslateService.updateUserUsedCount(OPENAI_MODEL, prompt.length(), shopName, limit);
-        return response.getBody();
+        //将翻译数据存储到数据库中
+        // 解析 JSON 字符串
+        String responseBody = response.getBody();
+        String content;
+        if (responseBody != null && responseBody.contains("content") && responseBody.contains("total_tokens")) {
+            JSONObject obj = JSON.parseObject(response.getBody());
+
+            // 获取 content
+            JSONArray choices = obj.getJSONArray("choices");
+            JSONObject firstChoice = choices.getJSONObject(0);
+            content = firstChoice.getJSONObject("message").getString("content");
+
+            // 获取 total_tokens
+            int totalTokens = obj.getJSONObject("usage").getIntValue("total_tokens");
+            iUserPrivateTranslateService.updateUserUsedCount(OPENAI_MODEL, totalTokens, shopName, limit);
+        }else {
+            appInsights.trackTrace("errors openai 翻译失败 ： " +  responseBody);
+            return prompt;
+        }
+
+        return content;
     }
 
     /**
