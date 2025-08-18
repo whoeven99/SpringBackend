@@ -20,8 +20,8 @@ public class UsersDO {
     private String accessToken;
     private String email;
     private String phone;
-    private String realAddress;
-    private String ipAddress;
+    private String realAddress; //改为这个用户第一天安装第一次翻译的时间
+    private String ipAddress; //改成这个用户第一天安装第一次支付的时间
     private String userTag;
     private String firstName;
     private String lastName;
