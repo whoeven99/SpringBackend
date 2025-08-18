@@ -51,7 +51,6 @@ import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 public class TestController {
     private final TranslatesServiceImpl translatesServiceImpl;
     private final ChatGptIntegration chatGptIntegration;
-    private final ChatGptByOpenaiIntegration chatGptByOpenaiIntegration;
     private final TaskService taskService;
     private final RateHttpIntegration rateHttpIntegration;
     private final UserTypeTokenService userTypeTokenService;
@@ -64,10 +63,9 @@ public class TestController {
     private final GenerateDescriptionService generateDescriptionService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, ChatGptByOpenaiIntegration chatGptByOpenaiIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
-        this.chatGptByOpenaiIntegration = chatGptByOpenaiIntegration;
         this.taskService = taskService;
         this.rateHttpIntegration = rateHttpIntegration;
         this.userTypeTokenService = userTypeTokenService;

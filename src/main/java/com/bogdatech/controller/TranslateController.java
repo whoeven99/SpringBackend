@@ -171,6 +171,9 @@ public class TranslateController {
         if (clickTranslateRequest.getTarget().length > 5) {
             return new BaseResponse<>().CreateErrorResponse("Please select no more than 5 languages to translate.");
         }
+
+        //判断该用户是否
+
         if (clickTranslateRequest.getIsCover() == null) {
             clickTranslateRequest.setIsCover(false);
         }
@@ -401,6 +404,19 @@ public class TranslateController {
             appInsights.trackTrace(shopName + " 停止成功");
             return new BaseResponse<>().CreateSuccessResponse(stopFlag);
         }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    /**
+     * 用于获取进度条的相关数据
+     * */
+    @PostMapping("/getProgressData")
+    public BaseResponse<Object> getProgressData(@RequestParam String shopName, @RequestParam String target) {
+        Map<String, Integer> progressData = translateService.getProgressData(shopName, target);
+        if (progressData != null){
+            return new BaseResponse<>().CreateSuccessResponse(progressData);
+        }
+
         return new BaseResponse<>().CreateErrorResponse(false);
     }
 }

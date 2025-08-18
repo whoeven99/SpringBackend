@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.logic.PrivateKeyService.GOOGLE_MODEL;
 import static com.bogdatech.logic.PrivateKeyService.OPENAI_MODEL;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.UserPrivateUtils.maskString;
 
 @RestController
@@ -26,14 +27,15 @@ public class UserPrivateTranslateController {
      * */
     @PostMapping("/configPrivateModel")
     public BaseResponse<Object> configPrivateModel(@RequestParam String shopName, @RequestBody UserPrivateTranslateDO data) {
-        if (data.getApiKey().contains("*")){
-            return new BaseResponse<>().CreateErrorResponse("Please enter the correct key");
+        boolean flag;
+        if (data.getApiKey() != null) {
+            appInsights.trackTrace(shopName + " apiKey : " + data.getApiKey());
+            flag = userPrivateTranslateService.configPrivateModel(shopName, data);
+        }else {
+            flag = userPrivateTranslateService.configPrivateModelExceptApiKey(shopName, data);
         }
-        Boolean b = userPrivateTranslateService.configPrivateModel(shopName, data);
-        if (b) {
-            //修改用户的key，只返回前4位和后4位，中间用*表示
-            String userKey = maskString(data.getApiKey());
-            data.setApiKey(userKey);
+
+        if (flag) {
             return new BaseResponse<>().CreateSuccessResponse(data);
         }else {
             return new BaseResponse<>().CreateErrorResponse(false);
@@ -57,7 +59,7 @@ public class UserPrivateTranslateController {
      * */
     @PostMapping("/testPrivateModel")
     public BaseResponse<Object> testPrivateModel(@RequestParam String shopName, @RequestBody TestPrivateModelVO data) {
-        String s = userPrivateTranslateService.testPrivateModel(shopName, data.getApiName(), data.getSourceText(), data.getTargetCode());
+        String s = userPrivateTranslateService.testPrivateModel(shopName, data.getApiName(), data.getSourceText(), data.getTargetCode(), data.getPrompt());
         if (s != null) {
             return new BaseResponse<>().CreateSuccessResponse(s);
         }

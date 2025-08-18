@@ -7,6 +7,7 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ITranslatesService extends IService<TranslatesDO> {
     Integer readStatus(TranslateRequest request);

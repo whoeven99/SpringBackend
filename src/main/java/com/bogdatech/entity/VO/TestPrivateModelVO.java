@@ -11,4 +11,5 @@ public class TestPrivateModelVO {
     private Integer apiName;
     private String sourceText;
     private String targetCode;
+    private String prompt;
 }
