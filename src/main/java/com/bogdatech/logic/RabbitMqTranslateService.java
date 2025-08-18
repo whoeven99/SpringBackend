@@ -761,7 +761,7 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace(shopName + " 用户 消耗的token ： " + counter.getTotalChars());
 //            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
             // 将翻译状态为2改为“部分翻译”
-            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
+            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 7));
             // 将task表数据都改为 5
             translateTasksService.updateByShopName(shopName, 5);
             return true;
