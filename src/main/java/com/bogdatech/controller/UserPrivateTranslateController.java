@@ -59,7 +59,7 @@ public class UserPrivateTranslateController {
      * */
     @PostMapping("/testPrivateModel")
     public BaseResponse<Object> testPrivateModel(@RequestParam String shopName, @RequestBody TestPrivateModelVO data) {
-        String s = userPrivateTranslateService.testPrivateModel(shopName, data.getApiName(), data.getSourceText(), data.getTargetCode());
+        String s = userPrivateTranslateService.testPrivateModel(shopName, data.getApiName(), data.getSourceText(), data.getTargetCode(), data.getPrompt());
         if (s != null) {
             return new BaseResponse<>().CreateSuccessResponse(s);
         }
