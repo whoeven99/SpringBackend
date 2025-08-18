@@ -403,4 +403,17 @@ public class TranslateController {
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
+
+    /**
+     * 用于获取进度条的相关数据
+     * */
+    @PostMapping("/getProgressData")
+    public BaseResponse<Object> getProgressData(@RequestParam String shopName, @RequestParam String target) {
+        Map<String, Integer> progressData = translateService.getProgressData(shopName, target);
+        if (progressData != null){
+            return new BaseResponse<>().CreateSuccessResponse(progressData);
+        }
+
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
 }

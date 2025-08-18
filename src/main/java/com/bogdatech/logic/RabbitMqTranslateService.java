@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
@@ -41,6 +42,7 @@ import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.ListUtils.convertALL;
 import static com.bogdatech.utils.ListUtils.sort;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
@@ -119,6 +121,7 @@ public class RabbitMqTranslateService {
         //获取目前所使用的AI语言包
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
+        CharacterCountUtils allTasks = new CharacterCountUtils();
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
@@ -148,16 +151,17 @@ public class RabbitMqTranslateService {
                 RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
                 dbTranslateVO.setShopifyData(query);
                 String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
-                translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName()));
+                translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
+                allTasks.addChars(1);
             } catch (Exception e) {
                 appInsights.trackTrace("保存翻译任务失败 errors : " + e);
             }
             // 改为将请求数据存储到数据库中
-            parseShopifyData(rabbitMqTranslateVO, translateResource);
+            parseShopifyData(rabbitMqTranslateVO, translateResource, allTasks);
         }
         rabbitMqTranslateVO.setTranslateList(translateResourceDTOS);
         //当模块都发送后，发送邮件模块
-        sendEmailTranslate(rabbitMqTranslateVO, emailType);
+        sendEmailTranslate(rabbitMqTranslateVO, emailType, allTasks);
     }
 
     /**
@@ -167,7 +171,7 @@ public class RabbitMqTranslateService {
      * @Param emailType 邮件类型
      * 根据emailType填入不同的邮件类型
      */
-    public void sendEmailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, Boolean emailType) {
+    public void sendEmailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, Boolean emailType, CharacterCountUtils allTasks) {
         //邮件相关参数
         if (emailType) {
             rabbitMqTranslateVO.setShopifyData(EMAIL);
@@ -178,7 +182,14 @@ public class RabbitMqTranslateService {
 
         try {
             String json = OBJECT_MAPPER.writeValueAsString(rabbitMqTranslateVO);
-            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName()));
+            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
+            //计数前面的子任务项，并修改allTasks的字段
+            allTasks.addChars(1);
+            //修改之前的所有allTasks的字段
+            translateTasksService.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, rabbitMqTranslateVO.getShopName()).set(TranslateTasksDO::getAllTasks, allTasks.getTotalChars()));
+            //将进度条状态改为2
+            Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
+            userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
         } catch (Exception e) {
             appInsights.trackTrace("保存翻译任务失败 errors : " + e);
         }
@@ -188,7 +199,7 @@ public class RabbitMqTranslateService {
     /**
      * 解析shopifyData的数据，递归获取，每250条数据作为一个翻译任务发送到队列里面
      */
-    public void parseShopifyData(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateResourceDTO translateResource) {
+    public void parseShopifyData(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateResourceDTO translateResource, CharacterCountUtils allTasks) {
         JsonNode rootNode;
         try {
             rootNode = OBJECT_MAPPER.readTree(rabbitMqTranslateVO.getShopifyData());
@@ -197,11 +208,11 @@ public class RabbitMqTranslateService {
             return;
         }
 
-        translateNextPage(rootNode, translateResource, rabbitMqTranslateVO);
+        translateNextPage(rootNode, translateResource, rabbitMqTranslateVO, allTasks);
     }
 
     //获取下一页数据
-    public void translateNextPage(JsonNode rootNode, TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO) {
+    public void translateNextPage(JsonNode rootNode, TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = rootNode.path("translatableResources");
         // 获取pageInfo节点
@@ -210,16 +221,16 @@ public class RabbitMqTranslateService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.path("endCursor");
                 translateContext.setAfter(endCursor.asText(null));
-                translateNextPageData(translateContext, rabbitMqTranslateVO);
+                translateNextPageData(translateContext, rabbitMqTranslateVO, allTasks);
             }
         }
     }
 
     //递归处理下一页数据
-    private void translateNextPageData(TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO) {
+    private void translateNextPageData(TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
         JsonNode nextPageData;
         try {
-            nextPageData = fetchNextPage(translateContext, new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget()), rabbitMqTranslateVO);
+            nextPageData = fetchNextPage(translateContext, new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget()), rabbitMqTranslateVO, allTasks);
             if (nextPageData == null) {
                 return;
             }
@@ -228,10 +239,10 @@ public class RabbitMqTranslateService {
         }
         rabbitMqTranslateVO.setShopifyData(nextPageData.toString());
         // 重新开始翻译流程
-        parseShopifyData(rabbitMqTranslateVO, translateContext);
+        parseShopifyData(rabbitMqTranslateVO, translateContext, allTasks);
     }
 
-    public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request, RabbitMqTranslateVO rabbitMqTranslateVO) {
+    public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
         String query = new ShopifyRequestBody().getAfterQuery(translateResource);
         //将请求数据存数据库中
@@ -239,7 +250,8 @@ public class RabbitMqTranslateService {
             RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
             dbTranslateVO.setShopifyData(query);
             String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
-            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName()));
+            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
+            allTasks.addChars(1);
         } catch (Exception e) {
             appInsights.trackTrace("fechNextPage 保存翻译任务失败 errors " + e);
         }
