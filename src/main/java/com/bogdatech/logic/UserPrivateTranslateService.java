@@ -64,14 +64,10 @@ public class UserPrivateTranslateService {
 
 
     public UserPrivateTranslateDO getUserPrivateData(String shopName, Integer apiName) {
-        String userKey = getApiKey(shopName, apiName);
-        KeyVaultSecret keyVaultSecret = secretClient.getSecret(userKey);
-        String keyVaultSecretValue = keyVaultSecret.getValue();
         // 从数据中获取相关数据
         UserPrivateTranslateDO one = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiName, apiName));
         // 处理key后，存放到UserPrivateTranslateDO
-        String key = maskString(keyVaultSecretValue);
-        one.setApiKey(key);
+        one.setApiKey(null);
         return one;
     }
 
@@ -108,5 +104,29 @@ public class UserPrivateTranslateService {
                 break;
         }
         return targetText;
+    }
+
+    public boolean configPrivateModelExceptApiKey(String shopName, UserPrivateTranslateDO data) {
+        data.setShopName(shopName);
+        //判断这个值在DB中是否存在。存在一系列操作后，插入；不存在，更新相关数据
+        UserPrivateTranslateDO dbData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>()
+                .eq(UserPrivateTranslateDO::getShopName, shopName)
+                .eq(UserPrivateTranslateDO::getApiName, data.getApiName()));
+        String userKey = getApiKey(shopName, data.getApiName());
+        if (dbData != null) {
+            //仅更新 api_model，prompt_word，token_limit ，is_selected
+            appInsights.trackTrace("userKey: " + userKey);
+            return iUserPrivateTranslateService.update(new LambdaUpdateWrapper<UserPrivateTranslateDO>()
+                    .eq(UserPrivateTranslateDO::getShopName, shopName)
+                    .eq(UserPrivateTranslateDO::getApiName, data.getApiName())
+                    .set(UserPrivateTranslateDO::getApiModel, data.getApiModel())
+                    .set(UserPrivateTranslateDO::getPromptWord, data.getPromptWord())
+                    .set(UserPrivateTranslateDO::getTokenLimit, data.getTokenLimit())
+                    .set(UserPrivateTranslateDO::getIsSelected, data.getIsSelected()));
+        }
+
+        //将数据存到数据库中
+        data.setApiKey(userKey);
+        return iUserPrivateTranslateService.save(data);
     }
 }
