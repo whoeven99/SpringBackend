@@ -45,9 +45,6 @@ public class UserPrivateTranslateController {
      * */
     @PostMapping("/getUserPrivateData")
     public BaseResponse<Object> getUserPrivateData(@RequestParam String shopName, @RequestParam Integer apiName) {
-        if (!apiName.equals(GOOGLE_MODEL) || !apiName.equals(OPENAI_MODEL)){
-            return new BaseResponse<>().CreateErrorResponse(false);
-        }
         UserPrivateTranslateDO userPrivateData = userPrivateTranslateService.getUserPrivateData(shopName, apiName);
         if (userPrivateData != null) {
             return new BaseResponse<>().CreateSuccessResponse(userPrivateData);
@@ -66,5 +63,4 @@ public class UserPrivateTranslateController {
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
-
-}
+    }
