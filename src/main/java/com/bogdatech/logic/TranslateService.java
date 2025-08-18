@@ -1,6 +1,7 @@
 package com.bogdatech.logic;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
@@ -30,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.*;
@@ -110,9 +112,7 @@ public class TranslateService {
     static ThreadFactory threadFactory = runnable -> {
         Thread thread = new Thread(runnable);
         thread.setName("my-thread-" + thread.getId());
-        thread.setUncaughtExceptionHandler((t, e) -> {
-            appInsights.trackTrace("线程 " + t.getName() + " 抛出异常: " + e.getMessage());
-        });
+        thread.setUncaughtExceptionHandler((t, e) -> appInsights.trackTrace("线程 " + t.getName() + " 抛出异常: " + e.getMessage()));
         return thread;
     };
     public static ExecutorService executorService = new ThreadPoolExecutor(
@@ -125,7 +125,7 @@ public class TranslateService {
     );
 
     //部分翻译的处理
-    public void translate3Handle(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int remainingChars, int usedChars,List<TranslateResourceDTO> translateSettings3) {
+    public void translate3Handle(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int remainingChars, int usedChars, List<TranslateResourceDTO> translateSettings3) {
         //更新初始值
 //        translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, request.getShopName(), 0, counter.getTotalChars(), 0, 0, 0));
         translatesService.updateTranslateStatus(request.getShopName(), 3, request.getTarget(), request.getSource(), request.getAccessToken());
@@ -380,7 +380,6 @@ public class TranslateService {
     }
 
 
-
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
 
     public Future<Void> translateJson(TranslateContext translateContext, CharacterCountUtils usedCharCounter) {
@@ -588,7 +587,7 @@ public class TranslateService {
                 case METAFIELD:
                     try {
                         translateMetafield(entry.getValue(), translateContext);
-                    }catch (ClientException e){
+                    } catch (ClientException e) {
                         throw e;
                     } catch (Exception e) {
                         appInsights.trackTrace(translateContext.getShopifyRequest().getShopName() + " 用户 metafield 翻译 errors ：" + e);
@@ -729,7 +728,7 @@ public class TranslateService {
                 String original = resultList.get(i);
                 if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
                     //走翻译流程
-                    String translated = translateSingleText(request, original, languagePackId, counter, source,limitChars);
+                    String translated = translateSingleText(request, original, languagePackId, counter, source, limitChars);
                     //将数据填回去
                     resultList.set(i, translated);
                 }
@@ -1153,7 +1152,7 @@ public class TranslateService {
             shopifyService.saveToShopify(value, translation, registerTransactionRequest.getResourceId(), request);
             return;
         }
-        if (!translateType.equals(HANDLE)){
+        if (!translateType.equals(HANDLE)) {
             addData(request.getTarget(), value, targetString);
         }
 
@@ -1161,7 +1160,7 @@ public class TranslateService {
         printTranslation(targetString, value, translation, request.getShopName(), resourceType, registerTransactionRequest.getResourceId(), source);
         //判断是否是handle再决定是否存到数据库中
         try {
-            if (translateType.equals(HANDLE)){
+            if (translateType.equals(HANDLE)) {
                 return;
             }
             // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
@@ -1239,7 +1238,7 @@ public class TranslateService {
                     || "LIST_URL".equals(type)
                     || "JSON".equals(type)
                     || "JSON_STRING".equals(type)
-                    ) {
+            ) {
                 continue;
             }
 
@@ -1269,9 +1268,9 @@ public class TranslateService {
                 }
 
                 //对key中含section和general的做key值判断
-                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()){
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                     //进行白名单的确认
-                    if (whiteListTranslate(key)){
+                    if (whiteListTranslate(key)) {
                         judgeData.get(PLAIN_TEXT).add(new RegisterTransactionRequest(shopName, null, locale, key, value, translatableContentDigest, resourceId, null));
                         continue;
                     }
@@ -1365,7 +1364,7 @@ public class TranslateService {
                 || type.equals(("LIST_URL"))
                 || "JSON".equals(type)
                 || "JSON_STRING".equals(type)
-                ) {
+        ) {
             return true;
         }
 
@@ -1596,10 +1595,6 @@ public class TranslateService {
     }
 
 
-
-
-
-
     /**
      * 根据店铺名称和target获取对应的 ID。
      *
@@ -1683,8 +1678,8 @@ public class TranslateService {
 
     /**
      * 用户shopify和数据库同步的方法
-     * */
-    public void syncShopifyAndDatabase(TranslateRequest request)  {
+     */
+    public void syncShopifyAndDatabase(TranslateRequest request) {
         //获取用户数据
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.translateRequestToCloudServiceRequest(request);
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
@@ -1727,10 +1722,10 @@ public class TranslateService {
 
     /**
      * 循环遍历数据库中是否有该条数据
-     * */
-    public void isExistInDatabase(String shopName, ClickTranslateRequest clickTranslateRequest, TranslateRequest request){
-        for (String target: clickTranslateRequest.getTarget()
-             ) {
+     */
+    public void isExistInDatabase(String shopName, ClickTranslateRequest clickTranslateRequest, TranslateRequest request) {
+        for (String target : clickTranslateRequest.getTarget()
+        ) {
             request.setTarget(target);
             TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("source", clickTranslateRequest.getSource()).eq("target", request.getTarget()));
             if (one == null) {
@@ -1738,6 +1733,32 @@ public class TranslateService {
                 syncShopifyAndDatabase(request);
             }
         }
+    }
+
+    public Map<String, Integer> getProgressData(String shopName, String target) {
+        Map<String, Integer> progressData = new HashMap<>();
+        AtomicReference<Integer> other = new AtomicReference<>(0);
+        //从数据库中升序获取所有的同shopName和target对应的数据
+        List<TranslateTasksDO> list = translateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>()
+                .eq(TranslateTasksDO::getShopName, shopName)
+                .eq(TranslateTasksDO::getStatus, 0)
+                .like(TranslateTasksDO::getPayload, "\"target\":\"" + target + "\"")
+                .orderByAsc(TranslateTasksDO::getCreatedAt));
+        if (list.isEmpty()) {
+            progressData.put("RemainingQuantity", 0);
+            progressData.put("TotalQuantity", 0);
+            return progressData;
+        }
+
+        for (TranslateTasksDO task : list) {
+            other.getAndSet(other.get() + 1);
+            if (task.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
+                break;
+            }
+        }
+        progressData.put("RemainingQuantity", other.get());
+        progressData.put("TotalQuantity", list.get(0).getAllTasks());
+        return progressData;
     }
 }
 
