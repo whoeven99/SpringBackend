@@ -221,6 +221,10 @@ public class ShopifyController {
                 .eq("status", "ACTIVE")
                 .orderByDesc("updated_date")
         );
+
+        if (charsOrdersDO == null) {
+            return new BaseResponse<>().CreateErrorResponse("charsOrdersDO is null");
+        }
         UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>()
                 .eq("shop_name", shopName)
         );
