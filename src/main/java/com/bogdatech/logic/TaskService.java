@@ -8,12 +8,10 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.model.controller.request.*;
-import com.bogdatech.model.service.TranslateTaskPublisherService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -25,9 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
@@ -155,10 +151,11 @@ public class TaskService {
         String env = System.getenv("ApplicationEnv");
         //根据新的集合获取这个订阅计划的信息
         if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", null), query));
+            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, null), query));
         } else {
-            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), "2024-10", "en", query));
+            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, "en", query));
         }
+
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
             appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务根据订单id: " + userPriceRequest.getSubscriptionId() + "获取数据失败" + " token: " + userPriceRequest.getAccessToken());

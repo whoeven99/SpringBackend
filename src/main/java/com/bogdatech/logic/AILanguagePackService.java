@@ -40,7 +40,7 @@ public class AILanguagePackService {
             return languagePackId;
         }
 
-        String shopifyData = getShopifyData(new ShopifyRequest(shopName, accessToken, "2024-10", "zh-CN"), new TranslateResourceDTO(SHOP, MAX_LENGTH, "zh-CN", ""));
+        String shopifyData = getShopifyData(new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, "zh-CN"), new TranslateResourceDTO(SHOP, MAX_LENGTH, "zh-CN", ""));
         if (shopifyData == null || shopifyData.isEmpty()) {
             return null;
         }
