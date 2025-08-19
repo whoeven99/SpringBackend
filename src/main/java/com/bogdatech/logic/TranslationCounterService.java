@@ -2,12 +2,10 @@ package com.bogdatech.logic;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogdatech.Service.ICharsOrdersService;
-import com.bogdatech.Service.ISubscriptionPlansService;
-import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.Service.IUserTrialsService;
+import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.CharsOrdersDO;
 import com.bogdatech.entity.DO.UserTrialsDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,20 +24,24 @@ public class TranslationCounterService {
     private final ISubscriptionPlansService iSubscriptionPlansService;
     private final ITranslationCounterService iTranslationCounterService;
     private final IUserTrialsService iUserTrialsService;
+    private final IUsersService iUsersService;
 
     public final String ACTIVE = "ACTIVE";
     @Autowired
-    public TranslationCounterService(ICharsOrdersService iCharsOrdersService, ISubscriptionPlansService iSubscriptionPlansService, ITranslationCounterService iTranslationCounterService, IUserTrialsService iUserTrialsService) {
+    public TranslationCounterService(ICharsOrdersService iCharsOrdersService, ISubscriptionPlansService iSubscriptionPlansService, ITranslationCounterService iTranslationCounterService, IUserTrialsService iUserTrialsService, IUsersService iUsersService) {
         this.iCharsOrdersService = iCharsOrdersService;
         this.iSubscriptionPlansService = iSubscriptionPlansService;
         this.iTranslationCounterService = iTranslationCounterService;
         this.iUserTrialsService = iUserTrialsService;
+        this.iUsersService = iUsersService;
     }
 
     public Boolean addCharsByShopNameAfterSubscribe(String shopName, TranslationCharsVO translationCharsVO) {
+        //获取该用户的accessToken
+        UsersDO userByName = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
         //根据传来的gid获取，相关订阅信息
         String subscriptionQuery = getSubscriptionQuery(translationCharsVO.getSubGid());
-        String shopifyByQuery = getShopifyByQuery(subscriptionQuery, shopName, translationCharsVO.getAccessToken());
+        String shopifyByQuery = getShopifyByQuery(subscriptionQuery, shopName, userByName.getAccessToken());
         //判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
