@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
@@ -230,9 +231,9 @@ public class ShopifyController {
         String env = System.getenv("ApplicationEnv");
         //根据新的集合获取这个订阅计划的信息
         if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", null), query));
+            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(usersDO.getShopName(), usersDO.getAccessToken(), API_VERSION_LAST, null), query));
         } else {
-            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), "2024-10", "en", query));
+            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), API_VERSION_LAST, "en", query));
         }
 //        appInsights.trackTrace("infoByShopify = " + infoByShopify);
         if (infoByShopify == null || infoByShopify.isEmpty()) {

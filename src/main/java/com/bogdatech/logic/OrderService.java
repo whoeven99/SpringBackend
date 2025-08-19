@@ -1,5 +1,6 @@
 package com.bogdatech.logic;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -99,5 +100,15 @@ public class OrderService {
         templateData.put("shop_name", targetShop);
 
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+    }
+
+    public String getLatestActiveSubscribeId(String shopName) {
+        CharsOrdersDO charsOrdersDO = charsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>()
+                .eq(CharsOrdersDO::getShopName, shopName)
+                .eq(CharsOrdersDO::getStatus, "ACTIVE")
+                .like(CharsOrdersDO::getId, "AppSubscription")
+                .orderByDesc(CharsOrdersDO::getCreatedAt)
+                .last("OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY"));
+        return charsOrdersDO.getId();
     }
 }
