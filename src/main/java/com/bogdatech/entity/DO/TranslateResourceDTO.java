@@ -89,7 +89,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
+//            new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN_GROUP, MAX_LENGTH, "", "")
@@ -134,12 +134,13 @@ public class TranslateResourceDTO {
         TOKEN_MAP.put("theme", Arrays.asList(
                 new TranslateResourceDTO(ONLINE_STORE_THEME, MAX_LENGTH, "", "")
                 ,
-                new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
+//                new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
-                new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", ""),
-                new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", "")
+                new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", "")
+//                ,
+//                new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", "")
         ));
         TOKEN_MAP.put("article", List.of(new TranslateResourceDTO(ARTICLE, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("blog_titles", List.of(new TranslateResourceDTO(BLOG, MAX_LENGTH, "", "")));
@@ -185,7 +186,7 @@ public class TranslateResourceDTO {
         EMAIL_MAP.put(ONLINE_STORE_THEME_SECTION_GROUP,"theme");
         EMAIL_MAP.put(ONLINE_STORE_THEME_SETTINGS_CATEGORY,"theme");
         EMAIL_MAP.put(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS,"theme");
-        EMAIL_MAP.put(ONLINE_STORE_THEME_LOCALE_CONTENT,"theme");
+//        EMAIL_MAP.put(ONLINE_STORE_THEME_LOCALE_CONTENT,"theme");
         EMAIL_MAP.put(ARTICLE,"article");
         EMAIL_MAP.put(BLOG,"blog_titles");
         EMAIL_MAP.put(FILTER,"filters");
@@ -207,7 +208,8 @@ public class TranslateResourceDTO {
 
     //自动翻译模块顺序
     public static final List<String> AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
-            ARTICLE, PRODUCT, PRODUCT_OPTION, PRODUCT_OPTION_VALUE, ONLINE_STORE_THEME, ONLINE_STORE_THEME_APP_EMBED, ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP, ONLINE_STORE_THEME_SETTINGS_CATEGORY, ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, ONLINE_STORE_THEME_LOCALE_CONTENT
+            ARTICLE, PRODUCT, PRODUCT_OPTION, PRODUCT_OPTION_VALUE, ONLINE_STORE_THEME, ONLINE_STORE_THEME_APP_EMBED, ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP, ONLINE_STORE_THEME_SETTINGS_CATEGORY, ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS
+//            , ONLINE_STORE_THEME_LOCALE_CONTENT
     ));
 
     private String resourceType;
