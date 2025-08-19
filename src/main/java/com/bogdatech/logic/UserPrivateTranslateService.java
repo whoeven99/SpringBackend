@@ -64,6 +64,9 @@ public class UserPrivateTranslateService {
     public UserPrivateTranslateDO getUserPrivateData(String shopName, Integer apiName) {
         // 从数据中获取相关数据
         UserPrivateTranslateDO one = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiName, apiName));
+        if (one == null) {
+            return null;
+        }
         // 处理key后，存放到UserPrivateTranslateDO
         one.setApiKey(null);
         return one;
