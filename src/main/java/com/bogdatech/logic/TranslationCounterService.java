@@ -7,6 +7,7 @@ import com.bogdatech.entity.DO.CharsOrdersDO;
 import com.bogdatech.entity.DO.UserTrialsDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
+import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 
@@ -53,7 +55,9 @@ public class TranslationCounterService {
         String name = queryValid.getString("name");
         String status = queryValid.getString("status");
         Integer trialDays = queryValid.getInteger("trialDays");
+        appInsights.trackTrace(shopName + " 用户 免费试用天数 ：" + trialDays);
         if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0){
+            appInsights.trackTrace(shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
             // 不添加额度, 但需要修改免费试用订阅表
             String createdAt = queryValid.getString("createdAt");
 //            String currentPeriodEnd = queryValid.getString("currentPeriodEnd");
@@ -71,8 +75,7 @@ public class TranslationCounterService {
         if (name.equals(charsOrdersDO.getName()) && status.equals(ACTIVE)){
             //根据用户的计划添加对应的额度
             Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(name);
-            Integer maxCharsByShopName = iTranslationCounterService.getMaxCharsByShopName(shopName);
-            return iTranslationCounterService.updateAddUsedCharsByShopName(shopName, charsByPlanName, maxCharsByShopName);
+            return iTranslationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, shopName, charsByPlanName, 0 , 0 , 0, 0));
         }
         return null;
     }
