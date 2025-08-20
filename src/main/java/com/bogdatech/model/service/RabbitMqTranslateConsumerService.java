@@ -112,7 +112,7 @@ public class RabbitMqTranslateConsumerService {
             rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
             appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
         } catch (ClientException e1) {
-            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "到达字符限制： " + e1);
+            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 到达字符限制： " + e1);
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
             translateTasksService.updateByTaskId(task.getTaskId(), 3);
