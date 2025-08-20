@@ -682,7 +682,7 @@ public class RabbitMqTranslateService {
         String target = rabbitMqTranslateVO.getTarget();
         Integer limitChars = rabbitMqTranslateVO.getLimitChars();
         String accessToken = rabbitMqTranslateVO.getAccessToken();
-        ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, APIVERSION, target);
+        ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
         for (TranslateTextDO translateTextDO : htmlData) {
             //根据模块选择翻译方法，先做普通翻译
             //判断是否停止翻译
@@ -778,7 +778,7 @@ public class RabbitMqTranslateService {
         String target = rabbitMqTranslateVO.getTarget();
         Integer limitChars = rabbitMqTranslateVO.getLimitChars();
         String accessToken = rabbitMqTranslateVO.getAccessToken();
-        ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, APIVERSION, target);
+        ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
         for (TranslateTextDO translateTextDO : plainTextData) {
             //根据模块选择翻译方法，先做普通翻译
             //判断是否停止翻译
@@ -869,7 +869,7 @@ public class RabbitMqTranslateService {
         String target = rabbitMqTranslateVO.getTarget();
         Integer limitChars = rabbitMqTranslateVO.getLimitChars();
         String accessToken = rabbitMqTranslateVO.getAccessToken();
-        ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, APIVERSION, target);
+        ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
 
         Map<String, Object> glossaryMap = rabbitMqTranslateVO.getGlossaryMap();
         if (glossaryMap == null || glossaryMap.isEmpty()) {

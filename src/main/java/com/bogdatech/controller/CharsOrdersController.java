@@ -65,4 +65,17 @@ public class CharsOrdersController {
             return new BaseResponse<>().CreateErrorResponse("false");
         }
     }
+
+    /**
+     * 查询用户最新一次订阅状态为Active的订阅id
+     * */
+    @PostMapping("/getLatestActiveSubscribeId")
+    public BaseResponse<Object> getLatestActiveSubscribeId(@RequestParam String shopName) {
+        String latestActiveSubscribeId = orderService.getLatestActiveSubscribeId(shopName);
+        if (latestActiveSubscribeId != null) {
+            return new BaseResponse<>().CreateSuccessResponse(latestActiveSubscribeId);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
+    }
 }

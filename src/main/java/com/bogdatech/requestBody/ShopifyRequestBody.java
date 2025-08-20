@@ -91,6 +91,7 @@ public class ShopifyRequestBody {
                 "      status\n" +
                 "      createdAt\n" +
                 "      currentPeriodEnd\n" +
+                "      trialDays\n" +
                 "      lineItems {\n" +
                 "        plan {\n" +
                 "          pricingDetails {\n" +
