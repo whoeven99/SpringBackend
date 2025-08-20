@@ -168,11 +168,6 @@ public class TranslateController {
                 || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().length == 0) {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
-        if (clickTranslateRequest.getTarget().length > 5) {
-            return new BaseResponse<>().CreateErrorResponse("Please select no more than 5 languages to translate.");
-        }
-
-        //判断该用户是否
 
         if (clickTranslateRequest.getIsCover() == null) {
             clickTranslateRequest.setIsCover(false);
