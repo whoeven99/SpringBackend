@@ -251,6 +251,11 @@ public class TranslateController {
                     request.getSource(),
                     request.getAccessToken()
             );
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                appInsights.trackException(e);
+            }
         }
 
         //全部走DB翻译
