@@ -179,12 +179,12 @@ public class TranslateResourceDTO {
     public static final Map<String, String> EMAIL_MAP = new HashMap<>();
     static {
         EMAIL_MAP.put(COLLECTION,"collection");
-        EMAIL_MAP.put(EMAIL_TEMPLATE,"notifications");
+//        EMAIL_MAP.put(EMAIL_TEMPLATE,"notifications");
         EMAIL_MAP.put(ONLINE_STORE_THEME,"theme");
         EMAIL_MAP.put(ONLINE_STORE_THEME_APP_EMBED,"theme");
         EMAIL_MAP.put(ONLINE_STORE_THEME_JSON_TEMPLATE,"theme");
         EMAIL_MAP.put(ONLINE_STORE_THEME_SECTION_GROUP,"theme");
-        EMAIL_MAP.put(ONLINE_STORE_THEME_SETTINGS_CATEGORY,"theme");
+//        EMAIL_MAP.put(ONLINE_STORE_THEME_SETTINGS_CATEGORY,"theme");
         EMAIL_MAP.put(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS,"theme");
 //        EMAIL_MAP.put(ONLINE_STORE_THEME_LOCALE_CONTENT,"theme");
         EMAIL_MAP.put(ARTICLE,"article");
