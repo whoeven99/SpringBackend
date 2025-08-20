@@ -169,8 +169,6 @@ public class TranslateController {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
 
-        //判断该用户是否
-
         if (clickTranslateRequest.getIsCover() == null) {
             clickTranslateRequest.setIsCover(false);
         }

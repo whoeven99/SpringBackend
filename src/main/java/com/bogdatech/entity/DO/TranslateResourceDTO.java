@@ -24,7 +24,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
+//            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", "")
             ,
             new TranslateResourceDTO(MENU, MAX_LENGTH, "", ""),
@@ -83,12 +83,12 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(METAOBJECT, MIDDLE_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
+//            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
+//            new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
 //            new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
@@ -130,14 +130,14 @@ public class TranslateResourceDTO {
     public static final Map<String, List<TranslateResourceDTO>> TOKEN_MAP = new HashMap<>();
     static {
         TOKEN_MAP.put("collection", List.of(new TranslateResourceDTO(COLLECTION, MAX_LENGTH, "", "")));
-        TOKEN_MAP.put("notifications", List.of(new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", "")));
+//        TOKEN_MAP.put("notifications", List.of(new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", "")));
         TOKEN_MAP.put("theme", Arrays.asList(
                 new TranslateResourceDTO(ONLINE_STORE_THEME, MAX_LENGTH, "", "")
                 ,
 //                new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, MAX_LENGTH, "", ""),
-                new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
+//                new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", "")
 //                ,
 //                new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", "")
@@ -209,7 +209,7 @@ public class TranslateResourceDTO {
     //自动翻译模块顺序
     public static final List<String> AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
             ARTICLE, PRODUCT, PRODUCT_OPTION, PRODUCT_OPTION_VALUE, COLLECTION, ONLINE_STORE_THEME,
-            ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP, ONLINE_STORE_THEME_SETTINGS_CATEGORY,
+            ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP,
             ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, METAFIELD, PAGE
     ));
 
