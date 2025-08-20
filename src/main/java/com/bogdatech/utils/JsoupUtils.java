@@ -259,18 +259,18 @@ public class JsoupUtils {
 
         try {
             //对模型进行判断 , 1,ciwi 2,openai 3,deepL
-             switch (translationModel) {
-                case OPENAI_MODEL :
+            switch (translationModel) {
+                case OPENAI_MODEL:
                     prompt = getOpenaiKeyPrompt(targetLanguage, languagePackId, key, customKey);
                     appInsights.trackTrace("模块文本：" + content + " openai key提示词: " + prompt);
                     return chatGptIntegration.chatWithGpt(prompt, content, request, counter, limitChars);
-                case DEEPL_MODEL :
-                    if (!deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)){
+                case DEEPL_MODEL:
+                    if (!deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)) {
                         return deepLIntegration.translateByDeepL(content, target, counter, shopName, limitChars);
-                    }else {
+                    } else {
                         return translateByCiwiModel(request, counter, limitChars, prompt);
                     }
-                default :
+                default:
                     return translateByCiwiModel(request, counter, limitChars, prompt);
             }
         } catch (Exception e) {
@@ -402,7 +402,7 @@ public class JsoupUtils {
         String prompt = getShortPrompt(targetLanguage);
         String resultTranslation;
         try {
-            if (DEEPL_MODEL.equals(translationModel) && !deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)){
+            if (DEEPL_MODEL.equals(translationModel) && !deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)) {
                 resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName(), limitChars);
             } else if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
                 resultTranslation = translateByQwenMt(request.getContent(), source, target, counter, request.getShopName(), limitChars);

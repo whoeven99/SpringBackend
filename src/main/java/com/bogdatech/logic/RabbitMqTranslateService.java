@@ -304,7 +304,7 @@ public class RabbitMqTranslateService {
             case "handle", "product_type" ->
                     jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getTranslationModel());
             default ->
-                    jsoupUtils.translateAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
+                    jsoupUtils.translateByModel(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
         };
     }
 
@@ -325,7 +325,7 @@ public class RabbitMqTranslateService {
             case "handle" ->
                     jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getTranslationModel());
             default ->
-                    jsoupUtils.translateAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
+                    jsoupUtils.translateByModel(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
         };
 
     }
@@ -1032,7 +1032,7 @@ public class RabbitMqTranslateService {
             case ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS:
             case ONLINE_STORE_THEME_LOCALE_CONTENT, EMAIL_TEMPLATE, SHOP, SHOP_POLICY:
                 //翻译主题
-                return jsoupUtils.translateAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
+                return jsoupUtils.translateByModel(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
             case PRODUCT:
                 //产品
                 return productTranslate(rabbitMqTranslateVO, counter, translateTextDO, handleType);
@@ -1050,7 +1050,7 @@ public class RabbitMqTranslateService {
                 //机器翻译
                 return jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars(), null);
             default:
-                return jsoupUtils.translateAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
+                return jsoupUtils.translateByModel(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
         }
     }
 
@@ -1075,7 +1075,7 @@ public class RabbitMqTranslateService {
             }
 
             //走翻译流程
-            String translatedText = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
+            String translatedText = jsoupUtils.translateByModel(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
             shopifyService.saveToShopify(translatedText, translation, resourceId, shopifyRequest);
             printTranslation(translatedText, value, translation, shopifyRequest.getShopName(), type, resourceId, source);
             //存到数据库中
@@ -1101,7 +1101,7 @@ public class RabbitMqTranslateService {
                     String original = resultList.get(i);
                     if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
                         //走翻译流程
-                        String translated = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), handleType, rabbitMqTranslateVO.getLimitChars());
+                        String translated = jsoupUtils.translateByModel(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
                         //将数据填回去
                         resultList.set(i, translated);
                     }
