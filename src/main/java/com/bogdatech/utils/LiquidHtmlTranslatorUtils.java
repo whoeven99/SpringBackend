@@ -400,7 +400,9 @@ public class LiquidHtmlTranslatorUtils {
         // Step 1: 记录开头和结尾的空格数量
         int leadingSpaces = countLeadingSpaces(sourceText);
         int trailingSpaces = countTrailingSpaces(sourceText);
-
+        if (trailingSpaces == 0) {
+            return sourceText;
+        }
         // Step 2: 去除首尾空格，准备翻译
         String textToTranslate = sourceText.trim();
 
@@ -444,6 +446,9 @@ public class LiquidHtmlTranslatorUtils {
     }
 
     private static int countTrailingSpaces(String s) {
+        if (s == null || s.isEmpty()) {
+            return 0;
+        }
         int count = 0;
         for (int i = s.length() - 1; i >= 0; i--) {
             if (s.charAt(i) == ' ') {
