@@ -132,7 +132,7 @@ public class TranslateController {
     public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
         if (request != null) {
             //改为返回状态为2的所有相关数据
-            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2));
+            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2).orderByDesc(TranslatesDO::getUpdateAt));
             if (list.isEmpty()) {
                 TranslatesDO translatesDO = translatesService.selectLatestOne(request);
                 list.add(translatesDO);
@@ -241,9 +241,21 @@ public class TranslateController {
         }
 
         //改为循环遍历，将相关target状态改为2
-        for (String target: clickTranslateRequest.getTarget()
-             ) {
-            translatesService.updateTranslateStatus(request.getShopName(), 2, target, request.getSource(), request.getAccessToken());
+        String[] targets = clickTranslateRequest.getTarget();
+        for (int i = targets.length - 1; i >= 0; i--) {
+            String target = targets[i];
+            translatesService.updateTranslateStatus(
+                    request.getShopName(),
+                    2,
+                    target,
+                    request.getSource(),
+                    request.getAccessToken()
+            );
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                appInsights.trackException(e);
+            }
         }
 
         //全部走DB翻译
