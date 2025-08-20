@@ -67,6 +67,9 @@ public class RabbitMqTranslateConsumerService {
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
+            //将缓存状态中改为2
+            Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
+            userTranslate.put(shopName, translationStatusMap);
         } catch (ClientException e1) {
             appInsights.trackTrace(shopName + " 到达字符限制： " + e1);
         } catch (Exception e) {
@@ -253,6 +256,7 @@ public class RabbitMqTranslateConsumerService {
                     .eq(TranslatesDO::getSource, vo.getSource())
                     .eq(TranslatesDO::getTarget, vo.getTarget())
                     .set(TranslatesDO::getResourceType, null));
+
         } else {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
 //            appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
