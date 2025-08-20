@@ -241,9 +241,16 @@ public class TranslateController {
         }
 
         //改为循环遍历，将相关target状态改为2
-        for (String target: clickTranslateRequest.getTarget()
-             ) {
-            translatesService.updateTranslateStatus(request.getShopName(), 2, target, request.getSource(), request.getAccessToken());
+        String[] targets = clickTranslateRequest.getTarget();
+        for (int i = targets.length - 1; i >= 0; i--) {
+            String target = targets[i];
+            translatesService.updateTranslateStatus(
+                    request.getShopName(),
+                    2,
+                    target,
+                    request.getSource(),
+                    request.getAccessToken()
+            );
         }
 
         //全部走DB翻译
