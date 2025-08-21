@@ -1164,6 +1164,21 @@ public class RabbitMqTranslateService {
             tencentEmailService.translateFailEmail(shopName, counter, startTime, startChars, convertALL, target, source);
             translateTasksService.updateByTaskId(task.getTaskId(), 1);
             //修改后面发生失败的邮件消耗字数。
+            translateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0)).forEach(translateTasksDO -> {
+                if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
+                    //将这条数据里面的startChars改为现在的usedChars
+                    try {
+                        RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
+                        data.setStartChars(nowUserToken);
+                        String json = OBJECT_MAPPER.writeValueAsString(rabbitMqTranslateVO);
+                        translateTasksDO.setPayload(json);
+                        //存回
+                        translateTasksService.updateById(translateTasksDO);
+                    } catch (JsonProcessingException e) {
+                        appInsights.trackException(e);
+                    }
+                }
+            });
         }
 
     }
