@@ -255,6 +255,9 @@ public class TaskService {
     public void autoTranslate() {
         //获取所有使用自动翻译的用户
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        if (translatesDOList.isEmpty()){
+            return;
+        }
         for (TranslatesDO translatesDO : translatesDOList
         ) {
 //            appInsights.trackTrace("translatesDO: " + translatesDO);
