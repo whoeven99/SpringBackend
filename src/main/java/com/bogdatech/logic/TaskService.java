@@ -265,6 +265,9 @@ public class TaskService {
 
             //判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getUserByName(shopName);
+            if (usersDO == null){
+                continue;
+            }
             if (usersDO.getUninstallTime() != null) {
                 //如果用户卸载了，但有登陆时间，需要判断两者的前后
                 if (usersDO.getLoginTime() == null) {
@@ -390,6 +393,9 @@ public class TaskService {
 
             //判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+            if (usersDO == null) {
+                continue;
+            }
             if (usersDO.getUninstallTime() != null) {
                 //如果用户卸载了，但有登陆时间，需要判断两者的前后
                 if (usersDO.getLoginTime() == null) {
