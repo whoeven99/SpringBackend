@@ -44,6 +44,7 @@ public class TranslationCounterService {
         //根据传来的gid获取，相关订阅信息
         String subscriptionQuery = getSubscriptionQuery(translationCharsVO.getSubGid());
         String shopifyByQuery = getShopifyByQuery(subscriptionQuery, shopName, userByName.getAccessToken());
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
         //判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
@@ -55,9 +56,9 @@ public class TranslationCounterService {
         String name = queryValid.getString("name");
         String status = queryValid.getString("status");
         Integer trialDays = queryValid.getInteger("trialDays");
-        appInsights.trackTrace(shopName + " 用户 免费试用天数 ：" + trialDays);
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays);
         if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0){
-            appInsights.trackTrace(shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
+            appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
             // 不添加额度, 但需要修改免费试用订阅表
             String createdAt = queryValid.getString("createdAt");
 //            String currentPeriodEnd = queryValid.getString("currentPeriodEnd");
@@ -68,7 +69,7 @@ public class TranslationCounterService {
             //试用结束时间
             Instant afterTrialDaysDays = begin.plus(trialDays, ChronoUnit.DAYS);
             Timestamp afterTrialDaysTimestamp = Timestamp.from(afterTrialDaysDays);
-            return iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
+            iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
         }
 
         //添加额度
