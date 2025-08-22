@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class OrderService {
@@ -80,6 +81,12 @@ public class OrderService {
     }
 
     public Boolean sendSubscribeSuccessEmail(CharsOrdersDO charsOrdersDO) {
+        //判断是否是免费试用,根据用户额度的数据查看
+        TranslationCounterDO translationCounterDO = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, charsOrdersDO.getShopName()));
+        if (translationCounterDO != null && translationCounterDO.getGoogleChars() != null) {
+            appInsights.trackTrace("sendSubscribeSuccessEmail: " + charsOrdersDO.getShopName() + " is free trial");
+            return true;
+        }
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(charsOrdersDO.getShopName());
         //根据shopName获取订单信息

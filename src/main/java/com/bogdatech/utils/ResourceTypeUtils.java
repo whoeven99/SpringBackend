@@ -19,7 +19,7 @@ public class ResourceTypeUtils {
         StringBuilder afterType = new StringBuilder();
 
         if (targetType == null) {
-            for ( String resource : EMAIL_MAP.values()) {
+            for (String resource : EMAIL_MAP.values()) {
                 afterType.append(resource).append(",");
             }
             return new TypeSplitResponse(beforeType, afterType);
