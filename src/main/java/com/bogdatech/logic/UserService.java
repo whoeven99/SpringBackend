@@ -125,13 +125,12 @@ public class UserService {
                 widgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userRequest.getShopName()).set("ip_open", false));
                 //获取用户订单表里计划为Active的订单
                 //删除对应的额度
-                CharsOrdersDO charsOrdersDO = iCharsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>()
-                        .eq(CharsOrdersDO::getShopName, userRequest.getShopName())
-                        .eq(CharsOrdersDO::getStatus, "ACTIVE")
-                        .orderByDesc(CharsOrdersDO::getCreatedAt)
-                        .last("OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY"));
-                Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(charsOrdersDO.getName());
-                translationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, userRequest.getShopName()).setSql("chars = chars - " + charsByPlanName));
+                //获取用户额度数据，判断是否是免费试用卸载，然后扣额度
+                TranslationCounterDO translationCounterDO = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, userRequest.getShopName()));
+                if (translationCounterDO != null && translationCounterDO.getOpenAiChars() == 1){
+                    translationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, userRequest.getShopName()).set(TranslationCounterDO::getOpenAiChars, 0).setSql("chars = chars - " + translationCounterDO.getGoogleChars()));
+                }
+
                 return true;
             } catch (Exception e) {
                 attempt++;
