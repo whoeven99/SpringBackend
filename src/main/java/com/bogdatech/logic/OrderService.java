@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUserTrialsService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.CharsOrdersDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.DO.UserTrialsDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
@@ -22,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class OrderService {
@@ -29,13 +32,15 @@ public class OrderService {
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
     private final ITranslationCounterService translationCounterService;
+    private final IUserTrialsService iUserTrialsService;
 
     @Autowired
-    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService){
+    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService, IUserTrialsService iUserTrialsService){
     this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.translationCounterService = translationCounterService;
+        this.iUserTrialsService = iUserTrialsService;
     }
 
     public Boolean insertOrUpdateOrder(CharsOrdersDO charsOrdersDO) {
@@ -80,6 +85,12 @@ public class OrderService {
     }
 
     public Boolean sendSubscribeSuccessEmail(CharsOrdersDO charsOrdersDO) {
+        //判断是否是免费试用,根据用户额度的数据查看
+        UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, charsOrdersDO.getShopName()));
+        if (userTrialsDO != null && !userTrialsDO.getIsTrialExpired()) {
+            appInsights.trackTrace("sendSubscribeSuccessEmail: " + charsOrdersDO.getShopName() + " is free trial");
+            return false;
+        }
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(charsOrdersDO.getShopName());
         //根据shopName获取订单信息
