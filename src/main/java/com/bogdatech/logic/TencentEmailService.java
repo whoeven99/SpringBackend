@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
@@ -188,17 +189,19 @@ public class TencentEmailService {
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
-        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0)).forEach(translateTasksDO -> {
+        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0).orderByAsc(TranslateTasksDO::getCreatedAt)).forEach(translateTasksDO -> {
             if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
                 //将这条数据里面的startChars改为现在的usedChars
                 try {
                     RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
                     data.setStartChars(counter.getTotalChars());
+                    String lastTime = String.valueOf(LocalDateTime.now());
+                    data.setStartTime(lastTime);
                     String json = OBJECT_MAPPER.writeValueAsString(data);
                     translateTasksDO.setPayload(json);
                     //存回
-                    appInsights.trackTrace("修改后的数据为： " + translateTasksDO);
-                    iTranslateTasksService.updateById(translateTasksDO);
+                    appInsights.trackTrace("translateFailEmail : 部分翻译邮件修改后的数据为 ：" + data);
+                    iTranslateTasksService.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getTaskId, translateTasksDO.getTaskId()).set(TranslateTasksDO::getPayload, json));
                 } catch (JsonProcessingException e) {
                     appInsights.trackException(e);
                 }
@@ -252,17 +255,19 @@ public class TencentEmailService {
             //存入数据库中
             emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
         }
-        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0)).forEach(translateTasksDO -> {
+        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0).orderByAsc(TranslateTasksDO::getCreatedAt)).forEach(translateTasksDO -> {
             if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
                 //将这条数据里面的startChars改为现在的usedChars
                 try {
                     RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
                     data.setStartChars(counter.getTotalChars());
+                    String lastTime = String.valueOf(LocalDateTime.now());
+                    data.setStartTime(lastTime);
                     String json = OBJECT_MAPPER.writeValueAsString(data);
                     translateTasksDO.setPayload(json);
                     //存回
-                    appInsights.trackTrace("修改后的数据为： " + translateTasksDO);
-                    iTranslateTasksService.updateById(translateTasksDO);
+                    appInsights.trackTrace("translateSuccessEmail : 修改后的数据为 " + translateTasksDO);
+                    iTranslateTasksService.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getTaskId, translateTasksDO.getTaskId()).set(TranslateTasksDO::getPayload, json));
                 } catch (JsonProcessingException e) {
                     appInsights.trackException(e);
                 }
