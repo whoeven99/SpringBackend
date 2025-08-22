@@ -394,6 +394,7 @@ public class TaskService {
             //判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
             if (usersDO == null) {
+                appInsights.trackTrace("shopName: " + shopName);
                 continue;
             }
             if (usersDO.getUninstallTime() != null) {
