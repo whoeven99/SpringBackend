@@ -60,7 +60,7 @@ public class TranslationCounterService {
         Integer trialDays = queryValid.getInteger("trialDays");
         appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays);
         Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(name);
-        if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0){
+        if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays >= 0){
             appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
             // 不添加额度, 但需要修改免费试用订阅表
             String createdAt = queryValid.getString("createdAt");
