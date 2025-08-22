@@ -89,7 +89,7 @@ public class OrderService {
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, charsOrdersDO.getShopName()));
         if (userTrialsDO != null && !userTrialsDO.getIsTrialExpired()) {
             appInsights.trackTrace("sendSubscribeSuccessEmail: " + charsOrdersDO.getShopName() + " is free trial");
-            return true;
+            return false;
         }
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(charsOrdersDO.getShopName());
