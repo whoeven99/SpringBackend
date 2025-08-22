@@ -18,6 +18,12 @@ public class ResourceTypeUtils {
         StringBuilder beforeType = new StringBuilder();
         StringBuilder afterType = new StringBuilder();
 
+        if (targetType == null) {
+            for ( String resource : EMAIL_MAP.values()) {
+                afterType.append(resource).append(",");
+            }
+            return new TypeSplitResponse(beforeType, afterType);
+        }
         Set<String> beforeSet = new HashSet<>();
         Set<String> afterSet = new HashSet<>();
         int index = -1;
