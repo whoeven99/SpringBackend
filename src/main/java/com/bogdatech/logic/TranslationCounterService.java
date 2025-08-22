@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.CharsOrdersDO;
 import com.bogdatech.entity.DO.UserTrialsDO;
@@ -69,7 +70,14 @@ public class TranslationCounterService {
             //试用结束时间
             Instant afterTrialDaysDays = begin.plus(trialDays, ChronoUnit.DAYS);
             Timestamp afterTrialDaysTimestamp = Timestamp.from(afterTrialDaysDays);
-            iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
+            // 获取用户是否已经是免费试用，是的话，将false改为true
+            UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
+            if (userTrialsDO == null) {
+                iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
+            }else {
+                iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialExpired, true));
+            }
+
         }
 
         //添加额度
