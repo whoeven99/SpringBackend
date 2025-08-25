@@ -152,7 +152,7 @@ public class ALiYunTranslateIntegration {
             totalToken =  call.getUsage().getTotalTokens();
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace( "clickTranslation 用户： " + shopName +" token ali mt : 原文本- " + source + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace( "clickTranslation 用户： " + shopName +" token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(translateText, 2);
             userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
