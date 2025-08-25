@@ -60,7 +60,7 @@ public class RabbitMqTask {
                             RabbitMqTranslateVO vo = OBJECT_MAPPER.readValue(task.getPayload(), RabbitMqTranslateVO.class);
                             rabbitMqTranslateConsumerService.startTranslate(vo, task);
                         } catch (Exception e) {
-                            appInsights.trackTrace(shopName + " 处理失败 errors : " + e);
+                            appInsights.trackTrace("clickTranslation " + shopName + " 处理失败 errors : " + e);
                             //将该模块状态改为4
                             translateTasksService.updateByTaskId(task.getTaskId(), 4);
                             appInsights.trackException(e);

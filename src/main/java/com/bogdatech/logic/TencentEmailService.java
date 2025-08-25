@@ -200,7 +200,7 @@ public class TencentEmailService {
                     String json = OBJECT_MAPPER.writeValueAsString(data);
                     translateTasksDO.setPayload(json);
                     //存回
-                    appInsights.trackTrace("translateFailEmail : 部分翻译邮件修改后的数据为 ：" + data);
+                    appInsights.trackTrace("clickTranslation translateFailEmail " + shopName + ": 部分翻译邮件修改后的数据为 ：" + data);
                     iTranslateTasksService.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getTaskId, translateTasksDO.getTaskId()).set(TranslateTasksDO::getPayload, json));
                 } catch (JsonProcessingException e) {
                     appInsights.trackException(e);

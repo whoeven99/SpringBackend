@@ -100,13 +100,13 @@ public class ArkTranslateIntegration {
             userTranslate.put(shopName, translationStatusMap);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
-            appInsights.trackTrace(shopName + " 用户 token doubao: " + sourceText + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
+            appInsights.trackTrace("clickTranslation douBaoTranslate " + shopName + " 用户 token doubao: " + sourceText + " target : " + response + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalTokensInt, limitChars);
             countUtils.addChars(totalTokensInt);
             return response.toString();
-//        return sourceText;
         } catch (Exception e) {
-            appInsights.trackTrace("豆包翻译失败 errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " douBaoTranslate 豆包翻译失败 errors : " + e.getMessage());
+            appInsights.trackException(e);
             return sourceText;
         }
     }

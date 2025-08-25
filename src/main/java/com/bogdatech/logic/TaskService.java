@@ -312,11 +312,6 @@ public class TaskService {
                             , translatesDO.getTarget()), counter, AUTO_TRANSLATE_MAP
                     , new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null)
                     , remainingChars, usedChars, false, "1", false, EMAIL_TRANSLATE, false);
-
-
-//            TaskTranslateDTO translateDTO = new TaskTranslateDTO(translatesDO.getStatus(),shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget());
-//            String json = objectToJson(translateDTO);
-//            translateTaskPublisherService.sendScheduledTranslateTask(json);
         }
     }
 

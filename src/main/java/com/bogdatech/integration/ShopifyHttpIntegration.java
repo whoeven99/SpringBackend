@@ -107,14 +107,14 @@ public class ShopifyHttpIntegration {
                     return jsonObject.getString("data");
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("registerTransaction errors : " + "用户： " + request.getShopName() + " 目标： " + request.getTarget() + e.getMessage());
+                appInsights.trackTrace("registerTransaction errors : " + "用户： " + request.getShopName() + " 目标： " + request.getTarget() + "  " + e.getMessage());
             }
 
             // 如果没有成功，等待一段时间再重试
             try {
                 Thread.sleep(retryInterval);  // 延迟后进行下一次重试
             } catch (InterruptedException e) {
-                appInsights.trackTrace("Thread sleep interrupted: " + e.getMessage());
+                appInsights.trackTrace("registerTransaction Thread sleep interrupted: " + e.getMessage());
             }
         }
 
