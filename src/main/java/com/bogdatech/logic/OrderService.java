@@ -118,7 +118,9 @@ public class OrderService {
         if (feeType == MONTHLY_FEE) {
             return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         } else if (feeType == ANNUAL_FEE) {
-            templateData.put("new_fee", "$" + userData.getAmount() * 12);
+            double value = userData.getAmount() * 12;
+            String formatted = String.format("%.2f", value);
+            templateData.put("new_fee", "$" + formatted);
             return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146081L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         }
         return false;
