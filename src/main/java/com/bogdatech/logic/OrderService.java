@@ -24,6 +24,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import static com.bogdatech.constants.MailChimpConstants.*;
+import static com.bogdatech.constants.TranslateConstants.ANNUAL_FEE;
+import static com.bogdatech.constants.TranslateConstants.MONTHLY_FEE;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -47,7 +49,7 @@ public class OrderService {
         CharsOrdersDO charsOrdersServiceById = charsOrdersService.getById(charsOrdersDO.getId());
         if (charsOrdersServiceById == null) {
             return charsOrdersService.save(charsOrdersDO);
-        }else {
+        } else {
             return charsOrdersService.updateStatusByShopName(charsOrdersDO.getId(), charsOrdersDO.getStatus());
         }
     }
@@ -77,24 +79,24 @@ public class OrderService {
         //当购买的token大于相减的token，展示购买的token
         if (purchaseSuccessRequest.getCredit() > (remainingChars - usedChars)) {
             templateData.put("total_credits_count", formattedNumber + " Credits");
-        }else {
-            String formattedNumber2 = formatter.format(remainingChars-usedChars);
+        } else {
+            String formattedNumber2 = formatter.format(remainingChars - usedChars);
             templateData.put("total_credits_count", formattedNumber2 + " Credits");
         }
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(138372L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 
-    public Boolean sendSubscribeSuccessEmail(CharsOrdersDO charsOrdersDO) {
+    public Boolean sendSubscribeSuccessEmail(String shopName, String subId, int feeType) {
         //判断是否是免费试用,根据用户额度的数据查看
-        UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, charsOrdersDO.getShopName()));
+        UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
         if (userTrialsDO != null && !userTrialsDO.getIsTrialExpired()) {
-            appInsights.trackTrace("sendSubscribeSuccessEmail: " + charsOrdersDO.getShopName() + " is free trial");
+            appInsights.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
             return false;
         }
         //根据shopName获取用户名
-        UsersDO usersDO = usersService.getUserByName(charsOrdersDO.getShopName());
+        UsersDO usersDO = usersService.getUserByName(shopName);
         //根据shopName获取订单信息
-        CharsOrdersDO userData = charsOrdersService.getOne(new QueryWrapper<CharsOrdersDO>().eq("id", charsOrdersDO.getId()));
+        CharsOrdersDO userData = charsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>().eq(CharsOrdersDO::getId, subId));
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
         templateData.put("new_plan_name", userData.getName());
@@ -110,7 +112,12 @@ public class OrderService {
         targetShop = usersDO.getShopName().substring(0, usersDO.getShopName().length() - suffix.length());
         templateData.put("shop_name", targetShop);
 
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        if (feeType == MONTHLY_FEE) {
+            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        } else if (feeType == ANNUAL_FEE) {
+            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146081L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        }
+        return false;
     }
 
     public String getLatestActiveSubscribeId(String shopName) {
@@ -120,6 +127,10 @@ public class OrderService {
                 .like(CharsOrdersDO::getId, "AppSubscription")
                 .orderByDesc(CharsOrdersDO::getCreatedAt)
                 .last("OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY"));
-        return charsOrdersDO.getId();
+        if (charsOrdersDO != null) {
+            return charsOrdersDO.getId();
+        }
+        return null;
+
     }
 }

@@ -38,7 +38,7 @@ public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGener
             }
         }
 
-        appInsights.trackTrace("更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + subtaskId);
+        appInsights.trackTrace("updateStatusById 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + subtaskId);
         return false;
     }
 

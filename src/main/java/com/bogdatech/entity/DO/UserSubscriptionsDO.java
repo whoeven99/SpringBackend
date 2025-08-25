@@ -19,6 +19,7 @@ public class UserSubscriptionsDO {
     private String shopName;
     private Integer planId;
     private Integer status;
+    private Integer feeType;
     private LocalDateTime startDate; // 订阅开始日期
     private LocalDateTime endDate; // 订阅结束日期
 }

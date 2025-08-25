@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class TranslationCharsVO {
     private String subGid;
     private String accessToken;
+    private Integer feeType;
 }

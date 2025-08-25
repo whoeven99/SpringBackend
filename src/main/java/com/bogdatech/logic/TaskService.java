@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -192,6 +193,7 @@ public class TaskService {
         Instant created = Instant.parse(createdAt);
         //订阅结束时间
         Instant end = Instant.parse(currentPeriodEnd);
+        LocalDateTime subEnd = end.atZone(ZoneOffset.UTC).toLocalDateTime();
         //当前时间
         Instant now = Instant.now();
 
@@ -213,10 +215,12 @@ public class TaskService {
             // 根据计划获取对应的字符
             Integer chars = subscriptionPlansService.getCharsByPlanName(name);
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
-            appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars);
+            appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars);
             translationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, userPriceRequest.getShopName(), chars, 0, 0, 0, 0));
             //将用户免费Ip清零
             iUserIpService.update(new UpdateWrapper<UserIpDO>().eq("shop_name", userPriceRequest.getShopName()).set("times", 0).set("first_email", 0).set("second_email", 0));
+            //修改该用户过期时间
+            iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, userPriceRequest.getShopName()).set(UserSubscriptionsDO::getEndDate, subEnd));
             if ("Starter".equals(name)) {
                 return;
             }
@@ -341,6 +345,10 @@ public class TaskService {
             if (now.after(trialEnd)) {
                 //获取最新一条gid订单，判断是否支付成功
                 String latestActiveSubscribeId = orderService.getLatestActiveSubscribeId(shopName);
+                if (latestActiveSubscribeId == null) {
+                    appInsights.trackTrace("freeTrialTask  latestActiveSubscribeId的数据为null，用户是：" + shopName);
+                    continue;
+                }
                 UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
                 //如果订单存在，并且支付成功，添加相关计划额度；如果订单不存在，说明他未支付，修改免费试用计划表
                 String subscriptionQuery = getSubscriptionQuery(latestActiveSubscribeId);
@@ -394,7 +402,7 @@ public class TaskService {
             //判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
             if (usersDO == null) {
-                appInsights.trackTrace("shopName: " + shopName);
+                appInsights.trackTrace("initUserStatus shopName: " + shopName);
                 continue;
             }
             if (usersDO.getUninstallTime() != null) {
