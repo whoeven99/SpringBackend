@@ -26,6 +26,7 @@ import java.util.Map;
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.ANNUAL_FEE;
 import static com.bogdatech.constants.TranslateConstants.MONTHLY_FEE;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class OrderService {
@@ -86,6 +87,12 @@ public class OrderService {
     }
 
     public Boolean sendSubscribeSuccessEmail(String shopName, String subId, int feeType) {
+        //判断是否是免费试用,根据用户额度的数据查看
+        UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
+        if (userTrialsDO != null && !userTrialsDO.getIsTrialExpired()) {
+            appInsights.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
+            return false;
+        }
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(shopName);
         //根据shopName获取订单信息
