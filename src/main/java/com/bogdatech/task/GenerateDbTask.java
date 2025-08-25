@@ -59,7 +59,7 @@ public class GenerateDbTask {
     }
 
     // 每3秒钟检查一次是否有闲置线程
-    @Scheduled(fixedDelay = 3000)
+//    @Scheduled(fixedDelay = 3000)
     public void scanAndGenerateSubtask() {
         // 获取所有status为0的数据
         List<APGUserGeneratedSubtaskDO> list = iapgUserGeneratedSubtaskService.list(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>().eq(APGUserGeneratedSubtaskDO::getStatus, 0).orderBy(true, true, APGUserGeneratedSubtaskDO::getCreateTime));
