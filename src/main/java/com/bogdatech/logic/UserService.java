@@ -1,12 +1,11 @@
 package com.bogdatech.logic;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
-import com.bogdatech.entity.DO.EmailDO;
-import com.bogdatech.entity.DO.GlossaryDO;
-import com.bogdatech.entity.DO.UsersDO;
-import com.bogdatech.entity.DO.WidgetConfigurationsDO;
+import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
@@ -45,10 +44,12 @@ public class UserService {
     private final ITranslatesService translatesService;
     private final IGlossaryService iGlossaryService;
     private final IWidgetConfigurationsService widgetConfigurationsService;
+    private final ICharsOrdersService iCharsOrdersService;
+    private final ISubscriptionPlansService iSubscriptionPlansService;
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
 
     @Autowired
-    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService, IGlossaryService iGlossaryService, IWidgetConfigurationsService widgetConfigurationsService) {
+    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService, IGlossaryService iGlossaryService, IWidgetConfigurationsService widgetConfigurationsService, ICharsOrdersService iCharsOrdersService, ISubscriptionPlansService iSubscriptionPlansService) {
         this.usersService = usersService;
         this.taskScheduler = taskScheduler;
         this.translationCounterService = translationCounterService;
@@ -59,6 +60,8 @@ public class UserService {
         this.translatesService = translatesService;
         this.iGlossaryService = iGlossaryService;
         this.widgetConfigurationsService = widgetConfigurationsService;
+        this.iCharsOrdersService = iCharsOrdersService;
+        this.iSubscriptionPlansService = iSubscriptionPlansService;
     }
 
     //添加用户
@@ -109,6 +112,7 @@ public class UserService {
         int attempt = 0;
         while (attempt < MAX_RETRY_ATTEMPTS) {
             try {
+                appInsights.trackTrace("unInstallApp " + userRequest.getShopName() + " 用户卸载应用");
                 //更改用户卸载翻译时间
                 usersService.unInstallApp(userRequest);
                 //将用户定时任务的true都改为false
@@ -119,6 +123,14 @@ public class UserService {
                 //将词汇表改为0
                 iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userRequest.getShopName()).set("status", 0));
                 widgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userRequest.getShopName()).set("ip_open", false));
+                //获取用户订单表里计划为Active的订单
+                //删除对应的额度
+                //获取用户额度数据，判断是否是免费试用卸载，然后扣额度
+                TranslationCounterDO translationCounterDO = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, userRequest.getShopName()));
+                if (translationCounterDO != null && translationCounterDO.getOpenAiChars() == 1){
+                    translationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, userRequest.getShopName()).set(TranslationCounterDO::getOpenAiChars, 0).setSql("chars = chars - " + translationCounterDO.getGoogleChars()));
+                }
+
                 return true;
             } catch (Exception e) {
                 attempt++;

@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUserTrialsService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.CharsOrdersDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.DO.UserTrialsDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
@@ -31,13 +33,15 @@ public class OrderService {
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
     private final ITranslationCounterService translationCounterService;
+    private final IUserTrialsService iUserTrialsService;
 
     @Autowired
-    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService) {
-        this.charsOrdersService = charsOrdersService;
+    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService, IUserTrialsService iUserTrialsService){
+    this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.translationCounterService = translationCounterService;
+        this.iUserTrialsService = iUserTrialsService;
     }
 
     public Boolean insertOrUpdateOrder(CharsOrdersDO charsOrdersDO) {

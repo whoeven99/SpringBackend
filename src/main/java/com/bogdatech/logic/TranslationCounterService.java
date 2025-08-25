@@ -52,6 +52,7 @@ public class TranslationCounterService {
         //根据传来的gid获取，相关订阅信息
         String subscriptionQuery = getSubscriptionQuery(translationCharsVO.getSubGid());
         String shopifyByQuery = getShopifyByQuery(subscriptionQuery, shopName, userByName.getAccessToken());
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
         //判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
@@ -63,6 +64,10 @@ public class TranslationCounterService {
         String name = queryValid.getString("name");
         String status = queryValid.getString("status");
         Integer trialDays = queryValid.getInteger("trialDays");
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays);
+        Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(name);
+        if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0){
+//            appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
         String currentPeriodEnd = queryValid.getString("currentPeriodEnd");
         //修改用户过期时间  和  费用类型
         //订阅结束时间
@@ -82,14 +87,21 @@ public class TranslationCounterService {
             //试用结束时间
             Instant afterTrialDaysDays = begin.plus(trialDays, ChronoUnit.DAYS);
             Timestamp afterTrialDaysTimestamp = Timestamp.from(afterTrialDaysDays);
-            return iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
+            // 获取用户是否已经是免费试用，是的话，将false改为true
+            UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
+            if (userTrialsDO == null) {
+                iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
+                //修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
+                iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlanName).set(TranslationCounterDO::getOpenAiChars,1));
+            }
+        }else {
+            iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialExpired, true));
         }
 
         //添加额度
         if (name.equals(charsOrdersDO.getName()) && status.equals(ACTIVE)) {
             //根据用户的计划添加对应的额度
-            Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(name);
-            return iTranslationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, shopName, charsByPlanName, 0, 0, 0, 0));
+            return iTranslationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, shopName, charsByPlanName, 0 , 0 , 0, 0));
         }
 
         return null;
