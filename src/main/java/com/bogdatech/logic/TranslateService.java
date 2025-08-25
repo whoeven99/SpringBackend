@@ -170,7 +170,7 @@ public class TranslateService {
             Future<?> future = userTasks.get(shopName);
             if (future != null && !future.isDone()) {
                 future.cancel(true);  // 中断正在执行的任务
-                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
+                appInsights.trackTrace("stopTranslation 用户 " + shopName + " 的翻译任务已停止");
                 //将Task表DB中的status改为5
                 translateTasksService.updateStatusAllTo5ByShopName(shopName);
 //                 将翻译状态改为“部分翻译” shopName, status=3
@@ -1696,7 +1696,7 @@ public class TranslateService {
         } catch (Exception e) {
             // 如果出现异常，则跳过, 翻译其他的内容
             //更新当前字符数
-            appInsights.trackTrace("Failed to get Shopify data errors : " + e.getMessage());
+            appInsights.trackTrace("syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
         }
 
         //分析获取到的数据，然后存储到list集合里面
@@ -1704,7 +1704,7 @@ public class TranslateService {
         try {
             root = OBJECT_MAPPER.readTree(shopifyData);
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("Failed to parse Shopify data errors : " + e.getMessage());
+            appInsights.trackTrace("syncShopifyAndDatabase Failed to parse Shopify data errors : " + e.getMessage());
             return;
         }
 

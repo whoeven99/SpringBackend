@@ -255,14 +255,14 @@ public class JsoupUtils {
         }
         //根据key选择提示词使用的key值
         prompt = getKeyPrompt(targetLanguage, languagePackId, key, customKey);
-        appInsights.trackTrace("模块文本：" + content + " key提示词: " + prompt);
+        appInsights.trackTrace("clickTranslation " + shopName + " 模块文本：" + content + " key提示词: " + prompt);
 
         try {
             //对模型进行判断 , 1,ciwi 2,openai 3,deepL
             switch (translationModel) {
                 case OPENAI_MODEL:
                     prompt = getOpenaiKeyPrompt(targetLanguage, languagePackId, key, customKey);
-                    appInsights.trackTrace("模块文本：" + content + " openai key提示词: " + prompt);
+                    appInsights.trackTrace("clickTranslation " + shopName + " 模块文本：" + content + " openai key提示词: " + prompt);
                     return chatGptIntegration.chatWithGpt(prompt, content, request, counter, limitChars);
                 case DEEPL_MODEL:
                     if (!deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)) {
@@ -274,7 +274,7 @@ public class JsoupUtils {
                     return translateByCiwiModel(request, counter, limitChars, prompt);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage());
             return translateSingleLineWithProtection(request, counter, limitChars, key, languagePackId, customKey);
         }
 
@@ -396,7 +396,7 @@ public class JsoupUtils {
         try {
             sleep(300);
         } catch (Exception e) {
-            appInsights.trackTrace("sleep errors ： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation sleep errors ： " + e.getMessage());
         }
         String targetLanguage = getLanguageName(target);
         String prompt = getShortPrompt(targetLanguage);
@@ -408,14 +408,14 @@ public class JsoupUtils {
                 resultTranslation = translateByQwenMt(request.getContent(), source, target, counter, request.getShopName(), limitChars);
             } else {
                 //qwen 短文本翻译
-                appInsights.trackTrace("短文本翻译： " + request.getContent() + " 提示词: " + prompt);
+                appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译： " + request.getContent() + " 提示词: " + prompt);
                 resultTranslation = aLiYunTranslateIntegration.singleTranslate(request.getContent(), prompt, counter, target, request.getShopName(), limitChars);
             }
             return resultTranslation;
 
         } catch (Exception e) {
             //mt翻译失败的话，用其他大模型翻译
-            appInsights.trackTrace("短文本翻译 errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译 errors : " + e.getMessage());
             resultTranslation = aLiYunTranslateIntegration.singleTranslate(request.getContent(), prompt, counter, target, request.getShopName(), limitChars);
             return resultTranslation;
         }
@@ -431,7 +431,7 @@ public class JsoupUtils {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
-                appInsights.trackTrace("MT sleep errors ： " + ex.getMessage());
+                appInsights.trackTrace("clickTranslation MT sleep errors ： " + ex.getMessage());
             }
             return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
         }
@@ -757,14 +757,14 @@ public class JsoupUtils {
                 resultTranslation = translateByQwenMt(request.getContent(), request.getSource(), request.getTarget(), counter, request.getShopName(), limitChars);
             } else {
                 //qwen 短文本翻译
-                appInsights.trackTrace("400翻译 errors : " + request.getContent() + " key 提示词: " + prompt);
+                appInsights.trackTrace("clickTranslation 400翻译 errors : " + request.getContent() + " key 提示词: " + prompt);
                 resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt, request.getContent(), counter, limitChars);
             }
             return resultTranslation;
 
         } catch (Exception e) {
             //mt翻译失败的话，用其他大模型翻译
-            appInsights.trackTrace("400翻译 errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation 400翻译 errors : " + e.getMessage());
             resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt, request.getContent(), counter, limitChars);
             return resultTranslation;
         }

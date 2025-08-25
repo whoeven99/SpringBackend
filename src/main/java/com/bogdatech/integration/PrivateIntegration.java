@@ -28,6 +28,7 @@ import static com.bogdatech.logic.PrivateKeyService.OPENAI_MODEL;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PlaceholderUtils.getFullHtmlPrompt;
@@ -81,10 +82,10 @@ public class PrivateIntegration {
 
             // 获取 total_tokens
             int totalTokens = obj.getJSONObject("usage").getIntValue("total_tokens");
-            appInsights.trackTrace(shopName + " 用户 openai 私有key翻译 all: " + totalTokens + " text: " + content);
+            appInsights.trackTrace("translateByGpt " + shopName + " 用户 openai 私有key翻译 all: " + totalTokens + " text: " + content);
             iUserPrivateTranslateService.updateUserUsedCount(OPENAI_MODEL, totalTokens, shopName, limit);
         }else {
-            appInsights.trackTrace("errors openai 翻译失败 ： " +  responseBody);
+            appInsights.trackTrace("translateByGpt errors openai 翻译失败 ： " +  responseBody);
             return prompt;
         }
 

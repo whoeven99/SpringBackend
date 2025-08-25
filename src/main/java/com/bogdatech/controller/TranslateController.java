@@ -172,6 +172,10 @@ public class TranslateController {
         if (clickTranslateRequest.getIsCover() == null) {
             clickTranslateRequest.setIsCover(false);
         }
+
+        //暂时使所有用户的customKey失效
+        clickTranslateRequest.setCustomKey(null);
+
         Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
         userTranslate.put(shopName, translationStatusMap);
         //将ClickTranslateRequest转换为TranslateRequest
@@ -215,13 +219,13 @@ public class TranslateController {
             translateModel.removeIf("handle"::equals);
             handleFlag = true;
         }
-        appInsights.trackTrace(shopName + " 用户 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
+        appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
         //修改模块的排序
         List<String> translateResourceDTOS = null;
         try {
             translateResourceDTOS = translateModel(translateModel);
         } catch (Exception e) {
-            appInsights.trackTrace("translateModel errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation translateModel errors : " + e.getMessage());
         }
 //      翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
@@ -288,7 +292,7 @@ public class TranslateController {
         request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
         String s = registerTransaction(request, body);
-        appInsights.trackTrace("用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
+        appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
     }
 
 
@@ -296,6 +300,7 @@ public class TranslateController {
     @PostMapping("/deleteFromTranslates")
     public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
         Boolean b = translatesService.deleteFromTranslates(request);
+        appInsights.trackTrace("insertTranslatedText 用户删除翻译语言： " + request.getShopName());
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
@@ -399,7 +404,7 @@ public class TranslateController {
      */
     @PutMapping("/stopTranslatingTask")
     public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
-        appInsights.trackTrace("正在翻译的用户： " + userStopFlags);
+        appInsights.trackTrace("stopTranslatingTask 正在翻译的用户： " + userStopFlags);
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
         stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
         userStopFlags.put(shopName, stopFlag);
@@ -408,7 +413,7 @@ public class TranslateController {
         //将所有状态为0和2的子任务，改为7
         Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
         if (flag && stopFlag.get()) {
-            appInsights.trackTrace(shopName + " 停止成功");
+            appInsights.trackTrace("stopTranslatingTask " + shopName + " 停止成功");
             return new BaseResponse<>().CreateSuccessResponse(stopFlag);
         }
         return new BaseResponse<>().CreateErrorResponse(false);

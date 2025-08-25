@@ -91,18 +91,18 @@ public class HunYuanIntegration {
                     long promptTokens = resp.getUsage().getPromptTokens();
                     Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
                     userTranslate.put(shopName, translationStatusMap);
-                    appInsights.trackTrace(shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                    appInsights.trackTrace("hunYuanTranslate " + shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
                     countUtils.addChars(totalToken);
                     return targetText;
                 } else {
-                    appInsights.trackTrace("重试 Hunyuan errors " + attempt);
+                    appInsights.trackTrace("hunYuanTranslate 重试 Hunyuan errors " + attempt);
                 }
 
             } catch (TencentCloudSDKException e) {
-                appInsights.trackTrace("hunyuan errors : " + e + " resp_id: " + e.getRequestId());
+                appInsights.trackTrace("hunYuanTranslate hunyuan errors : " + e + " resp_id: " + e.getRequestId());
                 if (attempt == maxRetries) {
-                    throw new RuntimeException("errors Failed after " + maxRetries + " attempts", e);
+                    throw new RuntimeException("hunYuanTranslate errors Failed after " + maxRetries + " attempts", e);
                 }
             }
             try {
@@ -110,7 +110,7 @@ public class HunYuanIntegration {
                 Thread.sleep(delay);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt(); // restore interrupt flag
-                throw new RuntimeException("Hunyuan errors Retry interrupted", ie);
+                throw new RuntimeException("hunYuanTranslate Hunyuan errors Retry interrupted", ie);
             }
         }
         return sourceText;

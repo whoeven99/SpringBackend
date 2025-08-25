@@ -752,9 +752,9 @@ public class ShopifyService {
 
     //修改shopify本地单条数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        appInsights.trackTrace("传入的值： " + registerTransactionRequest.toString());
+        appInsights.trackTrace(registerTransactionRequest.getShopName() + " 传入的值： " + registerTransactionRequest.toString());
         String string = updateShopifySingleData(registerTransactionRequest);
-        appInsights.trackTrace("返回的值： " + string);
+        appInsights.trackTrace(registerTransactionRequest.getShopName() + " 返回的值： " + string);
         if (string.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {

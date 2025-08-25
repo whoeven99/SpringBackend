@@ -151,12 +151,12 @@ public class ShopifyController {
                     Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
                     map.put("chars", translationCounterRequests.getUsedChars());
                     map.put("totalChars", maxCharsByShopName);
-                    appInsights.trackTrace("chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
+                    appInsights.trackTrace("getUserLimitChars " + shopName + " chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
                     return new BaseResponse<>().CreateSuccessResponse(map);
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                appInsights.trackTrace("Error while getUserLimitChars for shop " + e.getMessage());
+                appInsights.trackTrace("getUserLimitChars Error while getUserLimitChars for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试

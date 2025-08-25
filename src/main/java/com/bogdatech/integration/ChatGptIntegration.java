@@ -76,7 +76,7 @@ public class ChatGptIntegration {
                 int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
                 int promptToken = chatCompletions.getUsage().getPromptTokens();
                 int completionToken = chatCompletions.getUsage().getCompletionTokens();
-                appInsights.trackTrace( "用户： " + request.getShopName() + " 翻译的文本： " + sourceText + " token openai : " + request.getTarget() + " all: " + allToken + " promptToken : " + promptToken + " completionToken : " + completionToken);
+                appInsights.trackTrace( "clickTranslation chatWithGpt 用户： " + request.getShopName() + " 翻译的文本： " + sourceText + " token openai : " + request.getTarget() + " all: " + allToken + " promptToken : " + promptToken + " completionToken : " + completionToken);
                 Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
                 userTranslate.put(request.getShopName(), translationStatusMap);
                 translationCounterService.updateAddUsedCharsByShopName(request.getShopName(), allToken, limitChars);
@@ -84,10 +84,11 @@ public class ChatGptIntegration {
                 return content;
             } catch (Exception e) {
                 retryCount++;
-                appInsights.trackTrace("Error occurred while calling GPT: " + e.getMessage());
+                appInsights.trackTrace("clickTranslation " + request.getShopName() + " chatWithGpt Error occurred while calling GPT: " + e.getMessage());
+                appInsights.trackException(e);
                 if (retryCount >= 2){
                         // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
-                        throw new ClientException("Translation openai exception errors ");
+                        throw new ClientException("clickTranslation " + request.getShopName() + " chatWithGpt Translation openai exception errors ");
                     }
             }
         }
