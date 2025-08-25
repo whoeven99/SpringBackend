@@ -60,6 +60,7 @@ public class LiquidHtmlTranslatorUtils {
 
     /**
      * 主翻译方法
+     *
      * @param
      * @param html 输入的HTML文本
      * @return 翻译后的HTML文本
@@ -90,8 +91,6 @@ public class LiquidHtmlTranslatorUtils {
 
                 processNode(doc.body(), request, counter, languagePackId, limitChars, model, customKey, translationModel);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
-//                appInsights.trackTrace("有html标签： "  + result);
-//                appInsights.trackTrace("有html标签： "  + result);
                 result = isHtmlEntity(result);
                 return result;
             } else {
@@ -106,14 +105,13 @@ public class LiquidHtmlTranslatorUtils {
                 }
 
                 String output = result.toString();
-//                appInsights.trackTrace("没有html标签： "  + output);
-//                appInsights.trackTrace("没有html标签： "  + output);
                 output = isHtmlEntity(output);
                 return output;
             }
 
         } catch (Exception e) {
-            appInsights.trackTrace("new html errors : " + e);
+            appInsights.trackException(e);
+            appInsights.trackTrace("clickTranslation " + request.getShopName() + " new html errors : " + e);
             return html;
         }
     }
@@ -160,7 +158,7 @@ public class LiquidHtmlTranslatorUtils {
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("递归处理节点报错： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + request.getShopName() + "递归处理节点报错： " + e.getMessage());
         }
     }
 
@@ -230,9 +228,6 @@ public class LiquidHtmlTranslatorUtils {
                     String targetString;
                     try {
                         request.setContent(cleanedText);
-//                            appInsights.trackTrace("要翻译的文本： " + cleanedText);
-//                            appInsights.trackTrace("要翻译的文本1： " + cleanedText);
-//                        targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
                         targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey, translationModel);
                         result.append(targetString);
                     } catch (ClientException e) {
@@ -262,9 +257,6 @@ public class LiquidHtmlTranslatorUtils {
                 String targetString;
                 try {
                     request.setContent(cleanedText);
-//                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                    appInsights.trackTrace("要翻译的文本2： " + cleanedText);
-//                    targetString = jsoupUtils.translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
                     targetString = addSpaceAfterTranslated(cleanedText, request, counter, languagePackId, limitChars, model, customKey, translationModel);
                     result.append(targetString);
                 } catch (ClientException e) {
@@ -326,13 +318,13 @@ public class LiquidHtmlTranslatorUtils {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
         String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, languagePack);
-        appInsights.trackTrace("翻译 html 的提示词：" + fullHtmlPrompt);
+        appInsights.trackTrace("clickTranslation " + shopName + " 翻译 html 的提示词：" + fullHtmlPrompt);
 
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(text).find();
         Document originalDoc;
         if (hasHtmlTag) {
             originalDoc = Jsoup.parse(text);
-        }else {
+        } else {
             originalDoc = Jsoup.parseBodyFragment(text);
         }
 
@@ -354,19 +346,19 @@ public class LiquidHtmlTranslatorUtils {
 
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("html 翻译失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + shopName + " html 翻译失败 errors : " + e);
             return text;
         }
     }
 
     /**
      * 对大模型翻译后的数据进行处理并返回
-     * */
-    public static String processTranslationResult(String translatedText, Map<String, FullAttributeSnapshotDTO> attrMap, boolean hasHtmlTag){
+     */
+    public static String processTranslationResult(String translatedText, Map<String, FullAttributeSnapshotDTO> attrMap, boolean hasHtmlTag) {
         Document translatedDoc;
         if (hasHtmlTag) {
             translatedDoc = Jsoup.parse(translatedText);
-        }else {
+        } else {
             translatedDoc = Jsoup.parseBodyFragment(translatedText);
         }
         // 第五步：将样式还原到翻译后的 HTML 中
@@ -382,13 +374,13 @@ public class LiquidHtmlTranslatorUtils {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
         String fullPolicyHtmlPrompt = getPolicyPrompt(targetLanguage);
-        appInsights.trackTrace("翻译 政策 html 的提示词：" + fullPolicyHtmlPrompt);
+        appInsights.trackTrace("clickTranslation " + shopName + " 翻译 政策 html 的提示词：" + fullPolicyHtmlPrompt);
         //调用qwen翻译
         //返回翻译结果
         try {
             return aLiYunTranslateIntegration.singleTranslate(text, fullPolicyHtmlPrompt, counter, target, shopName, limitChars);
         } catch (Exception e) {
-            appInsights.trackTrace("html 翻译失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + shopName + " html 翻译失败 errors : " + e);
             return text;
         }
     }

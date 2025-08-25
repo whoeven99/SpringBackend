@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -93,7 +94,7 @@ public class RabbitMqTranslateConsumerService {
         counter.addChars(usedChars);
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + "字符超限 processMessage errors ");
+            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " clickTranslation 字符超限 processMessage errors 当前消耗token为: " + usedChars);
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
             //将用户翻译状态也改为3
@@ -104,15 +105,15 @@ public class RabbitMqTranslateConsumerService {
         translatesService.updateTranslatesResourceType(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());
         // 修改数据库的模块翻译状态
         translateTasksService.updateByTaskId(task.getTaskId(), 2);
-        appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
+        appInsights.trackTrace("clickTranslation 用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
         try {
             if (isTranslationAuto) {
                 rabbitMqTranslateVO.setCustomKey(null);
             }
             rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
-            appInsights.trackTrace("用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
+            appInsights.trackTrace("clickTranslation 用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
         } catch (ClientException e1) {
-            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 到达字符限制： " + e1);
+            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 到达字符限制： " + e1);
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
             translateTasksService.updateByTaskId(task.getTaskId(), 3);
@@ -129,7 +130,7 @@ public class RabbitMqTranslateConsumerService {
 
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " 处理消息失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 处理消息失败 errors : " + e);
             translateTasksService.updateByTaskId(task.getTaskId(), 4);
         } finally {
             statisticalAutomaticTranslationData(isTranslationAuto, counter, usedChars, start, rabbitMqTranslateVO);
@@ -195,7 +196,7 @@ public class RabbitMqTranslateConsumerService {
             rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
             rabbitMqTranslateService.countAfterTranslated(new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget(), null));
         } catch (Exception e) {
-            appInsights.trackTrace("邮件发送 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
         }
     }
@@ -232,7 +233,7 @@ public class RabbitMqTranslateConsumerService {
                         .set(TranslationUsageDO::getCreditCount, 0));
             }
         } catch (Exception e) {
-            appInsights.trackTrace("邮件发送 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
         }
     }
@@ -256,7 +257,7 @@ public class RabbitMqTranslateConsumerService {
                     .eq(TranslatesDO::getSource, vo.getSource())
                     .eq(TranslatesDO::getTarget, vo.getTarget())
                     .set(TranslatesDO::getResourceType, null));
-
+            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
         } else {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
 //            appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");

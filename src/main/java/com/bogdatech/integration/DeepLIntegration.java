@@ -41,14 +41,15 @@ public class DeepLIntegration {
             appInsights.trackTrace("result: " + result);
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
-            appInsights.trackTrace( "用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
+            appInsights.trackTrace( "clickTranslation translateByDeepL 用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
             userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             counter.addChars(totalToken);
             return targetText;
         } catch (Exception e) {
-            appInsights.trackTrace("DeepL翻译失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation translateByDeepL DeepL翻译失败 errors : " + e);
+            appInsights.trackException(e);
         }
         return sourceText;
     }
@@ -63,7 +64,7 @@ public class DeepLIntegration {
             result = client.translateText(sourceText, null, target);
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
-            appInsights.trackTrace( "用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
+            appInsights.trackTrace( "translateByDeepL 用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
             userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);

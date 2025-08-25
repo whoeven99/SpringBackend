@@ -48,11 +48,11 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
                     return true;
                 } else {
                     retryCount++;
-                    appInsights.trackTrace("更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + userId);
+                    appInsights.trackTrace("updateUserUsedCount 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + userId);
                 }
             } catch (Exception e) {
                 retryCount++;
-                appInsights.trackTrace("更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + userId + ", 错误=" + e);
+                appInsights.trackTrace("updateUserUsedCount 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + userId + ", 错误=" + e);
             }
 
             try {
@@ -63,7 +63,7 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
             }
         }
 
-        appInsights.trackTrace("更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + userId);
+        appInsights.trackTrace("updateUserUsedCount 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + userId);
         return false;
 
     }

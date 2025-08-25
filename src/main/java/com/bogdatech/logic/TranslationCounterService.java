@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
-import com.bogdatech.entity.DO.CharsOrdersDO;
-import com.bogdatech.entity.DO.TranslationCounterDO;
-import com.bogdatech.entity.DO.UserTrialsDO;
-import com.bogdatech.entity.DO.UsersDO;
+import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.TranslationCharsVO;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +12,10 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
@@ -29,15 +29,18 @@ public class TranslationCounterService {
     private final ITranslationCounterService iTranslationCounterService;
     private final IUserTrialsService iUserTrialsService;
     private final IUsersService iUsersService;
+    private final IUserSubscriptionsService iUserSubscriptionsService;
 
     public final String ACTIVE = "ACTIVE";
+
     @Autowired
-    public TranslationCounterService(ICharsOrdersService iCharsOrdersService, ISubscriptionPlansService iSubscriptionPlansService, ITranslationCounterService iTranslationCounterService, IUserTrialsService iUserTrialsService, IUsersService iUsersService) {
+    public TranslationCounterService(ICharsOrdersService iCharsOrdersService, ISubscriptionPlansService iSubscriptionPlansService, ITranslationCounterService iTranslationCounterService, IUserTrialsService iUserTrialsService, IUsersService iUsersService, IUserSubscriptionsService iUserSubscriptionsService) {
         this.iCharsOrdersService = iCharsOrdersService;
         this.iSubscriptionPlansService = iSubscriptionPlansService;
         this.iTranslationCounterService = iTranslationCounterService;
         this.iUserTrialsService = iUserTrialsService;
         this.iUsersService = iUsersService;
+        this.iUserSubscriptionsService = iUserSubscriptionsService;
     }
 
     public Boolean addCharsByShopNameAfterSubscribe(String shopName, TranslationCharsVO translationCharsVO) {
@@ -60,8 +63,17 @@ public class TranslationCounterService {
         Integer trialDays = queryValid.getInteger("trialDays");
         appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays);
         Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(name);
-        if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0){
-//            appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
+        if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0) {
+            appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
+            String currentPeriodEnd = queryValid.getString("currentPeriodEnd");
+            //修改用户过期时间  和  费用类型
+            //订阅结束时间
+            if (currentPeriodEnd != null) {
+                Instant end = Instant.parse(currentPeriodEnd);
+                LocalDateTime subEnd = end.atZone(ZoneOffset.UTC).toLocalDateTime();
+                iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName).set(UserSubscriptionsDO::getFeeType, translationCharsVO.getFeeType()).set(UserSubscriptionsDO::getEndDate, subEnd));
+            }
+
             // 不添加额度, 但需要修改免费试用订阅表
             String createdAt = queryValid.getString("createdAt");
             //用户购买订阅时间
@@ -75,17 +87,18 @@ public class TranslationCounterService {
             if (userTrialsDO == null) {
                 iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
                 //修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
-                iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlanName).set(TranslationCounterDO::getOpenAiChars,1));
+                iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlanName).set(TranslationCounterDO::getOpenAiChars, 1));
             }
-        }else {
+        } else {
             iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialExpired, true));
         }
 
         //添加额度
-        if (name.equals(charsOrdersDO.getName()) && status.equals(ACTIVE)){
+        if (name.equals(charsOrdersDO.getName()) && status.equals(ACTIVE)) {
             //根据用户的计划添加对应的额度
-            return iTranslationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, shopName, charsByPlanName, 0 , 0 , 0, 0));
+            return iTranslationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, shopName, charsByPlanName, 0, 0, 0, 0));
         }
+
         return null;
     }
 }

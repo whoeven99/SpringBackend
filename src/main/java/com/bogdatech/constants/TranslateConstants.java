@@ -73,4 +73,6 @@ public class TranslateConstants {
     public static final int DEEPL_MAGNIFICATION = 4;
     public static final String API_VERSION_LAST = "2025-07";
     public static final String QWEN_VL_LAST = "qwen-vl-max-latest";
+    public static final int ANNUAL_FEE = 2; //年费
+    public static final int MONTHLY_FEE = 1; //月费
 }

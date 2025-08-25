@@ -2,17 +2,16 @@ package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SubscriptionVO;
-import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,12 +151,12 @@ public class ShopifyController {
                     Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
                     map.put("chars", translationCounterRequests.getUsedChars());
                     map.put("totalChars", maxCharsByShopName);
-                    appInsights.trackTrace("chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
+                    appInsights.trackTrace("getUserLimitChars " + shopName + " chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
                     return new BaseResponse<>().CreateSuccessResponse(map);
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                appInsights.trackTrace("Error while getUserLimitChars for shop " + e.getMessage());
+                appInsights.trackTrace("getUserLimitChars Error while getUserLimitChars for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -187,7 +186,8 @@ public class ShopifyController {
             return new BaseResponse<>().CreateErrorResponse("shopName is null");
         }
         SubscriptionVO subscriptionVO = new SubscriptionVO();
-        Integer userSubscriptionPlan = userSubscriptionsService.getUserSubscriptionPlan(shopName);
+        UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getOne(new LambdaQueryWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName));
+        Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
         if ("ciwishop.myshopify.com".equals(shopName)) {
