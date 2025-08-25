@@ -1,6 +1,7 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.entity.DO.CharsOrdersDO;
+import com.bogdatech.entity.VO.TranslationCharsVO;
 import com.bogdatech.logic.OrderService;
 import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -55,10 +56,12 @@ public class CharsOrdersController {
         }
     }
 
-    //订阅付费计划成功之后发送相关邮件
+    /**
+     * 订阅付费计划成功之后发送相关邮件
+     */
     @PostMapping("/sendSubscribeSuccessEmail")
-    public BaseResponse<Object> sendSubscribeSuccessEmail(@RequestBody CharsOrdersDO charsOrdersDO) {
-        Boolean flag = orderService.sendSubscribeSuccessEmail(charsOrdersDO);
+    public BaseResponse<Object> sendSubscribeSuccessEmail(@RequestParam String shopName, @RequestBody TranslationCharsVO translationCharsVO) {
+        Boolean flag = orderService.sendSubscribeSuccessEmail(shopName, translationCharsVO.getSubGid(), translationCharsVO.getFeeType());
         if (flag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {
