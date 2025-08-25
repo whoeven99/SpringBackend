@@ -739,6 +739,7 @@ public class JsoupUtils {
             return translateByCiwiModel(request, counter, limitChars, languagePackId);
         } catch (Exception e) {
             appInsights.trackTrace("翻译handle数据报错 errors ： " + e.getMessage());
+            appInsights.trackException(e);
             return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target, shopName, limitChars);
         }
     }
