@@ -97,6 +97,9 @@ public class OrderService {
         UsersDO usersDO = usersService.getUserByName(shopName);
         //根据shopName获取订单信息
         CharsOrdersDO userData = charsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>().eq(CharsOrdersDO::getId, subId));
+        if (userData == null) {
+            return false;
+        }
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
         templateData.put("new_plan_name", userData.getName());
@@ -115,6 +118,7 @@ public class OrderService {
         if (feeType == MONTHLY_FEE) {
             return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         } else if (feeType == ANNUAL_FEE) {
+            templateData.put("new_fee", "$" + userData.getAmount() * 12);
             return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146081L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         }
         return false;
