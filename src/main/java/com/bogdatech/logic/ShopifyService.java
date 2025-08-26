@@ -752,9 +752,9 @@ public class ShopifyService {
 
     //修改shopify本地单条数据
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        appInsights.trackTrace(registerTransactionRequest.getShopName() + " 传入的值： " + registerTransactionRequest.toString());
+        appInsights.trackTrace("updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 传入的值： " + registerTransactionRequest);
         String string = updateShopifySingleData(registerTransactionRequest);
-        appInsights.trackTrace(registerTransactionRequest.getShopName() + " 返回的值： " + string);
+        appInsights.trackTrace("updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 返回的值： " + string);
         if (string.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
@@ -770,6 +770,7 @@ public class ShopifyService {
                 Field field = LanguageFlagConfig.class.getField(string.toUpperCase());
                 imageInfo.put(string, field.get(null));
             } catch (NoSuchFieldException | IllegalAccessException e) {
+                appInsights.trackException(e);
                 throw new RuntimeException(e);
             }
         }
@@ -1136,13 +1137,13 @@ public class ShopifyService {
             String env = System.getenv("ApplicationEnv");
             if ("prod".equals(env) || "dev".equals(env)) {
                 String s = registerTransaction(request, body);
-                appInsights.trackTrace("用户： " + cloudServiceRequest.getShopName() + " saveToShopify : " + s);
+                appInsights.trackTrace("saveToShopify 用户： " + cloudServiceRequest.getShopName() + " saveToShopify : " + s);
             } else {
                 sendShopifyPost("translate/insertTranslatedText", requestBody);
             }
 
         } catch (JsonProcessingException | ClientException e) {
-            appInsights.trackTrace("Failed to save to Shopify errors : " + e.getMessage());
+            appInsights.trackTrace("saveToShopify " + request.getShopName() + " Failed to save to Shopify errors : " + e.getMessage());
         }
     }
 
@@ -1170,7 +1171,7 @@ public class ShopifyService {
             //存到数据库中
             userTranslationDataService.insertTranslationData(json, request.getShopName());
         } catch (Exception e) {
-            appInsights.trackTrace(request.getShopName() + " save to Shopify errors : " + e.getMessage());
+            appInsights.trackTrace("saveToShopify " + request.getShopName() + " save to Shopify errors : " + e.getMessage());
         }
     }
 }

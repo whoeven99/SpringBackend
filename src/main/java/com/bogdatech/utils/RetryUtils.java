@@ -54,4 +54,44 @@ public class RetryUtils {
         return false;
     }
 
+
+    /**
+     * 通用重试方法
+     * @param action         需要执行的逻辑（返回 T 类型结果）
+     * @param maxRetries     最大重试次数
+     * @param baseDelayMs    初始延迟（毫秒）
+     * @param <T>            返回结果类型
+     * @return               成功返回结果，失败返回 null
+     */
+    public static <T> T executeWithRetry(Supplier<T> action, int maxRetries, long baseDelayMs) {
+        int attempt = 0;
+        Exception lastException = null;
+
+        while (attempt < maxRetries) {
+            try {
+                attempt++;
+                return action.get(); // 尝试执行任务
+            } catch (Exception e) {
+                lastException = e;
+                System.err.println("执行失败，第 " + attempt + " 次，错误：" + e.getMessage());
+
+                if (attempt >= maxRetries) {
+                    break; // 达到最大次数
+                }
+
+                // 指数退避：1s, 2s, 4s...
+                try {
+                    Thread.sleep(baseDelayMs * (1L << (attempt - 1)));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+
+        if (lastException != null) {
+            lastException.printStackTrace();
+        }
+        return null; // 全部失败，返回 null
+    }
 }

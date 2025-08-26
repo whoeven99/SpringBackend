@@ -28,7 +28,7 @@ public class TranslationCounterController {
     public BaseResponse<Object> insertCharsByShopName(@RequestBody TranslationCounterRequest request) {
         TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(request.getShopName());
         if (translationCounterDO == null) {
-            Integer result = iTranslationCounterService.insertCharsByShopName(request);
+            int result = iTranslationCounterService.insertCharsByShopName(request);
             //int result = 1;
             if (result > 0) {
                 return new BaseResponse().CreateSuccessResponse(result);
@@ -42,6 +42,9 @@ public class TranslationCounterController {
 
     }
 
+    /**
+     * 获取用户额度信息
+     * */
     @GetMapping("/getCharsByShopName")
     public BaseResponse<Object> getCharsByShopName(@RequestParam String shopName) {
        TranslationCounterDO translatesDOS = iTranslationCounterService.readCharsByShopName(shopName);
@@ -51,6 +54,9 @@ public class TranslationCounterController {
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
+    /**
+     * 更新用户的额度
+     * */
     @PutMapping("/updateCharsByShopName")
     public BaseResponse<Object> updateCharsByShopName(@RequestBody TranslationCounterRequest request) {
         int result = iTranslationCounterService.updateUsedCharsByShopName(request);
@@ -60,7 +66,9 @@ public class TranslationCounterController {
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
     }
 
-    //添加字符额度
+    /**
+     * 添加字符额度
+     * */
     @PostMapping("/addCharsByShopName")
     public BaseResponse<Object> addCharsByShopName(@RequestBody TranslationCounterRequest request) {
         if (iTranslationCounterService.updateCharsByShopName(request)){

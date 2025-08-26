@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.enums.ErrorEnum.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getCurrencyDOS;
 
 @Service
@@ -55,6 +56,10 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     public BaseResponse<Object> getCurrencyByShopName(String shopName) {
         CurrenciesDO[] list = baseMapper.getCurrencyByShopName(shopName);
         List<Map<String, Object>> mapList = new ArrayList<>();
+        if (list.length == 0){
+            appInsights.trackTrace("getCurrencyByShopName No currency found for shopName: " + shopName);
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
         for (CurrenciesDO currenciesDO : list) {
             Map<String, Object> currencyDOS = new java.util.HashMap<>(getCurrencyDOS(currenciesDO));
             mapList.add(currencyDOS);
@@ -65,6 +70,10 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     @Override
     public Map<String, Object> getCurrencyWithSymbol(CurrenciesDO request) {
         CurrenciesDO currencyByShopNameAndCurrencyCode = baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode());
+        if (currencyByShopNameAndCurrencyCode == null) {
+            appInsights.trackTrace("getCurrencyWithSymbol No currency found for shopName: " + request.getShopName() + " and currencyCode: " + request.getCurrencyCode());
+            return null;
+        }
         return new java.util.HashMap<>(getCurrencyDOS(currencyByShopNameAndCurrencyCode));
     }
 

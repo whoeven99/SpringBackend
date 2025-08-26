@@ -67,7 +67,7 @@ public class ShopifyHttpIntegration {
                     break;
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("Shopify request failed on attempt " + attempt + ": " + e.getMessage());
+                appInsights.trackTrace("getInfoByShopify Shopify request failed on attempt " + attempt + ": " + e.getMessage());
             }
 
             if (attempt < maxRetries) {
@@ -82,7 +82,7 @@ public class ShopifyHttpIntegration {
         }
 
         if (response == null) {
-            appInsights.trackTrace("Failed to get response from Shopify after " + maxRetries + " attempts.");
+            appInsights.trackTrace("getInfoByShopify Failed to get response from Shopify after " + maxRetries + " attempts.");
             return null;
         }
 
@@ -107,6 +107,7 @@ public class ShopifyHttpIntegration {
                     return jsonObject.getString("data");
                 }
             } catch (Exception e) {
+                appInsights.trackException(e);
                 appInsights.trackTrace("registerTransaction errors : " + "用户： " + request.getShopName() + " 目标： " + request.getTarget() + "  " + e.getMessage());
             }
 

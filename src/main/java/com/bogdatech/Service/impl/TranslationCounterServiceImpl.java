@@ -59,11 +59,11 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
                     return true;
                 } else {
                     retryCount++;
-                    appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + shopName);
+                    appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + shopName + " usedChars=" + usedChars + ", maxChars=" + maxChars);
                 }
             } catch (Exception e) {
                 retryCount++;
-                appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + shopName + ", 错误=" + e);
+                appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + shopName + " usedChars=" + usedChars + ", maxChars=" + maxChars + ", 错误=" + e);
             }
 
             try {
@@ -74,7 +74,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
             }
         }
 
-        appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + shopName);
+        appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + shopName+ " usedChars=" + usedChars + ", maxChars=" + maxChars);
         return false;
     }
 

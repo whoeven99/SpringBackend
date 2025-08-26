@@ -8,6 +8,8 @@ import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.*;
 import org.springframework.stereotype.Service;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Service
 public class APGCharsOrderService {
     private final IAPGCharsOrderService charsOrdersService;
@@ -30,6 +32,10 @@ public class APGCharsOrderService {
     public Boolean insertOrUpdateOrder(String shopName, APGCharsOrderDO charsOrdersDO) {
         //获取用户id
         APGUsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        if (usersDO == null) {
+            appInsights.trackTrace("APGCharsOrderService 用户 " + shopName + " usersDO is null ");
+            return false;
+        }
         APGCharsOrderDO charsOrdersServiceById = charsOrdersService.getById(usersDO.getId());
         if (charsOrdersServiceById == null) {
             charsOrdersDO.setUserId(usersDO.getId());

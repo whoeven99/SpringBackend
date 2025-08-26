@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/klaviyo")
 public class KlaviyoController {
-
+    // 下面功能目前没用了，待删除
     private final KlaviyoService klaviyoService;
     @Autowired
     public KlaviyoController(KlaviyoService klaviyoService) {
