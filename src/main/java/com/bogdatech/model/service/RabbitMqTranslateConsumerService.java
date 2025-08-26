@@ -72,9 +72,9 @@ public class RabbitMqTranslateConsumerService {
             Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
             userTranslate.put(shopName, translationStatusMap);
         } catch (ClientException e1) {
-            appInsights.trackTrace(shopName + " 到达字符限制： " + e1);
+            appInsights.trackTrace("clickTranslation " + shopName + " 到达字符限制： " + e1);
         } catch (Exception e) {
-            appInsights.trackTrace(shopName + " 处理消息失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + shopName + " 处理消息失败 errors : " + e);
             appInsights.trackException(e);
         }
 

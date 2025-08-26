@@ -23,33 +23,41 @@ public class EmailController {
         this.emailService = emailService;
     }
 
+    /**
+     * 这是最初版用mailChimp发送邮件的接口
+     * 可以考虑删除了
+     * */
     @PostMapping("/send")
     public String sendEmail(@RequestParam String toEmail) {
-//        return emailIntegration.sendEmail(new SendEmailRequest(null, CHARACTER_PURCHASE_SUCCESSFUL, "EMAIL", "daoyee@ciwi.ai",
-//                "Welcome to Ciwi.ai! Unlock a New Language Translation Experience", "support@ciwi.ai", "daoyee@ciwi.ai"));
         return mailChimpService.sendTranslateFailMail(new MailChampSendEmailRequest(null, null,
                 null,null, null, toEmail, "daoye"), "ture");
-//        return null;
     }
 
-    //由腾讯发送邮件
+    /**
+     * 由腾讯发送邮件
+     * */
     @PostMapping("/sendByTencent")
     public void sendEmailByTencent(@RequestBody TencentSendEmailRequest TencentSendEmailRequest) {
         tencentEmailService.sendEmailByEmail(TencentSendEmailRequest);
 
     }
 
-    //将翻译的数据存储到数据库
+    /**
+     * 将翻译的数据存储到数据库
+     * */
     @PostMapping("/saveEmail")
     public BaseResponse<Object> saveTranslate(@RequestBody EmailDO emailDO) {
         Integer i = emailService.saveEmail(emailDO);
         if (i > 0 ){
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {
-            return new BaseResponse<>().CreateErrorResponse("false");
+            return new BaseResponse<>().CreateErrorResponse(false);
         }
     }
 
+    /**
+     *发生未成功翻译的邮件
+     * */
     @PostMapping("/sendOnlineEmail")
     public BaseResponse<Object> sendEmail(@RequestParam String shopName, @RequestParam String target, @RequestParam String source) {
         Boolean b = tencentEmailService.sendEmailByOnline(shopName, target, source);
@@ -57,10 +65,13 @@ public class EmailController {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         else {
-            return new BaseResponse<>().CreateErrorResponse("false");
+            return new BaseResponse<>().CreateErrorResponse(false);
         }
     }
 
+    /**
+     * 发送自动翻译的邮件
+     * */
     @PostMapping("/sendAutoTranslateEmail")
     public BaseResponse<Object> sendAutoTranslateEmail() {
         Boolean b = tencentEmailService.sendAutoTranslateEmail("shopName");

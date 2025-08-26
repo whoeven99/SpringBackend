@@ -39,7 +39,7 @@ public class UserPrivateTranslateService {
         String userKey = getApiKey(shopName, data.getApiName());
         if (dbData != null) {
             //仅更新 api_model，prompt_word，token_limit ，is_selected
-            appInsights.trackTrace("userKey: " + userKey);
+            appInsights.trackTrace("configPrivateModel " + shopName + "userKey: " + userKey);
             KeyVaultSecret keyVaultSecret = secretClient.setSecret(userKey, data.getApiKey());
             return iUserPrivateTranslateService.update(new LambdaUpdateWrapper<UserPrivateTranslateDO>()
                     .eq(UserPrivateTranslateDO::getShopName, shopName)
@@ -51,7 +51,7 @@ public class UserPrivateTranslateService {
         }
 
         //将数据存到Azure服务器里面
-        appInsights.trackTrace("userKey: " + userKey);
+        appInsights.trackTrace("configPrivateModel " + shopName + " userKey: " + userKey);
         KeyVaultSecret keyVaultSecret = secretClient.setSecret(userKey, data.getApiKey());
 
         //将数据存到数据库中
@@ -116,7 +116,7 @@ public class UserPrivateTranslateService {
         String userKey = getApiKey(shopName, data.getApiName());
         if (dbData != null) {
             //仅更新 api_model，prompt_word，token_limit ，is_selected
-            appInsights.trackTrace("userKey: " + userKey);
+            appInsights.trackTrace("configPrivateModelExceptApiKey " + shopName + " userKey: " + userKey);
             return iUserPrivateTranslateService.update(new LambdaUpdateWrapper<UserPrivateTranslateDO>()
                     .eq(UserPrivateTranslateDO::getShopName, shopName)
                     .eq(UserPrivateTranslateDO::getApiName, data.getApiName())

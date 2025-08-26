@@ -61,8 +61,8 @@ public class ShopifyController {
         try {
             infoByShopify = getInfoByShopify(request, body);
         } catch (Exception e) {
-//            throw new RuntimeException(e);
-            appInsights.trackTrace("无法获取shopify数据");
+            appInsights.trackException(e);
+            appInsights.trackTrace("test123 " + request.getShopName() + " 无法获取shopify数据");
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
@@ -91,7 +91,8 @@ public class ShopifyController {
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                appInsights.trackTrace("Error while getConsumedWords for shop " + e.getMessage());
+                appInsights.trackException(e);
+                appInsights.trackTrace("getConsumedWords Error while getConsumedWords for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -187,6 +188,10 @@ public class ShopifyController {
         }
         SubscriptionVO subscriptionVO = new SubscriptionVO();
         UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getOne(new LambdaQueryWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName));
+        if (userSubscriptionsDO == null) {
+            appInsights.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
+            return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
+        }
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
@@ -239,13 +244,12 @@ public class ShopifyController {
         } else {
             infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), API_VERSION_LAST, "en", query));
         }
-//        appInsights.trackTrace("infoByShopify = " + infoByShopify);
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
-        //根据订阅计划信息，判断是否是第一个月的开始，是否要添加额度
+        //根据订阅计划信息，判断是否是第一个月的开始
         JSONObject root = JSON.parseObject(infoByShopify);
         JSONObject node = root.getJSONObject("node");
         if (node == null || node.isEmpty()) {

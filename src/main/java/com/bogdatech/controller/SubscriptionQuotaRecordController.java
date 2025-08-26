@@ -32,9 +32,9 @@ public class SubscriptionQuotaRecordController {
 
         //如果数据库中含有这条数据，就不插入了
         SubscriptionQuotaRecordDO byId = subscriptionQuotaRecordService.getOne(new QueryWrapper<SubscriptionQuotaRecordDO>().eq("subscription_id", subscriptionQuotaRecordDO.getSubscriptionId()).eq("billing_cycle", 1));
-        appInsights.trackTrace("addSubscriptionQuotaRecord 这条数据只是判断是否要往数据库存值 byId: " + byId);
+        appInsights.trackTrace("addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 这条数据只是判断是否要往数据库存值 byId: " + byId);
         if (byId != null){
-            appInsights.trackTrace("数据库中含有这条数据，就不插入了");
+            appInsights.trackTrace("addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 数据库中含有这条数据，就不插入了");
             return;
         }
         // 重试逻辑
@@ -45,11 +45,11 @@ public class SubscriptionQuotaRecordController {
                     success = true; // 成功条件：i == 1
                 } else {
                     attempt++;
-                    appInsights.trackTrace("插入结果不符合预期 (i=" + i + ")，正在重试第 " + (attempt + 1) + " 次");
+                    appInsights.trackTrace("addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 插入结果不符合预期 (i=" + i + ")，正在重试第 " + (attempt + 1) + " 次");
                 }
             } catch (Exception e) {
                 attempt++;
-                appInsights.trackTrace("插入异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
+                appInsights.trackTrace("addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 插入异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
             }
         }
 

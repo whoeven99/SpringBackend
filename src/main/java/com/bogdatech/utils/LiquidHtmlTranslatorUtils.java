@@ -4,6 +4,7 @@ package com.bogdatech.utils;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.ArkTranslateIntegration;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.apache.commons.text.StringEscapeUtils;
@@ -30,6 +31,7 @@ import static com.bogdatech.utils.PlaceholderUtils.getPolicyPrompt;
 public class LiquidHtmlTranslatorUtils {
 
     private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    private final ArkTranslateIntegration arkTranslateIntegration;
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
     //    // 不翻译的Liquid变量模式
@@ -52,8 +54,9 @@ public class LiquidHtmlTranslatorUtils {
     private final ChatGptIntegration chatGptIntegration;
 
     @Autowired
-    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, JsoupUtils jsoupUtils, ChatGptIntegration chatGptIntegration) {
+    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, ArkTranslateIntegration arkTranslateIntegration, JsoupUtils jsoupUtils, ChatGptIntegration chatGptIntegration) {
         this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
+        this.arkTranslateIntegration = arkTranslateIntegration;
         this.jsoupUtils = jsoupUtils;
         this.chatGptIntegration = chatGptIntegration;
     }
@@ -312,7 +315,8 @@ public class LiquidHtmlTranslatorUtils {
 
     /**
      * 翻译html文本（整段翻译，需要处理一下）
-     * 目前专门用qwen翻译
+     * 对数据进行处理，将属性替换
+     * 判断调用qwen还是openai
      */
     public String fullTranslateHtmlByQwen(String text, String languagePack, CharacterCountUtils counter, String target, String shopName, Integer limitChars, String translateModel, String source) {
         //选择翻译html的提示词
@@ -347,6 +351,16 @@ public class LiquidHtmlTranslatorUtils {
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + shopName + " html 翻译失败 errors : " + e);
+            //睡眠10s
+            try {
+                Thread.sleep(10000);
+            }catch (Exception exception){
+                appInsights.trackTrace("clickTranslation " + shopName + " sleep 失败 ");
+            }
+            String aLiString = aLiYunTranslateIntegration.singleTranslate(cleanedHtml, fullHtmlPrompt, counter, target, shopName, limitChars);
+            if (aLiString != null) {
+                return aLiString;
+            }
             return text;
         }
     }
@@ -367,7 +381,7 @@ public class LiquidHtmlTranslatorUtils {
     }
 
     /**
-     * 翻译html文本（整段翻译，需要处理一下）
+     * 翻译政策html文本
      * 目前专门用qwen翻译
      */
     public String fullTranslatePolicyHtmlByQwen(String text, CharacterCountUtils counter, String target, String shopName, Integer limitChars) {
@@ -380,7 +394,17 @@ public class LiquidHtmlTranslatorUtils {
         try {
             return aLiYunTranslateIntegration.singleTranslate(text, fullPolicyHtmlPrompt, counter, target, shopName, limitChars);
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " html 翻译失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + shopName + " 翻译 政策 html 翻译失败 errors : " + e);
+            //睡眠10s
+            try {
+                Thread.sleep(10000);
+            }catch (Exception exception){
+                appInsights.trackTrace("clickTranslation " + shopName + " sleep 失败 ");
+            }
+            String aLiString = aLiYunTranslateIntegration.singleTranslate(text, fullPolicyHtmlPrompt, counter, target, shopName, limitChars);
+            if (aLiString != null) {
+                return aLiString;
+            }
             return text;
         }
     }

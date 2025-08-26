@@ -67,7 +67,8 @@ public class UserPrivateService {
 
             }
         } catch (Exception e) {
-            appInsights.trackTrace("保存用户数据失败：" + e.getMessage());
+            appInsights.trackException(e);
+            appInsights.trackTrace("saveOrUpdateUserData " + userPrivateRequest.getShopName() + " 保存用户数据失败：" + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse("保存用户数据失败");
         }
 
@@ -100,7 +101,7 @@ public class UserPrivateService {
             } catch (Exception e) {
                 retries--;
                 if (retries == 0) {
-                    appInsights.trackTrace("failed: " + e.getMessage());
+                    appInsights.trackTrace("getUserData " + userPrivateRequest.getShopName() + " failed: " + e.getMessage());
                 } else {
                     try {
                         Thread.sleep(delay);  // 延迟重试
@@ -126,13 +127,17 @@ public class UserPrivateService {
     public Boolean deleteUserData(String shopName) {
         //只删除 amount 和 key数据
         UserPrivateDO user = userPrivateService.selectOneByShopName(shopName);
+        if (user == null) {
+            appInsights.trackTrace("deleteUserData " + shopName + " 用户不存在");
+            return false;
+        }
         //删除用户在keyVault里面的数据
         try {
             shopName = replaceDot(shopName);
             secretClient.getDeletedSecret(shopName + "-" + GOOGLE);
         } catch (Exception e) {
-//            appInsights.trackTrace("删除用户在keyVault里面的数据失败：" + e.getMessage());
-            appInsights.trackTrace("删除用户在keyVault里面的数据失败：" + e.getMessage());
+            appInsights.trackException(e);
+            appInsights.trackTrace("deleteUserData " + shopName + " 删除用户在keyVault里面的数据失败：" + e.getMessage());
         }
 
         //将数据库中的数据的amount和key清空

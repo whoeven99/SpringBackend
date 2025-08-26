@@ -29,14 +29,18 @@ public class PrivateKeyController {
         this.userPrivateService = userPrivateService;
     }
 
-    //用户通过私有key翻译
+    /**
+     * 用户通过私有key翻译
+     * */
     @PutMapping("/translate")
     public BaseResponse<Object> translate(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
         return privateKeyService.judgePrivateKey(shopName, clickTranslateRequest);
     }
 
 
-    //存用户的Google的apikey
+    /**
+     * 存用户的Google的apikey
+     * */
     @PutMapping("/saveGoogleKey")
     public BaseResponse<Object> saveGoogleKey(@RequestBody UserPrivateRequest userPrivateRequest) {
         //调一次google接口， 用于判断key值是否有效

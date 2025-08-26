@@ -29,7 +29,7 @@ public class UserPrivateTranslateController {
     public BaseResponse<Object> configPrivateModel(@RequestParam String shopName, @RequestBody UserPrivateTranslateDO data) {
         boolean flag;
         if (data.getApiKey() != null) {
-            appInsights.trackTrace(shopName + " apiKey : " + data.getApiKey());
+            appInsights.trackTrace("configPrivateModel " + shopName + " apiKey : " + data.getApiKey());
             flag = userPrivateTranslateService.configPrivateModel(shopName, data);
         }else {
             flag = userPrivateTranslateService.configPrivateModelExceptApiKey(shopName, data);

@@ -337,6 +337,10 @@ public class RabbitMqTranslateService {
     public void commonTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
         //根据DB的请求语句获取对应shopify值
         String shopifyDataByDb = getShopifyDataByDb(rabbitMqTranslateVO);
+        if(shopifyDataByDb == null) {
+            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " shopifyDataByDb is null" + rabbitMqTranslateVO);
+            return;
+        }
         Set<TranslateTextDO> needTranslatedData = translatedDataParse(stringToJson(shopifyDataByDb), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getIsCover());
         if (needTranslatedData == null) {
             return;
@@ -368,7 +372,7 @@ public class RabbitMqTranslateService {
         } catch (Exception e) {
             // 如果出现异常，则跳过, 翻译其他的内容
             //更新当前字符数
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + "Failed to get Shopify data errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " Failed to get Shopify data errors : " + e.getMessage());
         }
         return shopifyData;
     }

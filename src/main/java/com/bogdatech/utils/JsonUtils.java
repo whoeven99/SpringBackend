@@ -55,11 +55,11 @@ public class JsonUtils {
                     .path("message");
 
             if (!messageNode.isMissingNode()) {
-                appInsights.trackTrace("Message: " + messageNode.asText());
+                appInsights.trackTrace("updateShopifyDataByTranslateTextRequest Message: " + messageNode.asText());
                 message = messageNode.asText();
             } else {
                 message = json;
-                appInsights.trackTrace("Message not found");
+                appInsights.trackTrace("updateShopifyDataByTranslateTextRequest   Message not found");
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -74,7 +74,7 @@ public class JsonUtils {
         try {
             return OBJECT_MAPPER.readTree(str);
         }catch (Exception e) {
-            appInsights.trackTrace("String to Json errors: " + e);
+            appInsights.trackTrace("clickTranslation String to Json errors: " + e);
             throw new RuntimeException(e);
         }
     }

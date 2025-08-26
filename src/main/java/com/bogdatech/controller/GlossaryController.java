@@ -20,7 +20,9 @@ public class GlossaryController {
         this.glossaryService = glossaryService;
     }
 
-    //插入glossary数据
+    /**
+     * 插入glossary数据
+     */
     @PostMapping("/insertGlossaryInfo")
     public BaseResponse<Object> insertGlossaryInfo(@RequestBody GlossaryDO glossaryDO) {
         //判断 如果数据库中有5个就不再插入了
@@ -31,7 +33,7 @@ public class GlossaryController {
         //判断是否冲突（sourceText， rangeCode， caseSensitive）
         for (GlossaryDO glossary : singleGlossaryByShopNameAndSource) {
             if (glossary.getSourceText().equals(glossaryDO.getSourceText())) {
-                if (glossary.getRangeCode().equals(glossaryDO.getRangeCode()) || glossary.getRangeCode().equals("ALL") || glossaryDO.getRangeCode().equals("ALL")) {
+                if (glossary.getRangeCode().equals(glossaryDO.getRangeCode()) || "ALL".equals(glossary.getRangeCode()) || "ALL".equals(glossaryDO.getRangeCode())) {
                     return new BaseResponse<>().CreateErrorResponse("The information entered conflicts with existing");
                 }
             }
@@ -44,7 +46,9 @@ public class GlossaryController {
         return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 
-    //根据id删除glossary数据
+    /**
+     * 根据id删除glossary数据
+     * */
     @DeleteMapping("/deleteGlossaryById")
     public BaseResponse<Object> deleteGlossaryById(@RequestBody GlossaryDO glossaryDO) {
         if (glossaryService.deleteGlossaryById(glossaryDO)) {
@@ -53,13 +57,17 @@ public class GlossaryController {
         return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
     }
 
-    //根据shopName获得glossary数据
+    /**
+     * 根据shopName获得glossary数据
+     * */
     @GetMapping("/getGlossaryByShopName")
     public BaseResponse<Object> getGlossaryByShopName(@RequestParam String shopName) {
         return new BaseResponse<>().CreateSuccessResponse(glossaryService.getGlossaryByShopName(shopName));
     }
 
-    //根据id修改targetText，status，rangeCode，caseSensitive数据
+    /**
+     * 根据id修改targetText，status，rangeCode，caseSensitive数据
+     * */
     @PostMapping("/updateTargetTextById")
     public BaseResponse<Object> updateTargetTextById(@RequestBody GlossaryDO glossaryDO) {
         GlossaryDO[] singleGlossaryByShopNameAndSource = glossaryService.getGlossaryByShopName(glossaryDO.getShopName());
@@ -77,7 +85,6 @@ public class GlossaryController {
                     // 如果 rangeCode 不为 ALL，且相同的 sourceText 和 rangeCode 存在，直接跳过
                     if (glossary.getRangeCode().equals(glossaryDO.getRangeCode())) {
                         return new BaseResponse<>().CreateErrorResponse("The rangeCode '" + glossaryDO.getRangeCode() + "' cannot conflict with the same rangeCode.");
-//                    break;
                     }
                 }
             }

@@ -110,7 +110,8 @@ public class TaskService {
             try {
                 addCharsByUserData(userPriceRequest);
             } catch (Exception e) {
-                appInsights.trackTrace("用户： " + userPriceRequest.getShopName() + " 获取数据 errors : " + e);
+                appInsights.trackException(e);
+                appInsights.trackTrace("judgeAddChars 用户： " + userPriceRequest.getShopName() + " 获取数据 errors : " + e);
             }
         }
 
@@ -139,14 +140,19 @@ public class TaskService {
             try {
                 //根据订阅计划信息，判断是否过期，如果过期，将用户计划改为2
                 JSONObject node = analyzeOrderData(order);
+                if (node == null) {
+                    appInsights.trackTrace("judgeAddChars " + order.getShopName() + " 获取不到计划的相关数据，获取为null");
+                    continue;
+                }
                 String status = node.getString("status");
                 if (!"ACTIVE".equals(status)) {
                     //如果过期，将用户计划改为2
                     boolean i = iUserSubscriptionsService.checkUserPlan(order.getShopName(), 2) > 0;
-                    appInsights.trackTrace(order.getShopName() + " 计划过期，将用户计划改为2 " + " 修改状态: " + i);
+                    appInsights.trackTrace("judgeAddChars " + order.getShopName() + " 计划过期，将用户计划改为2 " + " 修改状态: " + i);
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("用户： " + order.getShopName() + " 获取订阅计划数据 errors : " + e);
+                appInsights.trackException(e);
+                appInsights.trackTrace("judgeAddChars 用户： " + order.getShopName() + " 获取订阅计划数据 errors : " + e);
             }
         }
     }
@@ -182,6 +188,10 @@ public class TaskService {
 
         //根据新的集合获取这个订阅计划的信息
         JSONObject node = analyzeOrderData(userPriceRequest);
+        if (node == null) {
+            appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 获取不到计划的相关数据，获取为null " + userPriceRequest);
+            return;
+        }
         String name = node.getString("name");
         String status = node.getString("status");
         String createdAt = node.getString("createdAt");
