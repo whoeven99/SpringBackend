@@ -80,7 +80,7 @@ public class APGUserGeneratedTaskController {
             String json = OBJECT_MAPPER.writeValueAsString(generateDescriptionsVO);
             apgUserGeneratedTaskService.initOrUpdateData(shopName, 0, generateDescriptionsVO.getPageType() + " " + generateDescriptionsVO.getContentType(), json);
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
+            appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户 批量生成任务失败 errors ：" + e);
             appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
@@ -109,14 +109,14 @@ public class APGUserGeneratedTaskController {
         }catch (ClientException e1){
             //发送对应邮件
             //修改状态
-            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
+            appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
 //            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
             appInsights.trackException(e1);
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件
-            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
+            appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e);
 //            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
             appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);
@@ -151,7 +151,7 @@ public class APGUserGeneratedTaskController {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         Boolean result = GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
-        appInsights.trackTrace("result : " + result);
+        appInsights.trackTrace("stopBatchGenerateDescription " + shopName + " 停止翻译标识 : " + result);
         //将任务和子任务的状态改为1
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
         if (Boolean.TRUE.equals(result) && updateFlag) {

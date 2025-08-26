@@ -113,7 +113,7 @@ public class PrivateKeyService {
      */
     public BaseResponse<Object> judgePrivateKey(String shopName, ClickTranslateRequest clickTranslateRequest) {
         //做数据检验
-        appInsights.trackTrace("click: " + clickTranslateRequest);
+        appInsights.trackTrace("translate " + shopName + " click: " + clickTranslateRequest);
         //判断前端传的数据是否完整，如果不完整，报错
         if (shopName == null || shopName.isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
@@ -126,7 +126,7 @@ public class PrivateKeyService {
         Integer apiName = Integer.valueOf(clickTranslateRequest.getTranslateSettings1());
         //判断是google还是openai
         Integer modelFlag = judgeModelByValue(clickTranslateRequest.getTranslateSettings1());
-        appInsights.trackTrace("modelFlag: " + modelFlag);
+        appInsights.trackTrace("translate " + shopName + " modelFlag 选择模型: " + modelFlag);
         if (modelFlag < 0) {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
@@ -141,7 +141,6 @@ public class PrivateKeyService {
         try {
             KeyVaultSecret keyVaultSecret = secretClient.getSecret(userKey);
             apiKey = keyVaultSecret.getValue();
-//            Object aiClient = initAiModel(clickTranslateRequest.getTranslateSettings1(), apiKey);
         } catch (Exception e) {
             appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(request);
@@ -152,6 +151,9 @@ public class PrivateKeyService {
         }
         //判断字符是否超限
         UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiKey, userKey));
+        if (privateData == null) {
+            return new BaseResponse<>().CreateErrorResponse(request);
+        }
         Long remainingChars = privateData.getTokenLimit();
         Long usedChars = privateData.getUsedToken();
         // 如果字符超限，则直接返回字符超限
@@ -182,7 +184,7 @@ public class PrivateKeyService {
         try {
             translateResourceDTOS = translateModel(clickTranslateRequest.getTranslateSettings3());
         } catch (Exception e) {
-            appInsights.trackTrace("translateModel errors : " + e.getMessage());
+            appInsights.trackTrace("translate " + shopName + " translateModel errors : " + e.getMessage());
         }
 //      翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
@@ -232,7 +234,7 @@ public class PrivateKeyService {
         String target = request.getTarget();
         Future<?> future = executorService.submit(() -> {
             LocalDateTime begin = LocalDateTime.now();
-            appInsights.trackTrace("Task submitted at: " + begin + " for shop: " + shopName);
+            appInsights.trackTrace("translate Task submitted at: " + begin + " for shop: " + shopName);
             try {
                 translating(request, remainingChars, counter, apiKey, translateResourceDTOS, isCover, modelFlag, apiModel, userPrompt, handleFlag);  // 执行翻译任务
             } catch (ClientException e) {
@@ -310,7 +312,7 @@ public class PrivateKeyService {
 
         }
         iTranslatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), request.getSource(), null);
-        appInsights.trackTrace("翻译结束");
+        appInsights.trackTrace("translate " + shopifyRequest.getShopName() + " 翻译结束时间： " + LocalDateTime.now());
     }
 
     //更新初始值
@@ -358,7 +360,7 @@ public class PrivateKeyService {
     public Future<Void> translateJson(TranslateContext translateContext) {
         String resourceType = translateContext.getTranslateResource().getResourceType();
         ShopifyRequest request = translateContext.getShopifyRequest();
-        appInsights.trackTrace("现在翻译到： " + resourceType);
+        appInsights.trackTrace("translate " + request.getShopName() + " 现在翻译到： " + resourceType);
         //将目前的状态，添加到数据库中，前端要用这个数据做进度条功能
         iTranslatesService.updateTranslatesResourceType(request.getShopName(), request.getTarget(), translateContext.getSource(), resourceType);
 
@@ -370,7 +372,7 @@ public class PrivateKeyService {
         try {
             rootNode = OBJECT_MAPPER.readTree(translateContext.getShopifyData());
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("rootNode错误： " + e.getMessage());
+            appInsights.trackTrace("translate " + request.getShopName() + " 解析rootNode错误： " + e.getMessage());
             return null;
         }
         translateSingleLineTextFieldsRecursively(rootNode, translateContext);
@@ -524,7 +526,7 @@ public class PrivateKeyService {
         //将glossaryMap中所有caseSensitive为1的数据存到一个Map集合里面
         for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
             GlossaryDO glossaryDO = OBJECT_MAPPER.convertValue(entry.getValue(), GlossaryDO.class);
-            appInsights.trackTrace("shopName : " + shopName + " , glossaryDO : " + glossaryDO);
+            appInsights.trackTrace("translate shopName : " + shopName + " , glossaryDO : " + glossaryDO);
 //            GlossaryDO glossaryDO = (GlossaryDO) entry.getValue();
             if (glossaryDO.getCaseSensitive() == 1) {
                 keyMap1.put(glossaryDO.getSourceText(), glossaryDO.getTargetText());
@@ -578,10 +580,10 @@ public class PrivateKeyService {
                     String prompt;
                     if (glossaryString != null) {
                         prompt = getGlossaryPrompt(targetName, glossaryString, null);
-                        appInsights.trackTrace("私有 普通文本： " + value + " Glossary提示词: " + prompt);
+                        appInsights.trackTrace("translate 私有 普通文本： " + value + " Glossary提示词: " + prompt);
                     } else {
                         prompt = getSimplePrompt(targetName, null);
-                        appInsights.trackTrace("私有 普通文本：" + value + " Simple提示词: " + prompt);
+                        appInsights.trackTrace("translate 私有 普通文本：" + value + " Simple提示词: " + prompt);
                     }
                     //目前改为openai翻译
                     String finalText = privateIntegration.translateByGpt(value, translateContext.getApiModel(), translateContext.getApiKey(), prompt, shopName, Long.valueOf(translateContext.getRemainingChars()));
@@ -589,7 +591,7 @@ public class PrivateKeyService {
                     shopifyService.saveToShopify(finalText, translation, resourceId, shopifyRequest);
                     printTranslation(finalText, value, translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
                 } catch (Exception e) {
-                    appInsights.trackTrace("glossaryTranslationModel errors " + e);
+                    appInsights.trackTrace("translate glossaryTranslationModel errors " + e);
                     shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
                 }
             }
@@ -617,7 +619,7 @@ public class PrivateKeyService {
         String accessToken = shopifyRequest.getAccessToken();
 
         if (translateContext.getModel().equals(GOOGLE_MODEL)) {
-            appInsights.trackTrace("google skip!!!");
+            appInsights.trackTrace("translate " + shopName + " google 跳过html的翻译!!!");
             return;
         }
 
@@ -655,10 +657,13 @@ public class PrivateKeyService {
                 printTranslation(modelHtml, translateTextDO.getSourceText(), translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
                 //如果翻译数据小于255，存到数据库
                 try {
+                    if (modelHtml.length() >= 255) {
+                        continue;
+                    }
                     // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
                     vocabularyService.InsertOne(target, modelHtml, source, translateTextDO.getSourceText());
                 } catch (Exception e) {
-                    appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
+                    appInsights.trackTrace("translate 存储失败： " + e.getMessage() + " ，继续翻译");
                 }
             }
         }
@@ -824,7 +829,7 @@ public class PrivateKeyService {
             try {
                 translateByUser(translateContext, value, source, request, resourceId, translation, translateContext.getApiKey(), translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
-                appInsights.trackTrace("value : " + value + " 翻译失败 errors ：" + e.getMessage());
+                appInsights.trackTrace("translate value : " + value + " 翻译失败 errors ：" + e.getMessage());
                 userPrivateService.updateUsedCharsByShopName(request.getShopName(), counter.getTotalChars());
                 saveToShopify(value, translation, resourceId, request);
             }
@@ -858,7 +863,7 @@ public class PrivateKeyService {
         } else if (translateContext.getModel().equals(OPENAI_MODEL)) {
             return privateIntegration.translateByGpt(value, translateContext.getApiModel(), apiKey, translateContext.getUserPrompt(), translateContext.getShopifyRequest().getShopName(), Long.valueOf(translateContext.getRemainingChars()));
         } else {
-            appInsights.trackTrace(request.getShopName() + " 用户 model : " + translateContext.getModel() + " 不存在");
+            appInsights.trackTrace("translate " + request.getShopName() + " 用户 model : " + translateContext.getModel() + " 不存在");
             return null;
         }
     }
@@ -881,7 +886,7 @@ public class PrivateKeyService {
             // 调用 saveToShopify 方法
             saveToShopify(new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables));
         } catch (Exception e) {
-            appInsights.trackTrace(request.getShopName() + " save to Shopify errors : " + e.getMessage());
+            appInsights.trackTrace("saveToShopify " + request.getShopName() + " save to Shopify errors : " + e.getMessage());
         }
     }
 
@@ -903,7 +908,7 @@ public class PrivateKeyService {
             }
 
         } catch (JsonProcessingException | ClientException e) {
-            appInsights.trackTrace("Failed to save to Shopify: " + e.getMessage());
+            appInsights.trackTrace("saveToShopify " + request.getShopName() + "Failed to save to Shopify: " + e.getMessage());
         }
     }
 
@@ -1012,7 +1017,6 @@ public class PrivateKeyService {
             String formattedNumber2 = formatter.format(remaining);
             templateData.put("remaining_credits", formattedNumber2);
         }
-        appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中

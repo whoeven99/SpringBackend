@@ -82,7 +82,7 @@ public class PrivateIntegration {
 
             // 获取 total_tokens
             int totalTokens = obj.getJSONObject("usage").getIntValue("total_tokens");
-            appInsights.trackTrace("translateByGpt " + shopName + " 用户 openai 私有key翻译 all: " + totalTokens + " text: " + content);
+            appInsights.trackTrace("translateByGpt " + shopName + " 用户 openai 私有key翻译 all: " + totalTokens + " sourceText: " + prompt + " targetText : " + content);
             iUserPrivateTranslateService.updateUserUsedCount(OPENAI_MODEL, totalTokens, shopName, limit);
         }else {
             appInsights.trackTrace("translateByGpt errors openai 翻译失败 ： " +  responseBody);
@@ -144,11 +144,11 @@ public class PrivateIntegration {
                     userTranslate.put(shopName, translationStatusMap);
                     //将字符数存到数据库中
                     iUserPrivateTranslateService.updateUserUsedCount(GOOGLE_MODEL, text.length(), shopName, limit);
-                    appInsights.trackTrace(shopName + " 用户 私有key google翻译为 ：" + translatedText + " google  all: " + text.length());
+                    appInsights.trackTrace("translate " + shopName + " 用户 私有key google翻译为 ：" + translatedText + " google  all: " + text.length());
                     return translatedText; // 成功获取翻译，直接返回
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("翻译 API 调用失败，重试次数：" + retryCount + "，错误信息：" + e.getMessage());
+                appInsights.trackTrace("translate 翻译 API 调用失败，重试次数：" + retryCount + "，错误信息：" + e.getMessage());
             }
 
             try {
@@ -178,7 +178,7 @@ public class PrivateIntegration {
         //选择翻译html的提示词
         String targetLanguage = getLanguageName(target);
         String fullHtmlPrompt = getFullHtmlPrompt(targetLanguage, null);
-        appInsights.trackTrace("翻译 html 的提示词：" + fullHtmlPrompt);
+        appInsights.trackTrace("translate " + shopName + " 翻译 html 的提示词：" + fullHtmlPrompt);
 
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
         Document originalDoc;

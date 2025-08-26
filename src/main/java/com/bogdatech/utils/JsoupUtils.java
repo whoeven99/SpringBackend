@@ -274,7 +274,7 @@ public class JsoupUtils {
                     return translateByCiwiModel(request, counter, limitChars, prompt);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " translateByKeyPrompt errors ： " + e.getMessage());
             return translateSingleLineWithProtection(request, counter, limitChars, key, languagePackId, customKey);
         }
 
@@ -328,13 +328,13 @@ public class JsoupUtils {
 
         } else {
             prompt = getSimplePrompt(targetLanguage, languagePackId);
-            appInsights.trackTrace("普通文本：" + content + " Simple提示词: " + prompt);
+            appInsights.trackTrace("clickTranslation " + shopName + " 普通文本：" + content + " Simple提示词: " + prompt);
         }
         try {
             //对模型进行判断 , 1,ciwi 2,openai 3,deepL
             return translateByCiwiModel(request, counter, limitChars, prompt);
         } catch (Exception e) {
-            appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " checkTranslationModel errors ： " + e.getMessage());
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
         }
 
@@ -359,16 +359,16 @@ public class JsoupUtils {
         String prompt;
         if (glossaryString != null) {
             prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
-            appInsights.trackTrace("普通文本： " + content + " Glossary提示词: " + prompt);
+            appInsights.trackTrace("clickTranslation " + shopName + " 普通文本： " + content + " Glossary提示词: " + prompt);
         } else {
             prompt = getSimplePrompt(targetName, languagePackId);
-            appInsights.trackTrace("普通文本：" + content + " Simple提示词: " + prompt);
+            appInsights.trackTrace("clickTranslation " + shopName + " 普通文本：" + content + " Simple提示词: " + prompt);
         }
 
         try {
             return translateByCiwiModel(request, counter, limitChars, prompt);
         } catch (Exception e) {
-            appInsights.trackTrace("glossaryTranslationModel errors ： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage());
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
         }
     }
@@ -415,8 +415,9 @@ public class JsoupUtils {
 
         } catch (Exception e) {
             //mt翻译失败的话，用其他大模型翻译
+            appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译 errors : " + e.getMessage());
-            resultTranslation = aLiYunTranslateIntegration.singleTranslate(request.getContent(), prompt, counter, target, request.getShopName(), limitChars);
+            resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt, request.getContent(), counter, limitChars);
             return resultTranslation;
         }
     }

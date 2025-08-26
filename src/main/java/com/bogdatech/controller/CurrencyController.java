@@ -8,6 +8,8 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/currency")
 public class CurrencyController {
@@ -47,7 +49,12 @@ public class CurrencyController {
     //根据传入的货币代码和默认货币代码从rate缓存中获取对应的汇率
     @PostMapping("/getCacheData")
     public BaseResponse<Object> getCurrencyByShopId(@RequestBody CurrenciesDO request) {
-        return new BaseResponse<>().CreateSuccessResponse(purchaseService.getCacheData(request));
+        Map<String, Object> cacheData = purchaseService.getCacheData(request);
+        if (cacheData != null) {
+            return new BaseResponse<>().CreateSuccessResponse(cacheData);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
     }
 
    //对currency的初始化方法，添加默认代码

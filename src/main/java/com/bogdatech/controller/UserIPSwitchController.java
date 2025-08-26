@@ -34,6 +34,7 @@ public class UserIPSwitchController {
         try {
             return new BaseResponse<>().CreateSuccessResponse(userIPSwitchService.getSwitchId(shopName));
         } catch (Exception e) {
+            appInsights.trackException(e);
             appInsights.trackTrace("getSwitchId error: " + e.getMessage());
         }
         return new BaseResponse<>().CreateErrorResponse("fail");

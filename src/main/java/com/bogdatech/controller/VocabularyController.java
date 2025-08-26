@@ -29,6 +29,11 @@ public class VocabularyController {
         return null;
     }
 
+    /**
+     * 用于本地根据csv翻译文件写入数据库
+     * 待删除
+     * */
+
     @PostMapping("/convertDataByCsv")
     public BaseResponse<Object> convertDataByCsv(@RequestParam String filePath) {
         //读csv文件将csv的数据转换为TranslateTextDO类型的List
@@ -39,7 +44,6 @@ public class VocabularyController {
            } catch (Exception e) {
                appInsights.trackTrace("第" + i + "个文件读取失败");
                continue;
-//               throw new RuntimeException(e);
            }
 
            //将TranslateTextDO类型的List的数据转换为数据库中

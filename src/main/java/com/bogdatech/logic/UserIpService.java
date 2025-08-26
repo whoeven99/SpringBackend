@@ -52,7 +52,7 @@ public class UserIpService {
         if (userIpDO == null) {
             return false;
         }
-        appInsights.trackTrace("userIpDO = " + userIpDO);
+        appInsights.trackTrace("checkUserIp userIpDO = " + userIpDO);
 
         long currentTimes = userIpDO.getTimes();
 

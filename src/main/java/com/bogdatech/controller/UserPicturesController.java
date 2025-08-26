@@ -22,15 +22,13 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 public class UserPicturesController {
 
     private final IUserPicturesService iUserPicturesService;
-    private final UserPicturesService userPicturesService;
 
     @Autowired
-    public UserPicturesController(IUserPicturesService iUserPicturesService, UserPicturesService userPicturesService) {
+    public UserPicturesController(IUserPicturesService iUserPicturesService) {
         this.iUserPicturesService = iUserPicturesService;
-        this.userPicturesService = userPicturesService;
     }
 
-    private List<String> allowedMimeTypes = List.of(
+    private final List<String> allowedMimeTypes = List.of(
             "image/jpeg",
             "image/png",
             "image/webp",
@@ -48,7 +46,7 @@ public class UserPicturesController {
         try {
             userPicturesDO = OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("userPicturesDoJson 解析失败 errors " + e);
+            appInsights.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }
         //先判断是否有图片,有图片做上传和插入更新数据;没有图片,做插入和更新数据
         if (!file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {

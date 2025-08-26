@@ -255,7 +255,7 @@ public class UserService {
         try {
             encryptionEmail = encrypt(usersDO.getEmail());
         } catch (Exception e) {
-            appInsights.trackTrace(shopName + "加密邮箱失败");
+            appInsights.trackTrace("getEncryptedEmail " + shopName + "加密邮箱失败");
         }
 
         //更新加密邮箱

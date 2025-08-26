@@ -65,7 +65,7 @@ public class UserTypeTokenService {
                 try {
                     shopifyService.insertInitialByTranslation(shopifyRequest, key, "initial");
                 } catch (Exception e) {
-                    appInsights.trackTrace(key + "模块获取失败： " + request);
+                    appInsights.trackTrace("getUserInitToken " + shopifyRequest.getShopName() + " " + key + "模块获取失败： " + request);
                 }
             }
 
@@ -109,7 +109,8 @@ public class UserTypeTokenService {
                 getUserTranslatedToken(request, translationId, userTypeTokenService, shopifyService);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("错误原因 errors ： " + e.getMessage());
+            appInsights.trackException(e);
+            appInsights.trackTrace("startTokenCount " + request.getShopName() + "错误原因 errors ： " + e.getMessage());
         }
     }
 
@@ -140,7 +141,7 @@ public class UserTypeTokenService {
                 updateWrapper.set(key, tokens);
                 userTypeTokenService.update(null, updateWrapper);
             } else {
-                appInsights.trackTrace("Invalid column name");
+                appInsights.trackTrace("getUserTranslatedToken " + shopifyRequest.getShopName() + " Invalid column name");
             }
         }
         //token全部获取完之后修改，UserTypeToken的status==1

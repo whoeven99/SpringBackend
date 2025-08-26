@@ -71,7 +71,9 @@ public class TencentEmailService {
         emailIntegration.sendEmailByTencent(tencentSendEmailRequest);
     }
 
-    //发生主题未翻译的邮件
+    /**
+     * 发生未成功翻译的邮件
+     * */
     public Boolean sendEmailByOnline(String shopName, String source, String target) {
         Map<String, String> templateData = new HashMap<>();
         templateData.put(SHOP_NAME, shopName);

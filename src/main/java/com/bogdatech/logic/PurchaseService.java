@@ -24,9 +24,12 @@ public class PurchaseService {
     public Map<String, Object> getCacheData(CurrenciesDO currencyDO){
         //获取对应货币代码符号和国旗图片
         Map<String, Object> currencyWithSymbol = currenciesService.getCurrencyWithSymbol(currencyDO);
+        if (currencyWithSymbol == null ){
+            return null;
+        }
         String defaultCurrencyCode = currenciesService.getCurrencyCodeByPrimaryStatusAndShopName(currencyDO.getShopName());
         //当exchangeRate为Auto时，从缓存中获取对应货币代码数据数据
-        if (currencyWithSymbol.get("primaryStatus").equals(0) && currencyWithSymbol.get("exchangeRate").equals("Auto")) {
+        if (currencyWithSymbol.get("primaryStatus").equals(0) && "Auto".equals(currencyWithSymbol.get("exchangeRate"))) {
             if (rateMap.isEmpty()){
                 return currencyWithSymbol;
             }

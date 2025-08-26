@@ -49,9 +49,9 @@ public class APGDescriptionGenerationController {
         try {
             product = generateDescriptionService.getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
             description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit, product);
-            appInsights.trackTrace(shopName + " generateDescription: " + description);
+            appInsights.trackTrace("generateDescription" + shopName + " generateDescription: " + description);
         } catch (ClientException e) {
-            appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
+            appInsights.trackTrace("generateDescription shopName : " + shopName + " generateDescription errors : " + e.getMessage());
 //            appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         }

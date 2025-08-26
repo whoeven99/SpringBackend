@@ -197,7 +197,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = result.getUsage().getInputTokens();
             Integer outputTokens = result.getUsage().getOutputTokens();
             int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
-            appInsights.trackTrace("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            appInsights.trackTrace("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
