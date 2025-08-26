@@ -132,7 +132,7 @@ public class PrivateKeyService {
         }
 
         //判断Google等机器模型的语言
-        if (modelFlag.equals(GOOGLE_MODEL) && LANGUAGE_CODES.contains(clickTranslateRequest.getSource())) {
+        if (modelFlag.equals(GOOGLE_MODEL) && (LANGUAGE_CODES.contains(clickTranslateRequest.getSource()) || LANGUAGE_CODES.contains(clickTranslateRequest.getTarget()[0])) ) {
            return new BaseResponse<>().CreateErrorResponse("Google cannot translate this language");
         }
 
