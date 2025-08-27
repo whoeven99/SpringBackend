@@ -57,7 +57,7 @@ public class PrivateIntegration {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + apiKey);
         headers.set("Content-Type", "application/json");
-        appInsights.trackTrace(shopName + " 用户的 apiKey: " + apiKey);
+//        appInsights.trackTrace(shopName + " 用户的 apiKey: " + apiKey);
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
         body.put("messages", new Object[]{
