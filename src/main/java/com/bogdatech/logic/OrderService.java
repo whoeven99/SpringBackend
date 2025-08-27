@@ -2,14 +2,9 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogdatech.Service.ICharsOrdersService;
-import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.Service.IUserTrialsService;
-import com.bogdatech.Service.IUsersService;
-import com.bogdatech.entity.DO.CharsOrdersDO;
-import com.bogdatech.entity.DO.TranslationCounterDO;
-import com.bogdatech.entity.DO.UserTrialsDO;
-import com.bogdatech.entity.DO.UsersDO;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.bogdatech.Service.*;
+import com.bogdatech.entity.DO.*;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
@@ -36,14 +31,16 @@ public class OrderService {
     private final EmailIntegration emailIntegration;
     private final ITranslationCounterService translationCounterService;
     private final IUserTrialsService iUserTrialsService;
+    private final IUserSubscriptionsService iUserSubscriptionsService;
 
     @Autowired
-    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService, IUserTrialsService iUserTrialsService) {
+    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService) {
         this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.translationCounterService = translationCounterService;
         this.iUserTrialsService = iUserTrialsService;
+        this.iUserSubscriptionsService = iUserSubscriptionsService;
     }
 
     public Boolean insertOrUpdateOrder(CharsOrdersDO charsOrdersDO) {
@@ -90,7 +87,9 @@ public class OrderService {
     public Boolean sendSubscribeSuccessEmail(String shopName, String subId, int feeType) {
         //判断是否是免费试用,根据用户额度的数据查看
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
-
+        //修改用户计划表里面用户feeType
+        boolean update = iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName).set(UserSubscriptionsDO::getFeeType, feeType));
+        appInsights.trackTrace("sendSubscribeSuccessEmail 用户 " + shopName + " 修改用户计划表里面用户feeType " + update + " feeType为" + feeType + " subId为" + subId);
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(shopName);
         //根据shopName获取订单信息
