@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +38,8 @@ public class OrderService {
     private final IUserTrialsService iUserTrialsService;
 
     @Autowired
-    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService, IUserTrialsService iUserTrialsService){
-    this.charsOrdersService = charsOrdersService;
+    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService, IUserTrialsService iUserTrialsService) {
+        this.charsOrdersService = charsOrdersService;
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.translationCounterService = translationCounterService;
@@ -89,16 +90,28 @@ public class OrderService {
     public Boolean sendSubscribeSuccessEmail(String shopName, String subId, int feeType) {
         //判断是否是免费试用,根据用户额度的数据查看
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
-        if (userTrialsDO != null && !userTrialsDO.getIsTrialExpired()) {
-            appInsights.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
-            return false;
-        }
+
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(shopName);
         //根据shopName获取订单信息
         CharsOrdersDO userData = charsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>().eq(CharsOrdersDO::getId, subId));
         if (userData == null) {
             return false;
+        }
+        if (userTrialsDO != null && !userTrialsDO.getIsTrialExpired()) {
+        //发送免费试用邮件
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("user", usersDO.getFirstName());
+        templateData.put("new_plan_name", userData.getName());
+        //从免费试用表里面获取对应开始和结束时间
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String trialStart = sdf.format(userTrialsDO.getTrialStart());
+        String trialEnd = sdf.format(userTrialsDO.getTrialEnd());
+        templateData.put("Start date", trialStart + " UTC");
+        templateData.put("End date", trialEnd + " UTC");
+        emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146220L, templateData, PLAN_TRIALS_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        appInsights.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
+        return false;
         }
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());

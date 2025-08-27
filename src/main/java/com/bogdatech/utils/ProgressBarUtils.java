@@ -16,73 +16,73 @@ public class ProgressBarUtils {
         progressData.put("TranslateType", 1); // 1代表私有key
         switch (resourceType) {
             case SHOP:
-                progressData.put("RemainingQuantity", 10);
+                progressData.put("RemainingQuantity", 90);
                 return progressData;
             case PAGE:
-                progressData.put("RemainingQuantity", 20);
-                return progressData;
-            case ONLINE_STORE_THEME:
-                progressData.put("RemainingQuantity", 35);
-                return progressData;
-            case PRODUCT:
-                progressData.put("RemainingQuantity", 55);
-                return progressData;
-            case PRODUCT_OPTION:
-                progressData.put("RemainingQuantity", 58);
-                return progressData;
-            case PRODUCT_OPTION_VALUE:
-                progressData.put("RemainingQuantity", 60);
-                return progressData;
-            case COLLECTION:
-                progressData.put("RemainingQuantity", 62);
-                return progressData;
-            case METAFIELD:
-                progressData.put("RemainingQuantity", 68);
-                return progressData;
-            case ARTICLE:
-                progressData.put("RemainingQuantity", 70);
-                return progressData;
-            case BLOG:
-                progressData.put("RemainingQuantity", 75);
-                return progressData;
-            case MENU:
-                progressData.put("RemainingQuantity", 77);
-                return progressData;
-            case LINK:
-                progressData.put("RemainingQuantity", 78);
-                return progressData;
-            case FILTER:
-                progressData.put("RemainingQuantity", 79);
-                return progressData;
-            case METAOBJECT:
                 progressData.put("RemainingQuantity", 80);
                 return progressData;
+            case ONLINE_STORE_THEME:
+                progressData.put("RemainingQuantity", 65);
+                return progressData;
+            case PRODUCT:
+                progressData.put("RemainingQuantity", 45);
+                return progressData;
+            case PRODUCT_OPTION:
+                progressData.put("RemainingQuantity", 42);
+                return progressData;
+            case PRODUCT_OPTION_VALUE:
+                progressData.put("RemainingQuantity", 40);
+                return progressData;
+            case COLLECTION:
+                progressData.put("RemainingQuantity", 38);
+                return progressData;
+            case METAFIELD:
+                progressData.put("RemainingQuantity", 32);
+                return progressData;
+            case ARTICLE:
+                progressData.put("RemainingQuantity", 30);
+                return progressData;
+            case BLOG:
+                progressData.put("RemainingQuantity", 25);
+                return progressData;
+            case MENU:
+                progressData.put("RemainingQuantity", 23);
+                return progressData;
+            case LINK:
+                progressData.put("RemainingQuantity", 22);
+                return progressData;
+            case FILTER:
+                progressData.put("RemainingQuantity", 21);
+                return progressData;
+            case METAOBJECT:
+                progressData.put("RemainingQuantity", 20);
+                return progressData;
             case ONLINE_STORE_THEME_JSON_TEMPLATE:
-                progressData.put("RemainingQuantity", 81);
+                progressData.put("RemainingQuantity", 19);
                 return progressData;
             case ONLINE_STORE_THEME_SECTION_GROUP:
-                progressData.put("RemainingQuantity", 82);
+                progressData.put("RemainingQuantity", 18);
                 return progressData;
             case ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS:
-                progressData.put("RemainingQuantity", 83);
+                progressData.put("RemainingQuantity", 17);
                 return progressData;
             case PACKING_SLIP_TEMPLATE:
-                progressData.put("RemainingQuantity", 85);
+                progressData.put("RemainingQuantity", 15);
                 return progressData;
             case DELIVERY_METHOD_DEFINITION:
-                progressData.put("RemainingQuantity", 86);
+                progressData.put("RemainingQuantity", 14);
                 return progressData;
             case SHOP_POLICY:
-                progressData.put("RemainingQuantity", 88);
+                progressData.put("RemainingQuantity", 12);
                 return progressData;
             case PAYMENT_GATEWAY:
-                progressData.put("RemainingQuantity", 95);
+                progressData.put("RemainingQuantity", 15);
                 return progressData;
             case SELLING_PLAN:
-                progressData.put("RemainingQuantity", 97);
+                progressData.put("RemainingQuantity", 13);
                 return progressData;
             case SELLING_PLAN_GROUP:
-                progressData.put("RemainingQuantity", 99);
+                progressData.put("RemainingQuantity", 1);
                 return progressData;
 
             default:
