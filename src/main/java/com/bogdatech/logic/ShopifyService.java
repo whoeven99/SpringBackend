@@ -1137,7 +1137,7 @@ public class ShopifyService {
             String env = System.getenv("ApplicationEnv");
             if ("prod".equals(env) || "dev".equals(env)) {
                 String s = registerTransaction(request, body);
-                appInsights.trackTrace("saveToShopify 用户： " + cloudServiceRequest.getShopName() + " saveToShopify : " + s);
+                appInsights.trackTrace("saveToShopify 用户： " + cloudServiceRequest.getShopName() + " target: " + cloudServiceRequest.getTarget() + " saveToShopify : " + s);
             } else {
                 sendShopifyPost("translate/insertTranslatedText", requestBody);
             }

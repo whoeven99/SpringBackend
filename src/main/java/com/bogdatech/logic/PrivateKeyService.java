@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
-import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
+import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.RabbitMqTranslateService.*;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
@@ -133,7 +133,7 @@ public class PrivateKeyService {
 
         //判断Google等机器模型的语言
         if (modelFlag.equals(GOOGLE_MODEL) && (LANGUAGE_CODES.contains(clickTranslateRequest.getSource()) || LANGUAGE_CODES.contains(clickTranslateRequest.getTarget()[0])) ) {
-           return new BaseResponse<>().CreateErrorResponse("Google cannot translate this language");
+           return new BaseResponse<>().CreateErrorResponse(GOOGLE_RANGE);
         }
 
         String apiKey;
@@ -165,7 +165,7 @@ public class PrivateKeyService {
         List<Integer> integers = iTranslatesService.readStatusInTranslatesByShopName(request.getShopName());
         for (Integer integer : integers) {
             if (integer == 2) {
-                return new BaseResponse<>().CreateSuccessResponse(HAS_TRANSLATED);
+                return new BaseResponse<>().CreateSuccessResponse(USER_TRANSLATING);
             }
         }
 
@@ -606,7 +606,7 @@ public class PrivateKeyService {
         // 以用户数据进行判断
         UserPrivateTranslateDO userData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiName, apiName));
         if (userData.getUsedToken() >= userData.getTokenLimit()) {
-            translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
+            translatesService.updateTranslateStatus(shopName, 5, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
             throw new ClientException(CHARACTER_LIMIT);
         }
     }

@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class SubscriptionVO {
     private Integer userSubscriptionPlan;
     private String currentPeriodEnd;
-    private String feeType;
+    private Integer feeType;
 }
