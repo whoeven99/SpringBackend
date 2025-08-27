@@ -161,7 +161,7 @@ public class LiquidHtmlTranslatorUtils {
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + request.getShopName() + "递归处理节点报错： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + request.getShopName() + " 递归处理节点报错： " + e.getMessage());
         }
     }
 
@@ -416,9 +416,6 @@ public class LiquidHtmlTranslatorUtils {
         // Step 1: 记录开头和结尾的空格数量
         int leadingSpaces = countLeadingSpaces(sourceText);
         int trailingSpaces = countTrailingSpaces(sourceText);
-        if (trailingSpaces == 0) {
-            return sourceText;
-        }
         // Step 2: 去除首尾空格，准备翻译
         String textToTranslate = sourceText.trim();
 
@@ -436,20 +433,25 @@ public class LiquidHtmlTranslatorUtils {
         }
 //        String targetString = textToTranslate + 1;
         // Step 4: 恢复开头和结尾空格
-        StringBuilder finalResult = new StringBuilder();
-        for (int i = 0; i < leadingSpaces; i++) {
-            finalResult.append(" ");
+        StringBuilder finalResult= new StringBuilder();
+        if (leadingSpaces != 0){
+            finalResult.append(" ".repeat(Math.max(0, leadingSpaces)));
         }
-        finalResult.append(targetString);
-        for (int i = 0; i < trailingSpaces; i++) {
-            finalResult.append(" ");
+
+        if (trailingSpaces != 0){
+            finalResult.append(targetString);
+            finalResult.append(" ".repeat(Math.max(0, trailingSpaces)));
         }
-//        appInsights.trackTrace("finalResult: " + "'" + finalResult.toString() + "'");
+
+        appInsights.trackTrace("clickTranslation " + request.getShopName() + " finalResult: " + "'" + finalResult + "'" + " sourceText: " + sourceText);
 
         return finalResult.toString();
     }
 
     private static int countLeadingSpaces(String s) {
+        if (s == null || s.isEmpty()) {
+            return 0;
+        }
         int count = 0;
         for (char c : s.toCharArray()) {
             if (c == ' ') {

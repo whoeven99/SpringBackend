@@ -740,6 +740,7 @@ public class RabbitMqTranslateService {
                 //对翻译后的html做格式处理
                 htmlTranslation = normalizeHtml(htmlTranslation);
             }
+
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " html translation errors : " + e.getMessage());
             shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);
