@@ -192,18 +192,23 @@ public class ShopifyController {
             appInsights.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
         }
+        if (userSubscriptionsDO.getFeeType() == null ){
+            userSubscriptionsDO.setFeeType(0);
+        }
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
         if ("ciwishop.myshopify.com".equals(shopName)) {
             subscriptionVO.setUserSubscriptionPlan(6);
             subscriptionVO.setCurrentPeriodEnd(null);
+            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 
         //如果是userSubscriptionPlan是1和2，传null
         if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2) {
             subscriptionVO.setCurrentPeriodEnd(null);
+            subscriptionVO.setFeeType(0);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 
@@ -213,6 +218,7 @@ public class ShopifyController {
             //根据shopName获取订阅计划过期的时间
             UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
             subscriptionVO.setCurrentPeriodEnd(String.valueOf(userTrialsDO.getTrialEnd()));
+            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 
@@ -245,6 +251,7 @@ public class ShopifyController {
             infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), API_VERSION_LAST, "en", query));
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
+            subscriptionVO.setFeeType(0);
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
@@ -254,9 +261,11 @@ public class ShopifyController {
         JSONObject node = root.getJSONObject("node");
         if (node == null || node.isEmpty()) {
             //用户卸载，计划会被取消，但不确定其他情况
+            subscriptionVO.setFeeType(0);
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);
         }else {
+            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
             String currentPeriodEnd = node.getString("currentPeriodEnd");
             subscriptionVO.setCurrentPeriodEnd(currentPeriodEnd);
         }
