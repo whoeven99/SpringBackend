@@ -606,7 +606,7 @@ public class PrivateKeyService {
         // 以用户数据进行判断
         UserPrivateTranslateDO userData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiName, apiName));
         if (userData.getUsedToken() >= userData.getTokenLimit()) {
-            translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
+            translatesService.updateTranslateStatus(shopName, 5, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
             throw new ClientException(CHARACTER_LIMIT);
         }
     }
