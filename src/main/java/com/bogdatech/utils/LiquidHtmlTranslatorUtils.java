@@ -354,7 +354,7 @@ public class LiquidHtmlTranslatorUtils {
             //睡眠10s
             try {
                 Thread.sleep(10000);
-            }catch (Exception exception){
+            } catch (Exception exception) {
                 appInsights.trackTrace("clickTranslation " + shopName + " sleep 失败 ");
             }
             String aLiString = aLiYunTranslateIntegration.singleTranslate(cleanedHtml, fullHtmlPrompt, counter, target, shopName, limitChars);
@@ -398,7 +398,7 @@ public class LiquidHtmlTranslatorUtils {
             //睡眠10s
             try {
                 Thread.sleep(10000);
-            }catch (Exception exception){
+            } catch (Exception exception) {
                 appInsights.trackTrace("clickTranslation " + shopName + " sleep 失败 ");
             }
             String aLiString = aLiYunTranslateIntegration.singleTranslate(text, fullPolicyHtmlPrompt, counter, target, shopName, limitChars);
@@ -433,13 +433,14 @@ public class LiquidHtmlTranslatorUtils {
         }
 //        String targetString = textToTranslate + 1;
         // Step 4: 恢复开头和结尾空格
-        StringBuilder finalResult= new StringBuilder();
-        if (leadingSpaces != 0){
+        StringBuilder finalResult = new StringBuilder();
+        if (leadingSpaces != 0) {
             finalResult.append(" ".repeat(Math.max(0, leadingSpaces)));
         }
 
-        if (trailingSpaces != 0){
-            finalResult.append(targetString);
+        finalResult.append(targetString);
+
+        if (trailingSpaces != 0) {
             finalResult.append(" ".repeat(Math.max(0, trailingSpaces)));
         }
 
