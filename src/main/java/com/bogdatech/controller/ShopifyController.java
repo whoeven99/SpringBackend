@@ -308,7 +308,11 @@ public class ShopifyController {
     //修改多条文本
     @PostMapping("/updateItems")
     public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
+        if (registerTransactionRequest.isEmpty()){
+            return new BaseResponse<>().CreateErrorResponse("registerTransactionRequest is empty");
+        }
         String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
+        appInsights.trackTrace("updateItems 用户 " + registerTransactionRequest.get(0).getShopName() + " 返回数据 response: " + s);
         if (s.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {

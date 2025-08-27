@@ -50,6 +50,7 @@ import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
+import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -1745,9 +1746,19 @@ public class TranslateService {
                 .like(TranslateTasksDO::getPayload, "\"target\":\"" + target + "\"")
                 .orderByAsc(TranslateTasksDO::getCreatedAt));
         if (list.isEmpty()) {
-            progressData.put("RemainingQuantity", 0);
-            progressData.put("TotalQuantity", 0);
-            return progressData;
+            //根据用户当前的模块从静态数据做判断
+            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target));
+            if (translatesDO == null){
+                appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 数据库中不存在该条数据");
+                return null;
+            }
+            if (translatesDO.getResourceType() == null) {
+                appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 数据库中该条数据的resourceType数据为null");
+                progressData.put("RemainingQuantity", 0);
+                progressData.put("TotalQuantity", 0);
+                return progressData;
+            }
+            return getProgressBar(translatesDO.getResourceType());
         }
 
         for (TranslateTasksDO task : list) {
@@ -1758,6 +1769,7 @@ public class TranslateService {
         }
         progressData.put("RemainingQuantity", other.get());
         progressData.put("TotalQuantity", list.get(0).getAllTasks());
+        appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 正在翻译的进度条： " + progressData);
         return progressData;
     }
 }
