@@ -18,6 +18,7 @@ public class MailChimpConstants {
     public static final String CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT = "Confirmation of Successful Credits Purchase｜Ciwi-translator";
     public static final String ONLINE_NOT_TRANSLATION_SUBJECT = "Translate Task Reminder Not Complete｜Ciwi-translator";
     public static final String PLAN_UPGRADE_SUCCESSFUL = "Plan Upgrade Successful!｜Ciwi-translator";
+    public static final String PLAN_TRIALS_SUCCESSFUL = "You’re now on your 5-day free trial｜Ciwi-translator";
     public static final String EMAIL_IP_RUNNING_OUT = "IP Geolocation Quota is Running Low｜Ciwi-translator";
     public static final String EMAIL_IP_OUT = "IP Geolocation Limit Reached｜Ciwi-translator";
     public static final String APG_INIT_EMAIL = "Create High-Converting Product Descriptions in 10 Seconds | Ciwi.ai-Product Content";
