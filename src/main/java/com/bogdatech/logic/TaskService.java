@@ -21,10 +21,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.constants.TranslateConstants.*;
@@ -432,6 +429,28 @@ public class TaskService {
             //初始化用户状态
             userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
             userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        }
+    }
+
+    public void printTranslatingAndWaitTranslatingData() {
+        //直接从数据库里获取数据，然后做处理。 先获取，再一起打印
+        List<String> translatingShopName = null;
+        List<String> waitTranslatingShopName = null;
+        try {
+            translatingShopName = translateTasksService.listStatus2ShopName();
+            waitTranslatingShopName = translateTasksService.listStatus0ShopName();
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+
+        if (translatingShopName != null) {
+            //打印正在翻译的用户数量
+            appInsights.trackMetric("Ciwi-Translator translating shopName", translatingShopName.size());
+        }
+
+        if (waitTranslatingShopName != null) {
+            //打印等待翻译的用户数量
+            appInsights.trackMetric("Ciwi-Translator wait translating shopName", waitTranslatingShopName.size());
         }
     }
 }

@@ -78,4 +78,14 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
                 .and(wrapper -> wrapper.eq(TranslateTasksDO::getStatus, 0).or().eq(TranslateTasksDO::getStatus, 2))
                 .set(TranslateTasksDO::getStatus, 7)) > 0;
     }
+
+    @Override
+    public List<String> listStatus2ShopName() {
+        return baseMapper.listStatus2ShopName();
+    }
+
+    @Override
+    public List<String> listStatus0ShopName() {
+        return baseMapper.listStatus0ShopName();
+    }
 }
