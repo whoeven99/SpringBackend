@@ -73,14 +73,13 @@ public class PrivateKeyService {
     private final IVocabularyService vocabularyService;
     private final SecretClient secretClient;
     private final IUserTypeTokenService userTypeTokenService;
-    private final ChatGptByOpenaiIntegration chatGptByOpenaiIntegration;
     private final IUserPrivateTranslateService iUserPrivateTranslateService;
     private final GlossaryService glossaryService;
     private final RabbitMqTranslateService rabbitMqTranslateService;
     private final PrivateIntegration privateIntegration;
 
     @Autowired
-    public PrivateKeyService(UserPrivateService userPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, GlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService, ChatGptByOpenaiIntegration chatGptByOpenaiIntegration, IUserPrivateTranslateService iUserPrivateTranslateService, RabbitMqTranslateService rabbitMqTranslateService, PrivateIntegration privateIntegration) {
+    public PrivateKeyService(UserPrivateService userPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, GlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService, IUserPrivateTranslateService iUserPrivateTranslateService, RabbitMqTranslateService rabbitMqTranslateService, PrivateIntegration privateIntegration) {
         this.userPrivateService = userPrivateService;
         this.iTranslatesService = iTranslatesService;
         this.usersService = usersService;
@@ -95,7 +94,6 @@ public class PrivateKeyService {
         this.vocabularyService = vocabularyService;
         this.secretClient = secretClient;
         this.userTypeTokenService = userTypeTokenService;
-        this.chatGptByOpenaiIntegration = chatGptByOpenaiIntegration;
         this.iUserPrivateTranslateService = iUserPrivateTranslateService;
         this.rabbitMqTranslateService = rabbitMqTranslateService;
         this.privateIntegration = privateIntegration;
@@ -204,17 +202,6 @@ public class PrivateKeyService {
             case "0" -> 0;
             case "1" -> 1;
             default -> -1;
-        };
-    }
-
-    /**
-     * 大模型初始化
-     * 目前只有openai
-     */
-    public Object initAiModel(String translateSettings1, String apiKey) {
-        return switch (translateSettings1) {
-            case "1" -> chatGptByOpenaiIntegration.initOpenAIClient(apiKey);
-            default -> null;
         };
     }
 

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
@@ -39,22 +40,29 @@ public class RabbitMqTask {
     public void scanAndSubmitTasks() {
         //查询 0 状态的记录，过滤掉 shop 已被锁定的
         List<TranslateTasksDO> tasks = new ArrayList<>();
+        ThreadPoolExecutor tpe = null;
         try {
             tasks = translateTasksService.find0StatusTasks();
+            tpe = (ThreadPoolExecutor) executorService;
         } catch (Exception e) {
             appInsights.trackTrace("获取task集合失败 errors");
         }
         if (tasks.isEmpty()) {
             return;
         }
+
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
             //判断PROCESSING_SHOPS里面是否有该用户，是跳过，否的话，翻译
             if (!PROCESSING_SHOPS.contains(shopName)) {
                 PROCESSING_SHOPS.add(shopName);
+                ThreadPoolExecutor finalTpe = tpe;
                 executorService.submit(() -> {
                     if (tryLock(shopName)) {
                         appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName() + "shop: " + SHOP_LOCKS.get(shopName));
+                        if (finalTpe != null){
+                            appInsights.trackMetric("Number of active translating threads", finalTpe.getActiveCount());
+                        }
                         try {
                             // 只执行一个线程处理这个 shopName
                             RabbitMqTranslateVO vo = OBJECT_MAPPER.readValue(task.getPayload(), RabbitMqTranslateVO.class);

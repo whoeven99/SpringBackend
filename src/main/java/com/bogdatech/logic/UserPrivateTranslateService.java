@@ -6,16 +6,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.IUserPrivateTranslateService;
 import com.bogdatech.entity.DO.UserPrivateTranslateDO;
-import com.bogdatech.integration.ChatGptByOpenaiIntegration;
 import com.bogdatech.integration.PrivateIntegration;
-import com.bogdatech.utils.CharacterCountUtils;
-import com.openai.client.OpenAIClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.UserPrivateUtils.getApiKey;
-import static com.bogdatech.utils.UserPrivateUtils.maskString;
 
 @Service
 public class UserPrivateTranslateService {

@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
+import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 
@@ -91,6 +92,7 @@ public class HunYuanIntegration {
                     long promptTokens = resp.getUsage().getPromptTokens();
                     Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
                     userTranslate.put(shopName, translationStatusMap);
+                    printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
                     appInsights.trackTrace("hunYuanTranslate " + shopName + " 用户 token hunyuan: " + sourceText + " all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                     translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
                     countUtils.addChars(totalToken);

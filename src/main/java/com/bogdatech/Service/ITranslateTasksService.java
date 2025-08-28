@@ -23,4 +23,8 @@ public interface ITranslateTasksService extends IService<TranslateTasksDO> {
     Boolean listBeforeEmailTask(String shopName, String taskId);
 
     Boolean updateStatus0And2To7(String shopName);
+
+    List<String> listStatus2ShopName();
+
+    List<String> listStatus0ShopName();
 }

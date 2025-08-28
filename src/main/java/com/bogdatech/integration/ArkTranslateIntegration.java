@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
+import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 
@@ -100,6 +101,7 @@ public class ArkTranslateIntegration {
             userTranslate.put(shopName, translationStatusMap);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
+            printTranslateCost(totalTokensInt, (int) promptTokens, (int)completionTokens);
             appInsights.trackTrace("clickTranslation douBaoTranslate " + shopName + " 用户 token doubao: " + sourceText + " target : " + response + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalTokensInt, limitChars);
             countUtils.addChars(totalTokensInt);
@@ -132,6 +134,7 @@ public class ArkTranslateIntegration {
             int totalTokensInt = (int) totalTokens;
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
+            printTranslateCost(totalTokensInt, (int) promptTokens, (int)completionTokens);
             appInsights.trackTrace("token doubao: " + sourceText + "all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
             countUtils.addChars(totalTokensInt);
             return response.toString();
