@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 
+import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -101,6 +102,8 @@ public class TranslateApiIntegration {
             JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
+            int totalToken = encodedQuery.length();
+            printTranslateCost(totalToken, totalToken, totalToken);
         } catch (Exception e) {
             appInsights.trackTrace("信息：" + e.getMessage());
         }

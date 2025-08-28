@@ -5,6 +5,7 @@ import com.bogdatech.entity.DO.TranslateTasksDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import java.util.List;
 
 @Mapper
 public interface TranslateTasksMapper extends BaseMapper<TranslateTasksDO> {
@@ -24,4 +25,23 @@ public interface TranslateTasksMapper extends BaseMapper<TranslateTasksDO> {
     
 """)
     int listBeforeEmailTask(String shopName, String taskId);
+
+    @Select("""
+            SELECT DISTINCT shop_name
+            FROM TranslateTasks
+            WHERE Status = 2;
+            """)
+    List<String> listStatus2ShopName();
+
+    @Select("""
+            SELECT DISTINCT shop_name
+            FROM TranslateTasks
+            WHERE Status = 0
+              AND shop_name NOT IN (
+                  SELECT DISTINCT shop_name
+                  FROM TranslateTasks
+                  WHERE Status = 2
+              );
+            """)
+    List<String> listStatus0ShopName();
 }

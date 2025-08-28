@@ -11,6 +11,7 @@ import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.userTranslate;
+import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 
@@ -34,13 +35,14 @@ public class DeepLIntegration {
     public String translateByDeepL(String sourceText , String targetCode, CharacterCountUtils counter, String shopName, Integer limitChars) {
         //target要做映射
         client = new DeepLClient(API_KEY);
-        TextResult result = null;
+        TextResult result;
         try {
             String target = DEEPL_LANGUAGE_MAP.get(targetCode);
             result = client.translateText(sourceText, null, target);
             appInsights.trackTrace("result: " + result);
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
+            printTranslateCost(totalToken, totalToken, totalToken);
             appInsights.trackTrace( "clickTranslation translateByDeepL 用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
             userTranslate.put(shopName, translationStatusMap);

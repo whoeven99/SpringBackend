@@ -27,6 +27,7 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.constants.TranslateConstants.QWEN_VL_LAST;
 import static com.bogdatech.logic.TranslateService.userTranslate;
+import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.SwitchModelUtils.switchModel;
@@ -60,12 +61,6 @@ public class ALiYunTranslateIntegration {
         }
     }
 
-
-    //单文本翻译的提示词
-    public static String cueWordSingle(String target, String type) {
-        return "Translate the following text into " + target + ". Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
-    }
-
     //单文本翻译的提示词(用具体语言而不是语言代码)
 
     /**
@@ -97,7 +92,7 @@ public class ALiYunTranslateIntegration {
                 .messages(Arrays.asList(systemMsg, userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .build();
-        String content = null;
+        String content;
         int totalToken;
         try {
             GenerationResult call = gen.call(param);
@@ -108,6 +103,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("singleTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
@@ -153,6 +149,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace( "clickTranslation 用户： " + shopName +" token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(translateText, 2);
             userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
@@ -197,6 +194,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = result.getUsage().getInputTokens();
             Integer outputTokens = result.getUsage().getOutputTokens();
             int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             appInsights.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            appInsights.trackTrace("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
@@ -236,6 +234,7 @@ public class ALiYunTranslateIntegration {
 //        int totalToken = 10;
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);

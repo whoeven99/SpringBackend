@@ -27,8 +27,8 @@ import static com.bogdatech.logic.PrivateKeyService.GOOGLE_MODEL;
 import static com.bogdatech.logic.PrivateKeyService.OPENAI_MODEL;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
+import static com.bogdatech.utils.AppInsightsUtils.printPrivateTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.CaseSensitiveUtils.extractKeywords;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PlaceholderUtils.getFullHtmlPrompt;
@@ -82,6 +82,7 @@ public class PrivateIntegration {
 
             // 获取 total_tokens
             int totalTokens = obj.getJSONObject("usage").getIntValue("total_tokens");
+            printPrivateTranslateCost(totalTokens);
             appInsights.trackTrace("translateByGpt " + shopName + " 用户 openai 私有key翻译 all: " + totalTokens + " sourceText: " + prompt + " targetText : " + content);
             iUserPrivateTranslateService.updateUserUsedCount(OPENAI_MODEL, totalTokens, shopName, limit);
         }else {
@@ -119,6 +120,7 @@ public class PrivateIntegration {
             String responseBody = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             jsonObject = JSONObject.parseObject(responseBody);
             // 获取翻译结果
+            printPrivateTranslateCost(encodedQuery.length());
             JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
