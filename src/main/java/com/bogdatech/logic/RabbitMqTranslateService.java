@@ -742,7 +742,7 @@ public class RabbitMqTranslateService {
             }
 
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " html translation errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " html translation errors : " + e.getMessage() + " sourceText: " + sourceText);
             shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);
             return;
         }
@@ -815,7 +815,7 @@ public class RabbitMqTranslateService {
             try {
                 translateGeneralTextData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
             } catch (Exception e) {
-                appInsights.trackTrace("clickTranslation " + shopName + " value : " + value + " 翻译失败 errors ：" + e.getMessage());
+                appInsights.trackTrace("clickTranslation " + shopName + " value : " + value + " 翻译失败 errors ：" + e.getMessage() + " sourceText: " + value);
             }
         }
     }
@@ -865,7 +865,7 @@ public class RabbitMqTranslateService {
             // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
             vocabularyService.InsertOne(rabbitMqTranslateVO.getTarget(), targetString, rabbitMqTranslateVO.getSource(), value);
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " 存储失败 errors ： " + e.getMessage() + " ，继续翻译");
+            appInsights.trackTrace("clickTranslation " + shopName + " 存储失败 errors ： " + e.getMessage() + " ，sourceText: " + value);
         }
     }
 
@@ -963,7 +963,7 @@ public class RabbitMqTranslateService {
             shopifyService.saveToShopify(finalText, translation, resourceId, shopifyRequest);
             printTranslation(finalText, value, translation, shopifyRequest.getShopName(), modeType, resourceId, source);
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " glossaryTranslationModel errors " + e);
+            appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " glossaryTranslationModel errors " + e + " sourceText: " + value);
             shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
         }
     }

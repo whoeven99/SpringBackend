@@ -368,7 +368,7 @@ public class JsoupUtils {
         try {
             return translateByCiwiModel(request, counter, limitChars, prompt);
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage() + " sourceText: " + content);
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
         }
     }
@@ -739,7 +739,7 @@ public class JsoupUtils {
             //目标语言是中文的，用qwen-max翻译
             return translateByCiwiModel(request, counter, limitChars, languagePackId);
         } catch (Exception e) {
-            appInsights.trackTrace("翻译handle数据报错 errors ： " + e.getMessage());
+            appInsights.trackTrace("翻译handle数据报错 errors ： " + e.getMessage() + " sourceText: " + content);
             appInsights.trackException(e);
             return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target, shopName, limitChars);
         }
