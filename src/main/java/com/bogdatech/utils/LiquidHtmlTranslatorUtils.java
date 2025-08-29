@@ -31,7 +31,6 @@ import static com.bogdatech.utils.PlaceholderUtils.getPolicyPrompt;
 public class LiquidHtmlTranslatorUtils {
 
     private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
-    private final ArkTranslateIntegration arkTranslateIntegration;
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
     //    // 不翻译的Liquid变量模式
@@ -54,17 +53,14 @@ public class LiquidHtmlTranslatorUtils {
     private final ChatGptIntegration chatGptIntegration;
 
     @Autowired
-    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, ArkTranslateIntegration arkTranslateIntegration, JsoupUtils jsoupUtils, ChatGptIntegration chatGptIntegration) {
+    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, JsoupUtils jsoupUtils, ChatGptIntegration chatGptIntegration) {
         this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
-        this.arkTranslateIntegration = arkTranslateIntegration;
         this.jsoupUtils = jsoupUtils;
         this.chatGptIntegration = chatGptIntegration;
     }
 
     /**
      * 主翻译方法
-     *
-     * @param
      * @param html 输入的HTML文本
      * @return 翻译后的HTML文本
      */
@@ -74,7 +70,6 @@ public class LiquidHtmlTranslatorUtils {
             return html;
         }
 
-//        appInsights.trackTrace("现在正在翻译： "  + html);
         try {
             // 判断输入是否包含 <html> 标签
             boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
@@ -449,7 +444,7 @@ public class LiquidHtmlTranslatorUtils {
         return finalResult.toString();
     }
 
-    private static int countLeadingSpaces(String s) {
+    public static int countLeadingSpaces(String s) {
         if (s == null || s.isEmpty()) {
             return 0;
         }
@@ -464,7 +459,7 @@ public class LiquidHtmlTranslatorUtils {
         return count;
     }
 
-    private static int countTrailingSpaces(String s) {
+    public static int countTrailingSpaces(String s) {
         if (s == null || s.isEmpty()) {
             return 0;
         }

@@ -124,7 +124,7 @@ public class TranslateApiIntegration {
                     return translatedText; // 成功获取翻译，直接返回
                 }
             } catch (Exception e) {
-                appInsights.trackTrace("翻译 API 调用失败，重试次数：" + retryCount + "，错误信息：" + e.getMessage());
+                appInsights.trackTrace("翻译 API 调用失败，重试次数：" + retryCount + "，错误信息：" + e.getMessage() + " sourceText: " + request.getContent() + " target: " + request.getTarget());
             }
 
             try {

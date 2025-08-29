@@ -98,11 +98,11 @@ public class HunYuanIntegration {
                     countUtils.addChars(totalToken);
                     return targetText;
                 } else {
-                    appInsights.trackTrace("hunYuanTranslate 重试 Hunyuan errors " + attempt);
+                    appInsights.trackTrace("hunYuanTranslate 重试 Hunyuan errors " + attempt + " sourceText: " + sourceText + " prompt: " + prompt);
                 }
 
             } catch (TencentCloudSDKException e) {
-                appInsights.trackTrace("hunYuanTranslate hunyuan errors : " + e + " resp_id: " + e.getRequestId());
+                appInsights.trackTrace("hunYuanTranslate hunyuan errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
                 if (attempt == maxRetries) {
                     throw new RuntimeException("hunYuanTranslate errors Failed after " + maxRetries + " attempts", e);
                 }
