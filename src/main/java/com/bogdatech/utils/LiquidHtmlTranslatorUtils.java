@@ -109,7 +109,7 @@ public class LiquidHtmlTranslatorUtils {
 
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation " + request.getShopName() + " new html errors : " + e);
+            appInsights.trackTrace("clickTranslation " + request.getShopName() + " new html errors : " + e + " sourceText: " + html);
             return html;
         }
     }

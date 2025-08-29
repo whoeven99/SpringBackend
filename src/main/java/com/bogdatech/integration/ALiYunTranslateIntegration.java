@@ -203,7 +203,7 @@ public class ALiYunTranslateIntegration {
             counter.addChars(totalToken);
             return (String) content.get(0).get("text");
         } catch (Exception e) {
-            appInsights.trackTrace("调用百炼视觉模型报错信息 errors ： " + e.getMessage());
+            appInsights.trackTrace("调用百炼视觉模型报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             appInsights.trackException(e);
             return null;
         }
@@ -240,7 +240,7 @@ public class ALiYunTranslateIntegration {
 //            appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);
         } catch (Exception e) {
-            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
+            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             return null;
 //            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
         }
