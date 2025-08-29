@@ -477,7 +477,7 @@ public class RabbitMqTranslateService {
                 }
                 String key = content.path("key").asText(null);
                 String outdated = content.path("outdated").asText(null);
-                if (outdated == null || "false".equals(outdated)) {
+                if ("false".equals(outdated)) {
                     partTranslateTextDOSet.remove(key);
                 }
 
