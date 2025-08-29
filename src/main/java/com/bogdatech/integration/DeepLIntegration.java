@@ -50,7 +50,7 @@ public class DeepLIntegration {
             counter.addChars(totalToken);
             return targetText;
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation translateByDeepL DeepL翻译失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation translateByDeepL DeepL翻译失败 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
             appInsights.trackException(e);
         }
         return sourceText;
