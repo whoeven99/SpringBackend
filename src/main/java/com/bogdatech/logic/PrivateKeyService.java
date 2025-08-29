@@ -13,7 +13,6 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -21,6 +20,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.CannotCreateTransactionException;
@@ -30,7 +31,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static com.bogdatech.constants.MailChimpConstants.*;
@@ -43,7 +43,6 @@ import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.UserTypeTokenService.getUserTranslatedToken;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
-import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
@@ -65,7 +64,6 @@ public class PrivateKeyService {
     private final IUsersService usersService;
     private final EmailIntegration emailIntegration;
     private final IEmailService emailService;
-    private final JsoupUtils jsoupUtils;
     private final ShopifyService shopifyService;
     private final ITranslatesService translatesService;
     private final TestingEnvironmentIntegration testingEnvironmentIntegration;
@@ -79,13 +77,12 @@ public class PrivateKeyService {
     private final PrivateIntegration privateIntegration;
 
     @Autowired
-    public PrivateKeyService(UserPrivateService userPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, JsoupUtils jsoupUtils, GlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService, IUserPrivateTranslateService iUserPrivateTranslateService, RabbitMqTranslateService rabbitMqTranslateService, PrivateIntegration privateIntegration) {
+    public PrivateKeyService(UserPrivateService userPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, GlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService, IUserPrivateTranslateService iUserPrivateTranslateService, RabbitMqTranslateService rabbitMqTranslateService, PrivateIntegration privateIntegration) {
         this.userPrivateService = userPrivateService;
         this.iTranslatesService = iTranslatesService;
         this.usersService = usersService;
         this.emailIntegration = emailIntegration;
         this.emailService = emailService;
-        this.jsoupUtils = jsoupUtils;
         this.glossaryService = glossaryService;
         this.shopifyService = shopifyService;
         this.translatesService = translatesService;
@@ -103,6 +100,7 @@ public class PrivateKeyService {
     private static final String PRIVATE_KEY = "private_key";
     public static final Integer GOOGLE_MODEL = 0;
     public static final Integer OPENAI_MODEL = 1;
+    private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00\uDFFF])+");
 
     /**
      * 私有key翻译前的判断
@@ -130,8 +128,8 @@ public class PrivateKeyService {
         }
 
         //判断Google等机器模型的语言
-        if (modelFlag.equals(GOOGLE_MODEL) && (LANGUAGE_CODES.contains(clickTranslateRequest.getSource()) || LANGUAGE_CODES.contains(clickTranslateRequest.getTarget()[0])) ) {
-           return new BaseResponse<>().CreateErrorResponse(GOOGLE_RANGE);
+        if (modelFlag.equals(GOOGLE_MODEL) && (LANGUAGE_CODES.contains(clickTranslateRequest.getSource()) || LANGUAGE_CODES.contains(clickTranslateRequest.getTarget()[0]))) {
+            return new BaseResponse<>().CreateErrorResponse(GOOGLE_RANGE);
         }
 
         String apiKey;
@@ -453,7 +451,7 @@ public class PrivateKeyService {
                 // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
                 vocabularyService.InsertOne(request.getTarget(), translatedText, source, value);
             } catch (Exception e) {
-                appInsights.trackTrace("translateMetafield存储失败 errors ： " + e.getMessage() + " ，继续翻译");
+                appInsights.trackTrace("translate 存储失败 errors ： " + e.getMessage() + " ，继续翻译");
             }
             return;
         }
@@ -483,12 +481,12 @@ public class PrivateKeyService {
                     // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
                     vocabularyService.InsertOne(request.getTarget(), translatedValue, source, value);
                 } catch (Exception e) {
-                    appInsights.trackTrace("translateMetafield存储失败 errors ： " + e.getMessage() + " ，继续翻译");
+                    appInsights.trackTrace("translate 存储失败 errors ： " + e.getMessage() + " ，继续翻译");
                 }
             } catch (Exception e) {
                 //存原数据到shopify本地
                 shopifyService.saveToShopify(value, translation, resourceId, request);
-                appInsights.trackTrace("LIST errors 错误原因： " + e.getMessage());
+                appInsights.trackTrace("translate LIST errors 错误原因： " + e.getMessage());
             }
         }
     }
@@ -605,179 +603,61 @@ public class PrivateKeyService {
         String target = shopifyRequest.getTarget();
         String accessToken = shopifyRequest.getAccessToken();
 
-        if (translateContext.getModel().equals(GOOGLE_MODEL)) {
-            appInsights.trackTrace("translate " + shopName + " google 跳过html的翻译!!!");
-            return;
-        }
+        for (TranslateTextDO translateTextDO : htmlData) {
+            //根据模块选择翻译方法，先做普通翻译
+            //判断是否停止翻译
+            if (checkIsStopped(shopName)) {
+                return;
+            }
 
-        if (translateContext.getModel().equals(OPENAI_MODEL)) {
-            for (TranslateTextDO translateTextDO : htmlData) {
-                //根据模块选择翻译方法，先做普通翻译
-                //判断是否停止翻译
-                if (checkIsStopped(shopName)) {
-                    return;
-                }
+            String value = translateTextDO.getSourceText();
+            String resourceId = translateTextDO.getResourceId();
+            String source = translateContext.getSource();
+            String key = translateTextDO.getTextKey();
+            String digest = translateTextDO.getDigest();
+            Map<String, Object> translation = createTranslationMap(target, key, digest);
 
-                String value = translateTextDO.getSourceText();
-                String resourceId = translateTextDO.getResourceId();
-                String source = translateContext.getSource();
-                String key = translateTextDO.getTextKey();
-                String digest = translateTextDO.getDigest();
-                Map<String, Object> translation = createTranslationMap(target, key, digest);
+            //判断是否达到额度限制
+            updateCharsWhenExceedLimit(shopName, translateContext.getModel(), new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-                //判断是否达到额度限制
-                updateCharsWhenExceedLimit(shopName, translateContext.getModel(), new TranslateRequest(0, shopName, accessToken, source, target, null));
+            //开始翻译
+            //缓存翻译和数据库翻译
+            if (rabbitMqTranslateService.cacheOrDatabaseTranslateData(value, source, translation, resourceId, shopifyRequest)) {
+                continue;
+            }
 
-                //开始翻译
-                //缓存翻译和数据库翻译
-                if (rabbitMqTranslateService.cacheOrDatabaseTranslateData(value, source, translation, resourceId, shopifyRequest)) {
+            String modelHtml;
+            //判断是google翻译还是openai翻译
+            if (translateContext.getModel().equals(GOOGLE_MODEL)) {
+                modelHtml = translateGooglePrivateHtml(translateTextDO.getSourceText(), target, shopName, translateContext.getApiKey(), translateContext.getRemainingChars());
+            } else if (translateContext.getModel().equals(OPENAI_MODEL)) {
+                //大模型 html翻译
+                modelHtml = privateIntegration.translatePrivateNewHtml(translateTextDO.getSourceText(), target, translateContext.getApiKey(), translateContext.getApiModel(), shopName, Long.valueOf(translateContext.getRemainingChars()));
+            } else {
+                appInsights.trackTrace("translate 私有 html：" + value + " 没有找到对应的翻译api modelHtml : " + translateContext.getModel());
+                continue;
+            }
+
+            if (translateContext.getTranslateResource().getResourceType().equals(METAFIELD)) {
+                //对翻译后的html做格式处理
+                modelHtml = normalizeHtml(modelHtml);
+            }
+            shopifyService.saveToShopify(modelHtml, translation, resourceId, shopifyRequest);
+            printTranslation(modelHtml, translateTextDO.getSourceText(), translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
+            //如果翻译数据小于255，存到数据库
+            try {
+                if (modelHtml.length() >= 255) {
                     continue;
                 }
-
-                //大模型 html翻译
-                String modelHtml = privateIntegration.translatePrivateNewHtml(translateTextDO.getSourceText(), target, translateContext.getApiKey(), translateContext.getApiModel(), shopName, Long.valueOf(translateContext.getRemainingChars()));
-                if (translateContext.getTranslateResource().getResourceType().equals(METAFIELD)) {
-                    //对翻译后的html做格式处理
-                    modelHtml = normalizeHtml(modelHtml);
-                }
-                shopifyService.saveToShopify(modelHtml, translation, resourceId, shopifyRequest);
-                printTranslation(modelHtml, translateTextDO.getSourceText(), translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
-                //如果翻译数据小于255，存到数据库
-                try {
-                    if (modelHtml.length() >= 255) {
-                        continue;
-                    }
-                    // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-                    vocabularyService.InsertOne(target, modelHtml, source, translateTextDO.getSourceText());
-                } catch (Exception e) {
-                    appInsights.trackTrace("translate 存储失败： " + e.getMessage() + " ，继续翻译");
-                }
+                // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
+                vocabularyService.InsertOne(target, modelHtml, source, translateTextDO.getSourceText());
+            } catch (Exception e) {
+                appInsights.trackTrace("translate 存储失败： " + e.getMessage() + " ，继续翻译");
             }
         }
+
     }
 
-    //翻译词汇表的html文本
-    public String translateGlossaryHtmlText(TranslateRequest request, CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String apiKey) {
-        String html = request.getContent();
-        // 解析HTML文档
-        Document doc = Jsoup.parse(html);
-
-        // 提取需要翻译的文本
-        Map<Element, List<String>> elementTextMap = jsoupUtils.extractTextsToTranslate(doc);
-        // 翻译文本
-        Map<Element, List<String>> translatedTextMap = translateGlossaryTexts(elementTextMap, request, counter, keyMap, keyMap0, apiKey);
-        // 替换原始文本为翻译后的文本
-        jsoupUtils.replaceOriginalTextsWithTranslated(doc, translatedTextMap);
-        return doc.body().html();
-    }
-
-    // 对文本进行翻译（词汇表）
-    public Map<Element, List<String>> translateGlossaryTexts(Map<Element, List<String>> elementTextMap, TranslateRequest request,
-                                                             CharacterCountUtils counter, Map<String, String> keyMap, Map<String, String> keyMap0, String apiKey) {
-        Map<Element, List<String>> translatedTextMap = new HashMap<>();
-        for (Map.Entry<Element, List<String>> entry : elementTextMap.entrySet()) {
-            Element element = entry.getKey();
-            List<String> texts = entry.getValue();
-            List<String> translatedTexts = new ArrayList<>();
-            for (String text : texts) {
-                String translated = translateSingleLineWithProtection(text, request, counter, keyMap, keyMap0, apiKey);
-                translatedTexts.add(translated);
-            }
-            translatedTextMap.put(element, translatedTexts); // 保存翻译后的文本和 alt 属性
-        }
-        return translatedTextMap;
-    }
-
-    /**
-     * 翻译单行文本，保护变量、URL和符号
-     */
-    private String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
-                                                     Map<String, String> keyMap, Map<String, String> keyMap0, String apiKey) {
-        // 检查缓存
-        String translatedCache = translateSingleLine(text, request.getTarget());
-        if (translatedCache != null) {
-            return translatedCache;
-        }
-
-        // 处理文本，保护不翻译的部分
-        String translatedText = processTextWithProtection(text, (cleanedText) -> {
-            String translated = translateSingleLine(cleanedText, request.getTarget());
-            if (translated != null) {
-                return translated;
-            }
-
-            // 使用谷歌翻译
-            counter.addChars(googleCalculateToken(cleanedText));
-            Map<String, String> placeholderMap = new HashMap<>();
-            String updateText = extractKeywords(cleanedText, placeholderMap, keyMap, keyMap0, request.getSource());
-            request.setContent(updateText);
-            String targetString = privateIntegration.getGoogleTranslationWithRetry(updateText, apiKey, request.getTarget(), request.getShopName(), null);
-            String finalText = restoreKeywords(targetString, placeholderMap);
-            addData(request.getTarget(), cleanedText, finalText);
-            return finalText;
-        });
-
-        addData(request.getTarget(), text, translatedText);
-        return translatedText;
-    }
-
-    /**
-     * 处理文本，保护不翻译的变量、URL和符号
-     */
-    private String processTextWithProtection(String text, Function<String, String> translator) {
-        StringBuilder result = new StringBuilder();
-        int lastEnd = 0;
-
-        List<Pattern> patterns = Arrays.asList(
-                URL_PATTERN,
-//                VARIABLE_PATTERN,
-//                CUSTOM_VAR_PATTERN
-//                ,
-//                LIQUID_CONDITION_PATTERN,
-//                ARRAY_VAR_PATTERN
-                SYMBOL_PATTERN
-        );
-
-        List<MatchRange> matches = new ArrayList<>();
-        for (Pattern pattern : patterns) {
-            Matcher matcher = pattern.matcher(text);
-            while (matcher.find()) {
-                matches.add(new MatchRange(matcher.start(), matcher.end(), matcher.group()));
-            }
-        }
-
-        matches.sort(Comparator.comparingInt(m -> m.start));
-
-        for (MatchRange match : matches) {
-            if (match.start > lastEnd) {
-                String toTranslate = text.substring(lastEnd, match.start);
-                String cleanedText = cleanTextFormat(toTranslate);
-                if (!cleanedText.isEmpty()) {
-                    if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
-                        result.append(cleanedText); // 纯符号不翻译
-                    } else {
-                        result.append(translator.apply(cleanedText)); // 普通文本翻译
-                    }
-                }
-            }
-            result.append(match.content); // 保留变量或URL
-            lastEnd = match.end;
-        }
-
-        if (lastEnd < text.length()) {
-            String remaining = text.substring(lastEnd);
-            String cleanedText = cleanTextFormat(remaining);
-            if (!cleanedText.isEmpty()) {
-                if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
-                    result.append(cleanedText);
-                } else {
-                    result.append(translator.apply(cleanedText));
-                }
-            }
-        }
-
-        return result.toString();
-    }
 
     //对不同的数据使用不同的翻译api
     private void translateDataByAPI(Set<TranslateTextDO> plainTextData,
@@ -1009,5 +889,244 @@ public class PrivateKeyService {
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
 
+    }
+
+    /**
+     * 私有keyGoogle翻译方法
+     * 暂时先简单的改下，具体的后面再做
+     * @param html 输入的HTML文本
+     * @param target 目标语言
+     * @param shopName 店铺名称
+     * @param apiKey Google翻译API密钥
+     * @param limitChars 限制字符数
+     * @return 翻译后的HTML文本
+     */
+    public String translateGooglePrivateHtml(String html, String target, String shopName, String apiKey, Integer limitChars) {
+        // 检查输入是否有效
+        if (html == null || html.trim().isEmpty()) {
+            return html;
+        }
+
+        try {
+            // 判断输入是否包含 <html> 标签
+            boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
+
+            if (hasHtmlTag) {
+                // 如果有 <html> 标签，按完整文档处理
+                Document doc = Jsoup.parse(html);
+                if (doc == null) {
+                    return html;
+                }
+
+                // 获取 <html> 元素并修改 lang 属性
+                Element htmlTag = doc.selectFirst("html");
+                if (htmlTag != null) {
+                    htmlTag.attr("lang", target);
+                }
+
+                processNode(doc.body(), target, shopName, apiKey, limitChars);
+                String result = doc.outerHtml(); // 返回完整的HTML结构
+                result = isHtmlEntity(result);
+                return result;
+            } else {
+                // 如果没有 <html> 标签，作为片段处理
+                Document doc = Jsoup.parseBodyFragment(html);
+                Element body = doc.body();
+                processNode(body, target, shopName, apiKey, limitChars);
+                // 只返回子节点内容，不包含 <body>
+                StringBuilder result = new StringBuilder();
+                for (Node child : body.childNodes()) {
+                    result.append(child.toString());
+                }
+
+                String output = result.toString();
+                output = isHtmlEntity(output);
+                return output;
+            }
+
+        } catch (Exception e) {
+            appInsights.trackException(e);
+            appInsights.trackTrace("translate " + shopName + " new html errors : " + e);
+            return html;
+        }
+    }
+
+    /**
+     * 递归处理节点
+     *
+     * @param node 当前节点
+     */
+    private void processNode(Node node, String target, String shopName, String apiKey, Integer limitChars) {
+        try {
+            // 如果是元素节点
+            if (node instanceof Element) {
+                Element element = (Element) node;
+                String tagName = element.tagName().toLowerCase();
+
+                // 检查是否为不翻译的标签
+                if (NO_TRANSLATE_TAGS.contains(tagName)) {
+                    return;
+                }
+
+                // 属性不翻译，保持原样
+                element.attributes().forEach(attr -> {
+                });
+
+                // 递归处理子节点
+                for (Node child : element.childNodes()) {
+                    processNode(child, target, shopName, apiKey, limitChars);
+                }
+            }
+            // 如果是文本节点
+            else if (node instanceof TextNode) {
+                TextNode textNode = (TextNode) node;
+                String text = textNode.getWholeText();
+
+                // 如果文本为空或只有空白字符，跳过
+                if (text.trim().isEmpty()) {
+                    return;
+                }
+
+                // 使用缓存处理文本
+
+                String translatedText = translateTextWithCache(text, target, shopName, apiKey, limitChars);
+                textNode.text(translatedText);
+            }
+        } catch (Exception e) {
+            appInsights.trackTrace("translate " + shopName + " 递归处理节点报错： " + e.getMessage());
+        }
+    }
+
+    /**
+     * 使用缓存处理文本内容，保护变量和URL
+     *
+     * @param text 输入文本
+     * @return 翻译后的文本
+     */
+    private String translateTextWithCache(String text, String target, String shopName, String apiKey, Integer limitChars) {
+        // 检查缓存
+        String translated = translateSingleLine(text, target);
+        if (translated != null) {
+            return translated;
+        }
+
+        // 处理文本中的变量和URL
+        String translatedText = translateTextWithProtection(text, target, shopName, apiKey, limitChars);
+
+        // 存入缓存
+        addData(target, text, translatedText);
+        return translatedText;
+    }
+
+    /**
+     * 处理文本内容，保护变量和URL
+     *
+     * @param text 输入文本
+     * @return 翻译后的文本
+     */
+    private String translateTextWithProtection(String text, String target, String shopName, String apiKey, Integer limitChars) {
+        StringBuilder result = new StringBuilder();
+        int lastEnd = 0;
+
+        // 合并所有需要保护的模式
+        List<Pattern> patterns = Arrays.asList(
+                URL_PATTERN,
+                SYMBOL_PATTERN,
+                EMOJI_PATTERN
+        );
+
+        List<MatchRange> matches = new ArrayList<>();
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                matches.add(new MatchRange(matcher.start(), matcher.end(), matcher.group()));
+            }
+        }
+
+        // 按位置排序
+        matches.sort(Comparator.comparingInt(m -> m.start));
+
+        // 处理所有匹配项之间的文本
+        for (MatchRange match : matches) {
+            // 翻译匹配项之前的文本
+            if (match.start > lastEnd) {
+                String toTranslate = text.substring(lastEnd, match.start);
+                String cleanedText = cleanTextFormat(toTranslate); // 清理格式
+                //对特殊符号进行处理
+                if (cleanedText.matches("\\p{Zs}+")) {
+                    result.append(cleanedText);
+                    continue;
+                }
+                if (!cleanedText.trim().isEmpty()) { // 避免翻译空字符串
+                    String targetString;
+                    try {
+                        targetString = addSpaceAfterTranslated(cleanedText, target, shopName, apiKey, limitChars);
+                        result.append(targetString);
+                    } catch (ClientException e) {
+                        // 如果AI翻译失败，则使用谷歌翻译
+                        result.append(cleanedText);
+                        continue;
+                    }
+                } else {
+                    result.append(toTranslate); // 保留原始空白
+                }
+            }
+            // 保留匹配到的变量或URL，不翻译
+            result.append(match.content);
+            lastEnd = match.end;
+        }
+
+        // 处理剩余文本
+        if (lastEnd < text.length()) {
+            String remaining = text.substring(lastEnd);
+            String cleanedText = cleanTextFormat(remaining); // 清理格式
+
+            if (cleanedText.matches("\\p{Zs}+")) {
+                result.append(cleanedText);
+                return result.toString();
+            }
+            if (!cleanedText.trim().isEmpty() && !cleanedText.matches("\\s*")) {
+                String targetString;
+                try {
+                    targetString = addSpaceAfterTranslated(cleanedText, target, shopName, apiKey, limitChars);
+                    result.append(targetString);
+                } catch (ClientException e) {
+                    result.append(cleanedText);
+                }
+            } else {
+                result.append(remaining);
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * 手动添加空格
+     */
+    public String addSpaceAfterTranslated(String sourceText, String target, String shopName, String apiKey, Integer limitChars) {
+        // Step 1: 记录开头和结尾的空格数量
+        int leadingSpaces = countLeadingSpaces(sourceText);
+        int trailingSpaces = countTrailingSpaces(sourceText);
+        // Step 2: 去除首尾空格，准备翻译
+        String textToTranslate = sourceText.trim();
+
+        // Step 3: google翻译操作
+        appInsights.trackTrace("translate " + shopName + " textToTranslate: " + "'" + textToTranslate + "'" + " sourceText: " + sourceText + " apiKey: " + apiKey + " limitChars: " + limitChars);
+        String targetString = privateIntegration.getGoogleTranslationWithRetry(textToTranslate, apiKey, target, shopName, Long.valueOf(limitChars));
+
+        // Step 4: 恢复开头和结尾空格
+        StringBuilder finalResult = new StringBuilder();
+        if (leadingSpaces != 0) {
+            finalResult.append(" ".repeat(Math.max(0, leadingSpaces)));
+        }
+
+        finalResult.append(targetString);
+
+        if (trailingSpaces != 0) {
+            finalResult.append(" ".repeat(Math.max(0, trailingSpaces)));
+        }
+
+        appInsights.trackTrace("translate " + shopName + " finalResult: " + "'" + finalResult + "'" + " sourceText: " + sourceText);
+        return finalResult.toString();
     }
 }
