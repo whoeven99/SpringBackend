@@ -300,7 +300,7 @@ public class TranslateController {
     @PostMapping("/deleteFromTranslates")
     public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
         Boolean b = translatesService.deleteFromTranslates(request);
-        appInsights.trackTrace("insertTranslatedText 用户删除翻译语言： " + request.getShopName());
+        appInsights.trackTrace("insertTranslatedText 用户删除翻译语言： " + request);
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
@@ -423,8 +423,8 @@ public class TranslateController {
      * 用于获取进度条的相关数据
      * */
     @PostMapping("/getProgressData")
-    public BaseResponse<Object> getProgressData(@RequestParam String shopName, @RequestParam String target) {
-        Map<String, Integer> progressData = translateService.getProgressData(shopName, target);
+    public BaseResponse<Object> getProgressData(@RequestParam String shopName, @RequestParam String target, @RequestParam String source) {
+        Map<String, Integer> progressData = translateService.getProgressData(shopName, target, source);
         if (progressData != null){
             return new BaseResponse<>().CreateSuccessResponse(progressData);
         }
