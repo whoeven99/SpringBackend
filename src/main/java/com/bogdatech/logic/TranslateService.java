@@ -1736,7 +1736,7 @@ public class TranslateService {
         }
     }
 
-    public Map<String, Integer> getProgressData(String shopName, String target, String source) {
+    public Map<String, Integer> getProgressData(String shopName, String target) {
         Map<String, Integer> progressData = new HashMap<>();
         AtomicReference<Integer> other = new AtomicReference<>(0);
         //从数据库中升序获取所有的同shopName和target对应的数据
@@ -1747,7 +1747,7 @@ public class TranslateService {
                 .orderByAsc(TranslateTasksDO::getCreatedAt));
         if (list.isEmpty()) {
             //根据用户当前的模块从静态数据做判断
-            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
+            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target));
             if (translatesDO == null){
                 appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 数据库中不存在该条数据");
                 return null;
