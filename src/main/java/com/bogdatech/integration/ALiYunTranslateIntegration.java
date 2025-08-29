@@ -13,6 +13,8 @@ import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.*;
 import com.alibaba.dashscope.tokenizers.Tokenizer;
 import com.alibaba.dashscope.tokenizers.TokenizerFactory;
+import com.aliyun.alimt20181012.Client;
+import com.aliyun.alimt20181012.models.*;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -24,8 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogdatech.constants.TranslateConstants.QWEN_VL_LAST;
+import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -44,20 +45,19 @@ public class ALiYunTranslateIntegration {
         this.iapgUserCounterService = iapgUserCounterService;
     }
 
-    public com.aliyun.alimt20181012.Client createClient() {
-        // 工程代码泄露可能会导致 AccessKey 泄露，并威胁账号下所有资源的安全性。以下代码示例仅供参考。
-        // 建议使用更安全的 STS 方式，更多鉴权访问方式请参见：https://help.aliyun.com/document_detail/378657.html。
-        com.aliyun.teaopenapi.models.Config config = new com.aliyun.teaopenapi.models.Config()
-                // 必填，请确保代码运行环境设置了环境变量 ALIBABA_CLOUD_ACCESS_KEY_ID。
-                .setAccessKeyId(System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"))
-                // 必填，请确保代码运行环境设置了环境变量 ALIBABA_CLOUD_ACCESS_KEY_SECRET。
-                .setAccessKeySecret(System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"));
-        // Endpoint 请参考 https://api.aliyun.com/product/alimt
-        config.endpoint = "mt.cn-hangzhou.aliyuncs.com";
+    public static com.aliyun.alimt20181012.Client createClient() {
         try {
-            return new com.aliyun.alimt20181012.Client(config);
+            com.aliyun.teaopenapi.models.Config credentialConfig = new com.aliyun.teaopenapi.models.Config();
+            credentialConfig.setType("access_key");
+            credentialConfig.setAccessKeyId(System.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID"));
+            credentialConfig.setAccessKeySecret(System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"));
+            credentialConfig.setRegionId("cn-hangzhou");
+            credentialConfig.setEndpoint("mt.cn-hangzhou.aliyuncs.com");
+           return new com.aliyun.alimt20181012.Client(credentialConfig);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            appInsights.trackException(e);
+            appInsights.trackTrace("createClient 调用报错： " + e.getMessage());
+            return null;
         }
     }
 
@@ -155,11 +155,43 @@ public class ALiYunTranslateIntegration {
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             countUtils.addChars(totalToken);
         } catch (Exception e) {
-//            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
+            appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + shopName + " 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + translateText);
         }
         return content;
 
+    }
+
+    /**
+     * 调用qwen图片机器翻译
+     * */
+    public String callWithPic(String source, String target, String picUrl, String shopName, Integer limitChars) {
+        Client client = createClient();
+        com.aliyun.alimt20181012.models.TranslateImageRequest translateImageRequest = new com.aliyun.alimt20181012.models.TranslateImageRequest()
+                .setImageUrl(picUrl)
+                .setTargetLanguage(target)
+                .setSourceLanguage(source)
+                .setField("e-commerce");
+        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
+
+        String targetPicUrl = null;
+        try {
+            if (client == null) {
+                appInsights.trackTrace("callWithPic " + shopName + " 百炼翻译报错信息 client is null picUrl : " + picUrl);
+                return null;
+            }
+            TranslateImageResponse translateImageResponse = client.translateImageWithOptions(translateImageRequest, runtime);
+            TranslateImageResponseBody body = translateImageResponse.getBody();
+            // 打印 body
+            appInsights.trackTrace("callWithPic " + shopName + " 图片返回message : " + body.getMessage() + " picUrl : " + body.getData().finalImageUrl + " RequestId: " + body.getRequestId() + " Code: " + body.getCode());
+            translationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
+            targetPicUrl = body.getData().finalImageUrl;
+        } catch (Exception error) {
+            appInsights.trackException(error);
+            appInsights.trackTrace("callWithPic " + shopName + " 百炼翻译报错信息 errors ： " + error.getMessage() + " picUrl : " + picUrl);
+        }
+
+        return targetPicUrl;
     }
 
     public static Integer calculateBaiLianToken(String text) {

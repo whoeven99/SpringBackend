@@ -8,6 +8,7 @@ import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.TranslateApiIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -72,6 +73,9 @@ public class TranslateService {
     private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
     private final JsoupUtils jsoupUtils;
     private final ITranslateTasksService translateTasksService;
+    private final IUsersService iUsersService;
+    private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    private final ITranslationCounterService iTranslationCounterService;
 
     @Autowired
     public TranslateService(
@@ -84,7 +88,7 @@ public class TranslateService {
             AILanguagePackService aiLanguagePackService,
             IVocabularyService vocabularyService,
             UserTypeTokenService userTypeTokensService,
-            TencentEmailService tencentEmailService, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, JsoupUtils jsoupUtils, ITranslateTasksService translateTasksService) {
+            TencentEmailService tencentEmailService, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, JsoupUtils jsoupUtils, ITranslateTasksService translateTasksService, IUsersService iUsersService, ALiYunTranslateIntegration aLiYunTranslateIntegration, ITranslationCounterService iTranslationCounterService) {
         this.translateApiIntegration = translateApiIntegration;
         this.shopifyService = shopifyService;
         this.translatesService = translatesService;
@@ -98,6 +102,9 @@ public class TranslateService {
         this.tencentEmailService = tencentEmailService;
         this.jsoupUtils = jsoupUtils;
         this.translateTasksService = translateTasksService;
+        this.iUsersService = iUsersService;
+        this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
+        this.iTranslationCounterService = iTranslationCounterService;
     }
 
     public static ConcurrentHashMap<String, ConcurrentHashMap<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
@@ -1736,7 +1743,7 @@ public class TranslateService {
         }
     }
 
-    public Map<String, Integer> getProgressData(String shopName, String target) {
+    public Map<String, Integer> getProgressData(String shopName, String target, String source) {
         Map<String, Integer> progressData = new HashMap<>();
         AtomicReference<Integer> other = new AtomicReference<>(0);
         //从数据库中升序获取所有的同shopName和target对应的数据
@@ -1747,7 +1754,7 @@ public class TranslateService {
                 .orderByAsc(TranslateTasksDO::getCreatedAt));
         if (list.isEmpty()) {
             //根据用户当前的模块从静态数据做判断
-            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target));
+            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
             if (translatesDO == null){
                 appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 数据库中不存在该条数据");
                 return null;
@@ -1771,6 +1778,20 @@ public class TranslateService {
         progressData.put("TotalQuantity", list.get(0).getAllTasks());
         appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 正在翻译的进度条： " + progressData);
         return progressData;
+    }
+
+    public String imageTranslate(String sourceCode, String targetCode, String imageUrl, String shopName, String accessToken) {
+        appInsights.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + sourceCode + " targetCode " + targetCode + " imageUrl " + imageUrl + " accessToken " + accessToken);
+        //获取用户token，判断是否和数据库中一致再选择是否调用
+        UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+        if (!usersDO.getAccessToken().equals(accessToken)) {
+            return null;
+        }
+
+        //获取用户最大额度限制
+        Integer maxCharsByShopName = iTranslationCounterService.getMaxCharsByShopName(shopName);
+        //调用图片翻译方法
+        return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName);
     }
 }
 
