@@ -107,7 +107,7 @@ public class ALiYunTranslateIntegration {
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
-            appInsights.trackTrace("singleTranslate 百炼翻译报错信息 errors ： " + e.getMessage());
+            appInsights.trackTrace("singleTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
             return text;
         }
@@ -156,7 +156,7 @@ public class ALiYunTranslateIntegration {
             countUtils.addChars(totalToken);
         } catch (NoApiKeyException | InputRequiredException e) {
 //            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
-            appInsights.trackTrace("clickTranslation " + shopName + " 百炼翻译报错信息 errors ： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + translateText);
         }
         return content;
 

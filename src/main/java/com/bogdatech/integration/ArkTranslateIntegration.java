@@ -107,7 +107,7 @@ public class ArkTranslateIntegration {
             countUtils.addChars(totalTokensInt);
             return response.toString();
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " douBaoTranslate 豆包翻译失败 errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " douBaoTranslate 豆包翻译失败 errors : " + e.getMessage() + " sourceText : " + sourceText);
             appInsights.trackException(e);
             return sourceText;
         }

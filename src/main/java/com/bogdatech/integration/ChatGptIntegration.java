@@ -86,11 +86,11 @@ public class ChatGptIntegration {
                 return content;
             } catch (Exception e) {
                 retryCount++;
-                appInsights.trackTrace("clickTranslation " + request.getShopName() + " chatWithGpt Error occurred while calling GPT: " + e.getMessage());
+                appInsights.trackTrace("clickTranslation " + request.getShopName() + " chatWithGpt Error occurred while calling GPT: " + e.getMessage() + " sourceText: " + sourceText + " prompt: " + prompt);
                 appInsights.trackException(e);
                 if (retryCount >= 2){
                         // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
-                        throw new ClientException("clickTranslation " + request.getShopName() + " chatWithGpt Translation openai exception errors ");
+                        throw new ClientException("clickTranslation " + request.getShopName() + " chatWithGpt Translation openai exception errors " + " sourceText: " + sourceText + " prompt: " + prompt);
                     }
             }
         }
