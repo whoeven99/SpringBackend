@@ -300,7 +300,7 @@ public class TranslateController {
     @PostMapping("/deleteFromTranslates")
     public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
         Boolean b = translatesService.deleteFromTranslates(request);
-        appInsights.trackTrace("insertTranslatedText 用户删除翻译语言： " + request.getShopName());
+        appInsights.trackTrace("insertTranslatedText 用户删除翻译语言： " + request);
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {

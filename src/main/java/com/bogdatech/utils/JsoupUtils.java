@@ -334,7 +334,7 @@ public class JsoupUtils {
             //对模型进行判断 , 1,ciwi 2,openai 3,deepL
             return translateByCiwiModel(request, counter, limitChars, prompt);
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " checkTranslationModel errors ： " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " checkTranslationModel errors ： " + e.getMessage() + " sourceText: " + content);
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
         }
 
@@ -416,7 +416,7 @@ public class JsoupUtils {
         } catch (Exception e) {
             //mt翻译失败的话，用其他大模型翻译
             appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译 errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译 errors : " + e.getMessage() + " sourceText: " + content);
             resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt, request.getContent(), counter, limitChars);
             return resultTranslation;
         }
