@@ -109,7 +109,7 @@ public class LiquidHtmlTranslatorUtils {
 
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation " + request.getShopName() + " new html errors : " + e);
+            appInsights.trackTrace("clickTranslation " + request.getShopName() + " new html errors : " + e + " sourceText: " + html);
             return html;
         }
     }
@@ -345,7 +345,7 @@ public class LiquidHtmlTranslatorUtils {
 
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation " + shopName + " html 翻译失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + shopName + " html 翻译失败 errors : " + e + "source: " + cleanedHtml);
             //睡眠10s
             try {
                 Thread.sleep(10000);
@@ -389,7 +389,7 @@ public class LiquidHtmlTranslatorUtils {
         try {
             return aLiYunTranslateIntegration.singleTranslate(text, fullPolicyHtmlPrompt, counter, target, shopName, limitChars);
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " 翻译 政策 html 翻译失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + shopName + " 翻译 政策 html 翻译失败 errors : " + e + " sourceText: " + text);
             //睡眠10s
             try {
                 Thread.sleep(10000);

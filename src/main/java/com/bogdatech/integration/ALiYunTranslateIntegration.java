@@ -106,8 +106,8 @@ public class ALiYunTranslateIntegration {
             printTranslateCost(totalToken, inputTokens, outputTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             countUtils.addChars(totalToken);
-        } catch (NoApiKeyException | InputRequiredException e) {
-            appInsights.trackTrace("singleTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
             return text;
         }
@@ -154,7 +154,7 @@ public class ALiYunTranslateIntegration {
             userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             countUtils.addChars(totalToken);
-        } catch (NoApiKeyException | InputRequiredException e) {
+        } catch (Exception e) {
 //            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
             appInsights.trackTrace("clickTranslation " + shopName + " 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + translateText);
         }
@@ -203,7 +203,7 @@ public class ALiYunTranslateIntegration {
             counter.addChars(totalToken);
             return (String) content.get(0).get("text");
         } catch (Exception e) {
-            appInsights.trackTrace("调用百炼视觉模型报错信息 errors ： " + e.getMessage());
+            appInsights.trackTrace("调用百炼视觉模型报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             appInsights.trackException(e);
             return null;
         }
@@ -239,8 +239,8 @@ public class ALiYunTranslateIntegration {
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
 //            appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);
-        } catch (NoApiKeyException | InputRequiredException e) {
-            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage());
+        } catch (Exception e) {
+            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             return null;
 //            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
         }
