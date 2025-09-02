@@ -111,6 +111,27 @@ public class ShopifyRequestBody {
     }
 
     /**
+     * 根据用户单独购买积分的gid，获取订单信息
+     * */
+    public static String getSingleQuery(String singleId) {
+        return "query MyQuery {\n" +
+                "  node(id: " + singleId + ") {\n" +
+                "    ... on AppPurchaseOneTime {\n" +
+                "      id\n" +
+                "      name\n" +
+                "      createdAt\n" +
+                "      price {\n" +
+                "        amount\n" +
+                "        currencyCode\n" +
+                "      }\n" +
+                "      status\n" +
+                "      test\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+    }
+
+    /**
      * 根据产品id获取对应的数据,目前简单的写就是获取title的值
      */
     public static String getProductsQueryById(String productId) {

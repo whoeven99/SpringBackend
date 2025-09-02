@@ -44,12 +44,10 @@ public class UserService {
     private final ITranslatesService translatesService;
     private final IGlossaryService iGlossaryService;
     private final IWidgetConfigurationsService widgetConfigurationsService;
-    private final ICharsOrdersService iCharsOrdersService;
-    private final ISubscriptionPlansService iSubscriptionPlansService;
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
 
     @Autowired
-    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService, IGlossaryService iGlossaryService, IWidgetConfigurationsService widgetConfigurationsService, ICharsOrdersService iCharsOrdersService, ISubscriptionPlansService iSubscriptionPlansService) {
+    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService, IGlossaryService iGlossaryService, IWidgetConfigurationsService widgetConfigurationsService) {
         this.usersService = usersService;
         this.taskScheduler = taskScheduler;
         this.translationCounterService = translationCounterService;
@@ -60,8 +58,6 @@ public class UserService {
         this.translatesService = translatesService;
         this.iGlossaryService = iGlossaryService;
         this.widgetConfigurationsService = widgetConfigurationsService;
-        this.iCharsOrdersService = iCharsOrdersService;
-        this.iSubscriptionPlansService = iSubscriptionPlansService;
     }
 
     //添加用户
