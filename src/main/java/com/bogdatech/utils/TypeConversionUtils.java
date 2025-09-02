@@ -1,12 +1,10 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.TemplateDTO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateDescriptionsVO;
 import com.bogdatech.entity.VO.GenerateProgressBarVO;
-import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.model.controller.request.*;
 
 public class TypeConversionUtils {

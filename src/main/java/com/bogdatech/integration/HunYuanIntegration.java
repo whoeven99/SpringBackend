@@ -102,6 +102,7 @@ public class HunYuanIntegration {
                 }
 
             } catch (TencentCloudSDKException e) {
+                appInsights.trackException(e);
                 appInsights.trackTrace("hunYuanTranslate hunyuan errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
                 if (attempt == maxRetries) {
                     throw new RuntimeException("hunYuanTranslate errors Failed after " + maxRetries + " attempts", e);

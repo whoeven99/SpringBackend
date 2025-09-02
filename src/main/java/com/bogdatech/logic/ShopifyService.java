@@ -16,7 +16,6 @@ import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.model.service.StoringDataPublisherService;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TypeConversionUtils;
@@ -93,6 +92,7 @@ public class ShopifyService {
             String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
             string = sendShopifyPost("test123", requestBody);
         } catch (Exception e) {
+            appInsights.trackException(e);
             return null;
         }
         return string;
@@ -137,7 +137,7 @@ public class ShopifyService {
             }
             countBeforeTranslateChars(infoByShopify, request, translateResource, counter, translateCounter, method);
         } catch (Exception e) {
-            appInsights.trackTrace(request.getShopName() + "用户 " + request.getTarget() + "目标 方法： " + method + " 统计字符数失败 errors ： " + e.getMessage());
+            appInsights.trackTrace("getTotalWords " + request.getShopName() + "用户 " + request.getTarget() + "目标 方法： " + method + " 统计字符数失败 errors ： " + e.getMessage());
         }
         return counter.getTotalChars();
     }
@@ -730,7 +730,7 @@ public class ShopifyService {
     //在UserSubscription表里面添加一个购买了免费订阅计划的用户（商家）
     public BaseResponse<Object> addUserFreeSubscription(UserSubscriptionsRequest request) {
         request.setStatus(1);
-        request.setPlanId(2);
+        request.setPlanId(8); //将初始化的计划改为8 新的Free计划 初始额度是0
         LocalDateTime localDate = LocalDateTime.now();
         String localDateFormat = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         LocalDateTime startDate = LocalDateTime.parse(localDateFormat, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));

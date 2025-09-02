@@ -1,15 +1,20 @@
 package com.bogdatech.Service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.mapper.TranslationCounterMapper;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.bogdatech.requestBody.ShopifyRequestBody.getSingleQuery;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
+import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 
 @Service
 @Transactional
@@ -37,8 +42,29 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     }
 
     @Override
-    public Boolean updateCharsByShopName(TranslationCounterRequest request) {
-        return baseMapper.updateCharsByShopName(request.getShopName(), request.getChars());
+    public Boolean updateCharsByShopName(AddCharsVO addCharsVO) {
+        //根据gid，判断是否符合添加额度的条件
+        //根据传来的gid获取， 判断调用那个方法，查询相关订阅信息
+        String gid = addCharsVO.getGid();
+        String query;
+        if (gid.contains("AppPurchaseOneTime")){
+            query = getSingleQuery(gid);
+        }else {
+            query = getSubscriptionQuery(gid);
+        }
+
+        String shopifyByQuery = getShopifyByQuery(query, addCharsVO.getShopName(), addCharsVO.getAccessToken());
+        //判断和解析相关数据
+        JSONObject queryValid = isQueryValid(shopifyByQuery);
+        if (queryValid == null) {
+            return false;
+        }
+        String status = queryValid.getString("status");
+        if (!"ACTIVE".equals(status)) {
+            return false;
+        }
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + addCharsVO.getShopName() + " 用户 订阅信息 ：" + shopifyByQuery);
+        return baseMapper.updateCharsByShopName(addCharsVO.getShopName(), addCharsVO.getChars());
     }
 
     @Override
@@ -49,7 +75,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     @Override
     public Boolean updateAddUsedCharsByShopName(String shopName, Integer usedChars, Integer maxChars) {
         final int maxRetries = 3;
-        final long retryDelayMillis = 500;
+        final long retryDelayMillis = 1000;
         int retryCount = 0;
 
         while (retryCount < maxRetries) {
@@ -63,11 +89,12 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
                 }
             } catch (Exception e) {
                 retryCount++;
+                appInsights.trackException(e);
                 appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + shopName + " usedChars=" + usedChars + ", maxChars=" + maxChars + ", 错误=" + e);
             }
 
             try {
-                Thread.sleep(retryDelayMillis);
+                Thread.sleep(retryDelayMillis * maxRetries);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
                 return false;

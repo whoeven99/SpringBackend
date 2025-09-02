@@ -25,14 +25,13 @@ public class UserTrialsService {
 
     /**
      * 1,向免费订阅表里面插入用户信息
-     * 2，修改用户订阅表，改为7
+     * 2，修改用户订阅表，改为7 (这个暂时去除，目前没有用)
      * @param shopName 商店名称
      * @return Boolean 是否成功
      * */
     public Boolean insertUserTrial(String shopName){
-        boolean insertUserTrial = iUserTrialsService.insertUserTrial(shopName);
-        Boolean userSubscription = iUserSubscriptionsService.updateUserSubscription(shopName, 7);
-        return insertUserTrial && userSubscription;
+        //        Boolean userSubscription = iUserSubscriptionsService.updateUserSubscription(shopName, 7);
+        return iUserTrialsService.insertUserTrial(shopName);
     }
 
     /**

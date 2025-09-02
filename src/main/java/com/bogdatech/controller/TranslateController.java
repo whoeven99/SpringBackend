@@ -76,13 +76,13 @@ public class TranslateController {
         return translateService.googleTranslate(request);
     }
 
-    /**
-     * 调用百度翻译的API接口
-     */
-    @PostMapping("/baiDuTranslate")
-    public BaseResponse<Object> baiDuTranslate(@RequestBody TranslateRequest request) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.baiDuTranslate(request));
-    }
+//    /**
+//     * 调用百度翻译的API接口
+//     */
+//    @PostMapping("/baiDuTranslate")
+//    public BaseResponse<Object> baiDuTranslate(@RequestBody TranslateRequest request) {
+//        return new BaseResponse<>().CreateSuccessResponse(translateService.baiDuTranslate(request));
+//    }
 
     /**
      * 读取所有的翻译状态信息
@@ -300,7 +300,7 @@ public class TranslateController {
     @PostMapping("/deleteFromTranslates")
     public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
         Boolean b = translatesService.deleteFromTranslates(request);
-        appInsights.trackTrace("insertTranslatedText 用户删除翻译语言： " + request);
+        appInsights.trackTrace("deleteFromTranslates 用户删除翻译语言： " + request);
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {

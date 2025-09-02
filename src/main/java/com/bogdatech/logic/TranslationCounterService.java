@@ -5,17 +5,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
-import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
@@ -87,7 +85,11 @@ public class TranslationCounterService {
             if (userTrialsDO == null) {
                 iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
                 //修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
-                iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlanName).set(TranslationCounterDO::getOpenAiChars, 1));
+                //同时修改额度表里面100w字符（暂定），在计划表里
+                Integer charsByPlan = iSubscriptionPlansService.getCharsByPlanName("Gift Amount");
+                boolean update = iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlanName).set(TranslationCounterDO::getOpenAiChars, 1).setSql("chars = chars + " + charsByPlan));
+                appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用额度添加 ：" + charsByPlan + " 是否成功： " + update);
+                return update;
             }
         } else {
             iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialExpired, true));
@@ -96,7 +98,7 @@ public class TranslationCounterService {
         //添加额度
         if (name.equals(charsOrdersDO.getName()) && status.equals(ACTIVE)) {
             //根据用户的计划添加对应的额度
-            return iTranslationCounterService.updateCharsByShopName(new TranslationCounterRequest(0, shopName, charsByPlanName, 0, 0, 0, 0));
+            return iTranslationCounterService.updateCharsByShopName(new AddCharsVO(shopName, charsByPlanName, translationCharsVO.getSubGid(), translationCharsVO.getAccessToken()));
         }
 
         return null;
