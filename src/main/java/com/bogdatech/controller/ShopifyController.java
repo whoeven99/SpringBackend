@@ -206,7 +206,7 @@ public class ShopifyController {
         }
 
         //如果是userSubscriptionPlan是1和2，传null
-        if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2) {
+        if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2 || userSubscriptionPlan == 8) {
             subscriptionVO.setCurrentPeriodEnd(null);
             subscriptionVO.setFeeType(0);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
