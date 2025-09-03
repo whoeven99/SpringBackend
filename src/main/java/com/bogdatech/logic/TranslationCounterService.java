@@ -87,7 +87,7 @@ public class TranslationCounterService {
                 //修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
                 //同时修改额度表里面100w字符（暂定），在计划表里
                 Integer charsByPlan = iSubscriptionPlansService.getCharsByPlanName("Gift Amount");
-                boolean update = iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlanName).set(TranslationCounterDO::getOpenAiChars, 1).setSql("chars = chars + " + charsByPlan));
+                boolean update = iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlan + 200000).set(TranslationCounterDO::getOpenAiChars, 1).setSql("chars = chars + " + charsByPlan));
                 appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用额度添加 ：" + charsByPlan + " 是否成功： " + update);
                 return update;
             }
