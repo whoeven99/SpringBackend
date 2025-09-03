@@ -200,13 +200,13 @@ public class TranslateService {
     }
 
     //百度翻译接口
-    public String baiDuTranslate(TranslateRequest request) {
-        String result = translateApiIntegration.baiDuTranslate(request);
-        if (result != null) {
-            return result;
-        }
-        return TRANSLATE_ERROR.getErrMsg();
-    }
+//    public String baiDuTranslate(TranslateRequest request) {
+//        String result = translateApiIntegration.baiDuTranslate(request);
+//        if (result != null) {
+//            return result;
+//        }
+//        return TRANSLATE_ERROR.getErrMsg();
+//    }
 
     //google翻译接口
     public String googleTranslate(TranslateRequest request) {

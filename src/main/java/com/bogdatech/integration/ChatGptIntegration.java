@@ -28,8 +28,6 @@ public class ChatGptIntegration {
 
     @Value("${gpt.endpoint}")
     private String endpoint;
-    @Value("${gpt.apiKey}")
-    private String apiKey;
     @Value("${gpt.deploymentName}")
     private String deploymentName;
 
@@ -46,7 +44,7 @@ public class ChatGptIntegration {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
-                .credential(new AzureKeyCredential(apiKey))
+                .credential(new AzureKeyCredential(System.getenv("Gpt_ApiKey")))
                 .buildClient();
 
         // 模拟聊天交互

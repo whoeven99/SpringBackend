@@ -67,6 +67,7 @@ public class ShopifyHttpIntegration {
                     break;
                 }
             } catch (Exception e) {
+                appInsights.trackException(e);
                 appInsights.trackTrace("getInfoByShopify Shopify request failed on attempt " + attempt + ": " + e.getMessage());
             }
 

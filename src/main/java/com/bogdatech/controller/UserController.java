@@ -50,12 +50,6 @@ public class UserController {
         return new BaseResponse<>().CreateSuccessResponse(userService.unInstallApp(userRequest));
     }
 
-    //用户卸载应用后48小时后清除数据
-    @DeleteMapping("/cleanData")
-    public BaseResponse<Object> cleanData(@RequestBody UsersDO userRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(200);
-    }
-
     //客户可以向店主请求其数据
     @PostMapping("/requestData")
     public BaseResponse<Object> requestData() {
