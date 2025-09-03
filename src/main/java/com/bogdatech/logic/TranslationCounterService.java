@@ -98,7 +98,7 @@ public class TranslationCounterService {
         //添加额度
         if (name.equals(charsOrdersDO.getName()) && status.equals(ACTIVE)) {
             //根据用户的计划添加对应的额度
-            return iTranslationCounterService.updateCharsByShopName(new AddCharsVO(shopName, charsByPlanName, translationCharsVO.getSubGid(), translationCharsVO.getAccessToken()));
+            return iTranslationCounterService.updateCharsByShopName(shopName, translationCharsVO.getAccessToken(), translationCharsVO.getSubGid(), charsByPlanName);
         }
 
         return null;

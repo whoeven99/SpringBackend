@@ -108,24 +108,22 @@ public class UserService {
         int attempt = 0;
         while (attempt < MAX_RETRY_ATTEMPTS) {
             try {
-                appInsights.trackTrace("unInstallApp " + userRequest.getShopName() + " 用户卸载应用");
+                String shopName = userRequest.getShopName();
+                appInsights.trackTrace("unInstallApp " + shopName + " 用户卸载应用");
                 //更改用户卸载翻译时间
                 usersService.unInstallApp(userRequest);
                 //将用户定时任务的true都改为false
-                translatesService.updateAutoTranslateByShopNameToFalse(userRequest.getShopName());
+                translatesService.updateAutoTranslateByShopNameToFalse(shopName);
                 //将用户翻译状态改为0
-                translatesService.updateAllStatusTo0(userRequest.getShopName());
+                translatesService.updateAllStatusTo0(shopName);
                 //将用户ip关掉
                 //将词汇表改为0
-                iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userRequest.getShopName()).set("status", 0));
-                widgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userRequest.getShopName()).set("ip_open", false));
+                iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", shopName).set("status", 0));
+                widgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", shopName).set("ip_open", false));
                 //获取用户订单表里计划为Active的订单
                 //删除对应的额度
                 //获取用户额度数据，判断是否是免费试用卸载，然后扣额度
-                TranslationCounterDO translationCounterDO = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, userRequest.getShopName()));
-                if (translationCounterDO != null && translationCounterDO.getOpenAiChars() == 1){
-                    translationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, userRequest.getShopName()).set(TranslationCounterDO::getOpenAiChars, 0).setSql("chars = chars - " + translationCounterDO.getGoogleChars()));
-                }
+                translationCounterService.deleteTrialCounter(shopName);
 
                 return true;
             } catch (Exception e) {
@@ -144,54 +142,6 @@ public class UserService {
             }
         }
         return false;
-    }
-
-    //用户卸载应用后48小时后清除数据
-    @Async
-    public void cleanData(UsersDO userRequest) {
-        //测试 这一部分有问题
-        appInsights.trackTrace("开始执行定时任务： " + userRequest.getShopName());
-        String shopName = userRequest.getShopName();
-//        long delayMillis = TimeUnit.HOURS.toMillis(48); // 48小时转为毫秒
-        long delayMillis = TimeUnit.SECONDS.toMillis(10);
-        // 创建一个触发器，在48小时后执行
-        Trigger trigger = context -> {
-            Instant executionTime = Instant.now().plusMillis(delayMillis); // 当前时间 + 48小时
-            return Date.from(executionTime).toInstant(); // 将 Instant 转换为 Date
-        };
-
-        // 使用 taskScheduler 来调度任务
-        futureRef.set(taskScheduler.schedule(() -> {
-            // 执行任务
-            judgeUserLogin(shopName);
-            // 任务执行完后，取消任务
-            ScheduledFuture<?> future = futureRef.get();
-            if (future != null) {
-                future.cancel(true);  // 取消任务
-            }
-        }, trigger));
-
-//        judgeUserLogin(userRequest.getShopName());
-    }
-
-    // 判断48小时后 用户是否再次登陆过 如果登陆就不删除了，如果没登陆就删除数据
-    public void judgeUserLogin(String shopName) {
-        //获取用户的登陆时间
-        LoginAndUninstallRequest loginAndUninstallRequest = usersService.getUserLoginTime(shopName);
-        //当登陆时间 > 卸载时间时，什么都不做； 当登陆时间 < 卸载时间时，删除数据
-//        loginAndUninstallRequest.getLoginTime();
-        if (loginAndUninstallRequest.getLoginTime().before(loginAndUninstallRequest.getUninstallTime())) {
-            deleteUserData(shopName);
-        }
-    }
-
-    public void deleteUserData(String shopName) {
-        appInsights.trackTrace("删除数据: " + shopName);
-//        usersService.deleteUserGlossaryData(shopName);
-//        usersService.deleteCurrenciesData(shopName);
-//        usersService.deleteTranslatesData(shopName);
-//        appInsights.trackTrace("删除数据完成: " + shopName);
-
     }
 
     public Boolean requestData() {
