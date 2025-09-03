@@ -109,6 +109,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     public Boolean deleteTrialCounter(String shopName) {
         TranslationCounterDO translationCounterDO = baseMapper.selectOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
         if (translationCounterDO != null && translationCounterDO.getOpenAiChars() == 1){
+            appInsights.trackTrace("deleteTrialCounter " + shopName + " 用户 删除试用额度 " + translationCounterDO.getGoogleChars());
             return baseMapper.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getOpenAiChars, 0).setSql("chars = chars - " + translationCounterDO.getGoogleChars())) > 0;
         }
         return true;
