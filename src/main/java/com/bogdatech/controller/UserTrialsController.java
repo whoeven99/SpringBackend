@@ -44,15 +44,7 @@ public class UserTrialsController {
      * */
     @PostMapping("/isOpenFreePlan")
     public BaseResponse<Object> isFreePlan(@RequestParam String shopName) {
-        Boolean flag;
-        try {
-            flag = userTrialsService.queryUserTrialByShopName(shopName);
-        } catch (Exception e) {
-            appInsights.trackException(e);
-            return new BaseResponse<>().CreateErrorResponse(false);
-        }
-
-        return new BaseResponse<>().CreateSuccessResponse(flag);
+        return  userTrialsService.queryUserTrialByShopName(shopName);
     }
 
 }
