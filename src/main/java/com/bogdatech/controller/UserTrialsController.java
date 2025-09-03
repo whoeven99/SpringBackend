@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
 
 @RestController
@@ -42,18 +43,16 @@ public class UserTrialsController {
      * 查询是否开过免费计划。
      * */
     @PostMapping("/isOpenFreePlan")
-    public BaseResponse<Object> isFreePlan(@RequestParam String shopName){
-        boolean result = retryWithParam(
-                userTrialsService::queryUserTrialByShopName,
-                shopName,
-                3,
-                1000,
-                8000
-        );
-        if (result){
-            return new BaseResponse<>().CreateSuccessResponse(true);
+    public BaseResponse<Object> isFreePlan(@RequestParam String shopName) {
+        Boolean flag;
+        try {
+            flag = userTrialsService.queryUserTrialByShopName(shopName);
+        } catch (Exception e) {
+            appInsights.trackException(e);
+            return new BaseResponse<>().CreateErrorResponse(false);
         }
-        return new BaseResponse<>().CreateErrorResponse(false);
+
+        return new BaseResponse<>().CreateSuccessResponse(flag);
     }
 
 }
