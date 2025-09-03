@@ -77,11 +77,9 @@ public class TranslationCounterController {
      * */
     @PostMapping("/addCharsByShopName")
     public BaseResponse<Object> addCharsByShopName(@RequestParam String shopName, @RequestBody AddCharsVO addCharsVO) {
-        addCharsVO.setShopName(shopName);
         UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
-        addCharsVO.setAccessToken(usersDO.getAccessToken());
         //获取用户accessToken
-        if (iTranslationCounterService.updateCharsByShopName(addCharsVO)){
+        if (iTranslationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars())){
             return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);

@@ -223,7 +223,7 @@ public class TaskService {
             // 根据计划获取对应的字符
             Integer chars = subscriptionPlansService.getCharsByPlanName(name);
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
-            Boolean flag = translationCounterService.updateCharsByShopName(new AddCharsVO(userPriceRequest.getShopName(), chars, userPriceRequest.getSubscriptionId(), userPriceRequest.getAccessToken()));
+            Boolean flag = translationCounterService.updateCharsByShopName(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), userPriceRequest.getSubscriptionId(), chars);
             appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars + " 是否成功： " + flag);
             //将用户免费Ip清零
             iUserIpService.update(new UpdateWrapper<UserIpDO>().eq("shop_name", userPriceRequest.getShopName()).set("times", 0).set("first_email", 0).set("second_email", 0));
@@ -361,7 +361,8 @@ public class TaskService {
                 if (queryValid == null) {
                     continue;
                 }
-
+                String name = queryValid.getString("name");
+                Integer charsByPlanName = subscriptionPlansService.getCharsByPlanName(name);
                 String status = queryValid.getString("status");
                 if (!"ACTIVE".equals(status)) {
                     try {
@@ -384,9 +385,7 @@ public class TaskService {
                 //将免费试用计划表里的状态改为true
                 iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialExpired, true));
                 //如果订单存在，并且支付成功，添加相关计划额度
-                String name = queryValid.getString("name");
-                Integer charsByPlanName = subscriptionPlansService.getCharsByPlanName(name);
-                Boolean flag = translationCounterService.updateCharsByShopName(new AddCharsVO(shopName, charsByPlanName, latestActiveSubscribeId, usersDO.getAccessToken()));
+                Boolean flag = translationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), latestActiveSubscribeId, charsByPlanName);
                 appInsights.trackTrace(shopName + " 用户 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
             }
         }

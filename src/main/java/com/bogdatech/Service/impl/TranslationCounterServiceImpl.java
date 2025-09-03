@@ -1,10 +1,11 @@
 package com.bogdatech.Service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
-import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.mapper.TranslationCounterMapper;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import org.springframework.stereotype.Service;
@@ -42,10 +43,9 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     }
 
     @Override
-    public Boolean updateCharsByShopName(AddCharsVO addCharsVO) {
+    public Boolean updateCharsByShopName(String shopName, String accessToken, String gid, Integer chars) {
         //根据gid，判断是否符合添加额度的条件
         //根据传来的gid获取， 判断调用那个方法，查询相关订阅信息
-        String gid = addCharsVO.getGid();
         String query;
         if (gid.contains("AppPurchaseOneTime")){
             query = getSingleQuery(gid);
@@ -53,7 +53,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
             query = getSubscriptionQuery(gid);
         }
 
-        String shopifyByQuery = getShopifyByQuery(query, addCharsVO.getShopName(), addCharsVO.getAccessToken());
+        String shopifyByQuery = getShopifyByQuery(query, shopName, accessToken);
         //判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
@@ -63,8 +63,8 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         if (!"ACTIVE".equals(status)) {
             return false;
         }
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + addCharsVO.getShopName() + " 用户 订阅信息 ：" + shopifyByQuery);
-        return baseMapper.updateCharsByShopName(addCharsVO.getShopName(), addCharsVO.getChars());
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
+        return baseMapper.updateCharsByShopName(shopName, chars);
     }
 
     @Override
@@ -103,6 +103,15 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
 
         appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + shopName+ " usedChars=" + usedChars + ", maxChars=" + maxChars);
         return false;
+    }
+
+    @Override
+    public Boolean deleteTrialCounter(String shopName) {
+        TranslationCounterDO translationCounterDO = baseMapper.selectOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
+        if (translationCounterDO != null && translationCounterDO.getOpenAiChars() == 1){
+            return baseMapper.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getOpenAiChars, 0).setSql("chars = chars - " + translationCounterDO.getGoogleChars())) > 0;
+        }
+        return true;
     }
 
 
