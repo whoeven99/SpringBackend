@@ -115,7 +115,7 @@ public class ShopifyRequestBody {
      * */
     public static String getSingleQuery(String singleId) {
         return "query MyQuery {\n" +
-                "  node(id: " + singleId + ") {\n" +
+                "  node(id: \"" + singleId + "\") {\n" +
                 "    ... on AppPurchaseOneTime {\n" +
                 "      id\n" +
                 "      name\n" +

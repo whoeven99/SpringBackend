@@ -5,10 +5,13 @@ import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.Service.IUserTrialsService;
 import com.bogdatech.entity.DO.CharsOrdersDO;
+import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 public class UserTrialsService {
@@ -39,12 +42,17 @@ public class UserTrialsService {
      * @param shopName 商店名称
      * @return Boolean 是否成功
      * */
-    public Boolean queryUserTrialByShopName(String shopName){
+    public BaseResponse<Object> queryUserTrialByShopName(String shopName){
         //判断是否购买过订阅计划，如果有则返回true
         List<CharsOrdersDO> charsOrdersDOList = iCharsOrdersService.list(new QueryWrapper<CharsOrdersDO>().eq("shop_name", shopName).like("id", "AppSubscription").eq("status", "ACTIVE"));
         if (charsOrdersDOList != null && !charsOrdersDOList.isEmpty()){
-            return true;
+            appInsights.trackTrace("queryUserTrialByShopName " + shopName + " 返回的charsOrdersDOList 值为 ： " + charsOrdersDOList);
+            return new BaseResponse<>().CreateErrorResponse(charsOrdersDOList);
         }
-        return iUserTrialsService.queryUserTrialByShopName(shopName);
+        Boolean flag = iUserTrialsService.queryUserTrialByShopName(shopName);
+        if (flag != null) {
+            return new BaseResponse<>().CreateSuccessResponse(flag);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 }

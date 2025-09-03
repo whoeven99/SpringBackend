@@ -54,16 +54,18 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         }
 
         String shopifyByQuery = getShopifyByQuery(query, shopName, accessToken);
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
         //判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
+            appInsights.trackTrace("updateCharsByShopName " + shopName + " 用户  errors queryValid : " + queryValid);
             return false;
         }
         String status = queryValid.getString("status");
         if (!"ACTIVE".equals(status)) {
             return false;
         }
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
+
         return baseMapper.updateCharsByShopName(shopName, chars);
     }
 
