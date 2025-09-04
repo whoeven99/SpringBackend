@@ -102,8 +102,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
         wrapper.select(
                 "TOP 1 id, source, access_token, target, shop_name, status, resource_type"
         );
-        wrapper.eq(SHOP_NAME, request.getShopName()); // shopName 是参数
-        wrapper.eq("source", request.getSource());       // source 是参数
+        // shopName 是参数
+        wrapper.eq(SHOP_NAME, request.getShopName());
+        // source 是参数
+        wrapper.eq("source", request.getSource());
         wrapper.orderByDesc("update_at");
 
         return baseMapper.selectOne(wrapper);

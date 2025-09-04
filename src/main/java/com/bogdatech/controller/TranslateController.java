@@ -9,6 +9,7 @@ import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.entity.VO.TranslateArrayVO;
 import com.bogdatech.entity.VO.TranslatingStopVO;
@@ -204,9 +205,10 @@ public class TranslateController {
         if (usedChars >= remainingChars) {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
-
-        userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
+        //重置用户发送的邮件
+        userEmailStatus.put(shopName, new AtomicBoolean(false));
+        // 初始化用户的停止标志
+        userStopFlags.put(shopName, new AtomicBoolean(false));
 
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
@@ -429,6 +431,18 @@ public class TranslateController {
             return new BaseResponse<>().CreateSuccessResponse(progressData);
         }
 
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    /**
+     * 图片翻译
+     * */
+    @PutMapping("/imageTranslate")
+    public BaseResponse<Object> imageTranslate(@RequestParam String shopName, @RequestBody ImageTranslateVO imageTranslateVO) {
+        String targetPic = translateService.imageTranslate(imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), imageTranslateVO.getImageUrl(), shopName, imageTranslateVO.getAccessToken());
+        if (targetPic != null) {
+            return new BaseResponse<>().CreateSuccessResponse(targetPic);
+        }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
 }
