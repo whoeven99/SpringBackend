@@ -2,9 +2,7 @@ package com.bogdatech.integration;
 
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,9 +14,6 @@ public class RateHttpIntegration {
 
     @Autowired
     private BaseHttpIntegration baseHttpIntegration;
-
-    @Value("${fixer.api.key}")
-    private String apiKey;
 
     public static Map<String, Double> rateMap = new HashMap<String, Double>();
 
@@ -33,7 +28,7 @@ public class RateHttpIntegration {
                 ",CHF,TWD,THB,TJS,TZS,TOP,TTD,TND,TRY,TMT,UGX,UAH,AED,USD,UYU,UZS,VUV,VES,VND,XOF,YER,ZMW,STD";
         String response;
         try {
-            response = baseHttpIntegration.sendHttpGet(url, apiKey);
+            response = baseHttpIntegration.sendHttpGet(url, System.getenv("Fixer_Api_Key"));
         } catch (IOException e) {
             appInsights.trackTrace("获取汇率失败");
             return;

@@ -1,7 +1,11 @@
 package com.bogdatech.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.DO.UsersDO;
+import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
 import com.bogdatech.logic.TranslationCounterService;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
@@ -17,10 +21,12 @@ public class TranslationCounterController {
 
     private final ITranslationCounterService iTranslationCounterService;
     private final TranslationCounterService translationCounterService;
+    private final IUsersService usersService;
     @Autowired
-    public TranslationCounterController(ITranslationCounterService iTranslationCounterService, TranslationCounterService translationCounterService) {
+    public TranslationCounterController(ITranslationCounterService iTranslationCounterService, TranslationCounterService translationCounterService, IUsersService usersService) {
         this.iTranslationCounterService = iTranslationCounterService;
         this.translationCounterService = translationCounterService;
+        this.usersService = usersService;
     }
 
     //给用户添加一个免费额度
@@ -70,8 +76,10 @@ public class TranslationCounterController {
      * 添加字符额度
      * */
     @PostMapping("/addCharsByShopName")
-    public BaseResponse<Object> addCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        if (iTranslationCounterService.updateCharsByShopName(request)){
+    public BaseResponse<Object> addCharsByShopName(@RequestParam String shopName, @RequestBody AddCharsVO addCharsVO) {
+        UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+        //获取用户accessToken
+        if (iTranslationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars())){
             return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);

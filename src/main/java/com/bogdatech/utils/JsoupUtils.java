@@ -274,6 +274,7 @@ public class JsoupUtils {
                     return translateByCiwiModel(request, counter, limitChars, prompt);
             }
         } catch (Exception e) {
+            appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + shopName + " translateByKeyPrompt errors ： " + e.getMessage());
             return translateSingleLineWithProtection(request, counter, limitChars, key, languagePackId, customKey);
         }
@@ -334,6 +335,7 @@ public class JsoupUtils {
             //对模型进行判断 , 1,ciwi 2,openai 3,deepL
             return translateByCiwiModel(request, counter, limitChars, prompt);
         } catch (Exception e) {
+            appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + shopName + " checkTranslationModel errors ： " + e.getMessage() + " sourceText: " + content);
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
         }

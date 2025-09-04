@@ -32,51 +32,49 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @Component
 public class TranslateApiIntegration {
 
-    @Value("${baidu.api.key}")
-    private String apiUrl;
+//    @Value("${baidu.api.key}")
+//    private String apiUrl;
+//
+//    @Value("${baidu.api.secret}")
+//    private String secret;
 
-    @Value("${baidu.api.secret}")
-    private String secret;
-
-    @Value("${microsoft.translation.key}")
-    private String microsoftKey;
 
     @Value("${microsoft.translation.endpoint}")
     private String microsoftEndpoint;
 
-    //百度翻译API
-    public String baiDuTranslate(TranslateRequest request) {
-        //创建URL
-        String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
-//        appInsights.trackTrace("encodedQuery: " + encodedQuery);
-        Random random = new Random();
-        String salt = String.valueOf(random.nextInt(10000));
-        String sign = DigestUtils.md5DigestAsHex((apiUrl + request.getContent() + salt + secret).getBytes());
-        String url = "https://fanyi-api.baidu.com/api/trans/vip/translate?q=" + encodedQuery
-                + "&from=" + request.getSource() + "&to=" + request.getTarget() + "&appid=" + apiUrl + "&salt=" + salt + "&sign=" + sign;
-
-        // 创建Httpclient对象
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        // 创建httpPost请求
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
-        String result = "";
-        // 执行请求
-        JSONObject jsonObject;
-        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            // 获取响应实体并转换为JSON格式
-            jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
-            // 获取翻译结果
-            if (jsonObject.containsKey("trans_result")) {
-                result = jsonObject.getJSONArray("trans_result").getJSONObject(0).getString("dst");
-            }
-            response.close();
-            httpClient.close();
-        } catch (IOException e) {
-            return e.toString();
-        }
-        return result;
-    }
+//    //百度翻译API
+//    public String baiDuTranslate(TranslateRequest request) {
+//        //创建URL
+//        String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
+////        appInsights.trackTrace("encodedQuery: " + encodedQuery);
+//        Random random = new Random();
+//        String salt = String.valueOf(random.nextInt(10000));
+//        String sign = DigestUtils.md5DigestAsHex((apiUrl + request.getContent() + salt + secret).getBytes());
+//        String url = "https://fanyi-api.baidu.com/api/trans/vip/translate?q=" + encodedQuery
+//                + "&from=" + request.getSource() + "&to=" + request.getTarget() + "&appid=" + apiUrl + "&salt=" + salt + "&sign=" + sign;
+//
+//        // 创建Httpclient对象
+//        CloseableHttpClient httpClient = HttpClients.createDefault();
+//        // 创建httpPost请求
+//        HttpPost httpPost = new HttpPost(url);
+//        httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
+//        String result = "";
+//        // 执行请求
+//        JSONObject jsonObject;
+//        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+//            // 获取响应实体并转换为JSON格式
+//            jsonObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity(), "UTF-8"));
+//            // 获取翻译结果
+//            if (jsonObject.containsKey("trans_result")) {
+//                result = jsonObject.getJSONArray("trans_result").getJSONObject(0).getString("dst");
+//            }
+//            response.close();
+//            httpClient.close();
+//        } catch (IOException e) {
+//            return e.toString();
+//        }
+//        return result;
+//    }
 
     //谷歌翻译API
     public static String googleTranslate(TranslateRequest request) {
@@ -147,7 +145,7 @@ public class TranslateApiIntegration {
         HttpPost httpPost = new HttpPost(microsoftEndpoint + micTarget);
 
         // 随机生成一个 32 位的 Guid设置请求头
-        httpPost.setHeader("Ocp-Apim-Subscription-Key", microsoftKey);
+        httpPost.setHeader("Ocp-Apim-Subscription-Key", System.getenv("Microsoft.Translation.Key"));
         httpPost.setHeader("Content-Type", "application/json");
         httpPost.setHeader("Ocp-Apim-Subscription-Region", "eastus");
 

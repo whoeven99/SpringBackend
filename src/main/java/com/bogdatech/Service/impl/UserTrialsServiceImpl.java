@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Service
 public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTrialsDO> implements IUserTrialsService {
 
@@ -25,6 +27,10 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
     @Override
     public Boolean queryUserTrialByShopName(String shopName) {
         UserTrialsDO userTrialsDO = baseMapper.selectOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
-        return userTrialsDO.getTrialStart() != null;
+        if (userTrialsDO != null && userTrialsDO.getIsTrialExpired() != null) {
+            appInsights.trackTrace("queryUserTrialByShopName " + shopName + " userTrialsDO: " + userTrialsDO);
+            return userTrialsDO.getIsTrialExpired();
+        }
+        return null;
     }
 }
