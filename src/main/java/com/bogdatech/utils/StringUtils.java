@@ -1,10 +1,18 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.entity.DTO.SimpleMultipartFileDTO;
+import com.microsoft.applicationinsights.core.dependencies.apachecommons.io.FilenameUtils;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class StringUtils {
     /**
@@ -149,5 +157,40 @@ public class StringUtils {
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * 将图片的url转化为MultipartFile文件
+     * */
+    public static MultipartFile convertUrlToMultipartFile(String imageUrl)  {
+
+        try {
+            // 1. 打开URL连接
+            URL url = new URL(imageUrl);
+            URLConnection connection = url.openConnection();
+            String contentType = connection.getContentType(); // 尝试获取Content-Type
+            String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1); // 取URL最后一段作为文件名
+            String fileNameWithoutExt = FilenameUtils.getBaseName(fileName);
+            InputStream inputStream = connection.getInputStream();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            // 2. 创建 MultipartFile
+            return new SimpleMultipartFileDTO(
+                    "file",                // form字段名
+                    fileNameWithoutExt,              // 文件名
+                    contentType != null ? contentType : "application/octet-stream", // 如果获取不到就用通用类型
+                    outputStream.toByteArray()
+            );
+        }catch (Exception e) {
+            appInsights.trackException(e);
+            appInsights.trackTrace("convertUrlToMultipartFile error: " + e.getMessage());
+        }
+        return  null;
     }
 }
