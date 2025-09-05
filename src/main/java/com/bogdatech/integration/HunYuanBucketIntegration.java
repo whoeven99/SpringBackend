@@ -76,7 +76,7 @@ public class HunYuanBucketIntegration {
      * 上传文件图片
      * 上传文件, 根据文件大小自动选择简单上传或者分块上传。
      * */
-    public static String uploadFile(MultipartFile file, String shopName, UserPicturesDO userPicturesDO) {
+    public static String uploadFile(MultipartFile file, String shopName, String imageId) {
         int maxRetries = 3; // 最大重试次数
         int retryCount = 0;
         long retryDelayMillis = 2000; // 重试间隔2秒
@@ -84,7 +84,7 @@ public class HunYuanBucketIntegration {
         while (retryCount < maxRetries) {
             TransferManager transferManager = createTransferManager();
             String originalFilename = file.getOriginalFilename();
-            String key = PATH_NAME + "/" + shopName + "/" + userPicturesDO.getImageId() + "/" + originalFilename;
+            String key = PATH_NAME + "/" + shopName + "/" + imageId + "/" + originalFilename;
             String afterUrl = HTTP + key;
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());

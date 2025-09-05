@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.*;
-import static com.bogdatech.enums.ErrorEnum.TRANSLATE_ERROR;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
