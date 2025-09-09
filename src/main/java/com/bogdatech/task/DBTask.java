@@ -23,11 +23,11 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @Component
 @EnableScheduling
 @EnableAsync
-public class RabbitMqTask {
+public class DBTask {
     private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
     private final ITranslateTasksService translateTasksService;
 
-    public RabbitMqTask(RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, ITranslateTasksService translateTasksService) {
+    public DBTask(RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, ITranslateTasksService translateTasksService) {
         this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
         this.translateTasksService = translateTasksService;
     }

@@ -4,6 +4,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.bogdatech.constants.TranslateConstants.ARTICLE;
+import static com.bogdatech.constants.TranslateConstants.PRODUCT;
+
 
 public class PlaceholderUtils {
     // 定义占位符的正则表达式
@@ -95,6 +98,10 @@ public class PlaceholderUtils {
 
     /**
      * key值提示词
+     * @param target 目标语言
+     * @param languagePackId 语言包
+     * @param key 各类key值
+     * @param customKey 用户自定义提示词
      * */
     public static String getKeyPrompt(String target, String languagePackId, String key, String customKey) {
         boolean hasLanguagePackId = languagePackId != null && !languagePackId.isEmpty();
@@ -223,6 +230,68 @@ public class PlaceholderUtils {
     public static String getPolicyPrompt(String target) {
         return "Translate the following shop policy HTML content into " + target + ". Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
     }
+
+    /**
+     * list 翻译提示词
+     * @param target 目标语言
+     * @param languagePackId 语言包
+     * @param translationKeyType 翻译key
+     * @param modelType 模型类型
+     * */
+    public static String getListPrompt(String target, String languagePackId, String translationKeyType, String modelType) {
+            String basePrompt =
+                    """
+                            You are a translation-savvy assistant who will help me translate every language accurately. You will automatically determine the current language, and I will provide you with a target language for translation. I will provide you with a list of items to translate, and you will return them in a fixed format after you translate them. For example: I will provide you with a list: [ "button", "copy" ]\s
+                            I will also provide you with a language to translate: English. You will return the following format:\s
+                            { "button": "button", "copy": "description" }\s
+                            Okay, now help me translate the following content and only output the translated document.\s""";
+
+            // 处理 keyByModel 或 target 语言提示
+            String keyByModel = getKeyByModel(modelType, translationKeyType, target);
+
+            String languageText = keyByModel != null ? keyByModel : "The language to translate is: " + target;
+
+            // 处理语言包信息
+            String languagePackPart = (languagePackId != null && !languagePackId.isEmpty())
+                    ? " Using terminology and tone appropriate for the " + languagePackId + "."
+                    : "";
+
+            return new StringBuilder()
+                    .append(basePrompt)
+                    .append(languageText)
+                    .append(".")
+                    .append(languagePackPart)
+                    .append(" The variable name is not translated and the original value is returned. The list to translate is: ")
+                    .toString();
+    }
+
+    /**
+     * 根据key和modelType生成不同的字段
+     * */
+    public static String getKeyByModel(String modelType, String key, String target) {
+        if (key == null || modelType == null){
+            return null;
+        }
+
+        String prefix;
+        switch (modelType) {
+            case ARTICLE -> prefix = "article";
+            case PRODUCT -> prefix = "product";
+            default -> {
+                return null; // modelType 不匹配
+            }
+        }
+
+        String text = "Translate the following ";
+        return switch (key) {
+            case "title" -> text + prefix + " title into " + target;
+//            case "body_html" -> prefix + (modelType.equals("article") ? " content" : " description");
+            case "meta_title" -> prefix + " meta title into " + target;
+//            case "meta_description" -> prefix + " meta description";
+            default -> null;
+        };
+    }
+
 
     /**
      * 构建描述生成提示词的动态方法
