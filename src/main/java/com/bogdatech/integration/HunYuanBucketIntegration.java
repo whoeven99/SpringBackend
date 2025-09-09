@@ -84,6 +84,9 @@ public class HunYuanBucketIntegration {
         while (retryCount < maxRetries) {
             TransferManager transferManager = createTransferManager();
             String originalFilename = file.getOriginalFilename();
+            if (originalFilename != null) {
+                originalFilename = originalFilename.replace(" ", "_");
+            }
             String key = PATH_NAME + "/" + shopName + "/" + imageId + "/" + originalFilename;
             String afterUrl = HTTP + key;
             ObjectMetadata metadata = new ObjectMetadata();
