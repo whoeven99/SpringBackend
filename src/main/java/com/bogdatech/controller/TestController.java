@@ -15,6 +15,7 @@ import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
+import com.bogdatech.entity.VO.TestVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
@@ -22,7 +23,7 @@ import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
-import com.bogdatech.task.RabbitMqTask;
+import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,10 +40,11 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
-import static com.bogdatech.task.RabbitMqTask.*;
+import static com.bogdatech.task.DBTask.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
+import static com.bogdatech.utils.PlaceholderUtils.getListPrompt;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
 @RestController
@@ -55,13 +57,13 @@ public class TestController {
     private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
     private final TencentEmailService tencentEmailService;
     private final ITranslateTasksService translateTasksService;
-    private final RabbitMqTask rabbitMqTask;
+    private final DBTask DBTask;
     private final UserTranslationDataService userTranslationDataService;
     private final IAPGUsersService iapgUsersService;
     private final GenerateDescriptionService generateDescriptionService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, DBTask DBTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.taskService = taskService;
@@ -70,7 +72,7 @@ public class TestController {
         this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
         this.tencentEmailService = tencentEmailService;
         this.translateTasksService = translateTasksService;
-        this.rabbitMqTask = rabbitMqTask;
+        this.DBTask = DBTask;
         this.userTranslationDataService = userTranslationDataService;
         this.iapgUsersService = iapgUsersService;
         this.generateDescriptionService = generateDescriptionService;
@@ -259,7 +261,7 @@ public class TestController {
      */
     @PutMapping("/testDBTranslate")
     public void testDBTranslate() {
-        rabbitMqTask.scanAndSubmitTasks();
+        DBTask.scanAndSubmitTasks();
     }
 
     /**
@@ -340,7 +342,7 @@ public class TestController {
 
     /**
      * 往缓存中插入数据
-     * */
+     */
     @GetMapping("/testInsertCache")
     public void testInsertCache(@RequestParam String shopName, @RequestParam String value) {
         Map<String, Object> translationStatusMap = getTranslationStatusMap(value, 2);
@@ -349,7 +351,7 @@ public class TestController {
 
     /**
      * 暂停APG应用的生成任务
-     * */
+     */
     @GetMapping("/testAPGStop")
     public boolean userMaxLimit(@RequestParam String shopName) {
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
@@ -363,7 +365,7 @@ public class TestController {
 
     /**
      * 测试analyzeDescriptionData是否可行
-     * */
+     */
     @GetMapping("/testAnalyze")
     public APGAnalyzeDataVO testAnalyze() {
         String gen = """
@@ -375,9 +377,32 @@ public class TestController {
 
     /**
      * 单纯的打印信息
-     * */
+     */
     @GetMapping("/frontEndPrinting")
     public void frontEndPrinting(@RequestBody String data) {
         appInsights.trackTrace(data);
+    }
+
+    /**
+     * 测试返回后的数据是否可解析
+     */
+    @GetMapping("/testReturn")
+    public String testReturn(@RequestBody TestVO target) {
+        String listPrompt = getListPrompt(target.getTarget(), target.getPackId(), target.getTranslationKeyType(), target.getModelType());
+//        System.out.println("listPrompt: " + listPrompt);
+        return listPrompt;
+//        String json = """
+//                {\n  "parameters": "parametri",\n  "data": "dati",\n  "model": "modello",\n  "artificial intelligence": "intelligenza artificiale",\n  "machine learning": "apprendimento automatico",\n  "deep network": "rete profonda",\n  "training process": "processo di addestramento",\n  "neural weights": "pesi neurali",\n  "input features": "caratteristiche di input",\n  "output layer": "strato di output",\n  "hidden state": "stato nascosto",\n  "data pipeline": "pipeline dei dati",\n  "optimization goal": "obiettivo di ottimizzazione",\n  "gradient descent": "discesa del gradiente",\n  "loss function": "funzione di perdita",\n  "evaluation metric": "metrica di valutazione",\n  "test accuracy": "accuratezza del test",\n  "overfitting issue": "problema di overfitting",\n  "cross validation": "convalida incrociata",\n  "random seed": "seme casuale",\n  "batch normalization": "normalizzazione batch",\n  "dropout layer": "strato di dropout",\n  "activation function": "funzione di attivazione",\n  "softmax output": "output softmax",\n  "feature extraction": "estrazione delle caratteristiche",\n  "dimensionality reduction": "riduzione della dimensionalità",\n  "regularization term": "termine di regolarizzazione",\n  "hyperparameter tuning": "ottimizzazione degli iperparametri",\n  "model checkpoint": "punto di controllo del modello",\n  "learning rate": "tasso di apprendimento",\n  "training dataset": "set di dati di addestramento",\n  "validation split": "divisione di validazione",\n  "testing dataset": "set di dati di test",\n  "data augmentation": "aumento dei dati",\n  "label encoding": "codifica delle etichette",\n  "prediction result": "risultato della previsione",\n  "confusion matrix": "matrice di confusione",\n  "precision score": "punteggio di precisione",\n  "recall score": "punteggio di richiamo",\n  "f1 measure": "misura F1",\n  "class imbalance": "squilibrio di classe",\n  "epoch counter": "contatore di epoche",\n  "iteration step": "passo di iterazione",\n  "computational cost": "costo computazionale",\n  "memory usage": "utilizzo della memoria",\n  "inference speed": "velocità di inferenza",\n  "real time prediction": "previsione in tempo reale",\n  "deployment pipeline": "pipeline di distribuzione",\n  "production model": "modello di produzione",\n  "continuous learning": "apprendimento continuo",\n  "transfer learning": "apprendimento per trasferimento"\n}
+//                """;
+//        try {
+//            Map<String, String> map = OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
+//
+//            // 测试输出
+//            map.forEach((key, value) -> System.out.println(key + " -> " + value));
+//
+//        } catch (JsonProcessingException e) {
+//            System.err.println(e);
+//            throw new RuntimeException(e);
+//        }
     }
 }

@@ -415,6 +415,10 @@ public class PrivateKeyService {
                     translateHtml(entry.getValue(), translateContext);
                     break;
                 case PLAIN_TEXT:
+                case TITLE:
+                case META_TITLE:
+                case LIST_SINGLE:
+                case LOWERCASE_HANDLE:
                     translateDataByAPI(entry.getValue(), translateContext);
                     break;
                 case GLOSSARY:

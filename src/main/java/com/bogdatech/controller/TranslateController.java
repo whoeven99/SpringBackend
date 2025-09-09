@@ -427,6 +427,7 @@ public class TranslateController {
     @PostMapping("/getProgressData")
     public BaseResponse<Object> getProgressData(@RequestParam String shopName, @RequestParam String target, @RequestParam String source) {
         Map<String, Integer> progressData = translateService.getProgressData(shopName, target, source);
+        appInsights.trackTrace("getProgressData " + shopName + " target : " + target + " " + source + " " + progressData);
         if (progressData != null){
             return new BaseResponse<>().CreateSuccessResponse(progressData);
         }
