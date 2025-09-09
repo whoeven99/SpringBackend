@@ -441,6 +441,7 @@ public class TranslateController {
     @PutMapping("/imageTranslate")
     public BaseResponse<Object> imageTranslate(@RequestParam String shopName, @RequestBody ImageTranslateVO imageTranslateVO) {
         String targetPic = translateService.imageTranslate(imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), imageTranslateVO.getImageUrl(), shopName, imageTranslateVO.getAccessToken());
+
         if (targetPic != null) {
             return new BaseResponse<>().CreateSuccessResponse(targetPic);
         }
