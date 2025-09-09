@@ -893,6 +893,7 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace(shopName + " untranslatedTexts :  " + untranslatedTexts + " " + translationKeyType);
             //根据不同的key类型，生成对应提示词，后翻译
             String prompt = getListPrompt(getLanguageName(target), languagePack, translationKeyType, modelType);
+            appInsights.trackTrace(shopName + " prompt : " + prompt + " translationKeyType");
             String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt);
             appInsights.trackTrace(shopName + " translatedJson : " + translatedJson);
 
