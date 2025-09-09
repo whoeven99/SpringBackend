@@ -23,7 +23,7 @@ public class RateTask {
         this.rateHttpIntegration = rateHttpIntegration;
     }
 
-//    @PostConstruct
+    @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")
     public void getRateEveryHour() {
 //        appInsights.trackTrace(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
