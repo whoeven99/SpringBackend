@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.azure.core.annotation.Post;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.IAPGUsersService;
@@ -378,7 +379,7 @@ public class TestController {
     /**
      * 单纯的打印信息
      */
-    @GetMapping("/frontEndPrinting")
+    @PostMapping("/frontEndPrinting")
     public void frontEndPrinting(@RequestBody String data) {
         appInsights.trackTrace(data);
     }
