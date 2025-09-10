@@ -389,7 +389,7 @@ public class TestController {
     @GetMapping("/testReturn")
     public String testReturn(@RequestBody TestVO target) {
         String listPrompt = getListPrompt(target.getTarget(), target.getPackId(), target.getTranslationKeyType(), target.getModelType());
-//        System.out.println("listPrompt: " + listPrompt);
+        System.out.println("listPrompt: " + listPrompt + target.getValue());
         return listPrompt;
 //        String json = """
 //                """;

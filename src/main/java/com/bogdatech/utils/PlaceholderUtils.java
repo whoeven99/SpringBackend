@@ -239,36 +239,42 @@ public class PlaceholderUtils {
      * @param modelType 模型类型
      * */
     public static String getListPrompt(String target, String languagePackId, String translationKeyType, String modelType) {
-            String basePrompt =
-                    """
-                            You are a translation-savvy assistant who will help me translate every language accurately. You will automatically determine the current language, and I will provide you with a target language for translation. I will provide you with a list of items to translate, and you will return them in a fixed format after you translate them. For example: I will provide you with a list: [ "button", "copy" ]\s
-                            I will also provide you with a language to translate: English. You will return the following format:\s
-                            { "button": "button", "copy": "description" }\s
-                            Okay, now help me translate the following content and only output the translated document.\s""";
+        StringBuilder prompt = new StringBuilder();
 
-            // 处理 keyByModel 或 target 语言提示
-            String keyByModel = getKeyByModel(modelType, translationKeyType, target);
+        prompt.append("你是一个精通翻译的小助手，你会帮我把每个语言都翻译的准确。\n")
+                .append("你会自动识别源语言，并将其翻译成我指定的目标语言。\n")
+                .append("你不会翻译key值，只翻译值的内容。\n")
+                .append("翻译之前你会判断他是不是一个变量名，如果是变量名你就不会翻译。\n")
+                .append("我会给你一个待翻译的列表，你翻译之后给我返回一个固定的返回格式。\n");
 
-            String languageText = keyByModel != null ? keyByModel : "The language to translate is: " + target;
+        // 1,如果有行业，才加上这一行
+        if (languagePackId != null && !languagePackId.isBlank()) {
+            prompt.append(String.format("翻译时你会使用适合 %s 行业的专业术语和友好语气。\n", languagePackId));
+        }
 
-            // 处理语言包信息
-            String languagePackPart = (languagePackId != null && !languagePackId.isEmpty())
-                    ? " Using terminology and tone appropriate for the " + languagePackId + "."
-                    : "";
+        // 2,如果有 keyByModel，才加上这一行
+        String keyByModel = getKeyByModel(modelType, translationKeyType);
+        if (keyByModel != null && !keyByModel.isBlank()) {
+            prompt.append(String.format("待翻译的数据类型是 %s，不要输出解释性文本。\n", keyByModel));
+        }
 
-            return new StringBuilder()
-                    .append(basePrompt)
-                    .append(languageText)
-                    .append(".")
-                    .append(languagePackPart)
-                    .append(" The variable name is not translated and the original value is returned. The list to translate is: ")
-                    .toString();
+        prompt.append("你给我的返回值里面的key保持我给的内容不变，后面的value是你翻译后的内容。\n")
+                .append("举例说明：\n")
+                .append("我给你一个列表：[\"按钮\",\"[%-S] sec%!S\", \"{{ select }}\"]\n")
+                .append("再给你一个待翻译语言：Chinese (Traditional) \n")
+                .append("你给我按照如下格式返回: {\n")
+                .append("\"按钮\": \"按鈕\",\"[%-S] sec%!S\": \"[%-S] sec%!S\", \"{{ select }}\": \"{{ select }}\"}\n")
+                .append("好，现在帮我翻译一下如下内容\n")
+                .append(String.format("待翻译语言为：%s\n", target))
+                .append("待翻译列表为：");
+
+        return prompt.toString();
     }
 
     /**
      * 根据key和modelType生成不同的字段
      * */
-    public static String getKeyByModel(String modelType, String key, String target) {
+    public static String getKeyByModel(String modelType, String key) {
         if (key == null || modelType == null){
             return null;
         }
@@ -282,11 +288,10 @@ public class PlaceholderUtils {
             }
         }
 
-        String text = "Translate the following ";
         return switch (key) {
-            case "title" -> text + prefix + " title into " + target;
+            case "title" ->  prefix + " title";
 //            case "body_html" -> prefix + (modelType.equals("article") ? " content" : " description");
-            case "meta_title" -> prefix + " meta title into " + target;
+            case "meta_title" -> prefix + " meta title";
 //            case "meta_description" -> prefix + " meta description";
             default -> null;
         };

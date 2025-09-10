@@ -890,10 +890,9 @@ public class RabbitMqTranslateService {
                 continue;
             }
 
-            appInsights.trackTrace(shopName + " untranslatedTexts :  " + untranslatedTexts + " " + translationKeyType);
             //根据不同的key类型，生成对应提示词，后翻译
             String prompt = getListPrompt(getLanguageName(target), languagePack, translationKeyType, modelType);
-            appInsights.trackTrace(shopName + " prompt : " + prompt + " translationKeyType");
+            appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
             String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt);
             appInsights.trackTrace(shopName + " translatedJson : " + translatedJson);
 
@@ -929,20 +928,19 @@ public class RabbitMqTranslateService {
     /**
      * list翻译
      *
-     * @param template          翻译模板
+     * @param translateRequest  翻译相关参数
      * @param untranslatedTexts 未翻译文本
      * @param counter           字符计数器
      * @param limitChars        字符限制
      * @param prompt            提示词
      */
-    private String translateBatch(TranslateRequest template,
+    private String translateBatch(TranslateRequest translateRequest,
                                   List<String> untranslatedTexts,
                                   CharacterCountUtils counter,
                                   Integer limitChars,
                                   String prompt) {
         try {
-            TranslateRequest request = cloneTranslateRequest(template, untranslatedTexts.toString());
-            return jsoupUtils.translateByCiwiModel(request, counter, limitChars, prompt);
+            return jsoupUtils.translateByCiwiUserModel(translateRequest.getTarget(), untranslatedTexts.toString(), translateRequest.getShopName(), translateRequest.getSource(), counter, limitChars, prompt);
         } catch (Exception e) {
             System.out.println("clickTranslation translateBatch 调用翻译接口失败: " + e.getMessage());
             appInsights.trackTrace("clickTranslation translateBatch 调用翻译接口失败: " + e.getMessage());

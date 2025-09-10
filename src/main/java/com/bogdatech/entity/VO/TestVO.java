@@ -12,4 +12,5 @@ public class TestVO {
     private String packId;
     private String translationKeyType;
     private String modelType;
+    private String value;
 }

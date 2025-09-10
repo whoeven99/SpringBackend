@@ -119,4 +119,71 @@ public class HunYuanIntegration {
         return sourceText;
     }
 
+    /**
+     * 混元model翻译 单User翻译
+     *
+     * @param sourceText 原文本
+     * @param prompt     提示词
+     * @param countUtils 字符统计工具
+     * @param model      模型
+     * @param shopName   店铺名称
+     * @return 翻译后的文本
+     **/
+    public String hunYuanUserTranslate(String sourceText, String prompt, CharacterCountUtils countUtils, String model, String shopName, Integer limitChars) {
+        final int maxRetries = 3;
+        final long baseDelayMillis = 1000; // 初始重试延迟为 1 秒
+
+        // 1. 创建 ChatCompletions 请求
+        ChatCompletionsRequest req = new ChatCompletionsRequest();
+        // 设置模型名称（请确认具体名称，假设为 "hunyuan-turbo-s"）
+        req.setModel(model); //28k token
+        // 设置对话消息
+        Message[] messages = new Message[1];
+        messages[0] = new Message();
+        messages[0].setRole("user");
+        messages[0].setContent(prompt + sourceText);
+        req.setMessages(messages);
+        req.setStream(false); // 非流式调用，设为 true 可启用流式返回
+
+        // 4. 发送请求并获取响应
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                ChatCompletionsResponse resp = CLIENT.ChatCompletions(req);
+                // 5. 输出结果
+                if (resp.getChoices() != null && resp.getChoices().length > 0) {
+                    String targetText = resp.getChoices()[0].getMessage().getContent();
+                    if (resp.getUsage() != null && resp.getUsage().getTotalTokens() != null) {
+                        countUtils.addChars(resp.getUsage().getTotalTokens().intValue());
+                    }
+                    int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
+                    long completionTokens = resp.getUsage().getCompletionTokens();
+                    long promptTokens = resp.getUsage().getPromptTokens();
+                    Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+                    userTranslate.put(shopName, translationStatusMap);
+                    printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
+                    appInsights.trackTrace("hunYuanUserTranslate " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                    translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+                    countUtils.addChars(totalToken);
+                    return targetText;
+                } else {
+                    appInsights.trackTrace("hunYuanUserTranslate 重试 Hunyuan errors " + attempt + " sourceText: " + sourceText + " prompt: " + prompt);
+                }
+
+            } catch (TencentCloudSDKException e) {
+                appInsights.trackException(e);
+                appInsights.trackTrace("hunYuanUserTranslate hunyuan errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
+                if (attempt == maxRetries) {
+                    throw new RuntimeException("hunYuanUserTranslate errors Failed after " + maxRetries + " attempts", e);
+                }
+            }
+            try {
+                long delay = baseDelayMillis * (1L << (attempt - 1)); // 1s, 2s, 4s...
+                Thread.sleep(delay);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt(); // restore interrupt flag
+                throw new RuntimeException("hunYuanUserTranslate Hunyuan errors Retry interrupted", ie);
+            }
+        }
+        return sourceText;
+    }
 }

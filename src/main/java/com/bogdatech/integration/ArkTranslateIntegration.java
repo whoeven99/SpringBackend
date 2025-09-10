@@ -113,12 +113,12 @@ public class ArkTranslateIntegration {
         }
     }
 
-    public static String douBaoPromptTranslate(String prompt, String sourceText, CharacterCountUtils countUtils) {
+    public String douBaoPromptTranslate(String shopName, String prompt, String sourceText, CharacterCountUtils countUtils, Integer limitChars) {
         try {
             List<ChatMessage> messages = new ArrayList<>();
             ChatMessage userMessage = ChatMessage.builder()
                     .role(ChatMessageRole.USER)
-                    .content(prompt)
+                    .content(prompt + sourceText)
                     .build();
             messages.add(userMessage);
 
@@ -132,14 +132,18 @@ public class ArkTranslateIntegration {
             chatCompletion.getChoices().forEach(choice -> response.append(choice.getMessage().getContent()));
             long totalTokens = (long) (chatCompletion.getUsage().getTotalTokens() * MAGNIFICATION);
             int totalTokensInt = (int) totalTokens;
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+            userTranslate.put(shopName, translationStatusMap);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
             printTranslateCost(totalTokensInt, (int) promptTokens, (int)completionTokens);
-            appInsights.trackTrace("token doubao: " + sourceText + "all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
+            appInsights.trackTrace("clickTranslation douBaoPromptTranslate " + shopName + " 用户 token doubao: " + sourceText + " target : " + response + "all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
+            translationCounterService.updateAddUsedCharsByShopName(shopName, totalTokensInt, limitChars);
             countUtils.addChars(totalTokensInt);
             return response.toString();
         } catch (Exception e) {
-            appInsights.trackTrace("豆包翻译失败 errors : " + e.getMessage());
+            appInsights.trackTrace("clickTranslation " + shopName + " douBaoTranslate 豆包翻译失败 errors : " + e.getMessage() + " sourceText : " + sourceText);
+            appInsights.trackException(e);
             return sourceText;
         }
     }
