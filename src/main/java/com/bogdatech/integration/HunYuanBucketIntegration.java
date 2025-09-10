@@ -18,9 +18,9 @@ import com.qcloud.cos.transfer.TransferProgress;
 import com.qcloud.cos.transfer.Upload;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
 import static com.bogdatech.constants.TencentConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.StringUtils.generate8DigitNumber;
 
 @Component
 public class HunYuanBucketIntegration {
@@ -84,10 +84,14 @@ public class HunYuanBucketIntegration {
         while (retryCount < maxRetries) {
             TransferManager transferManager = createTransferManager();
             String originalFilename = file.getOriginalFilename();
-            if (originalFilename != null) {
-                originalFilename = originalFilename.replace(" ", "_");
+            String extension = "";
+            // 获取文件后缀名
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
             }
-            String key = PATH_NAME + "/" + shopName + "/" + imageId + "/" + originalFilename;
+            //随机生成8位随机数
+            String generate8DigitNumber = generate8DigitNumber();
+            String key = PATH_NAME + "/" + shopName + "/" + imageId + "/" + generate8DigitNumber + extension;
             String afterUrl = HTTP + key;
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
