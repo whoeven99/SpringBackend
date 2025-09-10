@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -192,5 +193,13 @@ public class StringUtils {
             appInsights.trackTrace("convertUrlToMultipartFile error: " + e.getMessage());
         }
         return  null;
+    }
+
+    /**
+     * 随机生成8位随机数
+     * */
+    public static String generate8DigitNumber() {
+        int number = ThreadLocalRandom.current().nextInt(10000000, 100000000);
+        return String.valueOf(number);
     }
 }
