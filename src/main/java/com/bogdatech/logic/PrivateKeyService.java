@@ -46,6 +46,8 @@ import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogdatech.utils.ListUtils.convertALL;
+import static com.bogdatech.utils.ListUtils.sort;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.PlaceholderUtils.getGlossaryPrompt;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
@@ -228,7 +230,10 @@ public class PrivateKeyService {
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
                 if (emailSent.compareAndSet(false, true)) {
-                    translateFailEmail(shopName, begin, Math.toIntExact(usedChars), target, source, userKey);
+                    //将List<String> 转化位 List<TranslateResourceDTO>
+                    List<String> sort = sort(translateResourceDTOS);
+                    List<TranslateResourceDTO> convertALL = convertALL(sort);
+                    translateFailEmail(shopName, begin, Math.toIntExact(usedChars), target, source, userKey, convertALL);
                 }
                 appInsights.trackException(e);
                 return;
@@ -813,7 +818,7 @@ public class PrivateKeyService {
         }
     }
 
-    public void translateFailEmail(String shopName, LocalDateTime begin, int beginChars, String target, String source, String userKey) {
+    public void translateFailEmail(String shopName, LocalDateTime begin, int beginChars, String target, String source, String userKey, List<TranslateResourceDTO> resourceList) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
         templateData.put("language", target);
@@ -826,7 +831,7 @@ public class PrivateKeyService {
         //获取用户已翻译的和未翻译的文本
         //通过shopName获取翻译到那个文本
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
-        TypeSplitResponse typeSplitResponse = splitByType(resourceType, ALL_RESOURCES);
+        TypeSplitResponse typeSplitResponse = splitByType(resourceType, resourceList);
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
         //获取更新前后的时间
