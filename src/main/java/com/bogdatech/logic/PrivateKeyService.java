@@ -59,43 +59,38 @@ import static com.bogdatech.utils.UserPrivateUtils.getApiKey;
 
 @Component
 public class PrivateKeyService {
-    private final UserPrivateService userPrivateService;
-    private final ITranslatesService iTranslatesService;
-    private final IUsersService usersService;
-    private final EmailIntegration emailIntegration;
-    private final IEmailService emailService;
-    private final ShopifyService shopifyService;
-    private final ITranslatesService translatesService;
-    private final TestingEnvironmentIntegration testingEnvironmentIntegration;
-    private final ShopifyHttpIntegration shopifyApiIntegration;
-    private final IVocabularyService vocabularyService;
-    private final SecretClient secretClient;
-    private final IUserTypeTokenService userTypeTokenService;
-    private final IUserPrivateTranslateService iUserPrivateTranslateService;
-    private final GlossaryService glossaryService;
-    private final RabbitMqTranslateService rabbitMqTranslateService;
-    private final PrivateIntegration privateIntegration;
-
     @Autowired
-    public PrivateKeyService(UserPrivateService userPrivateService, ITranslatesService iTranslatesService, IUsersService usersService, EmailIntegration emailIntegration, IEmailService emailService, GlossaryService glossaryService, ShopifyService shopifyService, ITranslatesService translatesService, TestingEnvironmentIntegration testingEnvironmentIntegration, ShopifyHttpIntegration shopifyApiIntegration, IVocabularyService vocabularyService, SecretClient secretClient, IUserTypeTokenService userTypeTokenService, IUserPrivateTranslateService iUserPrivateTranslateService, RabbitMqTranslateService rabbitMqTranslateService, PrivateIntegration privateIntegration) {
-        this.userPrivateService = userPrivateService;
-        this.iTranslatesService = iTranslatesService;
-        this.usersService = usersService;
-        this.emailIntegration = emailIntegration;
-        this.emailService = emailService;
-        this.glossaryService = glossaryService;
-        this.shopifyService = shopifyService;
-        this.translatesService = translatesService;
-        this.testingEnvironmentIntegration = testingEnvironmentIntegration;
-        this.shopifyApiIntegration = shopifyApiIntegration;
-        this.vocabularyService = vocabularyService;
-        this.secretClient = secretClient;
-        this.userTypeTokenService = userTypeTokenService;
-        this.iUserPrivateTranslateService = iUserPrivateTranslateService;
-        this.rabbitMqTranslateService = rabbitMqTranslateService;
-        this.privateIntegration = privateIntegration;
-    }
-
+    private  UserPrivateService userPrivateService;
+    @Autowired
+    private  ITranslatesService iTranslatesService;
+    @Autowired
+    private  IUsersService usersService;
+    @Autowired
+    private  EmailIntegration emailIntegration;
+    @Autowired
+    private  IEmailService emailService;
+    @Autowired
+    private  ShopifyService shopifyService;
+    @Autowired
+    private  ITranslatesService translatesService;
+    @Autowired
+    private  TestingEnvironmentIntegration testingEnvironmentIntegration;
+    @Autowired
+    private  ShopifyHttpIntegration shopifyApiIntegration;
+    @Autowired
+    private  IVocabularyService vocabularyService;
+    @Autowired
+    private  SecretClient secretClient;
+    @Autowired
+    private  IUserTypeTokenService userTypeTokenService;
+    @Autowired
+    private  IUserPrivateTranslateService iUserPrivateTranslateService;
+    @Autowired
+    private  GlossaryService glossaryService;
+    @Autowired
+    private  RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private  PrivateIntegration privateIntegration;
 
     private static final String PRIVATE_KEY = "private_key";
     public static final Integer GOOGLE_MODEL = 0;
@@ -188,7 +183,7 @@ public class PrivateKeyService {
         }
         //私有key翻译
         translatesService.updateTranslateStatus(request.getShopName(), 2, clickTranslateRequest.getTarget()[0], request.getSource(), request.getAccessToken());
-        startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey, translateResourceDTOS, clickTranslateRequest.getIsCover(), modelFlag, privateData.getApiModel(), privateData.getPromptWord(), handleFlag);
+        startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey, translateResourceDTOS, clickTranslateRequest.getIsCover(), modelFlag, privateData.getApiModel(), privateData.getPromptWord(), handleFlag, userKey);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 
@@ -212,7 +207,7 @@ public class PrivateKeyService {
      * @param counter        字符计数器
      * @param usedChars      已使用字符数
      */
-    public void startPrivateTranslation(TranslateRequest request, Long remainingChars, CharacterCountUtils counter, Long usedChars, String apiKey, List<String> translateResourceDTOS, boolean isCover, Integer modelFlag, String apiModel, String userPrompt, boolean handleFlag) {
+    public void startPrivateTranslation(TranslateRequest request, Long remainingChars, CharacterCountUtils counter, Long usedChars, String apiKey, List<String> translateResourceDTOS, boolean isCover, Integer modelFlag, String apiModel, String userPrompt, boolean handleFlag, String userKey) {
         // 创建并启动翻译任务
         String shopName = request.getShopName();
         String source = request.getSource();
@@ -254,7 +249,7 @@ public class PrivateKeyService {
             try {
                 //翻译成功后发送翻译成功的邮件
                 if (!userStopFlags.get(shopName).get()) {
-                    translateSuccessEmail(request, counter, begin, Math.toIntExact(usedChars), Math.toIntExact(remainingChars));
+                    translateSuccessEmail(request, begin, Math.toIntExact(usedChars), Math.toIntExact(remainingChars), userKey);
                 }
             } catch (Exception e) {
                 appInsights.trackException(e);
@@ -853,7 +848,7 @@ public class PrivateKeyService {
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }
 
-    public void translateSuccessEmail(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int beginChars, Integer remainingChars) {
+    public void translateSuccessEmail(TranslateRequest request, LocalDateTime begin, int beginChars, Integer remainingChars, String userKey) {
         String shopName = request.getShopName();
         //通过shopName获取用户信息 需要 {{user}} {{language}} {{credit_count}} {{time}} {{remaining_credits}}
         UsersDO usersDO = usersService.getUserByName(shopName);
@@ -873,10 +868,13 @@ public class PrivateKeyService {
         templateData.put("time", costTime + " minutes");
 
         //共消耗的字符数
+        //获取当前已消耗的token
+        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiKey, userKey));
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        int endChars = counter.getTotalChars();
+        int endChars = Math.toIntExact(privateData.getUsedToken());
         int costChars = endChars - beginChars;
         String formattedNumber = formatter.format(costChars);
+        appInsights.trackTrace(shopName + " formattedNumber = " + formattedNumber);
         templateData.put("credit_count", formattedNumber);
 
         //还剩下的字符数

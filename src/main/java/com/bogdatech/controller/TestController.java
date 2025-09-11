@@ -2,7 +2,6 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.azure.core.annotation.Post;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.IAPGUsersService;
@@ -13,10 +12,8 @@ import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UserTranslationDataDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
-import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
-import com.bogdatech.entity.VO.TestVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
@@ -45,39 +42,33 @@ import static com.bogdatech.task.DBTask.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.PlaceholderUtils.getListPrompt;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
 @RestController
 public class TestController {
-    private final TranslatesServiceImpl translatesServiceImpl;
-    private final ChatGptIntegration chatGptIntegration;
-    private final TaskService taskService;
-    private final RateHttpIntegration rateHttpIntegration;
-    private final UserTypeTokenService userTypeTokenService;
-    private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
-    private final TencentEmailService tencentEmailService;
-    private final ITranslateTasksService translateTasksService;
-    private final DBTask DBTask;
-    private final UserTranslationDataService userTranslationDataService;
-    private final IAPGUsersService iapgUsersService;
-    private final GenerateDescriptionService generateDescriptionService;
-
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, DBTask DBTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
-        this.translatesServiceImpl = translatesServiceImpl;
-        this.chatGptIntegration = chatGptIntegration;
-        this.taskService = taskService;
-        this.rateHttpIntegration = rateHttpIntegration;
-        this.userTypeTokenService = userTypeTokenService;
-        this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
-        this.tencentEmailService = tencentEmailService;
-        this.translateTasksService = translateTasksService;
-        this.DBTask = DBTask;
-        this.userTranslationDataService = userTranslationDataService;
-        this.iapgUsersService = iapgUsersService;
-        this.generateDescriptionService = generateDescriptionService;
-    }
+    private TranslatesServiceImpl translatesServiceImpl;
+    @Autowired
+    private ChatGptIntegration chatGptIntegration;
+    @Autowired
+    private TaskService taskService;
+    @Autowired
+    private RateHttpIntegration rateHttpIntegration;
+    @Autowired
+    private UserTypeTokenService userTypeTokenService;
+    @Autowired
+    private RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
+    @Autowired
+    private TencentEmailService tencentEmailService;
+    @Autowired
+    private ITranslateTasksService translateTasksService;
+    @Autowired
+    private DBTask dBTask;
+    @Autowired
+    private UserTranslationDataService userTranslationDataService;
+    @Autowired
+    private IAPGUsersService iapgUsersService;
+
 
     @GetMapping("/ping")
     public String ping() {
@@ -244,7 +235,6 @@ public class TestController {
     /**
      * 修改用户锁集合
      */
-
     @PutMapping("/testModifyLock")
     public String testModifyLock(@RequestParam String shopName) {
         ReentrantLock lock = SHOP_LOCKS.get(shopName);
@@ -262,7 +252,7 @@ public class TestController {
      */
     @PutMapping("/testDBTranslate")
     public void testDBTranslate() {
-        DBTask.scanAndSubmitTasks();
+        dBTask.scanAndSubmitTasks();
     }
 
     /**
@@ -359,23 +349,6 @@ public class TestController {
         return GENERATE_SHOP.add(usersDO.getId());
     }
 
-    @GetMapping("/testAuto")
-    public void testAuto() {
-        taskService.autoTranslate();
-    }
-
-    /**
-     * 测试analyzeDescriptionData是否可行
-     */
-    @GetMapping("/testAnalyze")
-    public APGAnalyzeDataVO testAnalyze() {
-        String gen = """
-                """;
-        String des = """
-                """;
-        return generateDescriptionService.analyzeDescriptionData(des, gen, "123");
-    }
-
     /**
      * 单纯的打印信息
      */
@@ -384,25 +357,4 @@ public class TestController {
         appInsights.trackTrace(data);
     }
 
-    /**
-     * 测试返回后的数据是否可解析
-     */
-    @GetMapping("/testReturn")
-    public String testReturn(@RequestBody TestVO target) {
-        String listPrompt = getListPrompt(target.getTarget(), target.getPackId(), target.getTranslationKeyType(), target.getModelType());
-        System.out.println("listPrompt: " + listPrompt + target.getValue());
-        return listPrompt;
-//        String json = """
-//                """;
-//        try {
-//            Map<String, String> map = OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
-//
-//            // 测试输出
-//            map.forEach((key, value) -> System.out.println(key + " -> " + value));
-//
-//        } catch (JsonProcessingException e) {
-//            System.err.println(e);
-//            throw new RuntimeException(e);
-//        }
-    }
 }
