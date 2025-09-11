@@ -228,7 +228,7 @@ public class PrivateKeyService {
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
                 if (emailSent.compareAndSet(false, true)) {
-                    translateFailEmail(shopName, counter, begin, Math.toIntExact(usedChars), target, source);
+                    translateFailEmail(shopName, begin, Math.toIntExact(usedChars), target, source, userKey);
                 }
                 appInsights.trackException(e);
                 return;
@@ -813,7 +813,7 @@ public class PrivateKeyService {
         }
     }
 
-    public void translateFailEmail(String shopName, CharacterCountUtils counter, LocalDateTime begin, int beginChars, String target, String source) {
+    public void translateFailEmail(String shopName, LocalDateTime begin, int beginChars, String target, String source, String userKey) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
         templateData.put("language", target);
@@ -837,8 +837,9 @@ public class PrivateKeyService {
         templateData.put("time", costTime + " minutes");
 
         //共消耗的字符数
+        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiKey, userKey));
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        int endChars = counter.getTotalChars();
+        int endChars = Math.toIntExact(privateData.getUsedToken());
         int costChars = endChars - beginChars;
         String formattedNumber = formatter.format(costChars);
         templateData.put("credit_count", formattedNumber);
