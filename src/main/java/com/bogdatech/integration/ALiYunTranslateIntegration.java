@@ -61,8 +61,6 @@ public class ALiYunTranslateIntegration {
         }
     }
 
-    //单文本翻译的提示词(用具体语言而不是语言代码)
-
     /**
      * 用qwen-MT的部分代替google翻译。
      *
@@ -108,6 +106,53 @@ public class ALiYunTranslateIntegration {
             countUtils.addChars(totalToken);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
+            appInsights.trackException(e);
+            return text;
+        }
+        return content;
+    }
+
+    /**
+     * qwen 单 user msg 翻译
+     *
+     * @param text       要翻译的文本
+     * @param prompt     提示词
+     * @param target     目标语言代码
+     * @param countUtils 计数器
+     * @param shopName   店铺名称
+     * @return 翻译后的文本
+     */
+    public String userTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars) {
+        String model = switchModel(target);
+        Generation gen = new Generation();
+
+        Message userMsg = Message.builder()
+                .role(Role.USER.getValue())
+                .content(prompt + text)
+                .build();
+        GenerationParam param = GenerationParam.builder()
+                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .model(model)
+                .messages(Collections.singletonList(userMsg))
+                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .build();
+        String content;
+        int totalToken;
+        try {
+            GenerationResult call = gen.call(param);
+            content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(text, 2);
+            userTranslate.put(shopName, translationStatusMap);
+            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            Integer inputTokens = call.getUsage().getInputTokens();
+            Integer outputTokens = call.getUsage().getOutputTokens();
+            appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
+            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            countUtils.addChars(totalToken);
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation userTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
             return text;
         }
@@ -235,7 +280,7 @@ public class ALiYunTranslateIntegration {
             counter.addChars(totalToken);
             return (String) content.get(0).get("text");
         } catch (Exception e) {
-            appInsights.trackTrace("调用百炼视觉模型报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
+            appInsights.trackTrace("callWithPicMess 用户 " + userId + " 调用百炼视觉模型报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             appInsights.trackException(e);
             return null;
         }

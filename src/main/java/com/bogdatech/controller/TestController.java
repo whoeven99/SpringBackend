@@ -12,7 +12,6 @@ import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UserTranslationDataDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
-import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ChatGptIntegration;
@@ -22,7 +21,7 @@ import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
-import com.bogdatech.task.RabbitMqTask;
+import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
-import static com.bogdatech.task.RabbitMqTask.*;
+import static com.bogdatech.task.DBTask.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
@@ -47,34 +46,29 @@ import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
 @RestController
 public class TestController {
-    private final TranslatesServiceImpl translatesServiceImpl;
-    private final ChatGptIntegration chatGptIntegration;
-    private final TaskService taskService;
-    private final RateHttpIntegration rateHttpIntegration;
-    private final UserTypeTokenService userTypeTokenService;
-    private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
-    private final TencentEmailService tencentEmailService;
-    private final ITranslateTasksService translateTasksService;
-    private final RabbitMqTask rabbitMqTask;
-    private final UserTranslationDataService userTranslationDataService;
-    private final IAPGUsersService iapgUsersService;
-    private final GenerateDescriptionService generateDescriptionService;
-
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
-        this.translatesServiceImpl = translatesServiceImpl;
-        this.chatGptIntegration = chatGptIntegration;
-        this.taskService = taskService;
-        this.rateHttpIntegration = rateHttpIntegration;
-        this.userTypeTokenService = userTypeTokenService;
-        this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
-        this.tencentEmailService = tencentEmailService;
-        this.translateTasksService = translateTasksService;
-        this.rabbitMqTask = rabbitMqTask;
-        this.userTranslationDataService = userTranslationDataService;
-        this.iapgUsersService = iapgUsersService;
-        this.generateDescriptionService = generateDescriptionService;
-    }
+    private TranslatesServiceImpl translatesServiceImpl;
+    @Autowired
+    private ChatGptIntegration chatGptIntegration;
+    @Autowired
+    private TaskService taskService;
+    @Autowired
+    private RateHttpIntegration rateHttpIntegration;
+    @Autowired
+    private UserTypeTokenService userTypeTokenService;
+    @Autowired
+    private RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
+    @Autowired
+    private TencentEmailService tencentEmailService;
+    @Autowired
+    private ITranslateTasksService translateTasksService;
+    @Autowired
+    private DBTask dBTask;
+    @Autowired
+    private UserTranslationDataService userTranslationDataService;
+    @Autowired
+    private IAPGUsersService iapgUsersService;
+
 
     @GetMapping("/ping")
     public String ping() {
@@ -241,7 +235,6 @@ public class TestController {
     /**
      * 修改用户锁集合
      */
-
     @PutMapping("/testModifyLock")
     public String testModifyLock(@RequestParam String shopName) {
         ReentrantLock lock = SHOP_LOCKS.get(shopName);
@@ -259,7 +252,7 @@ public class TestController {
      */
     @PutMapping("/testDBTranslate")
     public void testDBTranslate() {
-        rabbitMqTask.scanAndSubmitTasks();
+        dBTask.scanAndSubmitTasks();
     }
 
     /**
@@ -340,7 +333,7 @@ public class TestController {
 
     /**
      * 往缓存中插入数据
-     * */
+     */
     @GetMapping("/testInsertCache")
     public void testInsertCache(@RequestParam String shopName, @RequestParam String value) {
         Map<String, Object> translationStatusMap = getTranslationStatusMap(value, 2);
@@ -349,35 +342,19 @@ public class TestController {
 
     /**
      * 暂停APG应用的生成任务
-     * */
+     */
     @GetMapping("/testAPGStop")
     public boolean userMaxLimit(@RequestParam String shopName) {
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         return GENERATE_SHOP.add(usersDO.getId());
     }
 
-    @GetMapping("/testAuto")
-    public void testAuto() {
-        taskService.autoTranslate();
-    }
-
-    /**
-     * 测试analyzeDescriptionData是否可行
-     * */
-    @GetMapping("/testAnalyze")
-    public APGAnalyzeDataVO testAnalyze() {
-        String gen = """
-                """;
-        String des = """
-                """;
-        return generateDescriptionService.analyzeDescriptionData(des, gen, "123");
-    }
-
     /**
      * 单纯的打印信息
-     * */
-    @GetMapping("/frontEndPrinting")
+     */
+    @PostMapping("/frontEndPrinting")
     public void frontEndPrinting(@RequestBody String data) {
         appInsights.trackTrace(data);
     }
+
 }
