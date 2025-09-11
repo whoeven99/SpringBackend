@@ -7,6 +7,10 @@ public class TranslateConstants {
     public static final String DOUBLE_CURLY_BRACKET_AND_HUNDRED = "{%%}";
     public static final String PLAIN_TEXT = "PLAIN_TEXT";
     public static final String HTML = "HTML";
+    public static final String TITLE = "title";
+    public static final String META_TITLE = "meta_title";
+    public static final String LIST_SINGLE = "LIST_SINGLE_LINE_TEXT_FIELD";
+    public static final String LOWERCASE_HANDLE = "handle";
     public static final String HANDLE = "HANDLE";
     public static final String URI = "URI";
     public static final String GENERAL = "GENERAL";
