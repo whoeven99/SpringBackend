@@ -59,9 +59,10 @@ public class TestController {
     private final UserTranslationDataService userTranslationDataService;
     private final IAPGUsersService iapgUsersService;
     private final GenerateDescriptionService generateDescriptionService;
+    private final RedisService redisService;
 
     @Autowired
-    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService) {
+    public TestController(TranslatesServiceImpl translatesServiceImpl, ChatGptIntegration chatGptIntegration, TaskService taskService, RateHttpIntegration rateHttpIntegration, UserTypeTokenService userTypeTokenService, RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, TencentEmailService tencentEmailService, ITranslateTasksService translateTasksService, RabbitMqTask rabbitMqTask, UserTranslationDataService userTranslationDataService, IAPGUsersService iapgUsersService, GenerateDescriptionService generateDescriptionService, RedisService redisService) {
         this.translatesServiceImpl = translatesServiceImpl;
         this.chatGptIntegration = chatGptIntegration;
         this.taskService = taskService;
@@ -74,6 +75,7 @@ public class TestController {
         this.userTranslationDataService = userTranslationDataService;
         this.iapgUsersService = iapgUsersService;
         this.generateDescriptionService = generateDescriptionService;
+        this.redisService = redisService;
     }
 
     @GetMapping("/ping")
@@ -340,7 +342,7 @@ public class TestController {
 
     /**
      * 往缓存中插入数据
-     * */
+     */
     @GetMapping("/testInsertCache")
     public void testInsertCache(@RequestParam String shopName, @RequestParam String value) {
         Map<String, Object> translationStatusMap = getTranslationStatusMap(value, 2);
@@ -349,7 +351,7 @@ public class TestController {
 
     /**
      * 暂停APG应用的生成任务
-     * */
+     */
     @GetMapping("/testAPGStop")
     public boolean userMaxLimit(@RequestParam String shopName) {
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
@@ -363,7 +365,7 @@ public class TestController {
 
     /**
      * 测试analyzeDescriptionData是否可行
-     * */
+     */
     @GetMapping("/testAnalyze")
     public APGAnalyzeDataVO testAnalyze() {
         String gen = """
@@ -375,9 +377,29 @@ public class TestController {
 
     /**
      * 单纯的打印信息
-     * */
+     */
     @GetMapping("/frontEndPrinting")
     public void frontEndPrinting(@RequestBody String data) {
         appInsights.trackTrace(data);
+    }
+
+    /**
+     * 调用redis进度条相关方法
+     */
+    @PostMapping("/testRedis")
+    public void testRedis(@RequestParam String shopName, @RequestBody ShopifyRequest request) {
+        switch (request.getAccessToken()) {
+            case "1":
+                long l = redisService.incrementProgressFieldData(shopName, request.getTarget(), request.getShopName(), 10);
+                System.out.println("已经增加的数据 : " + l);
+                break;
+            case "2":
+                Map<String, String> translationProgress = redisService.getTranslationProgress(shopName, request.getTarget());
+                System.out.println("translationProgress : " + translationProgress);
+                break;
+            case "3":
+                redisService.deleteTranslationProgress(shopName, request.getTarget());
+                break;
+        }
     }
 }

@@ -64,9 +64,10 @@ public class RabbitMqTranslateService {
     private final ITranslateTasksService translateTasksService;
     private final TaskScheduler taskScheduler;
     private final UserTypeTokenService userTypeTokenService;
+    private final RedisService redisService;
 
     @Autowired
-    public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler, UserTypeTokenService userTypeTokenService1) {
+    public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler, UserTypeTokenService userTypeTokenService1, RedisService redisService) {
         this.translationCounterService = translationCounterService;
         this.translatesService = translatesService;
         this.shopifyService = shopifyService;
@@ -79,6 +80,7 @@ public class RabbitMqTranslateService {
         this.translateTasksService = translateTasksService;
         this.taskScheduler = taskScheduler;
         this.userTypeTokenService = userTypeTokenService1;
+        this.redisService = redisService;
     }
 
     /**
@@ -216,6 +218,10 @@ public class RabbitMqTranslateService {
     public void translateNextPage(JsonNode rootNode, TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = rootNode.path("translatableResources");
+
+        // 获取nodes节点，再获取translatableContent节点，计数里面的value个数
+        countValue(translatableResourcesNode, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget());
+
         // 获取pageInfo节点
         JsonNode pageInfoNode = translatableResourcesNode.path("pageInfo");
         if (translatableResourcesNode.hasNonNull("pageInfo")) {
@@ -226,6 +232,21 @@ public class RabbitMqTranslateService {
             }
         }
     }
+
+    /**
+     * 根据shopify返回的字段，统计里面的value值
+     * */
+    public void countValue(JsonNode translatableResourcesNode, String shopName, String target) {
+        JsonNode nodes = translatableResourcesNode.path("nodes");
+        if (nodes == null){
+            return;
+        }
+        for (JsonNode node : nodes) {
+            JsonNode translatableContent = node.path("translatableContent");
+            redisService.incrementProgressFieldData(shopName, target, PROGRESS_TOTAL, translatableContent.size());
+        }
+    }
+
 
     //递归处理下一页数据
     private void translateNextPageData(TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
@@ -337,7 +358,7 @@ public class RabbitMqTranslateService {
     public void commonTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
         //根据DB的请求语句获取对应shopify值
         String shopifyDataByDb = getShopifyDataByDb(rabbitMqTranslateVO);
-        if(shopifyDataByDb == null) {
+        if (shopifyDataByDb == null) {
             appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " shopifyDataByDb is null" + rabbitMqTranslateVO);
             return;
         }
@@ -838,7 +859,7 @@ public class RabbitMqTranslateService {
             //在这里做模块判断用什么模型翻译
             targetString = translateTextDataByModeType(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest, handleType);
         } catch (ClientException e) {
-            appInsights.trackTrace("clickTranslation " + shopName +  " 翻译失败 errors ： " + e.getMessage() + " ，继续翻译");
+            appInsights.trackTrace("clickTranslation " + shopName + " 翻译失败 errors ： " + e.getMessage() + " ，继续翻译");
         }
 
         if (Objects.equals(targetString, METAFIELD)) {
