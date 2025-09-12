@@ -28,7 +28,7 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.generateProcessKey;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 
 @Service
 public class RabbitMqTranslateConsumerService {

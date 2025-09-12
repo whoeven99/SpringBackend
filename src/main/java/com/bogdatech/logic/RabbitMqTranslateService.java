@@ -42,7 +42,7 @@ import static com.bogdatech.utils.ListUtils.sort;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PlaceholderUtils.getListPrompt;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
-import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.*;
+import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 

@@ -42,8 +42,8 @@ public class RedisIntegration {
     /**
      * hash get
      * */
-    public Object getHash(String key, String field){
-        return redisTemplate.opsForHash().get(key, field);
+    public String getHash(String key, String field){
+        return (String) redisTemplate.opsForHash().get(key, field);
     }
 
 

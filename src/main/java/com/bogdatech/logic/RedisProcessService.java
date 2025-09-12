@@ -4,8 +4,8 @@ import com.bogdatech.integration.RedisIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.PROGRESS_DONE;
-import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.PROGRESS_TOTAL;
+import static com.bogdatech.utils.RedisKeyUtils.PROGRESS_DONE;
+import static com.bogdatech.utils.RedisKeyUtils.PROGRESS_TOTAL;
 
 @Service
 public class RedisProcessService {
@@ -26,7 +26,7 @@ public class RedisProcessService {
     /**
      * redis获取进度条相关数据
      * */
-    public Object getFieldProcessData(String key, String field){
+    public String getFieldProcessData(String key, String field){
         return redisIntegration.getHash(key,field);
     }
 
