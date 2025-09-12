@@ -16,12 +16,8 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @EnableScheduling
 @EnableAsync
 public class RateTask {
-
-    private final RateHttpIntegration rateHttpIntegration;
     @Autowired
-    public RateTask(RateHttpIntegration rateHttpIntegration) {
-        this.rateHttpIntegration = rateHttpIntegration;
-    }
+    private RateHttpIntegration rateHttpIntegration;
 
     @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")

@@ -4,18 +4,16 @@ import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
-
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -24,13 +22,10 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @EnableScheduling
 @EnableAsync
 public class DBTask {
-    private final RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
-    private final ITranslateTasksService translateTasksService;
-
-    public DBTask(RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService, ITranslateTasksService translateTasksService) {
-        this.rabbitMqTranslateConsumerService = rabbitMqTranslateConsumerService;
-        this.translateTasksService = translateTasksService;
-    }
+    @Autowired
+    private RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
+    @Autowired
+    private ITranslateTasksService translateTasksService;
 
     public static final ConcurrentHashMap<String, ReentrantLock> SHOP_LOCKS = new ConcurrentHashMap<>();
     public static final Set<String> PROCESSING_SHOPS = ConcurrentHashMap.newKeySet();

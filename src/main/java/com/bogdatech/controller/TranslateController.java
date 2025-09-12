@@ -37,28 +37,21 @@ import static com.bogdatech.utils.TypeConversionUtils.*;
 @RestController
 @RequestMapping("/translate")
 public class TranslateController {
-    private final TranslateService translateService;
-    private final ITranslatesService translatesService;
-    private final ITranslationCounterService translationCounterService;
-    private final IUserTypeTokenService userTypeTokenService;
-    private final UserTypeTokenService userTypeTokensService;
-    private final RabbitMqTranslateService rabbitMqTranslateService;
-    private final ITranslateTasksService iTranslateTasksService;
-
     @Autowired
-    public TranslateController(
-            TranslateService translateService,
-            ITranslatesService translatesService,
-            ITranslationCounterService translationCounterService,
-            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService, ITranslateTasksService iTranslateTasksService) {
-        this.translateService = translateService;
-        this.translatesService = translatesService;
-        this.translationCounterService = translationCounterService;
-        this.userTypeTokenService = userTypeTokenService;
-        this.userTypeTokensService = userTypeTokensService;
-        this.rabbitMqTranslateService = rabbitMqTranslateService;
-        this.iTranslateTasksService = iTranslateTasksService;
-    }
+    private  TranslateService translateService;
+    @Autowired
+    private  ITranslatesService translatesService;
+    @Autowired
+    private  ITranslationCounterService translationCounterService;
+    @Autowired
+    private  IUserTypeTokenService userTypeTokenService;
+    @Autowired
+    private  UserTypeTokenService userTypeTokensService;
+    @Autowired
+    private  RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private  ITranslateTasksService iTranslateTasksService;
+
 
 
     /**
@@ -76,14 +69,6 @@ public class TranslateController {
     public String googleTranslate(@RequestBody TranslateRequest request) {
         return translateService.googleTranslate(request);
     }
-
-//    /**
-//     * 调用百度翻译的API接口
-//     */
-//    @PostMapping("/baiDuTranslate")
-//    public BaseResponse<Object> baiDuTranslate(@RequestBody TranslateRequest request) {
-//        return new BaseResponse<>().CreateSuccessResponse(translateService.baiDuTranslate(request));
-//    }
 
     /**
      * 读取所有的翻译状态信息
