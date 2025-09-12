@@ -357,24 +357,4 @@ public class TestController {
         appInsights.trackTrace(data);
     }
 
-
-    /**
-     * 调用redis进度条相关方法
-     */
-    @PostMapping("/testRedis")
-    public void testRedis(@RequestParam String shopName, @RequestBody ShopifyRequest request) {
-        switch (request.getAccessToken()) {
-            case "1":
-                long l = redisService.incrementProgressFieldData(shopName, request.getTarget(), request.getShopName(), 10);
-                System.out.println("已经增加的数据 : " + l);
-                break;
-            case "2":
-                Map<String, String> translationProgress = redisService.getTranslationProgress(shopName, request.getTarget());
-                System.out.println("translationProgress : " + translationProgress);
-                break;
-            case "3":
-                redisService.deleteTranslationProgress(shopName, request.getTarget());
-                break;
-        }
-    }
 }

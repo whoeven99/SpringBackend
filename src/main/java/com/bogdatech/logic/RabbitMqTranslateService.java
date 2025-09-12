@@ -762,6 +762,8 @@ public class RabbitMqTranslateService {
             }
             //html翻译
             translateGeneralHtmlData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
+            //翻译进度条加1
+            redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
         }
     }
 
@@ -781,7 +783,6 @@ public class RabbitMqTranslateService {
                         liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
                 case PRODUCT, ARTICLE ->
                         liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getTranslationModel(), source);
-//                        liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getCustomKey(), rabbitMqTranslateVO.getTranslationModel());
                 default ->
                         liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), null, null, null);
             };
@@ -866,6 +867,8 @@ public class RabbitMqTranslateService {
             } catch (Exception e) {
                 appInsights.trackTrace("clickTranslation " + shopName + " value : " + value + " 翻译失败 errors ：" + e.getMessage() + " sourceText: " + value);
             }
+            //翻译进度条加1
+            redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
         }
     }
 
@@ -917,7 +920,7 @@ public class RabbitMqTranslateService {
             String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt);
             appInsights.trackTrace(shopName + " translatedJson : " + translatedJson);
 
-            //处理翻译后的数据
+//            处理翻译后的数据
             if (translatedJson != null) {
                 handleTranslationResults(translatedJson, batch, shopifyRequest, handleType, rabbitMqTranslateVO);
             }
@@ -1012,6 +1015,8 @@ public class RabbitMqTranslateService {
                 }
                 saveTranslation(targetText, sourceText, item, shopifyRequest, handleType, rabbitMqTranslateVO);
             }
+            //翻译进度条加1
+            redisService.incrementProgressFieldData(shopifyRequest.getShopName(), shopifyRequest.getTarget(), PROGRESS_DONE, batch.size());
         } catch (JsonProcessingException e) {
             appInsights.trackTrace("clickTranslation 解析翻译结果失败: " + e.getMessage());
             appInsights.trackException(e);
@@ -1169,6 +1174,8 @@ public class RabbitMqTranslateService {
 
             //词汇表翻译
             translateAllGlossaryData(source, value, resourceId, counter, translation, shopifyRequest, keyMap1, keyMap0, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getModeType(), limitChars);
+            //翻译进度条加1
+            redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
         }
     }
 
