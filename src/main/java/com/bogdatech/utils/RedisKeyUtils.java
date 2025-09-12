@@ -17,6 +17,9 @@ public class RedisKeyUtils {
          * 生成翻译进度的 Redis key
          */
         public static String generateProcessKey(String shopName, String targetCode) {
+            if (shopName == null || targetCode == null) {
+                return null;
+            }
             return TRANSLATE_PROGRESS_KEY_TEMPLATE
                     .replace("{shopName}", shopName)
                     .replace("{targetCode}", targetCode);

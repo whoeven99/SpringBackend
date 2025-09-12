@@ -389,7 +389,7 @@ public class PrivateKeyService {
     //方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
     private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
         //将node转换为json字符串
-        Set<TranslateTextDO> needTranslatedData = translatedDataParse(node, translateContext.getShopifyRequest().getShopName(), translateContext.getIsCover());
+        Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(node, translateContext.getShopifyRequest().getShopName(), translateContext.getIsCover(), null);
         if (needTranslatedData == null) {
             return;
         }

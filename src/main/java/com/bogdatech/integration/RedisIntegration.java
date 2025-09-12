@@ -8,23 +8,44 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class RedisIntegration {
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
 
 
     /**
      * 设置缓存
      */
-    public void set(String key, Object value, long timeout) {
+    public void set(String key, String value, long timeout) {
         redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
     }
 
     /**
      * 不设置缓存
      * */
-    public void set(String key, Object value){
+    public void set(String key, String value){
         redisTemplate.opsForValue().set(key, value);
     }
+    /**
+     * 不设置缓存的hash
+     * */
+    public void setHash(String key, String field, Object value) {
+        redisTemplate.opsForHash().put(key, field, value);
+    }
+
+    /**
+     * hash 增加指定数据
+     * */
+    public Long incrementHash(String key, String field, long value){
+        return redisTemplate.opsForHash().increment(key, field, value);
+    }
+
+    /**
+     * hash get
+     * */
+    public Object getHash(String key, String field){
+        return redisTemplate.opsForHash().get(key, field);
+    }
+
 
     /**
      * 获取缓存

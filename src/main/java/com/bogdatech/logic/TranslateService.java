@@ -62,7 +62,7 @@ public class TranslateService {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
-    private RedisIntegration redisIntegration;
+    private RedisProcessService redisProcessService;
 
     public static ConcurrentHashMap<String, ConcurrentHashMap<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -393,9 +393,9 @@ public class TranslateService {
             return progressData;
         }
         //从redis中获取当前用户正在翻译的进度条数据
-        Map<String, String> translationProgress = (Map<String, String>) redisIntegration.get(generateProcessKey(shopName, target));
-
-        if (translationProgress == null || translationProgress.isEmpty()) {
+        Object total = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL);
+        Object done = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_DONE);
+        if (total == null || done == null) {
             //根据用户当前的模块从静态数据做判断
             TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
             if (translatesDO == null) {
@@ -411,17 +411,8 @@ public class TranslateService {
             return getProgressBar(translatesDO.getResourceType());
         }
 
-        if (translationProgress.get(PROGRESS_DONE) == null) {
-            progressData.put("RemainingQuantity", 0);
-        }else {
-            progressData.put("RemainingQuantity", Integer.valueOf(translationProgress.get(PROGRESS_DONE)));
-        }
-        if (translationProgress.get(PROGRESS_TOTAL) == null){
-            progressData.put("TotalQuantity", 0);
-        }else {
-            progressData.put("TotalQuantity", Integer.valueOf(translationProgress.get(PROGRESS_TOTAL)));
-        }
-
+        progressData.put("RemainingQuantity", (Integer) done);
+        progressData.put("TotalQuantity", (Integer) total);
         appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 正在翻译的进度条： " + progressData);
         return progressData;
     }
