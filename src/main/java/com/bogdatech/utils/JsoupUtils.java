@@ -1,8 +1,10 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.KeywordVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
+import com.bogdatech.logic.RedisService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -25,28 +27,30 @@ import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.*;
+import static com.bogdatech.utils.StringUtils.isValueBlank;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 import static java.lang.Thread.sleep;
 
 @Component
 public class JsoupUtils {
 
-    private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
-    private final ArkTranslateIntegration arkTranslateIntegration;
-    private final HunYuanIntegration hunYuanIntegration;
-    private final DeepLIntegration deepLIntegration;
-    private final ChatGptIntegration chatGptIntegration;
-
     @Autowired
-    public JsoupUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, ArkTranslateIntegration arkTranslateIntegration, HunYuanIntegration hunYuanIntegration, DeepLIntegration deepLIntegration, ChatGptIntegration chatGptIntegration) {
-        this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
-        this.arkTranslateIntegration = arkTranslateIntegration;
-        this.hunYuanIntegration = hunYuanIntegration;
-        this.deepLIntegration = deepLIntegration;
-        this.chatGptIntegration = chatGptIntegration;
-    }
+    private  ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private  ArkTranslateIntegration arkTranslateIntegration;
+    @Autowired
+    private  HunYuanIntegration hunYuanIntegration;
+    @Autowired
+    private  DeepLIntegration deepLIntegration;
+    @Autowired
+    private  ChatGptIntegration chatGptIntegration;
+    @Autowired
+    private RedisService redisService;
+
 
     /**
      * 翻译词汇表单行文本，保护变量、URL和符号
@@ -827,5 +831,136 @@ public class JsoupUtils {
         }
 
         return hunYuanIntegration.hunYuanUserTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
+    }
+
+    /**
+     * 遍历needTranslatedSet, 对Set集合进行通用规则的筛选，返回筛选后的数据
+     */
+    public Set<TranslateTextDO> filterNeedTranslateSet(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet, String shopName, String target) {
+        Iterator<TranslateTextDO> iterator = needTranslateSet.iterator();
+        while (iterator.hasNext()) {
+            TranslateTextDO translateTextDO = iterator.next();
+            String value = translateTextDO.getSourceText();
+
+            // 当 value 为空时跳过
+            if (!isValueBlank(value)) {
+                iterator.remove(); //  安全删除
+                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                continue;
+            }
+
+            String type = translateTextDO.getTextType();
+
+            // 如果是特定类型，也从集合中移除
+            if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
+                    || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
+                    || "LIST_URL".equals(type)
+                    || "JSON".equals(type)
+                    || "JSON_STRING".equals(type)
+            ) {
+                iterator.remove(); // 根据业务条件删除
+                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                continue;
+            }
+
+            //判断数据是不是json数据。是的话删除
+            if (isJson(value)) {
+                iterator.remove(); // 根据业务条件删除
+                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                continue;
+            }
+
+            String key = translateTextDO.getTextKey();
+            //如果handleFlag为false，则跳过
+            if (type.equals(URI) && "handle".equals(key)) {
+                if (!handleFlag) {
+                    iterator.remove();
+                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    continue;
+                }
+            }
+
+            //通用的不翻译数据
+            if (!generalTranslate(key, value)) {
+                iterator.remove(); // 根据业务条件删除
+                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                continue;
+            }
+
+            //产品的筛选规则
+            if (PRODUCT_OPTION.equals(modeType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
+                iterator.remove();
+                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                continue;
+            }
+
+            //如果是theme模块的数据
+            if (TRANSLATABLE_RESOURCE_TYPES.contains(modeType)) {
+                //如果是html放html文本里面
+                if (isHtml(value)) {
+                    continue;
+                }
+
+                //对key中包含slide  slideshow  general.lange 的数据不翻译
+                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
+                    printTranslateReason(value + "是包含slide,slideshow和general.lange的key是： " + key);
+                    iterator.remove();
+                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    continue;
+                }
+
+                //对key中含section和general的做key值判断
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+                    //进行白名单的确认
+                    if (whiteListTranslate(key)) {
+                        continue;
+                    }
+
+                    //如果包含对应key和value，则跳过
+                    if (!shouldTranslate(key, value)) {
+                        iterator.remove();
+                        redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                        continue;
+                    }
+                }
+            }
+            //对METAOBJECT字段翻译
+            if (modeType.equals(METAOBJECT)) {
+                if (isJson(value)) {
+                    iterator.remove();
+                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    continue;
+                }
+            }
+
+            //对METAFIELD字段翻译
+            if (modeType.equals(METAFIELD)) {
+                //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
+                if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
+                    iterator.remove();
+                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    continue;
+                }
+                if (!metaTranslate(value)) {
+                    iterator.remove();
+                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    continue;
+                }
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
+                    iterator.remove();
+                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    continue;
+                }
+                if (isJson(value)) {
+                    iterator.remove();
+                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    continue;
+                }
+            }
+
+        }
+        return needTranslateSet;
     }
 }

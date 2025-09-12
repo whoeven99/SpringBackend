@@ -19,6 +19,9 @@ public class RedisService {
      */
     @Async
     public void incrementProgressFieldData(String shopName, String targetCode, String field, int increment) {
+        if (shopName == null || targetCode == null || field == null) {
+            return;
+        }
         String key = "tr:" + shopName + ":" + targetCode;
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.hincrBy(key, field, increment);

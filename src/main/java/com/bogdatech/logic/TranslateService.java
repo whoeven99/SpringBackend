@@ -382,6 +382,15 @@ public class TranslateService {
 
     public Map<String, Integer> getProgressData(String shopName, String target, String source) {
         Map<String, Integer> progressData = new HashMap<>();
+
+        //获取用户数据库翻译状态，如果是已完成，返回1/1
+        TranslatesDO translatesServiceOne = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
+        if (translatesServiceOne != null && translatesServiceOne.getStatus() == 1) {
+            progressData.put("RemainingQuantity", 1);
+            progressData.put("TotalQuantity", 1);
+            return progressData;
+        }
+
         //从redis中获取当前用户正在翻译的进度条数据
         Map<String, String> translationProgress = redisService.getTranslationProgress(shopName, target);
         if (translationProgress == null || translationProgress.isEmpty()) {
@@ -400,7 +409,7 @@ public class TranslateService {
             return getProgressBar(translatesDO.getResourceType());
         }
 
-        if (translationProgress.get(PROGRESS_DONE) == null ) {
+        if (translationProgress.get(PROGRESS_DONE) == null) {
             progressData.put("RemainingQuantity", 0);
         }else {
             progressData.put("RemainingQuantity", Integer.valueOf(translationProgress.get(PROGRESS_DONE)));

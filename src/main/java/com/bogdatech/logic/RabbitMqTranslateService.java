@@ -371,7 +371,7 @@ public class RabbitMqTranslateService {
         if (needTranslatedData == null) {
             return;
         }
-        Set<TranslateTextDO> filterTranslateData = filterNeedTranslateSet(rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getHandleFlag(), needTranslatedData);
+        Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getHandleFlag(), needTranslatedData, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget());
         //将翻译的数据分类，提示词，普通文本，html
         Map<String, Set<TranslateTextDO>> stringSetMap = initTranslateMap();
         //将筛选好的数据分类
@@ -510,125 +510,6 @@ public class RabbitMqTranslateService {
             });
         }
         return partTranslateTextDOSet;
-    }
-
-    /**
-     * 遍历needTranslatedSet, 对Set集合进行通用规则的筛选，返回筛选后的数据
-     */
-    public static Set<TranslateTextDO> filterNeedTranslateSet(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet) {
-        Iterator<TranslateTextDO> iterator = needTranslateSet.iterator();
-        while (iterator.hasNext()) {
-            TranslateTextDO translateTextDO = iterator.next();
-//            appInsights.trackTrace("translateTextDO: " + translateTextDO);
-            String value = translateTextDO.getSourceText();
-
-            // 当 value 为空时跳过
-            if (!isValueBlank(value)) {
-                iterator.remove(); //  安全删除
-                continue;
-            }
-
-            String type = translateTextDO.getTextType();
-
-            // 如果是特定类型，也从集合中移除
-            if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
-                    || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                    || "LIST_URL".equals(type)
-                    || "JSON".equals(type)
-                    || "JSON_STRING".equals(type)
-            ) {
-                iterator.remove(); // 根据业务条件删除
-                continue;
-            }
-
-            //判断数据是不是json数据。是的话删除
-            if (isJson(value)) {
-                iterator.remove(); // 根据业务条件删除
-                continue;
-            }
-
-            String key = translateTextDO.getTextKey();
-            //如果handleFlag为false，则跳过
-            if (type.equals(URI) && "handle".equals(key)) {
-                if (!handleFlag) {
-                    iterator.remove();
-                    continue;
-                }
-            }
-
-            //通用的不翻译数据
-            if (!generalTranslate(key, value)) {
-                iterator.remove(); // 根据业务条件删除
-                continue;
-            }
-
-            //产品的筛选规则
-            if (PRODUCT_OPTION.equals(modeType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
-                iterator.remove();
-                continue;
-            }
-
-            //如果是theme模块的数据
-            if (TRANSLATABLE_RESOURCE_TYPES.contains(modeType)) {
-                //如果是html放html文本里面
-                if (isHtml(value)) {
-                    continue;
-                }
-
-                //对key中包含slide  slideshow  general.lange 的数据不翻译
-                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
-                    printTranslateReason(value + "是包含slide,slideshow和general.lange的key是： " + key);
-                    iterator.remove();
-                    continue;
-                }
-
-                //对key中含section和general的做key值判断
-                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
-                    //进行白名单的确认
-                    if (whiteListTranslate(key)) {
-                        continue;
-                    }
-
-                    //如果包含对应key和value，则跳过
-                    if (!shouldTranslate(key, value)) {
-                        iterator.remove();
-                        continue;
-                    }
-                }
-            }
-            //对METAOBJECT字段翻译
-            if (modeType.equals(METAOBJECT)) {
-                if (isJson(value)) {
-                    iterator.remove();
-                    continue;
-                }
-            }
-
-            //对METAFIELD字段翻译
-            if (modeType.equals(METAFIELD)) {
-                //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
-                if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
-                    iterator.remove();
-                    continue;
-                }
-                if (!metaTranslate(value)) {
-                    iterator.remove();
-                    continue;
-                }
-                //如果是base64编码的数据，不翻译
-                if (BASE64_PATTERN.matcher(value).matches()) {
-                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
-                    iterator.remove();
-                    continue;
-                }
-                if (isJson(value)) {
-                    iterator.remove();
-                    continue;
-                }
-            }
-
-        }
-        return needTranslateSet;
     }
 
     /**

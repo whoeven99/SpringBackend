@@ -13,6 +13,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -93,6 +94,8 @@ public class PrivateKeyService {
     private  RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
     private  PrivateIntegration privateIntegration;
+    @Autowired
+    private JsoupUtils jsoupUtils;
 
     private static final String PRIVATE_KEY = "private_key";
     public static final Integer GOOGLE_MODEL = 0;
@@ -390,7 +393,7 @@ public class PrivateKeyService {
         if (needTranslatedData == null) {
             return;
         }
-        Set<TranslateTextDO> filterTranslateData = filterNeedTranslateSet(translateContext.getTranslateResource().getResourceType(), translateContext.getHandleFlag(), needTranslatedData);
+        Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(translateContext.getTranslateResource().getResourceType(), translateContext.getHandleFlag(), needTranslatedData, null, null);
         //将翻译的数据分类，提示词，普通文本，html
         Map<String, Set<TranslateTextDO>> stringSetMap = initTranslateMap();
         //将筛选好的数据分类
