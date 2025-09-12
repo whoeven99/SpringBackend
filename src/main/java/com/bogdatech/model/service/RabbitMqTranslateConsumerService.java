@@ -12,7 +12,7 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
-import com.bogdatech.logic.RedisService;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -28,6 +28,7 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
+import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.generateProcessKey;
 
 @Service
 public class RabbitMqTranslateConsumerService {
@@ -44,7 +45,7 @@ public class RabbitMqTranslateConsumerService {
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
-    private RedisService redisService;
+    private RedisIntegration redisIntegration;
 
     /**
      * 重新实现邮件发送方法。 能否获取这条数据之前是否有其他项没完成，没完成的话继续完成；完成的话，走发送邮件的逻辑。
@@ -255,7 +256,7 @@ public class RabbitMqTranslateConsumerService {
                     .set(TranslatesDO::getResourceType, null));
             appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
             //删除redis该用户相关进度条数据
-            redisService.deleteTranslationProgress(vo.getShopName(), vo.getTarget());
+            redisIntegration.delete(generateProcessKey(vo.getShopName(), vo.getTarget()));
 
         } else {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");

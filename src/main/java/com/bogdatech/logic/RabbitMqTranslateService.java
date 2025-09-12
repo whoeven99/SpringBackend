@@ -8,6 +8,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -37,54 +38,47 @@ import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
-import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsonUtils.stringToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
-import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.ListUtils.convertALL;
 import static com.bogdatech.utils.ListUtils.sort;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PlaceholderUtils.getListPrompt;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
+import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.*;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
-import static com.bogdatech.utils.StringUtils.isValueBlank;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 
 @Service
 @EnableAsync
 public class RabbitMqTranslateService {
-
-    private final ITranslationCounterService translationCounterService;
-    private final ITranslatesService translatesService;
-    private final ShopifyService shopifyService;
-    private final IVocabularyService vocabularyService;
-    private final TencentEmailService tencentEmailService;
-    private final GlossaryService glossaryService;
-    private final AILanguagePackService aiLanguagePackService;
-    private final JsoupUtils jsoupUtils;
-    private final LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
-    private final ITranslateTasksService translateTasksService;
-    private final TaskScheduler taskScheduler;
-    private final UserTypeTokenService userTypeTokenService;
-    private final RedisService redisService;
-
     @Autowired
-    public RabbitMqTranslateService(ITranslationCounterService translationCounterService, ITranslatesService translatesService, ShopifyService shopifyService, IVocabularyService vocabularyService, TencentEmailService tencentEmailService, GlossaryService glossaryService, AILanguagePackService aiLanguagePackService, JsoupUtils jsoupUtils, LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils, ITranslateTasksService translateTasksService, TaskScheduler taskScheduler, UserTypeTokenService userTypeTokenService1, RedisService redisService) {
-        this.translationCounterService = translationCounterService;
-        this.translatesService = translatesService;
-        this.shopifyService = shopifyService;
-        this.vocabularyService = vocabularyService;
-        this.tencentEmailService = tencentEmailService;
-        this.glossaryService = glossaryService;
-        this.aiLanguagePackService = aiLanguagePackService;
-        this.jsoupUtils = jsoupUtils;
-        this.liquidHtmlTranslatorUtils = liquidHtmlTranslatorUtils;
-        this.translateTasksService = translateTasksService;
-        this.taskScheduler = taskScheduler;
-        this.userTypeTokenService = userTypeTokenService1;
-        this.redisService = redisService;
-    }
+    private  ITranslationCounterService translationCounterService;
+    @Autowired
+    private  ITranslatesService translatesService;
+    @Autowired
+    private  ShopifyService shopifyService;
+    @Autowired
+    private  IVocabularyService vocabularyService;
+    @Autowired
+    private  TencentEmailService tencentEmailService;
+    @Autowired
+    private  GlossaryService glossaryService;
+    @Autowired
+    private  AILanguagePackService aiLanguagePackService;
+    @Autowired
+    private  JsoupUtils jsoupUtils;
+    @Autowired
+    private  LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
+    @Autowired
+    private  ITranslateTasksService translateTasksService;
+    @Autowired
+    private  TaskScheduler taskScheduler;
+    @Autowired
+    private  UserTypeTokenService userTypeTokenService;
+    @Autowired
+    private  RedisIntegration redisIntegration;
 
     public static final int BATCH_SIZE = 50;
 
@@ -248,7 +242,7 @@ public class RabbitMqTranslateService {
         }
         for (JsonNode node : nodes) {
             JsonNode translatableContent = node.path("translatableContent");
-            redisService.incrementProgressFieldData(shopName, target, PROGRESS_TOTAL, translatableContent.size());
+            redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_TOTAL, translatableContent.size());
         }
     }
 
@@ -644,7 +638,7 @@ public class RabbitMqTranslateService {
             //html翻译
             translateGeneralHtmlData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
             //翻译进度条加1
-            redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+            redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
         }
     }
 
@@ -749,7 +743,7 @@ public class RabbitMqTranslateService {
                 appInsights.trackTrace("clickTranslation " + shopName + " value : " + value + " 翻译失败 errors ：" + e.getMessage() + " sourceText: " + value);
             }
             //翻译进度条加1
-            redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+            redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
         }
     }
 
@@ -897,7 +891,7 @@ public class RabbitMqTranslateService {
                 saveTranslation(targetText, sourceText, item, shopifyRequest, handleType, rabbitMqTranslateVO);
             }
             //翻译进度条加1
-            redisService.incrementProgressFieldData(shopifyRequest.getShopName(), shopifyRequest.getTarget(), PROGRESS_DONE, batch.size());
+            redisIntegration.set(generateProcessKey(shopifyRequest.getShopName(), shopifyRequest.getTarget()), PROGRESS_DONE, batch.size());
         } catch (JsonProcessingException e) {
             appInsights.trackTrace("clickTranslation 解析翻译结果失败: " + e.getMessage());
             appInsights.trackException(e);
@@ -1056,7 +1050,7 @@ public class RabbitMqTranslateService {
             //词汇表翻译
             translateAllGlossaryData(source, value, resourceId, counter, translation, shopifyRequest, keyMap1, keyMap0, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getModeType(), limitChars);
             //翻译进度条加1
-            redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+            redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
         }
     }
 

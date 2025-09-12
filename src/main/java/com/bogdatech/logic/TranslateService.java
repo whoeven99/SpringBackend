@@ -7,6 +7,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -35,6 +36,7 @@ import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
+import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.*;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
@@ -60,7 +62,7 @@ public class TranslateService {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
-    private RedisService redisService;
+    private RedisIntegration redisIntegration;
 
     public static ConcurrentHashMap<String, ConcurrentHashMap<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -390,9 +392,9 @@ public class TranslateService {
             progressData.put("TotalQuantity", 1);
             return progressData;
         }
-
         //从redis中获取当前用户正在翻译的进度条数据
-        Map<String, String> translationProgress = redisService.getTranslationProgress(shopName, target);
+        Map<String, String> translationProgress = (Map<String, String>) redisIntegration.get(generateProcessKey(shopName, target));
+
         if (translationProgress == null || translationProgress.isEmpty()) {
             //根据用户当前的模块从静态数据做判断
             TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));

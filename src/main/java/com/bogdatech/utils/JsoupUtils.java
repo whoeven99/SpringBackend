@@ -4,7 +4,7 @@ import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.KeywordVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
-import com.bogdatech.logic.RedisService;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -31,6 +31,8 @@ import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.*;
+import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.PROGRESS_DONE;
+import static com.bogdatech.utils.RedisKeyUtils.RedisKeyUtil.generateProcessKey;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 import static java.lang.Thread.sleep;
@@ -49,7 +51,7 @@ public class JsoupUtils {
     @Autowired
     private  ChatGptIntegration chatGptIntegration;
     @Autowired
-    private RedisService redisService;
+    private RedisIntegration redisIntegration;
 
 
     /**
@@ -845,7 +847,7 @@ public class JsoupUtils {
             // 当 value 为空时跳过
             if (!isValueBlank(value)) {
                 iterator.remove(); //  安全删除
-                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                 continue;
             }
 
@@ -859,14 +861,14 @@ public class JsoupUtils {
                     || "JSON_STRING".equals(type)
             ) {
                 iterator.remove(); // 根据业务条件删除
-                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                 continue;
             }
 
             //判断数据是不是json数据。是的话删除
             if (isJson(value)) {
                 iterator.remove(); // 根据业务条件删除
-                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                 continue;
             }
 
@@ -875,7 +877,7 @@ public class JsoupUtils {
             if (type.equals(URI) && "handle".equals(key)) {
                 if (!handleFlag) {
                     iterator.remove();
-                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                     continue;
                 }
             }
@@ -883,14 +885,14 @@ public class JsoupUtils {
             //通用的不翻译数据
             if (!generalTranslate(key, value)) {
                 iterator.remove(); // 根据业务条件删除
-                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                 continue;
             }
 
             //产品的筛选规则
             if (PRODUCT_OPTION.equals(modeType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
                 iterator.remove();
-                redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                 continue;
             }
 
@@ -905,7 +907,7 @@ public class JsoupUtils {
                 if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
                     printTranslateReason(value + "是包含slide,slideshow和general.lange的key是： " + key);
                     iterator.remove();
-                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                     continue;
                 }
 
@@ -919,7 +921,7 @@ public class JsoupUtils {
                     //如果包含对应key和value，则跳过
                     if (!shouldTranslate(key, value)) {
                         iterator.remove();
-                        redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                        redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                         continue;
                     }
                 }
@@ -928,7 +930,7 @@ public class JsoupUtils {
             if (modeType.equals(METAOBJECT)) {
                 if (isJson(value)) {
                     iterator.remove();
-                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                     continue;
                 }
             }
@@ -938,24 +940,24 @@ public class JsoupUtils {
                 //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
                 if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
                     iterator.remove();
-                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                     continue;
                 }
                 if (!metaTranslate(value)) {
                     iterator.remove();
-                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                     continue;
                 }
                 //如果是base64编码的数据，不翻译
                 if (BASE64_PATTERN.matcher(value).matches()) {
                     printTranslateReason(value + "是base64编码的数据, key是： " + key);
                     iterator.remove();
-                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                     continue;
                 }
                 if (isJson(value)) {
                     iterator.remove();
-                    redisService.incrementProgressFieldData(shopName, target, PROGRESS_DONE, 1);
+                    redisIntegration.set(generateProcessKey(shopName, target), PROGRESS_DONE, 1);
                     continue;
                 }
             }

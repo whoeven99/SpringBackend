@@ -83,8 +83,4 @@ public class TranslateConstants {
     public static final int MONTHLY_FEE = 1;
     //图片翻译费用
     public static final int PIC_FEE = 1000;
-    //redis进度条 total
-    public static final String PROGRESS_TOTAL = "total";
-    //redis进度条 done
-    public static final String PROGRESS_DONE = "done";
 }
