@@ -411,7 +411,7 @@ public class TranslateService {
             return getProgressBar(translatesDO.getResourceType());
         }
 
-        progressData.put("RemainingQuantity", (Integer) done);
+        progressData.put("RemainingQuantity", (Integer) total - (Integer) done);
         progressData.put("TotalQuantity", (Integer) total);
         appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 正在翻译的进度条： " + progressData);
         return progressData;
