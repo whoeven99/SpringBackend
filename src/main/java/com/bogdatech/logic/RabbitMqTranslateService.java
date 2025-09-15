@@ -8,6 +8,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -75,7 +76,8 @@ public class RabbitMqTranslateService {
     private  UserTypeTokenService userTypeTokenService;
     @Autowired
     private  RedisProcessService redisProcessService;
-
+    @Autowired
+    private RedisIntegration redisIntegration;
     public static final int BATCH_SIZE = 50;
 
     /**
@@ -88,6 +90,7 @@ public class RabbitMqTranslateService {
             request.setTarget(target);
             shopifyRequest.setTarget(target);
             mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, limitChars, usedChars, handleFlag, translationModel, isCover, customKey, emailType);
+            redisIntegration.delete(generateProcessKey(shopifyRequest.getShopName(), shopifyRequest.getTarget()));
         }
 
     }
