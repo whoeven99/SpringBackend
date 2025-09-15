@@ -1039,11 +1039,11 @@ public class JsoupUtils {
                 String key = content.path("key").asText(null);
                 String outdated = content.path("outdated").asText(null);
                 if ("false".equals(outdated)) {
-                    partTranslateTextDOSet.remove(key);
                     //相当于已翻译一条
                     if (partTranslateTextDOSet.containsKey(key)){
                         redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                     }
+                    partTranslateTextDOSet.remove(key);
                 }
             });
         }

@@ -109,7 +109,6 @@ public class RabbitMqTranslateService {
      * @param customKey             自定义key
      * @param emailType             邮件类型
      */
-//    @Async
     public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType) {
         //判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
