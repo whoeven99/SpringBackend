@@ -1037,7 +1037,7 @@ public class JsoupUtils {
                     return;
                 }
                 String key = content.path("key").asText(null);
-                String outdated = content.path("outdated").asText(null);
+                String outdated = content.path("outdated").asText("null");
                 if ("false".equals(outdated)) {
                     //相当于已翻译一条
                     if (partTranslateTextDOSet.containsKey(key)){
