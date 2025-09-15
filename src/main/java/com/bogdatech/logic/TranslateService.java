@@ -203,15 +203,6 @@ public class TranslateService {
         innerMap.put(innerKey, value);
     }
 
-    //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
-    public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-        String query = new ShopifyRequestBody().getAfterQuery(translateResource);
-        cloudServiceRequest.setBody(query);
-
-        return getShopifyJsonNode(request, cloudServiceRequest, query);
-    }
-
     //翻译单个文本数据
     public String translateSingleText(RegisterTransactionRequest request) {
         TranslateRequest translateRequest = TypeConversionUtils.registerTransactionRequestToTranslateRequest(request);

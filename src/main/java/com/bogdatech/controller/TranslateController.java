@@ -399,7 +399,7 @@ public class TranslateController {
         stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
         userStopFlags.put(shopName, stopFlag);
         //获取所有的status为2的target
-        List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2).eq(TranslatesDO::getSource, translatingStopVO.getSource()));
+        List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2).eq(TranslatesDO::getSource, translatingStopVO.getSource()).orderByAsc(TranslatesDO::getUpdateAt));
         //将所有状态2的任务改成7
         translatesService.updateStopStatus(shopName, translatingStopVO.getSource(), translatingStopVO.getAccessToken());
         //将所有状态为0和2的子任务，改为7
