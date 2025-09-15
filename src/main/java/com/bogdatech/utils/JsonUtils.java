@@ -4,8 +4,6 @@ package com.bogdatech.utils;
 import com.bogdatech.exception.ClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import static com.bogdatech.enums.ErrorEnum.JSON_PARSE_ERROR;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;

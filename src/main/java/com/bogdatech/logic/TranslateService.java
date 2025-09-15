@@ -385,10 +385,10 @@ public class TranslateService {
     public Map<String, Integer> getProgressData(String shopName, String target, String source) {
         Map<String, Integer> progressData = new HashMap<>();
 
-        //获取用户数据库翻译状态，如果是已完成，返回1/1
+        //获取用户数据库翻译状态，如果是已完成，返回100%进度
         TranslatesDO translatesServiceOne = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
         if (translatesServiceOne != null && translatesServiceOne.getStatus() == 1) {
-            progressData.put("RemainingQuantity", 1);
+            progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
             return progressData;
         }
@@ -413,7 +413,7 @@ public class TranslateService {
         int totalInt = Integer.parseInt(total);
         int doneInt = Integer.parseInt(done);
         if (doneInt > totalInt) {
-            progressData.put("RemainingQuantity", 0);
+            progressData.put("RemainingQuantity", 1);
         }else {
             progressData.put("RemainingQuantity",  totalInt -  doneInt);
         }

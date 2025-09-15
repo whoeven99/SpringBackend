@@ -237,6 +237,7 @@ public class JsoupUtils {
     public String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
         String sourceText = request.getContent();
 
+        //从缓存中获取数据
         //判断是否符合mt翻译 ，是， 调用mt翻译。
         if (sourceText.length() <= 20) {
             return checkTranslationApi(request, counter, limitChars, null);
@@ -1040,9 +1041,10 @@ public class JsoupUtils {
                 if ("false".equals(outdated)) {
                     partTranslateTextDOSet.remove(key);
                     //相当于已翻译一条
-                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    if (partTranslateTextDOSet.containsKey(key)){
+                        redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    }
                 }
-
             });
         }
         return partTranslateTextDOSet;
