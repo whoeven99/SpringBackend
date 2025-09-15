@@ -13,6 +13,7 @@ import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.entity.VO.TranslateArrayVO;
 import com.bogdatech.entity.VO.TranslatingStopVO;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
@@ -32,6 +33,7 @@ import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @RestController
@@ -51,7 +53,8 @@ public class TranslateController {
     private  RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
     private  ITranslateTasksService iTranslateTasksService;
-
+    @Autowired
+    private RedisIntegration redisIntegration;
 
 
     /**
@@ -400,6 +403,8 @@ public class TranslateController {
         //将所有状态为0和2的子任务，改为7
         Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
         if (flag && stopFlag.get()) {
+            //将redis进度条删除掉
+            redisIntegration.delete(generateProcessKey(shopName, translatingStopVO.getTarget()));
             appInsights.trackTrace("stopTranslatingTask " + shopName + " 停止成功");
             return new BaseResponse<>().CreateSuccessResponse(stopFlag);
         }
