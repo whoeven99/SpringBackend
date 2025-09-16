@@ -192,24 +192,17 @@ public class TranslateService {
         return false;
     }
 
-    //将翻译后的数据放入内存中
+    //将翻译后的数据放入redis中
     public static void addData(String outerKey, String innerKey, String value) {
-        // 使用 computeIfAbsent 原子地初始化 innerMap
-        ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.computeIfAbsent(
-                outerKey, key -> new ConcurrentHashMap<>()
-        );
+        //将翻译后的数据存到redis中
 
-        // 安全地放入 innerMap
-        innerMap.put(innerKey, value);
-    }
-
-    //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
-    public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-        String query = new ShopifyRequestBody().getAfterQuery(translateResource);
-        cloudServiceRequest.setBody(query);
-
-        return getShopifyJsonNode(request, cloudServiceRequest, query);
+//        // 使用 computeIfAbsent 原子地初始化 innerMap
+//        ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.computeIfAbsent(
+//                outerKey, key -> new ConcurrentHashMap<>()
+//        );
+//
+//        // 安全地放入 innerMap
+//        innerMap.put(innerKey, value);
     }
 
     //翻译单个文本数据

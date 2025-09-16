@@ -31,10 +31,17 @@ public class RedisProcessService {
     }
 
     /**
-     * 初始化用户进度条数据 0/0
+     * 初始化对应数据
      * */
-    public void initProcessData(String key){
+    public void initProcessData(String key) {
         redisIntegration.setHash(key, PROGRESS_TOTAL, 0);
         redisIntegration.setHash(key, PROGRESS_DONE, 0);
+    }
+    /**
+     * 设置缓存时间为2周
+     * 数据格式为 tr:{shopName}:{digest}
+     * */
+    public void setProcessData(String key, String field, String value){
+
     }
 }
