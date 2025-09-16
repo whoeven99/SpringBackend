@@ -1,9 +1,13 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.KeywordVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
+import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,42 +15,45 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.DeepLIntegration.DEEPL_LANGUAGE_MAP;
+import static com.bogdatech.logic.RabbitMqTranslateService.extractTranslationsByResourceId;
 import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
 import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.*;
+import static com.bogdatech.utils.RedisKeyUtils.PROGRESS_DONE;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
+import static com.bogdatech.utils.StringUtils.isValueBlank;
 import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 import static java.lang.Thread.sleep;
 
 @Component
 public class JsoupUtils {
 
-    private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
-    private final ArkTranslateIntegration arkTranslateIntegration;
-    private final HunYuanIntegration hunYuanIntegration;
-    private final DeepLIntegration deepLIntegration;
-    private final ChatGptIntegration chatGptIntegration;
-
     @Autowired
-    public JsoupUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, ArkTranslateIntegration arkTranslateIntegration, HunYuanIntegration hunYuanIntegration, DeepLIntegration deepLIntegration, ChatGptIntegration chatGptIntegration) {
-        this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
-        this.arkTranslateIntegration = arkTranslateIntegration;
-        this.hunYuanIntegration = hunYuanIntegration;
-        this.deepLIntegration = deepLIntegration;
-        this.chatGptIntegration = chatGptIntegration;
-    }
+    private  ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private  ArkTranslateIntegration arkTranslateIntegration;
+    @Autowired
+    private  HunYuanIntegration hunYuanIntegration;
+    @Autowired
+    private  DeepLIntegration deepLIntegration;
+    @Autowired
+    private  ChatGptIntegration chatGptIntegration;
+    @Autowired
+    private RedisProcessService redisProcessService;
+
 
     /**
      * 翻译词汇表单行文本，保护变量、URL和符号
@@ -230,6 +237,7 @@ public class JsoupUtils {
     public String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
         String sourceText = request.getContent();
 
+        //从缓存中获取数据
         //判断是否符合mt翻译 ，是， 调用mt翻译。
         if (sourceText.length() <= 20) {
             return checkTranslationApi(request, counter, limitChars, null);
@@ -827,5 +835,218 @@ public class JsoupUtils {
         }
 
         return hunYuanIntegration.hunYuanUserTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
+    }
+
+    /**
+     * 遍历needTranslatedSet, 对Set集合进行通用规则的筛选，返回筛选后的数据
+     */
+    public Set<TranslateTextDO> filterNeedTranslateSet(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet, String shopName, String target) {
+        Iterator<TranslateTextDO> iterator = needTranslateSet.iterator();
+        while (iterator.hasNext()) {
+            TranslateTextDO translateTextDO = iterator.next();
+            String value = translateTextDO.getSourceText();
+
+            // 当 value 为空时跳过
+            if (!isValueBlank(value)) {
+                iterator.remove(); //  安全删除
+                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                continue;
+            }
+
+            String type = translateTextDO.getTextType();
+
+            // 如果是特定类型，也从集合中移除
+            if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
+                    || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
+                    || "LIST_URL".equals(type)
+                    || "JSON".equals(type)
+                    || "JSON_STRING".equals(type)
+            ) {
+                iterator.remove(); // 根据业务条件删除
+                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                continue;
+            }
+
+            //判断数据是不是json数据。是的话删除
+            if (isJson(value)) {
+                iterator.remove(); // 根据业务条件删除
+                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                continue;
+            }
+
+            String key = translateTextDO.getTextKey();
+            //如果handleFlag为false，则跳过
+            if (type.equals(URI) && "handle".equals(key)) {
+                if (!handleFlag) {
+                    iterator.remove();
+                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    continue;
+                }
+            }
+
+            //通用的不翻译数据
+            if (!generalTranslate(key, value)) {
+                iterator.remove(); // 根据业务条件删除
+                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                continue;
+            }
+
+            //产品的筛选规则
+            if (PRODUCT_OPTION.equals(modeType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
+                iterator.remove();
+                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                continue;
+            }
+
+            //如果是theme模块的数据
+            if (TRANSLATABLE_RESOURCE_TYPES.contains(modeType)) {
+                //如果是html放html文本里面
+                if (isHtml(value)) {
+                    continue;
+                }
+
+                //对key中包含slide  slideshow  general.lange 的数据不翻译
+                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
+                    printTranslateReason(value + "是包含slide,slideshow和general.lange的key是： " + key);
+                    iterator.remove();
+                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    continue;
+                }
+
+                //对key中含section和general的做key值判断
+                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+                    //进行白名单的确认
+                    if (whiteListTranslate(key)) {
+                        continue;
+                    }
+
+                    //如果包含对应key和value，则跳过
+                    if (!shouldTranslate(key, value)) {
+                        iterator.remove();
+                        redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                        continue;
+                    }
+                }
+            }
+            //对METAOBJECT字段翻译
+            if (modeType.equals(METAOBJECT)) {
+                if (isJson(value)) {
+                    iterator.remove();
+                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    continue;
+                }
+            }
+
+            //对METAFIELD字段翻译
+            if (modeType.equals(METAFIELD)) {
+                //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
+                if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
+                    iterator.remove();
+                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    continue;
+                }
+                if (!metaTranslate(value)) {
+                    iterator.remove();
+                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    continue;
+                }
+                //如果是base64编码的数据，不翻译
+                if (BASE64_PATTERN.matcher(value).matches()) {
+                    printTranslateReason(value + "是base64编码的数据, key是： " + key);
+                    iterator.remove();
+                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    continue;
+                }
+                if (isJson(value)) {
+                    iterator.remove();
+                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    continue;
+                }
+            }
+
+        }
+        return needTranslateSet;
+    }
+
+    /**
+     * 解析shopifyData数据，分析数据是否可用，然后判断出可翻译数据
+     */
+    public Set<TranslateTextDO> translatedDataParse(JsonNode shopDataJson, String shopName, Boolean isCover, String target) {
+        Set<TranslateTextDO> doubleTranslateTextDOSet = new HashSet<>();
+        try {
+            // 获取 translatableResources 节点
+            JsonNode translatableResourcesNode = shopDataJson.path("translatableResources");
+            if (!translatableResourcesNode.isObject()) {
+                return null;
+            }
+            // 处理 nodes 数组
+            JsonNode nodesNode = translatableResourcesNode.path("nodes");
+            if (!nodesNode.isArray()) {
+                return null;
+            }
+            // nodesArray.size()相当于resourceId的数量，相当于items数
+            ArrayNode nodesArray = (ArrayNode) nodesNode;
+            for (JsonNode nodeElement : nodesArray) {
+                if (nodeElement.isObject()) {
+                    Set<TranslateTextDO> stringTranslateTextDOSet = needTranslatedSet(nodeElement, shopName, isCover, target);
+                    doubleTranslateTextDOSet.addAll(stringTranslateTextDOSet);
+                }
+            }
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
+        }
+        return doubleTranslateTextDOSet;
+    }
+
+    /**
+     * 分析用户需要翻译的数据
+     */
+    public Set<TranslateTextDO> needTranslatedSet(JsonNode shopDataJson, String shopName, Boolean isCover, String target) {
+        String resourceId;
+        Iterator<Map.Entry<String, JsonNode>> fields = shopDataJson.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> field = fields.next();
+            String fieldName = field.getKey();
+            JsonNode fieldValue = field.getValue();
+
+            // 根据字段名称进行处理
+            if ("resourceId".equals(fieldName)) {
+                if (fieldValue == null) {
+                    continue;
+                }
+                resourceId = fieldValue.asText(null);
+                // 提取翻译内容映射
+                Map<String, TranslateTextDO> partTranslateTextDOMap = extractTranslationsByResourceId(shopDataJson, resourceId, shopName);
+                Map<String, TranslateTextDO> partTranslatedTextDOMap = extractTranslatedDataByResourceId(shopDataJson, partTranslateTextDOMap, isCover, target, shopName);
+                Set<TranslateTextDO> notNeedTranslatedSet = new HashSet<>(partTranslatedTextDOMap.values());
+                
+                return new HashSet<>(notNeedTranslatedSet);
+            }
+        }
+        return new HashSet<>();
+    }
+
+    /**
+     * 获取所有的resourceId下的已翻译数据
+     */
+    public Map<String, TranslateTextDO> extractTranslatedDataByResourceId(JsonNode shopDataJson, Map<String, TranslateTextDO> partTranslateTextDOSet, Boolean isCover, String target, String shopName) {
+        JsonNode contentNode = shopDataJson.path("translations");
+        if (contentNode.isArray() && !contentNode.isEmpty() && !isCover) {
+            contentNode.forEach(content -> {
+                if (partTranslateTextDOSet == null) {
+                    return;
+                }
+                String key = content.path("key").asText(null);
+                String outdated = content.path("outdated").asText("null");
+                if ("false".equals(outdated)) {
+                    //相当于已翻译一条
+                    if (partTranslateTextDOSet.containsKey(key)){
+                        redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    }
+                    partTranslateTextDOSet.remove(key);
+                }
+            });
+        }
+        return partTranslateTextDOSet;
     }
 }

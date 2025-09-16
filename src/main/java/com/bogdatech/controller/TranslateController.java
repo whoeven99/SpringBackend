@@ -13,6 +13,7 @@ import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.entity.VO.TranslateArrayVO;
 import com.bogdatech.entity.VO.TranslatingStopVO;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
@@ -32,33 +33,28 @@ import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @RestController
 @RequestMapping("/translate")
 public class TranslateController {
-    private final TranslateService translateService;
-    private final ITranslatesService translatesService;
-    private final ITranslationCounterService translationCounterService;
-    private final IUserTypeTokenService userTypeTokenService;
-    private final UserTypeTokenService userTypeTokensService;
-    private final RabbitMqTranslateService rabbitMqTranslateService;
-    private final ITranslateTasksService iTranslateTasksService;
-
     @Autowired
-    public TranslateController(
-            TranslateService translateService,
-            ITranslatesService translatesService,
-            ITranslationCounterService translationCounterService,
-            IUserTypeTokenService userTypeTokenService, UserTypeTokenService userTypeTokensService, RabbitMqTranslateService rabbitMqTranslateService, ITranslateTasksService iTranslateTasksService) {
-        this.translateService = translateService;
-        this.translatesService = translatesService;
-        this.translationCounterService = translationCounterService;
-        this.userTypeTokenService = userTypeTokenService;
-        this.userTypeTokensService = userTypeTokensService;
-        this.rabbitMqTranslateService = rabbitMqTranslateService;
-        this.iTranslateTasksService = iTranslateTasksService;
-    }
+    private  TranslateService translateService;
+    @Autowired
+    private  ITranslatesService translatesService;
+    @Autowired
+    private  ITranslationCounterService translationCounterService;
+    @Autowired
+    private  IUserTypeTokenService userTypeTokenService;
+    @Autowired
+    private  UserTypeTokenService userTypeTokensService;
+    @Autowired
+    private  RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private  ITranslateTasksService iTranslateTasksService;
+    @Autowired
+    private RedisIntegration redisIntegration;
 
 
     /**
@@ -76,14 +72,6 @@ public class TranslateController {
     public String googleTranslate(@RequestBody TranslateRequest request) {
         return translateService.googleTranslate(request);
     }
-
-//    /**
-//     * 调用百度翻译的API接口
-//     */
-//    @PostMapping("/baiDuTranslate")
-//    public BaseResponse<Object> baiDuTranslate(@RequestBody TranslateRequest request) {
-//        return new BaseResponse<>().CreateSuccessResponse(translateService.baiDuTranslate(request));
-//    }
 
     /**
      * 读取所有的翻译状态信息
@@ -410,11 +398,18 @@ public class TranslateController {
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
         stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
         userStopFlags.put(shopName, stopFlag);
+        //获取所有的status为2的target
+        List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2).eq(TranslatesDO::getSource, translatingStopVO.getSource()).orderByAsc(TranslatesDO::getUpdateAt));
         //将所有状态2的任务改成7
         translatesService.updateStopStatus(shopName, translatingStopVO.getSource(), translatingStopVO.getAccessToken());
         //将所有状态为0和2的子任务，改为7
         Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
         if (flag && stopFlag.get()) {
+            //将redis进度条删除掉
+            for (TranslatesDO translatesDO: list
+                 ) {
+                redisIntegration.delete(generateProcessKey(shopName, translatesDO.getTarget()));
+            }
             appInsights.trackTrace("stopTranslatingTask " + shopName + " 停止成功");
             return new BaseResponse<>().CreateSuccessResponse(stopFlag);
         }

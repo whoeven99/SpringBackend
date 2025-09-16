@@ -12,6 +12,7 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -27,27 +28,24 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 
 @Service
 public class RabbitMqTranslateConsumerService {
-    private final RabbitMqTranslateService rabbitMqTranslateService;
-    private final ITranslationCounterService translationCounterService;
-    private final ITranslatesService translatesService;
-    private final ITranslateTasksService translateTasksService;
-    private final ITranslationUsageService translationUsageService;
-    private final TencentEmailService tencentEmailService;
-
-
     @Autowired
-    public RabbitMqTranslateConsumerService(RabbitMqTranslateService rabbitMqTranslateService, ITranslationCounterService translationCounterService, ITranslatesService translatesService, ITranslateTasksService translateTasksService, ITranslationUsageService translationUsageService, TencentEmailService tencentEmailService) {
-        this.rabbitMqTranslateService = rabbitMqTranslateService;
-        this.translationCounterService = translationCounterService;
-        this.translatesService = translatesService;
-        this.translateTasksService = translateTasksService;
-        this.translationUsageService = translationUsageService;
-        this.tencentEmailService = tencentEmailService;
-    }
-
+    private RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private ITranslationCounterService translationCounterService;
+    @Autowired
+    private ITranslatesService translatesService;
+    @Autowired
+    private ITranslateTasksService translateTasksService;
+    @Autowired
+    private ITranslationUsageService translationUsageService;
+    @Autowired
+    private TencentEmailService tencentEmailService;
+    @Autowired
+    private RedisIntegration redisIntegration;
 
     /**
      * 重新实现邮件发送方法。 能否获取这条数据之前是否有其他项没完成，没完成的话继续完成；完成的话，走发送邮件的逻辑。
@@ -109,6 +107,7 @@ public class RabbitMqTranslateConsumerService {
             if (isTranslationAuto) {
                 rabbitMqTranslateVO.setCustomKey(null);
             }
+            //翻译方法
             rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
             appInsights.trackTrace("clickTranslation 用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
         } catch (ClientException e1) {
@@ -243,7 +242,6 @@ public class RabbitMqTranslateConsumerService {
     private void handleEmailTask(String shopifyData, RabbitMqTranslateVO vo, TranslateTasksDO task) {
         String shopName = vo.getShopName();
         boolean canSendEmail = translateTasksService.listBeforeEmailTask(shopName, task.getTaskId());
-//        appInsights.trackTrace("canSendEmail: " + canSendEmail);
         if (canSendEmail) {
             if (EMAIL.equals(shopifyData)) {
                 emailTranslate(vo, task);
@@ -257,9 +255,11 @@ public class RabbitMqTranslateConsumerService {
                     .eq(TranslatesDO::getTarget, vo.getTarget())
                     .set(TranslatesDO::getResourceType, null));
             appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
+            //删除redis该用户相关进度条数据
+            redisIntegration.delete(generateProcessKey(vo.getShopName(), vo.getTarget()));
+
         } else {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
-//            appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
         }
     }
 }

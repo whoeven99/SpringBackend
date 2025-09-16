@@ -2,41 +2,70 @@ package com.bogdatech.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import redis.clients.jedis.DefaultJedisClientConfig;
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.JedisPool;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import redis.clients.jedis.JedisPoolConfig;
 
 import java.time.Duration;
 
 
-//@Configuration
+@Configuration
 public class RedisConfig {
 
     /**
      * 配置redis
-     * */
-//    @Bean
-//    public JedisPool jedisPool() {
-//                String cacheHostname = System.getenv("REDISCACHEHOSTNAME");
-//        String cachekey = System.getenv("REDISCACHEKEY");
-//        int port = 6380;
-//        // 配置连接池
-//        JedisPoolConfig poolConfig = new JedisPoolConfig();
-//        poolConfig.setMaxTotal(20);       // 最大连接数
-//        poolConfig.setMaxIdle(10);        // 最大空闲连接
-//        poolConfig.setMinIdle(2);         // 最小空闲连接
-//        poolConfig.setMaxWait(Duration.ofMillis(3000));  // 等待最多 3 秒
-//        poolConfig.setTestOnBorrow(true); // 取连接时测试可用性
-//        poolConfig.setTestOnReturn(true); // 还连接时测试可用性
-//        poolConfig.setBlockWhenExhausted(true); // 连接耗尽时是否阻塞
-//        poolConfig.setJmxEnabled(false);  // 关闭JMX避免MBean冲突
-//
-//        DefaultJedisClientConfig config = DefaultJedisClientConfig.builder()
-//                .password(cachekey)
-//                .ssl(true)
-//                .build();
-//        return new JedisPool(poolConfig, new HostAndPort(cacheHostname, port), config);
-//    }
+     */
 
+    @Bean
+    public JedisConnectionFactory redisConnectionFactory() {
+        String cacheHostname = System.getenv("REDISCACHEHOSTNAME");
+        String cachekey = System.getenv("REDISCACHEKEY");
+        int port = 6380;
+        // 配置连接池
+        JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setMaxTotal(100);
+        poolConfig.setMaxIdle(20);
+        poolConfig.setMinIdle(5);
+        poolConfig.setMaxWait(Duration.ofMillis(3000));
+
+        // 配置Redis基本信息
+        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
+        redisConfig.setHostName(cacheHostname);
+        redisConfig.setPort(port);
+        redisConfig.setPassword(cachekey);
+
+        // 构建 Jedis 连接工厂
+        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfigurationBuilder = (JedisClientConfiguration.JedisClientConfigurationBuilder) JedisClientConfiguration.builder()
+                .connectTimeout(Duration.ofMillis(3000))
+                .readTimeout(Duration.ofMillis(3000))
+                .useSsl();
+        JedisClientConfiguration clientConfig = jedisClientConfigurationBuilder
+                .usePooling()
+                .poolConfig(poolConfig)
+                .build();
+
+        return new JedisConnectionFactory(redisConfig, clientConfig);
+    }
+
+    @Bean
+    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+
+        // 设置key的序列化器
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+
+        // 设置value的序列化器
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+
+        template.afterPropertiesSet();
+        return template;
+    }
 }
