@@ -76,8 +76,6 @@ public class RabbitMqTranslateService {
     private  UserTypeTokenService userTypeTokenService;
     @Autowired
     private  RedisProcessService redisProcessService;
-    @Autowired
-    private RedisIntegration redisIntegration;
     public static final int BATCH_SIZE = 50;
 
     /**
@@ -90,7 +88,6 @@ public class RabbitMqTranslateService {
             request.setTarget(target);
             shopifyRequest.setTarget(target);
             mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, limitChars, usedChars, handleFlag, translationModel, isCover, customKey, emailType);
-            redisIntegration.delete(generateProcessKey(shopifyRequest.getShopName(), shopifyRequest.getTarget()));
         }
 
     }
@@ -121,6 +118,7 @@ public class RabbitMqTranslateService {
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         CharacterCountUtils allTasks = new CharacterCountUtils();
+        redisProcessService.initProcessData(generateProcessKey(shopifyRequest.getShopName(), shopifyRequest.getTarget()));
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
