@@ -192,15 +192,17 @@ public class TranslateService {
         return false;
     }
 
-    //将翻译后的数据放入内存中
+    //将翻译后的数据放入redis中
     public static void addData(String outerKey, String innerKey, String value) {
-        // 使用 computeIfAbsent 原子地初始化 innerMap
-        ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.computeIfAbsent(
-                outerKey, key -> new ConcurrentHashMap<>()
-        );
+        //将翻译后的数据存到redis中
 
-        // 安全地放入 innerMap
-        innerMap.put(innerKey, value);
+//        // 使用 computeIfAbsent 原子地初始化 innerMap
+//        ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.computeIfAbsent(
+//                outerKey, key -> new ConcurrentHashMap<>()
+//        );
+//
+//        // 安全地放入 innerMap
+//        innerMap.put(innerKey, value);
     }
 
     //翻译单个文本数据
