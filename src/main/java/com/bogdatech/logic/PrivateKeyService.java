@@ -96,6 +96,8 @@ public class PrivateKeyService {
     private  PrivateIntegration privateIntegration;
     @Autowired
     private JsoupUtils jsoupUtils;
+    @Autowired
+    private RedisProcessService redisProcessService;
 
     private static final String PRIVATE_KEY = "private_key";
     public static final Integer GOOGLE_MODEL = 0;
@@ -579,7 +581,7 @@ public class PrivateKeyService {
                     }
                     //目前改为openai翻译
                     String finalText = privateIntegration.translateByGpt(value, translateContext.getApiModel(), translateContext.getApiKey(), prompt, shopName, Long.valueOf(translateContext.getRemainingChars()));
-                    addData(shopifyRequest.getTarget(), value, finalText);
+                    redisProcessService.setCacheData(shopifyRequest.getTarget(), finalText, value);
                     shopifyService.saveToShopify(finalText, translation, resourceId, shopifyRequest);
                     printTranslation(finalText, value, translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
                 } catch (Exception e) {
@@ -721,7 +723,7 @@ public class PrivateKeyService {
             return;
         }
         String targetValue = translateByModel(translateContext, value, request, apiKey);
-        addData(request.getTarget(), value, targetValue);
+        redisProcessService.setCacheData(request.getTarget(), targetValue, value);
         //翻译成功后，将翻译后的数据存shopify本地中
         saveToShopify(targetValue, translation, resourceId, request);
         printTranslation(targetValue, value, translation, request.getShopName() + PRIVATE_KEY, resourceType, resourceId, source);
@@ -1012,11 +1014,15 @@ public class PrivateKeyService {
      * 使用缓存处理文本内容，保护变量和URL
      *
      * @param text 输入文本
+     * @param target 目标语言
+     * @param shopName 店铺名称
+     * @param apiKey 翻译API密钥
+     * @param limitChars 限制字符数
      * @return 翻译后的文本
      */
     private String translateTextWithCache(String text, String target, String shopName, String apiKey, Integer limitChars) {
         // 检查缓存
-        String translated = translateSingleLine(text, target);
+        String translated = redisProcessService.getCacheData(target, text);
         if (translated != null) {
             return translated;
         }
@@ -1025,7 +1031,7 @@ public class PrivateKeyService {
         String translatedText = translateTextWithProtection(text, target, shopName, apiKey, limitChars);
 
         // 存入缓存
-        addData(target, text, translatedText);
+        redisProcessService.setCacheData(target, translatedText, text);
         return translatedText;
     }
 

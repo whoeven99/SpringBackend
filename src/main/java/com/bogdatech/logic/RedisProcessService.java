@@ -4,8 +4,8 @@ import com.bogdatech.integration.RedisIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import static com.bogdatech.utils.RedisKeyUtils.PROGRESS_DONE;
-import static com.bogdatech.utils.RedisKeyUtils.PROGRESS_TOTAL;
+import static com.bogdatech.utils.AESUtils.encryptMD5;
+import static com.bogdatech.utils.RedisKeyUtils.*;
 
 @Service
 public class RedisProcessService {
@@ -37,11 +37,35 @@ public class RedisProcessService {
         redisIntegration.setHash(key, PROGRESS_TOTAL, 0);
         redisIntegration.setHash(key, PROGRESS_DONE, 0);
     }
-    /**
-     * 设置缓存时间为2周
-     * 数据格式为 tr:{shopName}:{digest}
-     * */
-    public void setProcessData(String key, String field, String value){
 
+    /**
+     * 将翻译数据存入redis，设置缓存时间为2周
+     * 数据格式为 tr:{shopName}:{digest}
+     * @param targetCode 目标语言
+     * @param targetValue 目标语言翻译后的文本
+     * @param sourceValue 源语言文本
+     * */
+    public void setCacheData(String targetCode, String targetValue, String sourceValue){
+        String encryptedSource = encryptMD5(sourceValue);
+        String key = generateCacheKey(targetCode, encryptedSource);
+        redisIntegration.set(key, targetValue, DAY_14);
     }
+
+    /**
+     * 获取缓存中对应的数据
+     * 重置原先的时间
+     * @param targetCode 目标语言
+     * @param sourceValue 源语言文本
+     * */
+    public String getCacheData(String targetCode, String sourceValue){
+        String encryptedSource = encryptMD5(sourceValue);
+        String key = generateCacheKey(targetCode, encryptedSource);
+        String text = redisIntegration.get(key);
+        if (text != null && !"null".equals(text)){
+            redisIntegration.expire(key, DAY_14);
+            return text;
+        }
+        return null;
+    }
+
 }

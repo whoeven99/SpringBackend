@@ -69,7 +69,8 @@ public class TestController {
     private UserTranslationDataService userTranslationDataService;
     @Autowired
     private IAPGUsersService iapgUsersService;
-
+    @Autowired
+    private RedisProcessService redisProcessService;
 
     @GetMapping("/ping")
     public String ping() {
@@ -118,15 +119,15 @@ public class TestController {
         appInsights.trackTrace("rateMap: " + rateMap.toString());
     }
 
-    //测试缓存功能
+    //测试获取缓存功能
     @GetMapping("/testCache")
-    public String testCache() {
-        return SINGLE_LINE_TEXT.toString();
+    public String testCache(@RequestParam String target, @RequestParam String value) {
+        return redisProcessService.getCacheData(target, value);
     }
 
     @GetMapping("/testAddCache")
     public void testAddCache(String target, String value, String targetText) {
-        addData(target, value, targetText);
+        redisProcessService.setCacheData(target, targetText, value);
     }
 
     //测试theme判断

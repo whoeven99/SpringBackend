@@ -22,8 +22,6 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.DeepLIntegration.DEEPL_LANGUAGE_MAP;
 import static com.bogdatech.logic.RabbitMqTranslateService.extractTranslationsByResourceId;
-import static com.bogdatech.logic.TranslateService.SINGLE_LINE_TEXT;
-import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
@@ -42,15 +40,15 @@ import static java.lang.Thread.sleep;
 public class JsoupUtils {
 
     @Autowired
-    private  ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
-    private  ArkTranslateIntegration arkTranslateIntegration;
+    private ArkTranslateIntegration arkTranslateIntegration;
     @Autowired
-    private  HunYuanIntegration hunYuanIntegration;
+    private HunYuanIntegration hunYuanIntegration;
     @Autowired
-    private  DeepLIntegration deepLIntegration;
+    private DeepLIntegration deepLIntegration;
     @Autowired
-    private  ChatGptIntegration chatGptIntegration;
+    private ChatGptIntegration chatGptIntegration;
     @Autowired
     private RedisProcessService redisProcessService;
 
@@ -61,14 +59,14 @@ public class JsoupUtils {
     private String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
                                                      Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType, String languagePackId, Integer limitChars) {
         // 检查缓存
-        String translatedCache = translateSingleLine(text, request.getTarget());
+        String translatedCache = redisProcessService.getCacheData(request.getTarget(), text);
         if (translatedCache != null) {
             return translatedCache;
         }
 
         // 处理文本，保护不翻译的部分
         String translatedText = processTextWithProtection(text, (cleanedText) -> {
-            String translated = translateSingleLine(cleanedText, request.getTarget());
+            String translated = redisProcessService.getCacheData(request.getTarget(), cleanedText);
             if (translated != null) {
                 return translated;
             }
@@ -78,19 +76,18 @@ public class JsoupUtils {
             if (cleanedText.length() <= 5) {
                 counter.addChars(googleCalculateToken(cleanedText));
                 String targetString = translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
-                addData(request.getTarget(), cleanedText, targetString);
+                redisProcessService.setCacheData(request.getTarget(), targetString, cleanedText);
                 return targetString;
             } else {
                 //如果字符数大于100字符，用大模型翻译
                 String glossaryString = glossaryText(keyMap1, keyMap0, cleanedText);
                 //根据关键词生成对应的提示词
                 String finalText = glossaryTranslationModel(request, counter, glossaryString, languagePackId, limitChars);
-                addData(request.getTarget(), cleanedText, finalText);
+                redisProcessService.setCacheData(request.getTarget(), finalText, cleanedText);
                 return finalText;
             }
 
         });
-        addData(request.getTarget(), text, translatedText);
         return translatedText;
     }
 
@@ -167,45 +164,6 @@ public class JsoupUtils {
         return result.toString();
     }
 
-    // 提取需要翻译的文本（包括文本和alt属性）
-    public Map<Element, List<String>> extractTextsToTranslate(Document doc) {
-        Map<Element, List<String>> elementTextMap = new HashMap<>();
-        for (Element element : doc.getAllElements()) {
-            if (!NO_TRANSLATE_TAGS.contains(element.tagName().toLowerCase())) { // 忽略script和style标签
-                List<String> texts = new ArrayList<>();
-
-                // 提取文本
-                String text = element.ownText().trim();
-                if (!text.isEmpty()) {
-                    texts.add(text);
-                }
-
-                if (!texts.isEmpty()) {
-                    elementTextMap.put(element, texts); // 记录元素和对应的文本及 alt
-                }
-            }
-        }
-        return elementTextMap;
-    }
-
-    // 替换原始文本为翻译后的文本
-    public void replaceOriginalTextsWithTranslated(Document doc, Map<Element, List<String>> translatedTextMap) {
-        try {
-            for (Map.Entry<Element, List<String>> entry : translatedTextMap.entrySet()) {
-                Element element = entry.getKey();
-                List<String> translatedTexts = entry.getValue();
-                // 替换文本内容
-                if (!translatedTexts.isEmpty()) {
-                    element.text(translatedTexts.get(0)); // 第一个是文本
-                }
-            }
-
-        } catch (Exception e) {
-//            appInsights.trackTrace("This text is not a valid HTML element: " + translatedTextMap.values());
-            throw new ClientException("This text is not a valid HTML element");
-        }
-    }
-
     //判断String类型是否是html数据
     public static boolean isHtml(String content) {
         //如果content里面有html标签，再判断，否则返回false
@@ -215,15 +173,6 @@ public class JsoupUtils {
         Document doc = Jsoup.parse(content);
         return !doc.body().text().equals(content);
     }
-
-    //从缓存中获取数据
-    public static String translateSingleLine(String sourceText, String target) {
-        if (SINGLE_LINE_TEXT.get(target) != null) {
-            return SINGLE_LINE_TEXT.get(target).get(sourceText);
-        }
-        return null;
-    }
-
 
     /**
      * 调用多模型翻译：1，5字符以内用model翻译和qwen翻译。2，ar用HUN_YUAN_MODEL翻译 3，hi用doubao-1.5-pro-256k翻译
@@ -483,7 +432,7 @@ public class JsoupUtils {
 
         //判断translateType是不是handle，再决定是否添加到缓存
         if (!translateType.equals(HANDLE)) {
-            addData(request.getTarget(), text, targetString);
+            redisProcessService.setCacheData(request.getTarget(), targetString, text);
         }
 
         return targetString;
@@ -507,7 +456,7 @@ public class JsoupUtils {
         targetString = isHtmlEntity(targetString);
 
         //判断translateType是不是handle，再决定是否添加到缓存
-        addData(request.getTarget(), text, targetString);
+        redisProcessService.setCacheData(request.getTarget(), targetString, text);
         return targetString;
     }
 
@@ -623,7 +572,7 @@ public class JsoupUtils {
      */
     private String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars) {
         // 检查缓存
-        String translated = translateSingleLine(text, request.getTarget());
+        String translated = redisProcessService.getCacheData(request.getTarget(), text);
         if (translated != null) {
             return translated;
         }
@@ -632,7 +581,7 @@ public class JsoupUtils {
         String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars);
 
         // 存入缓存
-        addData(request.getTarget(), text, translatedText);
+        redisProcessService.setCacheData(request.getTarget(), translatedText, text);
         return translatedText;
     }
 
@@ -822,7 +771,7 @@ public class JsoupUtils {
 
     /**
      * ciwi 单 User 翻译
-     * */
+     */
     public String translateByCiwiUserModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt) {
         //目标语言是中文的，用qwen-max翻译
         if ("ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(source) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
@@ -1019,7 +968,6 @@ public class JsoupUtils {
                 Map<String, TranslateTextDO> partTranslateTextDOMap = extractTranslationsByResourceId(shopDataJson, resourceId, shopName);
                 Map<String, TranslateTextDO> partTranslatedTextDOMap = extractTranslatedDataByResourceId(shopDataJson, partTranslateTextDOMap, isCover, target, shopName);
                 Set<TranslateTextDO> notNeedTranslatedSet = new HashSet<>(partTranslatedTextDOMap.values());
-                
                 return new HashSet<>(notNeedTranslatedSet);
             }
         }
@@ -1040,7 +988,7 @@ public class JsoupUtils {
                 String outdated = content.path("outdated").asText("null");
                 if ("false".equals(outdated)) {
                     //相当于已翻译一条
-                    if (partTranslateTextDOSet.containsKey(key)){
+                    if (partTranslateTextDOSet.containsKey(key)) {
                         redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                     }
                     partTranslateTextDOSet.remove(key);

@@ -7,7 +7,6 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -28,7 +27,6 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
-import static com.bogdatech.logic.RabbitMqTranslateService.getShopifyJsonNode;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
@@ -63,8 +61,6 @@ public class TranslateService {
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
     private RedisProcessService redisProcessService;
-
-    public static ConcurrentHashMap<String, ConcurrentHashMap<String, String>> SINGLE_LINE_TEXT = new ConcurrentHashMap<>();
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     //判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
@@ -192,18 +188,7 @@ public class TranslateService {
         return false;
     }
 
-    //将翻译后的数据放入redis中
-    public static void addData(String outerKey, String innerKey, String value) {
-        //将翻译后的数据存到redis中
 
-//        // 使用 computeIfAbsent 原子地初始化 innerMap
-//        ConcurrentHashMap<String, String> innerMap = SINGLE_LINE_TEXT.computeIfAbsent(
-//                outerKey, key -> new ConcurrentHashMap<>()
-//        );
-//
-//        // 安全地放入 innerMap
-//        innerMap.put(innerKey, value);
-    }
 
     //翻译单个文本数据
     public String translateSingleText(RegisterTransactionRequest request) {
@@ -214,26 +199,6 @@ public class TranslateService {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(translateRequest);
         return registerTransaction(shopifyRequest, variables);
     }
-
-
-    //将缓存的数据存到数据库中
-    public void saveToTranslates() {
-        //添加数据
-        // 遍历外层的 Map
-        List<TranslateTextDO> list = new ArrayList<>();
-        SINGLE_LINE_TEXT.forEach((outerKey, innerMap) -> {
-            // 使用流来遍历内部的 Map
-            innerMap.forEach((innerKey, value) -> list.add(new TranslateTextDO(null, null, null, null, null, null, innerKey, value, null, outerKey, false)));
-        });
-        if (!list.isEmpty()) {
-            try {
-                vocabularyService.storeTranslationsInVocabulary(list);
-            } catch (Exception e) {
-                appInsights.trackTrace("存储失败： " + e.getMessage() + " ，继续翻译");
-            }
-        }
-    }
-
 
     /**
      * 根据店铺名称和target获取对应的 ID。
@@ -388,7 +353,7 @@ public class TranslateService {
         //从redis中获取当前用户正在翻译的进度条数据
         String total = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL);
         String done = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_DONE);
-        if (total == null || done == null) {
+        if (total == null || done == null || "null".equals(total) || "null".equals(done)) {
             //根据用户当前的模块从静态数据做判断
             TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
             if (translatesDO == null) {

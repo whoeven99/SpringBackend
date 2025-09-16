@@ -10,8 +10,6 @@ public class RedisIntegration {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
-
-
     /**
      * 设置缓存
      */
@@ -51,8 +49,8 @@ public class RedisIntegration {
     /**
      * 获取缓存
      */
-    public Object get(String key) {
-        return redisTemplate.opsForValue().get(key);
+    public String get(String key) {
+        return redisTemplate.opsForValue().get(key) + "";
     }
 
     /**
@@ -69,4 +67,10 @@ public class RedisIntegration {
         return redisTemplate.hasKey(key);
     }
 
+    /**
+     * 重新设置过期时间
+     * */
+    public Boolean expire(String key, long timeout) {
+        return redisTemplate.expire(key, timeout, TimeUnit.SECONDS);
+    }
 }

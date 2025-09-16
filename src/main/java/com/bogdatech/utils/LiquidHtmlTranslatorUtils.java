@@ -4,33 +4,28 @@ package com.bogdatech.utils;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.integration.ArkTranslateIntegration;
 import com.bogdatech.integration.ChatGptIntegration;
+import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.logic.TranslateService.addData;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsoupUtils.translateSingleLine;
 import static com.bogdatech.utils.PlaceholderUtils.getFullHtmlPrompt;
 import static com.bogdatech.utils.PlaceholderUtils.getPolicyPrompt;
 
 @Component
 public class LiquidHtmlTranslatorUtils {
 
-    private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
     //    // 不翻译的Liquid变量模式
@@ -49,15 +44,15 @@ public class LiquidHtmlTranslatorUtils {
     public final static Set<String> NO_TRANSLATE_TAGS = Set.of("script", "style", "meta", "svg", "canvas", "link");
     private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00\uDFFF])+");
     private static final String STYLE_TEXT = "data-id";
-    private final JsoupUtils jsoupUtils;
-    private final ChatGptIntegration chatGptIntegration;
 
     @Autowired
-    public LiquidHtmlTranslatorUtils(ALiYunTranslateIntegration aLiYunTranslateIntegration, JsoupUtils jsoupUtils, ChatGptIntegration chatGptIntegration) {
-        this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
-        this.jsoupUtils = jsoupUtils;
-        this.chatGptIntegration = chatGptIntegration;
-    }
+    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private  JsoupUtils jsoupUtils;
+    @Autowired
+    private  ChatGptIntegration chatGptIntegration;
+    @Autowired
+    private RedisProcessService redisProcessService;
 
     /**
      * 主翻译方法
@@ -168,17 +163,13 @@ public class LiquidHtmlTranslatorUtils {
      */
     private String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String model, String customKey, String translationModel) {
         // 检查缓存
-        String translated = translateSingleLine(text, request.getTarget());
+        String translated = redisProcessService.getCacheData(request.getTarget(), text);
         if (translated != null) {
             return translated;
         }
 
         // 处理文本中的变量和URL
-        String translatedText = translateTextWithProtection(text, request, counter, languagePackId, limitChars, model, customKey, translationModel);
-
-        // 存入缓存
-        addData(request.getTarget(), text, translatedText);
-        return translatedText;
+        return translateTextWithProtection(text, request, counter, languagePackId, limitChars, model, customKey, translationModel);
     }
 
     /**
