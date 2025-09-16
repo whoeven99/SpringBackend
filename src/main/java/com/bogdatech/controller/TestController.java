@@ -16,7 +16,6 @@ import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;

@@ -766,7 +766,8 @@ public class RabbitMqTranslateService {
                                   Integer limitChars,
                                   String prompt) {
         try {
-            return jsoupUtils.translateByCiwiUserModel(translateRequest.getTarget(), untranslatedTexts.toString(), translateRequest.getShopName(), translateRequest.getSource(), counter, limitChars, prompt);
+            String json = OBJECT_MAPPER.writeValueAsString(untranslatedTexts);
+            return jsoupUtils.translateByCiwiUserModel(translateRequest.getTarget(), json, translateRequest.getShopName(), translateRequest.getSource(), counter, limitChars, prompt);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation translateBatch 调用翻译接口失败: " + e.getMessage());
             appInsights.trackException(e);
