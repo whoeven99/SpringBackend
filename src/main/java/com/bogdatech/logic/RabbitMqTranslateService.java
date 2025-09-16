@@ -560,6 +560,16 @@ public class RabbitMqTranslateService {
             //html翻译
             translateGeneralHtmlData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
             //翻译进度条加1
+            //判断当翻译停止后就不加了
+            checkNeedAddProcessData(shopName, target);
+        }
+    }
+
+    /**
+     * 翻译停止后，进度条就不加了
+     * */
+    public void checkNeedAddProcessData(String shopName, String target) {
+        if(userStopFlags.get(shopName).get()){
             redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
         }
     }
@@ -665,7 +675,7 @@ public class RabbitMqTranslateService {
                 appInsights.trackTrace("clickTranslation " + shopName + " value : " + value + " 翻译失败 errors ：" + e.getMessage() + " sourceText: " + value);
             }
             //翻译进度条加1
-            redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+            checkNeedAddProcessData(shopName, target);
         }
     }
 
@@ -955,7 +965,7 @@ public class RabbitMqTranslateService {
             //词汇表翻译
             translateAllGlossaryData(source, value, resourceId, counter, translation, shopifyRequest, keyMap1, keyMap0, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getModeType(), limitChars);
             //翻译进度条加1
-            redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+            checkNeedAddProcessData(shopName, target);
         }
     }
 
