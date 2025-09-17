@@ -855,7 +855,7 @@ public class JsoupUtils {
                 }
 
                 //对key中包含slide  slideshow  general.lange 的数据不翻译
-                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
+                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange") || key.contains("add_button_selector")) {
                     printTranslateReason(value + "是包含slide,slideshow和general.lange的key是： " + key);
                     iterator.remove();
                     redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
