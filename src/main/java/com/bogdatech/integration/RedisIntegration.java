@@ -3,6 +3,8 @@ package com.bogdatech.integration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -45,6 +47,20 @@ public class RedisIntegration {
         return redisTemplate.opsForHash().get(key, field) + "";
     }
 
+    /**
+     * hash GETALL
+     * */
+    public Map<Object, Object> getHashAll(String key) {
+        return redisTemplate.opsForHash().entries(key);
+    }
+
+    /**
+     * Set存
+     * */
+    public Boolean setSet(String key, String value) {
+        Long add = redisTemplate.opsForSet().add(key, value);
+        return add != null && add > 0;
+    }
 
     /**
      * 获取缓存

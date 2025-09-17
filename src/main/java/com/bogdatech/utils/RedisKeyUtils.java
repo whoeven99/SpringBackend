@@ -10,7 +10,11 @@ public class RedisKeyUtils {
     //redis 缓存模板字符串
     private static final String TRANSLATE_CACHE_KEY_TEMPLATE = "tc:{targetCode}:{source}";
     public static final Long DAY_14 = 1209600L;
-
+    public static final String DATA_REPORT_KEY_TEMPLATE = "dr:{shopName}:{language}:{yyyyMMdd}";
+    public static final Long DAY_15 = 2592000L;
+    public static final Long DAY_1 = 86400L;
+    //对clientId去重 set
+    public static final String CLIENT_ID_SET = "dr:{shopName}:{language}:{yyyyMMdd}:{eventName}";
     /**
      * 生成翻译进度的 Redis key
      */
@@ -32,5 +36,30 @@ public class RedisKeyUtils {
         }
         return TRANSLATE_CACHE_KEY_TEMPLATE.replace("{targetCode}", targetCode)
                 .replace("{source}", digest);
+    }
+
+    /**
+     * 生成数据上报的key
+     * */
+    public static String generateDataReportKey(String shopName, String language, String time) {
+        if (shopName == null || language == null || time == null) {
+            return null;
+        }
+        return DATA_REPORT_KEY_TEMPLATE.replace("{shopName}", shopName)
+                .replace("{language}", language)
+                .replace("{yyyyMMdd}", time);
+    }
+
+    /**
+     * 生成由于clientId去重的key
+     * */
+    public static String generateClientIdSetKey(String shopName, String language, String time, String eventName) {
+        if (shopName == null || language == null || time == null) {
+            return null;
+        }
+        return CLIENT_ID_SET.replace("{shopName}", shopName)
+                .replace("{language}", language)
+                .replace("{yyyyMMdd}", time)
+                .replace("{eventName}", eventName);
     }
 }
