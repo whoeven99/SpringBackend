@@ -855,13 +855,19 @@ public class JsoupUtils {
                 }
 
                 //对key中包含slide  slideshow  general.lange 的数据不翻译
-                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange") || key.contains("add_button_selector")) {
+                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
                     printTranslateReason(value + "是包含slide,slideshow和general.lange的key是： " + key);
                     iterator.remove();
                     redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                     continue;
                 }
 
+                if (key.contains("block") && key.contains("add_button_selector")){
+                    printTranslateReason(value + "是包含block,add_button_selector的key是： " + key);
+                    iterator.remove();
+                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+                    continue;
+                }
                 //对key中含section和general的做key值判断
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                     //进行白名单的确认
