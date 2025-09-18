@@ -583,14 +583,7 @@ public class RabbitMqTranslateService {
             //判断产品模块用完全翻译，其他模块用分段html翻译
             Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
             userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
-            htmlTranslation = switch (rabbitMqTranslateVO.getModeType()) {
-                case SHOP_POLICY ->
-                        liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
-                case PRODUCT, ARTICLE ->
-                        liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getTranslationModel(), source);
-                default ->
-                        liquidHtmlTranslatorUtils.newJsonTranslateHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
-            };
+            htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
 
             if (rabbitMqTranslateVO.getModeType().equals(METAFIELD)) {
                 //对翻译后的html做格式处理
