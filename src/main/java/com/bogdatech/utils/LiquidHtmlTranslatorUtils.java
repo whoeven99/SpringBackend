@@ -593,7 +593,7 @@ public class LiquidHtmlTranslatorUtils {
         Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId, limitChars);
 
         // 5. 填回原处
-        fillBackTranslatedData(nodes, translatedTexts);
+        fillBackTranslatedData(nodes, translatedTexts, request.getTarget());
 
         // 输出翻译后的 HTML
         if (hasHtmlTag) {
@@ -705,7 +705,7 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 将翻译后的数据填回原处
      * */
-    public static void fillBackTranslatedData(List<TextNode> nodes, Map<String, String> translatedTexts) {
+    public void fillBackTranslatedData(List<TextNode> nodes, Map<String, String> translatedTexts, String target) {
         for (TextNode node : nodes) {
             String text = node.getWholeText();
             if (!text.isEmpty()) {
@@ -728,6 +728,8 @@ public class LiquidHtmlTranslatorUtils {
                     targetText = text;
                     appInsights.trackTrace("fillBackTranslatedData targetText 没有被翻译，原文是: " + targetText);
                 } else {
+                    //添加到缓存里面
+                    redisProcessService.setCacheData(target, targetText, core);
                     if (targetText != null && !targetText.trim().isEmpty()) {
                         targetText = leading + targetText + trailing;
                     } else {
