@@ -973,8 +973,8 @@ public class JsoupUtils {
                 // 提取翻译内容映射
                 Map<String, TranslateTextDO> partTranslateTextDOMap = extractTranslationsByResourceId(shopDataJson, resourceId, shopName);
                 Map<String, TranslateTextDO> partTranslatedTextDOMap = extractTranslatedDataByResourceId(shopDataJson, partTranslateTextDOMap, isCover, target, shopName);
-                Set<TranslateTextDO> notNeedTranslatedSet = new HashSet<>(partTranslatedTextDOMap.values());
-                return new HashSet<>(notNeedTranslatedSet);
+                Set<TranslateTextDO> needTranslatedSet = new HashSet<>(partTranslatedTextDOMap.values());
+                return new HashSet<>(needTranslatedSet);
             }
         }
         return new HashSet<>();

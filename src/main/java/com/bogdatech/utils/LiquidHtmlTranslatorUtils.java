@@ -1,12 +1,15 @@
 package com.bogdatech.utils;
 
 
+import com.bogdatech.Service.IVocabularyService;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
@@ -18,10 +21,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
+import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
+import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.PlaceholderUtils.getFullHtmlPrompt;
-import static com.bogdatech.utils.PlaceholderUtils.getPolicyPrompt;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
+import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
+import static com.bogdatech.utils.PlaceholderUtils.*;
 
 @Component
 public class LiquidHtmlTranslatorUtils {
@@ -48,14 +55,17 @@ public class LiquidHtmlTranslatorUtils {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
-    private  JsoupUtils jsoupUtils;
+    private JsoupUtils jsoupUtils;
     @Autowired
-    private  ChatGptIntegration chatGptIntegration;
+    private ChatGptIntegration chatGptIntegration;
     @Autowired
     private RedisProcessService redisProcessService;
+    @Autowired
+    private IVocabularyService vocabularyService;
 
     /**
      * 主翻译方法
+     *
      * @param html 输入的HTML文本
      * @return 翻译后的HTML文本
      */
@@ -72,9 +82,6 @@ public class LiquidHtmlTranslatorUtils {
             if (hasHtmlTag) {
                 // 如果有 <html> 标签，按完整文档处理
                 Document doc = Jsoup.parse(html);
-                if (doc == null) {
-                    return html;
-                }
 
                 // 获取 <html> 元素并修改 lang 属性
                 Element htmlTag = doc.selectFirst("html");
@@ -554,15 +561,183 @@ public class LiquidHtmlTranslatorUtils {
         }
     }
 
-
     /**
-     * 清除所有 style 和 class 属性，准备翻译
+     * html的拆分翻译，放弃递归，改为json翻译
      */
-    // 清除所有 style 和 class 属性
-    public String removeStyles(Document doc) {
-        doc.select("[style]").forEach(el -> el.removeAttr("style"));
-        doc.select("[class]").forEach(el -> el.removeAttr("class"));
-        return doc.body().html();  // 返回清理后的 HTML
+    public String newJsonTranslateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
+        if (!isHtml(html)) {
+            return null;
+        }
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(html, 2);
+        userTranslate.put(request.getShopName(), translationStatusMap);
+        html = isHtmlEntity(html); //判断是否含有HTML实体,然后解码
+        //1, 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
+        boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
+        Document doc = parseHtml(html, request.getTarget(), hasHtmlTag);
+
+        // 2. 收集所有 TextNode
+        List<TextNode> nodes = new ArrayList<>();
+        for (Element element : doc.getAllElements()) {
+            nodes.addAll(element.textNodes());
+        }
+
+        // 3. 提取要翻译文本
+        List<String> originalTexts = new ArrayList<>();
+        for (TextNode node : nodes) {
+            String text = node.text().trim();
+            if (!text.isEmpty() && !originalTexts.contains(text)) {
+                originalTexts.add(text);
+            }
+        }
+
+        // 4. 每50条一次翻译
+        Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId, limitChars);
+
+        // 5. 填回原处
+        fillBackTranslatedData(nodes, translatedTexts);
+
+        // 输出翻译后的 HTML
+        if (hasHtmlTag) {
+            String results = doc.outerHtml(); // 返回完整的HTML结构
+            results = isHtmlEntity(results);
+            return results;
+        } else {
+            Element body = doc.body();
+            // 只返回子节点内容，不包含 <body>
+            StringBuilder results = new StringBuilder();
+            for (Node child : body.childNodes()) {
+                if (child != null) {
+                    String childHtml = child.outerHtml(); // 或 child.toString()
+                    results.append(childHtml);
+                }
+            }
+            String output2 = results.toString();
+            output2 = isHtmlEntity(output2);
+            return output2;
+        }
     }
 
+    /**
+     * 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
+     */
+    public static Document parseHtml(String html, String target, boolean hasHtmlTag) {
+        Document doc;
+        if (hasHtmlTag) {
+            doc = Jsoup.parse(html);
+            // 获取 <html> 元素并修改 lang 属性
+            Element htmlTag = doc.selectFirst("html");
+            if (htmlTag != null) {
+                htmlTag.attr("lang", target);
+            }
+        } else {
+            doc = Jsoup.parseBodyFragment(html);
+        }
+        doc.outputSettings().prettyPrint(false);
+        return doc;
+    }
+
+    /**
+     * 每50条文本翻译一次
+     */
+    public Map<String, String> translateAllList(List<String> originalTexts, TranslateRequest request, CharacterCountUtils counter, String languagePack, Integer limitChars) {
+        String target = request.getTarget();
+        String shopName = request.getShopName();
+        String source = request.getSource();
+        String prompt = getListPrompt(getLanguageName(target), languagePack, null, null);
+        Map<String, String> allTranslatedMap = new HashMap<>();
+        //先缓存翻译一次
+        cacheAndDbTranslateData(originalTexts, target, source, allTranslatedMap);
+        //翻译剩余未翻译的数据
+        for (int i = 0; i < originalTexts.size(); i += BATCH_SIZE) {
+            // 取每次的50条（或剩余全部）
+            int endIndex = Math.min(i + BATCH_SIZE, originalTexts.size());
+            List<String> batch = originalTexts.subList(i, endIndex);
+            if (batch.isEmpty()) {
+                continue;
+            }
+            //筛选出来要翻译的数据
+            String sourceJson;
+            try {
+                sourceJson = OBJECT_MAPPER.writeValueAsString(batch);
+                //翻译
+                String translated = jsoupUtils.translateByCiwiUserModel(target, sourceJson, shopName, source, counter, limitChars, prompt);
+                Map<String, String> resultMap = OBJECT_MAPPER.readValue(translated, new TypeReference<>() {});
+                allTranslatedMap.putAll(resultMap);
+            } catch (JsonProcessingException e) {
+                appInsights.trackException(e);
+                appInsights.trackTrace("translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 未翻译文本 : " + batch);
+            }
+        }
+        return allTranslatedMap;
+    }
+
+    // 模拟批量翻译
+    private static Map<String, String> fakeTranslateAll(List<String> texts) {
+        Map<String, String> resultMap = new HashMap<>();
+        for (String t : texts) {
+            resultMap.put(t, "Z " + t + " Z");
+        }
+        return resultMap;
+    }
+
+    /**
+     * 用缓存和db，翻译List<String>类型的数据
+     */
+    private void cacheAndDbTranslateData(List<String> originalTexts, String target, String source, Map<String, String> allTranslatedMap) {
+        Iterator<String> it = originalTexts.iterator();
+        while (it.hasNext()) {
+            String sourceText = it.next();
+            String cacheData = redisProcessService.getCacheData(target, sourceText);
+            if (cacheData != null) {
+                allTranslatedMap.put(sourceText, cacheData);
+                it.remove(); // 安全删除当前元素
+                continue;
+            }
+
+            String dbData = vocabularyService.getTranslateTextDataInVocabulary(target, sourceText, source);
+            if (dbData != null) {
+                allTranslatedMap.put(sourceText, dbData);
+                redisProcessService.setCacheData(target, dbData, sourceText);
+                it.remove(); // 同样可以安全删除
+            }
+        }
+    }
+
+    /**
+     * 将翻译后的数据填回原处
+     * */
+    public static void fillBackTranslatedData(List<TextNode> nodes, Map<String, String> translatedTexts) {
+        for (TextNode node : nodes) {
+            String text = node.getWholeText();
+            if (!text.isEmpty()) {
+                //记录空格，还需要填回
+                // Step 1: 记录开头和结尾的空格数量
+                // 匹配前导空格
+                Matcher leadingMatcher = Pattern.compile("^(\\p{Zs}+)").matcher(text);
+                String leading = leadingMatcher.find() ? leadingMatcher.group(1) : "";
+                // 匹配尾随空格
+                Matcher trailingMatcher = Pattern.compile("(\\p{Zs}+)$").matcher(text);
+                String trailing = trailingMatcher.find() ? trailingMatcher.group(1) : "";
+                // 去掉前后空格，得到核心文本
+                int begin = leading.length();
+                int end = text.length() - trailing.length();
+                String core = (begin >= end) ? "" : text.substring(begin, end);
+                // 拼回原来的空格
+                String targetText = translatedTexts.get(core);
+                if (core.isEmpty()) {
+                    // 没有核心文本，只保留原始空格（避免被清空，也避免重复加）
+                    targetText = text;
+                    appInsights.trackTrace("fillBackTranslatedData targetText 没有被翻译，原文是: " + targetText);
+                } else {
+                    if (targetText != null && !targetText.trim().isEmpty()) {
+                        targetText = leading + targetText + trailing;
+                    } else {
+                        targetText = leading + core + trailing;
+                    }
+                }
+
+                node.text(targetText);
+            }
+        }
+    }
 }

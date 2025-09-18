@@ -587,7 +587,7 @@ public class RabbitMqTranslateService {
                 case PRODUCT, ARTICLE ->
                         liquidHtmlTranslatorUtils.fullTranslateHtmlByQwen(sourceText, rabbitMqTranslateVO.getLanguagePack(), counter, translateRequest.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getTranslationModel(), source);
                 default ->
-                        liquidHtmlTranslatorUtils.translateNewHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), null, null, null);
+                        liquidHtmlTranslatorUtils.newJsonTranslateHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
             };
 
             if (rabbitMqTranslateVO.getModeType().equals(METAFIELD)) {
@@ -789,8 +789,7 @@ public class RabbitMqTranslateService {
                                           ShopifyRequest shopifyRequest,
                                           RabbitMqTranslateVO rabbitMqTranslateVO) {
         try {
-            Map<String, String> resultMap = OBJECT_MAPPER.readValue(translatedJson, new TypeReference<>() {
-            });
+            Map<String, String> resultMap = OBJECT_MAPPER.readValue(translatedJson, new TypeReference<>() {});
 
             for (TranslateTextDO item : batch) {
                 String sourceText = item.getSourceText();
@@ -799,6 +798,8 @@ public class RabbitMqTranslateService {
                     appInsights.trackTrace("clickTranslation 翻译结果缺失：" + sourceText);
                     continue;
                 }
+                Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+                userTranslate.put(shopifyRequest.getShopName(), translationStatusMap);
                 saveTranslation(targetText, sourceText, item, shopifyRequest, item.getTextType(), rabbitMqTranslateVO);
             }
             //翻译进度条加1
