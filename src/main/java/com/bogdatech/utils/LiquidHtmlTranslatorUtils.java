@@ -568,8 +568,7 @@ public class LiquidHtmlTranslatorUtils {
         if (!isHtml(html)) {
             return null;
         }
-        Map<String, Object> translationStatusMap = getTranslationStatusMap(html, 2);
-        userTranslate.put(request.getShopName(), translationStatusMap);
+
         html = isHtmlEntity(html); //判断是否含有HTML实体,然后解码
         //1, 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();

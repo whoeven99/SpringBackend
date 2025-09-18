@@ -581,6 +581,8 @@ public class RabbitMqTranslateService {
         try {
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
             //判断产品模块用完全翻译，其他模块用分段html翻译
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+            userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
             htmlTranslation = switch (rabbitMqTranslateVO.getModeType()) {
                 case SHOP_POLICY ->
                         liquidHtmlTranslatorUtils.fullTranslatePolicyHtmlByQwen(sourceText, counter, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getLimitChars());
