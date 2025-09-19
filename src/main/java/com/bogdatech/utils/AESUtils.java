@@ -2,7 +2,12 @@ package com.bogdatech.utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class AESUtils {
     // 密钥（长度必须为 16、24 或 32 字节）
@@ -25,5 +30,23 @@ public class AESUtils {
         cipher.init(Cipher.DECRYPT_MODE, key);
         byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedText));
         return new String(decryptedBytes);
+    }
+
+    /**
+     * 对sourceText做MD5加密
+     * */
+    public static String encryptMD5(String sourceText) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(sourceText.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : digest) {
+                hexString.append(String.format("%02x", b));
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            appInsights.trackException(e);
+            return null;
+        }
     }
 }

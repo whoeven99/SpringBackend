@@ -13,8 +13,8 @@ import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.entity.VO.TranslateArrayVO;
 import com.bogdatech.entity.VO.TranslatingStopVO;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.RabbitMqTranslateService;
+import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.model.controller.request.*;
@@ -54,7 +54,7 @@ public class TranslateController {
     @Autowired
     private  ITranslateTasksService iTranslateTasksService;
     @Autowired
-    private RedisIntegration redisIntegration;
+    private RedisProcessService redisProcessService;
 
 
     /**
@@ -298,13 +298,6 @@ public class TranslateController {
         }
     }
 
-    //将缓存的数据存到数据库中
-    @PostMapping("/saveCacheToTranslates")
-    public String saveToTranslates() {
-        translateService.saveToTranslates();
-        return SINGLE_LINE_TEXT.toString();
-    }
-
     //将target以集合的形式插入到数据库中
     @PostMapping("/insertTargets")
     public void insertTargets(@RequestBody TargetListRequest request) {
@@ -408,7 +401,7 @@ public class TranslateController {
             //将redis进度条删除掉
             for (TranslatesDO translatesDO: list
                  ) {
-                redisIntegration.delete(generateProcessKey(shopName, translatesDO.getTarget()));
+                redisProcessService.initProcessData(generateProcessKey(shopName, translatesDO.getTarget()));
             }
             appInsights.trackTrace("stopTranslatingTask " + shopName + " 停止成功");
             return new BaseResponse<>().CreateSuccessResponse(stopFlag);

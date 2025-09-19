@@ -14,13 +14,14 @@ import com.bogdatech.entity.DO.UserTranslationDataDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
+import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -43,7 +44,7 @@ import static com.bogdatech.task.DBTask.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
+import static com.bogdatech.utils.StringUtils.*;
 
 @RestController
 public class TestController {
@@ -69,7 +70,10 @@ public class TestController {
     private UserTranslationDataService userTranslationDataService;
     @Autowired
     private IAPGUsersService iapgUsersService;
-
+    @Autowired
+    private RedisProcessService redisProcessService;
+    @Autowired
+    private RedisDataReportService redisDataReportService;
 
     @GetMapping("/ping")
     public String ping() {
@@ -118,15 +122,15 @@ public class TestController {
         appInsights.trackTrace("rateMap: " + rateMap.toString());
     }
 
-    //测试缓存功能
+    //测试获取缓存功能
     @GetMapping("/testCache")
-    public String testCache() {
-        return SINGLE_LINE_TEXT.toString();
+    public String testCache(@RequestParam String target, @RequestParam String value) {
+        return redisProcessService.getCacheData(target, value);
     }
 
     @GetMapping("/testAddCache")
     public void testAddCache(String target, String value, String targetText) {
-        addData(target, value, targetText);
+        redisProcessService.setCacheData(target, targetText, value);
     }
 
     //测试theme判断
@@ -358,4 +362,24 @@ public class TestController {
         appInsights.trackTrace(data);
     }
 
+    /**
+     * 数据上传
+     * */
+    @PostMapping("/saveUserDataReport")
+    public void userDataReport(@RequestParam String shopName, @RequestBody UserDataReportVO userDataReportVO) {
+        redisDataReportService.saveUserDataReport(shopName, userDataReportVO);
+    }
+
+
+    /**
+     * 读取相关数据
+     * */
+    @PostMapping("/getUserDataReport")
+    public BaseResponse<Object> getUserDataReport(@RequestParam String shopName, @RequestBody UserDataReportVO userDataReportVO) {
+        String userDataReport = redisDataReportService.getUserDataReport(shopName, userDataReportVO.getStoreLanguage(), userDataReportVO.getTimestamp(), userDataReportVO.getDayData());
+        if (userDataReport != null) {
+            return new BaseResponse<>().CreateSuccessResponse(userDataReport);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
 }

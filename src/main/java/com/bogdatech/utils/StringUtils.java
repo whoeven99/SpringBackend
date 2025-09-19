@@ -202,4 +202,20 @@ public class StringUtils {
         int number = ThreadLocalRandom.current().nextInt(10000000, 100000000);
         return String.valueOf(number);
     }
+
+    /**
+     * 处理返回的数据包含带有 Markdown 包装的 JSON
+     * */
+    public static String parseJson(String body){
+        // 用正则提取出 JSON 部分
+        Pattern pattern = Pattern.compile("```json\\s*(\\{.*?\\})\\s*```", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(body);
+        if (matcher.find()) {
+            String jsonStr = matcher.group(1);
+            appInsights.trackTrace("parseJson jsonStr : " + jsonStr);
+            return jsonStr;
+        } else {
+            return body;
+        }
+    }
 }
