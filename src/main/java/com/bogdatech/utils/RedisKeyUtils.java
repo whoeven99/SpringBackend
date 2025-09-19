@@ -14,7 +14,7 @@ public class RedisKeyUtils {
     public static final Long DAY_15 = 2592000L;
     public static final Long DAY_1 = 86400L;
     //对clientId去重 set
-    public static final String CLIENT_ID_SET = "dr:{shopName}:{language}:{yyyyMMdd}:{eventName}";
+    public static final String CLIENT_ID_SET = "ci:{shopName}:{language}:{yyyyMMdd}:{eventName}";
     /**
      * 生成翻译进度的 Redis key
      */

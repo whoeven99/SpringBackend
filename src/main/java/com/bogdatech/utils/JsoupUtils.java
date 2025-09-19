@@ -757,7 +757,7 @@ public class JsoupUtils {
         String content = request.getContent();
         String shopName = request.getShopName();
         //目标语言是中文的，用qwen-max翻译
-        if ("ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+        if ("fr".equals(target) || "ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
         }
 
@@ -774,7 +774,7 @@ public class JsoupUtils {
      */
     public String translateByCiwiUserModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt) {
         //目标语言是中文的，用qwen-max翻译
-        if ("ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(source) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+        if ("fr".equals(target) || "ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(source) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
             return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars);
         }
 

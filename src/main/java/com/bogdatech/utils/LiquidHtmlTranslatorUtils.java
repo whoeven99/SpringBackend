@@ -23,12 +23,11 @@ import java.util.stream.Collectors;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
-import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.PlaceholderUtils.*;
+import static com.bogdatech.utils.StringUtils.parseJson;
 
 @Component
 public class LiquidHtmlTranslatorUtils {
@@ -643,6 +642,7 @@ public class LiquidHtmlTranslatorUtils {
         String shopName = request.getShopName();
         String source = request.getSource();
         String prompt = getListPrompt(getLanguageName(target), languagePack, null, null);
+        appInsights.trackTrace("translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 待翻译文本 : " + originalTexts.size() + "条");
         Map<String, String> allTranslatedMap = new HashMap<>();
         //先缓存翻译一次
         cacheAndDbTranslateData(originalTexts, target, source, allTranslatedMap);
@@ -660,7 +660,8 @@ public class LiquidHtmlTranslatorUtils {
                 sourceJson = OBJECT_MAPPER.writeValueAsString(batch);
                 //翻译
                 String translated = jsoupUtils.translateByCiwiUserModel(target, sourceJson, shopName, source, counter, limitChars, prompt);
-                Map<String, String> resultMap = OBJECT_MAPPER.readValue(translated, new TypeReference<>() {});
+                String parseJson = parseJson(translated);
+                Map<String, String> resultMap = OBJECT_MAPPER.readValue(parseJson, new TypeReference<>() {});
                 allTranslatedMap.putAll(resultMap);
             } catch (JsonProcessingException e) {
                 appInsights.trackException(e);
