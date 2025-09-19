@@ -10,6 +10,7 @@ import com.bogdatech.entity.VO.SubscriptionVO;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
@@ -29,25 +30,20 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/shopify")
 public class ShopifyController {
-
-    private final ShopifyService shopifyService;
-    private final ITranslatesService translatesService;
-    private final ITranslationCounterService translationCounterService;
-    private final IUserSubscriptionsService userSubscriptionsService;
-    private final ICharsOrdersService charsOrdersService;
-    private final IUsersService usersService;
-    private final IUserTrialsService iUserTrialsService;
-
     @Autowired
-    public ShopifyController(ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService, ICharsOrdersService charsOrdersService, IUsersService usersService, IUserTrialsService iUserTrialsService) {
-        this.shopifyService = shopifyService;
-        this.translatesService = translatesService;
-        this.translationCounterService = translationCounterService;
-        this.userSubscriptionsService = userSubscriptionsService;
-        this.charsOrdersService = charsOrdersService;
-        this.usersService = usersService;
-        this.iUserTrialsService = iUserTrialsService;
-    }
+    private  ShopifyService shopifyService;
+    @Autowired
+    private  ITranslatesService translatesService;
+    @Autowired
+    private  ITranslationCounterService translationCounterService;
+    @Autowired
+    private  IUserSubscriptionsService userSubscriptionsService;
+    @Autowired
+    private  ICharsOrdersService charsOrdersService;
+    @Autowired
+    private  IUsersService usersService;
+    @Autowired
+    private  IUserTrialsService iUserTrialsService;
 
     //通过测试环境调shopify的API
     @PostMapping("/test123")
@@ -342,5 +338,8 @@ public class ShopifyController {
         }
     }
 
-
+    @PostMapping("/getDBConfiguration")
+    public BaseResponse<Object> queryDBConfiguration(@RequestParam String shopName) {
+        return shopifyService.queryDBConfiguration(shopName);
+    }
 }
