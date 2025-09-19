@@ -19,7 +19,7 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Timestamp end = new Timestamp(now.getTime() + 5 * 24 * 60 * 60 * 1000); //暂定5天后过期
         boolean isTrialExpired = false;
-        UserTrialsDO userTrialsDO = new UserTrialsDO(null, shopName, now, end, isTrialExpired);
+        UserTrialsDO userTrialsDO = new UserTrialsDO(null, shopName, now, end, isTrialExpired, null);
         int insert = baseMapper.insert(userTrialsDO);
         return insert > 0;
     }

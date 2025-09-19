@@ -1,8 +1,5 @@
 package com.bogdatech.logic;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.IItemsService;
 import com.bogdatech.Service.ITranslatesService;
@@ -29,7 +26,6 @@ import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,11 +33,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
-import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
@@ -60,26 +54,16 @@ import static com.bogdatech.utils.StringUtils.countWords;
 @Component
 public class ShopifyService {
 
-
-    private final IUserTypeTokenService userTypeTokenService;
-    private final IUserSubscriptionsService userSubscriptionsService;
-    private final IItemsService itemsService;
-    private final ITranslatesService translatesService;
-    private final UserTranslationDataService userTranslationDataService;
-
     @Autowired
-    public ShopifyService(
-            IUserTypeTokenService userTypeTokenService,
-            IUserSubscriptionsService userSubscriptionsService,
-            IItemsService itemsService,
-            ITranslatesService translatesService,
-            UserTranslationDataService userTranslationDataService) {
-        this.userTypeTokenService = userTypeTokenService;
-        this.userSubscriptionsService = userSubscriptionsService;
-        this.itemsService = itemsService;
-        this.translatesService = translatesService;
-        this.userTranslationDataService = userTranslationDataService;
-    }
+    private IUserTypeTokenService userTypeTokenService;
+    @Autowired
+    private IUserSubscriptionsService userSubscriptionsService;
+    @Autowired
+    private IItemsService itemsService;
+    @Autowired
+    private ITranslatesService translatesService;
+    @Autowired
+    private UserTranslationDataService userTranslationDataService;
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
     private final int length = 32;
@@ -96,24 +80,6 @@ public class ShopifyService {
             return null;
         }
         return string;
-    }
-
-    //封装调用云服务器实现更新shopify数据的方法
-    public String updateShopifyData(RegisterTransactionRequest registerTransactionRequest) {
-        // 使用 ObjectMapper 将对象转换为 JSON 字符串
-        String string;
-        JSONObject translationsArray;
-        JSONArray translationsObject;
-        try {
-            String requestBody = OBJECT_MAPPER.writeValueAsString(registerTransactionRequest);
-            string = sendShopifyPost("shopify/updateItem", requestBody);
-            JSONObject jsonObject = JSON.parseObject(string);
-            translationsArray = jsonObject.getJSONObject("translationsRegister");
-            translationsObject = translationsArray.getJSONArray("translations");
-        } catch (JsonProcessingException | ClientException e) {
-            throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
-        }
-        return (String) translationsObject.getJSONObject(0).get("value");
     }
 
     //获得翻译前一共需要消耗的字符数
@@ -1164,9 +1130,6 @@ public class ShopifyService {
 //        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
             CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
             String json = objectToJson(cloudServiceRequest);
-//            // 调用 saveToShopify 方法
-//            storingDataPublisherService.storingData(json);
-//            saveToShopify(cloudServiceRequest);
 
             //存到数据库中
             userTranslationDataService.insertTranslationData(json, request.getShopName());

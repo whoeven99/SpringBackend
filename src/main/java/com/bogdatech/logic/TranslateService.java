@@ -1,6 +1,9 @@
 package com.bogdatech.logic;
 
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
@@ -30,11 +33,13 @@ import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTransla
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
+import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
@@ -392,6 +397,43 @@ public class TranslateService {
         Integer maxCharsByShopName = iTranslationCounterService.getMaxCharsByShopName(shopName);
         //调用图片翻译方法
         return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName);
+    }
+
+    /**
+     * 获取用户商店语言开启状态
+     * */
+    public BaseResponse<Object> getTranslationStatus(String shopName, String source) {
+        //1， 从db获取用户token和相关翻译数据， 存入Map中
+        Map<String, Integer> statusMap = new HashMap<>();
+        UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+        List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
+        for (TranslatesDO translatesDO : list) {
+            statusMap.put(translatesDO.getTarget(), translatesDO.getStatus());
+        }
+
+        //2，从shopify中获取所有的语言状态数据
+        String shopifyByQuery = getShopifyByQuery(getShopLanguageQuery(), shopName, usersDO.getAccessToken());
+        System.out.println("shopify: " + shopifyByQuery);
+
+        //3，对shopify返回的数据进行解析，判断用户是否所有翻译语言都发布
+        //默认是全部发布了
+        statusMap.put(IS_PUBLISH, 1);
+        // 先转成 JSONObject
+        JSONObject jsonObject = JSON.parseObject(shopifyByQuery);
+        // 取出 shopLocales 数组
+        JSONArray shopLocalesArr = jsonObject.getJSONArray("shopLocales");
+        // 遍历
+        for (int i = 0; i < shopLocalesArr.size(); i++) {
+            JSONObject item = shopLocalesArr.getJSONObject(i);
+            String locale = item.getString("locale");
+            Boolean published = item.getBoolean("published");
+            if (Boolean.FALSE.equals(published) && statusMap.get(locale) >= 1) {
+                //翻译后的语言没有发布
+                statusMap.put(IS_PUBLISH, 0);
+            }
+        }
+
+        return new BaseResponse<>().CreateSuccessResponse(statusMap);
     }
 }
 
