@@ -34,6 +34,7 @@ import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
+import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
@@ -408,7 +409,7 @@ public class TranslateService {
         UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
         List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
         for (TranslatesDO translatesDO : list) {
-            statusMap.put(translatesDO.getTarget(), translatesDO.getStatus());
+            statusMap.put(getLanguageName(translatesDO.getTarget()), translatesDO.getStatus());
         }
 
         //2，从shopify中获取所有的语言状态数据
@@ -427,7 +428,7 @@ public class TranslateService {
             JSONObject item = shopLocalesArr.getJSONObject(i);
             String locale = item.getString("locale");
             Boolean published = item.getBoolean("published");
-            if (Boolean.FALSE.equals(published) && statusMap.get(locale) >= 1) {
+            if (Boolean.FALSE.equals(published) && statusMap.get(getLanguageName(locale)) >= 1) {
                 //翻译后的语言没有发布
                 statusMap.put(IS_PUBLISH, 0);
             }
