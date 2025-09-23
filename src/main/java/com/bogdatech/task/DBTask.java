@@ -3,6 +3,8 @@ package com.bogdatech.task;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
+import com.bogdatech.integration.RedisIntegration;
+import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -11,12 +13,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.RedisKeyUtils.generateTranslateLockKey;
 
 @Component
 @EnableScheduling
@@ -26,9 +27,10 @@ public class DBTask {
     private RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
     @Autowired
     private ITranslateTasksService translateTasksService;
-
-    public static final ConcurrentHashMap<String, ReentrantLock> SHOP_LOCKS = new ConcurrentHashMap<>();
-    public static final Set<String> PROCESSING_SHOPS = ConcurrentHashMap.newKeySet();
+    @Autowired
+    private RedisTranslateLockService redisTranslateLockService;
+    @Autowired
+    private RedisIntegration redisIntegration;
 
     // 每6秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 6000)
@@ -48,63 +50,30 @@ public class DBTask {
 
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
-            //判断PROCESSING_SHOPS里面是否有该用户，是跳过，否的话，翻译
-            if (!PROCESSING_SHOPS.contains(shopName)) {
-                PROCESSING_SHOPS.add(shopName);
+            //在加锁时判断是否成功，成功-翻译；不成功跳过
+            if (redisTranslateLockService.lockStore(shopName)) {
                 ThreadPoolExecutor finalTpe = tpe;
                 executorService.submit(() -> {
-                    if (tryLock(shopName)) {
-                        appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName() + "shop: " + SHOP_LOCKS.get(shopName));
-                        if (finalTpe != null){
-                            appInsights.trackMetric("Number of active translating threads", finalTpe.getActiveCount());
-                        }
-                        try {
-                            // 只执行一个线程处理这个 shopName
-                            RabbitMqTranslateVO vo = OBJECT_MAPPER.readValue(task.getPayload(), RabbitMqTranslateVO.class);
-                            rabbitMqTranslateConsumerService.startTranslate(vo, task);
-                        } catch (Exception e) {
-                            appInsights.trackTrace("clickTranslation " + shopName + " 处理失败 errors : " + e);
-                            //将该模块状态改为4
-                            translateTasksService.updateByTaskId(task.getTaskId(), 4);
-                            appInsights.trackException(e);
-                        } finally {
-                            unlock(shopName);
-                            PROCESSING_SHOPS.remove(shopName);
-                        }
+                    appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName() + "shop: " + shopName + " 锁的状态： " + redisIntegration.get(generateTranslateLockKey(shopName)));
+                    if (finalTpe != null) {
+                        appInsights.trackMetric("Number of active translating threads", finalTpe.getActiveCount());
+                    }
+                    try {
+                        // 只执行一个线程处理这个 shopName
+                        RabbitMqTranslateVO vo = OBJECT_MAPPER.readValue(task.getPayload(), RabbitMqTranslateVO.class);
+                        rabbitMqTranslateConsumerService.startTranslate(vo, task);
+                    } catch (Exception e) {
+                        appInsights.trackTrace("clickTranslation " + shopName + " 处理失败 errors : " + e);
+                        //将该模块状态改为4
+                        translateTasksService.updateByTaskId(task.getTaskId(), 4);
+                        appInsights.trackException(e);
+                    } finally {
+                        redisTranslateLockService.unLockStore(shopName);
                     }
                 });
+
             }
         }
     }
-
-    /**
-     * 尝试加锁
-     *
-     * @param shopName 商品名称（锁标识）
-     * @return true：成功获取锁；false：已被锁定
-     */
-    public static boolean tryLock(String shopName) {
-        // 获取或创建锁对象（非阻塞）
-        ReentrantLock lock = SHOP_LOCKS.computeIfAbsent(shopName, key -> new ReentrantLock());
-
-        // 尝试获取锁（非阻塞）
-        return lock.tryLock();
-    }
-
-    /**
-     * 释放锁
-     *
-     * @param shopName 商品名称（锁标识）
-     */
-    public static void unlock(String shopName) {
-        ReentrantLock lock = SHOP_LOCKS.get(shopName);
-        if (lock != null && lock.isHeldByCurrentThread()) {
-            appInsights.trackTrace("unlock before Lock [" + shopName + "] by thread " + Thread.currentThread().getName());
-            lock.unlock();
-            appInsights.trackTrace("unlock after Lock [" + shopName + "] by thread " + Thread.currentThread().getName());
-        }
-    }
-
-
 }
 

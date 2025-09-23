@@ -46,8 +46,6 @@ public class TranslateService {
     @Autowired
     private ITranslationCounterService translationCounterService;
     @Autowired
-    private IVocabularyService vocabularyService;
-    @Autowired
     private LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
     @Autowired
     private JsoupUtils jsoupUtils;
@@ -75,14 +73,7 @@ public class TranslateService {
         thread.setUncaughtExceptionHandler((t, e) -> appInsights.trackTrace("线程 " + t.getName() + " 抛出异常: " + e.getMessage()));
         return thread;
     };
-    public static ExecutorService executorService = new ThreadPoolExecutor(
-            5,   // 核心线程数（比 vCPU 多一点）
-            10,  // 最大线程数（vCPU * 4）
-            60L, TimeUnit.SECONDS, // 空闲线程存活时间
-            new LinkedBlockingQueue<>(50), // 任务队列（避免内存过载）
-            threadFactory,
-            new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略
-    );
+    public static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     // 用户卸载停止指定用户的翻译任务
     public void stopTranslation(String shopName) {

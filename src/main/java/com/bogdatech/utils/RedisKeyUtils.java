@@ -15,6 +15,20 @@ public class RedisKeyUtils {
     public static final Long DAY_1 = 86400L;
     //对clientId去重 set
     public static final String CLIENT_ID_SET = "ci:{shopName}:{language}:{yyyyMMdd}:{eventName}";
+    //翻译商店锁
+    public static final String TRANSLATE_LOCK = "tl:{shopName}";
+    public static final String TRANSLATE_LOCK_TRUE = "1";
+
+    /**
+     * 生成翻译锁的 key
+     * */
+    public static String generateTranslateLockKey(String shopName) {
+        if (shopName == null) {
+            return null;
+        }
+        return TRANSLATE_LOCK.replace("{shopName}", shopName);
+    }
+
     /**
      * 生成翻译进度的 Redis key
      */

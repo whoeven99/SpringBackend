@@ -683,14 +683,14 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 用缓存和db，翻译List<String>类型的数据
      */
-    private void cacheAndDbTranslateData(List<String> originalTexts, String target, String source, Map<String, String> allTranslatedMap) {
+    public void cacheAndDbTranslateData(List<String> originalTexts, String target, String source, Map<String, String> allTranslatedMap) {
         Iterator<String> it = originalTexts.iterator();
         while (it.hasNext()) {
             String sourceText = it.next();
             String cacheData = redisProcessService.getCacheData(target, sourceText);
             if (cacheData != null) {
                 allTranslatedMap.put(sourceText, cacheData);
-                it.remove(); // 安全删除当前元素
+                it.remove();
                 continue;
             }
 
@@ -698,7 +698,7 @@ public class LiquidHtmlTranslatorUtils {
             if (dbData != null) {
                 allTranslatedMap.put(sourceText, dbData);
                 redisProcessService.setCacheData(target, dbData, sourceText);
-                it.remove(); // 同样可以安全删除
+                it.remove();
             }
         }
     }

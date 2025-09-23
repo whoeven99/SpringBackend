@@ -13,6 +13,15 @@ public class RedisIntegration {
     private RedisTemplate<String, String> redisTemplate;
 
     /**
+     * key 不存在时才 set
+     * */
+    public boolean trySetValueIfAbsent(String key, String value) {
+        Boolean result = redisTemplate.opsForValue()
+                .setIfAbsent(key, value);
+        return Boolean.TRUE.equals(result);
+    }
+
+    /**
      * 设置缓存
      */
     public void set(String key, String value, long timeout) {
