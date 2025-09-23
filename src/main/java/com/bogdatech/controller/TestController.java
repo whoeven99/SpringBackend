@@ -17,6 +17,7 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
@@ -25,16 +26,10 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -47,9 +42,8 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.RedisKeyUtils.TRANSLATE_LOCK_FALSE;
+import static com.bogdatech.utils.RedisKeyUtils.generateTranslateLockKey;
 import static com.bogdatech.utils.StringUtils.*;
 
 @RestController
@@ -81,10 +75,9 @@ public class TestController {
     @Autowired
     private RedisDataReportService redisDataReportService;
     @Autowired
-    private LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
-    @Autowired
     private RedisTranslateLockService redisTranslateLockService;
-
+    @Autowired
+    private RedisIntegration redisIntegration;
     @GetMapping("/ping")
     public String ping() {
         TelemetryClient appInsights = new TelemetryClient();
@@ -201,7 +194,7 @@ public class TestController {
     public String logThreadPoolStatus(@RequestParam String shopName) {
         if (executorService instanceof ThreadPoolExecutor executor) {
             String userTranslates = (" - 用户翻译Set： " + userTranslate + " ");
-            String process = (" - 进程Set： " + redisTranslateLockService.isShopLock(shopName) + " ");
+            String process = (" - 进程Set： " + redisIntegration.get(generateTranslateLockKey(shopName)) + " ");
             String userStopFlag = (" - 停止标志： " + userStopFlags);
             String executorServic = (" - 线程池状态：" + executorService + "  ");
             String crePoolSize = (" - 核心线程数(corePoolSize): " + executor.getCorePoolSize() + "  ");
@@ -280,25 +273,19 @@ public class TestController {
     @PutMapping("/testRecover")
     public String testRecover(@RequestParam String shopName) {
         //获取用户，redis锁情况
-        String shopLock = redisTranslateLockService.isShopLock(shopName);
         translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
-        boolean flag = redisTranslateLockService.unLockStore(shopName, true);
+        boolean flag = redisTranslateLockService.unLockStore(shopName);
         Map<String, Object> translationStatusMap = getTranslationStatusMap(" ", 1);
         userTranslate.put(shopName, translationStatusMap);
-        return "是否解锁成功： " + flag + " shopLock: " + shopLock;
+        return "是否解锁成功： " + flag;
     }
 
     /**
      * 测试加锁
-     * */
+     */
     @GetMapping("/testLock")
-    public void testLock(@RequestParam String shopName) {
-        String shopLock = redisTranslateLockService.isShopLock(shopName);
-        appInsights.trackTrace("shopLock: " + shopLock);
-        if (shopLock == null || TRANSLATE_LOCK_FALSE.equals(shopLock)) {
-            boolean b = redisTranslateLockService.lockStore(shopName, shopLock != null);
-            appInsights.trackTrace("b: " + b);
-        }
+    public Boolean testLock(@RequestParam String shopName) {
+        return redisTranslateLockService.lockStore(shopName);
     }
 
 
@@ -340,7 +327,7 @@ public class TestController {
 
     /**
      * 数据上传
-     * */
+     */
     @PostMapping("/saveUserDataReport")
     public void userDataReport(@RequestParam String shopName, @RequestBody UserDataReportVO userDataReportVO) {
         redisDataReportService.saveUserDataReport(shopName, userDataReportVO);
@@ -349,7 +336,7 @@ public class TestController {
 
     /**
      * 读取相关数据
-     * */
+     */
     @PostMapping("/getUserDataReport")
     public BaseResponse<Object> getUserDataReport(@RequestParam String shopName, @RequestBody UserDataReportVO userDataReportVO) {
         String userDataReport = redisDataReportService.getUserDataReport(shopName, userDataReportVO.getStoreLanguage(), userDataReportVO.getTimestamp(), userDataReportVO.getDayData());

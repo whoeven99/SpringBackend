@@ -22,15 +22,6 @@ public class RedisIntegration {
     }
 
     /**
-     * key 存在时才更新
-     * */
-    public boolean tryUpdateIfPresent(String key, String value) {
-        Boolean result = redisTemplate.opsForValue()
-                .setIfPresent(key, value);
-        return Boolean.TRUE.equals(result);
-    }
-
-    /**
      * 设置缓存
      */
     public void set(String key, String value, long timeout) {

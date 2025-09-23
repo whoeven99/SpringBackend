@@ -3,6 +3,7 @@ package com.bogdatech.task;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ import java.util.concurrent.*;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.RedisKeyUtils.TRANSLATE_LOCK_FALSE;
+import static com.bogdatech.utils.RedisKeyUtils.generateTranslateLockKey;
 
 @Component
 @EnableScheduling
@@ -28,6 +29,8 @@ public class DBTask {
     private ITranslateTasksService translateTasksService;
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
+    @Autowired
+    private RedisIntegration redisIntegration;
 
     // 每6秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 6000)
@@ -47,13 +50,11 @@ public class DBTask {
 
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
-            //判断redis里面是否有该用户，是跳过，否的话，翻译
-            String shopLock = redisTranslateLockService.isShopLock(shopName);
-            if (shopLock == null || TRANSLATE_LOCK_FALSE.equals(shopLock)) {
-                redisTranslateLockService.lockStore(shopName, shopLock != null);
+            //在加锁时判断是否成功，成功-翻译；不成功跳过
+            if (redisTranslateLockService.lockStore(shopName)) {
                 ThreadPoolExecutor finalTpe = tpe;
                 executorService.submit(() -> {
-                    appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName() + "shop: " + redisTranslateLockService.isShopLock(shopName));
+                    appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName() + "shop: " + shopName + " 锁的状态： " + redisIntegration.get(generateTranslateLockKey(shopName)));
                     if (finalTpe != null) {
                         appInsights.trackMetric("Number of active translating threads", finalTpe.getActiveCount());
                     }
@@ -67,9 +68,10 @@ public class DBTask {
                         translateTasksService.updateByTaskId(task.getTaskId(), 4);
                         appInsights.trackException(e);
                     } finally {
-                        redisTranslateLockService.unLockStore(shopName, true);
+                        redisTranslateLockService.unLockStore(shopName);
                     }
                 });
+
             }
         }
     }

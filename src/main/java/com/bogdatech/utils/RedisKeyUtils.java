@@ -18,7 +18,6 @@ public class RedisKeyUtils {
     //翻译商店锁
     public static final String TRANSLATE_LOCK = "tl:{shopName}";
     public static final String TRANSLATE_LOCK_TRUE = "1";
-    public static final String TRANSLATE_LOCK_FALSE = "0";
 
     /**
      * 生成翻译锁的 key
