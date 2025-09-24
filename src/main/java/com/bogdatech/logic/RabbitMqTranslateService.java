@@ -304,49 +304,6 @@ public class RabbitMqTranslateService {
     }
 
     /**
-     * 翻译产品，具体待补充
-     */
-    public String productTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils counter, TranslateTextDO translateTextDO, String handleType) {
-        String textKey = translateTextDO.getTextKey();
-        String value = translateTextDO.getSourceText();
-        String source = rabbitMqTranslateVO.getSource();
-        String shopName = translateTextDO.getShopName();
-        TranslateRequest translateRequest = new TranslateRequest(0, shopName, rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), value);
-        //根据key值选择翻译方法
-        String productKeyByKey = getProductKeyByKey(translateTextDO.getTextKey());
-        return switch (textKey) {
-            case "title", "body_html", "meta_description", "meta_title" ->
-                    jsoupUtils.translateKeyModelAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), productKeyByKey, rabbitMqTranslateVO.getCustomKey(), rabbitMqTranslateVO.getTranslationModel());
-            case "handle", "product_type" ->
-                    jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getTranslationModel());
-            default ->
-                    jsoupUtils.translateByModel(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
-        };
-    }
-
-    /**
-     * 翻译文章，具体待补充
-     */
-    public String articleTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils counter, TranslateTextDO translateTextDO, String handleType) {
-        String textKey = translateTextDO.getTextKey();
-        String value = translateTextDO.getSourceText();
-        String source = rabbitMqTranslateVO.getSource();
-        String shopName = translateTextDO.getShopName();
-        TranslateRequest translateRequest = new TranslateRequest(0, shopName, rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), value);
-        //根据key值选择翻译方法
-        String articleKeyByKey = getArticleKeyByKey(translateTextDO.getTextKey());
-        return switch (textKey) {
-            case "title", "body_html", "meta_description", "meta_title", "summary_html" ->
-                    jsoupUtils.translateKeyModelAndCount(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), articleKeyByKey, rabbitMqTranslateVO.getCustomKey(), rabbitMqTranslateVO.getTranslationModel());
-            case "handle" ->
-                    jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getTranslationModel());
-            default ->
-                    jsoupUtils.translateByModel(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
-        };
-
-    }
-
-    /**
      * 翻译通用模块数据
      */
     public void commonTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
@@ -715,7 +672,7 @@ public class RabbitMqTranslateService {
             String prompt = getListPrompt(getLanguageName(target), languagePack, translationKeyType, modelType);
             appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
             String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt);
-            appInsights.trackTrace(shopName + " translatedJson : " + translatedJson);
+            appInsights.trackTrace(shopName + " source: " + source +" translatedJson : " + translatedJson);
 
 //            处理翻译后的数据
             if (translatedJson != null) {
@@ -790,7 +747,7 @@ public class RabbitMqTranslateService {
                 String sourceText = item.getSourceText();
                 String targetText = resultMap.get(sourceText);
                 if (targetText == null) {
-                    appInsights.trackTrace("clickTranslation 翻译结果缺失：" + sourceText);
+                    appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " 翻译结果缺失：" + sourceText);
                     continue;
                 }
                 Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
@@ -848,56 +805,6 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace("clickTranslation 存储翻译失败：" + e.getMessage() + " sourceText:" + sourceText);
         }
     }
-
-    /**
-     * 通用文本翻译
-     */
-    public void translateGeneralTextData(TranslateTextDO translateTextDO, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils counter, Map<String, Object> translation, ShopifyRequest shopifyRequest) {
-        String value = translateTextDO.getSourceText();
-        String source = rabbitMqTranslateVO.getSource();
-        String resourceId = translateTextDO.getResourceId();
-        String shopName = translateTextDO.getShopName();
-        String modeType = rabbitMqTranslateVO.getModeType();
-        String targetString = null;
-        String handleType = "null";
-        if (rabbitMqTranslateVO.getHandleFlag()) {
-            handleType = HANDLE;
-        }
-        try {
-            //在这里做模块判断用什么模型翻译
-            targetString = translateTextDataByModeType(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest, handleType);
-        } catch (ClientException e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " 翻译失败 errors ： " + e.getMessage() + " ，继续翻译");
-        }
-
-        if (Objects.equals(targetString, METAFIELD)) {
-            return;
-        }
-
-        if (targetString == null) {
-            appInsights.trackTrace("clickTranslation " + shopName + " 翻译失败后的字符 errors ： " + translateTextDO);
-            shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
-            return;
-        }
-
-        if (!handleType.equals(HANDLE)) {
-            redisProcessService.setCacheData(shopifyRequest.getTarget(), targetString, value);
-        }
-        shopifyService.saveToShopify(targetString, translation, resourceId, shopifyRequest);
-        printTranslation(targetString, value, translation, shopName, modeType, resourceId, source);
-
-        //存到数据库中
-        try {
-            if (handleType.equals(HANDLE)) {
-                return;
-            }
-            // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-            vocabularyService.InsertOne(rabbitMqTranslateVO.getTarget(), targetString, rabbitMqTranslateVO.getSource(), value);
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " 存储失败 errors ： " + e.getMessage() + " ，sourceText: " + value);
-        }
-    }
-
 
     /**
      * 词汇表翻译
@@ -1107,42 +1014,6 @@ public class RabbitMqTranslateService {
         boolean flag1 = cacheTranslateData(source, request, translateTextDO, target);
         boolean flag2 = translateDataByDatabase(source, request, translateTextDO, target);
         return flag1 || flag2;
-    }
-
-    /**
-     * 根据模块选择翻译Text方法
-     */
-    public String translateTextDataByModeType(TranslateTextDO translateTextDO, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils counter, Map<String, Object> translation, ShopifyRequest shopifyRequest, String handleType) {
-        TranslateRequest translateRequest = new TranslateRequest(0, translateTextDO.getShopName(), rabbitMqTranslateVO.getAccessToken(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
-        switch (rabbitMqTranslateVO.getModeType()) {
-            case ONLINE_STORE_THEME:
-            case ONLINE_STORE_THEME_APP_EMBED:
-            case ONLINE_STORE_THEME_JSON_TEMPLATE:
-            case ONLINE_STORE_THEME_SECTION_GROUP:
-            case ONLINE_STORE_THEME_SETTINGS_CATEGORY:
-            case ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS:
-            case ONLINE_STORE_THEME_LOCALE_CONTENT, EMAIL_TEMPLATE, SHOP, SHOP_POLICY:
-                //翻译主题
-                return jsoupUtils.translateByModel(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
-            case PRODUCT:
-                //产品
-                return productTranslate(rabbitMqTranslateVO, counter, translateTextDO, handleType);
-            case PRODUCT_OPTION:
-            case PRODUCT_OPTION_VALUE, BLOG, COLLECTION, PACKING_SLIP_TEMPLATE, MENU, LINK, DELIVERY_METHOD_DEFINITION, FILTER, PAYMENT_GATEWAY, SELLING_PLAN, SELLING_PLAN_GROUP, PAGE:
-                //机器翻译
-                return jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getTranslationModel());
-            case ARTICLE:
-                return articleTranslate(rabbitMqTranslateVO, counter, translateTextDO, handleType);
-            case METAFIELD:
-                //元字段
-                translateMetafieldTextData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
-                return METAFIELD;
-            case METAOBJECT:
-                //机器翻译
-                return jsoupUtils.checkTranslationApi(translateRequest, counter, rabbitMqTranslateVO.getLimitChars(), null);
-            default:
-                return jsoupUtils.translateByModel(translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
-        }
     }
 
     /**

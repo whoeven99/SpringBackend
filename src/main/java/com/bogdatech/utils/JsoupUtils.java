@@ -196,75 +196,6 @@ public class JsoupUtils {
     }
 
     /**
-     * 根据模块关键词，选择相应提示词翻译
-     */
-    public String translateByKeyPrompt(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String key, String customKey, String translationModel) {
-        String target = request.getTarget();
-        String targetLanguage = getLanguageName(target);
-        String content = request.getContent();
-        String shopName = request.getShopName();
-        String prompt;
-
-        //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
-        if (hasPlaceholders(content)) {
-            return translateVariableData(request, counter, limitChars, targetLanguage, languagePackId);
-
-        }
-        //根据key选择提示词使用的key值
-        prompt = getKeyPrompt(targetLanguage, languagePackId, key, customKey);
-        appInsights.trackTrace("clickTranslation " + shopName + " 模块文本：" + content + " key提示词: " + prompt);
-
-        try {
-            //对模型进行判断 , 1,ciwi 2,openai 3,deepL
-            switch (translationModel) {
-                case OPENAI_MODEL:
-                    prompt = getOpenaiKeyPrompt(targetLanguage, languagePackId, key, customKey);
-                    appInsights.trackTrace("clickTranslation " + shopName + " 模块文本：" + content + " openai key提示词: " + prompt);
-                    return chatGptIntegration.chatWithGpt(prompt, content, request, counter, limitChars);
-                case DEEPL_MODEL:
-                    if (!deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)) {
-                        return deepLIntegration.translateByDeepL(content, target, counter, shopName, limitChars);
-                    } else {
-                        return translateByCiwiModel(request, counter, limitChars, prompt);
-                    }
-                default:
-                    return translateByCiwiModel(request, counter, limitChars, prompt);
-            }
-        } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation " + shopName + " translateByKeyPrompt errors ： " + e.getMessage());
-            return translateSingleLineWithProtection(request, counter, limitChars, key, languagePackId, customKey);
-        }
-
-    }
-
-    /**
-     * 根据Product key选择提示词使用的key值
-     */
-    public static String getProductKeyByKey(String key) {
-        return switch (key) {
-            case "title" -> "product title";
-            case "body_html" -> "product description";
-            case "meta_title" -> "product meta title";
-            case "meta_description" -> "product meta description";
-            default -> null;
-        };
-    }
-
-    /**
-     * 根据ARTICLE key选择提示词使用的key值
-     */
-    public static String getArticleKeyByKey(String key) {
-        return switch (key) {
-            case "title" -> "article title";
-            case "body_html" -> "article content";
-            case "meta_title" -> "article meta title";
-            case "meta_description" -> "article meta description";
-            default -> null;
-        };
-    }
-
-    /**
      * 根据每个模型的条件，翻译文本数据
      * 在翻译的同时计数字符数
      *
@@ -438,27 +369,6 @@ public class JsoupUtils {
         return targetString;
     }
 
-    /**
-     * 根据模块key选择提示词，使用ciwi进行翻译
-     */
-    public String translateKeyModelAndCount(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, String key, String customKey, String translationModel) {
-        String text = request.getContent();
-        String targetString;
-        if (key != null) {
-            targetString = translateByKeyPrompt(request, counter, languagePackId, limitChars, key, customKey, translationModel);
-        } else {
-            targetString = translateByModel(request, counter, languagePackId, limitChars);
-        }
-
-        if (targetString == null) {
-            return text;
-        }
-        targetString = isHtmlEntity(targetString);
-
-        //判断translateType是不是handle，再决定是否添加到缓存
-        redisProcessService.setCacheData(request.getTarget(), targetString, text);
-        return targetString;
-    }
 
 
     // 定义google翻译不了的语言代码集合
@@ -705,33 +615,6 @@ public class JsoupUtils {
     }
 
     /**
-     * 对于ali出现400的问题（主要是内容不适），先用机器翻译，随后用豆包大模型翻译
-     */
-    public String translateSingleLineWithProtection(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String key, String languagePackId, String customKey) {
-        String target = request.getTarget();
-        String source = request.getSource();
-        String targetLanguage = getLanguageName(target);
-        String prompt = getKeyPrompt(targetLanguage, languagePackId, key, customKey);
-        String resultTranslation;
-        try {
-            if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
-                resultTranslation = translateByQwenMt(request.getContent(), request.getSource(), request.getTarget(), counter, request.getShopName(), limitChars);
-            } else {
-                //qwen 短文本翻译
-                appInsights.trackTrace("clickTranslation 400翻译 errors : " + request.getContent() + " key 提示词: " + prompt);
-                resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt, request.getContent(), counter, limitChars);
-            }
-            return resultTranslation;
-
-        } catch (Exception e) {
-            //mt翻译失败的话，用其他大模型翻译
-            appInsights.trackTrace("clickTranslation 400翻译 errors : " + e.getMessage());
-            resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt, request.getContent(), counter, limitChars);
-            return resultTranslation;
-        }
-    }
-
-    /**
      * 变量翻译,目前暂定ciwi模型翻译
      */
     public String translateVariableData(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String targetLanguage, String languagePackId) {
@@ -948,6 +831,7 @@ public class JsoupUtils {
                 }
             }
         } catch (Exception e) {
+            appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
         }
         return doubleTranslateTextDOSet;

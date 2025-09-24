@@ -74,7 +74,6 @@ public class StringUtils {
         }
         // 用正则表达式匹配单词
         String[] words = text.trim().split("[\\s\\p{Punct}]+");
-//        appInsights.trackTrace("words: " + Arrays.toString(words));
         return words.length;
     }
 
@@ -218,4 +217,5 @@ public class StringUtils {
             return body;
         }
     }
+
 }

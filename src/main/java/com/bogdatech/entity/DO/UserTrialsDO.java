@@ -20,4 +20,5 @@ public class UserTrialsDO {
     private Timestamp trialStart;
     private Timestamp trialEnd;
     private Boolean isTrialExpired;
+    private Boolean isTrialShow;
 }

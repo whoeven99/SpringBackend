@@ -26,6 +26,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +41,8 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
+import static com.bogdatech.task.DBTask.*;
+import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
@@ -345,4 +348,14 @@ public class TestController {
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
+
+    /**
+     * 测试error报错问题
+     * */
+    @GetMapping("/testError")
+    public void testError(@RequestParam String source) throws JsonProcessingException {
+        String s1 = encryptMD5(source);
+        System.out.println("si: " + s1);
+    }
+
 }
