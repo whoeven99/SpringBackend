@@ -775,14 +775,16 @@ public class JsoupUtils {
     public String translateByCiwiUserModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt) {
         //目标语言是中文的，用qwen-max翻译
         if ("fr".equals(target) || "ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(source) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
+            appInsights.trackTrace("千问翻译 用户： " + shopName);
             return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars);
         }
 
         //hi用doubao-1.5-pro-256k翻译
         if ("hi".equals(target) || "th".equals(target)) {
+            appInsights.trackTrace("豆包翻译 用户： " + shopName);
             return arkTranslateIntegration.douBaoPromptTranslate(shopName, prompt, content, counter, limitChars);
         }
-
+        appInsights.trackTrace("混元翻译 用户： " + shopName);
         return hunYuanIntegration.hunYuanUserTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
     }
 

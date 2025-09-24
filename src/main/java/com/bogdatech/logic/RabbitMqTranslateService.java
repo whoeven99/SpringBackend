@@ -537,7 +537,7 @@ public class RabbitMqTranslateService {
             if (checkNeedStopped(rabbitMqTranslateVO.getShopName(), counter)) {
                 return;
             }
-
+            appInsights.trackTrace("解析数据 用户： " + rabbitMqTranslateVO.getShopName());
             String value = translateTextDO.getSourceText();
             String resourceId = translateTextDO.getResourceId();
             String source = rabbitMqTranslateVO.getSource();
@@ -546,6 +546,7 @@ public class RabbitMqTranslateService {
             Map<String, Object> translation = createTranslationMap(target, key, digest);
 
             //判断是否达到额度限制
+            appInsights.trackTrace("判断是否达到额度限制 用户： " + rabbitMqTranslateVO.getShopName());
             updateCharsWhenExceedLimit(counter, shopName, limitChars, new TranslateRequest(0, shopName, accessToken, source, target, null));
 
             //开始翻译
@@ -555,8 +556,10 @@ public class RabbitMqTranslateService {
             }
             //html翻译
             translateGeneralHtmlData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
+            appInsights.trackTrace("html翻译完 用户： " + rabbitMqTranslateVO.getShopName());
             //翻译进度条加1
             //判断当翻译停止后就不加了
+            appInsights.trackTrace("翻译进度条加1 用户： " + rabbitMqTranslateVO.getShopName());
             checkNeedAddProcessData(shopName, target);
         }
     }
@@ -579,14 +582,17 @@ public class RabbitMqTranslateService {
         String resourceId = translateTextDO.getResourceId();
         String source = rabbitMqTranslateVO.getSource();
         try {
+            appInsights.trackTrace("定义translateRequest 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
             TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
             //判断产品模块用完全翻译，其他模块用分段html翻译
             Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
             userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
+            appInsights.trackTrace("修改进度条的数据 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
             htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
-
+            appInsights.trackTrace("完成翻译html 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
             if (rabbitMqTranslateVO.getModeType().equals(METAFIELD)) {
                 //对翻译后的html做格式处理
+                appInsights.trackTrace("html所在模块是METAFIELD 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
                 htmlTranslation = normalizeHtml(htmlTranslation);
             }
 
@@ -595,11 +601,13 @@ public class RabbitMqTranslateService {
             shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);
             return;
         }
+        appInsights.trackTrace("存到shopify数据到数据库 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
         shopifyService.saveToShopify(htmlTranslation, translation, resourceId, shopifyRequest);
         printTranslation(htmlTranslation, sourceText, translation, shopifyRequest.getShopName(), rabbitMqTranslateVO.getModeType(), resourceId, source);
 
         //如果翻译数据小于255，存到数据库
         try {
+            appInsights.trackTrace("存到数据库 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
             if (htmlTranslation.length() >= 255) {
                 return;
             }
