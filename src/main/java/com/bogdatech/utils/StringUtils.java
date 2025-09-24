@@ -206,15 +206,18 @@ public class StringUtils {
     /**
      * 处理返回的数据包含带有 Markdown 包装的 JSON
      * */
-    public static String parseJson(String body){
+    public static String parseJson(String body, String shopName){
         // 用正则提取出 JSON 部分
+        appInsights.trackTrace("开始解析 用户： " + shopName);
         Pattern pattern = Pattern.compile("```json\\s*(\\{.*?\\})\\s*```", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(body);
+        appInsights.trackTrace("匹配结束 用户： " + shopName);
         if (matcher.find()) {
             String jsonStr = matcher.group(1);
             appInsights.trackTrace("parseJson jsonStr : " + jsonStr);
             return jsonStr;
         } else {
+            appInsights.trackTrace("返回原文本 用户： " + shopName);
             return body;
         }
     }

@@ -58,8 +58,6 @@ public class RabbitMqTranslateConsumerService {
         boolean isEmailAuto = EMAIL_AUTO.equals(shopifyData);
         boolean isTranslationAuto = EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey());
         try {
-            // 修改数据库的模块翻译状态
-            translateTasksService.updateByTaskId(task.getTaskId(), 2);
             if (isEmail || isEmailAuto) {
                 handleEmailTask(shopifyData, rabbitMqTranslateVO, task);
             } else {
