@@ -41,7 +41,6 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
-import static com.bogdatech.task.DBTask.*;
 import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
@@ -353,7 +352,7 @@ public class TestController {
      * 测试error报错问题
      * */
     @GetMapping("/testError")
-    public void testError(@RequestParam String source) throws JsonProcessingException {
+    public void testError(@RequestParam String source) {
         String s1 = encryptMD5(source);
         System.out.println("si: " + s1);
     }

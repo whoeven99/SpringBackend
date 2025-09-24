@@ -112,9 +112,7 @@ public class ShopifyController {
     public BaseResponse<Object> getTotalWords(@RequestParam String shopName, @RequestParam String modelType, @RequestBody ShopifyRequest shopifyRequest) {
         TranslateResourceDTO translateResourceDTO = new TranslateResourceDTO(modelType, MAX_LENGTH, shopifyRequest.getTarget(), "");
         shopifyRequest.setShopName(shopName);
-        System.out.println("resourceDTO: " + modelType);
         int totalWords = shopifyService.getTotalWords(shopifyRequest, null, translateResourceDTO);
-        System.out.println("tokens: " + totalWords);
         return new BaseResponse<>().CreateSuccessResponse(totalWords);
     }
 
