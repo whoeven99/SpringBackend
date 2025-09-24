@@ -124,12 +124,14 @@ public class ALiYunTranslateIntegration {
      */
     public String userTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars) {
         String model = switchModel(target);
+        appInsights.trackTrace("model 用户 " + shopName);
         Generation gen = new Generation();
-
+        appInsights.trackTrace("gen 用户 " + shopName);
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
                 .content(prompt + text)
                 .build();
+        appInsights.trackTrace("userMsg 用户 " + shopName);
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
                 .apiKey(System.getenv("BAILIAN_API_KEY"))
@@ -137,20 +139,31 @@ public class ALiYunTranslateIntegration {
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .build();
+        appInsights.trackTrace("param 用户 " + shopName);
         String content;
         int totalToken;
+        appInsights.trackTrace("totalToken 用户 " + shopName);
         try {
             GenerationResult call = gen.call(param);
+            appInsights.trackTrace("GenerationResult 用户 " + shopName);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            appInsights.trackTrace("content 用户 " + shopName);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(text, 2);
+            appInsights.trackTrace("translationStatusMap 用户 " + shopName);
             userTranslate.put(shopName, translationStatusMap);
+            appInsights.trackTrace("userTranslate 用户 " + shopName);
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            appInsights.trackTrace("totalToken 用户 " + shopName);
             Integer inputTokens = call.getUsage().getInputTokens();
+            appInsights.trackTrace("inputTokens 用户 " + shopName);
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
+            appInsights.trackTrace("printTranslateCost 用户 " + shopName);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            appInsights.trackTrace("updateAddUsedCharsByShopName 用户 " + shopName);
             countUtils.addChars(totalToken);
+            appInsights.trackTrace("countUtils 用户 " + shopName);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation userTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
