@@ -116,30 +116,42 @@ public class ArkTranslateIntegration {
     public String douBaoPromptTranslate(String shopName, String prompt, String sourceText, CharacterCountUtils countUtils, Integer limitChars) {
         try {
             List<ChatMessage> messages = new ArrayList<>();
+            appInsights.trackTrace("messages 用户 " + shopName);
             ChatMessage userMessage = ChatMessage.builder()
                     .role(ChatMessageRole.USER)
                     .content(prompt + sourceText)
                     .build();
             messages.add(userMessage);
-
+            appInsights.trackTrace("ChatMessage 用户 " + shopName);
             ChatCompletionRequest request = ChatCompletionRequest.builder()
                     .model("doubao-1-5-pro-256k-250115") //256k token
                     .messages(messages)
                     .build();
-
+            appInsights.trackTrace("ChatCompletionRequest 用户 " + shopName);
             StringBuilder response = new StringBuilder();
+            appInsights.trackTrace("StringBuilder 用户 " + shopName);
             ChatCompletionResult chatCompletion = arkService.createChatCompletion(request);
+            appInsights.trackTrace("ChatCompletionResult 用户 " + shopName);
             chatCompletion.getChoices().forEach(choice -> response.append(choice.getMessage().getContent()));
+            appInsights.trackTrace("chatCompletion 用户 " + shopName);
             long totalTokens = (long) (chatCompletion.getUsage().getTotalTokens() * MAGNIFICATION);
+            appInsights.trackTrace("totalTokens 用户 " + shopName);
             int totalTokensInt = (int) totalTokens;
+            appInsights.trackTrace("totalTokensInt 用户 " + shopName);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+            appInsights.trackTrace("translationStatusMap 用户 " + shopName);
             userTranslate.put(shopName, translationStatusMap);
+            appInsights.trackTrace("userTranslate 用户 " + shopName);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
+            appInsights.trackTrace("completionTokens 用户 " + shopName);
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
+            appInsights.trackTrace("promptTokens 用户 " + shopName);
             printTranslateCost(totalTokensInt, (int) promptTokens, (int)completionTokens);
             appInsights.trackTrace("clickTranslation douBaoPromptTranslate " + shopName + " 用户 token doubao: " + sourceText + " target : " + response + "all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalTokensInt, limitChars);
+            appInsights.trackTrace("updateAddUsedCharsByShopName 用户 " + shopName);
             countUtils.addChars(totalTokensInt);
+            appInsights.trackTrace("countUtils 用户 " + shopName);
             return response.toString();
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + shopName + " douBaoTranslate 豆包翻译失败 errors : " + e.getMessage() + " sourceText : " + sourceText);

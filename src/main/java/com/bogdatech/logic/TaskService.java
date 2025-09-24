@@ -38,42 +38,41 @@ import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 
 @Component
 public class TaskService {
-    private final ICharsOrdersService charsOrdersService;
-    private final IUsersService usersService;
-    private final ITranslationCounterService translationCounterService;
-    private final ISubscriptionPlansService subscriptionPlansService;
-    private final OrderService orderService;
-    private final ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
-    private final ITranslatesService translatesService;
-    private final IUserTrialsService iUserTrialsService;
-    private final IUserSubscriptionsService iUserSubscriptionsService;
-    private final IWidgetConfigurationsService iWidgetConfigurationsService;
-    private final IGlossaryService iGlossaryService;
-    private final IUserIpService iUserIpService;
-    private final ITranslateTasksService translateTasksService;
-    private final TencentEmailService tencentEmailService;
-    private final RabbitMqTranslateService rabbitMqTranslateService;
-    private final ITranslationUsageService iTranslationUsageService;
-
     @Autowired
-    public TaskService(ICharsOrdersService charsOrdersService, IUsersService usersService, ITranslationCounterService translationCounterService, ISubscriptionPlansService subscriptionPlansService, OrderService orderService, ISubscriptionQuotaRecordService subscriptionQuotaRecordService, ITranslatesService translatesService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService, IWidgetConfigurationsService iWidgetConfigurationsService, IGlossaryService iGlossaryService, IUserIpService iUserIpService, ITranslateTasksService translateTasksService, TencentEmailService tencentEmailService, RabbitMqTranslateService rabbitMqTranslateService, ITranslationUsageService iTranslationUsageService) {
-        this.charsOrdersService = charsOrdersService;
-        this.usersService = usersService;
-        this.translationCounterService = translationCounterService;
-        this.subscriptionPlansService = subscriptionPlansService;
-        this.orderService = orderService;
-        this.subscriptionQuotaRecordService = subscriptionQuotaRecordService;
-        this.translatesService = translatesService;
-        this.iUserTrialsService = iUserTrialsService;
-        this.iUserSubscriptionsService = iUserSubscriptionsService;
-        this.iWidgetConfigurationsService = iWidgetConfigurationsService;
-        this.iGlossaryService = iGlossaryService;
-        this.iUserIpService = iUserIpService;
-        this.translateTasksService = translateTasksService;
-        this.tencentEmailService = tencentEmailService;
-        this.rabbitMqTranslateService = rabbitMqTranslateService;
-        this.iTranslationUsageService = iTranslationUsageService;
-    }
+    private  ICharsOrdersService charsOrdersService;
+    @Autowired
+    private  IUsersService usersService;
+    @Autowired
+    private  ITranslationCounterService translationCounterService;
+    @Autowired
+    private  ISubscriptionPlansService subscriptionPlansService;
+    @Autowired
+    private  OrderService orderService;
+    @Autowired
+    private  ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
+    @Autowired
+    private  ITranslatesService translatesService;
+    @Autowired
+    private  IUserTrialsService iUserTrialsService;
+    @Autowired
+    private  IUserSubscriptionsService iUserSubscriptionsService;
+    @Autowired
+    private  IWidgetConfigurationsService iWidgetConfigurationsService;
+    @Autowired
+    private  IGlossaryService iGlossaryService;
+    @Autowired
+    private  IUserIpService iUserIpService;
+    @Autowired
+    private  ITranslateTasksService translateTasksService;
+    @Autowired
+    private  TencentEmailService tencentEmailService;
+    @Autowired
+    private  RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private  ITranslationUsageService iTranslationUsageService;
+    @Autowired
+    private RedisTranslateLockService redisTranslateLockService;
+
 
     //异步调用根据订阅信息，判断是否添加额度的方法
     @Async
@@ -251,6 +250,8 @@ public class TaskService {
 
             //将该任务的状态改为0
             translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
+            //删除redis里面的tl:锁值
+            redisTranslateLockService.unLockStore(translatesDO.getShopName());
         }
     }
 
