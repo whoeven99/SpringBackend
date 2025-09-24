@@ -88,7 +88,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SHOP_POLICY, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(EMAIL_TEMPLATE, MAX_LENGTH, "", ""),
 //            new TranslateResourceDTO(ONLINE_STORE_THEME_APP_EMBED, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PAYMENT_GATEWAY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(SELLING_PLAN, MAX_LENGTH, "", ""),
@@ -179,7 +179,7 @@ public class TranslateResourceDTO {
     public static final Map<String, String> EMAIL_MAP = new HashMap<>();
     static {
         EMAIL_MAP.put(COLLECTION,"collection");
-//        EMAIL_MAP.put(EMAIL_TEMPLATE,"notifications");
+        EMAIL_MAP.put(EMAIL_TEMPLATE,"notifications");
         EMAIL_MAP.put(ONLINE_STORE_THEME,"theme");
         EMAIL_MAP.put(ONLINE_STORE_THEME_APP_EMBED,"theme");
         EMAIL_MAP.put(ONLINE_STORE_THEME_JSON_TEMPLATE,"theme");

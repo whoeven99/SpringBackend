@@ -15,12 +15,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
-import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
-import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
+import static com.bogdatech.constants.TranslateConstants.MAX_LENGTH;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
-import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
@@ -29,25 +26,20 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/shopify")
 public class ShopifyController {
-
-    private final ShopifyService shopifyService;
-    private final ITranslatesService translatesService;
-    private final ITranslationCounterService translationCounterService;
-    private final IUserSubscriptionsService userSubscriptionsService;
-    private final ICharsOrdersService charsOrdersService;
-    private final IUsersService usersService;
-    private final IUserTrialsService iUserTrialsService;
-
     @Autowired
-    public ShopifyController(ShopifyService shopifyService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IUserSubscriptionsService userSubscriptionsService, ICharsOrdersService charsOrdersService, IUsersService usersService, IUserTrialsService iUserTrialsService) {
-        this.shopifyService = shopifyService;
-        this.translatesService = translatesService;
-        this.translationCounterService = translationCounterService;
-        this.userSubscriptionsService = userSubscriptionsService;
-        this.charsOrdersService = charsOrdersService;
-        this.usersService = usersService;
-        this.iUserTrialsService = iUserTrialsService;
-    }
+    private ShopifyService shopifyService;
+    @Autowired
+    private ITranslatesService translatesService;
+    @Autowired
+    private ITranslationCounterService translationCounterService;
+    @Autowired
+    private IUserSubscriptionsService userSubscriptionsService;
+    @Autowired
+    private ICharsOrdersService charsOrdersService;
+    @Autowired
+    private IUsersService usersService;
+    @Autowired
+    private IUserTrialsService iUserTrialsService;
 
     //通过测试环境调shopify的API
     @PostMapping("/test123")
@@ -117,19 +109,13 @@ public class ShopifyController {
 
     //查询需要翻译的总字数-已翻译字符数. 计算翻译的项数
     @PostMapping("/getTotalWords")
-    public BaseResponse<Object> getTotalWords(@RequestBody ShopifyRequest shopifyRequest, @RequestParam String method) {
-//        TranslateResourceDTO resourceType = new TranslateResourceDTO("PRODUCT","250","","");
-        for (String key : TOKEN_MAP.keySet()
-        ) {
-            List<TranslateResourceDTO> lists = TOKEN_MAP.get(key);
-            int tokens = 0;
-            for (TranslateResourceDTO resourceDTO : lists
-            ) {
-                int totalWords = shopifyService.getTotalWords(shopifyRequest, method, resourceDTO);
-                tokens += totalWords;
-            }
-        }
-        return new BaseResponse<>().CreateSuccessResponse("success");
+    public BaseResponse<Object> getTotalWords(@RequestParam String shopName, @RequestParam String modelType, @RequestBody ShopifyRequest shopifyRequest) {
+        TranslateResourceDTO translateResourceDTO = new TranslateResourceDTO(modelType, MAX_LENGTH, shopifyRequest.getTarget(), "");
+        shopifyRequest.setShopName(shopName);
+        System.out.println("resourceDTO: " + modelType);
+        int totalWords = shopifyService.getTotalWords(shopifyRequest, null, translateResourceDTO);
+        System.out.println("tokens: " + totalWords);
+        return new BaseResponse<>().CreateSuccessResponse(totalWords);
     }
 
     //根据前端的传值,更新shopify后台和数据库
@@ -192,7 +178,7 @@ public class ShopifyController {
             appInsights.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
         }
-        if (userSubscriptionsDO.getFeeType() == null ){
+        if (userSubscriptionsDO.getFeeType() == null) {
             userSubscriptionsDO.setFeeType(0);
         }
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
@@ -264,7 +250,7 @@ public class ShopifyController {
             subscriptionVO.setFeeType(0);
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);
-        }else {
+        } else {
             subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
             String currentPeriodEnd = node.getString("currentPeriodEnd");
             subscriptionVO.setCurrentPeriodEnd(currentPeriodEnd);
@@ -291,17 +277,6 @@ public class ShopifyController {
         }
     }
 
-    //修改翻译状态
-    @PutMapping("/updateTranslationStatus")
-    public BaseResponse<Object> updateTranslationStatus(@RequestBody TranslateRequest request) {
-        int i = shopifyService.updateTranslationStatus(request);
-        if (i > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
-        } else {
-            return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
-        }
-    }
-
     //先从数据库中获取在调用getItemsByShopName
     @PostMapping("/getItemsInSqlByShopName")
     public BaseResponse<Object> getItemsInSqlByShopName(@RequestBody ResourceTypeRequest request) {
@@ -317,7 +292,7 @@ public class ShopifyController {
     //修改多条文本
     @PostMapping("/updateItems")
     public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
-        if (registerTransactionRequest.isEmpty()){
+        if (registerTransactionRequest.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse("registerTransactionRequest is empty");
         }
         String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
@@ -329,18 +304,8 @@ public class ShopifyController {
         }
     }
 
-    @PostMapping("/getTranslationItemsInfoTest")
-    public void getTranslationItemsInfoTest(@RequestBody ResourceTypeRequest request) {
-        for (String key : RESOURCE_MAP.keySet()
-        ) {
-            ResourceTypeRequest resourceTypeRequest = new ResourceTypeRequest();
-            resourceTypeRequest.setResourceType(key);
-            resourceTypeRequest.setTarget(request.getTarget());
-            resourceTypeRequest.setAccessToken(request.getAccessToken());
-            resourceTypeRequest.setShopName(request.getShopName());
-            shopifyService.getTranslationItemsInfoTest(resourceTypeRequest);
-        }
+    @PostMapping("/getDBConfiguration")
+    public BaseResponse<Object> queryDBConfiguration(@RequestParam String shopName) {
+        return shopifyService.queryDBConfiguration(shopName);
     }
-
-
 }

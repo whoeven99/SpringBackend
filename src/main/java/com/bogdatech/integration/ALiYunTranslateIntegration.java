@@ -244,7 +244,9 @@ public class ALiYunTranslateIntegration {
         try {
             return tokenizer.encode(text, "all").size();
         } catch (NoSpecialTokenExists | UnSupportedSpecialTokenMode e) {
-            throw new RuntimeException(e);
+            appInsights.trackException(e);
+            appInsights.trackTrace("calculateBaiLianToken " + e.getMessage() + " 计数失败 text : " + text);
+            return 0;
         }
     }
 
