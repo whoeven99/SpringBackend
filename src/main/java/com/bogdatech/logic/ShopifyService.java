@@ -156,7 +156,7 @@ public class ShopifyService {
     //对node节点进行判断，是否调用方法
     public void translateObjectNode(JsonNode objectNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResource) {
         //1, 获取所有要翻译的数据, 将单个语言的所有数据都统计
-        Set<TranslateTextDO> needTranslatedData = translatedAllDataParse(objectNode, request.getShopName(), false, request.getTarget());
+        Set<TranslateTextDO> needTranslatedData = translatedAllDataParse(objectNode, request.getShopName());
         if (needTranslatedData == null) {
             return;
         }
@@ -273,7 +273,7 @@ public class ShopifyService {
     /**
      * 解析shopifyData数据，将所有数据都存Set里面
      */
-    public Set<TranslateTextDO> translatedAllDataParse(JsonNode shopDataJson, String shopName, Boolean isCover, String target) {
+    public Set<TranslateTextDO> translatedAllDataParse(JsonNode shopDataJson, String shopName) {
         Set<TranslateTextDO> doubleTranslateTextDOSet = new HashSet<>();
         try {
             // 获取 translatableResources 节点
