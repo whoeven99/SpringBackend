@@ -83,7 +83,7 @@ public class TranslationCounterService {
             // 获取用户是否已经是免费试用，是的话，将false改为true
             UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
             if (userTrialsDO == null) {
-                iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false));
+                iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false, null));
                 //修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
                 //同时修改额度表里面100w字符（暂定），在计划表里
                 Integer charsByPlan = iSubscriptionPlansService.getCharsByPlanName("Gift Amount");

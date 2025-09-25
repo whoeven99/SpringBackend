@@ -112,7 +112,7 @@ public class ShopifyRequestBody {
 
     /**
      * 根据用户单独购买积分的gid，获取订单信息
-     * */
+     */
     public static String getSingleQuery(String singleId) {
         return "query MyQuery {\n" +
                 "  node(id: \"" + singleId + "\") {\n" +
@@ -203,6 +203,22 @@ public class ShopifyRequestBody {
                       createdAt
                     }
                   }
+                """;
+    }
+
+    /**
+     * 获取用户商店开启的语言和未开启的语言
+     */
+    public static String getShopLanguageQuery() {
+        return """
+                query MyQuery {
+                   shopLocales(published: false) {
+                         locale
+                         name
+                         primary
+                         published
+                         }
+                }
                 """;
     }
 }
