@@ -303,8 +303,8 @@ public class ShopifyController {
         }
     }
 
-    @PostMapping("/getDBConfiguration")
-    public BaseResponse<Object> queryDBConfiguration(@RequestParam String shopName) {
-        return shopifyService.queryDBConfiguration(shopName);
-    }
+
+
+
+
 }

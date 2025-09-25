@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,7 +41,7 @@ import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
 
-@Component
+@Service
 public class ShopifyService {
 
     @Autowired
@@ -871,34 +873,6 @@ public class ShopifyService {
         } catch (Exception e) {
             appInsights.trackTrace("saveToShopify " + request.getShopName() + " save to Shopify errors : " + e.getMessage());
         }
-    }
-
-    /**
-     * 术语表， switch表，  自动翻译
-     * 查询这三个表是否开启
-     */
-    public BaseResponse<Object> queryDBConfiguration(String shopName) {
-        Map<String, Boolean> configurationMap = new HashMap<>();
-        //1, 查询术语表
-        GlossaryDO[] glossaryByShopName = glossaryService.getGlossaryByShopName(shopName);
-        if (glossaryByShopName.length > 0) {
-            configurationMap.put("glossary", true);
-        } else {
-            configurationMap.put("glossary", false);
-        }
-
-        //2，查询switch表
-        WidgetConfigurationsDO data = iWidgetConfigurationsService.getData(shopName);
-        configurationMap.put("switch", data.getLanguageSelector());
-        //3，查询自动翻译表
-        TranslatesDO one = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getAutoTranslate, 1));
-        if (one != null) {
-            configurationMap.put("autoTranslate", true);
-        } else {
-            configurationMap.put("autoTranslate", false);
-        }
-
-        return new BaseResponse<>().CreateSuccessResponse(configurationMap);
     }
 }
 

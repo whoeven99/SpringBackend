@@ -218,4 +218,9 @@ public class StringUtils {
         }
     }
 
+    /**
+     * 将语言代码，转化为图片对应代码
+     * */
+
+
 }

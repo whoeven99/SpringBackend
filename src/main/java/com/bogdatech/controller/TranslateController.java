@@ -436,11 +436,5 @@ public class TranslateController {
         return new BaseResponse<>().CreateErrorResponse(false);
     }
 
-    /**
-     * 获取用户设置的语言的翻译状态与db的状态的统计
-     * */
-    @PostMapping("/getTranslationStatus")
-    public BaseResponse<Object> getTranslationStatus(@RequestParam String shopName, @RequestParam String source){
-        return translateService.getTranslationStatus(shopName, source);
-    }
+
 }
