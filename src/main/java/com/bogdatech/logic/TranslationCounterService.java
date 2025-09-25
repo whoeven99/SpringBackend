@@ -44,6 +44,7 @@ public class TranslationCounterService {
     public Boolean addCharsByShopNameAfterSubscribe(String shopName, TranslationCharsVO translationCharsVO) {
         //获取该用户的accessToken
         UsersDO userByName = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+        translationCharsVO.setAccessToken(userByName.getAccessToken());
         //根据传来的gid获取，相关订阅信息
         String subscriptionQuery = getSubscriptionQuery(translationCharsVO.getSubGid());
         String shopifyByQuery = getShopifyByQuery(subscriptionQuery, shopName, userByName.getAccessToken());
