@@ -68,8 +68,8 @@ public class TranslateResourceDTO {
 
             new TranslateResourceDTO(SHOP, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PAGE, MAX_LENGTH, "", ""),
-            new TranslateResourceDTO(ONLINE_STORE_THEME, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", ""),//可以注释掉，先不翻译
+//            new TranslateResourceDTO(ONLINE_STORE_THEME, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(ONLINE_STORE_THEME_LOCALE_CONTENT, MAX_LENGTH, "", ""),//可以注释掉，先不翻译
             new TranslateResourceDTO(PRODUCT, MIDDLE_LENGTH, "", ""),
             new TranslateResourceDTO(PRODUCT_OPTION, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PRODUCT_OPTION_VALUE, MAX_LENGTH, "", ""),
@@ -83,7 +83,7 @@ public class TranslateResourceDTO {
             new TranslateResourceDTO(METAOBJECT, MIDDLE_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_JSON_TEMPLATE, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_SECTION_GROUP, MAX_LENGTH, "", ""),
-//            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
+            new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_CATEGORY, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(PACKING_SLIP_TEMPLATE, MAX_LENGTH, "", ""),
             new TranslateResourceDTO(DELIVERY_METHOD_DEFINITION, MAX_LENGTH, "", ""),
