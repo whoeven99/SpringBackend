@@ -45,12 +45,15 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     @Override
     public Boolean updateCharsByShopName(String shopName, String accessToken, String gid, Integer chars) {
         //根据gid，判断是否符合添加额度的条件
+        appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars);
         //根据传来的gid获取， 判断调用那个方法，查询相关订阅信息
         String query;
         if (gid.contains("AppPurchaseOneTime")){
             query = getSingleQuery(gid);
+            System.out.println("updateCharsByShopName 用户： " + shopName + " query: " + query);
         }else {
             query = getSubscriptionQuery(gid);
+            System.out.println("updateCharsByShopName 用户： " + shopName + " query: " + query);
         }
 
         String shopifyByQuery = getShopifyByQuery(query, shopName, accessToken);
