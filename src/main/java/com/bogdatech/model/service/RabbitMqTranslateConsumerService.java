@@ -205,7 +205,6 @@ public class RabbitMqTranslateConsumerService {
             translateTasksService.removeById(task.getTaskId());
             //判断email类型，选择使用那个进行发送邮件
             rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
-            rabbitMqTranslateService.countAfterTranslated(new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget(), null));
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
@@ -270,7 +269,6 @@ public class RabbitMqTranslateConsumerService {
             appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
             //删除redis该用户相关进度条数据
             redisIntegration.delete(generateProcessKey(vo.getShopName(), vo.getTarget()));
-
         } else {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
         }
