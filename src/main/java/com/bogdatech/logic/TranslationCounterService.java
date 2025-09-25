@@ -56,10 +56,11 @@ public class TranslationCounterService {
 
         //获取用户订阅计划表的相关数据，与下面数据进行判断
         CharsOrdersDO charsOrdersDO = iCharsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>().eq(CharsOrdersDO::getId, translationCharsVO.getSubGid()));
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅计划表 ：" + charsOrdersDO.toString());
         String name = queryValid.getString("name");
         String status = queryValid.getString("status");
         Integer trialDays = queryValid.getInteger("trialDays");
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays);
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays + " name: " + name + " status: " + status);
         Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(name);
         if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0) {
             appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
@@ -96,6 +97,7 @@ public class TranslationCounterService {
         }
 
         //添加额度
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 计划名 ：" + charsOrdersDO.getName() + " name: " + name + " status: " + status);
         if (name.equals(charsOrdersDO.getName()) && status.equals(ACTIVE)) {
             //根据用户的计划添加对应的额度
             return iTranslationCounterService.updateCharsByShopName(shopName, translationCharsVO.getAccessToken(), translationCharsVO.getSubGid(), charsByPlanName);
