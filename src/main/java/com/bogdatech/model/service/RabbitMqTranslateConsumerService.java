@@ -58,6 +58,7 @@ public class RabbitMqTranslateConsumerService {
         boolean isEmailAuto = EMAIL_AUTO.equals(shopifyData);
         boolean isTranslationAuto = EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey());
         try {
+            // 修改数据库的模块翻译状态
             if (isEmail || isEmailAuto) {
                 handleEmailTask(shopifyData, rabbitMqTranslateVO, task);
             } else {
@@ -148,8 +149,8 @@ public class RabbitMqTranslateConsumerService {
 
     /**
      * 判断是否是自动翻译任务，然后记录相关数据
-     * */
-    public void statisticalAutomaticTranslationData(Boolean isTranslationAuto, CharacterCountUtils counter, int usedChars, Instant start, RabbitMqTranslateVO rabbitMqTranslateVO){
+     */
+    public void statisticalAutomaticTranslationData(Boolean isTranslationAuto, CharacterCountUtils counter, int usedChars, Instant start, RabbitMqTranslateVO rabbitMqTranslateVO) {
         if (isTranslationAuto) {
             // 获取消耗的token值
             int totalChars = counter.getTotalChars();

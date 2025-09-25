@@ -83,4 +83,6 @@ public class TranslateConstants {
     public static final int MONTHLY_FEE = 1;
     //图片翻译费用
     public static final int PIC_FEE = 1000;
+    //翻译的语言是否都发布
+    public static final String IS_PUBLISH = "Published Languages";
 }
