@@ -949,6 +949,8 @@ public class RabbitMqTranslateService {
             targetCache = isHtmlEntity(targetCache);
             shopifyService.saveToShopify(targetCache, translation, resourceId, request);
             printTranslation(targetCache, value, translation, request.getShopName(), "Cache", resourceId, source);
+            //翻译进度条加1
+            redisProcessService.addProcessData(generateProcessKey(request.getShopName(), request.getTarget()), PROGRESS_DONE, 1L);
             return true;
         }
 
@@ -968,6 +970,8 @@ public class RabbitMqTranslateService {
             redisProcessService.setCacheData(request.getTarget(), targetText, value);
             shopifyService.saveToShopify(targetText, translation, resourceId, request);
             printTranslation(targetText, value, translation, request.getShopName(), DATABASE, resourceId, source);
+            //翻译进度条加1
+            redisProcessService.addProcessData(generateProcessKey(request.getShopName(), request.getTarget()), PROGRESS_DONE, 1L);
             return true;
         }
         return false;
@@ -983,6 +987,8 @@ public class RabbitMqTranslateService {
             Map<String, Object> translation = createTranslationMap(target, translateTextDO.getTextKey(), translateTextDO.getDigest());
             shopifyService.saveToShopify(targetCache, translation, translateTextDO.getResourceId(), request);
             printTranslation(targetCache, translateTextDO.getSourceText(), translation, request.getShopName(), "Cache", translateTextDO.getResourceId(), source);
+            //翻译进度条加1
+            redisProcessService.addProcessData(generateProcessKey(request.getShopName(), request.getTarget()), PROGRESS_DONE, 1L);
             return true;
         }
         return false;
@@ -1010,6 +1016,8 @@ public class RabbitMqTranslateService {
             Map<String, Object> translation = createTranslationMap(target, translateTextDO.getTextKey(), translateTextDO.getDigest());
             shopifyService.saveToShopify(targetText, translation, translateTextDO.getResourceId(), request);
             printTranslation(targetText, value, translation, request.getShopName(), DATABASE, translateTextDO.getResourceId(), source);
+            //翻译进度条加1
+            redisProcessService.addProcessData(generateProcessKey(request.getShopName(), request.getTarget()), PROGRESS_DONE, 1L);
             return true;
         }
         return false;
@@ -1044,6 +1052,8 @@ public class RabbitMqTranslateService {
             String translatedText = jsoupUtils.translateByModel(new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value), counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars());
             shopifyService.saveToShopify(translatedText, translation, resourceId, shopifyRequest);
             printTranslation(translatedText, value, translation, shopifyRequest.getShopName(), type, resourceId, source);
+            //翻译进度条加1
+            redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
             //存到数据库中
             try {
                 redisProcessService.setCacheData(target, translatedText, value);
@@ -1080,7 +1090,8 @@ public class RabbitMqTranslateService {
                 String translatedValue = OBJECT_MAPPER.writeValueAsString(resultList);
                 shopifyService.saveToShopify(translatedValue, translation, resourceId, shopifyRequest);
                 printTranslation(translatedValue, value, translation, shopifyRequest.getShopName(), type, resourceId, source);
-
+                //翻译进度条加1
+                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                 //存到数据库中
                 try {
                     // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
