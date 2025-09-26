@@ -47,4 +47,12 @@ public class UserTrialsController {
         return  userTrialsService.queryUserTrialByShopName(shopName);
     }
 
+    /**
+     * 查询是否开启过免费试用弹窗
+     * */
+    @PostMapping("/isShowFreePlan")
+    public BaseResponse<Object> isShowFreePlan(@RequestParam String shopName){
+        return userTrialsService.isShowFreePlan(shopName);
+    }
+
 }

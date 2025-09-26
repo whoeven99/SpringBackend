@@ -152,8 +152,13 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
         // 获取目标语言的翻译
         List<VocabularyDO> results = baseMapper.selectList(queryWrapper);
         if (results != null && !results.isEmpty()) {
-            VocabularyDO vocabulary = results.get(0);  // 假设取第一个结果
-            return getTargetLanguageText(vocabulary, target);
+            //遍历results，获取source相同的值
+            for (VocabularyDO vocabulary : results) {
+                String sourceText = getTargetLanguageText(vocabulary, source);
+                if (sourceText.equals(value)) {
+                    return getTargetLanguageText(vocabulary, target);
+                }
+            }
         }
 
         return null;  // 如果没有找到对应的翻译
