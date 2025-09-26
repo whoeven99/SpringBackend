@@ -349,12 +349,11 @@ public class TestController {
     }
 
     /**
-     * 测试error报错问题
+     * 加密后输出数据
      * */
     @GetMapping("/testError")
-    public void testError(@RequestParam String source) {
-        String s1 = encryptMD5(source);
-        System.out.println("si: " + s1);
+    public String testError(@RequestParam String source) {
+        return encryptMD5(source);
     }
 
 }

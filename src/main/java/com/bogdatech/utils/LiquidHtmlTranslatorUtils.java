@@ -346,7 +346,7 @@ public class LiquidHtmlTranslatorUtils {
                 //翻译
                 appInsights.trackTrace("开始模型翻译 用户： " + request.getShopName() + endIndex);
                 String translated = jsoupUtils.translateByCiwiUserModel(target, sourceJson, shopName, source, counter, limitChars, prompt);
-                appInsights.trackTrace("翻译结束 用户： " + shopName);
+                appInsights.trackTrace("翻译结束 用户： " + shopName + " translated" + translated);
                 String parseJson = parseJson(translated, shopName);
                 appInsights.trackTrace("解析完数据 用户： " + shopName);
                 Map<String, String> resultMap = OBJECT_MAPPER.readValue(parseJson, new TypeReference<>() {});
@@ -378,7 +378,7 @@ public class LiquidHtmlTranslatorUtils {
         while (it.hasNext()) {
             String sourceText = it.next();
             String cacheData = redisProcessService.getCacheData(target, sourceText);
-            appInsights.trackTrace("redis翻译 用户： " + shopName + " cacheData " + cacheData);
+            appInsights.trackTrace("redis翻译 用户： " + shopName + " cacheData " + cacheData + " sourceText " + sourceText);
             if (cacheData != null) {
                 allTranslatedMap.put(sourceText, cacheData);
                 it.remove();
@@ -386,7 +386,7 @@ public class LiquidHtmlTranslatorUtils {
             }
 
             String dbData = vocabularyService.getTranslateTextDataInVocabulary(target, sourceText, source);
-            appInsights.trackTrace("db翻译 用户： " + shopName + " dbData " + dbData );
+            appInsights.trackTrace("db翻译 用户： " + shopName + " dbData " + dbData + " sourceText " + sourceText);
             if (dbData != null) {
                 allTranslatedMap.put(sourceText, dbData);
                 redisProcessService.setCacheData(target, dbData, sourceText);
