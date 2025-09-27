@@ -37,13 +37,14 @@ public class DBTask {
     // 每6秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 6000)
     public void scanAndSubmitTasks() {
-        appInsights.trackTrace("DBTask Number of active translating threads" + ((ThreadPoolExecutor) executorService).getActiveCount());
-        appInsights.trackMetric("DBTask Number of active translating threads", ((ThreadPoolExecutor) executorService).getActiveCount());
+        appInsights.trackTrace("DBTask Number of active translating threads " + ((ThreadPoolExecutor) executorService).getActiveCount());
+        appInsights.trackMetric("Number of active translating threads", ((ThreadPoolExecutor) executorService).getActiveCount());
 
         //查询 0 状态的记录，过滤掉 shop 已被锁定的
         List<TranslateTasksDO> tasks = new ArrayList<>();
         try {
             tasks = translateTasksService.find0StatusTasks();
+            appInsights.trackTrace("DBTask Number of tasks need to translate " + tasks.size());
         } catch (Exception e) {
             appInsights.trackTrace("获取task集合失败 errors");
         }
@@ -57,7 +58,8 @@ public class DBTask {
             // TODO 这里换到RedisLockUtils
             if (redisTranslateLockService.lockStore(shopName)) {
                 executorService.submit(() -> {
-                    appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName() + "shop: " + shopName + " 锁的状态： " + redisIntegration.get(generateTranslateLockKey(shopName)));
+                    appInsights.trackTrace("DBTask Lock [" + shopName + "] by thread " + Thread.currentThread().getName()
+                            + "shop: " + shopName + " 锁的状态： " + redisIntegration.get(generateTranslateLockKey(shopName)));
                     try {
                         // 只执行一个线程处理这个 shopName
                         // TODO 用 jsonUtils?
