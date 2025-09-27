@@ -12,12 +12,8 @@ import java.util.List;
 @Service
 @EnableAsync
 public class SaveShopifyDataTask {
-    private final UserTranslationDataService userTranslationDataService;
-
     @Autowired
-    public SaveShopifyDataTask(UserTranslationDataService userTranslationDataService) {
-        this.userTranslationDataService = userTranslationDataService;
-    }
+    private UserTranslationDataService userTranslationDataService;
 
     /**
      * 每1s调用一次，存储获取到的数据

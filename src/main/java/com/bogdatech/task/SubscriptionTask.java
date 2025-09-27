@@ -7,18 +7,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-
 @Component
 @EnableScheduling
 @EnableAsync
 public class SubscriptionTask {
-    private final TaskService taskService;
-
     @Autowired
-    public SubscriptionTask(TaskService taskService) {
-        this.taskService = taskService;
-    }
+    private TaskService taskService;
 
     /**
      * 每天凌晨0点执行一次 判断是否符合添加额度的条件，如果符合，添加，反之不添加
