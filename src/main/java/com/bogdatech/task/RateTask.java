@@ -21,7 +21,7 @@ public class RateTask {
     @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")
     public void getRateEveryHour() {
-//        appInsights.trackTrace(LocalDateTime.now() + " getRateEveryHour " + Thread.currentThread().getName());
+        // TODO 删掉这个task，然后在rateHttpIntegration里面添加这样一个逻辑，如果rateMap为空，就调用一次getFixerRate方法，如果不为空，直接返回 @庄泽
         //改为存储在缓存中（后面存储到redis中）
         try {
             rateHttpIntegration.getFixerRate();

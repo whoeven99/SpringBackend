@@ -13,13 +13,8 @@ import org.springframework.stereotype.Component;
 @EnableAsync
 @EnableScheduling
 public class TranslateTask implements ApplicationListener<ApplicationReadyEvent> {
-
-    private final TaskService taskService;
-
     @Autowired
-    public TranslateTask(TaskService taskService) {
-        this.taskService = taskService;
-    }
+    private TaskService taskService;
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {

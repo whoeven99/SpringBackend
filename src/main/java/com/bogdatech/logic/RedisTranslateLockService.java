@@ -12,10 +12,6 @@ public class RedisTranslateLockService {
     private RedisIntegration redisIntegration;
 
     /**
-     *
-     * */
-
-    /**
      * 对商店加锁
      * 不存在加锁，为1
      * 翻译完后再删掉1
