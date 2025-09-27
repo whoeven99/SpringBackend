@@ -57,16 +57,16 @@ public class DBTask {
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
             String lockKey = generateTranslateLockKey(shopName);
-            // TODO 以后其他的加锁都这么使用 @庄泽
-            try {
-                if (redisLockUtils.lock(lockKey)) {
-                    // 具体的逻辑
-                }
-            } catch (Exception e) {
-                //
-            } finally {
-                redisLockUtils.unLock(lockKey);
-            }
+//            // TODO 以后其他的加锁都这么使用 @庄泽
+//            try {
+//                if (redisLockUtils.lock(lockKey)) {
+//                    // 具体的逻辑
+//                }
+//            } catch (Exception e) {
+//                //
+//            } finally {
+//                redisLockUtils.unLock(lockKey);
+//            }
 
             //在加锁时判断是否成功，成功-翻译；不成功跳过
             if (redisTranslateLockService.lockStore(shopName)) {
