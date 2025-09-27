@@ -12,7 +12,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -32,7 +34,7 @@ public class DBTask {
     private RedisIntegration redisIntegration;
 
     // 给dbtask单独使用的线程池，不和其他共用
-    public static ExecutorService executorService = Executors.newFixedThreadPool(10);
+    public static ExecutorService executorService = Executors.newFixedThreadPool(50);
 
     // 每6秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 6000)
@@ -45,7 +47,13 @@ public class DBTask {
         try {
             tasks = translateTasksService.find0StatusTasks();
             appInsights.trackTrace("DBTask Number of tasks need to translate " + tasks.size());
+
+            // 统计shopName数量
+            Set<String> shopNames = new HashSet<>();
+            tasks.forEach(task -> shopNames.add(task.getShopName()));
+            appInsights.trackTrace("DBTask Number of existing shops: " + shopNames.size());
         } catch (Exception e) {
+            // TODO 确认下这里是不是可以删掉catch了
             appInsights.trackTrace("获取task集合失败 errors");
         }
         if (tasks.isEmpty()) {
