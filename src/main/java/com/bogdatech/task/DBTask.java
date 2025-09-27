@@ -37,14 +37,13 @@ public class DBTask {
     // 每6秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 6000)
     public void scanAndSubmitTasks() {
-        appInsights.trackMetric("DBTask Number of active translating threads", ((ThreadPoolExecutor) executorService).getActiveCount());
-
         //查询 0 状态的记录，过滤掉 shop 已被锁定的
         List<TranslateTasksDO> tasks = new ArrayList<>();
+        ThreadPoolExecutor tpe = null;
         try {
             tasks = translateTasksService.find0StatusTasks();
+            tpe = (ThreadPoolExecutor) executorService;
         } catch (Exception e) {
-            // TODO 这样的话这里是不是没有exception了？ 可以删掉catch
             appInsights.trackTrace("获取task集合失败 errors");
         }
         if (tasks.isEmpty()) {
@@ -53,13 +52,15 @@ public class DBTask {
 
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
-
             //在加锁时判断是否成功，成功-翻译；不成功跳过
             // TODO 这里换到RedisLockUtils
             if (redisTranslateLockService.lockStore(shopName)) {
+                ThreadPoolExecutor finalTpe = tpe;
                 executorService.submit(() -> {
-                    appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName()
-                            + "shop: " + shopName + " 锁的状态： " + redisIntegration.get(generateTranslateLockKey(shopName)));
+                    appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName() + "shop: " + shopName + " 锁的状态： " + redisIntegration.get(generateTranslateLockKey(shopName)));
+                    if (finalTpe != null) {
+                        appInsights.trackMetric("Number of active translating threads", finalTpe.getActiveCount());
+                    }
                     try {
                         // 只执行一个线程处理这个 shopName
                         // TODO 用 jsonUtils?
