@@ -6,7 +6,6 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
-import com.bogdatech.utils.RedisLockUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -31,16 +30,14 @@ public class DBTask {
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private RedisIntegration redisIntegration;
-    @Autowired
-    private RedisLockUtils redisLockUtils;
 
     // 给dbtask单独使用的线程池，不和其他共用
-    public static ExecutorService executorService = Executors.newFixedThreadPool(5);
+    public static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     // 每6秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 6000)
     public void scanAndSubmitTasks() {
-        appInsights.trackMetric("Number of active translating threads", ((ThreadPoolExecutor) executorService).getActiveCount());
+        appInsights.trackMetric("DBTask Number of active translating threads", ((ThreadPoolExecutor) executorService).getActiveCount());
 
         //查询 0 状态的记录，过滤掉 shop 已被锁定的
         List<TranslateTasksDO> tasks = new ArrayList<>();
@@ -56,19 +53,9 @@ public class DBTask {
 
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
-            String lockKey = generateTranslateLockKey(shopName);
-//            // TODO 以后其他的加锁都这么使用 @庄泽
-//            try {
-//                if (redisLockUtils.lock(lockKey)) {
-//                    // 具体的逻辑
-//                }
-//            } catch (Exception e) {
-//                //
-//            } finally {
-//                redisLockUtils.unLock(lockKey);
-//            }
 
             //在加锁时判断是否成功，成功-翻译；不成功跳过
+            // TODO 这里换到RedisLockUtils
             if (redisTranslateLockService.lockStore(shopName)) {
                 executorService.submit(() -> {
                     appInsights.trackTrace("Lock [" + shopName + "] by thread " + Thread.currentThread().getName()
