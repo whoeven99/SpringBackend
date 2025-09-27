@@ -295,15 +295,6 @@ public class RabbitMqTranslateService {
     }
 
     /**
-     * 根据模块选择翻译方法
-     */
-    public void translateByModeType(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
-        String modelType = rabbitMqTranslateVO.getModeType();
-        appInsights.trackTrace("clickTranslation DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
-        commonTranslate(rabbitMqTranslateVO, countUtils);
-    }
-
-    /**
      * 翻译产品，具体待补充
      */
     public String productTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils counter, TranslateTextDO translateTextDO, String handleType) {
@@ -349,7 +340,9 @@ public class RabbitMqTranslateService {
     /**
      * 翻译通用模块数据
      */
-    public void commonTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
+    public void translateByModeType(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
+        appInsights.trackTrace("clickTranslation DB翻译模块：" + rabbitMqTranslateVO.getModeType() + " 用户 ： " + rabbitMqTranslateVO.getShopName()
+                + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
         //根据DB的请求语句获取对应shopify值
         String shopifyDataByDb = getShopifyDataByDb(rabbitMqTranslateVO);
         if (shopifyDataByDb == null) {
@@ -365,8 +358,32 @@ public class RabbitMqTranslateService {
         Map<String, Set<TranslateTextDO>> stringSetMap = initTranslateMap();
         //将筛选好的数据分类
         Map<String, Set<TranslateTextDO>> stringSetMap1 = filterTranslateMap(stringSetMap, filterTranslateData, rabbitMqTranslateVO.getGlossaryMap());
+
         //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
-        translateMapData(stringSetMap1, rabbitMqTranslateVO, countUtils);
+        if (stringSetMap1.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, Set<TranslateTextDO>> entry : stringSetMap1.entrySet()) {
+            switch (entry.getKey()) {
+                case HTML:
+                    translateHtmlData(entry.getValue(), rabbitMqTranslateVO, countUtils);
+                    break;
+                case PLAIN_TEXT:
+                case TITLE:
+                case META_TITLE:
+                case LOWERCASE_HANDLE:
+                    translatePlainTextData(entry.getValue(), rabbitMqTranslateVO, countUtils, entry.getKey());
+                    break;
+                case LIST_SINGLE:
+                    translateListSingleData(entry.getValue(), rabbitMqTranslateVO, countUtils);
+                    break;
+                case GLOSSARY:
+                    translateGlossaryData(entry.getValue(), rabbitMqTranslateVO, countUtils);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     /**
@@ -490,36 +507,6 @@ public class RabbitMqTranslateService {
             }
         }
         return stringSetMap;
-    }
-
-    /**
-     * 分析三种类型数据，添加模块标识，开始翻译
-     */
-    public void translateMapData(Map<String, Set<TranslateTextDO>> stringSetMap, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
-        if (stringSetMap == null || stringSetMap.isEmpty()) {
-            return;
-        }
-        for (Map.Entry<String, Set<TranslateTextDO>> entry : stringSetMap.entrySet()) {
-            switch (entry.getKey()) {
-                case HTML:
-                    translateHtmlData(entry.getValue(), rabbitMqTranslateVO, countUtils);
-                    break;
-                case PLAIN_TEXT:
-                case TITLE:
-                case META_TITLE:
-                case LOWERCASE_HANDLE:
-                    translatePlainTextData(entry.getValue(), rabbitMqTranslateVO, countUtils, entry.getKey());
-                    break;
-                case LIST_SINGLE:
-                    translateListSingleData(entry.getValue(), rabbitMqTranslateVO, countUtils);
-                    break;
-                case GLOSSARY:
-                    translateGlossaryData(entry.getValue(), rabbitMqTranslateVO, countUtils);
-                    break;
-                default:
-                    break;
-            }
-        }
     }
 
     /**
@@ -675,22 +662,20 @@ public class RabbitMqTranslateService {
      * 修改翻译的逻辑，暂定获取每50条数据，
      *
      * @param plainTextData       翻译数据
-     * @param rabbitMqTranslateVO 翻译参数
+     * @param vo 翻译参数
      * @param counter             字符计数器
      * @param translationKeyType  翻译类型
      */
-    public void translatePlainTextData(Set<TranslateTextDO> plainTextData, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils counter, String translationKeyType) {
+    public void translatePlainTextData(Set<TranslateTextDO> plainTextData, RabbitMqTranslateVO vo, CharacterCountUtils counter, String translationKeyType) {
         if (plainTextData.isEmpty()) {
             return;
         }
-        String shopName = rabbitMqTranslateVO.getShopName();
-        String target = rabbitMqTranslateVO.getTarget();
-        Integer limitChars = rabbitMqTranslateVO.getLimitChars();
-        String accessToken = rabbitMqTranslateVO.getAccessToken();
-        String source = rabbitMqTranslateVO.getSource();
-        String languagePack = rabbitMqTranslateVO.getLanguagePack();
+        String shopName = vo.getShopName();
+        String target = vo.getTarget();
+        Integer limitChars = vo.getLimitChars();
+        String accessToken = vo.getAccessToken();
+        String source = vo.getSource();
         ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
-        String modelType = rabbitMqTranslateVO.getModeType();
         TranslateRequest translateRequestTemplate = new TranslateRequest(0, shopName, accessToken, source, target, null);
         // 先转成List，方便切片
         List<TranslateTextDO> list = new ArrayList<>(plainTextData);
@@ -712,14 +697,13 @@ public class RabbitMqTranslateService {
             }
 
             //根据不同的key类型，生成对应提示词，后翻译
-            String prompt = getListPrompt(getLanguageName(target), languagePack, translationKeyType, modelType);
+            String prompt = getListPrompt(getLanguageName(target), vo.getLanguagePack(), translationKeyType, vo.getModeType());
             appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
             String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt);
             appInsights.trackTrace(shopName + " translatedJson : " + translatedJson);
 
-//            处理翻译后的数据
             if (translatedJson != null) {
-                handleTranslationResults(translatedJson, batch, shopifyRequest, rabbitMqTranslateVO);
+                handleTranslationResults(translatedJson, batch, shopifyRequest, vo);
             }
         }
     }
