@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
@@ -31,14 +32,8 @@ public class LiquidHtmlTranslatorUtils {
 
     // 不翻译的URL模式
     public static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"]+|www\\.[^\\s<>\"]+");
-    //    // 不翻译的Liquid变量模式
-//    public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}");
     // 自定义变量模式：%{ order.name } 等
     public static final Pattern CUSTOM_VAR_PATTERN = Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\w+\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]");
-    //    // Liquid条件语句模式：{% if order.po_number != blank %} 等
-//    public static final Pattern LIQUID_CONDITION_PATTERN = Pattern.compile("\\{%[^%]+%\\}");
-//    // 数组变量模式：[ product[1]] 等
-//    public static final Pattern ARRAY_VAR_PATTERN = Pattern.compile("\\[\\s*[^\\]]+\\s*\\]");
     // 纯符号模式：匹配单独的 -、×、+、= 等符号（不含字母数字）
     public static final Pattern SYMBOL_PATTERN = Pattern.compile("^[\\+=×*/|!@#$%^&()_]+$", Pattern.MULTILINE);
     // 判断是否有 <html> 标签的模式
@@ -325,39 +320,63 @@ public class LiquidHtmlTranslatorUtils {
         //先缓存翻译一次
         cacheAndDbTranslateData(originalTexts, target, source, allTranslatedMap, shopName);
         appInsights.trackTrace("缓存翻译完成 用户： " + request.getShopName());
-        //翻译剩余未翻译的数据
         for (int i = 0; i < originalTexts.size(); i += BATCH_SIZE) {
-            // 取每次的50条（或剩余全部）
             int endIndex = Math.min(i + BATCH_SIZE, originalTexts.size());
             List<String> batch = originalTexts.subList(i, endIndex);
             appInsights.trackTrace("取对应数据 用户： " + request.getShopName() + endIndex);
             if (batch.isEmpty()) {
                 continue;
             }
-            //筛选出来要翻译的数据
-            String sourceJson;
-            try {
-                sourceJson = objectToJson(batch);
-                //翻译
-                appInsights.trackTrace("开始模型翻译 用户： " + request.getShopName() + endIndex);
-                String translated = jsoupUtils.translateByCiwiUserModel(target, sourceJson, shopName, source, counter, limitChars, prompt);
-                //对null的处理
-                if (translated == null) {
-                    translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName, limitChars);
+
+            // 二次切分：每批次最多 1000 token
+            List<String> currentGroup = new ArrayList<>();
+            int currentTokens = 0;
+            appInsights.trackTrace("二次切分前 用户： " + request.getShopName() + " currentGroup : " + currentGroup + " currentTokens : " + currentTokens);
+            for (String text : batch) {
+                int tokens = calculateBaiLianToken(text);
+                // 如果加上这条会超过 1000 token，就先处理当前组
+                if (currentTokens + tokens > 1000 && !currentGroup.isEmpty()) {
+                    processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap);
+                    currentGroup = new ArrayList<>();
+                    currentTokens = 0;
                 }
-                appInsights.trackTrace("翻译结束 用户： " + shopName + " translated" + translated);
-                String parseJson = parseJson(translated, shopName);
-                appInsights.trackTrace("解析完数据 用户： " + shopName);
-                Map<String, String> resultMap = OBJECT_MAPPER.readValue(parseJson, new TypeReference<>() {});
-                appInsights.trackTrace("解析完map 用户： " + shopName);
-                allTranslatedMap.putAll(resultMap);
-                appInsights.trackTrace("存完数据 用户： " + shopName);
-            } catch (Exception e) {
-                appInsights.trackException(e);
-                appInsights.trackTrace("每日须看 translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 未翻译文本 : " + batch);
+
+                currentGroup.add(text);
+                currentTokens += tokens;
+                appInsights.trackTrace("1000token以内的数据： " + currentTokens + " currentGroup : " + currentGroup);
+            }
+
+            // 处理最后剩下的一组
+            if (!currentGroup.isEmpty()) {
+                processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap);
             }
         }
+
         return allTranslatedMap;
+    }
+
+    /**
+     * 对拆分完的一批次进行翻译
+     */
+    private void processBatch(List<String> texts, String requestShopName, String shopName, String prompt, String target, String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap) {
+        try {
+            String sourceJson = objectToJson(texts);
+            appInsights.trackTrace("开始模型翻译 用户： " + requestShopName);
+            String translated = jsoupUtils.translateByCiwiUserModel(target, sourceJson, shopName, source, counter, limitChars, prompt);
+            if (translated == null) {
+                translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName, limitChars);
+            }
+            appInsights.trackTrace("翻译结束 解析数据 用户 ：" + requestShopName);
+            String parseJson = parseJson(translated, shopName);
+            Map<String, String> resultMap = OBJECT_MAPPER.readValue(parseJson, new TypeReference<>() {
+            });
+            appInsights.trackTrace("解析后的数据： "  + requestShopName + " resultMap" + resultMap.toString());
+            allTranslatedMap.putAll(resultMap);
+            appInsights.trackTrace("存完数据 用户： " + shopName + " sourceJson: " + sourceJson);
+        } catch (Exception e) {
+            appInsights.trackException(e);
+            appInsights.trackTrace("translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 未翻译文本 : " + texts);
+        }
     }
 
     // 模拟批量翻译

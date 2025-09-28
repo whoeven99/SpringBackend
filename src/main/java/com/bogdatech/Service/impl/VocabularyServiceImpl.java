@@ -136,7 +136,6 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
     @Override
     public String getTranslateTextDataInVocabulary(String target, String value, String source) {
         if (!(value.length() <= 255) || !isDatabaseLanguage(source) || !isDatabaseLanguage(target)){
-//            appInsights.trackTrace("被拦截了！！！");
             return null;
         }
         // 构造查询条件
