@@ -11,15 +11,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/aiLanguagePacks")
 public class AILanguagePacksController {
-
-    private final IAILanguagePacksService aiLanguagePacksService;
-    private final AILanguagePackService aiLanguagePackService;
-
     @Autowired
-    public AILanguagePacksController(IAILanguagePacksService aiLanguagePacksService, AILanguagePackService aiLanguagePackService) {
-        this.aiLanguagePacksService = aiLanguagePacksService;
-        this.aiLanguagePackService = aiLanguagePackService;
-    }
+    private IAILanguagePacksService aiLanguagePacksService;
 
     //获取AI语言包的数据
     @GetMapping("/readAILanguagePacks")
@@ -39,10 +32,4 @@ public class AILanguagePacksController {
         return aiLanguagePacksService.changeLanguagePack(userLanguageRequest);
     }
 
-    //获取用户的beta_description，根据这个由混元生成类目
-    @GetMapping("/getBetaDescription")
-    public BaseResponse<Object> getBetaDescription(@RequestParam String shopName, @RequestParam String accessToken) {
-        String categoryByDescription = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, new CharacterCountUtils(), 0);
-        return new BaseResponse().CreateSuccessResponse(categoryByDescription);
-    }
 }

@@ -39,7 +39,7 @@ public class DataRatingController {
         return new BaseResponse<>().CreateSuccessResponse(translationStatus);
     }
 
-    //TODO：查询评分信息 语言60% 工具40%
+    //查询评分信息 语言60% 工具40%
     @PostMapping("/getRatingInfo")
     public BaseResponse<Object> getSubscriptionInfo(@RequestParam String shopName, @RequestParam String source) {
         Double ratingInfo = dataRatingService.getRatingInfo(shopName, source);

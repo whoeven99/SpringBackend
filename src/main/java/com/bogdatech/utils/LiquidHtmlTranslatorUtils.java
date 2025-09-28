@@ -3,12 +3,9 @@ package com.bogdatech.utils;
 
 import com.bogdatech.Service.IVocabularyService;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
@@ -20,11 +17,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.PlaceholderUtils.*;
 import static com.bogdatech.utils.StringUtils.parseJson;
@@ -55,8 +52,6 @@ public class LiquidHtmlTranslatorUtils {
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
     private JsoupUtils jsoupUtils;
-    @Autowired
-    private ChatGptIntegration chatGptIntegration;
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
@@ -342,10 +337,14 @@ public class LiquidHtmlTranslatorUtils {
             //筛选出来要翻译的数据
             String sourceJson;
             try {
-                sourceJson = OBJECT_MAPPER.writeValueAsString(batch);
+                sourceJson = objectToJson(batch);
                 //翻译
                 appInsights.trackTrace("开始模型翻译 用户： " + request.getShopName() + endIndex);
                 String translated = jsoupUtils.translateByCiwiUserModel(target, sourceJson, shopName, source, counter, limitChars, prompt);
+                //对null的处理
+                if (translated == null) {
+                    translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName, limitChars);
+                }
                 appInsights.trackTrace("翻译结束 用户： " + shopName + " translated" + translated);
                 String parseJson = parseJson(translated, shopName);
                 appInsights.trackTrace("解析完数据 用户： " + shopName);
@@ -355,7 +354,7 @@ public class LiquidHtmlTranslatorUtils {
                 appInsights.trackTrace("存完数据 用户： " + shopName);
             } catch (Exception e) {
                 appInsights.trackException(e);
-                appInsights.trackTrace("translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 未翻译文本 : " + batch);
+                appInsights.trackTrace("每日须看 translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 未翻译文本 : " + batch);
             }
         }
         return allTranslatedMap;

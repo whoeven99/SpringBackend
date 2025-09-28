@@ -450,6 +450,11 @@ public class PrivateKeyService {
 
             //走翻译流程
             String translatedText = translateByModel(translateContext, value, request, apiKey);
+            //对null的处理, 不翻译
+            if (translatedText == null) {
+                return;
+            }
+
             shopifyService.saveToShopify(translatedText, translation, resourceId, request);
             printTranslation(translatedText, value, translation, request.getShopName(), resourceType, resourceId, source);
             //存到数据库中
@@ -581,6 +586,10 @@ public class PrivateKeyService {
                     }
                     //目前改为openai翻译
                     String finalText = privateIntegration.translateByGpt(value, translateContext.getApiModel(), translateContext.getApiKey(), prompt, shopName, Long.valueOf(translateContext.getRemainingChars()));
+                    //对null处理, 不翻译
+                    if (finalText == null) {
+                        return;
+                    }
                     redisProcessService.setCacheData(shopifyRequest.getTarget(), finalText, value);
                     shopifyService.saveToShopify(finalText, translation, resourceId, shopifyRequest);
                     printTranslation(finalText, value, translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
@@ -644,6 +653,11 @@ public class PrivateKeyService {
                 modelHtml = privateIntegration.translatePrivateNewHtml(translateTextDO.getSourceText(), target, translateContext.getApiKey(), translateContext.getApiModel(), shopName, Long.valueOf(translateContext.getRemainingChars()));
             } else {
                 appInsights.trackTrace("translate 私有 html：" + value + " 没有找到对应的翻译api modelHtml : " + translateContext.getModel());
+                continue;
+            }
+            if (modelHtml == null) {
+                //私有key 跳过
+                appInsights.trackTrace("translate 私有 html：" + value + " 翻译失败 用户： " + shopName + " sourceText : " + translateTextDO.getSourceText());
                 continue;
             }
 

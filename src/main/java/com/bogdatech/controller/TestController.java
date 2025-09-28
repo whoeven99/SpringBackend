@@ -26,11 +26,12 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -351,9 +352,29 @@ public class TestController {
     /**
      * 加密后输出数据
      * */
-    @GetMapping("/testError")
-    public String testError(@RequestParam String source) {
+    @GetMapping("/testEncryptMD5")
+    public String testEncryptMD5(@RequestParam String source) {
         return encryptMD5(source);
     }
 
+    /**
+     * 测试时间超时的问题
+     * */
+    @GetMapping("/testTimeOut")
+    public void testTimeOut() throws Exception {
+        String s = TimeOutUtils.callWithTimeoutAndRetry(() -> {
+            // 模拟耗时操作
+            LocalDateTime first = LocalDateTime.now();
+            System.out.println("first: " + first);
+            try {
+                Thread.sleep(310000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            LocalDateTime second = LocalDateTime.now();
+            System.out.println("second: " + second);
+            return "任务完成";
+        }, 5, TimeUnit.MINUTES, 3);
+        System.out.println("结果: " + s);
+    }
 }

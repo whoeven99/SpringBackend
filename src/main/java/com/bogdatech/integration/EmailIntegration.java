@@ -1,93 +1,28 @@
 package com.bogdatech.integration;
 
-import com.bogdatech.model.controller.request.MailChampSendEmailRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
-import com.bogdatech.requestBody.EmailRequestBody;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencentcloudapi.common.AbstractModel;
 import com.tencentcloudapi.common.Credential;
-import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
 import com.tencentcloudapi.common.profile.HttpProfile;
 import com.tencentcloudapi.ses.v20201002.SesClient;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailRequest;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailResponse;
 import com.tencentcloudapi.ses.v20201002.models.Template;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
 import java.util.Map;
-
 import static com.bogdatech.constants.MailChimpConstants.CC_EMAIL;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.TimeOutUtils.*;
+import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class EmailIntegration {
 
-    @Value("${email.key}")
-    private String mailChimpKey;
-
-    public  String sendEmail(MailChampSendEmailRequest sendEmailRequest) {
-        sendEmailRequest.setEmailKey(mailChimpKey);
-//        appInsights.trackTrace("mailChimpKey: " + mailChimpKey);
-        EmailRequestBody emailRequestBody = new EmailRequestBody();
-        String sendEmail = emailRequestBody.sendEmail(sendEmailRequest);
-//        appInsights.trackTrace("sendEmail: " + sendEmail);
-        String url = "https://mandrillapp.com/api/1.0/messages/send-template";
-        // 重试次数
-        int maxRetries = 3;
-        int retryCount = 0;
-        while (retryCount < maxRetries) {
-            // 创建Httpclient对象
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            // 创建httpPost请求
-            HttpPost httpPost = new HttpPost(url);
-            httpPost.addHeader("Content-Type", "application/json");
-            // 设置请求体
-            StringEntity input = new StringEntity(sendEmail, "UTF-8");
-            httpPost.setEntity(input);
-            // 执行请求
-//            JSONObject jsonObject;
-            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                // 获取响应实体并转换为JSON格式
-                String entity = EntityUtils.toString(response.getEntity(), "UTF-8");
-                // 获取status对象
-                if (entity.contains("sent")) {
-                    return "Success";
-                }
-
-                response.close();
-                httpClient.close();
-                return "Error: " + entity;
-            } catch (IOException e) {
-                // 重试机制
-                retryCount++;
-                if (retryCount < maxRetries) {
-                    try {
-                        Thread.sleep(1000); // 等待一段时间再重试，避免频繁请求
-                    } catch (InterruptedException ie) {
-                        //中断当前线程
-                        Thread.currentThread().interrupt();
-                        return "Error: " + ie.getMessage();
-                    }
-                } else {
-                    return "Error: " + e.getMessage();
-                }
-            }
-        }
-        return "Error: Max retries exceeded";
-    }
-
-    //腾讯邮件发送
+    /**
+     * 腾讯邮件发送
+     */
     public Boolean sendEmailByTencent(TencentSendEmailRequest tencentSendEmailRequest) {
         Map<String, String> templateData = tencentSendEmailRequest.getTemplateData();
 
@@ -118,12 +53,29 @@ public class EmailIntegration {
             String [] cc1 = {CC_EMAIL};
             req.setCc(cc1);
             // 返回的resp是一个SendEmailResponse的实例，与请求对象对应
-            SendEmailResponse resp = client.SendEmail(req);
+            SendEmailResponse resp = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return client.SendEmail(req);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (resp == null) {
+                appInsights.trackTrace("sendEmailByTencent 腾讯邮件报错信息 errors ： templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+                return false;
+            }
+
             // 输出json格式的字符串回包
             jsonString = AbstractModel.toJsonString(resp);
-            appInsights.trackTrace("sendEmailByTencent jsonString : " + jsonString + " data: " + tencentSendEmailRequest.getTemplateData());
-        } catch (TencentCloudSDKException | JsonProcessingException e) {
-            appInsights.trackException(e);
+            appInsights.trackTrace("sendEmailByTencent 腾讯邮件信息 jsonString : " + jsonString + " data: " + tencentSendEmailRequest.getTemplateData());
+        } catch (Exception e1){
+            appInsights.trackException(e1);
+            appInsights.trackTrace("sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
         }
         //判断服务的返回值是否含有RequestId
         if (jsonString == null) {

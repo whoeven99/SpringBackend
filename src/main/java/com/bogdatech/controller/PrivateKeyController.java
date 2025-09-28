@@ -2,7 +2,6 @@ package com.bogdatech.controller;
 
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
-import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserPrivateService;
 import com.bogdatech.logic.PrivateKeyService;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
@@ -10,7 +9,6 @@ import com.bogdatech.model.controller.request.UserPrivateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.integration.PrivateIntegration.googleTranslate;
 import static com.bogdatech.utils.StringUtils.replaceDot;
@@ -44,12 +42,11 @@ public class PrivateKeyController {
     @PutMapping("/saveGoogleKey")
     public BaseResponse<Object> saveGoogleKey(@RequestBody UserPrivateRequest userPrivateRequest) {
         //调一次google接口， 用于判断key值是否有效
-        try {
-            googleTranslate("a",  userPrivateRequest.getSecret(), "zh-CN");
-        } catch (Exception e) {
+
+        String s = googleTranslate("a", userPrivateRequest.getSecret(), "zh-CN");
+        if (s == null) {
             return new BaseResponse<>().CreateErrorResponse("key_error");
         }
-
         String shopName = replaceDot(userPrivateRequest.getShopName());
 
         //存用户的shopName到数据库中
@@ -69,8 +66,6 @@ public class PrivateKeyController {
                 return new BaseResponse<>().CreateSuccessResponse(userPrivateRequest);
             }
         }
-
-
         return new BaseResponse<>().CreateErrorResponse("save_error");
     }
 

@@ -14,7 +14,6 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -24,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_PURCHASE_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_TASK_INTERRUPT_EMAIL;
@@ -45,26 +43,22 @@ import static com.bogdatech.utils.StringUtils.parseShopName;
 
 @Component
 public class TencentEmailService {
-
-    private final EmailIntegration emailIntegration;
-    private final IEmailService emailService;
-    private final IUsersService usersService;
-    private final ITranslationUsageService translationUsageService;
-    private final ITranslatesService translatesService;
-    private final ITranslationCounterService translationCounterService;
-    private final IAPGEmailService iapgEmailService;
-    private final ITranslateTasksService iTranslateTasksService;
     @Autowired
-    public TencentEmailService(EmailIntegration emailIntegration, IEmailService emailService, IUsersService usersService, ITranslationUsageService translationUsageService, ITranslatesService translatesService, ITranslationCounterService translationCounterService, IAPGEmailService iapgEmailService, ITranslateTasksService iTranslateTasksService) {
-        this.emailIntegration = emailIntegration;
-        this.emailService = emailService;
-        this.usersService = usersService;
-        this.translationUsageService = translationUsageService;
-        this.translatesService = translatesService;
-        this.translationCounterService = translationCounterService;
-        this.iapgEmailService = iapgEmailService;
-        this.iTranslateTasksService = iTranslateTasksService;
-    }
+    private EmailIntegration emailIntegration;
+    @Autowired
+    private IEmailService emailService;
+    @Autowired
+    private IUsersService usersService;
+    @Autowired
+    private ITranslationUsageService translationUsageService;
+    @Autowired
+    private ITranslatesService translatesService;
+    @Autowired
+    private ITranslationCounterService translationCounterService;
+    @Autowired
+    private IAPGEmailService iapgEmailService;
+    @Autowired
+    private ITranslateTasksService iTranslateTasksService;
 
     //由腾讯发送邮件
     public void sendEmailByEmail(TencentSendEmailRequest tencentSendEmailRequest) {
@@ -73,7 +67,7 @@ public class TencentEmailService {
 
     /**
      * 发生未成功翻译的邮件
-     * */
+     */
     public Boolean sendEmailByOnline(String shopName, String source, String target) {
         Map<String, String> templateData = new HashMap<>();
         templateData.put(SHOP_NAME, shopName);
@@ -85,7 +79,7 @@ public class TencentEmailService {
 
     /**
      * 发送IP请求即将不足的邮件
-     * */
+     */
     public Boolean sendEmailByIpRunningOut(String shopName) {
         UsersDO userByName = usersService.getUserByName(shopName);
         String name = parseShopName(shopName);
@@ -98,7 +92,7 @@ public class TencentEmailService {
 
     /**
      * 发送IP请求不足的邮件
-     * */
+     */
     public Boolean sendEmailByIpOut(String shopName) {
         UsersDO userByName = usersService.getUserByName(shopName);
         String name = parseShopName(shopName);
@@ -111,7 +105,7 @@ public class TencentEmailService {
 
     /**
      * 发送自动翻译后邮件
-     * */
+     */
     public Boolean sendAutoTranslateEmail(String shopName) {
         String name = parseShopName(shopName);
         UsersDO usersDO = usersService.getUserByName(shopName);
@@ -121,12 +115,12 @@ public class TencentEmailService {
         List<TranslationUsageDO> translationUsageDOS = translationUsageService.readTranslationUsageData(shopName);
         StringBuilder divBuilder = new StringBuilder();
         for (TranslationUsageDO translationUsageDO : translationUsageDOS
-             ) {
-            if (translationUsageDO.getCreditCount() == 0){
+        ) {
+            if (translationUsageDO.getCreditCount() == 0) {
                 continue;
             }
             Integer remainingCredits = translationUsageDO.getRemainingCredits();
-            if (remainingCredits < 0){
+            if (remainingCredits < 0) {
                 remainingCredits = 0;
             }
             //将consumedTime转化为分钟
@@ -144,7 +138,7 @@ public class TencentEmailService {
 //        appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
         //判断邮件代码divBuilder里面是否为空，空就不发送邮件
-        if (divBuilder.toString().isEmpty()){
+        if (divBuilder.toString().isEmpty()) {
 //            appInsights.trackTrace("divBuilder is empty");
             return true;
         }
@@ -182,7 +176,7 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         int endChars = counter.getTotalChars();
         int costChars = endChars - beginChars;
-        if (costChars <= 0){
+        if (costChars <= 0) {
             costChars = 0;
         }
         String formattedNumber = formatter.format(costChars);
@@ -192,7 +186,7 @@ public class TencentEmailService {
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
         iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0).orderByAsc(TranslateTasksDO::getCreatedAt)).forEach(translateTasksDO -> {
-            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
+            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")) {
                 //将这条数据里面的startChars改为现在的usedChars
                 try {
                     RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
@@ -258,7 +252,7 @@ public class TencentEmailService {
             emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
         }
         iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0).orderByAsc(TranslateTasksDO::getCreatedAt)).forEach(translateTasksDO -> {
-            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")){
+            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")) {
                 //将这条数据里面的startChars改为现在的usedChars
                 try {
                     RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
@@ -300,7 +294,7 @@ public class TencentEmailService {
 
     /**
      * 发送订阅计划付费后的邮件
-     * */
+     */
     public void sendSubscribeEmail(String shopName, Integer numberOfCredits) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
@@ -315,8 +309,8 @@ public class TencentEmailService {
         Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
         Integer totalCreditsCount = maxCharsByShopName - translationCounterDO.getUsedChars();
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        templateData.put("number_of_credits",  formatter.format(numberOfCredits));
-        templateData.put("total_credits_count",  formatter.format(totalCreditsCount));
+        templateData.put("number_of_credits", formatter.format(numberOfCredits));
+        templateData.put("total_credits_count", formatter.format(totalCreditsCount));
         //共消耗的字符数
 //        appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
@@ -327,7 +321,8 @@ public class TencentEmailService {
 
     /**
      * 发送APG应用初始化邮件
-     * @param email 接收人的邮箱
+     *
+     * @param email  接收人的邮箱
      * @param userId 接收人的商店id
      */
     public void sendApgInitEmail(String email, Long userId) {
@@ -339,9 +334,10 @@ public class TencentEmailService {
 
     /**
      * 发送生成描述成功的邮件 144209
-     * @param email 接收人的邮箱
+     *
+     * @param email  接收人的邮箱
      * @param userId 接收人的商店id
-     * */
+     */
     public void sendAPGSuccessEmail(String email, Long userId, String taskType, String userName, Timestamp createTime, Integer totalToken, Integer products, Integer remaining) {
         //根据用户的id获取生成模块的相关数据
         Map<String, String> templateData = new HashMap<>();
@@ -365,15 +361,15 @@ public class TencentEmailService {
 
     /**
      * 发送APG应用购买成功的邮件
-     * */
+     */
     public Integer sendAPGPurchaseEmail(APGUsersDO apgUsersDO, Integer numberOfCredits, Double creditAmount, Integer creditBalance) {
         Map<String, String> templateData = new HashMap<>();
         templateData.put("username", apgUsersDO.getFirstName());
         // 获得用户总的token数
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        templateData.put("purchase_amount",  formatter.format(numberOfCredits));
-        templateData.put("credit_amount",  formatter.format(creditAmount));
-        templateData.put("credit_balance",  formatter.format(creditBalance));
+        templateData.put("purchase_amount", formatter.format(numberOfCredits));
+        templateData.put("credit_amount", formatter.format(creditAmount));
+        templateData.put("credit_balance", formatter.format(creditBalance));
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144922L, templateData, APG_PURCHASE_EMAIL, TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
         //存入数据库中
@@ -382,13 +378,13 @@ public class TencentEmailService {
 
     /**
      * 发送APG应用任务中断的邮件
-     * */
+     */
     public void sendAPGTaskInterruptEmail(APGUsersDO apgUsersDO, Integer completedCount, Integer remainingCount, Integer creditBalance) {
         Map<String, String> templateData = new HashMap<>();
         templateData.put("username", apgUsersDO.getFirstName());
         //存用户翻译任务等数据
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        templateData.put("credit_balance",  formatter.format(creditBalance));
+        templateData.put("credit_balance", formatter.format(creditBalance));
         templateData.put("completed_count", String.valueOf(completedCount));
         templateData.put("remaining_count", String.valueOf(remainingCount));
         //由腾讯发送邮件
