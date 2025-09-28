@@ -1,9 +1,10 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.exception.ClientException;
-
+import com.bogdatech.exception.FatalException;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
+
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class TimeOutUtils {
 
@@ -26,7 +27,7 @@ public class TimeOutUtils {
                                                 long timeout,
                                                 TimeUnit unit,
                                                 int maxRetries) throws Exception {
-        Exception lastException = new ClientException("调用超时，且重试无用");
+        Exception lastException = new FatalException("调用超时，且重试无用");
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -38,11 +39,13 @@ public class TimeOutUtils {
             } catch (TimeoutException e) {
                 future.cancel(true);
                 lastException = e;
-                System.err.println("调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
+                appInsights.trackTrace("每日须看 task 调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
+                appInsights.trackException(e);
             } catch (Exception e) {
                 future.cancel(true);
                 lastException = e;
-                System.err.println("调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
+                appInsights.trackTrace("每日须看 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
+                appInsights.trackException(e);
             } finally {
                 executor.shutdownNow(); // 确保线程被回收
             }
