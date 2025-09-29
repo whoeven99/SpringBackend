@@ -9,6 +9,7 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -79,6 +80,8 @@ public class RabbitMqTranslateService {
     private RedisProcessService redisProcessService;
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private RedisIntegration redisIntegration;
     public static final int BATCH_SIZE = 50;
 
     /**
@@ -1135,6 +1138,13 @@ public class RabbitMqTranslateService {
                 translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
                 tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
                 translateTasksService.updateByTaskId(task.getTaskId(), 1);
+                translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                        .eq(TranslatesDO::getSource, source)
+                        .eq(TranslatesDO::getTarget, target)
+                        .set(TranslatesDO::getResourceType, null));
+                appInsights.trackTrace("clickTranslation 用户 " + shopName + " ciwi翻译结束 时间为： " + LocalDateTime.now());
+                //删除redis该用户相关进度条数据
+                redisIntegration.delete(generateProcessKey(shopName, target));
             } else {
                 triggerSendEmailLater(shopName, target, source, accessToken, task, counter, startTime, startChars, limitChars);
             }
@@ -1186,6 +1196,14 @@ public class RabbitMqTranslateService {
             translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
             tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
             translateTasksService.updateByTaskId(task.getTaskId(), 1);
+            //将翻译项中的模块改为null
+            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                    .eq(TranslatesDO::getSource, source)
+                    .eq(TranslatesDO::getTarget, target)
+                    .set(TranslatesDO::getResourceType, null));
+            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
+            //删除redis该用户相关进度条数据
+            redisIntegration.delete(generateProcessKey(shopName, target));
         };
 
         // 设置执行时间为当前时间 + 10分钟（使用 Instant 代替 Date）
