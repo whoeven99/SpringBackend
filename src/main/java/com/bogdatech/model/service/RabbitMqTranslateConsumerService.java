@@ -199,6 +199,7 @@ public class RabbitMqTranslateConsumerService {
         try {
             Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
             userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
+            appInsights.trackTrace("emailTranslate : " + userTranslate.get(rabbitMqTranslateVO.getShopName()));
             //将email的status改为2
             translateTasksService.removeById(task.getTaskId());
             //判断email类型，选择使用那个进行发送邮件
