@@ -1,6 +1,5 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.config.LanguageFlagConfig;
