@@ -61,12 +61,12 @@ public class RabbitMqTranslateConsumerService {
                 handleEmailTask(shopifyData, rabbitMqTranslateVO, task);
             } else {
                 dbTranslate(rabbitMqTranslateVO, task, isTranslationAuto);
+                //将缓存状态中改为2
+                Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
+                userTranslate.put(shopName, translationStatusMap);
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
-            //将缓存状态中改为2
-            Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
-            userTranslate.put(shopName, translationStatusMap);
         } catch (ClientException e1) {
             appInsights.trackTrace("clickTranslation " + shopName + " 到达字符限制： " + e1);
         } catch (Exception e) {
@@ -195,7 +195,7 @@ public class RabbitMqTranslateConsumerService {
     /**
      * EMAIL的邮件发送
      */
-    public void emailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
+    public void     emailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
         try {
             Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
             userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
