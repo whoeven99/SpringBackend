@@ -269,7 +269,8 @@ public class ALiYunTranslateIntegration {
                 .setSourceLanguage(source)
                 .setField("e-commerce");
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
-
+        runtime.setReadTimeout(20000); // 20 秒读超时
+        runtime.setConnectTimeout(20000); // 20 秒连接超时
         String targetPicUrl = null;
         try {
             if (client == null) {
