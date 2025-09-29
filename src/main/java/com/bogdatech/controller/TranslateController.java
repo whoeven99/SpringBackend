@@ -173,11 +173,11 @@ public class TranslateController {
         //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
         //循环同步
         translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
-
+        appInsights.trackTrace("循环同步 : " + shopifyRequest.getShopName());
         //判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
-
+        appInsights.trackTrace("判断字符是否超限 : " + shopifyRequest.getShopName());
 //        一个用户当前只能翻译一条语言，根据用户的status判断
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request.getShopName());
         for (Integer integer : integers) {
@@ -193,6 +193,7 @@ public class TranslateController {
         if (usedChars >= remainingChars) {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
+        appInsights.trackTrace("判断字符不超限 : " + shopifyRequest.getShopName());
         //重置用户发送的邮件
         userEmailStatus.put(shopName, new AtomicBoolean(false));
         // 初始化用户的停止标志
@@ -201,7 +202,7 @@ public class TranslateController {
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
-
+        appInsights.trackTrace("初始化计数器和停止标识 : " + shopifyRequest.getShopName());
         //判断是否有handle
         boolean handleFlag = false;
         List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
@@ -217,6 +218,7 @@ public class TranslateController {
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation translateModel errors : " + e.getMessage());
         }
+        appInsights.trackTrace("修改模块的排序成功 : " + shopifyRequest.getShopName());
 //      翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
@@ -228,7 +230,7 @@ public class TranslateController {
         if (fixCustomKey != null){
             cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
         }
-
+        appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
         //改为循环遍历，将相关target状态改为2
         String[] targets = clickTranslateRequest.getTarget();
         for (int i = targets.length - 1; i >= 0; i--) {
@@ -246,7 +248,7 @@ public class TranslateController {
                 appInsights.trackException(e);
             }
         }
-
+        appInsights.trackTrace("修改相关target状态改为2 : " + shopifyRequest.getShopName());
         //全部走DB翻译
         rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true, clickTranslateRequest.getTarget());
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class ModelUtils {
 
@@ -17,10 +18,12 @@ public class ModelUtils {
             List<TranslateResourceDTO> translateResourceList = TOKEN_MAP.get(model);
             translateList.addAll(translateResourceList);
         }
+        appInsights.trackTrace("translateList 添加成功");
         List<String> translateModelList = new ArrayList<>();
         for (TranslateResourceDTO resourceDTO: translateList){
             translateModelList.add(resourceDTO.getResourceType());
         }
+        appInsights.trackTrace("translateModelList 添加成功");
         return translateModelList;
     }
 
