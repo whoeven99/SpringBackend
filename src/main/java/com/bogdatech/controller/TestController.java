@@ -170,6 +170,7 @@ public class TestController {
     //测试自动翻译功能
     @PutMapping("/testAutoTranslate")
     public void testAutoTranslate() {
+        appInsights.trackTrace("testAutoTranslate 开始调用");
         taskService.autoTranslate();
     }
 

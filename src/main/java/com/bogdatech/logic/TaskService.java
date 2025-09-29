@@ -266,6 +266,7 @@ public class TaskService {
      */
     @Async
     public void autoTranslate() {
+        appInsights.trackTrace("autoTranslate 开始");
         //获取所有使用自动翻译的用户
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         appInsights.trackTrace("autoTranslate 获取完所有 使用自动翻译的语言数： " + translatesDOList.size());
