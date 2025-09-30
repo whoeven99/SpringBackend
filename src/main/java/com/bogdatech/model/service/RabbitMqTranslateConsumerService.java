@@ -14,6 +14,7 @@ import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.TencentEmailService;
+import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,8 @@ public class RabbitMqTranslateConsumerService {
     private TencentEmailService tencentEmailService;
     @Autowired
     private RedisIntegration redisIntegration;
+    @Autowired
+    private TranslationMonitorRedisService translationMonitorRedisService;
 
     /**
      * 重新实现邮件发送方法。 能否获取这条数据之前是否有其他项没完成，没完成的话继续完成；完成的话，走发送邮件的逻辑。
@@ -76,7 +79,6 @@ public class RabbitMqTranslateConsumerService {
 
     }
 
-
     // 消息处理方法
     public void processMessage(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, boolean isTranslationAuto) {
         //获取现在的时间，后面做减法
@@ -94,6 +96,12 @@ public class RabbitMqTranslateConsumerService {
         appInsights.trackTrace("counter 用户 " + rabbitMqTranslateVO.getShopName());
         counter.addChars(usedChars);
         appInsights.trackTrace("addChars 用户 " + rabbitMqTranslateVO.getShopName());
+
+        String shopName = rabbitMqTranslateVO.getShopName();
+        // Record
+        translationMonitorRedisService.hsetUsedCharsOfShop(shopName, usedChars);
+        translationMonitorRedisService.hsetRemainingCharsOfShop(shopName, remainingChars);
+
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
             appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " clickTranslation 字符超限 processMessage errors 当前消耗token为: " + usedChars);

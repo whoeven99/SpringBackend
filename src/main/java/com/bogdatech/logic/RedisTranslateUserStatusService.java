@@ -27,7 +27,7 @@ public class RedisTranslateUserStatusService {
      * */
     public List<String> getAll(String shopName, String sourceCode) {
         String pattern = String.format("us:%s:%s:*", shopName, sourceCode);
-        Set<String> keys = redisIntegration.keys(pattern); // 匹配所有 key
+        Set<String> keys = redisIntegration.keys(pattern); // 匹配所有 key // TODO @庄泽 代码里面禁止使用一切keys语句，这样会pending住所有其他的redis命令，切记
         if (keys == null || keys.isEmpty()) {
             return Collections.emptyList();
         }
