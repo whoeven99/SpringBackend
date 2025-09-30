@@ -56,8 +56,8 @@ public class DataRatingService {
         WidgetConfigurationsDO data = iWidgetConfigurationsService.getData(shopName);
         configurationMap.put("switch", data.getLanguageSelector());
         //3，查询自动翻译表
-        TranslatesDO one = iTranslatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getAutoTranslate, 1));
-        if (one != null) {
+        List<TranslatesDO> doList = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getAutoTranslate, 1));
+        if (!doList.isEmpty()) {
             configurationMap.put("autoTranslate", true);
         } else {
             configurationMap.put("autoTranslate", false);
