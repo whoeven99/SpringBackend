@@ -2,6 +2,8 @@ package com.bogdatech.task;
 
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
+import com.bogdatech.logic.TranslateService;
+import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.utils.RedisLockUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -13,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -23,6 +27,8 @@ public class DBTask {
     private ITranslateTasksService translateTasksService;
     @Autowired
     private RedisLockUtils redisLockUtils;
+    @Autowired
+    private TranslationMonitorRedisService translationMonitorRedisService;
 
     // 给dbtask单独使用的线程池，不和其他共用
     public static ExecutorService executorService = Executors.newFixedThreadPool(50);
@@ -33,19 +39,18 @@ public class DBTask {
         appInsights.trackTrace("DBTask Number of active translating threads " + ((ThreadPoolExecutor) executorService).getActiveCount());
         appInsights.trackMetric("Number of active translating threads", ((ThreadPoolExecutor) executorService).getActiveCount());
 
-        //查询 0 状态的记录，过滤掉 shop 已被锁定的
-        List<TranslateTasksDO> tasks = new ArrayList<>();
-
-        tasks = translateTasksService.find0StatusTasks();
+        // 统计待翻译的 task
+        List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
+        translationMonitorRedisService.hsetCountOfTasks(tasks.size());
         appInsights.trackTrace("DBTask Number of tasks need to translate " + tasks.size());
-
-        // 统计shopName数量
-        Set<String> shopNames = new HashSet<>();
-        tasks.forEach(task -> shopNames.add(task.getShopName()));
-        appInsights.trackTrace("DBTask Number of existing shops: " + shopNames.size());
         if (tasks.isEmpty()) {
             return;
         }
+
+        // 统计shopName数量
+        Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
+        shops.forEach((shopName) -> translationMonitorRedisService.setTranslatingShop(shopName));
+        appInsights.trackTrace("DBTask Number of existing shops: " + shops.size());
 
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();

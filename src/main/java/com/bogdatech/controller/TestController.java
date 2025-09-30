@@ -19,6 +19,7 @@ import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
+import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
@@ -32,8 +33,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,7 +49,7 @@ import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
-import static com.bogdatech.utils.RedisKeyUtils.generateTranslateLockKey;
+import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.StringUtils.*;
 
 @RestController
@@ -377,5 +380,24 @@ public class TestController {
             return "任务完成";
         }, 5, TimeUnit.MINUTES, 3);
         System.out.println("结果: " + s);
+    }
+
+    @Autowired
+    private TranslationMonitorRedisService translationMonitorRedisService;
+
+    @GetMapping("/monitor")
+    public Map<String, Object> monitor() {
+        Set<String> shops = translationMonitorRedisService.getTranslatingShops();
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("shops", shops);
+        shops.forEach(shop -> {
+            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
+            responseMap.put(shop, map);
+        });
+
+        Integer tasksCount = translationMonitorRedisService.getCountOfTasks();
+        responseMap.put("tasksCount", tasksCount);
+
+        return responseMap;
     }
 }

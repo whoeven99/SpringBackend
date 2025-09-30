@@ -24,7 +24,6 @@ public class RedisLockUtils {
     @Autowired
     private ITranslateTasksService translateTasksService;
 
-
     /**
      * 在加锁时判断是否成功，成功-翻译；不成功跳过
      * */
