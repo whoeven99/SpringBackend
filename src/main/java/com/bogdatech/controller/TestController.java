@@ -24,7 +24,7 @@ import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
+import com.bogdatech.model.service.ProcessDbTaskService;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TimeOutUtils;
@@ -65,7 +65,7 @@ public class TestController {
     @Autowired
     private UserTypeTokenService userTypeTokenService;
     @Autowired
-    private RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
+    private ProcessDbTaskService processDbTaskService;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
@@ -241,7 +241,7 @@ public class TestController {
     public void testDBTranslate2(@RequestParam String taskId) {
         //根据id获取数据，转化为规定数据类型
         RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
-        rabbitMqTranslateConsumerService.processMessage(dataToProcess, new TranslateTasksDO(), false);
+        processDbTaskService.processMessage(dataToProcess, new TranslateTasksDO(), false);
         translateTasksService.updateByTaskId(taskId, 1);
     }
 
@@ -396,6 +396,9 @@ public class TestController {
         responseMap.put("shops", shops);
         shops.forEach(shop -> {
             Map map = translationMonitorRedisService.getShopTranslationStats(shop);
+
+//            String total = redisProcessService.getFieldProcessData(generateProcessKey(shop, target), PROGRESS_TOTAL);
+//            String done = redisProcessService.getFieldProcessData(generateProcessKey(shop, target), PROGRESS_DONE);
             responseMap.put(shop, map);
         });
 

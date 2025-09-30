@@ -89,14 +89,12 @@ public class RabbitMqTranslateService {
      */
     @Async
     public void mqTranslateWrapper(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType, String[] targets) {
-        for (String target : targets
-        ) {
+        for (String target : targets) {
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
             request.setTarget(target);
             shopifyRequest.setTarget(target);
             mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, limitChars, usedChars, handleFlag, translationModel, isCover, customKey, emailType);
         }
-
     }
 
     /**
@@ -322,6 +320,7 @@ public class RabbitMqTranslateService {
         //根据DB的请求语句获取对应shopify值
         String shopifyDataByDb = getShopifyDataByDb(rabbitMqTranslateVO);
         if (shopifyDataByDb == null) {
+            // TODO 这里应该就是FatalException了，出现这个状况的话很严重
             appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " shopifyDataByDb is null" + rabbitMqTranslateVO);
             return;
         }
