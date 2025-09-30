@@ -1,6 +1,5 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.config.LanguageFlagConfig;
@@ -73,6 +72,13 @@ public class ShopifyService {
             return null;
         }
         return string;
+    }
+
+    //包装一层，用于获取用户实际未翻译和部分翻译的语言数
+    public int getUnTranslatedCount(ShopifyRequest request, String method, TranslateResourceDTO translateResource) {
+
+        int totalWords = getTotalWords(request, method, translateResource);
+    return totalWords;
     }
 
     //获得翻译前一共需要消耗的字符数

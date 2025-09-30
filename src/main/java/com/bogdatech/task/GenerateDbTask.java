@@ -35,28 +35,24 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 public class GenerateDbTask {
-
-    private final IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
-    private final GenerateDescriptionService generateDescriptionService;
-    private final IAPGUsersService iapgUsersService;
-    private final IAPGUserPlanService iapgUserPlanService;
-    private final IAPGUserCounterService iapgUserCounterService;
-    private final IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
-    private final TencentEmailService tencentEmailService;
+    @Autowired
+    private IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
+    @Autowired
+    private GenerateDescriptionService generateDescriptionService;
+    @Autowired
+    private IAPGUsersService iapgUsersService;
+    @Autowired
+    private IAPGUserPlanService iapgUserPlanService;
+    @Autowired
+    private IAPGUserCounterService iapgUserCounterService;
+    @Autowired
+    private IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
+    @Autowired
+    private TencentEmailService tencentEmailService;
     public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
     public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
     public static final ConcurrentHashMap<Long, Boolean> GENERATE_SHOP_STOP_FLAG = new ConcurrentHashMap<>(); //判断用户是否停止生成描述
 
-    @Autowired
-    public GenerateDbTask(IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService, GenerateDescriptionService generateDescriptionService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService, IAPGUserCounterService iapgUserCounterService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService, TencentEmailService tencentEmailService) {
-        this.iapgUserGeneratedSubtaskService = iapgUserGeneratedSubtaskService;
-        this.generateDescriptionService = generateDescriptionService;
-        this.iapgUsersService = iapgUsersService;
-        this.iapgUserPlanService = iapgUserPlanService;
-        this.iapgUserCounterService = iapgUserCounterService;
-        this.iapgUserGeneratedTaskService = iapgUserGeneratedTaskService;
-        this.tencentEmailService = tencentEmailService;
-    }
 
     // 每3秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 3000)
@@ -204,7 +200,7 @@ public class GenerateDbTask {
      * 发送对应翻译中断的邮件
      * 获取用户主任务的taskId，然后获取子任务所有状态3，做遍历对比，获取已完成的产品数，剩余产品数
      * 获取当前的token
-     * */
+     */
     public void sendAPGTaskInterruptEmail(APGUsersDO usersDO) {
         //获取用户主任务的taskId，然后获取子任务所有状态3，做遍历对比，获取已完成的产品数，剩余产品数
         APGUserGeneratedTaskDO apgUserGeneratedTaskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, usersDO.getId()));

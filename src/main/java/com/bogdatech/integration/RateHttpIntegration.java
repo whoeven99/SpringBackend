@@ -3,12 +3,10 @@ package com.bogdatech.integration;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-
 @Component
 public class RateHttpIntegration {
 
@@ -29,11 +27,15 @@ public class RateHttpIntegration {
         String response;
         try {
             response = baseHttpIntegration.sendHttpGet(url, System.getenv("Fixer_Api_Key"));
-        } catch (IOException e) {
-            appInsights.trackTrace("获取汇率失败");
+        } catch (Exception e) {
+            appInsights.trackTrace("每日须看 getFixerRate 获取汇率失败 " + e.getMessage());
+            appInsights.trackException(e);
             return;
         }
-
+        if (response == null){
+            appInsights.trackTrace("每日须看 getFixerRate 获取汇率失败");
+            return;
+        }
         JSONObject jsonObject = JSONObject.parseObject(response);
         JSONObject json = jsonObject.getJSONObject("rates");
         if (json != null) {

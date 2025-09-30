@@ -50,17 +50,16 @@ public class APGDescriptionGenerationController {
             product = generateDescriptionService.getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
             description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit, product);
             appInsights.trackTrace("generateDescription" + shopName + " generateDescription: " + description);
+            if (description == null) {
+                return new BaseResponse<>().CreateErrorResponse(false);
+            }
         } catch (ClientException e) {
             appInsights.trackTrace("generateDescription shopName : " + shopName + " generateDescription errors : " + e.getMessage());
-//            appInsights.trackTrace("shopName : " + shopName + " generateDescription errors : " + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         }
         //计算相关生成数据
         APGAnalyzeDataVO apgAnalyzeDataVO = generateDescriptionService.analyzeDescriptionData(description, product.getProductDescription(), generateDescriptionVO.getSeoKeywords());
         apgAnalyzeDataVO.setGenerateText(description);
-        if (description != null) {
-            return new BaseResponse<>().CreateSuccessResponse(apgAnalyzeDataVO);
-        }
-        return new BaseResponse<>().CreateErrorResponse(false);
+        return new BaseResponse<>().CreateSuccessResponse(apgAnalyzeDataVO);
     }
 }

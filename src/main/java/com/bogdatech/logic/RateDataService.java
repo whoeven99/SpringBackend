@@ -25,13 +25,6 @@ public class RateDataService {
         rateRule.put("0.25", "小数部分直接变为0.25，例如12.34变为12.25；13.76变为13.25");
     }
 
-    public void updateValue(String key, LinkedHashMap<String, Object> data) {
-        synchronized (value) {
-            value.clear(); // 清空旧数据
-            value.put(key, data); // 存储新数据
-        }
-    }
-
     public Map<String, Object> getData() {
         // 返回不可修改的Map视图以防止外部修改
         return Collections.unmodifiableMap(value);

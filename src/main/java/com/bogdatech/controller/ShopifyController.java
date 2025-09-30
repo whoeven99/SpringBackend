@@ -112,7 +112,8 @@ public class ShopifyController {
     public BaseResponse<Object> getTotalWords(@RequestParam String shopName, @RequestParam String modelType, @RequestBody ShopifyRequest shopifyRequest) {
         TranslateResourceDTO translateResourceDTO = new TranslateResourceDTO(modelType, MAX_LENGTH, shopifyRequest.getTarget(), "");
         shopifyRequest.setShopName(shopName);
-        shopifyRequest.setTarget("en");
+        //获取该用户未翻译和已翻译的
+//        shopifyRequest.setTarget("en");
         int totalWords = shopifyService.getTotalWords(shopifyRequest, null, translateResourceDTO);
         return new BaseResponse<>().CreateSuccessResponse(totalWords);
     }

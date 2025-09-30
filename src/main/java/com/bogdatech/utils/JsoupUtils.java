@@ -48,8 +48,6 @@ public class JsoupUtils {
     @Autowired
     private DeepLIntegration deepLIntegration;
     @Autowired
-    private ChatGptIntegration chatGptIntegration;
-    @Autowired
     private RedisProcessService redisProcessService;
 
 
@@ -317,14 +315,14 @@ public class JsoupUtils {
         String changeSource = qwenMtCode(source);
         String changeTarget = qwenMtCode(target);
         try {
-            return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
+            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
         } catch (Exception e) {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
                 appInsights.trackTrace("clickTranslation MT sleep errors ： " + ex.getMessage());
             }
-            return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
+            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
         }
 
     }
@@ -356,7 +354,8 @@ public class JsoupUtils {
         }
 
         if (targetString == null) {
-            return text;
+            //对null的处理，再次翻译
+            return checkTranslationModel(request, counter, languagePackId, limitChars);
         }
 
         targetString = isHtmlEntity(targetString);

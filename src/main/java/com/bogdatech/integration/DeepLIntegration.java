@@ -5,29 +5,25 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.deepl.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.HashMap;
 import java.util.Map;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
+import static com.bogdatech.utils.TimeOutUtils.*;
+import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class DeepLIntegration {
     private static final String API_KEY = System.getenv(DEEPL_API_KEY);
     private static final String FREE_API_URL = "https://api-free.deepl.com/v2/translate";
     private static final String API_URL = "https://api.deepl.com/v2/translate";
-    private final ITranslationCounterService translationCounterService;
+    @Autowired
+    private ITranslationCounterService translationCounterService;
     DeepLClient client;
     private final int MAX_LIMIT = 500000;
-
-    @Autowired
-    public DeepLIntegration(ITranslationCounterService translationCounterService) {
-        this.translationCounterService = translationCounterService;
-    }
 
     /**
      * 使用deepL进行翻译,计数翻译数
@@ -38,7 +34,21 @@ public class DeepLIntegration {
         TextResult result;
         try {
             String target = DEEPL_LANGUAGE_MAP.get(targetCode);
-            result = client.translateText(sourceText, null, target);
+            result = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return client.translateText(sourceText, null, target);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 translateByDeepL deepL翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (result == null) {
+                return sourceText;
+            }
             appInsights.trackTrace("result: " + result);
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
@@ -50,7 +60,7 @@ public class DeepLIntegration {
             counter.addChars(totalToken);
             return targetText;
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation translateByDeepL DeepL翻译失败 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
+            appInsights.trackTrace("clickTranslation translateByDeepL deepL翻译报错信息 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
             appInsights.trackException(e);
         }
         return sourceText;

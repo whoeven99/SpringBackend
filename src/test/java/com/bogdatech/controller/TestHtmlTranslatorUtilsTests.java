@@ -286,14 +286,14 @@ public class TestHtmlTranslatorUtilsTests {
         // 构造 > 60 段文本
         StringBuilder sb = new StringBuilder("<div>");
         for (int i = 0; i < 60; i++) {
-            sb.append("<p>Text").append(i).append("</p>");
+            sb.append("<p>Text: 12312312312312312312312312312312312312312312312312312312312312312312312 : ").append(i).append("</p>");
         }
         sb.append("</div>");
         String html = sb.toString();
 
         Map<String, String> translated = new HashMap<>();
         for (int i = 0; i < 60; i++) {
-            translated.put("Text" + i, "T" + i);
+            translated.put("Text: 12312312312312312312312312312312312312312312312312312312312312312312312 : " + i, "T" + i);
         }
 
         doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any());
