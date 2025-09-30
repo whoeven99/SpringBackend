@@ -12,11 +12,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
@@ -25,7 +27,7 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.PlaceholderUtils.*;
-import static com.bogdatech.utils.StringUtils.parseJson;
+import static com.bogdatech.utils.StringUtils.ParsingJsonWithMarkdownPackaging;
 
 @Component
 public class LiquidHtmlTranslatorUtils {
@@ -78,8 +80,10 @@ public class LiquidHtmlTranslatorUtils {
         }
     }
 
-    //判断是否含有HTML实体
-    public static String isHtmlEntity(String text) {
+    /**
+     * 判断是否含有HTML实体, 然后解码
+     */
+    public static String setHtmlEntity(String text) {
         int i = 0;
         while (!text.equals(StringEscapeUtils.unescapeHtml4(text))) {
             // 如果有 HTML 实体，则解码
@@ -236,12 +240,24 @@ public class LiquidHtmlTranslatorUtils {
             return null;
         }
 
-        html = isHtmlEntity(html); //判断是否含有HTML实体,然后解码
+        html = setHtmlEntity(html); //判断是否含有HTML实体,然后解码
         //1, 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
         appInsights.trackTrace("定义translateRequest 用户： " + request.getShopName());
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
         appInsights.trackTrace("解析html 用户： " + request.getShopName());
-        Document doc = parseHtml(html, request.getTarget(), hasHtmlTag);
+//        解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
+        Document doc;
+        if (hasHtmlTag) {
+            doc = Jsoup.parse(html);
+            // 获取 <html> 元素并修改 lang 属性
+            Element htmlTag = doc.selectFirst("html");
+            if (htmlTag != null) {
+                htmlTag.attr("lang", request.getTarget());
+            }
+        } else {
+            doc = Jsoup.parseBodyFragment(html);
+        }
+        doc.outputSettings().prettyPrint(false);
 
         // 2. 收集所有 TextNode
         List<TextNode> nodes = new ArrayList<>();
@@ -265,11 +281,12 @@ public class LiquidHtmlTranslatorUtils {
         appInsights.trackTrace("填回原处前 用户： " + request.getShopName());
         fillBackTranslatedData(nodes, translatedTexts, request.getTarget(), request.getShopName());
         appInsights.trackTrace("填回原处后 用户： " + request.getShopName());
+
         // 输出翻译后的 HTML
         if (hasHtmlTag) {
             appInsights.trackTrace("输出翻译后的 HTML 1 用户： " + request.getShopName());
             String results = doc.outerHtml(); // 返回完整的HTML结构
-            results = isHtmlEntity(results);
+            results = setHtmlEntity(results);
             return results;
         } else {
             appInsights.trackTrace("输出翻译后的 HTML 2 用户： " + request.getShopName());
@@ -283,28 +300,9 @@ public class LiquidHtmlTranslatorUtils {
                 }
             }
             String output2 = results.toString();
-            output2 = isHtmlEntity(output2);
+            output2 = setHtmlEntity(output2);
             return output2;
         }
-    }
-
-    /**
-     * 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
-     */
-    public static Document parseHtml(String html, String target, boolean hasHtmlTag) {
-        Document doc;
-        if (hasHtmlTag) {
-            doc = Jsoup.parse(html);
-            // 获取 <html> 元素并修改 lang 属性
-            Element htmlTag = doc.selectFirst("html");
-            if (htmlTag != null) {
-                htmlTag.attr("lang", target);
-            }
-        } else {
-            doc = Jsoup.parseBodyFragment(html);
-        }
-        doc.outputSettings().prettyPrint(false);
-        return doc;
     }
 
     /**
@@ -336,7 +334,7 @@ public class LiquidHtmlTranslatorUtils {
                 int tokens = calculateBaiLianToken(text);
                 // 如果加上这条会超过 1000 token，就先处理当前组
                 if (currentTokens + tokens > 1000 && !currentGroup.isEmpty()) {
-                    processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap);
+                    translateHtmlSplitData(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap);
                     currentGroup = new ArrayList<>();
                     currentTokens = 0;
                 }
@@ -348,7 +346,7 @@ public class LiquidHtmlTranslatorUtils {
 
             // 处理最后剩下的一组
             if (!currentGroup.isEmpty()) {
-                processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap);
+                translateHtmlSplitData(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap);
             }
         }
 
@@ -358,7 +356,7 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 对拆分完的一批次进行翻译
      */
-    private void processBatch(List<String> texts, String requestShopName, String shopName, String prompt, String target, String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap) {
+    private void translateHtmlSplitData(List<String> texts, String requestShopName, String shopName, String prompt, String target, String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap) {
         try {
             String sourceJson = objectToJson(texts);
             appInsights.trackTrace("开始模型翻译 用户： " + requestShopName);
@@ -367,25 +365,17 @@ public class LiquidHtmlTranslatorUtils {
                 translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName, limitChars);
             }
             appInsights.trackTrace("翻译结束 解析数据 用户 ：" + requestShopName);
-            String parseJson = parseJson(translated, shopName);
+            //qwen可能会出现"""json xxx """ 类型的数据，做了个处理
+            String parseJson = ParsingJsonWithMarkdownPackaging(translated, shopName);
             Map<String, String> resultMap = OBJECT_MAPPER.readValue(parseJson, new TypeReference<>() {
             });
-            appInsights.trackTrace("解析后的数据： "  + requestShopName + " resultMap" + resultMap.toString());
+            appInsights.trackTrace("解析后的数据： " + requestShopName + " resultMap" + resultMap.toString());
             allTranslatedMap.putAll(resultMap);
             appInsights.trackTrace("存完数据 用户： " + shopName + " sourceJson: " + sourceJson);
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 未翻译文本 : " + texts);
         }
-    }
-
-    // 模拟批量翻译
-    private static Map<String, String> fakeTranslateAll(List<String> texts) {
-        Map<String, String> resultMap = new HashMap<>();
-        for (String t : texts) {
-            resultMap.put(t, "Z " + t + " Z");
-        }
-        return resultMap;
     }
 
     /**
@@ -415,7 +405,7 @@ public class LiquidHtmlTranslatorUtils {
 
     /**
      * 将翻译后的数据填回原处
-     * */
+     */
     public void fillBackTranslatedData(List<TextNode> nodes, Map<String, String> translatedTexts, String target, String shopName) {
         for (TextNode node : nodes) {
             String text = node.getWholeText();

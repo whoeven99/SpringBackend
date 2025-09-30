@@ -463,7 +463,7 @@ public class PrivateKeyService {
                     return;
                 }
                 // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-                vocabularyService.InsertOne(request.getTarget(), translatedText, source, value);
+                vocabularyService.InsertTranslated(request.getTarget(), translatedText, source, value);
             } catch (Exception e) {
                 appInsights.trackTrace("translate 存储失败 errors ： " + e.getMessage() + " ，继续翻译");
             }
@@ -493,7 +493,7 @@ public class PrivateKeyService {
                 //存到数据库中
                 try {
                     // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-                    vocabularyService.InsertOne(request.getTarget(), translatedValue, source, value);
+                    vocabularyService.InsertTranslated(request.getTarget(), translatedValue, source, value);
                 } catch (Exception e) {
                     appInsights.trackTrace("translate 存储失败 errors ： " + e.getMessage() + " ，继续翻译");
                 }
@@ -673,7 +673,7 @@ public class PrivateKeyService {
                     continue;
                 }
                 // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-                vocabularyService.InsertOne(target, modelHtml, source, translateTextDO.getSourceText());
+                vocabularyService.InsertTranslated(target, modelHtml, source, translateTextDO.getSourceText());
             } catch (Exception e) {
                 appInsights.trackTrace("translate 存储失败： " + e.getMessage() + " ，继续翻译");
             }
@@ -953,7 +953,7 @@ public class PrivateKeyService {
 
                 processNode(doc.body(), target, shopName, apiKey, limitChars);
                 String result = doc.outerHtml(); // 返回完整的HTML结构
-                result = isHtmlEntity(result);
+                result = setHtmlEntity(result);
                 return result;
             } else {
                 // 如果没有 <html> 标签，作为片段处理
@@ -967,7 +967,7 @@ public class PrivateKeyService {
                 }
 
                 String output = result.toString();
-                output = isHtmlEntity(output);
+                output = setHtmlEntity(output);
                 return output;
             }
 

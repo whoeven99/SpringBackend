@@ -15,16 +15,24 @@ import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsonUtils;
+import com.bogdatech.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.logic.RabbitMqTranslateService.filterTranslateMap;
+import static com.bogdatech.logic.RabbitMqTranslateService.initTranslateMap;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.stringToJson;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 
@@ -44,6 +52,8 @@ public class RabbitMqTranslateConsumerService {
     private TencentEmailService tencentEmailService;
     @Autowired
     private RedisIntegration redisIntegration;
+    @Autowired
+    private JsoupUtils jsoupUtils;
 
     /**
      * 重新实现邮件发送方法。 能否获取这条数据之前是否有其他项没完成，没完成的话继续完成；完成的话，走发送邮件的逻辑。
@@ -87,7 +97,7 @@ public class RabbitMqTranslateConsumerService {
     /**
      * 判断是否翻译条件
      * 添加对应日志打印和异常处理
-     * */
+     */
     public void ConditionalJudgmentBeforeTranslation(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, boolean isTranslationAuto) {
         //获取现在的时间，后面做减法
         Instant start = Instant.now();
@@ -115,12 +125,14 @@ public class RabbitMqTranslateConsumerService {
             appInsights.trackTrace("translatesService 用户 " + rabbitMqTranslateVO.getShopName());
             throw new ClientException("字符超限");
         }
+
         // 修改db中Translates表当前翻译模块
         translatesService.updateTranslatesResourceType(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());
         appInsights.trackTrace("updateTranslatesResourceType 用户 " + rabbitMqTranslateVO.getShopName());
         // 修改db中task翻译状态为2
         translateTasksService.updateByTaskId(task.getTaskId(), 2);
         appInsights.trackTrace("clickTranslation 用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
+
         try {
             if (isTranslationAuto) {
                 appInsights.trackTrace("isTranslationAuto 用户 " + rabbitMqTranslateVO.getShopName());
@@ -129,7 +141,25 @@ public class RabbitMqTranslateConsumerService {
             //通用翻译开启
             String modelType = rabbitMqTranslateVO.getModeType();
             appInsights.trackTrace("clickTranslation DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
-            rabbitMqTranslateService.commonTranslate(rabbitMqTranslateVO, counter);
+            //根据DB的请求语句获取对应shopify值
+            String shopifyDataByDb = rabbitMqTranslateService.getShopifyDataByDb(rabbitMqTranslateVO);
+            if (shopifyDataByDb == null) {
+                appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " shopifyDataByDb is null" + rabbitMqTranslateVO);
+                return;
+            }
+            //解析shopify返回的数据， 将数据以Set集合的形式返回
+            Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(stringToJson(shopifyDataByDb), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getIsCover(), rabbitMqTranslateVO.getTarget());
+            if (needTranslatedData == null) {
+                return;
+            }
+            //遍历Set数据，判断是否符合我们的翻译规则，不符合的不翻译
+            Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getHandleFlag(), needTranslatedData, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget());
+            //将翻译的数据分类，提示词，普通文本，html
+            Map<String, Set<TranslateTextDO>> stringSetMap = initTranslateMap();
+            //将筛选好的数据分类
+            Map<String, Set<TranslateTextDO>> stringSetMap1 = filterTranslateMap(stringSetMap, filterTranslateData, rabbitMqTranslateVO.getGlossaryMap());
+            //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
+            rabbitMqTranslateService.translateMapData(stringSetMap1, rabbitMqTranslateVO, counter);
             appInsights.trackTrace("clickTranslation 用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
         } catch (ClientException e1) {
             appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 到达字符限制： " + e1);
@@ -146,7 +176,6 @@ public class RabbitMqTranslateConsumerService {
                         .set(TranslationUsageDO::getConsumedTime, 0)
                         .set(TranslationUsageDO::getCreditCount, 0));
             }
-
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 处理消息失败 errors : " + e);
@@ -192,82 +221,62 @@ public class RabbitMqTranslateConsumerService {
     }
 
     /**
-     * EMAIL的邮件发送
-     */
-    public void emailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
-        try {
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
-            userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
-            appInsights.trackTrace("emailTranslate : " + userTranslate.get(rabbitMqTranslateVO.getShopName()));
-            //将email的status改为2
-            translateTasksService.removeById(task.getTaskId());
-            //判断email类型，选择使用那个进行发送邮件
-            rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
-            appInsights.trackException(e);
-        }
-    }
-
-    /**
-     * EMAIL_AUTO的邮件发送
-     */
-    public void emailAutoTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
-        try {
-            String shopName = rabbitMqTranslateVO.getShopName();
-            //判断数据库里面是否存在该语言
-            //使用自动翻译的发送邮件逻辑
-            //将status改为2
-            translateTasksService.updateByTaskId(task.getTaskId(), 2);
-            boolean update = translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                    .eq(TranslationUsageDO::getShopName, shopName)
-                    .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget())
-                    .set(TranslationUsageDO::getStatus, 1));
-            if (update) {
-                translateTasksService.removeById(task.getTaskId());
-            }
-
-            //判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
-            List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", task.getShopName()).eq("auto_translate", true));
-            Boolean b = translationUsageService.judgeSendAutoEmail(list, rabbitMqTranslateVO.getShopName());
-            if (b) {
-                tencentEmailService.sendAutoTranslateEmail(shopName);
-                //将所有status, remaining，consumed， credit都改为0
-                translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                        .eq(TranslationUsageDO::getShopName, task.getShopName())
-                        .set(TranslationUsageDO::getStatus, 0)
-                        .set(TranslationUsageDO::getRemainingCredits, 0)
-                        .set(TranslationUsageDO::getConsumedTime, 0)
-                        .set(TranslationUsageDO::getCreditCount, 0));
-            }
-            //将翻译项中的模块改为null
-            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
-                    .eq(TranslatesDO::getSource, rabbitMqTranslateVO.getSource())
-                    .eq(TranslatesDO::getTarget, rabbitMqTranslateVO.getTarget())
-                    .set(TranslatesDO::getResourceType, null));
-            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
-            //删除redis该用户相关进度条数据
-            redisIntegration.delete(generateProcessKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()));
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
-            appInsights.trackException(e);
-        }
-    }
-
-    /**
      * 两种邮件的实现功能
      */
     private void handleEmailTask(String shopifyData, RabbitMqTranslateVO vo, TranslateTasksDO task) {
         String shopName = vo.getShopName();
         boolean canSendEmail = translateTasksService.listBeforeEmailTask(shopName, task.getTaskId());
-        if (canSendEmail) {
-            if (EMAIL.equals(shopifyData)) {
-                emailTranslate(vo, task);
-            } else if (EMAIL_AUTO.equals(shopifyData)) {
-                emailAutoTranslate(vo, task);
-            }
-        } else {
+        if (!canSendEmail) {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
+            return;
+        }
+        try {
+            if (EMAIL.equals(shopifyData)) {
+                Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
+                userTranslate.put(shopName, translationStatusMap);
+                appInsights.trackTrace("emailTranslate : " + userTranslate.get(shopName));
+                //将email的status改为2
+                translateTasksService.removeById(task.getTaskId());
+                //判断email类型，选择使用那个进行发送邮件
+                rabbitMqTranslateService.sendTranslateEmail(vo, task, vo.getTranslateList());
+            } else if (EMAIL_AUTO.equals(shopifyData)) {
+                //判断数据库里面是否存在该语言
+                //使用自动翻译的发送邮件逻辑
+                //将status改为2
+                translateTasksService.updateByTaskId(task.getTaskId(), 2);
+                boolean update = translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
+                        .eq(TranslationUsageDO::getShopName, shopName)
+                        .eq(TranslationUsageDO::getLanguageName, vo.getTarget())
+                        .set(TranslationUsageDO::getStatus, 1));
+                if (update) {
+                    translateTasksService.removeById(task.getTaskId());
+                }
+
+                //判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
+                List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", task.getShopName()).eq("auto_translate", true));
+                Boolean b = translationUsageService.judgeSendAutoEmail(list, vo.getShopName());
+                if (b) {
+                    tencentEmailService.sendAutoTranslateEmail(shopName);
+                    //将所有status, remaining，consumed， credit都改为0
+                    translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
+                            .eq(TranslationUsageDO::getShopName, task.getShopName())
+                            .set(TranslationUsageDO::getStatus, 0)
+                            .set(TranslationUsageDO::getRemainingCredits, 0)
+                            .set(TranslationUsageDO::getConsumedTime, 0)
+                            .set(TranslationUsageDO::getCreditCount, 0));
+                }
+                //将翻译项中的模块改为null
+                translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                        .eq(TranslatesDO::getSource, vo.getSource())
+                        .eq(TranslatesDO::getTarget, vo.getTarget())
+                        .set(TranslatesDO::getResourceType, null));
+                appInsights.trackTrace("clickTranslation 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
+                //删除redis该用户相关进度条数据
+                redisIntegration.delete(generateProcessKey(shopName, vo.getTarget()));
+            }
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation " + shopName + " 邮件发送 errors : " + e);
+            appInsights.trackException(e);
         }
     }
 }
