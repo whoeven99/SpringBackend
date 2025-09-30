@@ -4,7 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -14,7 +17,7 @@ public class RedisIntegration {
 
     /**
      * key 不存在时才 set
-     * */
+     */
     public boolean trySetValueIfAbsent(String key, String value) {
         Boolean result = redisTemplate.opsForValue()
                 .setIfAbsent(key, value);
@@ -58,14 +61,14 @@ public class RedisIntegration {
 
     /**
      * hash GETALL
-     * */
+     */
     public Map<Object, Object> getHashAll(String key) {
         return redisTemplate.opsForHash().entries(key);
     }
 
     /**
      * Set存
-     * */
+     */
     public Boolean setSet(String key, String value) {
         Long add = redisTemplate.opsForSet().add(key, value);
         return add != null && add > 0;
@@ -76,6 +79,20 @@ public class RedisIntegration {
      */
     public String get(String key) {
         return redisTemplate.opsForValue().get(key) + "";
+    }
+
+    /**
+     * keys
+     */
+    public Set<String> keys(String pattern) {
+        return redisTemplate.keys(pattern); // 匹配所有 key
+    }
+
+    /**
+     * multiGet
+     * */
+    public List<String> multiGet(Collection<String> keys) {
+        return redisTemplate.opsForValue().multiGet(keys);
     }
 
     /**
@@ -94,7 +111,7 @@ public class RedisIntegration {
 
     /**
      * 重新设置过期时间
-     * */
+     */
     public Boolean expire(String key, long timeout) {
         return redisTemplate.expire(key, timeout, TimeUnit.SECONDS);
     }

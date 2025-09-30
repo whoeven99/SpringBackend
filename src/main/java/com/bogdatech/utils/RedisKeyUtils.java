@@ -18,6 +18,20 @@ public class RedisKeyUtils {
     //翻译商店锁
     public static final String TRANSLATE_LOCK = "tl:{shopName}";
     public static final String TRANSLATE_LOCK_TRUE = "1";
+    //redis 存用户查询语言状态（翻译状态）
+    public static final String TRANSLATE_USER_STATUS = "us:{shopName}:{sourceCode}:{targetCode}";
+
+    /**
+     * 生成语言状态的 key
+     * */
+    public static String generateTranslateUserStatusKey(String shopName, String sourceCode, String targetCode) {
+        if (shopName == null || sourceCode == null || targetCode == null) {
+            return null;
+        }
+        return TRANSLATE_USER_STATUS.replace("{shopName}", shopName)
+                .replace("{sourceCode}", sourceCode)
+                .replace("{targetCode}", targetCode);
+    }
 
     /**
      * 生成翻译锁的 key

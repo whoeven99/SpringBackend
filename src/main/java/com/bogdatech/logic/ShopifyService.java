@@ -17,9 +17,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -54,9 +52,7 @@ public class ShopifyService {
     @Autowired
     private UserTranslationDataService userTranslationDataService;
     @Autowired
-    private IGlossaryService glossaryService;
-    @Autowired
-    private IWidgetConfigurationsService iWidgetConfigurationsService;
+    private RedisTranslateUserStatusService redisTranslateUserStatusService;
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
@@ -75,10 +71,22 @@ public class ShopifyService {
     }
 
     //包装一层，用于获取用户实际未翻译和部分翻译的语言数
-    public int getUnTranslatedCount(ShopifyRequest request, String method, TranslateResourceDTO translateResource) {
+    public int getUnTranslatedToken(ShopifyRequest request, String method, TranslateResourceDTO translateResource, String source) {
+        //获取该用户所有的未翻译和部分翻译的所有token数据
+        List<String> all = redisTranslateUserStatusService.getAll(request.getShopName(), source);
+        int allLanguage = 1;
+        for (String status : all
+             ) {
+            if ("0".equals(status) || "3".equals(status) || "7".equals(status)){
+                allLanguage ++;
+            }
 
+        }
+        if (allLanguage > 1) {
+            allLanguage -= 1;
+        }
         int totalWords = getTotalWords(request, method, translateResource);
-    return totalWords;
+        return totalWords * allLanguage;
     }
 
     //获得翻译前一共需要消耗的字符数
