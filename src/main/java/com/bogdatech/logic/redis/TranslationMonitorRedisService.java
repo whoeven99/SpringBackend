@@ -26,12 +26,7 @@ public class TranslationMonitorRedisService {
     }
 
     public Set<String> getTranslatingShops() {
-        String shops = redisIntegration.get(TRANSLATION_MONITOR_SET_KEY);
-        if (shops == null || shops.isEmpty()) {
-            return new HashSet<>();
-        }
-        String[] shopArray = shops.split(",");
-        return new HashSet<>(Arrays.asList(shopArray));
+        return redisIntegration.getSet(TRANSLATION_MONITOR_SET_KEY);
     }
 
     public void hsetCountOfTasks(Integer tasksCount) {

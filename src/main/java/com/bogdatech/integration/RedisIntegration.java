@@ -74,6 +74,10 @@ public class RedisIntegration {
         return add != null && add > 0;
     }
 
+    public Set<String> getSet(String key) {
+        return redisTemplate.opsForSet().members(key);
+    }
+
     /**
      * 获取缓存
      */

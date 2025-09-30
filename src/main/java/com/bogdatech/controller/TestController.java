@@ -394,10 +394,10 @@ public class TestController {
 
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("shops", shops);
-//        shops.forEach(shop -> {
-//            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
-//            responseMap.put(shop, map);
-//        });
+        shops.forEach(shop -> {
+            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
+            responseMap.put(shop, map);
+        });
 
         Integer tasksCount = translationMonitorRedisService.getCountOfTasks();
         appInsights.trackTrace("monitor tasksCount: " + tasksCount);
