@@ -74,6 +74,13 @@ public class ShopifyService {
         return string;
     }
 
+    //包装一层，用于获取用户实际未翻译和部分翻译的语言数
+    public int getUnTranslatedCount(ShopifyRequest request, String method, TranslateResourceDTO translateResource) {
+
+        int totalWords = getTotalWords(request, method, translateResource);
+    return totalWords;
+    }
+
     //获得翻译前一共需要消耗的字符数
     public int getTotalWords(ShopifyRequest request, String method, TranslateResourceDTO translateResource) {
         CharacterCountUtils counter = new CharacterCountUtils();
