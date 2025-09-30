@@ -306,15 +306,6 @@ public class RabbitMqTranslateService {
     }
 
     /**
-     * 根据模块选择翻译方法
-     */
-    public void translateByModeType(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
-        String modelType = rabbitMqTranslateVO.getModeType();
-        appInsights.trackTrace("clickTranslation DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
-        commonTranslate(rabbitMqTranslateVO, countUtils);
-    }
-
-    /**
      * 翻译通用模块数据
      */
     public void commonTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
@@ -324,10 +315,12 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " shopifyDataByDb is null" + rabbitMqTranslateVO);
             return;
         }
+        //解析shopify返回的数据， 将数据以Set集合的形式返回
         Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(stringToJson(shopifyDataByDb), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getIsCover(), rabbitMqTranslateVO.getTarget());
         if (needTranslatedData == null) {
             return;
         }
+        //遍历Set数据，判断是否符合我们的翻译规则，不符合的不翻译
         Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getHandleFlag(), needTranslatedData, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget());
         //将翻译的数据分类，提示词，普通文本，html
         Map<String, Set<TranslateTextDO>> stringSetMap = initTranslateMap();
@@ -525,7 +518,6 @@ public class RabbitMqTranslateService {
             //html翻译
             translateGeneralHtmlData(translateTextDO, rabbitMqTranslateVO, counter, translation, shopifyRequest);
             appInsights.trackTrace("html翻译完 用户： " + rabbitMqTranslateVO.getShopName());
-            //翻译进度条加1
             //判断当翻译停止后就不加了
             appInsights.trackTrace("翻译进度条加1 用户： " + rabbitMqTranslateVO.getShopName());
             checkNeedAddProcessData(shopName, target);
