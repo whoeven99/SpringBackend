@@ -30,7 +30,7 @@ import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 
 @Service
-public class RabbitMqTranslateConsumerService {
+public class ProcessDbTaskService {
     @Autowired
     private RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
@@ -55,15 +55,30 @@ public class RabbitMqTranslateConsumerService {
     public void startTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
         String shopName = rabbitMqTranslateVO.getShopName();
         String shopifyData = rabbitMqTranslateVO.getShopifyData();
-        boolean isEmail = EMAIL.equals(shopifyData);
-        boolean isEmailAuto = EMAIL_AUTO.equals(shopifyData);
-        boolean isTranslationAuto = EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey());
         try {
-            // 修改数据库的模块翻译状态
-            if (isEmail || isEmailAuto) {
-                handleEmailTask(shopifyData, rabbitMqTranslateVO, task);
+            if (EMAIL.equals(shopifyData) || EMAIL_AUTO.equals(shopifyData)) {
+                // email任务
+                boolean canSendEmail = translateTasksService.listBeforeEmailTask(shopName, task.getTaskId());
+                if (canSendEmail) {
+                    if (EMAIL.equals(shopifyData)) {
+                        emailTranslate(rabbitMqTranslateVO, task);
+                    } else if (EMAIL_AUTO.equals(shopifyData)) {
+                        emailAutoTranslate(rabbitMqTranslateVO, task);
+                    }
+                } else {
+                    // TODO 这是个fatalException 出现这种问题都是比较严重的问题 没翻译完为什么会出现email的任务
+                    appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
+                }
             } else {
-                dbTranslate(rabbitMqTranslateVO, task, isTranslationAuto);
+                // 普通翻译任务
+                appInsights.trackTrace("dbTranslate 用户 " + rabbitMqTranslateVO.getShopName());
+                processMessage(rabbitMqTranslateVO, task, EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey()));
+                appInsights.trackTrace("processMessage 用户 " + rabbitMqTranslateVO.getShopName());
+
+                //将用户task改为1
+                translateTasksService.updateByTaskId(task.getTaskId(), 1);
+                appInsights.trackTrace("translateTasksService 用户 " + rabbitMqTranslateVO.getShopName());
+
                 //将缓存状态中改为2
                 Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
                 userTranslate.put(shopName, translationStatusMap);
@@ -79,61 +94,65 @@ public class RabbitMqTranslateConsumerService {
 
     }
 
-    // 消息处理方法
     public void processMessage(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, boolean isTranslationAuto) {
         //获取现在的时间，后面做减法
         Instant start = Instant.now();
+        String shopName = rabbitMqTranslateVO.getShopName();
+
         //判断字符是否超限
-        appInsights.trackTrace("start 用户 " + rabbitMqTranslateVO.getShopName());
-        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(rabbitMqTranslateVO.getShopName());
-        appInsights.trackTrace("request1 用户 " + rabbitMqTranslateVO.getShopName());
+        appInsights.trackTrace("start 用户 " + shopName);
+        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+        appInsights.trackTrace("request1 用户 " + shopName);
         Integer remainingChars = rabbitMqTranslateVO.getLimitChars();
-        appInsights.trackTrace("remainingChars 用户 " + rabbitMqTranslateVO.getShopName());
+        appInsights.trackTrace("remainingChars 用户 " + shopName);
         int usedChars = request1.getUsedChars();
-        appInsights.trackTrace("usedChars 用户 " + rabbitMqTranslateVO.getShopName());
+        appInsights.trackTrace("usedChars 用户 " + shopName);
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
-        appInsights.trackTrace("counter 用户 " + rabbitMqTranslateVO.getShopName());
+        appInsights.trackTrace("counter 用户 " + shopName);
         counter.addChars(usedChars);
-        appInsights.trackTrace("addChars 用户 " + rabbitMqTranslateVO.getShopName());
+        appInsights.trackTrace("addChars 用户 " + shopName);
 
-        String shopName = rabbitMqTranslateVO.getShopName();
         // Record
         translationMonitorRedisService.hsetUsedCharsOfShop(shopName, usedChars);
         translationMonitorRedisService.hsetRemainingCharsOfShop(shopName, remainingChars);
 
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= remainingChars) {
-            appInsights.trackTrace(rabbitMqTranslateVO.getShopName() + " clickTranslation 字符超限 processMessage errors 当前消耗token为: " + usedChars);
+            appInsights.trackTrace(shopName + " clickTranslation 字符超限 processMessage errors 当前消耗token为: " + usedChars);
             //将用户所有task改为3
-            rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
-            appInsights.trackTrace("updateTranslateTasksStatus 用户 " + rabbitMqTranslateVO.getShopName());
+            rabbitMqTranslateService.updateTranslateTasksStatus(shopName);
+            appInsights.trackTrace("updateTranslateTasksStatus 用户 " + shopName);
             //将用户翻译状态也改为3
-            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
-            appInsights.trackTrace("translatesService 用户 " + rabbitMqTranslateVO.getShopName());
+            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
+            appInsights.trackTrace("translatesService 用户 " + shopName);
             throw new ClientException("字符超限");
         }
+
         // 修改数据库当前翻译模块的数据
-        translatesService.updateTranslatesResourceType(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());
-        appInsights.trackTrace("updateTranslatesResourceType 用户 " + rabbitMqTranslateVO.getShopName());
+        translatesService.updateTranslatesResourceType(shopName, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());
+        appInsights.trackTrace("updateTranslatesResourceType 用户 " + shopName);
+
         // 修改数据库的模块翻译状态
         translateTasksService.updateByTaskId(task.getTaskId(), 2);
-        appInsights.trackTrace("clickTranslation 用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
+        appInsights.trackTrace("clickTranslation 用户 ： " + shopName + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
+
         try {
             if (isTranslationAuto) {
-                appInsights.trackTrace("isTranslationAuto 用户 " + rabbitMqTranslateVO.getShopName());
+                appInsights.trackTrace("isTranslationAuto 用户 " + shopName);
                 rabbitMqTranslateVO.setCustomKey(null);
             }
+
             //翻译方法
             rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
-            appInsights.trackTrace("clickTranslation 用户 ： " + rabbitMqTranslateVO.getShopName() + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
+            appInsights.trackTrace("clickTranslation 用户 ： " + shopName + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
         } catch (ClientException e1) {
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 到达字符限制： " + e1);
+            appInsights.trackTrace("clickTranslation " + shopName + " 到达字符限制： " + e1);
             //将用户所有task改为3
-            rabbitMqTranslateService.updateTranslateTasksStatus(rabbitMqTranslateVO.getShopName());
+            rabbitMqTranslateService.updateTranslateTasksStatus(shopName);
             translateTasksService.updateByTaskId(task.getTaskId(), 3);
             //将用户翻译状态也改为3
-            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", rabbitMqTranslateVO.getShopName()).eq("status", 2).set("status", 3));
+            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
             if (isTranslationAuto) {
                 translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
                         .eq(TranslationUsageDO::getShopName, task.getShopName())
@@ -142,10 +161,9 @@ public class RabbitMqTranslateConsumerService {
                         .set(TranslationUsageDO::getConsumedTime, 0)
                         .set(TranslationUsageDO::getCreditCount, 0));
             }
-
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 处理消息失败 errors : " + e);
+            appInsights.trackTrace("clickTranslation " + shopName + " 处理消息失败 errors : " + e);
             translateTasksService.updateByTaskId(task.getTaskId(), 4);
         } finally {
             statisticalAutomaticTranslationData(isTranslationAuto, counter, usedChars, start, rabbitMqTranslateVO);
@@ -157,53 +175,41 @@ public class RabbitMqTranslateConsumerService {
      * 判断是否是自动翻译任务，然后记录相关数据
      */
     public void statisticalAutomaticTranslationData(Boolean isTranslationAuto, CharacterCountUtils counter, int usedChars, Instant start, RabbitMqTranslateVO rabbitMqTranslateVO) {
-        if (isTranslationAuto) {
-            // 获取消耗的token值
-            int totalChars = counter.getTotalChars();
-            int translatedChars = totalChars - usedChars;
-            // 获取结束时间
-            Instant end = Instant.now();
-            // 计算耗时
-            Duration duration = Duration.between(start, end);
-            long seconds = duration.getSeconds();
-            //先获取目前已消耗的字符数和剩余字数数
-            TranslationCounterDO one = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, rabbitMqTranslateVO.getShopName()));
-
-            //修改自动翻译邮件数据，将消耗的字符数，剩余字符数
-            TranslationUsageDO usageServiceOne = translationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>()
-                    .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
-                    .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget()));
-
-            try {
-                translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                        .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
-                        .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget())
-                        .set(TranslationUsageDO::getConsumedTime, usageServiceOne.getConsumedTime() + seconds)
-                        .set(TranslationUsageDO::getRemainingCredits, rabbitMqTranslateVO.getLimitChars() - one.getUsedChars())
-                        .set(TranslationUsageDO::getCreditCount, usageServiceOne.getCreditCount() + translatedChars));
-            } catch (Exception e) {
-                appInsights.trackException(e);
-            }
+        if (!isTranslationAuto) {
+            return;
         }
-    }
+        // 获取消耗的token值
+        int totalChars = counter.getTotalChars();
+        int translatedChars = totalChars - usedChars;
+        // 获取结束时间
+        Instant end = Instant.now();
+        // 计算耗时
+        Duration duration = Duration.between(start, end);
+        long seconds = duration.getSeconds();
+        //先获取目前已消耗的字符数和剩余字数数
+        TranslationCounterDO one = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, rabbitMqTranslateVO.getShopName()));
 
-    /**
-     * DB翻译
-     */
-    public void dbTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, boolean isTranslationAuto) {
-        // 处理翻译功能
-        appInsights.trackTrace("dbTranslate 用户 " + rabbitMqTranslateVO.getShopName());
-        processMessage(rabbitMqTranslateVO, task, isTranslationAuto);
-        appInsights.trackTrace("processMessage 用户 " + rabbitMqTranslateVO.getShopName());
-        //将用户task改为1
-        translateTasksService.updateByTaskId(task.getTaskId(), 1);
-        appInsights.trackTrace("translateTasksService 用户 " + rabbitMqTranslateVO.getShopName());
+        //修改自动翻译邮件数据，将消耗的字符数，剩余字符数
+        TranslationUsageDO usageServiceOne = translationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>()
+                .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
+                .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget()));
+
+        try {
+            translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
+                    .eq(TranslationUsageDO::getShopName, rabbitMqTranslateVO.getShopName())
+                    .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget())
+                    .set(TranslationUsageDO::getConsumedTime, usageServiceOne.getConsumedTime() + seconds)
+                    .set(TranslationUsageDO::getRemainingCredits, rabbitMqTranslateVO.getLimitChars() - one.getUsedChars())
+                    .set(TranslationUsageDO::getCreditCount, usageServiceOne.getCreditCount() + translatedChars));
+        } catch (Exception e) {
+            appInsights.trackException(e);
+        }
     }
 
     /**
      * EMAIL的邮件发送
      */
-    public void     emailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
+    public void emailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
         try {
             Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
             userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
@@ -260,23 +266,6 @@ public class RabbitMqTranslateConsumerService {
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
-        }
-    }
-
-    /**
-     * 两种邮件的实现功能
-     */
-    private void handleEmailTask(String shopifyData, RabbitMqTranslateVO vo, TranslateTasksDO task) {
-        String shopName = vo.getShopName();
-        boolean canSendEmail = translateTasksService.listBeforeEmailTask(shopName, task.getTaskId());
-        if (canSendEmail) {
-            if (EMAIL.equals(shopifyData)) {
-                emailTranslate(vo, task);
-            } else if (EMAIL_AUTO.equals(shopifyData)) {
-                emailAutoTranslate(vo, task);
-            }
-        } else {
-            appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
         }
     }
 }

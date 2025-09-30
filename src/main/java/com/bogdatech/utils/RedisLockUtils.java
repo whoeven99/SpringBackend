@@ -5,7 +5,7 @@ import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.RedisTranslateLockService;
-import com.bogdatech.model.service.RabbitMqTranslateConsumerService;
+import com.bogdatech.model.service.ProcessDbTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import static com.bogdatech.task.DBTask.executorService;
@@ -20,7 +20,7 @@ public class RedisLockUtils {
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
-    private RabbitMqTranslateConsumerService rabbitMqTranslateConsumerService;
+    private ProcessDbTaskService processDbTaskService;
     @Autowired
     private ITranslateTasksService translateTasksService;
 
@@ -43,7 +43,7 @@ public class RedisLockUtils {
                         translateTasksService.updateByTaskId(task.getTaskId(), 10);
                         return;
                     }
-                    rabbitMqTranslateConsumerService.startTranslate(vo, task);
+                    processDbTaskService.startTranslate(vo, task);
                 } catch (Exception e) {
                     appInsights.trackTrace("clickTranslation " + shopName + " 处理失败 errors : " + e);
                     //将该模块状态改为4

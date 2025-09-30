@@ -2,7 +2,6 @@ package com.bogdatech.task;
 
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
-import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.utils.RedisLockUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +9,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -52,6 +49,7 @@ public class DBTask {
         shops.forEach((shopName) -> translationMonitorRedisService.setTranslatingShop(shopName));
         appInsights.trackTrace("DBTask Number of existing shops: " + shops.size());
 
+        // 开始翻译所有task
         for (TranslateTasksDO task : tasks) {
             String shopName = task.getShopName();
             redisLockUtils.translateLock(shopName, task);
