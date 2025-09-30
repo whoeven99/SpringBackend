@@ -241,7 +241,7 @@ public class TestController {
     public void testDBTranslate2(@RequestParam String taskId) {
         //根据id获取数据，转化为规定数据类型
         RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
-        rabbitMqTranslateConsumerService.processMessage(dataToProcess, new TranslateTasksDO(), false);
+        rabbitMqTranslateConsumerService.translate(dataToProcess, new TranslateTasksDO(), false);
         translateTasksService.updateByTaskId(taskId, 1);
     }
 
