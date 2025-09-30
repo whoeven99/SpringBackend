@@ -33,10 +33,8 @@ public class DBTask {
         appInsights.trackTrace("DBTask Number of active translating threads " + ((ThreadPoolExecutor) executorService).getActiveCount());
         appInsights.trackMetric("Number of active translating threads", ((ThreadPoolExecutor) executorService).getActiveCount());
 
-        //查询 0 状态的记录，过滤掉 shop 已被锁定的
-        List<TranslateTasksDO> tasks = new ArrayList<>();
-
-        tasks = translateTasksService.find0StatusTasks();
+        //查询status为0状态的task
+        List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
         appInsights.trackTrace("DBTask Number of tasks need to translate " + tasks.size());
 
         // 统计shopName数量

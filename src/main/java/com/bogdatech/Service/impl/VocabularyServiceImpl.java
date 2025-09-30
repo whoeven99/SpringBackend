@@ -175,13 +175,13 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
     }
 
     @Override
-    public Integer InsertOne(String target, String targetValue, String source, String sourceValue) {
-        if (targetValue.length() > 255 || !isDatabaseLanguage(target) || !isDatabaseLanguage(source) || sourceValue.length() > 255) {
+    public Integer InsertTranslated(String target, String targetValue, String source, String sourceValue) {
+        if (targetValue.length() >= 255 || !isDatabaseLanguage(target) || !isDatabaseLanguage(source) || sourceValue.length() >= 255) {
 //            appInsights.trackTrace("targetValue: " + targetValue + " sourceValue: " + sourceValue + " source" + source + " target: " + target);
             return null;
         }
         String oldSource = source;
-        if (source.equals("pt-BR") || source.equals("pt-PT") || source.equals("zh-CN") || source.equals("zh-TW")) {
+        if ("pt-BR".equals(source) || "pt-PT".equals(source) || "zh-CN".equals(source) || "zh-TW".equals(source)) {
             source = source.replace("-", "_");
         }
 //        appInsights.trackTrace("source: " + source + " sourceValue: " + sourceValue + " target: " + target + " targetValue: " + targetValue);

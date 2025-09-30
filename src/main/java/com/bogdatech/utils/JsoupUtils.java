@@ -358,7 +358,7 @@ public class JsoupUtils {
             return checkTranslationModel(request, counter, languagePackId, limitChars);
         }
 
-        targetString = isHtmlEntity(targetString);
+        targetString = setHtmlEntity(targetString);
 
         //判断translateType是不是handle，再决定是否添加到缓存
         if (!translateType.equals(HANDLE)) {
@@ -540,7 +540,7 @@ public class JsoupUtils {
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        appInsights.trackTrace("要翻译的文本： " + cleanedText);
                         targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
-                        targetString = isHtmlEntity(targetString);
+                        targetString = setHtmlEntity(targetString);
                         result.append(targetString);
                     } catch (ClientException e) {
                         // 如果AI翻译失败，则使用谷歌翻译
@@ -571,7 +571,7 @@ public class JsoupUtils {
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                    appInsights.trackTrace("要翻译的文本： " + cleanedText);
                     targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
-                    targetString = isHtmlEntity(targetString);
+                    targetString = setHtmlEntity(targetString);
                     result.append(targetString);
                 } catch (ClientException e) {
                     result.append(cleanedText);

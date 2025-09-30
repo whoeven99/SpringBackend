@@ -77,10 +77,12 @@ public class ShopifyService {
         int allLanguage = 1;
         for (String status : all
              ) {
-            if ("0".equals(status) || "3".equals(status) || "7".equals(status)){
+            if ("0".equals(status) || "3".equals(status) || "7".equals(status) || "6".equals(status)){
                 allLanguage ++;
             }
-
+        }
+        if(allLanguage == 1) {
+            return 0;
         }
         if (allLanguage > 1) {
             allLanguage -= 1;
