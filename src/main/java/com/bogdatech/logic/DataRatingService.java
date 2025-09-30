@@ -35,6 +35,8 @@ public class DataRatingService {
     private ITranslatesService iTranslatesService;
     @Autowired
     private IUsersService iUsersService;
+    @Autowired
+    private RedisTranslateUserStatusService redisTranslateUserStatusService;
 
     /**
      * 术语表， switch表，  自动翻译
@@ -103,6 +105,7 @@ public class DataRatingService {
         for (TranslatesDO translatesDO : list
         ) {
             if (statusMap.containsKey(getLanguageName(translatesDO.getTarget()))) {
+                redisTranslateUserStatusService.saveTranslateStatus(shopName, translatesDO.getTarget(), source, String.valueOf(translatesDO.getStatus()));
                 statusMap.put(getLanguageName(translatesDO.getTarget()), translatesDO.getStatus());
             }
         }

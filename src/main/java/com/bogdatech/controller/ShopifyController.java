@@ -107,13 +107,13 @@ public class ShopifyController {
         return new BaseResponse<>().CreateSuccessResponse(translatesDos);
     }
 
-    //查询需要翻译的总字数-已翻译字符数. 计算翻译的项数
-    @PostMapping("/getTotalWords")
-    public BaseResponse<Object> getTotalWords(@RequestParam String shopName, @RequestParam String modelType, @RequestBody ShopifyRequest shopifyRequest) {
+    //查询需要翻译的总字数
+    @PostMapping("/getUnTranslatedToken")
+    public BaseResponse<Object> getTotalWords(@RequestParam String shopName, @RequestParam String modelType, @RequestParam String source, @RequestBody ShopifyRequest shopifyRequest) {
         TranslateResourceDTO translateResourceDTO = new TranslateResourceDTO(modelType, MAX_LENGTH, shopifyRequest.getTarget(), "");
         shopifyRequest.setShopName(shopName);
-        shopifyRequest.setTarget("en");
-        int totalWords = shopifyService.getTotalWords(shopifyRequest, null, translateResourceDTO);
+        //获取该用户未翻译和已翻译的
+        int totalWords = shopifyService.getUnTranslatedToken(shopifyRequest, null, translateResourceDTO, source);
         return new BaseResponse<>().CreateSuccessResponse(totalWords);
     }
 

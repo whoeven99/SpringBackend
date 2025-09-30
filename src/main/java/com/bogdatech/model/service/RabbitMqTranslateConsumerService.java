@@ -14,7 +14,6 @@ import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.TencentEmailService;
-import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -63,12 +61,12 @@ public class RabbitMqTranslateConsumerService {
                 handleEmailTask(shopifyData, rabbitMqTranslateVO, task);
             } else {
                 dbTranslate(rabbitMqTranslateVO, task, isTranslationAuto);
+                //将缓存状态中改为2
+                Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
+                userTranslate.put(shopName, translationStatusMap);
             }
             //删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
-            //将缓存状态中改为2
-            Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
-            userTranslate.put(shopName, translationStatusMap);
         } catch (ClientException e1) {
             appInsights.trackTrace("clickTranslation " + shopName + " 到达字符限制： " + e1);
         } catch (Exception e) {
@@ -197,10 +195,11 @@ public class RabbitMqTranslateConsumerService {
     /**
      * EMAIL的邮件发送
      */
-    public void emailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
+    public void     emailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
         try {
             Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
             userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
+            appInsights.trackTrace("emailTranslate : " + userTranslate.get(rabbitMqTranslateVO.getShopName()));
             //将email的status改为2
             translateTasksService.removeById(task.getTaskId());
             //判断email类型，选择使用那个进行发送邮件
@@ -242,6 +241,14 @@ public class RabbitMqTranslateConsumerService {
                         .set(TranslationUsageDO::getConsumedTime, 0)
                         .set(TranslationUsageDO::getCreditCount, 0));
             }
+            //将翻译项中的模块改为null
+            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                    .eq(TranslatesDO::getSource, rabbitMqTranslateVO.getSource())
+                    .eq(TranslatesDO::getTarget, rabbitMqTranslateVO.getTarget())
+                    .set(TranslatesDO::getResourceType, null));
+            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
+            //删除redis该用户相关进度条数据
+            redisIntegration.delete(generateProcessKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()));
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
@@ -260,15 +267,6 @@ public class RabbitMqTranslateConsumerService {
             } else if (EMAIL_AUTO.equals(shopifyData)) {
                 emailAutoTranslate(vo, task);
             }
-
-            //将翻译项中的模块改为null
-            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
-                    .eq(TranslatesDO::getSource, vo.getSource())
-                    .eq(TranslatesDO::getTarget, vo.getTarget())
-                    .set(TranslatesDO::getResourceType, null));
-            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
-            //删除redis该用户相关进度条数据
-            redisIntegration.delete(generateProcessKey(vo.getShopName(), vo.getTarget()));
         } else {
             appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
         }

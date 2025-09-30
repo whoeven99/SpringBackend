@@ -13,13 +13,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-    private final UserService userService;
-    private final TranslateService translateService;
     @Autowired
-    public UserController(UserService userService, TranslateService translateService) {
-        this.userService = userService;
-        this.translateService = translateService;
-    }
+    private UserService userService;
+    @Autowired
+    private TranslateService translateService;
 
     //获得用户数据
     @GetMapping("/get")

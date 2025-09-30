@@ -1,13 +1,8 @@
 package com.bogdatech.logic;
 
-
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
-import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
@@ -25,10 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
@@ -36,14 +31,11 @@ import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTransla
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
-import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
-import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
-import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
@@ -189,7 +181,6 @@ public class TranslateService {
     }
 
 
-
     //翻译单个文本数据
     public String translateSingleText(RegisterTransactionRequest request) {
         TranslateRequest translateRequest = TypeConversionUtils.registerTransactionRequestToTranslateRequest(request);
@@ -248,6 +239,9 @@ public class TranslateService {
         if (type.equals(URI) && "handle".equals(key)) {
             // 如果 key 为 "handle"，这里是要处理的代码
             String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars);
+            if (targetString == null) {
+                return new BaseResponse<>().CreateErrorResponse(value);
+            }
             appInsights.trackTrace(shopName + " 用户 ，" + value + " 单条翻译 handle模块： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
             return new BaseResponse<>().CreateSuccessResponse(targetString);
         }
@@ -258,13 +252,13 @@ public class TranslateService {
                 TranslateRequest translateRequest = new TranslateRequest(0, shopName, null, source, target, value);
                 //单条翻译html，修改格式
                 if (resourceType.equals(METAFIELD)) {
-                    String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter,  null, remainingChars);
+                    String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars);
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     appInsights.trackTrace(shopName + " 用户 ，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                     return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
                 }
 
-                String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter,  null, remainingChars);
+                String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars);
                 appInsights.trackTrace(shopName + " 用户 ，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
@@ -349,6 +343,13 @@ public class TranslateService {
             progressData.put("TotalQuantity", 1);
             return progressData;
         }
+        //获取userTranslate是否是写入状态，是的话翻译100%
+        Map<String, Object> value = userTranslate.get(shopName);
+        if (value.get("value") == null && value.get("status").equals(3)) {
+            progressData.put("RemainingQuantity", 0);
+            progressData.put("TotalQuantity", 1);
+            return progressData;
+        }
         //从redis中获取当前用户正在翻译的进度条数据
         String total = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL);
         String done = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_DONE);
@@ -371,8 +372,8 @@ public class TranslateService {
         int doneInt = Integer.parseInt(done);
         if (doneInt > totalInt) {
             progressData.put("RemainingQuantity", 1);
-        }else {
-            progressData.put("RemainingQuantity",  totalInt -  doneInt);
+        } else {
+            progressData.put("RemainingQuantity", totalInt - doneInt);
         }
 
         progressData.put("TotalQuantity", totalInt);

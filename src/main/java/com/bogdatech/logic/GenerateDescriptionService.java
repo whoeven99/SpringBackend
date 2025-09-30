@@ -84,7 +84,9 @@ public class GenerateDescriptionService {
         }else {
              des = aLiYunTranslateIntegration.callWithPicMess(prompt, usersDO.getId(), counter, product.getImageUrl(), userMaxLimit);
         }
-
+        if (des == null) {
+            return null;
+        }
 //        每次生成都要更新一下版本记录和生成数据
         iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des, generateDescriptionVO.getPageType() , generateDescriptionVO.getContentType());
         GENERATE_STATE_BAR.put(usersDO.getId(), FINISHED);

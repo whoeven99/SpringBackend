@@ -48,8 +48,6 @@ public class JsoupUtils {
     @Autowired
     private DeepLIntegration deepLIntegration;
     @Autowired
-    private ChatGptIntegration chatGptIntegration;
-    @Autowired
     private RedisProcessService redisProcessService;
 
 
@@ -307,7 +305,7 @@ public class JsoupUtils {
             //mt翻译失败的话，用其他大模型翻译
             appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译 errors : " + e.getMessage() + " sourceText: " + content);
-            resultTranslation = arkTranslateIntegration.douBaoTranslate(request.getShopName(), prompt, request.getContent(), counter, limitChars);
+            resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName(), limitChars);
             return resultTranslation;
         }
     }
@@ -317,14 +315,14 @@ public class JsoupUtils {
         String changeSource = qwenMtCode(source);
         String changeTarget = qwenMtCode(target);
         try {
-            return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
+            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
         } catch (Exception e) {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
                 appInsights.trackTrace("clickTranslation MT sleep errors ： " + ex.getMessage());
             }
-            return aLiYunTranslateIntegration.callWithMessage(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
+            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
         }
 
     }
@@ -356,7 +354,8 @@ public class JsoupUtils {
         }
 
         if (targetString == null) {
-            return text;
+            //对null的处理，再次翻译
+            return checkTranslationModel(request, counter, languagePackId, limitChars);
         }
 
         targetString = isHtmlEntity(targetString);
@@ -624,12 +623,7 @@ public class JsoupUtils {
         String variableString = getOuterString(content);
         String prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
         appInsights.trackTrace("模块文本： " + content + " variable提示词: " + prompt);
-        if ("ar".equals(target) || "af".equals(target) || "en".equals(target)) {
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
-        } else {
-            content = " " + content + " ";
-            return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
-        }
+        return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
     }
 
     /**
@@ -645,9 +639,9 @@ public class JsoupUtils {
         }
 
         //hi用doubao-1.5-pro-256k翻译
-        if ("hi".equals(target) || "th".equals(target)) {
-            return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
-        }
+//        if ("hi".equals(target) || "th".equals(target)) {
+//            return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
+//        }
 
         return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
     }
@@ -657,10 +651,6 @@ public class JsoupUtils {
      */
     public String translateByCiwiUserModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt) {
         //hi用doubao-1.5-pro-256k翻译
-        if ("hi".equals(target) || "th".equals(target)) {
-            appInsights.trackTrace("豆包翻译 用户： " + shopName);
-            return arkTranslateIntegration.douBaoPromptTranslate(shopName, prompt, content, counter, limitChars);
-        }
         appInsights.trackTrace("千问翻译 用户： " + shopName);
         return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars);
     }

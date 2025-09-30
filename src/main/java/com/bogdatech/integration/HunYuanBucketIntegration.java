@@ -1,12 +1,9 @@
 package com.bogdatech.integration;
 
-import com.bogdatech.entity.DO.UserPicturesDO;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
 import com.qcloud.cos.auth.COSCredentials;
-import com.qcloud.cos.exception.CosClientException;
-import com.qcloud.cos.exception.CosServiceException;
 import com.qcloud.cos.http.HttpProtocol;
 import com.qcloud.cos.model.ObjectMetadata;
 import com.qcloud.cos.model.PutObjectRequest;
@@ -21,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import static com.bogdatech.constants.TencentConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.generate8DigitNumber;
+import static com.bogdatech.utils.TimeOutUtils.*;
+import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class HunYuanBucketIntegration {
@@ -77,11 +76,7 @@ public class HunYuanBucketIntegration {
      * 上传文件, 根据文件大小自动选择简单上传或者分块上传。
      * */
     public static String uploadFile(MultipartFile file, String shopName, String imageId) {
-        int maxRetries = 3; // 最大重试次数
-        int retryCount = 0;
-        long retryDelayMillis = 2000; // 重试间隔2秒
 
-        while (retryCount < maxRetries) {
             TransferManager transferManager = createTransferManager();
             String originalFilename = file.getOriginalFilename();
             String extension = "";
@@ -98,33 +93,35 @@ public class HunYuanBucketIntegration {
             metadata.setContentType(file.getContentType());
 
             try {
-                PutObjectRequest putObjectRequest = new PutObjectRequest(BUCKET_NAME, key, file.getInputStream(), metadata);
+                PutObjectRequest putObjectRequest = callWithTimeoutAndRetry(() -> {
+                            try {
+                                return new PutObjectRequest(BUCKET_NAME, key, file.getInputStream(), metadata);
+                            } catch (Exception e) {
+                                appInsights.trackTrace("每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " imageId : " + imageId + " 用户：" + shopName);
+                                appInsights.trackException(e);
+                                return null;
+                            }
+                        },
+                        DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                        DEFAULT_MAX_RETRIES                // 最多重试3次
+                );
+                if (putObjectRequest == null) {
+                    return null;
+                }
 //                long startTime = System.currentTimeMillis();
                 Upload upload = transferManager.upload(putObjectRequest);
                 showTransferProgress(upload);
                 UploadResult uploadResult = upload.waitForUploadResult();
 //                long endTime = System.currentTimeMillis();
 //                appInsights.trackTrace("used time: " + (endTime - startTime) / 1000);
-//                appInsights.trackTrace(uploadResult.getETag());
-//                appInsights.trackTrace(uploadResult.getCrc64Ecma());
                 transferManager.shutdownNow();
                 return afterUrl; // 上传成功直接返回true
             } catch (Exception e) {
-                retryCount++;
-                appInsights.trackTrace("插入图片 errors : " + e.getMessage() + ", retry " + retryCount + "/" + maxRetries);
+                appInsights.trackTrace("每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", shopName: " + shopName + " imageId: " + imageId);
+            } finally {
                 transferManager.shutdownNow();
-                if (retryCount >= maxRetries) {
-                    // 超过最大重试次数，返回失败
-                    return null;
-                }
-                try {
-                    Thread.sleep(retryDelayMillis);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    return null;
-                }
             }
-        }
+
         return null;
     }
 

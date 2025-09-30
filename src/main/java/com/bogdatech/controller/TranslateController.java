@@ -22,6 +22,8 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -108,6 +110,7 @@ public class TranslateController {
             }
             translateArrayVO.setTranslatesDOResult(translatesDOResult);
             translateArrayVO.setFlag(flag);
+            appInsights.trackTrace("readTranslateDOByArray : " + Arrays.toString(translatesDOS));
             return new BaseResponse<>().CreateSuccessResponse(translateArrayVO);
         } else {
             return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
@@ -367,6 +370,10 @@ public class TranslateController {
             Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
             return new BaseResponse<>().CreateSuccessResponse(translationStatusMap);
         }
+        if (value.get("value") == null && value.get("status").equals(3)) {
+            return new BaseResponse<>().CreateSuccessResponse(value);
+        }
+
         if (value.get("value") == null && value.get("status").equals(2)) {
             Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
             return new BaseResponse<>().CreateSuccessResponse(translationStatusMap);

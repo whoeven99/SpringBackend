@@ -1,31 +1,18 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.EmailIntegration;
-import com.bogdatech.model.controller.request.LoginAndUninstallRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.Trigger;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.sql.Date;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.utils.AESUtils.encrypt;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -33,32 +20,24 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @Component
 @Transactional
 public class UserService {
-
-    private final IUsersService usersService;
-    private final TaskScheduler taskScheduler;
-    private final ITranslationCounterService translationCounterService;
-    private final IAILanguagePacksService aiLanguagePacksService;
-    private final IUserSubscriptionsService userSubscriptionsService;
-    private final EmailIntegration emailIntegration;
-    private final IEmailService emailServicel;
-    private final ITranslatesService translatesService;
-    private final IGlossaryService iGlossaryService;
-    private final IWidgetConfigurationsService widgetConfigurationsService;
-    AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
-
     @Autowired
-    public UserService(IUsersService usersService, TaskScheduler taskScheduler, ITranslationCounterService translationCounterService, IAILanguagePacksService aiLanguagePacksService, IUserSubscriptionsService userSubscriptionsService, EmailIntegration emailIntegration, IEmailService emailServicel, ITranslatesService translatesService, IGlossaryService iGlossaryService, IWidgetConfigurationsService widgetConfigurationsService) {
-        this.usersService = usersService;
-        this.taskScheduler = taskScheduler;
-        this.translationCounterService = translationCounterService;
-        this.aiLanguagePacksService = aiLanguagePacksService;
-        this.userSubscriptionsService = userSubscriptionsService;
-        this.emailIntegration = emailIntegration;
-        this.emailServicel = emailServicel;
-        this.translatesService = translatesService;
-        this.iGlossaryService = iGlossaryService;
-        this.widgetConfigurationsService = widgetConfigurationsService;
-    }
+    private IUsersService usersService;
+    @Autowired
+    private ITranslationCounterService translationCounterService;
+    @Autowired
+    private IAILanguagePacksService aiLanguagePacksService;
+    @Autowired
+    private IUserSubscriptionsService userSubscriptionsService;
+    @Autowired
+    private EmailIntegration emailIntegration;
+    @Autowired
+    private IEmailService emailServicel;
+    @Autowired
+    private ITranslatesService translatesService;
+    @Autowired
+    private IGlossaryService iGlossaryService;
+    @Autowired
+    private IWidgetConfigurationsService widgetConfigurationsService;
 
     //添加用户
     public BaseResponse<Object> addUser(UsersDO usersDO) {
@@ -135,7 +114,7 @@ public class UserService {
                 try {
                     Thread.sleep(RETRY_DELAY_MS);
                 } catch (InterruptedException ie) {
-                    appInsights.trackTrace("Retry delay interrupted for shop: "+ ie);
+                    appInsights.trackTrace("Retry delay interrupted for shop: " + ie);
                     Thread.currentThread().interrupt(); // Restore interrupted status
                     return false;
                 }

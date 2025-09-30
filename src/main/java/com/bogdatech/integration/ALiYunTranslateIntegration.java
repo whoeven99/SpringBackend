@@ -32,18 +32,14 @@ import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.SwitchModelUtils.switchModel;
+import static com.bogdatech.utils.TimeOutUtils.*;
 
 @Component
 public class ALiYunTranslateIntegration {
-
-    private final ITranslationCounterService translationCounterService;
-    private final IAPGUserCounterService iapgUserCounterService;
-
     @Autowired
-    public ALiYunTranslateIntegration(ITranslationCounterService translationCounterService, IAPGUserCounterService iapgUserCounterService) {
-        this.translationCounterService = translationCounterService;
-        this.iapgUserCounterService = iapgUserCounterService;
-    }
+    private ITranslationCounterService translationCounterService;
+    @Autowired
+    private IAPGUserCounterService iapgUserCounterService;
 
     public static com.aliyun.alimt20181012.Client createClient() {
         try {
@@ -53,7 +49,7 @@ public class ALiYunTranslateIntegration {
             credentialConfig.setAccessKeySecret(System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"));
             credentialConfig.setRegionId("cn-hangzhou");
             credentialConfig.setEndpoint("mt.cn-hangzhou.aliyuncs.com");
-           return new com.aliyun.alimt20181012.Client(credentialConfig);
+            return new com.aliyun.alimt20181012.Client(credentialConfig);
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("createClient 调用报错： " + e.getMessage());
@@ -93,7 +89,21 @@ public class ALiYunTranslateIntegration {
         String content;
         int totalToken;
         try {
-            GenerationResult call = gen.call(param);
+            GenerationResult call = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return gen.call(param);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 singleTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (call == null) {
+                return null;
+            }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             Map<String, Object> translationStatusMap = getTranslationStatusMap(text, 2);
             userTranslate.put(shopName, translationStatusMap);
@@ -105,9 +115,9 @@ public class ALiYunTranslateIntegration {
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             countUtils.addChars(totalToken);
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
+            appInsights.trackTrace("singleTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
-            return text;
+            return null;
         }
         return content;
     }
@@ -144,7 +154,21 @@ public class ALiYunTranslateIntegration {
         int totalToken;
         appInsights.trackTrace("totalToken 用户 " + shopName);
         try {
-            GenerationResult call = gen.call(param);
+            GenerationResult call = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return gen.call(param);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 userTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (call == null) {
+                return null;
+            }
             appInsights.trackTrace("GenerationResult 用户 " + shopName);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             appInsights.trackTrace("content 用户 " + shopName);
@@ -167,7 +191,7 @@ public class ALiYunTranslateIntegration {
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation userTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
-            return text;
+            return null;
         }
         return content;
 
@@ -183,7 +207,7 @@ public class ALiYunTranslateIntegration {
      * @param countUtils    计数器
      * @return 翻译后的文本
      */
-    public String callWithMessage(String model, String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars) {
+    public String callWithMessageMT(String model, String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars) {
         Generation gen = new Generation();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
@@ -201,12 +225,26 @@ public class ALiYunTranslateIntegration {
         String content = null;
         int totalToken;
         try {
-            GenerationResult call = gen.call(param);
+            GenerationResult call = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return gen.call(param);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 callWithMessageMT 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + translateText + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (call == null) {
+                return translateText;
+            }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            totalToken =  call.getUsage().getTotalTokens();
+            totalToken = call.getUsage().getTotalTokens();
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace( "clickTranslation 用户： " + shopName +" token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace("callWithMessageMT 用户： " + shopName + " token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
             Map<String, Object> translationStatusMap = getTranslationStatusMap(translateText, 2);
             userTranslate.put(shopName, translationStatusMap);
@@ -214,7 +252,7 @@ public class ALiYunTranslateIntegration {
             countUtils.addChars(totalToken);
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation " + shopName + " 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + translateText);
+            appInsights.trackTrace("callWithMessageMT " + shopName + " 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + translateText);
         }
         return content;
 
@@ -222,7 +260,7 @@ public class ALiYunTranslateIntegration {
 
     /**
      * 调用qwen图片机器翻译
-     * */
+     */
     public String callWithPic(String source, String target, String picUrl, String shopName, Integer limitChars) {
         Client client = createClient();
         com.aliyun.alimt20181012.models.TranslateImageRequest translateImageRequest = new com.aliyun.alimt20181012.models.TranslateImageRequest()
@@ -231,14 +269,29 @@ public class ALiYunTranslateIntegration {
                 .setSourceLanguage(source)
                 .setField("e-commerce");
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
-
+        runtime.setReadTimeout(20000); // 20 秒读超时
+        runtime.setConnectTimeout(20000); // 20 秒连接超时
         String targetPicUrl = null;
         try {
             if (client == null) {
                 appInsights.trackTrace("callWithPic " + shopName + " 百炼翻译报错信息 client is null picUrl : " + picUrl);
                 return null;
             }
-            TranslateImageResponse translateImageResponse = client.translateImageWithOptions(translateImageRequest, runtime);
+            TranslateImageResponse translateImageResponse = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return client.translateImageWithOptions(translateImageRequest, runtime);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 callWithPic 百炼翻译报错信息 errors ： " + e.getMessage() + " picUrl : " + picUrl + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (translateImageResponse == null) {
+                return null;
+            }
             TranslateImageResponseBody body = translateImageResponse.getBody();
             // 打印 body
             appInsights.trackTrace("callWithPic " + shopName + " 图片返回message : " + body.getMessage() + " picUrl : " + body.getData().finalImageUrl + " RequestId: " + body.getRequestId() + " Code: " + body.getCode());
@@ -265,8 +318,8 @@ public class ALiYunTranslateIntegration {
 
     /**
      * 调用qwen视觉模型，根据传入的数据，生成对应的描述数据
-     * */
-    public String callWithPicMess(String prompt, Long userId, CharacterCountUtils counter, String picUrl, Integer userMaxLimit){
+     */
+    public String callWithPicMess(String prompt, Long userId, CharacterCountUtils counter, String picUrl, Integer userMaxLimit) {
         MultiModalConversation conv = new MultiModalConversation();
 
         MultiModalMessage userMessage = MultiModalMessage.builder().role(Role.USER.getValue())
@@ -279,23 +332,36 @@ public class ALiYunTranslateIntegration {
                 .model(QWEN_VL_LAST)
                 .message(userMessage)
                 .build();
-        MultiModalConversationResult result = null;
+        MultiModalConversationResult result;
         try {
-            result = conv.call(param);
+            result = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return conv.call(param);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 callWithPicMess 百炼翻译报错信息 errors ： " + e.getMessage() + " picUrl : " + picUrl + " 用户：" + userId);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (result == null) {
+                return null;
+            }
             List<Map<String, Object>> content = result.getOutput().getChoices().get(0).getMessage().getContent();
             Integer inputTokens = result.getUsage().getInputTokens();
             Integer outputTokens = result.getUsage().getOutputTokens();
             int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
             printTranslateCost(totalToken, inputTokens, outputTokens);
             appInsights.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-//            appInsights.trackTrace("用户 token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             //更新用户产品计数
             counter.addChars(totalToken);
             return (String) content.get(0).get("text");
         } catch (Exception e) {
-            appInsights.trackTrace("callWithPicMess 用户 " + userId + " 调用百炼视觉模型报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
+            appInsights.trackTrace("callWithPicMess 用户 " + userId + " 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             appInsights.trackException(e);
             return null;
         }
@@ -303,7 +369,7 @@ public class ALiYunTranslateIntegration {
 
     /**
      * 调用qwen-max用户产品描述图片为空的情况
-     * */
+     */
     public String callWithQwenMaxToDes(String prompt, CharacterCountUtils countUtils, Long userId, Integer userMaxLimit) {
         Generation gen = new Generation();
         Message userMsg = Message.builder()
@@ -320,21 +386,32 @@ public class ALiYunTranslateIntegration {
         String content;
         int totalToken;
         try {
-            GenerationResult call = gen.call(param);
+            GenerationResult call = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return gen.call(param);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt : " + prompt + " 用户：" + userId);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (call == null) {
+                return null;
+            }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
-//        int totalToken = 10;
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             printTranslateCost(totalToken, inputTokens, outputTokens);
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-//            appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);
         } catch (Exception e) {
-            appInsights.trackTrace("百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
+            appInsights.trackTrace("callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             return null;
-//            appInsights.trackTrace("百炼翻译报错信息： " + e.getMessage());
         }
         return content;
 

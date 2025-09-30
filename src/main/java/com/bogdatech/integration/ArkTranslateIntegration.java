@@ -7,35 +7,29 @@ import com.volcengine.ark.runtime.model.completion.chat.ChatCompletionResult;
 import com.volcengine.ark.runtime.model.completion.chat.ChatMessage;
 import com.volcengine.ark.runtime.model.completion.chat.ChatMessageRole;
 import com.volcengine.ark.runtime.service.ArkService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
 import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
+import static com.bogdatech.utils.TimeOutUtils.*;
+import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class ArkTranslateIntegration {
-
-    private final ITranslationCounterService translationCounterService;
+    @Autowired
+    private ITranslationCounterService translationCounterService;
 
 
     // 定义 ArkService 实例变量，用于与外部服务交互
     private static ArkService arkService;
     private static final String DOUBAO_API_KEY = "DOUBAO_API_KEY";
-
-    public ArkTranslateIntegration(ITranslationCounterService translationCounterService) {
-        this.translationCounterService = translationCounterService;
-    }
-    // 私有构造方法，防止外部通过 new 创建实例，确保单例性
-
-
     // 初始化方法，由 @Bean 的 initMethod 调用
     // 在 Spring 容器创建 Bean 时执行，用于初始化 ArkService
     public void init() {
@@ -45,12 +39,10 @@ public class ArkTranslateIntegration {
             // 检查 API Key 是否为空，若为空则抛出异常，避免服务启动失败
             if (apiKey == null || apiKey.isEmpty()) {
                 appInsights.trackTrace("豆包API Key 未设置:  " + apiKey);
-                //            throw new IllegalStateException("环境变量 ARK_API_KEY 未设置");
             }
             // 使用建造者模式创建 ArkService 实例，并赋值给成员变量
             arkService = ArkService.builder().apiKey(apiKey).timeout(Duration.ofSeconds(120)).retryTimes(2).build();
         } catch (Exception e) {
-//            appInsights.trackTrace("豆包模型初始化失败！！！" + e.getMessage());
             appInsights.trackTrace("豆包模型初始化失败！！！" + e.getMessage());
         }
     }
@@ -93,7 +85,21 @@ public class ArkTranslateIntegration {
                     .build();
 
             StringBuilder response = new StringBuilder();
-            ChatCompletionResult chatCompletion = arkService.createChatCompletion(request);
+            ChatCompletionResult chatCompletion = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return arkService.createChatCompletion(request);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 douBaoTranslate 豆包翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (chatCompletion == null) {
+                return sourceText;
+            }
             chatCompletion.getChoices().forEach(choice -> response.append(choice.getMessage().getContent()));
             long totalTokens = (long) (chatCompletion.getUsage().getTotalTokens() * MAGNIFICATION);
             int totalTokensInt = (int) totalTokens;
@@ -101,13 +107,13 @@ public class ArkTranslateIntegration {
             userTranslate.put(shopName, translationStatusMap);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
-            printTranslateCost(totalTokensInt, (int) promptTokens, (int)completionTokens);
+            printTranslateCost(totalTokensInt, (int) promptTokens, (int) completionTokens);
             appInsights.trackTrace("clickTranslation douBaoTranslate " + shopName + " 用户 token doubao: " + sourceText + " target : " + response + " all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalTokensInt, limitChars);
             countUtils.addChars(totalTokensInt);
             return response.toString();
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " douBaoTranslate 豆包翻译失败 errors : " + e.getMessage() + " sourceText : " + sourceText);
+            appInsights.trackTrace("clickTranslation " + shopName + " douBaoTranslate 豆包翻译报错信息 errors : " + e.getMessage() + " sourceText : " + sourceText);
             appInsights.trackException(e);
             return sourceText;
         }
@@ -130,7 +136,21 @@ public class ArkTranslateIntegration {
             appInsights.trackTrace("ChatCompletionRequest 用户 " + shopName);
             StringBuilder response = new StringBuilder();
             appInsights.trackTrace("StringBuilder 用户 " + shopName);
-            ChatCompletionResult chatCompletion = arkService.createChatCompletion(request);
+            ChatCompletionResult chatCompletion = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return arkService.createChatCompletion(request);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 douBaoPromptTranslate 豆包翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (chatCompletion == null) {
+                return sourceText;
+            }
             appInsights.trackTrace("ChatCompletionResult 用户 " + shopName);
             chatCompletion.getChoices().forEach(choice -> response.append(choice.getMessage().getContent()));
             appInsights.trackTrace("chatCompletion 用户 " + shopName);
@@ -146,7 +166,7 @@ public class ArkTranslateIntegration {
             appInsights.trackTrace("completionTokens 用户 " + shopName);
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
             appInsights.trackTrace("promptTokens 用户 " + shopName);
-            printTranslateCost(totalTokensInt, (int) promptTokens, (int)completionTokens);
+            printTranslateCost(totalTokensInt, (int) promptTokens, (int) completionTokens);
             appInsights.trackTrace("clickTranslation douBaoPromptTranslate " + shopName + " 用户 token doubao: " + sourceText + " target : " + response + "all: " + totalTokens + " input: " + promptTokens + " output: " + completionTokens);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalTokensInt, limitChars);
             appInsights.trackTrace("updateAddUsedCharsByShopName 用户 " + shopName);
@@ -154,7 +174,7 @@ public class ArkTranslateIntegration {
             appInsights.trackTrace("countUtils 用户 " + shopName);
             return response.toString();
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " douBaoTranslate 豆包翻译失败 errors : " + e.getMessage() + " sourceText : " + sourceText);
+            appInsights.trackTrace("clickTranslation " + shopName + " douBaoPromptTranslate 豆包翻译报错信息 errors : " + e.getMessage() + " sourceText : " + sourceText);
             appInsights.trackException(e);
             return sourceText;
         }

@@ -8,7 +8,6 @@ import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +21,8 @@ import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
+import static com.bogdatech.utils.TimeOutUtils.*;
+import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class ChatGptIntegration {
@@ -30,16 +31,12 @@ public class ChatGptIntegration {
     private String endpoint;
     @Value("${gpt.deploymentName}")
     private String deploymentName;
-
-    private final ITranslationCounterService translationCounterService;
     @Autowired
-    public ChatGptIntegration(ITranslationCounterService translationCounterService) {
-        this.translationCounterService = translationCounterService;
-    }
+    private ITranslationCounterService translationCounterService;
 
     /**
      * Azure服务器调用gpt
-     * */
+     */
     public String chatWithGpt(String prompt, String sourceText, TranslateRequest request, CharacterCountUtils counter, Integer limitChars) {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
@@ -49,11 +46,11 @@ public class ChatGptIntegration {
 
         // 模拟聊天交互
         ChatMessage messagereq = new ChatMessage(ChatRole.USER);
-        ChatMessage messagersy= new ChatMessage(ChatRole.SYSTEM);
+        ChatMessage messagersy = new ChatMessage(ChatRole.SYSTEM);
         messagersy.setContent(prompt);
         messagereq.setContent(sourceText);
 
-        List<ChatMessage> prompts = new ArrayList<> ();
+        List<ChatMessage> prompts = new ArrayList<>();
         prompts.add(messagereq);
         prompts.add(messagersy);
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
@@ -64,35 +61,41 @@ public class ChatGptIntegration {
                 .setPresencePenalty(0.0)
                 .setStream(false);
 
-        String content = null;
-        int retryCount = 0;
-        final int maxRetries = 3;
-        while (retryCount < maxRetries) {
-            try {
-
-                ChatCompletions chatCompletions = client.getChatCompletions(deploymentName, options);
-                content = chatCompletions.getChoices().get(0).getMessage().getContent();
-                int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
-                int promptToken = chatCompletions.getUsage().getPromptTokens();
-                int completionToken = chatCompletions.getUsage().getCompletionTokens();
-                printTranslateCost(allToken, promptToken, completionToken);
-                appInsights.trackTrace( "clickTranslation chatWithGpt 用户： " + request.getShopName() + " 翻译的文本： " + sourceText + " token openai : " + request.getTarget() + " all: " + allToken + " promptToken : " + promptToken + " completionToken : " + completionToken);
-                Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
-                userTranslate.put(request.getShopName(), translationStatusMap);
-                translationCounterService.updateAddUsedCharsByShopName(request.getShopName(), allToken, limitChars);
-                counter.addChars(allToken);
-                return content;
-            } catch (Exception e) {
-                retryCount++;
-                appInsights.trackTrace("clickTranslation " + request.getShopName() + " chatWithGpt Error occurred while calling GPT: " + e.getMessage() + " sourceText: " + sourceText + " prompt: " + prompt);
-                appInsights.trackException(e);
-                if (retryCount >= 2){
-                        // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
-                        throw new ClientException("clickTranslation " + request.getShopName() + " chatWithGpt Translation openai exception errors " + " sourceText: " + sourceText + " prompt: " + prompt);
-                    }
+        String content;
+        try {
+            ChatCompletions chatCompletions = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return client.getChatCompletions(deploymentName, options);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 chatWithGpt gpt翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + request.getShopName());
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (chatCompletions == null) {
+                return sourceText;
             }
+
+            content = chatCompletions.getChoices().get(0).getMessage().getContent();
+            int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
+            int promptToken = chatCompletions.getUsage().getPromptTokens();
+            int completionToken = chatCompletions.getUsage().getCompletionTokens();
+            printTranslateCost(allToken, promptToken, completionToken);
+            appInsights.trackTrace("clickTranslation chatWithGpt 用户： " + request.getShopName() + " 翻译的文本： " + sourceText + " token openai : " + request.getTarget() + " all: " + allToken + " promptToken : " + promptToken + " completionToken : " + completionToken);
+            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
+            userTranslate.put(request.getShopName(), translationStatusMap);
+            translationCounterService.updateAddUsedCharsByShopName(request.getShopName(), allToken, limitChars);
+            counter.addChars(allToken);
+            return content;
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation " + request.getShopName() + " chatWithGpt gpt翻译报错信息 Error occurred while calling GPT: " + e.getMessage() + " sourceText: " + sourceText + " prompt: " + prompt);
+            appInsights.trackException(e);
+            // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
+            return null;
         }
-        return content;
     }
 
 }
