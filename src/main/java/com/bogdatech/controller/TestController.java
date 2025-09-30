@@ -387,15 +387,20 @@ public class TestController {
 
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
+        TelemetryClient appInsights = new TelemetryClient();
+
         Set<String> shops = translationMonitorRedisService.getTranslatingShops();
+        appInsights.trackTrace("monitor shops: " + shops.toString());
+
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("shops", shops);
-        shops.forEach(shop -> {
-            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
-            responseMap.put(shop, map);
-        });
+//        shops.forEach(shop -> {
+//            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
+//            responseMap.put(shop, map);
+//        });
 
         Integer tasksCount = translationMonitorRedisService.getCountOfTasks();
+        appInsights.trackTrace("monitor tasksCount: " + tasksCount);
         responseMap.put("tasksCount", tasksCount);
 
         return responseMap;
