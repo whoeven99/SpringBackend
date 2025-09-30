@@ -51,7 +51,7 @@ public class TranslationMonitorRedisService {
     }
 
     public void hsetRemainingCharsOfShop(String shopName, Integer remainingChars) {
-        redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "usedChars", remainingChars.toString());
+        redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "remainingChars", remainingChars.toString());
     }
 
     public Map<Object, Object> getShopTranslationStats(String shopName) {
