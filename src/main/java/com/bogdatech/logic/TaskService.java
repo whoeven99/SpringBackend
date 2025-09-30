@@ -266,26 +266,31 @@ public class TaskService {
      */
     @Async
     public void autoTranslate() {
+        appInsights.trackTrace("autoTranslate 开始");
         //获取所有使用自动翻译的用户
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        appInsights.trackTrace("autoTranslate 获取完所有 使用自动翻译的语言数： " + translatesDOList.size());
         if (translatesDOList.isEmpty()){
             return;
         }
         for (TranslatesDO translatesDO : translatesDOList
         ) {
-//            appInsights.trackTrace("translatesDO: " + translatesDO);
-            String shopName = translatesDO.getShopName();
 
+            String shopName = translatesDO.getShopName();
+            appInsights.trackTrace("autoTranslate 用户: " + shopName);
             //判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getUserByName(shopName);
             if (usersDO == null){
+                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了");
                 continue;
             }
             if (usersDO.getUninstallTime() != null) {
                 //如果用户卸载了，但有登陆时间，需要判断两者的前后
                 if (usersDO.getLoginTime() == null) {
+                    appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了未登陆");
                     continue;
                 } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+                    appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了时间在登陆时间后");
                     continue;
                 }
             }
@@ -297,7 +302,7 @@ public class TaskService {
             int usedChars = request1.getUsedChars();
             // 如果字符超限，则直接返回字符超限
             if (usedChars >= remainingChars) {
-//                appInsights.trackTrace("该用户字符超限，不翻译了");
+                appInsights.trackTrace("该用户字符超限，不翻译了 ： " + shopName);
                 continue;
             }
 
@@ -305,17 +310,18 @@ public class TaskService {
             TranslationUsageDO usageServiceOne = iTranslationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>().eq(TranslationUsageDO::getShopName, shopName).eq(TranslationUsageDO::getLanguageName, translatesDO.getTarget()));
             if (usageServiceOne == null) {
                 iTranslationUsageService.save(new TranslationUsageDO(translatesDO.getId(), translatesDO.getShopName(), translatesDO.getTarget(), 0, 0, 0, 0));
+                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 存一个消耗记录");
             }
 
             //将任务存到数据库等待翻译
             //初始化用户状态
             userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
             userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
-
+            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
             //初始化计数器
             CharacterCountUtils counter = new CharacterCountUtils();
             counter.addChars(usedChars);
-
+            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化计数器");
             //调用DB翻译逻辑
             rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
                             , translatesDO.getTarget()), counter, AUTO_TRANSLATE_MAP

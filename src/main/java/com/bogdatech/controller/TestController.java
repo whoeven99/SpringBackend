@@ -171,6 +171,7 @@ public class TestController {
     //测试自动翻译功能
     @PutMapping("/testAutoTranslate")
     public void testAutoTranslate() {
+        appInsights.trackTrace("testAutoTranslate 开始调用");
         taskService.autoTranslate();
     }
 
@@ -237,7 +238,7 @@ public class TestController {
     public void testDBTranslate2(@RequestParam String taskId) {
         //根据id获取数据，转化为规定数据类型
         RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
-        rabbitMqTranslateConsumerService.processMessage(dataToProcess, new TranslateTasksDO(), false);
+        rabbitMqTranslateConsumerService.ConditionalJudgmentBeforeTranslation(dataToProcess, new TranslateTasksDO(), false);
         translateTasksService.updateByTaskId(taskId, 1);
     }
 
