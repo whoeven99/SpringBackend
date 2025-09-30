@@ -52,7 +52,7 @@ public class ProcessDbTaskService {
      * 重新实现邮件发送方法。 能否获取这条数据之前是否有其他项没完成，没完成的话继续完成；完成的话，走发送邮件的逻辑。
      * 判断是否需要发送邮件，如果是走邮件发送，如果不是,走用户翻译
      */
-    public void startTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
+    public void runTask(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
         String shopName = rabbitMqTranslateVO.getShopName();
         String shopifyData = rabbitMqTranslateVO.getShopifyData();
         try {
@@ -72,7 +72,7 @@ public class ProcessDbTaskService {
             } else {
                 // 普通翻译任务
                 appInsights.trackTrace("dbTranslate 用户 " + rabbitMqTranslateVO.getShopName());
-                processMessage(rabbitMqTranslateVO, task, EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey()));
+                processTask(rabbitMqTranslateVO, task, EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey()));
                 appInsights.trackTrace("processMessage 用户 " + rabbitMqTranslateVO.getShopName());
 
                 //将用户task改为1
@@ -94,24 +94,18 @@ public class ProcessDbTaskService {
 
     }
 
-    public void processMessage(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, boolean isTranslationAuto) {
+    public void processTask(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, boolean isTranslationAuto) {
         //获取现在的时间，后面做减法
         Instant start = Instant.now();
         String shopName = rabbitMqTranslateVO.getShopName();
 
         //判断字符是否超限
-        appInsights.trackTrace("start 用户 " + shopName);
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
-        appInsights.trackTrace("request1 用户 " + shopName);
         Integer remainingChars = rabbitMqTranslateVO.getLimitChars();
-        appInsights.trackTrace("remainingChars 用户 " + shopName);
         int usedChars = request1.getUsedChars();
-        appInsights.trackTrace("usedChars 用户 " + shopName);
         //初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
-        appInsights.trackTrace("counter 用户 " + shopName);
         counter.addChars(usedChars);
-        appInsights.trackTrace("addChars 用户 " + shopName);
 
         // Record
         translationMonitorRedisService.hsetUsedCharsOfShop(shopName, usedChars);
@@ -122,16 +116,13 @@ public class ProcessDbTaskService {
             appInsights.trackTrace(shopName + " clickTranslation 字符超限 processMessage errors 当前消耗token为: " + usedChars);
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(shopName);
-            appInsights.trackTrace("updateTranslateTasksStatus 用户 " + shopName);
             //将用户翻译状态也改为3
             translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
-            appInsights.trackTrace("translatesService 用户 " + shopName);
             throw new ClientException("字符超限");
         }
 
         // 修改数据库当前翻译模块的数据
         translatesService.updateTranslatesResourceType(shopName, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());
-        appInsights.trackTrace("updateTranslatesResourceType 用户 " + shopName);
 
         // 修改数据库的模块翻译状态
         translateTasksService.updateByTaskId(task.getTaskId(), 2);
