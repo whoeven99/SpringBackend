@@ -78,6 +78,11 @@ public class RedisIntegration {
         return redisTemplate.opsForSet().members(key);
     }
 
+    public Boolean remove(String key, String value) {
+        Long remove = redisTemplate.opsForSet().remove(key, value);
+        return remove != null && remove > 0;
+    }
+
     /**
      * 获取缓存
      */

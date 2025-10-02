@@ -12,14 +12,16 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
-import static com.bogdatech.utils.RedisKeyUtils.generateTranslateLockKey;
 
 @Component
 @EnableScheduling
@@ -35,6 +37,13 @@ public class DBTask {
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private ProcessDbTaskService processDbTaskService;
+    private final ExecutorService executorService = Executors.newCachedThreadPool(); // 线程数可根据实际情况调整
+
+    @PostConstruct
+    public void init() {
+        appInsights.trackTrace("DBTaskLog init");
+        redisTranslateLockService.setDelete(); // 删掉翻译中的所有shop
+    }
 
     // 每30秒钟轮询一次是否有新的shop需要翻译
     @Scheduled(fixedRate = 30 * 1000)
@@ -47,16 +56,14 @@ public class DBTask {
             return;
         }
 
-        // 统计shopName数量
+        // 统计待翻译的shop数量
         Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
         shops.forEach((shopName) -> translationMonitorRedisService.setTranslatingShop(shopName));
         appInsights.trackTrace("DBTaskLog Number of existing shops: " + shops.size());
 
-        // 被锁定的shop -> 正在翻译中的shop
-        Set<String> lockedShops = shops.stream()
-                .filter(shopName -> "1".equals(redisIntegration.get(generateTranslateLockKey(shopName))))
-                .collect(Collectors.toSet());
-        appInsights.trackTrace("DBTaskLog Number of lockedShops: " + lockedShops.size() + " " + lockedShops);
+        // 翻译中的shop数量
+        Set<String> translatingShops = redisTranslateLockService.members();
+        appInsights.trackTrace("DBTaskLog Number of translating Shops: " + translatingShops.size() + " " + translatingShops);
 
         // 对当前的shop轮询，抢到锁的时候，会在这个task把把当前shop的所有task都处理掉
         for (String shop : shops) {
@@ -64,72 +71,47 @@ public class DBTask {
             Set<TranslateTasksDO> shopTasks = tasks.stream()
                     .filter(taskDo -> taskDo.getShopName().equals(shop))
                     .collect(Collectors.toSet());
+
             // 这一行的日志可以看到每个shop的task是否在减少
             appInsights.trackTrace("DBTaskLog Number of shopTasks: " + shopTasks.size() + " need to translate of shop: " + shop);
 
             // 当前的加锁，只是为了保持一个shop只会被一个线程处理，防止进度条或者其他的状态不兼容并发翻译
-            if (redisTranslateLockService.lockStore(shop)) {
+            // 这里加锁的方式是将shop放进一个set
+            if (redisTranslateLockService.setAdd(shop)) {
                 appInsights.trackTrace("DBTaskLog new shop start translate: " + shop);
-
-                try {
-                    for (TranslateTasksDO task : shopTasks) {
-                        appInsights.trackTrace("DBTaskLog new task start: " + task.getTaskId() + " of shop: " + shop);
-                        try {
-                            RabbitMqTranslateVO vo = jsonToObject(task.getPayload(), RabbitMqTranslateVO.class);
-                            if (vo == null) {
-                                appInsights.trackTrace("DBTaskLog FatalException: " + shop + " 解析失败 " + task.getPayload());
-                                //将taskId 改为10（暂定）
-                                translateTasksService.updateByTaskId(task.getTaskId(), 10);
-                                return;
-                            }
-
-                            // 开始处理
-                            processDbTaskService.runTask(vo, task);
-                        } catch (Exception e) {
-                            appInsights.trackTrace("DBTaskLog FatalException " + shop + " 任务处理失败 " + e);
-                            //将该模块状态改为4
-                            translateTasksService.updateByTaskId(task.getTaskId(), 4);
-                            appInsights.trackException(e);
-                        }
+                executorService.submit(() -> {
+                    try {
+                        processShopTasks(shop, shopTasks);
+                    } finally {
+                        redisTranslateLockService.setRemove(shop);
                     }
-                } finally {
-                    redisTranslateLockService.unLockStore(shop);
-                }
+                });
             }
         }
-//
-//        // 开始处理所有task
-//        for (TranslateTasksDO task : tasks) {
-//            String shopName = task.getShopName();
-//            //在加锁时判断是否成功，成功-翻译；不成功跳过
-//            if (redisTranslateLockService.lockStore(shopName)) {
-//                executorService.submit(() -> {
-//                    appInsights.trackTrace("DBTask Lock [" + shopName + "] by thread " + Thread.currentThread().getName()
-//                            + "shop: " + shopName + " 锁的状态： " + redisIntegration.get(generateTranslateLockKey(shopName)));
-//                    try {
-//                        // 只执行一个线程处理这个 shopName
-//                        RabbitMqTranslateVO vo = jsonToObject(task.getPayload(), RabbitMqTranslateVO.class);
-//                        if (vo == null) {
-//                            redisTranslateLockService.unLockStore(shopName);
-//                            appInsights.trackTrace("每日须看 ： " + shopName + " 处理失败，payload为空 " + task.getPayload());
-//                            //将taskId 改为10（暂定）
-//                            translateTasksService.updateByTaskId(task.getTaskId(), 10);
-//                            return;
-//                        }
-//
-//                        // 开始处理
-//                        processDbTaskService.runTask(vo, task);
-//                    } catch (Exception e) {
-//                        appInsights.trackTrace("clickTranslation " + shopName + " 处理失败 errors : " + e);
-//                        //将该模块状态改为4
-//                        translateTasksService.updateByTaskId(task.getTaskId(), 4);
-//                        appInsights.trackException(e);
-//                    } finally {
-//                        redisTranslateLockService.unLockStore(shopName);
-//                    }
-//                });
-//            }
-//        }
+    }
+
+    private void processShopTasks(String shop, Set<TranslateTasksDO> shopTasks) {
+        for (TranslateTasksDO task : shopTasks) {
+            appInsights.trackTrace("DBTaskLog new task start: " + task.getTaskId() + " of shop: " + shop);
+            try {
+                RabbitMqTranslateVO vo = jsonToObject(task.getPayload(), RabbitMqTranslateVO.class);
+                if (vo == null) {
+                    appInsights.trackTrace("DBTaskLog FatalException: " + shop + " 解析失败 " + task.getPayload());
+                    //将taskId 改为10（暂定）
+                    translateTasksService.updateByTaskId(task.getTaskId(), 10);
+                    return;
+                }
+
+                // 开始处理
+                processDbTaskService.runTask(vo, task);
+                appInsights.trackTrace("DBTaskLog task finish successfully: " + task.getTaskId() + " of shop: " + shop);
+            } catch (Exception e) {
+                appInsights.trackTrace("DBTaskLog FatalException " + shop + " 任务处理失败 " + e);
+                //将该模块状态改为4
+                translateTasksService.updateByTaskId(task.getTaskId(), 4);
+                appInsights.trackException(e);
+            }
+        }
     }
 }
 

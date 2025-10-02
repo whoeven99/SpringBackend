@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
-import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -255,7 +254,7 @@ public class TaskService {
             translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
 
             //删除redis里面的tl:锁值
-            redisTranslateLockService.unLockStore(translatesDO.getShopName());
+            redisTranslateLockService.setRemove(translatesDO.getShopName());
             appInsights.trackTrace("TaskServiceLog 系统重启，删除锁： " + translatesDO.getShopName());
         }
     }
