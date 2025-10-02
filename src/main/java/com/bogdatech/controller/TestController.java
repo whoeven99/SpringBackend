@@ -283,7 +283,7 @@ public class TestController {
     public String testRecover(@RequestParam String shopName) {
         //获取用户，redis锁情况
         translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
-        boolean flag = redisTranslateLockService.unLockStore(shopName);
+        boolean flag = redisTranslateLockService.setRemove(shopName);
         Map<String, Object> translationStatusMap = getTranslationStatusMap(" ", 1);
         userTranslate.put(shopName, translationStatusMap);
         return "是否解锁成功： " + flag;
@@ -294,12 +294,12 @@ public class TestController {
      */
     @GetMapping("/testLock")
     public Boolean testLock(@RequestParam String shopName) {
-        return redisTranslateLockService.lockStore(shopName);
+        return redisTranslateLockService.setAdd(shopName);
     }
 
     @GetMapping("/testUnlock")
     public Boolean testUnlock(@RequestParam String shopName) {
-        return redisTranslateLockService.unLockStore(shopName);
+        return redisTranslateLockService.setRemove(shopName);
     }
 
 

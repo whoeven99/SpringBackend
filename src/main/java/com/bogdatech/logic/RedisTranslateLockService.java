@@ -3,30 +3,29 @@ package com.bogdatech.logic;
 import com.bogdatech.integration.RedisIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import static com.bogdatech.utils.RedisKeyUtils.*;
+
+import java.util.Set;
 
 @Service
 public class RedisTranslateLockService {
-
     @Autowired
     private RedisIntegration redisIntegration;
 
-    /**
-     * 对商店加锁
-     * 不存在加锁，为1
-     * 翻译完后再删掉1
-     */
-    public boolean lockStore(String shopName) {
-        return redisIntegration.trySetValueIfAbsent(generateTranslateLockKey(shopName), TRANSLATE_LOCK_TRUE);
+    public static final String TRANSLATING_SHOPS_SET_KEY = "translating_shops_set_key";
+
+    public boolean setAdd(String shopName) {
+        return redisIntegration.setSet(TRANSLATING_SHOPS_SET_KEY, shopName);
     }
 
-
-    /**
-     * 对商店解锁
-     * 将对应的key直接删除
-     */
-    public boolean unLockStore(String shopName) {
-        return redisIntegration.delete(generateTranslateLockKey(shopName));
+    public boolean setRemove(String shopName) {
+        return redisIntegration.remove(TRANSLATING_SHOPS_SET_KEY, shopName);
     }
 
+    public Set<String> members() {
+        return redisIntegration.getSet(TRANSLATING_SHOPS_SET_KEY);
+    }
+
+    public boolean setDelete() {
+        return redisIntegration.delete(TRANSLATING_SHOPS_SET_KEY);
+    }
 }
