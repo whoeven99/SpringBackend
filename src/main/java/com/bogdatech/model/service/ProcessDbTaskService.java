@@ -71,9 +71,9 @@ public class ProcessDbTaskService {
                 }
             } else {
                 // 普通翻译任务
-                appInsights.trackTrace("dbTranslate 用户 " + rabbitMqTranslateVO.getShopName());
+                appInsights.trackTrace("DBTaskLog ready process with task " + task.getTaskId() + " of shop " + rabbitMqTranslateVO.getShopName());
                 processTask(rabbitMqTranslateVO, task, EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey()));
-                appInsights.trackTrace("processMessage 用户 " + rabbitMqTranslateVO.getShopName());
+                appInsights.trackTrace("DBTaskLog process done with task " + task.getTaskId() + " of shop " + rabbitMqTranslateVO.getShopName());
 
                 //将用户task改为1
                 translateTasksService.updateByTaskId(task.getTaskId(), 1);
