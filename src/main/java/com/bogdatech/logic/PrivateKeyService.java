@@ -399,7 +399,7 @@ public class PrivateKeyService {
         //将翻译的数据分类，提示词，普通文本，html
         Map<String, Set<TranslateTextDO>> stringSetMap = initTranslateMap();
         //将筛选好的数据分类
-        Map<String, Set<TranslateTextDO>> stringSetMap1 = filterTranslateMap(stringSetMap, filterTranslateData, translateContext.getGlossaryMap());
+        Map<String, Set<TranslateTextDO>> stringSetMap1 = rabbitMqTranslateService.filterTranslateMap(stringSetMap, filterTranslateData, translateContext.getGlossaryMap());
         //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
 
         try {

@@ -651,6 +651,51 @@ public class RabbitMqTranslateService {
         }
     }
 
+    public Map<String, Set<TranslateTextDO>> filterTranslateMap(Map<String, Set<TranslateTextDO>> stringSetMap, Set<TranslateTextDO> filterTranslateData, Map<String, Object> glossaryMap) {
+        if (filterTranslateData == null || filterTranslateData.isEmpty()) {
+            return stringSetMap;
+        }
+        for (TranslateTextDO translateTextDO : filterTranslateData) {
+            String value = translateTextDO.getSourceText();
+            String key = translateTextDO.getTextKey();
+            String textType = translateTextDO.getTextType();
+            //判断是否是词汇表数据
+            if (!glossaryMap.isEmpty()) {
+                boolean success = false;
+                for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
+                    String glossaryKey = entry.getKey();
+                    if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
+                        stringSetMap.get(GLOSSARY).add(translateTextDO);
+                        success = true;
+                        break;
+                    }
+                }
+                if (success) {
+                    continue;
+                }
+            }
+
+            //判断是html还是普通文本
+            if (isHtml(value)) {
+                stringSetMap.get(HTML).add(translateTextDO);
+                continue;
+            }
+            switch (key) {
+                case TITLE -> stringSetMap.get(TITLE).add(translateTextDO);
+                case META_TITLE -> stringSetMap.get(META_TITLE).add(translateTextDO);
+                case LOWERCASE_HANDLE -> stringSetMap.get(LOWERCASE_HANDLE).add(translateTextDO);
+                default -> {
+                    if (textType.equals(LIST_SINGLE)) {
+                        stringSetMap.get(LIST_SINGLE).add(translateTextDO);
+                    } else {
+                        stringSetMap.get(PLAIN_TEXT).add(translateTextDO);
+                    }
+                }
+            }
+        }
+        return stringSetMap;
+    }
+
     /**
      * list翻译
      *
