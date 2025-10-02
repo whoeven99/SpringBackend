@@ -311,60 +311,6 @@ public class RabbitMqTranslateService {
     }
 
     /**
-     * 根据模块选择翻译方法
-     */
-    public void translateByModeType(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
-        String modelType = rabbitMqTranslateVO.getModeType();
-        appInsights.trackTrace("DBTaskLog DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
-
-        appInsights.trackTrace("clickTranslation DB翻译模块：" + modelType + " 用户 ： " + rabbitMqTranslateVO.getShopName() + " targetCode ：" + rabbitMqTranslateVO.getTarget() + " source : " + rabbitMqTranslateVO.getSource());
-
-        //根据DB的请求语句获取对应shopify值
-        String shopifyDataByDb = getShopifyDataByDb(rabbitMqTranslateVO);
-        if (shopifyDataByDb == null) {
-            // TODO 这里应该就是FatalException了，出现这个状况的话很严重
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " shopifyDataByDb is null" + rabbitMqTranslateVO);
-            return;
-        }
-        Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(
-                stringToJson(shopifyDataByDb), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getIsCover(),
-                rabbitMqTranslateVO.getTarget());
-        if (needTranslatedData == null) {
-            return;
-        }
-        Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(
-                rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getHandleFlag(), needTranslatedData,
-                rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget());
-        //将筛选好的数据分类
-        Map<String, Set<TranslateTextDO>> stringSetMap = filterTranslateMap(initTranslateMap(), filterTranslateData, rabbitMqTranslateVO.getGlossaryMap());
-        //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
-        if (stringSetMap.isEmpty()) {
-            return;
-        }
-        for (Map.Entry<String, Set<TranslateTextDO>> entry : stringSetMap.entrySet()) {
-            switch (entry.getKey()) {
-                case HTML:
-                    translateHtmlData(entry.getValue(), rabbitMqTranslateVO, countUtils);
-                    break;
-                case PLAIN_TEXT:
-                case TITLE:
-                case META_TITLE:
-                case LOWERCASE_HANDLE:
-                    translatePlainTextData(entry.getValue(), rabbitMqTranslateVO, countUtils, entry.getKey());
-                    break;
-                case LIST_SINGLE:
-                    translateListSingleData(entry.getValue(), rabbitMqTranslateVO, countUtils);
-                    break;
-                case GLOSSARY:
-                    translateGlossaryData(entry.getValue(), rabbitMqTranslateVO, countUtils);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    /**
      * 根据从数据库获取的数据，请求shopify获取数据
      */
     public String getShopifyDataByDb(RabbitMqTranslateVO rabbitMqTranslateVO) {
@@ -435,56 +381,6 @@ public class RabbitMqTranslateService {
         judgeData.put(LIST_SINGLE, new HashSet<>());
 
         return judgeData;
-    }
-
-
-    /**
-     * 遍历筛选后的数据，然后将数据分为词汇表数据，普通文本，html文本
-     */
-    public static Map<String, Set<TranslateTextDO>> filterTranslateMap(Map<String, Set<TranslateTextDO>> stringSetMap, Set<TranslateTextDO> filterTranslateData, Map<String, Object> glossaryMap) {
-        if (filterTranslateData == null || filterTranslateData.isEmpty()) {
-            return stringSetMap;
-        }
-        for (TranslateTextDO translateTextDO : filterTranslateData
-        ) {
-            String value = translateTextDO.getSourceText();
-            String key = translateTextDO.getTextKey();
-            String textType = translateTextDO.getTextType();
-            //判断是否是词汇表数据
-            if (!glossaryMap.isEmpty()) {
-                boolean success = false;
-                for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
-                    String glossaryKey = entry.getKey();
-                    if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
-                        stringSetMap.get(GLOSSARY).add(translateTextDO);
-                        success = true;
-                        break;
-                    }
-                }
-                if (success) {
-                    continue;
-                }
-            }
-
-            //判断是html还是普通文本
-            if (isHtml(value)) {
-                stringSetMap.get(HTML).add(translateTextDO);
-                continue;
-            }
-            switch (key) {
-                case TITLE -> stringSetMap.get(TITLE).add(translateTextDO);
-                case META_TITLE -> stringSetMap.get(META_TITLE).add(translateTextDO);
-                case LOWERCASE_HANDLE -> stringSetMap.get(LOWERCASE_HANDLE).add(translateTextDO);
-                default -> {
-                    if (textType.equals(LIST_SINGLE)) {
-                        stringSetMap.get(LIST_SINGLE).add(translateTextDO);
-                    } else {
-                        stringSetMap.get(PLAIN_TEXT).add(translateTextDO);
-                    }
-                }
-            }
-        }
-        return stringSetMap;
     }
 
     /**

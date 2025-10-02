@@ -16,6 +16,7 @@ import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.Duration;
@@ -23,9 +24,15 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.logic.RabbitMqTranslateService.initTranslateMap;
 import static com.bogdatech.logic.TranslateService.userTranslate;
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.JsonUtils.jsonToObject;
+import static com.bogdatech.utils.JsonUtils.stringToJson;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 
@@ -47,13 +54,23 @@ public class ProcessDbTaskService {
     private RedisIntegration redisIntegration;
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
+    @Autowired
+    private JsoupUtils jsoupUtils;
 
     /**
      * 重新实现邮件发送方法。 能否获取这条数据之前是否有其他项没完成，没完成的话继续完成；完成的话，走发送邮件的逻辑。
      * 判断是否需要发送邮件，如果是走邮件发送，如果不是,走用户翻译
      */
-    public void runTask(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
-        String shopName = rabbitMqTranslateVO.getShopName();
+    public void runTask(TranslateTasksDO task) {
+        String shopName = task.getShopName();
+        RabbitMqTranslateVO rabbitMqTranslateVO = jsonToObject(task.getPayload(), RabbitMqTranslateVO.class);
+        if (rabbitMqTranslateVO == null) {
+            appInsights.trackTrace("ProcessDBTaskLog FatalException: " + shopName + " 解析失败 " + task.getPayload());
+            //将taskId 改为10（暂定）
+            translateTasksService.updateByTaskId(task.getTaskId(), 10);
+            return;
+        }
+
         String shopifyData = rabbitMqTranslateVO.getShopifyData();
         try {
             if (EMAIL.equals(shopifyData) || EMAIL_AUTO.equals(shopifyData)) {
@@ -62,7 +79,7 @@ public class ProcessDbTaskService {
                 if (canSendEmail) {
                     if (EMAIL.equals(shopifyData)) {
                         emailTranslate(rabbitMqTranslateVO, task);
-                    } else if (EMAIL_AUTO.equals(shopifyData)) {
+                    } else {
                         emailAutoTranslate(rabbitMqTranslateVO, task);
                     }
                 } else {
@@ -71,49 +88,42 @@ public class ProcessDbTaskService {
                 }
             } else {
                 // 普通翻译任务
-                appInsights.trackTrace("ProcessDBTaskLog ready process with task " + task.getTaskId() + " of shop " + rabbitMqTranslateVO.getShopName());
                 processTask(rabbitMqTranslateVO, task, EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey()));
-                appInsights.trackTrace("ProcessDBTaskLog process done with task " + task.getTaskId() + " of shop " + rabbitMqTranslateVO.getShopName());
 
-                //将用户task改为1
+                // 将用户task改为1
                 translateTasksService.updateByTaskId(task.getTaskId(), 1);
-                appInsights.trackTrace("translateTasksService 用户 " + rabbitMqTranslateVO.getShopName());
 
-                //将缓存状态中改为2
+                // 将缓存状态中改为2
                 Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
                 userTranslate.put(shopName, translationStatusMap);
             }
-            //删除所有status为1的数据
+            // 删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
         } catch (ClientException e1) {
-            appInsights.trackTrace("clickTranslation " + shopName + " 到达字符限制： " + e1);
+            appInsights.trackTrace("ProcessDBTaskLog " + shopName + " 到达字符限制： " + e1);
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " 处理消息失败 errors : " + e);
+            appInsights.trackTrace("ProcessDBTaskLog " + shopName + " 处理消息失败 errors : " + e);
             appInsights.trackException(e);
         }
-
     }
 
-    public void processTask(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task, boolean isTranslationAuto) {
+    public void processTask(RabbitMqTranslateVO vo, TranslateTasksDO task, boolean isTranslationAuto) {
+        String shopName = vo.getShopName();
+
         //获取现在的时间，后面做减法
         Instant start = Instant.now();
-        String shopName = rabbitMqTranslateVO.getShopName();
 
         //判断字符是否超限
-        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
-        Integer remainingChars = rabbitMqTranslateVO.getLimitChars();
-        int usedChars = request1.getUsedChars();
-        //初始化计数器
-        CharacterCountUtils counter = new CharacterCountUtils();
-        counter.addChars(usedChars);
+        TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
+        int usedChars = counterDO.getUsedChars();
 
         // Record
         translationMonitorRedisService.hsetUsedCharsOfShop(shopName, usedChars);
-        translationMonitorRedisService.hsetRemainingCharsOfShop(shopName, remainingChars);
+        translationMonitorRedisService.hsetRemainingCharsOfShop(shopName, vo.getLimitChars());
 
         // 如果字符超限，则直接返回字符超限
-        if (usedChars >= remainingChars) {
-            appInsights.trackTrace(shopName + " clickTranslation 字符超限 processMessage errors 当前消耗token为: " + usedChars);
+        if (usedChars >= vo.getLimitChars()) {
+            appInsights.trackTrace("ProcessDBTaskLog 字符超限 " + shopName +" 当前消耗token为: " + usedChars);
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(shopName);
             //将用户翻译状态也改为3
@@ -122,23 +132,25 @@ public class ProcessDbTaskService {
         }
 
         // 修改数据库当前翻译模块的数据
-        translatesService.updateTranslatesResourceType(shopName, rabbitMqTranslateVO.getTarget(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getModeType());
+        translatesService.updateTranslatesResourceType(shopName, vo.getTarget(), vo.getSource(), vo.getModeType());
 
         // 修改数据库的模块翻译状态
         translateTasksService.updateByTaskId(task.getTaskId(), 2);
-        appInsights.trackTrace("clickTranslation 用户 ： " + shopName + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
+        //初始化计数器
+        CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
 
         try {
             if (isTranslationAuto) {
-                appInsights.trackTrace("isTranslationAuto 用户 " + shopName);
-                rabbitMqTranslateVO.setCustomKey(null);
+                appInsights.trackTrace("ProcessDBTaskLog isTranslationAuto 用户 " + shopName);
+                vo.setCustomKey(null);
             }
+            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars());
 
-            //翻译方法
-            rabbitMqTranslateService.translateByModeType(rabbitMqTranslateVO, counter);
-            appInsights.trackTrace("clickTranslation 用户 ： " + shopName + " " + rabbitMqTranslateVO.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
+            translateByModeType(vo, counter);
+            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
         } catch (ClientException e1) {
-            appInsights.trackTrace("clickTranslation " + shopName + " 到达字符限制： " + e1);
+            appInsights.trackTrace("ProcessDBTaskLog " + shopName + " 到达字符限制： " + e1);
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(shopName);
             translateTasksService.updateByTaskId(task.getTaskId(), 3);
@@ -154,12 +166,112 @@ public class ProcessDbTaskService {
             }
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation " + shopName + " 处理消息失败 errors : " + e);
+            appInsights.trackTrace("ProcessDBTaskLog " + shopName + " 处理消息失败 errors : " + e);
             translateTasksService.updateByTaskId(task.getTaskId(), 4);
         } finally {
-            statisticalAutomaticTranslationData(isTranslationAuto, counter, usedChars, start, rabbitMqTranslateVO);
+            statisticalAutomaticTranslationData(isTranslationAuto, counter, usedChars, start, vo);
+        }
+    }
+
+    public void translateByModeType(RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils countUtils) {
+        appInsights.trackTrace("ProcessDBTaskLog translateByModeType：" + rabbitMqTranslateVO.getModeType()
+                + " 用户 ： " + rabbitMqTranslateVO.getShopName()
+                + " targetCode ：" + rabbitMqTranslateVO.getTarget()
+                + " source : " + rabbitMqTranslateVO.getSource());
+
+        //根据DB的请求语句获取对应shopify值
+        String shopifyDataByDb = rabbitMqTranslateService.getShopifyDataByDb(rabbitMqTranslateVO);
+        if (shopifyDataByDb == null) {
+            // TODO 这里应该就是FatalException了，出现这个状况的话很严重
+            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " shopifyDataByDb is null" + rabbitMqTranslateVO);
+            return;
+        }
+        Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(
+                stringToJson(shopifyDataByDb), rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getIsCover(),
+                rabbitMqTranslateVO.getTarget());
+        if (needTranslatedData == null) {
+            return;
+        }
+        Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(
+                rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getHandleFlag(), needTranslatedData,
+                rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget());
+        //将筛选好的数据分类
+        Map<String, Set<TranslateTextDO>> stringSetMap = filterTranslateMap(initTranslateMap(), filterTranslateData, rabbitMqTranslateVO.getGlossaryMap());
+        //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
+        if (stringSetMap.isEmpty()) {
+            return;
         }
 
+        appInsights.trackTrace("ProcessDBTaskLog after FILTER, start translateByType：" + rabbitMqTranslateVO.getModeType()
+                + " shop ： " + rabbitMqTranslateVO.getShopName()
+                + " targetCode ：" + rabbitMqTranslateVO.getTarget()
+                + " source : " + rabbitMqTranslateVO.getSource());
+        for (Map.Entry<String, Set<TranslateTextDO>> entry : stringSetMap.entrySet()) {
+            switch (entry.getKey()) {
+                case HTML:
+                    rabbitMqTranslateService.translateHtmlData(entry.getValue(), rabbitMqTranslateVO, countUtils);
+                    break;
+                case PLAIN_TEXT:
+                case TITLE:
+                case META_TITLE:
+                case LOWERCASE_HANDLE:
+                    rabbitMqTranslateService.translatePlainTextData(entry.getValue(), rabbitMqTranslateVO, countUtils, entry.getKey());
+                    break;
+                case LIST_SINGLE:
+                    rabbitMqTranslateService.translateListSingleData(entry.getValue(), rabbitMqTranslateVO, countUtils);
+                    break;
+                case GLOSSARY:
+                    rabbitMqTranslateService.translateGlossaryData(entry.getValue(), rabbitMqTranslateVO, countUtils);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private static Map<String, Set<TranslateTextDO>> filterTranslateMap(Map<String, Set<TranslateTextDO>> stringSetMap, Set<TranslateTextDO> filterTranslateData, Map<String, Object> glossaryMap) {
+        if (filterTranslateData == null || filterTranslateData.isEmpty()) {
+            return stringSetMap;
+        }
+        for (TranslateTextDO translateTextDO : filterTranslateData) {
+            String value = translateTextDO.getSourceText();
+            String key = translateTextDO.getTextKey();
+            String textType = translateTextDO.getTextType();
+            //判断是否是词汇表数据
+            if (!glossaryMap.isEmpty()) {
+                boolean success = false;
+                for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
+                    String glossaryKey = entry.getKey();
+                    if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
+                        stringSetMap.get(GLOSSARY).add(translateTextDO);
+                        success = true;
+                        break;
+                    }
+                }
+                if (success) {
+                    continue;
+                }
+            }
+
+            //判断是html还是普通文本
+            if (isHtml(value)) {
+                stringSetMap.get(HTML).add(translateTextDO);
+                continue;
+            }
+            switch (key) {
+                case TITLE -> stringSetMap.get(TITLE).add(translateTextDO);
+                case META_TITLE -> stringSetMap.get(META_TITLE).add(translateTextDO);
+                case LOWERCASE_HANDLE -> stringSetMap.get(LOWERCASE_HANDLE).add(translateTextDO);
+                default -> {
+                    if (textType.equals(LIST_SINGLE)) {
+                        stringSetMap.get(LIST_SINGLE).add(translateTextDO);
+                    } else {
+                        stringSetMap.get(PLAIN_TEXT).add(translateTextDO);
+                    }
+                }
+            }
+        }
+        return stringSetMap;
     }
 
     /**
@@ -204,13 +316,13 @@ public class ProcessDbTaskService {
         try {
             Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 3);
             userTranslate.put(rabbitMqTranslateVO.getShopName(), translationStatusMap);
-            appInsights.trackTrace("emailTranslate : " + userTranslate.get(rabbitMqTranslateVO.getShopName()));
+            appInsights.trackTrace("ProcessDBTaskLog emailTranslate : " + userTranslate.get(rabbitMqTranslateVO.getShopName()));
             //将email的status改为2
             translateTasksService.removeById(task.getTaskId());
             //判断email类型，选择使用那个进行发送邮件
             rabbitMqTranslateService.sendTranslateEmail(rabbitMqTranslateVO, task, rabbitMqTranslateVO.getTranslateList());
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
+            appInsights.trackTrace("ProcessDBTaskLog " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
         }
     }
@@ -251,11 +363,11 @@ public class ProcessDbTaskService {
                     .eq(TranslatesDO::getSource, rabbitMqTranslateVO.getSource())
                     .eq(TranslatesDO::getTarget, rabbitMqTranslateVO.getTarget())
                     .set(TranslatesDO::getResourceType, null));
-            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
+            appInsights.trackTrace("ProcessDBTaskLog 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
             //删除redis该用户相关进度条数据
             redisIntegration.delete(generateProcessKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()));
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
+            appInsights.trackTrace("ProcessDBTaskLog " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
         }
     }
