@@ -297,6 +297,11 @@ public class TestController {
         return redisTranslateLockService.lockStore(shopName);
     }
 
+    @GetMapping("/testUnlock")
+    public Boolean testUnlock(@RequestParam String shopName) {
+        return redisTranslateLockService.unLockStore(shopName);
+    }
+
 
     @GetMapping("/testReadList")
     public List<UserTranslationDataDO> testreadList() {

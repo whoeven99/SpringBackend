@@ -243,6 +243,8 @@ public class TaskService {
 
         appInsights.trackTrace("TaskServiceLog 系统重启，获取翻译状态为2的任务数： " + listData.size());
 
+        // TODO 这里的翻译task为0的shop有没有解锁
+
         //循环处理获取到的任务，先将状态改为3，然后调用翻译API
         for (TranslatesDO translatesDO : listData) {
             //给这些用户添加停止标志符的状态
