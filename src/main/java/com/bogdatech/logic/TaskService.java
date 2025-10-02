@@ -241,17 +241,20 @@ public class TaskService {
         //查找翻译状态为2的任务
         List<TranslatesDO> listData = translatesService.getStatus2Data();
 
+        appInsights.trackTrace("TaskServiceLog 系统重启，获取翻译状态为2的任务数： " + listData.size());
+
         //循环处理获取到的任务，先将状态改为3，然后调用翻译API
-        for (TranslatesDO translatesDO : listData
-        ) {
+        for (TranslatesDO translatesDO : listData) {
             //给这些用户添加停止标志符的状态
             userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
             userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
 
             //将该任务的状态改为0
             translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
+
             //删除redis里面的tl:锁值
             redisTranslateLockService.unLockStore(translatesDO.getShopName());
+            appInsights.trackTrace("TaskServiceLog 系统重启，删除锁： " + translatesDO.getShopName());
         }
     }
 
