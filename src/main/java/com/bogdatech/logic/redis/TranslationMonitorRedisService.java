@@ -33,20 +33,16 @@ public class TranslationMonitorRedisService {
         redisIntegration.setHash(TRANSLATION_MONITOR_KEY, "task_count", tasksCount.toString());
     }
 
-    public Integer getCountOfTasks() {
-        String countStr = redisIntegration.getHash(TRANSLATION_MONITOR_KEY, "task_count");
-        if (countStr == null || countStr.isEmpty()) {
-            return 0;
-        }
-        return Integer.parseInt(countStr);
-    }
-
     public void hsetUsedCharsOfShop(String shopName, Integer usedChars) {
         redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "usedChars", usedChars.toString());
     }
 
     public void hsetRemainingCharsOfShop(String shopName, Integer remainingChars) {
         redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "remainingChars", remainingChars.toString());
+    }
+
+    public void hsetLastTaskFinishAt(String shopName, String time) {
+        redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "lastTaskFinishAt", time);
     }
 
     public Map<Object, Object> getShopTranslationStats(String shopName) {

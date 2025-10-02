@@ -395,16 +395,6 @@ public class TestController {
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
         Map<String, Object> responseMap = new HashMap<>();
-//        shops.forEach(shop -> {
-//            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
-
-//            String total = redisProcessService.getFieldProcessData(generateProcessKey(shop, target), PROGRESS_TOTAL);
-//            String done = redisProcessService.getFieldProcessData(generateProcessKey(shop, target), PROGRESS_DONE);
-//            responseMap.put(shop, map);
-//        });
-
-//        Integer tasksCount = translationMonitorRedisService.getCountOfTasks();
-//        responseMap.put("tasksCount", tasksCount);
 
         // 统计待翻译的 task
         List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
@@ -418,6 +408,9 @@ public class TestController {
         responseMap.put("translating_shops", translatingShops);
 
         for (String shop : shops) {
+            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
+            responseMap.put(shop, map);
+
             Set<TranslateTasksDO> shopTasks = tasks.stream()
                     .filter(taskDo -> taskDo.getShopName().equals(shop))
                     .collect(Collectors.toSet());

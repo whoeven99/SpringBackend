@@ -14,6 +14,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -21,7 +23,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.jsonToObject;
 
 @Component
 @EnableScheduling
@@ -37,7 +38,7 @@ public class DBTask {
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private ProcessDbTaskService processDbTaskService;
-    private final ExecutorService executorService = Executors.newCachedThreadPool(); // 线程数可根据实际情况调整
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @PostConstruct
     public void init() {
@@ -82,7 +83,7 @@ public class DBTask {
                 appInsights.trackTrace("DBTaskLog new shop start translate: " + shop);
                 executorService.submit(() -> {
                     try {
-                        processShopTasks(shop, shopTasks);
+                        processTasksOfShop(shop, shopTasks);
                     } finally {
                         redisTranslateLockService.setRemove(shop);
                     }
@@ -91,27 +92,15 @@ public class DBTask {
         }
     }
 
-    private void processShopTasks(String shop, Set<TranslateTasksDO> shopTasks) {
+    private void processTasksOfShop(String shop, Set<TranslateTasksDO> shopTasks) {
         for (TranslateTasksDO task : shopTasks) {
-            appInsights.trackTrace("DBTaskLog new task start: " + task.getTaskId() + " of shop: " + shop);
-            try {
-                RabbitMqTranslateVO vo = jsonToObject(task.getPayload(), RabbitMqTranslateVO.class);
-                if (vo == null) {
-                    appInsights.trackTrace("DBTaskLog FatalException: " + shop + " 解析失败 " + task.getPayload());
-                    //将taskId 改为10（暂定）
-                    translateTasksService.updateByTaskId(task.getTaskId(), 10);
-                    return;
-                }
+            appInsights.trackTrace("DBTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
 
-                // 开始处理
-                processDbTaskService.runTask(vo, task);
-                appInsights.trackTrace("DBTaskLog task finish successfully: " + task.getTaskId() + " of shop: " + shop);
-            } catch (Exception e) {
-                appInsights.trackTrace("DBTaskLog FatalException " + shop + " 任务处理失败 " + e);
-                //将该模块状态改为4
-                translateTasksService.updateByTaskId(task.getTaskId(), 4);
-                appInsights.trackException(e);
-            }
+            processDbTaskService.runTask(task);
+            appInsights.trackTrace("DBTaskLog task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);
+            // Monitor 记录最后一次task完成时间
+            translationMonitorRedisService.hsetLastTaskFinishAt(
+                    shop, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
     }
 }
