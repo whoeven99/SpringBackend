@@ -408,17 +408,14 @@ public class TestController {
 
         // 统计待翻译的 task
         List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
-        responseMap.put("tasksCount", tasks.size());
+        responseMap.put("tasks_count", tasks.size());
 
         // 统计shopName数量
         Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
         responseMap.put("all_shops", shops);
 
-        // 被锁定的shop -> 正在翻译中的shop
-        Set<String> lockedShops = shops.stream()
-                .filter(shopName -> "1".equals(redisIntegration.get(generateTranslateLockKey(shopName))))
-                .collect(Collectors.toSet());
-        responseMap.put("locked_shops", lockedShops);
+        Set<String> translatingShops = redisTranslateLockService.members();
+        responseMap.put("translating_shops", translatingShops);
 
         for (String shop : shops) {
             Set<TranslateTasksDO> shopTasks = tasks.stream()
