@@ -40,6 +40,8 @@ import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -387,25 +389,38 @@ public class TestController {
 
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
-        TelemetryClient appInsights = new TelemetryClient();
-
-        Set<String> shops = translationMonitorRedisService.getTranslatingShops();
-        appInsights.trackTrace("monitor shops: " + shops.toString());
-
         Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("shops", shops);
-        shops.forEach(shop -> {
-            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
+//        shops.forEach(shop -> {
+//            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
 
 //            String total = redisProcessService.getFieldProcessData(generateProcessKey(shop, target), PROGRESS_TOTAL);
 //            String done = redisProcessService.getFieldProcessData(generateProcessKey(shop, target), PROGRESS_DONE);
-            responseMap.put(shop, map);
-        });
+//            responseMap.put(shop, map);
+//        });
 
-        Integer tasksCount = translationMonitorRedisService.getCountOfTasks();
-        appInsights.trackTrace("monitor tasksCount: " + tasksCount);
-        responseMap.put("tasksCount", tasksCount);
+//        Integer tasksCount = translationMonitorRedisService.getCountOfTasks();
+//        responseMap.put("tasksCount", tasksCount);
 
+        // 统计待翻译的 task
+        List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
+        responseMap.put("tasksCount", tasks.size());
+
+        // 统计shopName数量
+        Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
+        responseMap.put("all_shops", shops);
+
+        // 被锁定的shop -> 正在翻译中的shop
+        Set<String> lockedShops = shops.stream()
+                .filter(shopName -> "1".equals(redisIntegration.get(generateTranslateLockKey(shopName))))
+                .collect(Collectors.toSet());
+        responseMap.put("locked_shops", lockedShops);
+
+        for (String shop : shops) {
+            Set<TranslateTasksDO> shopTasks = tasks.stream()
+                    .filter(taskDo -> taskDo.getShopName().equals(shop))
+                    .collect(Collectors.toSet());
+            responseMap.put("shopTasksCount_" + shop, shopTasks.size());
+        }
         return responseMap;
     }
 }
