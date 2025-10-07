@@ -207,11 +207,13 @@ public class TranslateController {
         counter.addChars(usedChars);
         appInsights.trackTrace("初始化计数器和停止标识 : " + shopifyRequest.getShopName());
         //判断是否有handle
-        boolean handleFlag = false;
+        boolean handleFlag;
         List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
         if (translateModel.contains("handle")) {
             translateModel.removeIf("handle"::equals);
             handleFlag = true;
+        } else {
+            handleFlag = false;
         }
         appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
         //修改模块的排序
@@ -229,9 +231,11 @@ public class TranslateController {
 
         //修改自定义提示词
         String fixCustomKey = clickTranslateRequest.getCustomKey();
-        String cleanedText = null;
+        String cleanedText;
         if (fixCustomKey != null){
             cleanedText = fixCustomKey.replaceAll("\\.{2,}", ".");
+        } else {
+            cleanedText = null;
         }
         appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
         //改为循环遍历，将相关target状态改为2
@@ -253,7 +257,11 @@ public class TranslateController {
         }
         appInsights.trackTrace("修改相关target状态改为2 : " + shopifyRequest.getShopName());
         //全部走DB翻译
-        rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, translateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true, clickTranslateRequest.getTarget());
+        List<String> finalTranslateResourceDTOS = translateResourceDTOS;
+        executorService.submit(() -> {
+            rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, counter, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), cleanedText, true, clickTranslateRequest.getTarget());
+                });
+
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
 

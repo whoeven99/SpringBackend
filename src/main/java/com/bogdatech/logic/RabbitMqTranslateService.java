@@ -87,7 +87,7 @@ public class RabbitMqTranslateService {
     /**
      * 加一层包装MQ翻译，用于自动翻译按顺序添加任务
      */
-    @Async
+//    @Async
     public void mqTranslateWrapper(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType, String[] targets) {
         for (String target : targets) {
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
