@@ -109,7 +109,21 @@ public class RabbitMqTranslateService {
         appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
         //改为循环遍历，将相关target状态改为2
         List<String> listTargets = Arrays.asList(targets);
-        translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopifyRequest.getShopName()).eq(TranslatesDO::getSource, request.getSource()).in(TranslatesDO::getTarget, listTargets).set(TranslatesDO::getStatus, 2));
+        listTargets.forEach(target -> {
+            translatesService.updateTranslateStatus(
+                    request.getShopName(),
+                    2,
+                    target,
+                    request.getSource(),
+                    request.getAccessToken()
+            );
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                appInsights.trackException(e);
+            }
+        });
+
         appInsights.trackTrace("修改相关target状态改为2 : " + shopifyRequest.getShopName());
 
         for (String target : targets) {
