@@ -33,10 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,6 +46,7 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.RedisKeyUtils.*;
@@ -396,13 +394,17 @@ public class TestController {
     public Map<String, Object> monitor() {
         Map<String, Object> responseMap = new HashMap<>();
 
+        List<TranslatesDO> startedTasks = translatesServiceImpl.getStatus2Data();
+        Set<String> startedShops = startedTasks.stream().map(TranslatesDO::getShopName).collect(Collectors.toSet());
+        responseMap.put("click_translating_shops", startedShops);
+
         // 统计待翻译的 task
         List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
         responseMap.put("tasks_count", tasks.size());
 
         // 统计shopName数量
         Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
-        responseMap.put("all_shops", shops);
+        responseMap.put("dbtask_all_shops", shops);
 
         Set<String> translatingShops = redisTranslateLockService.members();
         responseMap.put("translating_shops", translatingShops);
@@ -414,6 +416,17 @@ public class TestController {
             Set<TranslateTasksDO> shopTasks = tasks.stream()
                     .filter(taskDo -> taskDo.getShopName().equals(shop))
                     .collect(Collectors.toSet());
+//
+//            Map<String, List<RabbitMqTranslateVO>> targetMap = shopTasks.stream()
+//                    .map(translateTasksDO -> jsonToObject(translateTasksDO.getPayload(), RabbitMqTranslateVO.class))
+//                    .filter(Objects::nonNull)
+//                    .collect(Collectors.groupingBy(RabbitMqTranslateVO::getTarget));
+//
+//            targetMap.forEach((target, list) -> {
+//                Map<String, List<RabbitMqTranslateVO>> moeMap = list.stream().collect(Collectors.groupingBy(RabbitMqTranslateVO::getModeType));
+//                // TODO 在这里对shop下的task进行分类：语言分类，模块分类，安排不同的线程同时翻译
+//            });
+
             responseMap.put("shopTasksCount_" + shop, shopTasks.size());
         }
         return responseMap;

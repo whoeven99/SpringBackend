@@ -14,15 +14,19 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.jsonToObject;
 
 @Component
 @EnableScheduling
@@ -52,7 +56,6 @@ public class DBTask {
     public void scanAndSubmitTasks() {
         // 统计待翻译的 task
         List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
-        translationMonitorRedisService.hsetCountOfTasks(tasks.size());
         appInsights.trackTrace("DBTaskLog Number of tasks need to translate " + tasks.size());
         if (tasks.isEmpty()) {
             return;
@@ -93,15 +96,24 @@ public class DBTask {
     }
 
     private void processTasksOfShop(String shop, Set<TranslateTasksDO> shopTasks) {
+//        Map<String, List<RabbitMqTranslateVO>> targetMap = shopTasks.stream()
+//                .map(translateTasksDO -> jsonToObject(translateTasksDO.getPayload(), RabbitMqTranslateVO.class))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.groupingBy(RabbitMqTranslateVO::getTarget));
+//
+//        targetMap.forEach((target, list) -> {
+//            Map<String, List<RabbitMqTranslateVO>> modeMap = list.stream().collect(Collectors.groupingBy(RabbitMqTranslateVO::getModeType));
+//        });
+
         for (TranslateTasksDO task : shopTasks) {
             appInsights.trackTrace("DBTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
 
             processDbTaskService.runTask(task);
             appInsights.trackTrace("DBTaskLog task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);
-            // Monitor 记录最后一次task完成时间
-            translationMonitorRedisService.hsetLastTaskFinishAt(
-                    shop, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+            // Monitor 记录最后一次task完成时间（中国区时间）
+            String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            translationMonitorRedisService.hsetLastTaskFinishAt(shop, chinaTime);
         }
     }
 }
-
