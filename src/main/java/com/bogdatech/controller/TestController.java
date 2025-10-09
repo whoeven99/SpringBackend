@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.IAPGUsersService;
+import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
@@ -395,6 +396,17 @@ public class TestController {
 
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
+
+    @Autowired
+    private ICharsOrdersService charsOrdersService;
+
+    @GetMapping("/getTable")
+    public Map<String, Object> getTable(@RequestParam String shopName) {
+        List<CharsOrdersDO> list = charsOrdersService.getCharsOrdersDoByShopName(shopName);
+        Map<String, Object> map = new HashMap<>();
+        map.put("CharsOrder", list);
+        return map;
+    }
 
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
