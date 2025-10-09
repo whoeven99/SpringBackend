@@ -36,6 +36,7 @@ public class DataRatingController {
         if (translationStatus == null || translationStatus.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
+        translationStatus.remove(source);
         return new BaseResponse<>().CreateSuccessResponse(translationStatus);
     }
 

@@ -6,11 +6,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.Service.ITranslateTasksService;
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
-import com.bogdatech.entity.DO.APGUsersDO;
-import com.bogdatech.entity.DO.TranslateTasksDO;
-import com.bogdatech.entity.DO.TranslatesDO;
-import com.bogdatech.entity.DO.UserTranslationDataDO;
+import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
@@ -20,6 +18,7 @@ import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
+import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
@@ -38,7 +37,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -46,11 +44,13 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
+import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.StringUtils.*;
+import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
+import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @RestController
 public class TestController {
@@ -84,6 +84,12 @@ public class TestController {
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private RedisIntegration redisIntegration;
+    @Autowired
+    private RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private ITranslationCounterService translationCounterService;
+
+
     @GetMapping("/ping")
     public String ping() {
         TelemetryClient appInsights = new TelemetryClient();
@@ -431,4 +437,61 @@ public class TestController {
         }
         return responseMap;
     }
+
+    @PostMapping("/mqTranslateWrapper")
+    public BaseResponse<Object> mqTranslateWrapper(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
+        //判断前端传的数据是否完整，如果不完整，报错
+        if (shopName == null || shopName.isEmpty()
+                || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
+                || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
+                || clickTranslateRequest.getTarget() == null || clickTranslateRequest.getTarget().length == 0) {
+            return new BaseResponse<>().CreateErrorResponse("Missing parameters");
+        }
+
+        if (clickTranslateRequest.getIsCover() == null) {
+            clickTranslateRequest.setIsCover(false);
+        }
+
+        //暂时使所有用户的customKey失效
+        clickTranslateRequest.setCustomKey(null);
+
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
+        userTranslate.put(shopName, translationStatusMap);
+        //将ClickTranslateRequest转换为TranslateRequest
+        TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
+        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
+        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
+        int usedChars = request1.getUsedChars();
+        //判断是否有handle
+        boolean handleFlag;
+        List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
+        if (translateModel.contains("handle")) {
+            translateModel.removeIf("handle"::equals);
+            handleFlag = true;
+        } else {
+            handleFlag = false;
+        }
+        appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
+        //修改模块的排序
+        List<String> translateResourceDTOS = null;
+        try {
+            translateResourceDTOS = translateModel(translateModel);
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation translateModel errors : " + e.getMessage());
+        }
+        appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopifyRequest.getShopName());
+//      翻译
+        if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
+        }
+
+        //在这里异步 全部走DB翻译
+        List<String> finalTranslateResourceDTOS = translateResourceDTOS;
+        executorService.submit(() -> {
+            rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), true, clickTranslateRequest.getTarget());
+        });
+        return new BaseResponse<>().CreateSuccessResponse("Translation started successfully");
+    }
+
 }
