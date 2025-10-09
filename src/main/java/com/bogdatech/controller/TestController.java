@@ -402,27 +402,28 @@ public class TestController {
 
         List<TranslatesDO> startedTasks = translatesServiceImpl.getStatus2Data();
         Set<String> startedShops = startedTasks.stream().map(TranslatesDO::getShopName).collect(Collectors.toSet());
-        responseMap.put("click_translating_shops", startedShops);
+        responseMap.put("Step1-有进度条的用户", startedShops);
 
         // 统计待翻译的 task
         List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
-        responseMap.put("tasks_count", tasks.size());
+        responseMap.put("总的子任务数量", tasks.size());
 
         // 统计shopName数量
         Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
-        responseMap.put("dbtask_all_shops", shops);
+        responseMap.put("Step2-创建了翻译子任务的用户", shops);
 
         Set<String> translatingShops = redisTranslateLockService.members();
-        responseMap.put("translating_shops", translatingShops);
+        responseMap.put("Step3-翻译中的用户", translatingShops);
 
         for (String shop : shops) {
-            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
-            responseMap.put(shop, map);
-
             Set<TranslateTasksDO> shopTasks = tasks.stream()
                     .filter(taskDo -> taskDo.getShopName().equals(shop))
                     .collect(Collectors.toSet());
-//
+
+            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
+            map.put("翻译子任务数量", shopTasks.size());
+
+            responseMap.put(shop, map);
 //            Map<String, List<RabbitMqTranslateVO>> targetMap = shopTasks.stream()
 //                    .map(translateTasksDO -> jsonToObject(translateTasksDO.getPayload(), RabbitMqTranslateVO.class))
 //                    .filter(Objects::nonNull)
@@ -433,7 +434,6 @@ public class TestController {
 //                // TODO 在这里对shop下的task进行分类：语言分类，模块分类，安排不同的线程同时翻译
 //            });
 
-            responseMap.put("shopTasksCount_" + shop, shopTasks.size());
         }
         return responseMap;
     }
