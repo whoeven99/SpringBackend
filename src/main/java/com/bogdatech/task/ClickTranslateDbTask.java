@@ -1,27 +1,29 @@
 package com.bogdatech.task;
 
+import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.ClickTranslateTasksDO;
-import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.redis.ClickTranslateRedisService;
 import com.bogdatech.mapper.ClickTranslateTasksMapper;
+import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
-
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
+import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.jsonToObject;
 
 @Component
 @EnableScheduling
@@ -34,6 +36,8 @@ public class ClickTranslateDbTask {
     private ClickTranslateTasksMapper clickTranslateTasksMapper;
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
+    @Autowired
+    private IUsersService iUsersService;
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -89,19 +93,26 @@ public class ClickTranslateDbTask {
     }
 
     private void processClickTasksOfShop(String shop, Set<ClickTranslateTasksDO> shopTasks) {
+        // 获取用户的accessToken
+        UsersDO userDO = iUsersService.getUserByName(shop);
+
+
         for (ClickTranslateTasksDO task : shopTasks) {
             appInsights.trackTrace("ClickTranslateDbTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
 
+            // 获取已使用字符数和剩余字符数
             TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(shop);
             Integer remainingChars = iTranslationCounterService.getMaxCharsByShopName(shop);
-
-            // 判断字符是否超限
             int usedChars = translationCounterDO.getUsedChars();
+
             // 初始化计数器
             CharacterCountUtils counter = new CharacterCountUtils();
             counter.addChars(usedChars);
 
-            rabbitMqTranslateService.mqTranslate(shopifyRequest, counter, task.getTranslateSettings3(), request, remainingChars, usedChars, handleFlag, translationModel, isCover, cleanedText, emailType);
+            // 转化模块类型
+            List<String> list = jsonToObject(task.getTranslateSettings3(), new TypeReference<List<String>>() {});
+
+            rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shop, userDO.getAccessToken(), API_VERSION_LAST, task.getTarget()), counter, task.getTranslateSettings3(), new TranslateRequest(0, shop, userDO.getAccessToken(), task.getSource(), task.getTarget(), null), remainingChars, usedChars, task.isHandle(), task.getTranslateSettings1(), task.isCover(), task.getCustomKey(), true);
             appInsights.trackTrace("ClickTranslateDbTaskLog task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);
             // TODO: Monitor 记录最后一次task完成时间（中国区时间）
         }

@@ -24,6 +24,6 @@ public class ClickTranslateTasksDO {
     private String translateSettings3; // 模块类型
     private String customKey; // 自定义key
     private String shopName;
-    private Boolean handle = false;
+    private boolean handle = false;
     private Timestamp createdAt;
 }

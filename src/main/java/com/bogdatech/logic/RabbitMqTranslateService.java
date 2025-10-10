@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
@@ -96,14 +97,13 @@ public class RabbitMqTranslateService {
     public void mqTranslateWrapper(ClickTranslateRequest clickTranslateRequest, ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request, boolean handleFlag, boolean isCover, String customKey, String[] targets) {
         appInsights.trackTrace("mqTranslateWrapper开始: " + shopifyRequest.getShopName());
         String shopName = shopifyRequest.getShopName();
-        //重置用户发送的邮件
+        // 重置用户发送的邮件
         userEmailStatus.put(shopName, new AtomicBoolean(false));
-        // 初始化用户的停止标志
+
+        //  初始化用户的停止标志
         userStopFlags.put(shopName, new AtomicBoolean(false));
 
-
-
-        //修改自定义提示词
+        // 修改自定义提示词
         String cleanedText;
         if (customKey != null) {
             cleanedText = customKey.replaceAll("\\.{2,}", ".");
@@ -111,10 +111,15 @@ public class RabbitMqTranslateService {
             cleanedText = null;
         }
         appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
-        //改为循环遍历，将相关target状态改为2
+
+        // 改为循环遍历，将相关target状态改为2
         List<String> listTargets = Arrays.asList(targets);
 //        translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopifyRequest.getShopName()).eq(TranslatesDO::getSource, request.getSource()).in(TranslatesDO::getTarget, listTargets).set(TranslatesDO::getStatus, 2));
         appInsights.trackTrace("修改相关target状态改为2 : " + shopifyRequest.getShopName());
+
+        // 将模块数据List类型转化为Json类型
+        String resourceToJson = objectToJson(translateResourceDTOS);
+        appInsights.trackTrace("将模块数据List类型转化为Json类型 : " + shopifyRequest.getShopName() + " resourceToJson: " + resourceToJson);
 
         for (String target : targets) {
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
@@ -123,7 +128,7 @@ public class RabbitMqTranslateService {
 
             // 将线管参数存到数据库中
             System.out.println("将参数存到数据库中");
-            int insert = clickTranslateTasksMapper.insert(new ClickTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), translateResourceDTOS.toString(), cleanedText, clickTranslateRequest.getShopName(), handleFlag, Timestamp.valueOf(LocalDateTime.now())));
+            int insert = clickTranslateTasksMapper.insert(new ClickTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), resourceToJson, cleanedText, clickTranslateRequest.getShopName(), handleFlag, Timestamp.valueOf(LocalDateTime.now())));
             System.out.println("将参数存到数据库后： " + insert);
 
         }
@@ -573,10 +578,10 @@ public class RabbitMqTranslateService {
      * 文本翻译
      * 修改翻译的逻辑，暂定获取每50条数据，
      *
-     * @param plainTextData       翻译数据
-     * @param vo 翻译参数
-     * @param counter             字符计数器
-     * @param translationKeyType  翻译类型
+     * @param plainTextData      翻译数据
+     * @param vo                 翻译参数
+     * @param counter            字符计数器
+     * @param translationKeyType 翻译类型
      */
     public void translatePlainTextData(Set<TranslateTextDO> plainTextData, RabbitMqTranslateVO vo, CharacterCountUtils counter, String translationKeyType) {
         if (plainTextData.isEmpty()) {
@@ -630,7 +635,8 @@ public class RabbitMqTranslateService {
             // 处理翻译后的数据
             if (translatedJson != null) {
                 try {
-                    Map<String, String> resultMap = OBJECT_MAPPER.readValue(translatedJson, new TypeReference<>() {});
+                    Map<String, String> resultMap = OBJECT_MAPPER.readValue(translatedJson, new TypeReference<>() {
+                    });
                     for (TranslateTextDO item : batch) {
                         String sourceText = item.getSourceText();
                         String targetText = resultMap.get(sourceText);
@@ -676,7 +682,7 @@ public class RabbitMqTranslateService {
                     appInsights.trackException(e);
                 }
 
-            }else {
+            } else {
                 // 翻译有问题： 先打印看下情况 TODO 都改成fatalException
                 appInsights.trackTrace("每日须看 translatePlainTextData " + shopName + " source: " + source + " translatedJson : " + translatedJson);
             }

@@ -15,6 +15,7 @@ public class JsonUtils {
         try {
             return obj != null ? OBJECT_MAPPER.writeValueAsString(obj) : null;
         } catch (JsonProcessingException e) {
+            appInsights.trackException(e);
             throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
         }
     }
@@ -24,6 +25,7 @@ public class JsonUtils {
         try {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, clazz) : null;
         } catch (JsonProcessingException e) {
+            appInsights.trackException(e);
             throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
         }
     }
