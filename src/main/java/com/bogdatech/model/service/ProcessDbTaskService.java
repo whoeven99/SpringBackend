@@ -149,6 +149,7 @@ public class ProcessDbTaskService {
 
             translateByModeType(vo, counter);
             appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。");
+            translationMonitorRedisService.hsetModelCharsWithTime(shopName, vo.getModeType(), counter.getTotalChars() - usedChars, String.valueOf(Duration.between(start, Instant.now()).toMinutes()));
         } catch (ClientException e1) {
             appInsights.trackTrace("ProcessDBTaskLog " + shopName + " 到达字符限制： " + e1);
             //将用户所有task改为3
