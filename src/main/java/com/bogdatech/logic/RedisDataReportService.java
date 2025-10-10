@@ -61,8 +61,7 @@ public class RedisDataReportService {
 
         for (String languageCode : redisIntegrationSet) {
             // 每个语言对应一个独立的 languageMap
-            Map<String, Map<Object, Object>> languageMap =
-                    allMap.computeIfAbsent(languageCode, k -> new HashMap<>());
+            Map<String, Map<Object, Object>> languageMap = new HashMap<>();
 
             // 遍历 dayData 天的数据
             for (int i = 0; i < dayData; i++) {
@@ -76,6 +75,7 @@ public class RedisDataReportService {
                     languageMap.put(format, hashAll);
                 }
             }
+            allMap.put(languageCode, languageMap);
         }
 
         try {
