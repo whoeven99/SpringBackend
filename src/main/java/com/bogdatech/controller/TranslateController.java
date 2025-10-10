@@ -410,7 +410,7 @@ public class TranslateController {
     }
 
     @PostMapping("/getAllProgressData")
-    public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, String source) {
+    public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
         // TODO 用shopName source查数据库
 //        List<ClickTranslateTasksDO> clickTranslateTasksDOS = new ArrayList<>();
 
