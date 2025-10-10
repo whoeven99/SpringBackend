@@ -9,6 +9,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import static com.bogdatech.logic.TranslateService.executorService;
+
 @Component
 @EnableAsync
 @EnableScheduling
@@ -19,7 +21,9 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         // 执行业务代码
-        taskService.translateStatus2WhenSystemRestart();
+        executorService.execute(() -> {
+            taskService.translateStatus2WhenSystemRestart();
+        });
     }
 
     /**

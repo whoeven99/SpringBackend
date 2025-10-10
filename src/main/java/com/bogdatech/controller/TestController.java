@@ -182,7 +182,9 @@ public class TestController {
     @PutMapping("/testAutoTranslate")
     public void testAutoTranslate() {
         appInsights.trackTrace("testAutoTranslate 开始调用");
-        taskService.autoTranslate();
+        executorService.execute(() -> {
+            taskService.autoTranslate();
+        });
     }
 
     @GetMapping("/testFreeTrialTask")
