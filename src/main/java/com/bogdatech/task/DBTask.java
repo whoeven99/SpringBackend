@@ -17,10 +17,7 @@ import javax.annotation.PostConstruct;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.ZoneId;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -105,7 +102,12 @@ public class DBTask {
 //            Map<String, List<RabbitMqTranslateVO>> modeMap = list.stream().collect(Collectors.groupingBy(RabbitMqTranslateVO::getModeType));
 //        });
 
-        for (TranslateTasksDO task : shopTasks) {
+        // 按照创建时间排序，先创建的先翻译
+        List<TranslateTasksDO> taskList = shopTasks.stream()
+                .sorted(Comparator.comparing(TranslateTasksDO::getCreatedAt))
+                .toList();
+
+        for (TranslateTasksDO task : taskList) {
             appInsights.trackTrace("DBTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
 
             processDbTaskService.runTask(task);
