@@ -74,7 +74,6 @@ public class TaskService {
 
 
     //异步调用根据订阅信息，判断是否添加额度的方法
-    @Async
     public void judgeAddChars() {
         //获取数据库中所有order为ACTIVE的id集合
         List<CharsOrdersDO> list = charsOrdersService.getShopNameAndId();
@@ -235,7 +234,6 @@ public class TaskService {
     }
 
     //当自动重启后，重启翻译状态为2的任务
-    @Async
     public void translateStatus2WhenSystemRestart() {
         //查找翻译状态为2的任务
         List<TranslatesDO> listData = translatesService.getStatus2Data();
@@ -268,7 +266,6 @@ public class TaskService {
      * 4，再判断该用户是否正在翻译，正在翻译就不翻译了
      * 5，如果一个用户切换了本地语言，前后都设置了定时任务，只翻译最新的那个目标语言
      */
-    @Async
     public void autoTranslate() {
         appInsights.trackTrace("autoTranslate 开始");
         //获取所有使用自动翻译的用户
