@@ -7,6 +7,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import static com.bogdatech.logic.TranslateService.executorService;
+
 @Component
 @EnableScheduling
 @EnableAsync
@@ -17,6 +19,8 @@ public class AutoTranslateTask {
 
     @Scheduled(cron = "0 0 1 * * ?")
     public void autoTranslate() {
-        taskService.autoTranslate();
+        executorService.execute(() -> {
+            taskService.autoTranslate();
+        });
     }
 }
