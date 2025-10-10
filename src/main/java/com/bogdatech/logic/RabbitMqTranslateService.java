@@ -10,7 +10,7 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.RedisIntegration;
-import com.bogdatech.mapper.ClickTranslateTasksMapper;
+import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -24,14 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
@@ -86,7 +84,7 @@ public class RabbitMqTranslateService {
     @Autowired
     private RedisIntegration redisIntegration;
     @Autowired
-    private ClickTranslateTasksMapper clickTranslateTasksMapper;
+    private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
 
     public static final int BATCH_SIZE = 50;
@@ -142,7 +140,7 @@ public class RabbitMqTranslateService {
 
             // 将线管参数存到数据库中
             System.out.println("将参数存到数据库中");
-            int insert = clickTranslateTasksMapper.insert(new ClickTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), resourceToJson, cleanedText, clickTranslateRequest.getShopName(), handleFlag, Timestamp.valueOf(LocalDateTime.now())));
+            int insert = initialTranslateTasksMapper.insert(new ClickTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), resourceToJson, cleanedText, clickTranslateRequest.getShopName(), handleFlag, Timestamp.valueOf(LocalDateTime.now())));
             System.out.println("将参数存到数据库后： " + insert);
 
         }
@@ -166,41 +164,50 @@ public class RabbitMqTranslateService {
      * @param emailType             邮件类型
      */
     public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType) {
-        //判断是否有同义词
+        // 判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
         appInsights.trackTrace("判断是否有同义词 " + shopifyRequest.getShopName());
-        //获取目前所使用的AI语言包
+
+        // 获取目前所使用的AI语言包
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars);
         appInsights.trackTrace("获取目前所使用的AI语言包 " + shopifyRequest.getShopName());
+
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         CharacterCountUtils allTasks = new CharacterCountUtils();
         redisProcessService.initProcessData(generateProcessKey(shopifyRequest.getShopName(), shopifyRequest.getTarget()));
         appInsights.trackTrace("初始化进度条数据 " + shopifyRequest.getShopName());
+
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
             appInsights.trackTrace("初始化进度条数据 " + shopifyRequest.getShopName());
+
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             if (!translateResourceDTOS.contains(translateResource.getResourceType())) {
                 continue;
             }
             appInsights.trackTrace("判断模块是否存在 " + shopifyRequest.getShopName());
+
             if (translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
                 continue;
             }
             appInsights.trackTrace("网关不翻译 " + shopifyRequest.getShopName());
+
             if (EXCLUDED_SHOPS.contains(request.getShopName()) && PRODUCT_MODEL.contains(translateResource.getResourceType())) {
                 continue;
             }
             appInsights.trackTrace("一些shop模块不翻译 " + shopifyRequest.getShopName());
+
             // 定期检查是否停止
             if (checkNeedStopped(request.getShopName(), counter)) {
                 return;
             }
             appInsights.trackTrace("用户翻译不停止 " + shopifyRequest.getShopName());
+
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource);
             appInsights.trackTrace("用户shopify翻译数据 " + shopifyRequest.getShopName());
+
             rabbitMqTranslateVO.setShopifyData(shopifyData);
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
@@ -211,16 +218,19 @@ public class RabbitMqTranslateService {
                 String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
                 translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
                 appInsights.trackTrace("保存用户翻译数据到db " + shopifyRequest.getShopName());
+
                 allTasks.addChars(1);
             } catch (Exception e) {
                 appInsights.trackTrace("clickTranslation 保存翻译任务失败 errors : " + e);
                 appInsights.trackException(e);
             }
+
             // 改为将请求数据存储到数据库中
             parseShopifyData(rabbitMqTranslateVO, translateResource, allTasks);
         }
         rabbitMqTranslateVO.setTranslateList(translateResourceDTOS);
-        //当模块都发送后，发送邮件模块
+        
+        // 当模块都发送后，发送邮件模块
         appInsights.trackTrace("存邮件数据 " + rabbitMqTranslateVO.getShopName());
         sendEmailTranslate(rabbitMqTranslateVO, emailType, allTasks);
     }
