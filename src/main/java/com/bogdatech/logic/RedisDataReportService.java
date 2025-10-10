@@ -32,7 +32,7 @@ public class RedisDataReportService {
         //对传入的client_id做去重，然后再加一
         String clientIdSetKey = generateClientIdSetKey(shopName, userDataReportVO.getStoreLanguage()[0], format, userDataReportVO.getEventName());
         String setKeys = generateDataReportKeyKeys(shopName);
-        redisIntegration.setSet(setKeys, dataReportKey);
+        redisIntegration.setSet(setKeys, userDataReportVO.getStoreLanguage()[0]);
         Boolean flag = redisIntegration.setSet(clientIdSetKey, userDataReportVO.getClientId());
         if (flag) {
             redisIntegration.expire(clientIdSetKey, DAY_1);
@@ -59,15 +59,7 @@ public class RedisDataReportService {
             return null;
         }
 
-        for (String dataReportKey : redisIntegrationSet) {
-            String[] parts = dataReportKey.split(":");
-            if (parts.length != 4) {
-                appInsights.trackTrace("getUserDataReport Key 格式不正确: " + dataReportKey);
-                continue;
-            }
-
-            String languageCode = parts[2];
-
+        for (String languageCode : redisIntegrationSet) {
             // 每个语言对应一个独立的 languageMap
             Map<String, Map<Object, Object>> languageMap =
                     allMap.computeIfAbsent(languageCode, k -> new HashMap<>());
