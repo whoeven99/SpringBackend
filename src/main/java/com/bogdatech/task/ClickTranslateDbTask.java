@@ -1,6 +1,6 @@
 package com.bogdatech.task;
 
-import com.alibaba.fastjson2.TypeReference;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
@@ -110,9 +110,12 @@ public class ClickTranslateDbTask {
             counter.addChars(usedChars);
 
             // 转化模块类型
-            List<String> list = jsonToObject(task.getTranslateSettings3(), new TypeReference<List<String>>() {});
+            List<String> modelList = jsonToObject(
+                    task.getTranslateSettings3(),
+                    new TypeReference<List<String>>() {}
+            );
 
-            rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shop, userDO.getAccessToken(), API_VERSION_LAST, task.getTarget()), counter, task.getTranslateSettings3(), new TranslateRequest(0, shop, userDO.getAccessToken(), task.getSource(), task.getTarget(), null), remainingChars, usedChars, task.isHandle(), task.getTranslateSettings1(), task.isCover(), task.getCustomKey(), true);
+            rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shop, userDO.getAccessToken(), API_VERSION_LAST, task.getTarget()), counter, modelList, new TranslateRequest(0, shop, userDO.getAccessToken(), task.getSource(), task.getTarget(), null), remainingChars, usedChars, task.isHandle(), task.getTranslateSettings1(), task.isCover(), task.getCustomKey(), true);
             appInsights.trackTrace("ClickTranslateDbTaskLog task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);
             // TODO: Monitor 记录最后一次task完成时间（中国区时间）
         }
