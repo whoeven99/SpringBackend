@@ -105,7 +105,7 @@ public class DBTask {
         // 按照创建时间排序，先创建的先翻译
         List<TranslateTasksDO> taskList = shopTasks.stream()
                 .sorted(Comparator.comparing(TranslateTasksDO::getCreatedAt))
-                .toList();
+                .collect(Collectors.toList());
 
         for (TranslateTasksDO task : taskList) {
             appInsights.trackTrace("DBTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
