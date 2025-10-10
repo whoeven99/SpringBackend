@@ -17,9 +17,7 @@ public class ProgressResponse {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Prgress {
-        private String source;
         private String target;
-        private String shopName;
         private Integer status;
         private String resourceType;
         private String value;
