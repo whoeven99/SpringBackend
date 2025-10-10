@@ -4,8 +4,6 @@ import com.bogdatech.integration.RedisIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,6 +37,10 @@ public class TranslationMonitorRedisService {
 
     public void hsetRemainingCharsOfShop(String shopName, Integer remainingChars) {
         redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "remainingChars", remainingChars.toString());
+    }
+
+    public void hsetStartTranslationAt(String shopName, String time) {
+        redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "startTranslationAt", time);
     }
 
     public void hsetLastTaskFinishAt(String shopName, String time) {
