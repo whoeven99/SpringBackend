@@ -418,14 +418,14 @@ public class TranslateController {
                 .orderByDesc(TranslatesDO::getUpdateAt));
 
         ProgressResponse response = new ProgressResponse();
-        List<ProgressResponse.Prgress> list = new ArrayList<>();
+        List<ProgressResponse.Progress> list = new ArrayList<>();
         response.setList(list);
         if (translatesDOS.isEmpty()) {
             return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
         }
 
         translatesDOS.forEach(translatesDO -> {
-            ProgressResponse.Prgress progress = new ProgressResponse.Prgress();
+            ProgressResponse.Progress progress = new ProgressResponse.Progress();
             progress.setStatus(translatesDO.getStatus());
             progress.setTarget(translatesDO.getTarget());
             progress.setResourceType(translatesDO.getResourceType());

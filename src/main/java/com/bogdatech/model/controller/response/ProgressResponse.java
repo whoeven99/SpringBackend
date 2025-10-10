@@ -11,12 +11,12 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProgressResponse {
-    private List<Prgress> list;
+    private List<Progress> list;
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Prgress {
+    public static class Progress {
         private String target;
         private Integer status;
         private String resourceType;
