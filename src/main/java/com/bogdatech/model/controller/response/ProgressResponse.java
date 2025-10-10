@@ -1,0 +1,28 @@
+package com.bogdatech.model.controller.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ProgressResponse {
+    private List<Prgress> list;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Prgress {
+        private String source;
+        private String target;
+        private String shopName;
+        private Integer status;
+        private String resourceType;
+        private String value;
+        private Map<String, Integer> progressData;
+    }
+}

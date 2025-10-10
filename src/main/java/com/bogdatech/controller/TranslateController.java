@@ -19,10 +19,11 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,7 @@ public class TranslateController {
     /**
      * 根据传入的数组获取对应的数据
      */
+    // TODO delete
     @PostMapping("/readTranslateDOByArray")
     public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO[] translatesDOS) {
         if (translatesDOS != null && translatesDOS.length > 0) {
@@ -120,6 +122,7 @@ public class TranslateController {
     /**
      * 根据传入的shopName和source，返回一个最新时间的翻译项数据，status为1-3
      */
+    // TODO delete
     @PostMapping("/getTranslateDOByShopNameAndSource")
     public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
         if (request != null) {
@@ -404,6 +407,42 @@ public class TranslateController {
         }
 
         return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    @PostMapping("/getAllProgressData")
+    public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, String source) {
+        // TODO 用shopName source查数据库
+//        List<ClickTranslateTasksDO> clickTranslateTasksDOS = new ArrayList<>();
+
+        // 获取所有的TranslatesDO
+        List<TranslatesDO> translatesDOS = translatesService.list(new LambdaQueryWrapper<TranslatesDO>()
+                .eq(TranslatesDO::getShopName, shopName)
+                .eq(TranslatesDO::getSource, source)
+                .orderByDesc(TranslatesDO::getUpdateAt));
+
+        ProgressResponse response = new ProgressResponse();
+        List<ProgressResponse.Prgress> list = new ArrayList<>();
+        response.setList(list);
+        if (translatesDOS.isEmpty()) {
+            return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
+        }
+
+        translatesDOS.forEach(translatesDO -> {
+            ProgressResponse.Prgress progress = new ProgressResponse.Prgress();
+            progress.setStatus(translatesDO.getStatus());
+            progress.setTarget(translatesDO.getTarget());
+            progress.setResourceType(translatesDO.getResourceType());
+
+            // 获取所有进度条
+            Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
+            progress.setProgressData(progressData);
+
+//             TODO 添加正在翻译的字符串
+//            Map<String, Object> usersValue = getUserValueMap(shopName);
+//            progress.setValue();
+            list.add(progress);
+        });
+        return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
     }
 
     /**
