@@ -358,7 +358,7 @@ public class TestController {
      */
     @PostMapping("/getUserDataReport")
     public BaseResponse<Object> getUserDataReport(@RequestParam String shopName, @RequestBody UserDataReportVO userDataReportVO) {
-        String userDataReport = redisDataReportService.getUserDataReport(shopName, userDataReportVO.getStoreLanguage(), userDataReportVO.getTimestamp(), userDataReportVO.getDayData());
+        String userDataReport = redisDataReportService.getUserDataReport(shopName, userDataReportVO.getTimestamp(), userDataReportVO.getDayData());
         if (userDataReport != null) {
             return new BaseResponse<>().CreateSuccessResponse(userDataReport);
         }

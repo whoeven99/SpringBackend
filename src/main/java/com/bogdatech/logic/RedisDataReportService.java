@@ -8,9 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -25,7 +23,7 @@ public class RedisDataReportService {
     /**
      * 以set的形式存储用户上报的数据
      * dr:{shopName}:{language}:{eventName}
-     * */
+     */
     public void saveUserDataReport(String shopName, UserDataReportVO userDataReportVO) {
         //对时间进行处理，最小单位为天
         LocalDate date = userDataReportVO.getTimestamp().toLocalDateTime().toLocalDate(); // 只取日期部分
@@ -33,6 +31,8 @@ public class RedisDataReportService {
         String dataReportKey = generateDataReportKey(shopName, userDataReportVO.getStoreLanguage()[0], format);
         //对传入的client_id做去重，然后再加一
         String clientIdSetKey = generateClientIdSetKey(shopName, userDataReportVO.getStoreLanguage()[0], format, userDataReportVO.getEventName());
+        String setKeys = generateDataReportKeyKeys(shopName);
+        redisIntegration.setSet(setKeys, dataReportKey);
         Boolean flag = redisIntegration.setSet(clientIdSetKey, userDataReportVO.getClientId());
         if (flag) {
             redisIntegration.expire(clientIdSetKey, DAY_1);
@@ -44,33 +44,53 @@ public class RedisDataReportService {
     }
 
 
-
     /**
      * 读取用户上报的数据
-     * */
-    public String getUserDataReport(String shopName, String[] languages, Timestamp timestamp, int dayData) {
-        Map<String, Object> allMap = new HashMap<>();
-        LocalDate baseDate  = timestamp.toLocalDateTime().toLocalDate(); // 只取日期部分
-        for (String languageCode: languages
-        ) {
-            Map<String, Object> languageMap = new HashMap<>();
+     */
+    public String getUserDataReport(String shopName, Timestamp timestamp, int dayData) {
+        // 最终返回的数据结构： { languageCode -> { date -> {hash数据} } }
+        Map<String, Map<String, Map<Object, Object>>> allMap = new HashMap<>();
+        LocalDate baseDate = timestamp.toLocalDateTime().toLocalDate();
+        String setKeys = generateDataReportKeyKeys(shopName);
+        Set<String> redisIntegrationSet = redisIntegration.getSet(setKeys);
+
+        if (redisIntegrationSet == null || redisIntegrationSet.isEmpty()) {
+            appInsights.trackTrace("getUserDataReport 没有找到 key, shopName=" + shopName);
+            return null;
+        }
+
+        for (String dataReportKey : redisIntegrationSet) {
+            String[] parts = dataReportKey.split(":");
+            if (parts.length != 4) {
+                appInsights.trackTrace("getUserDataReport Key 格式不正确: " + dataReportKey);
+                continue;
+            }
+
+            String languageCode = parts[2];
+
+            // 每个语言对应一个独立的 languageMap
+            Map<String, Map<Object, Object>> languageMap =
+                    allMap.computeIfAbsent(languageCode, k -> new HashMap<>());
+
+            // 遍历 dayData 天的数据
             for (int i = 0; i < dayData; i++) {
                 LocalDate date = baseDate.minusDays(i);
                 String format = date.format(DATE_FORMATTER);
-                //对时间进行处理，最小单位为天
-                //date减去对应的一天
-                String dataReportKey = generateDataReportKey(shopName, languageCode, format);
-                Map<Object, Object> hashAll = redisIntegration.getHashAll(dataReportKey);
-                languageMap.put(format, hashAll);
+
+                String key = generateDataReportKey(shopName, languageCode, format);
+                Map<Object, Object> hashAll = redisIntegration.getHashAll(key);
+
+                if (hashAll != null && !hashAll.isEmpty()) {
+                    languageMap.put(format, hashAll);
+                }
             }
-            allMap.put(languageCode, languageMap);
         }
 
         try {
             return OBJECT_MAPPER.writeValueAsString(allMap);
         } catch (JsonProcessingException e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("getUserDataReport 用户： " + shopName + " target: " + Arrays.toString(languages));
+            appInsights.trackTrace("getUserDataReport JSON序列化失败, shopName=" + shopName);
             return null;
         }
     }
