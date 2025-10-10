@@ -36,6 +36,7 @@ import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
+import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
@@ -278,34 +279,23 @@ public class TranslateService {
      * 用户shopify和数据库同步的方法
      */
     public void syncShopifyAndDatabase(TranslateRequest request) {
-        //获取用户数据
+        // 获取用户数据
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.translateRequestToCloudServiceRequest(request);
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         String query = getLanguagesQuery();
         cloudServiceRequest.setBody(query);
-        String shopifyData = null;
+        String shopifyData;
+        JsonNode root;
         try {
-            String env = System.getenv("ApplicationEnv");
-            if ("prod".equals(env) || "dev".equals(env)) {
-                shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, query));
-            } else {
-                shopifyData = getShopifyDataByCloud(cloudServiceRequest);
-            }
-        } catch (Exception e) {
-            // 如果出现异常，则跳过, 翻译其他的内容
-            //更新当前字符数
-            appInsights.trackTrace("syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
-        }
-
-        //分析获取到的数据，然后存储到list集合里面
-        JsonNode root = null;
-        try {
+            shopifyData = getShopifyByQuery(query, request.getShopName(), request.getAccessToken());
             root = OBJECT_MAPPER.readTree(shopifyData);
-        } catch (JsonProcessingException e) {
-            appInsights.trackTrace("syncShopifyAndDatabase Failed to parse Shopify data errors : " + e.getMessage());
+        } catch (Exception e) {
+            appInsights.trackException(e);
+            appInsights.trackTrace("syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
             return;
         }
 
+        // 分析获取到的数据，然后存储到list集合里面
         JsonNode shopLocales = root.path("shopLocales");
         if (shopLocales.isArray()) {
             for (JsonNode node : shopLocales) {

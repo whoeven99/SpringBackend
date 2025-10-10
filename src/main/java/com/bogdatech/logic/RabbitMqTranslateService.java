@@ -10,6 +10,7 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.RedisIntegration;
+import com.bogdatech.mapper.ClickTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -23,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -81,12 +84,16 @@ public class RabbitMqTranslateService {
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
     private RedisIntegration redisIntegration;
+    @Autowired
+    private ClickTranslateTasksMapper clickTranslateTasksMapper;
+
+
     public static final int BATCH_SIZE = 50;
 
     /**
      * 加一层包装MQ翻译，用于自动翻译按顺序添加任务
      */
-    public void mqTranslateWrapper(ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, boolean emailType, String[] targets) {
+    public void mqTranslateWrapper(ClickTranslateRequest clickTranslateRequest, ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request, boolean handleFlag, boolean isCover, String customKey, String[] targets) {
         appInsights.trackTrace("mqTranslateWrapper开始: " + shopifyRequest.getShopName());
         String shopName = shopifyRequest.getShopName();
         //重置用户发送的邮件
@@ -94,10 +101,7 @@ public class RabbitMqTranslateService {
         // 初始化用户的停止标志
         userStopFlags.put(shopName, new AtomicBoolean(false));
 
-        //初始化计数器
-        CharacterCountUtils counter = new CharacterCountUtils();
-        counter.addChars(usedChars);
-        appInsights.trackTrace("初始化计数器和停止标识 : " + shopifyRequest.getShopName());
+
 
         //修改自定义提示词
         String cleanedText;
@@ -109,14 +113,19 @@ public class RabbitMqTranslateService {
         appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
         //改为循环遍历，将相关target状态改为2
         List<String> listTargets = Arrays.asList(targets);
-        translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopifyRequest.getShopName()).eq(TranslatesDO::getSource, request.getSource()).in(TranslatesDO::getTarget, listTargets).set(TranslatesDO::getStatus, 2));
+//        translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopifyRequest.getShopName()).eq(TranslatesDO::getSource, request.getSource()).in(TranslatesDO::getTarget, listTargets).set(TranslatesDO::getStatus, 2));
         appInsights.trackTrace("修改相关target状态改为2 : " + shopifyRequest.getShopName());
 
         for (String target : targets) {
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
             request.setTarget(target);
             shopifyRequest.setTarget(target);
-            mqTranslate(shopifyRequest, counter, translateResourceDTOS, request, limitChars, usedChars, handleFlag, translationModel, isCover, cleanedText, emailType);
+
+            // 将线管参数存到数据库中
+            System.out.println("将参数存到数据库中");
+            int insert = clickTranslateTasksMapper.insert(new ClickTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), translateResourceDTOS.toString(), cleanedText, clickTranslateRequest.getShopName(), handleFlag, Timestamp.valueOf(LocalDateTime.now())));
+            System.out.println("将参数存到数据库后： " + insert);
+
         }
     }
 

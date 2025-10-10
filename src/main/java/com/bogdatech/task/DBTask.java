@@ -37,8 +37,6 @@ public class DBTask {
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
     @Autowired
-    private RedisIntegration redisIntegration;
-    @Autowired
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private ProcessDbTaskService processDbTaskService;
