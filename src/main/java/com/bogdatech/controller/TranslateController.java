@@ -23,10 +23,7 @@ import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
@@ -435,8 +432,14 @@ public class TranslateController {
 
             // 获取所有进度条
             Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
-            progress.setProgressData(progressData);
-
+            appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + progressData);
+            if (progressData != null) {
+                // 正常处理
+                progress.setProgressData(progressData);
+            } else {
+                // 进度数据为空时，初始化一个空Map或默认值
+                progress.setProgressData(new HashMap<>());
+            }
 //             TODO 添加正在翻译的字符串
 //            Map<String, Object> usersValue = getUserValueMap(shopName);
 //            progress.setValue();
