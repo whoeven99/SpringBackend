@@ -76,6 +76,13 @@ public class TranslateService {
     };
     public static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
+    // TODO 所有翻译的总入口
+    public void translate() {
+        // 手动点击翻译 则需要 shopName, source, target, resourceTypes
+        // 自动翻译, 则需要 shopName, source, target
+        // 同样的，私有key翻译也走这里，做一次分发
+    }
+
     // 用户卸载停止指定用户的翻译任务
     public void stopTranslation(String shopName) {
         AtomicBoolean stopFlag = userStopFlags.get(shopName);
@@ -345,6 +352,11 @@ public class TranslateService {
         }
         //获取userTranslate是否是写入状态，是的话翻译100%
         Map<String, Object> value = userTranslate.get(shopName);
+        if (value == null) {
+            progressData.put("RemainingQuantity", 0);
+            progressData.put("TotalQuantity", 0);
+            return progressData;
+        }
         if (value.get("value") == null && value.get("status").equals(3)) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
@@ -394,7 +406,5 @@ public class TranslateService {
         //调用图片翻译方法
         return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName);
     }
-
-
 }
 
