@@ -70,9 +70,9 @@ public class ShopifyService {
         return string;
     }
 
-    //包装一层，用于获取用户实际未翻译和部分翻译的语言数
+    // 包装一层，用于获取用户实际未翻译和部分翻译的语言数
     public int getUnTranslatedToken(ShopifyRequest request, String method, TranslateResourceDTO translateResource, String source) {
-        //获取该用户所有的未翻译和部分翻译的所有token数据
+        // 获取该用户所有的未翻译和部分翻译的所有token数据
         List<String> all = redisTranslateUserStatusService.getAll(request.getShopName(), source);
         int allLanguage = 1;
         for (String status : all
@@ -89,7 +89,7 @@ public class ShopifyService {
         return totalWords * allLanguage;
     }
 
-    //获得翻译前一共需要消耗的字符数
+    // 获得翻译前一共需要消耗的字符数
     public int getTotalWords(ShopifyRequest request, String method, TranslateResourceDTO translateResource) {
         CharacterCountUtils counter = new CharacterCountUtils();
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
