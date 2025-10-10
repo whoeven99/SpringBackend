@@ -11,6 +11,8 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -59,7 +61,7 @@ public class UserTrialsService {
      * 获取免费试用是否弹窗数据
      */
     public BaseResponse<Object> isShowFreePlan(String shopName) {
-        //从数据库中获取是否弹出免费试用的弹窗
+        // 从数据库中获取是否弹出免费试用的弹窗
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
         if (userTrialsDO != null && !userTrialsDO.getIsTrialShow()) {
             //将弹窗状态改为true
@@ -72,5 +74,20 @@ public class UserTrialsService {
         }
         return new BaseResponse<>().CreateSuccessResponse(false);
 
+    }
+
+    /**
+     * 判断是否在免费试用时间
+     */
+    public BaseResponse<Object> isInFreePlanTime(String shopName) {
+        // 获取该用户是否在免费试用期间
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+
+        UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
+        // 判断now是否在trialStart 和 trialEnd 中间.  是，返回true； 否，返回false
+        if (userTrialsDO != null && userTrialsDO.getTrialStart().before(now) && userTrialsDO.getTrialEnd().after(now)) {
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateSuccessResponse(false);
     }
 }

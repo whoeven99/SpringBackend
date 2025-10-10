@@ -55,4 +55,11 @@ public class UserTrialsController {
         return userTrialsService.isShowFreePlan(shopName);
     }
 
+    /**
+     * 判断是否是免费试用期间
+     * */
+    @PostMapping("/isInFreePlanTime")
+    public BaseResponse<Object> isInFreePlanTime(@RequestParam String shopName){
+        return userTrialsService.isInFreePlanTime(shopName);
+    }
 }
