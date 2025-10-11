@@ -13,7 +13,6 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 @EnableScheduling
-@EnableAsync
 public class RateTask {
     @Autowired
     private RateHttpIntegration rateHttpIntegration;
