@@ -8,6 +8,7 @@ import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
@@ -43,6 +44,7 @@ import static com.bogdatech.logic.RabbitMqTranslateService.*;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.UserTypeTokenService.getUserTranslatedToken;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
@@ -98,6 +100,8 @@ public class PrivateKeyService {
     private JsoupUtils jsoupUtils;
     @Autowired
     private RedisProcessService redisProcessService;
+    @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
 
     private static final String PRIVATE_KEY = "private_key";
     public static final Integer GOOGLE_MODEL = 0;
@@ -537,8 +541,8 @@ public class PrivateKeyService {
         }
 
         for (TranslateTextDO translateTextDO : glossaryData) {
-            //根据模块选择翻译方法，先做普通翻译
-            //判断是否停止翻译
+            // 根据模块选择翻译方法，先做普通翻译
+            // 判断是否停止翻译
             if (checkIsStopped(shopName)) {
                 return;
             }
@@ -550,16 +554,19 @@ public class PrivateKeyService {
             String digest = translateTextDO.getDigest();
             Map<String, Object> translation = createTranslationMap(target, key, digest);
 
-            //判断是否达到额度限制
+            // 判断是否达到额度限制
             updateCharsWhenExceedLimit(shopName, translateContext.getModel(), new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-            //开始翻译
-            //缓存翻译和数据库翻译
+            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
+
+            // 开始翻译
+            // 缓存翻译和数据库翻译
             if (rabbitMqTranslateService.cacheOrDatabaseTranslateData(value, source, translation, resourceId, shopifyRequest)) {
                 continue;
             }
 
-            //词汇表翻译
+            // 词汇表翻译
             // html数据暂时先不翻译
             if (isHtml(value)) {
                 continue;
@@ -572,9 +579,10 @@ public class PrivateKeyService {
 
             if (translateContext.getModel().equals(OPENAI_MODEL)) {
                 try {
-                    //用大模型翻译
+                    // 用大模型翻译
                     String glossaryString = glossaryText(keyMap1, keyMap0, value);
-                    //根据关键词生成对应的提示词
+
+                    // 根据关键词生成对应的提示词
                     String targetName = getLanguageName(target);
                     String prompt;
                     if (glossaryString != null) {
@@ -584,9 +592,11 @@ public class PrivateKeyService {
                         prompt = getSimplePrompt(targetName, null);
                         appInsights.trackTrace("translate 私有 普通文本：" + value + " Simple提示词: " + prompt);
                     }
-                    //目前改为openai翻译
+
+                    // 目前改为openai翻译
                     String finalText = privateIntegration.translateByGpt(value, translateContext.getApiModel(), translateContext.getApiKey(), prompt, shopName, Long.valueOf(translateContext.getRemainingChars()));
-                    //对null处理, 不翻译
+
+                    // 对null处理, 不翻译
                     if (finalText == null) {
                         return;
                     }
@@ -622,8 +632,8 @@ public class PrivateKeyService {
         String accessToken = shopifyRequest.getAccessToken();
 
         for (TranslateTextDO translateTextDO : htmlData) {
-            //根据模块选择翻译方法，先做普通翻译
-            //判断是否停止翻译
+            // 根据模块选择翻译方法，先做普通翻译
+            // 判断是否停止翻译
             if (checkIsStopped(shopName)) {
                 return;
             }
@@ -635,39 +645,43 @@ public class PrivateKeyService {
             String digest = translateTextDO.getDigest();
             Map<String, Object> translation = createTranslationMap(target, key, digest);
 
-            //判断是否达到额度限制
+            // 判断是否达到额度限制
             updateCharsWhenExceedLimit(shopName, translateContext.getModel(), new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-            //开始翻译
-            //缓存翻译和数据库翻译
+            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
+
+            // 开始翻译
+            // 缓存翻译和数据库翻译
             if (rabbitMqTranslateService.cacheOrDatabaseTranslateData(value, source, translation, resourceId, shopifyRequest)) {
                 continue;
             }
 
             String modelHtml;
-            //判断是google翻译还是openai翻译
+            // 判断是google翻译还是openai翻译
             if (translateContext.getModel().equals(GOOGLE_MODEL)) {
                 modelHtml = translateGooglePrivateHtml(translateTextDO.getSourceText(), target, shopName, translateContext.getApiKey(), translateContext.getRemainingChars());
             } else if (translateContext.getModel().equals(OPENAI_MODEL)) {
-                //大模型 html翻译
+                // 大模型 html翻译
                 modelHtml = privateIntegration.translatePrivateNewHtml(translateTextDO.getSourceText(), target, translateContext.getApiKey(), translateContext.getApiModel(), shopName, Long.valueOf(translateContext.getRemainingChars()));
             } else {
                 appInsights.trackTrace("translate 私有 html：" + value + " 没有找到对应的翻译api modelHtml : " + translateContext.getModel());
                 continue;
             }
             if (modelHtml == null) {
-                //私有key 跳过
+                // 私有key 跳过
                 appInsights.trackTrace("translate 私有 html：" + value + " 翻译失败 用户： " + shopName + " sourceText : " + translateTextDO.getSourceText());
                 continue;
             }
 
             if (translateContext.getTranslateResource().getResourceType().equals(METAFIELD)) {
-                //对翻译后的html做格式处理
+                // 对翻译后的html做格式处理
                 modelHtml = normalizeHtml(modelHtml);
             }
             shopifyService.saveToShopify(modelHtml, translation, resourceId, shopifyRequest);
             printTranslation(modelHtml, translateTextDO.getSourceText(), translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
-            //如果翻译数据小于255，存到数据库
+
+            // 如果翻译数据小于255，存到数据库
             try {
                 if (modelHtml.length() >= 255) {
                     continue;
@@ -693,8 +707,8 @@ public class PrivateKeyService {
         String target = shopifyRequest.getTarget();
         String accessToken = shopifyRequest.getAccessToken();
         for (TranslateTextDO translateTextDO : plainTextData) {
-            //根据模块选择翻译方法，先做普通翻译
-            //判断是否停止翻译
+            // 根据模块选择翻译方法，先做普通翻译
+            // 判断是否停止翻译
             if (checkIsStopped(request.getShopName())) {
                 return;
             }
@@ -706,16 +720,19 @@ public class PrivateKeyService {
             String digest = translateTextDO.getDigest();
             Map<String, Object> translation = createTranslationMap(target, key, digest);
 
-            //判断是否达到额度限制
+            // 判断是否达到额度限制
             updateCharsWhenExceedLimit(shopName, translateContext.getModel(), new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-            //开始翻译
-            //缓存翻译和数据库翻译
+            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
+
+            // 开始翻译
+            // 缓存翻译和数据库翻译
             if (rabbitMqTranslateService.cacheOrDatabaseTranslateData(value, source, translation, resourceId, shopifyRequest)) {
                 continue;
             }
 
-            //switch根据m模型类型选择翻译
+            // switch根据m模型类型选择翻译
             try {
                 translateByUser(translateContext, value, source, request, resourceId, translation, translateContext.getApiKey(), translateContext.getTranslateResource().getResourceType());
             } catch (Exception e) {
@@ -727,10 +744,12 @@ public class PrivateKeyService {
 
     }
 
-    //根据用户的翻译模型选择翻译
+    /**
+     * 根据用户的翻译模型选择翻译
+     * */
     private void translateByUser(TranslateContext translateContext, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey, String resourceType) {
-        //根据模型类型选择对应的翻译方法
-        //对元字段数据类型翻译
+        // 根据模型类型选择对应的翻译方法
+        // 对元字段数据类型翻译
         if (translateContext.getTranslateResource().getResourceType().equals(METAFIELD)) {
             //特殊处理
             translateMetafield(translateContext, value, source, request, resourceId, translation, apiKey, resourceType);
@@ -738,7 +757,8 @@ public class PrivateKeyService {
         }
         String targetValue = translateByModel(translateContext, value, request, apiKey);
         redisProcessService.setCacheData(request.getTarget(), targetValue, value);
-        //翻译成功后，将翻译后的数据存shopify本地中
+
+        // 翻译成功后，将翻译后的数据存shopify本地中
         saveToShopify(targetValue, translation, resourceId, request);
         printTranslation(targetValue, value, translation, request.getShopName() + PRIVATE_KEY, resourceType, resourceId, source);
 

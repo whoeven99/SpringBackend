@@ -5,6 +5,7 @@ import com.bogdatech.entity.VO.KeywordVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
 import com.bogdatech.logic.RedisProcessService;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -22,6 +23,7 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.DeepLIntegration.DEEPL_LANGUAGE_MAP;
 import static com.bogdatech.logic.RabbitMqTranslateService.extractTranslationsByResourceId;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
@@ -42,7 +44,7 @@ public class JsoupUtils {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
-    private ArkTranslateIntegration arkTranslateIntegration;
+    private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private HunYuanIntegration hunYuanIntegration;
     @Autowired
@@ -86,6 +88,9 @@ public class JsoupUtils {
             }
 
         });
+
+        translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), String.valueOf(2));
+        translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), text);
         return translatedText;
     }
 
@@ -209,7 +214,7 @@ public class JsoupUtils {
         String shopName = request.getShopName();
         String prompt;
 
-        //判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
+        // 判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
             return translateVariableData(request, counter, limitChars, targetLanguage, languagePackId);
 
@@ -218,7 +223,7 @@ public class JsoupUtils {
             appInsights.trackTrace("clickTranslation " + shopName + " 普通文本：" + content + " Simple提示词: " + prompt);
         }
         try {
-            //对模型进行判断 , 1,ciwi 2,openai 3,deepL
+            // 对模型进行判断 , 1,ciwi 2,openai 3,deepL
             return translateByCiwiModel(request, counter, limitChars, prompt);
         } catch (Exception e) {
             appInsights.trackException(e);
@@ -340,7 +345,7 @@ public class JsoupUtils {
     public String translateAndCount(TranslateRequest request,
                                     CharacterCountUtils counter, String languagePackId, String translateType, Integer limitChars) {
         String text = request.getContent();
-        //检测text是不是全大写，如果是的话，最后翻译完也全大写
+        // 检测text是不是全大写，如果是的话，最后翻译完也全大写
 
         String targetString;
         if (translateType.equals(HANDLE)) {
@@ -354,17 +359,19 @@ public class JsoupUtils {
         }
 
         if (targetString == null) {
-            //对null的处理，再次翻译
+            // 对null的处理，再次翻译
             return checkTranslationModel(request, counter, languagePackId, limitChars);
         }
 
         targetString = isHtmlEntity(targetString);
 
-        //判断translateType是不是handle，再决定是否添加到缓存
+        // 判断translateType是不是handle，再决定是否添加到缓存
         if (!translateType.equals(HANDLE)) {
             redisProcessService.setCacheData(request.getTarget(), targetString, text);
         }
 
+        translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), String.valueOf(2));
+        translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), "Searching for content to translate…");
         return targetString;
     }
 
@@ -387,6 +394,9 @@ public class JsoupUtils {
         if (html == null || html.trim().isEmpty()) {
             return html;
         }
+
+        translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), String.valueOf(2));
+        translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), html);
 
         try {
             // 判断输入是否包含 <html> 标签
@@ -633,12 +643,13 @@ public class JsoupUtils {
         String target = request.getTarget();
         String content = request.getContent();
         String shopName = request.getShopName();
-        //目标语言是中文的，用qwen-max翻译
+
+        // 目标语言是中文的，用qwen-max翻译
         if ("fr".equals(target) || "ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
             return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
         }
 
-        //hi用doubao-1.5-pro-256k翻译
+        // hi用doubao-1.5-pro-256k翻译
 //        if ("hi".equals(target) || "th".equals(target)) {
 //            return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
 //        }
