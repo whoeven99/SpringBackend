@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
@@ -54,8 +53,6 @@ public class DeepLIntegration {
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
             printTranslateCost(totalToken, totalToken, totalToken);
             appInsights.trackTrace( "clickTranslation translateByDeepL 用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
-            userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             counter.addChars(totalToken);
             return targetText;
@@ -77,8 +74,6 @@ public class DeepLIntegration {
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
             appInsights.trackTrace( "translateByDeepL 用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
-            userTranslate.put(shopName, translationStatusMap);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             counter.addChars(totalToken);
             return targetText;

@@ -40,10 +40,9 @@ public class UserTranslationDataService {
      * 异步去做存shopify的处理
      * */
     public void translationDataToSave(UserTranslationDataDO data){
-        //将状态改为2
-        updateStatusTo2(data.getTaskId(), 2);
         String payload = data.getPayload();
-        //将payload解析
+
+        // 将payload解析
         CloudInsertRequest cloudInsertRequest;
         try {
             cloudInsertRequest = jsonToObject(payload, CloudInsertRequest.class);
@@ -56,7 +55,8 @@ public class UserTranslationDataService {
             return ;
         }
         saveToShopify(cloudInsertRequest);
-        //删除对应任务id
+
+        // 删除对应任务id
         userTranslationDataService.removeById(data.getTaskId());
     }
 }

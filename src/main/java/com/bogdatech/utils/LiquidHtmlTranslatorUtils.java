@@ -249,6 +249,7 @@ public class LiquidHtmlTranslatorUtils {
             nodes.addAll(element.textNodes());
         }
         appInsights.trackTrace("收集完所有的TextNode 用户： " + request.getShopName());
+
         // 3. 提取要翻译文本
         List<String> originalTexts = new ArrayList<>();
         for (TextNode node : nodes) {
@@ -258,13 +259,16 @@ public class LiquidHtmlTranslatorUtils {
             }
         }
         appInsights.trackTrace("提取完所有的翻译文本 用户： " + request.getShopName());
+
         // 4. 每50条一次翻译
         Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId, limitChars);
         appInsights.trackTrace("翻译完所有文本 用户： " + request.getShopName());
+
         // 5. 填回原处
         appInsights.trackTrace("填回原处前 用户： " + request.getShopName());
         fillBackTranslatedData(nodes, translatedTexts, request.getTarget(), request.getShopName());
         appInsights.trackTrace("填回原处后 用户： " + request.getShopName());
+
         // 输出翻译后的 HTML
         if (hasHtmlTag) {
             appInsights.trackTrace("输出翻译后的 HTML 1 用户： " + request.getShopName());

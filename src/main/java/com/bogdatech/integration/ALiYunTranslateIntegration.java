@@ -17,6 +17,7 @@ import com.aliyun.alimt20181012.Client;
 import com.aliyun.alimt20181012.models.*;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
@@ -105,8 +105,6 @@ public class ALiYunTranslateIntegration {
                 return null;
             }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(text, 2);
-            userTranslate.put(shopName, translationStatusMap);
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
@@ -172,9 +170,7 @@ public class ALiYunTranslateIntegration {
             appInsights.trackTrace("GenerationResult 用户 " + shopName);
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             appInsights.trackTrace("content 用户 " + shopName);
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(text, 2);
-            appInsights.trackTrace("translationStatusMap 用户 " + shopName);
-            userTranslate.put(shopName, translationStatusMap);
+
             appInsights.trackTrace("userTranslate 用户 " + shopName);
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             appInsights.trackTrace("totalToken 用户 " + shopName);
@@ -246,8 +242,7 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("callWithMessageMT 用户： " + shopName + " token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(translateText, 2);
-            userTranslate.put(shopName, translationStatusMap);
+
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             countUtils.addChars(totalToken);
         } catch (Exception e) {
