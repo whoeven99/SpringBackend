@@ -140,7 +140,7 @@ public class ProcessDbTaskService {
 
         // 修改redis当前翻译模块的数据
         translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(shopName, vo.getSource(), vo.getTarget()), vo.getModeType());
-//        translatesService.updateTranslatesResourceType(shopName, vo.getTarget(), vo.getSource(), vo.getModeType());
+        translatesService.updateTranslatesResourceType(shopName, vo.getTarget(), vo.getSource(), vo.getModeType());
 
         // 修改数据库的模块翻译状态
         translateTasksService.updateByTaskId(task.getTaskId(), 2);
