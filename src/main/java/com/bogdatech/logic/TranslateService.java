@@ -320,7 +320,7 @@ public class TranslateService {
         Map<Object, Object> value = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
 //        Map<String, Object> value = userTranslate.get(shopName);
 
-        if (value.get("value") == null && value.get("status").equals(3)) {
+        if (value.get("translation_status").equals(3)) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
             return progressData;
