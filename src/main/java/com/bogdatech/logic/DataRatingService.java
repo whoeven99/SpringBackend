@@ -54,10 +54,15 @@ public class DataRatingService {
 
         //2，查询switch表
         WidgetConfigurationsDO data = iWidgetConfigurationsService.getData(shopName);
-        configurationMap.put("switch", data.getLanguageSelector());
+        if (data != null) {
+            configurationMap.put("switch", data.getLanguageSelector());
+        }else {
+            configurationMap.put("switch", false);
+        }
+
         //3，查询自动翻译表
-        TranslatesDO one = iTranslatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getAutoTranslate, 1));
-        if (one != null) {
+        List<TranslatesDO> one = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getAutoTranslate, 1));
+        if (one != null && !one.isEmpty()) {
             configurationMap.put("autoTranslate", true);
         } else {
             configurationMap.put("autoTranslate", false);
@@ -70,18 +75,21 @@ public class DataRatingService {
      * 获取用户商店语言开启状态
      */
     public Map<String, Integer> getTranslationStatus(String shopName, String source) {
-        //1， 从db获取用户token和相关翻译数据， 存入Map中
+        // 1， 从db获取用户token和相关翻译数据， 存入Map中
         Map<String, Integer> statusMap = new HashMap<>();
         UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
         List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
-        //2，从shopify中获取所有的语言状态数据
+
+        // 2，从shopify中获取所有的语言状态数据
         String shopifyByQuery = getShopifyByQuery(getShopLanguageQuery(), shopName, usersDO.getAccessToken());
         if (shopifyByQuery == null) {
             return null;
         }
-        //3，对shopify返回的数据进行解析，判断用户是否所有翻译语言都发布
-        //默认是全部发布了
+
+        // 3，对shopify返回的数据进行解析，判断用户是否所有翻译语言都发布
+        // 默认是全部发布了
         statusMap.put(IS_PUBLISH, 1);
+
         // 先转成 JSONObject
         JSONObject jsonObject = JSON.parseObject(shopifyByQuery);
         // 取出 shopLocales 数组
@@ -101,7 +109,8 @@ public class DataRatingService {
                 statusMap.put(IS_PUBLISH, 0);
             }
         }
-        //4，从db中获取用户翻译状态，如果shopify里面没有，则不显示
+
+        // 4，从db中获取用户翻译状态，如果shopify里面没有，则不显示
         for (TranslatesDO translatesDO : list
         ) {
             if (statusMap.containsKey(getLanguageName(translatesDO.getTarget()))) {
@@ -110,6 +119,8 @@ public class DataRatingService {
             }
         }
 
+        // 5, 将source对应的语言删除
+        statusMap.remove(getLanguageName(source));
         return statusMap;
     }
 
