@@ -98,7 +98,7 @@ public class HunYuanIntegration {
                 Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
                 userTranslate.put(shopName, translationStatusMap);
                 printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
-                appInsights.trackTrace("hunYuanTranslate 混元报错信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                appInsights.trackTrace("hunYuanTranslate 混元信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
                 countUtils.addChars(totalToken);
                 return targetText;

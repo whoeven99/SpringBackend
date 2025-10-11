@@ -68,12 +68,6 @@ public class TranslateService {
     public static ConcurrentHashMap<String, Map<String, Object>> beforeUserTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
-    static ThreadFactory threadFactory = runnable -> {
-        Thread thread = new Thread(runnable);
-        thread.setName("my-thread-" + thread.getId());
-        thread.setUncaughtExceptionHandler((t, e) -> appInsights.trackTrace("线程 " + t.getName() + " 抛出异常: " + e.getMessage()));
-        return thread;
-    };
     public static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     // 用户卸载停止指定用户的翻译任务
@@ -156,30 +150,6 @@ public class TranslateService {
         translation.put("translatableContentDigest", translatableContentDigest);
         return translation;
     }
-
-    //判断是否翻译的通用逻辑
-    public static boolean translationLogic(String key, String value, String type, String resourceType) {
-        //如果包含相对路径则跳过
-        if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
-                || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                || type.equals(("LIST_URL"))
-                || "JSON".equals(type)
-                || "JSON_STRING".equals(type)
-        ) {
-            return true;
-        }
-
-        //通用的不翻译数据
-        if (!generalTranslate(key, value)) {
-            return true;
-        }
-
-        if (PRODUCT_OPTION.equals(resourceType)) {
-            return "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value);
-        }
-        return false;
-    }
-
 
     //翻译单个文本数据
     public String translateSingleText(RegisterTransactionRequest request) {
