@@ -98,14 +98,22 @@ public class TranslateController {
             TranslateArrayVO translateArrayVO = new TranslateArrayVO();
             TranslatesDO[] translatesDOResult = new TranslatesDO[translatesDOS.length];
             int i = 0;
-            //初始化 flag用于判断前端是否要继续请求
+            // 初始化 flag用于判断前端是否要继续请求
             boolean flag = false;
             for (TranslatesDO translatesDO : translatesDOS
             ) {
                 translatesDOResult[i] = translatesService.readTranslateDOByArray(translatesDO);
+
+                // 获取模块类型数据， 然后存到translatesDOResult[i]里面
+                Map<Object, Object> progressTranslationKey = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(translatesDOResult[i].getShopName(), translatesDOResult[i].getSource(), translatesDOResult[i].getTarget()));
+                Object translatingModule = progressTranslationKey.get("translating_module");
+                if (translatingModule != null) {
+                    translatesDOResult[i].setResourceType((String) translatingModule);
+                }
+
                 i++;
             }
-            //判断任务表里面是否存在该任务，存在将flag改为true
+            // 判断任务表里面是否存在该任务，存在将flag改为true
             List<TranslateTasksDO> list = iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
             if (!list.isEmpty()) {
                 flag = true;
