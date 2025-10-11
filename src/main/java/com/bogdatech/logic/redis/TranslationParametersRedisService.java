@@ -28,8 +28,8 @@ public class TranslationParametersRedisService {
             return null;
         }
         return PROGRESS_TRANSLATION_KEY.replace("{shopName}", shopName)
-                .replace("{sourceCode}", source)
-                .replace("{targetCode}", target);
+                .replace("{source}", source)
+                .replace("{target}", target);
     }
 
     /**
@@ -61,7 +61,7 @@ public class TranslationParametersRedisService {
     }
 
     /**
-     * 存进度条数字的key：tc:{targetCode}:{source}
+     * 存进度条数字的key：tr:{shopName}:{targetCode}
      * */
     public void hsetProgressNumber(String ptKey, String progressNumberKey) {
         redisIntegration.setHash(ptKey, "progress_number", progressNumberKey);
