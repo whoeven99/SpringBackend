@@ -21,9 +21,14 @@ public class SaveShopifyDataTask {
      * 每1s调用一次，存储获取到的数据
      * 获取成功后将数据状态改为2
      */
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedDelay = 1000)
     public void getDataToSaveInShopify() {
         List<UserTranslationDataDO> userTranslationDataDOS = userTranslationDataService.selectTranslationDataList();
+        for (UserTranslationDataDO data : userTranslationDataDOS
+             ) {
+            userTranslationDataService.updateStatusTo2(data.getTaskId(), 2);
+        }
+
         for (UserTranslationDataDO data : userTranslationDataDOS
         ) {
             executorService.submit(() -> {
