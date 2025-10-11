@@ -39,7 +39,6 @@ public class UserTranslationDataService {
     /**
      * 异步去做存shopify的处理
      * */
-    @Async
     public void translationDataToSave(UserTranslationDataDO data){
         //将状态改为2
         updateStatusTo2(data.getTaskId(), 2);

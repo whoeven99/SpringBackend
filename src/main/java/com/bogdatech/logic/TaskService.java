@@ -11,9 +11,7 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -23,7 +21,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -38,37 +35,37 @@ import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 @Component
 public class TaskService {
     @Autowired
-    private  ICharsOrdersService charsOrdersService;
+    private ICharsOrdersService charsOrdersService;
     @Autowired
-    private  IUsersService usersService;
+    private IUsersService usersService;
     @Autowired
-    private  ITranslationCounterService translationCounterService;
+    private ITranslationCounterService translationCounterService;
     @Autowired
-    private  ISubscriptionPlansService subscriptionPlansService;
+    private ISubscriptionPlansService subscriptionPlansService;
     @Autowired
-    private  OrderService orderService;
+    private OrderService orderService;
     @Autowired
-    private  ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
+    private ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
     @Autowired
-    private  ITranslatesService translatesService;
+    private ITranslatesService translatesService;
     @Autowired
-    private  IUserTrialsService iUserTrialsService;
+    private IUserTrialsService iUserTrialsService;
     @Autowired
-    private  IUserSubscriptionsService iUserSubscriptionsService;
+    private IUserSubscriptionsService iUserSubscriptionsService;
     @Autowired
-    private  IWidgetConfigurationsService iWidgetConfigurationsService;
+    private IWidgetConfigurationsService iWidgetConfigurationsService;
     @Autowired
-    private  IGlossaryService iGlossaryService;
+    private IGlossaryService iGlossaryService;
     @Autowired
-    private  IUserIpService iUserIpService;
+    private IUserIpService iUserIpService;
     @Autowired
-    private  ITranslateTasksService translateTasksService;
+    private ITranslateTasksService translateTasksService;
     @Autowired
-    private  TencentEmailService tencentEmailService;
+    private TencentEmailService tencentEmailService;
     @Autowired
-    private  RabbitMqTranslateService rabbitMqTranslateService;
+    private RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
-    private  ITranslationUsageService iTranslationUsageService;
+    private ITranslationUsageService iTranslationUsageService;
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
 
@@ -235,25 +232,28 @@ public class TaskService {
 
     //当自动重启后，重启翻译状态为2的任务
     public void translateStatus2WhenSystemRestart() {
-        //查找翻译状态为2的任务
-        List<TranslatesDO> listData = translatesService.getStatus2Data();
+        // 查找翻译状态为2的任务
+        QueryWrapper<TranslateTasksDO> wrapper = new QueryWrapper<>();
+        wrapper.select("DISTINCT shop_name");
 
-        appInsights.trackTrace("TaskServiceLog 系统重启，获取翻译状态为2的任务数： " + listData.size());
+        List<Map<String, Object>> maps = translateTasksService.listMaps(wrapper);
+        List<String> allShopName = maps.stream()
+                .map(m -> (String) m.get("shop_name"))
+                .toList();
 
-        // TODO 这里的翻译task为0的shop有没有解锁
+        // 将所有状态为2的任务状态改为0
+        translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
+        appInsights.trackTrace("TaskServiceLog 系统重启，获取翻译状态为2的任务数： " + allShopName.size());
 
-        //循环处理获取到的任务，先将状态改为3，然后调用翻译API
-        for (TranslatesDO translatesDO : listData) {
-            //给这些用户添加停止标志符的状态
-            userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-            userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+        // 循环处理获取到的任务，先将状态改为3，然后调用翻译API
+        for (String shop : allShopName) {
+            // 给这些用户添加停止标志符的状态
+            userEmailStatus.put(shop, new AtomicBoolean(false)); //重置用户发送的邮件
+            userStopFlags.put(shop, new AtomicBoolean(false));  // 初始化用户的停止标志
 
-            //将该任务的状态改为0
-            translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
-
-            //删除redis里面的tl:锁值
-            redisTranslateLockService.setRemove(translatesDO.getShopName());
-            appInsights.trackTrace("TaskServiceLog 系统重启，删除锁： " + translatesDO.getShopName());
+            // 删除redis里面的tl:锁值
+            redisTranslateLockService.setRemove(shop);
+            appInsights.trackTrace("TaskServiceLog 系统重启，删除锁： " + shop);
         }
     }
 
@@ -271,7 +271,7 @@ public class TaskService {
         //获取所有使用自动翻译的用户
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         appInsights.trackTrace("autoTranslate 获取完所有 使用自动翻译的语言数： " + translatesDOList.size());
-        if (translatesDOList.isEmpty()){
+        if (translatesDOList.isEmpty()) {
             return;
         }
         for (TranslatesDO translatesDO : translatesDOList
@@ -281,7 +281,7 @@ public class TaskService {
             appInsights.trackTrace("autoTranslate 用户: " + shopName);
             //判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getUserByName(shopName);
-            if (usersDO == null){
+            if (usersDO == null) {
                 appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了");
                 continue;
             }

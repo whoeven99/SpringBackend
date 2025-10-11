@@ -19,10 +19,8 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
