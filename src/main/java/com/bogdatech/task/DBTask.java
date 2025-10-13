@@ -2,8 +2,6 @@ package com.bogdatech.task;
 
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
-import com.bogdatech.entity.VO.RabbitMqTranslateVO;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.model.service.ProcessDbTaskService;
@@ -12,7 +10,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -21,9 +18,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.jsonToObject;
 
 @Component
 @EnableScheduling

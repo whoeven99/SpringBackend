@@ -25,6 +25,11 @@ public class SaveShopifyDataTask {
     public void getDataToSaveInShopify() {
         List<UserTranslationDataDO> userTranslationDataDOS = userTranslationDataService.selectTranslationDataList();
         for (UserTranslationDataDO data : userTranslationDataDOS
+             ) {
+            userTranslationDataService.updateStatusTo2(data.getTaskId(), 2);
+        }
+
+        for (UserTranslationDataDO data : userTranslationDataDOS
         ) {
             userTranslationDataService.updateStatusTo2(data.getTaskId(), 2);
         }
