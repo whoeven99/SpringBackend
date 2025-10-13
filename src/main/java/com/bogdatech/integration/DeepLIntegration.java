@@ -10,7 +10,6 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.TimeOutUtils.*;
 import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 

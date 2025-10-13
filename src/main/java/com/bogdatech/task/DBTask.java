@@ -60,7 +60,7 @@ public class DBTask {
         Set<String> translatingShops = redisTranslateLockService.members();
         appInsights.trackTrace("DBTaskLog Number of translating Shops: " + translatingShops.size() + " " + translatingShops);
 
-        // 对当前的shop轮询，抢到锁的时候，会在这个task把把当前shop的所有task都处理掉
+        // 对当前的shop轮询，抢到锁的时候，会在这个task把当前shop的所有task都处理掉
         for (String shop : shops) {
             // 该shop对应的所有task
             Set<TranslateTasksDO> shopTasks = tasks.stream()

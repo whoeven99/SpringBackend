@@ -48,7 +48,6 @@ import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.StringUtils.*;

@@ -25,6 +25,7 @@ public class RedisConfig {
         String cacheHostname = System.getenv("REDISCACHEHOSTNAME");
         String cachekey = System.getenv("REDISCACHEKEY");
         int port = 6380;
+
         // 配置连接池
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(100);

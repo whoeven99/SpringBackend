@@ -34,7 +34,6 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TypeConversionUtils.*;
@@ -177,12 +176,7 @@ public class TranslateController {
         // TODO: 暂时使所有用户的customKey失效
         clickTranslateRequest.setCustomKey(null);
 
-        // TODO: 改redis存储
-        Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
-        userTranslate.put(shopName, translationStatusMap);
-
         // 将ClickTranslateRequest转换为TranslateRequest
-        //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
 

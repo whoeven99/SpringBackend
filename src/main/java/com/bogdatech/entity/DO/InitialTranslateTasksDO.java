@@ -11,8 +11,8 @@ import java.sql.Timestamp;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("Click_Translate_Tasks")
-public class ClickTranslateTasksDO {
+@TableName("Initial_Translate_Tasks")
+public class InitialTranslateTasksDO {
     @TableId(type = IdType.AUTO)
     private String taskId;
     private Integer status; // 0:未开始 1:进行中 2:已完成 3:失败
@@ -23,7 +23,9 @@ public class ClickTranslateTasksDO {
     private String translateSettings2; // 语言包，先不管
     private String translateSettings3; // 模块类型
     private String customKey; // 自定义key
-    private String shopName;
+    private String shopName; // 店铺名称
     private boolean handle = false;
+    private String taskType; // 邮件标识
     private Timestamp createdAt;
+    private boolean deleted = false; // 是否删除
 }

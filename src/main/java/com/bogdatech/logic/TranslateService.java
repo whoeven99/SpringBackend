@@ -268,15 +268,6 @@ public class TranslateService {
         }
 
         // 分析获取到的数据，然后存储到list集合里面
-        //分析获取到的数据，然后存储到list集合里面
-        JsonNode root;
-        try {
-            root = OBJECT_MAPPER.readTree(shopifyData);
-        } catch (JsonProcessingException e) {
-            appInsights.trackTrace("syncShopifyAndDatabase Failed to parse Shopify data errors : " + e.getMessage());
-            return;
-        }
-
         JsonNode shopLocales = root.path("shopLocales");
         if (shopLocales.isArray()) {
             for (JsonNode node : shopLocales) {
