@@ -84,10 +84,6 @@ public class InitialTranslateDbTask {
             // 这一行的日志可以看到每个shop的clickTranslateDbTasks是否在减少
             appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of shopTasks: " + shopTasks.size() + " need to translate of shop: " + shop);
 
-            // Monitor 记录shop开始的时间（中国区时间）
-            String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            translationMonitorRedisService.hsetStartTranslationAt(shop, chinaTime);
-
             // 当前的加锁，只是为了保持一个shop只会被一个线程处理，防止进度条或者其他的状态不兼容并发翻译
             // 这里加锁的方式是将shop放进一个set
             if (initialTranslateRedisService.setAdd(shop)) {
@@ -110,7 +106,6 @@ public class InitialTranslateDbTask {
 
         for (InitialTranslateTasksDO task : shopTasks) {
             appInsights.trackTrace("processInitialTasksOfShop task START: " + task.getTaskId() + " of shop: " + shop);
-            System.out.println("processInitialTasksOfShop task START: " + task.getTaskId() + " of shop: " + shop);
             initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, task.getTaskId()).set(InitialTranslateTasksDO::getStatus, 2));
 
             // 获取已使用字符数和剩余字符数
@@ -132,7 +127,6 @@ public class InitialTranslateDbTask {
             // taskType为 click 是手动翻译邮件， auto 是自动翻译邮件 ， key 是私有key邮件（这个暂时未实现）
             rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shop, userDO.getAccessToken(), API_VERSION_LAST, task.getTarget()), counter, modelList, new TranslateRequest(0, shop, userDO.getAccessToken(), task.getSource(), task.getTarget(), null), remainingChars, usedChars, task.isHandle(), task.getTranslateSettings1(), task.isCover(), task.getCustomKey(), task.getTaskType());
             appInsights.trackTrace("processInitialTasksOfShop task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);
-            System.out.println("processInitialTasksOfShop task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);
             initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, task.getTaskId()).set(InitialTranslateTasksDO::getStatus, 1));
         }
 

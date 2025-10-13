@@ -140,17 +140,16 @@ public class RabbitMqTranslateService {
         appInsights.trackTrace("将模块数据List类型转化为Json类型 : " + shopifyRequest.getShopName() + " resourceToJson: " + resourceToJson);
 
         for (String target : targets) {
+            // 将上一次initial表中taskType为 click的数据逻辑删除
             try {
-                initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTarget, target).eq(InitialTranslateTasksDO::getTaskType, AUTO_EMAIL).eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
+                initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTarget, target).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
                     initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId()).set(InitialTranslateTasksDO::isDeleted, true));
-                    System.out.println("autoTranslate 用户: " + shopName + " 删除一个任务");
+                    appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务");
                 });
             } catch (Exception e) {
-                e.printStackTrace();
+                appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务失败");
+                appInsights.trackException(e);
             }
-
-            // 将上一次initial表中taskType为 click的数据逻辑删除
-            initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTarget, target).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isDeleted, true));
 
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
             translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(1));
@@ -160,9 +159,15 @@ public class RabbitMqTranslateService {
             shopifyRequest.setTarget(target);
 
             // 将线管参数存到数据库中
-            System.out.println("将参数存到数据库中");
-            int insert = initialTranslateTasksMapper.insert(new InitialTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), resourceToJson, cleanedText, clickTranslateRequest.getShopName(), handleFlag, CLICK_EMAIL, Timestamp.valueOf(LocalDateTime.now()), false));
-            System.out.println("将参数存到数据库后： " + insert);
+            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), resourceToJson, cleanedText, clickTranslateRequest.getShopName(), handleFlag, CLICK_EMAIL, Timestamp.valueOf(LocalDateTime.now()), false);
+            try {
+                appInsights.trackTrace("将手动翻译参数存到数据库中");
+                int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
+                appInsights.trackTrace("将手动翻译参数存到数据库后： " + insert);
+            } catch (Exception e) {
+                appInsights.trackTrace("mqTranslateWrapper 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
+                appInsights.trackException(e);
+            }
 
         }
     }
@@ -264,7 +269,7 @@ public class RabbitMqTranslateService {
      */
     public void sendEmailTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, String taskType, CharacterCountUtils allTasks) {
         // 邮件相关参数
-        switch (taskType){
+        switch (taskType) {
             case "click":
                 rabbitMqTranslateVO.setShopifyData(EMAIL);
                 break;

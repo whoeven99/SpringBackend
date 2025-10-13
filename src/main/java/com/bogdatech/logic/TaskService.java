@@ -31,7 +31,6 @@ import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 
@@ -71,6 +70,8 @@ public class TaskService {
     private ITranslationUsageService iTranslationUsageService;
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
+    @Autowired
+    private RabbitMqTranslateService rabbitMqTranslateService;
 
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -321,12 +322,6 @@ public class TaskService {
                 appInsights.trackTrace("autoTranslate 用户: " + shopName + " 存一个消耗记录");
             }
 
-            // 先获取看是否存在，存在修改； 不存在不做处理。 可能是第一次翻译
-            initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, translatesDO.getSource()).eq(InitialTranslateTasksDO::getShopName, translatesDO.getShopName()).eq(InitialTranslateTasksDO::getTarget, translatesDO.getTarget()).eq(InitialTranslateTasksDO::getTaskType, AUTO_EMAIL).eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId()).set(InitialTranslateTasksDO::isDeleted, true));
-                System.out.println("autoTranslate 用户: " + shopName + " 删除一个任务");
-            });
-
             // 将任务存到数据库等待翻译
             // 初始化用户状态
             userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
@@ -338,23 +333,14 @@ public class TaskService {
             counter.addChars(usedChars);
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化计数器");
 
-            // 转化模块类型
-            String resourceType = objectToJson(AUTO_TRANSLATE_MAP);
-
-            // 修改逻辑，也改为先存initial_Translate_Tasks， 然后根据参数生成对应的task任务
-            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0, translatesDO.getSource(), translatesDO.getTarget(), false, "1", "1", resourceType, null, shopName, false, AUTO_EMAIL, Timestamp.valueOf(LocalDateTime.now()), false);
-            try {
-                System.out.println("将auto参数存到数据库中");
-                int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
-                System.out.println("将auto参数存到数据库后： " + insert);
-            } catch (Exception e) {
-                appInsights.trackTrace("autoTranslate 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
-                appInsights.trackException(e);
-                System.out.println("autoTranslate 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO + " 111 : " + e.getMessage());
-            }
-
+            // 调用DB翻译逻辑
+            rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
+                            , translatesDO.getTarget()), counter, AUTO_TRANSLATE_MAP
+                    , new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null)
+                    , remainingChars, usedChars, false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
         }
     }
+
 
     /**
      * 获取所有计划不过期的用户，判断是否过期

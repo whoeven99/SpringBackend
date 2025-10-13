@@ -18,6 +18,7 @@ import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
+import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
@@ -25,7 +26,9 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -63,6 +66,8 @@ public class TranslateController {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
+    @Autowired
+    private TranslationMonitorRedisService translationMonitorRedisService;
 
     /**
      * 插入shop翻译项信息
@@ -206,6 +211,10 @@ public class TranslateController {
         if (integers.contains(2)) {
             return new BaseResponse<>().CreateErrorResponse(HAS_TRANSLATED);
         }
+
+        // Monitor 记录shop开始的时间（中国区时间）
+        String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        translationMonitorRedisService.hsetStartTranslationAt(shopName, chinaTime);
 
         // 判断是否有handle
         boolean handleFlag;
