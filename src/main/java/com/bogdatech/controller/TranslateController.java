@@ -6,6 +6,7 @@ import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
+import com.bogdatech.entity.DO.InitialTranslateTasksDO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
@@ -18,6 +19,7 @@ import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
@@ -58,6 +61,8 @@ public class TranslateController {
     private RedisProcessService redisProcessService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
+    private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
     /**
      * 插入shop翻译项信息
@@ -339,7 +344,7 @@ public class TranslateController {
         // 获取该用户正在翻译语言
         Map<String, Object> userTranslate = new HashMap<>();
         List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2));
-        if (list.isEmpty()){
+        if (list.isEmpty()) {
             userTranslate.put("value", "There is currently no language being translated");
             userTranslate.put("status", "4");
         }
@@ -398,23 +403,20 @@ public class TranslateController {
 
     @PostMapping("/getAllProgressData")
     public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
-        // TODO 用shopName source查数据库
-//        List<ClickTranslateTasksDO> clickTranslateTasksDOS = new ArrayList<>();
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::isDeleted, false).orderByAsc(InitialTranslateTasksDO::getCreatedAt));
 
         // 获取所有的TranslatesDO
-        List<TranslatesDO> translatesDOS = translatesService.list(new LambdaQueryWrapper<TranslatesDO>()
-                .eq(TranslatesDO::getShopName, shopName)
-                .eq(TranslatesDO::getSource, source)
-                .orderByDesc(TranslatesDO::getUpdateAt));
-
         ProgressResponse response = new ProgressResponse();
         List<ProgressResponse.Progress> list = new ArrayList<>();
         response.setList(list);
-        if (translatesDOS.isEmpty()) {
+        if (initialTranslateTasksDOS.isEmpty()) {
             return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
         }
 
-        for (TranslatesDO translatesDO : translatesDOS) {
+        for (InitialTranslateTasksDO initialTranslateTasksDO : initialTranslateTasksDOS) {
+            // 获取对应Translates表里面 对应语言的status
+            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, initialTranslateTasksDO.getTarget()).eq(TranslatesDO::getSource, source));
+
             ProgressResponse.Progress progress = new ProgressResponse.Progress();
             progress.setStatus(translatesDO.getStatus());
             progress.setTarget(translatesDO.getTarget());
