@@ -178,7 +178,7 @@ public class RabbitMqTranslateService {
         appInsights.trackTrace("初始化进度条数据 " + shopifyRequest.getShopName());
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
-            appInsights.trackTrace("初始化进度条数据 " + shopifyRequest.getShopName());
+            appInsights.trackTrace("初始化task数据 " + shopifyRequest.getShopName() + " model: " + translateResource.getResourceType());
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             if (!translateResourceDTOS.contains(translateResource.getResourceType())) {
                 continue;

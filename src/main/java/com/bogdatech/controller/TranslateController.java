@@ -113,6 +113,7 @@ public class TranslateController {
 
                 i++;
             }
+
             // 判断任务表里面是否存在该任务，存在将flag改为true
             List<TranslateTasksDO> list = iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
             if (!list.isEmpty()) {
@@ -134,7 +135,7 @@ public class TranslateController {
     public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
         if (request != null) {
             //改为返回状态为2的所有相关数据
-            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2).orderByDesc(TranslatesDO::getUpdateAt));
+            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2).orderByAsc(TranslatesDO::getUpdateAt));
             if (list.isEmpty()) {
                 TranslatesDO translatesDO = translatesService.selectLatestOne(request);
                 list.add(translatesDO);
