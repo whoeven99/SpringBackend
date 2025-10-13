@@ -496,7 +496,7 @@ public class TestController {
         // 在这里异步 全部走DB翻译
         List<String> finalTranslateResourceDTOS = translateResourceDTOS;
         executorService.submit(() -> {
-            rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), true, clickTranslateRequest.getTarget());
+//            rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), true, clickTranslateRequest.getTarget());
         });
         return new BaseResponse<>().CreateSuccessResponse("Translation started successfully");
     }

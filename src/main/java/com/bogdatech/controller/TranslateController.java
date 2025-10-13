@@ -139,6 +139,7 @@ public class TranslateController {
             appInsights.trackTrace("getTranslateDOByShopNameAndSource 获取到的相关数据： " + list.toString());
             if (list.isEmpty()) {
                 TranslatesDO translatesDO = translatesService.selectLatestOne(request);
+                translatesDO.setAccessToken(null);
                 list.add(translatesDO);
                 return new BaseResponse<>().CreateSuccessResponse(list);
             }
@@ -165,7 +166,7 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
         appInsights.trackTrace("clickTranslation : " + clickTranslateRequest);
-        //判断前端传的数据是否完整，如果不完整，报错
+        // 判断前端传的数据是否完整，如果不完整，报错
         if (shopName == null || shopName.isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
                 || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
@@ -173,23 +174,23 @@ public class TranslateController {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
 
-        if (clickTranslateRequest.getIsCover() == null) {
-            clickTranslateRequest.setIsCover(false);
-        }
-
-        //暂时使所有用户的customKey失效
+        // TODO: 暂时使所有用户的customKey失效
         clickTranslateRequest.setCustomKey(null);
+
+        // TODO: 改redis存储
+        Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
+        userTranslate.put(shopName, translationStatusMap);
+
+        // 将ClickTranslateRequest转换为TranslateRequest
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
-        //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
-        //循环同步
-        translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
-        appInsights.trackTrace("clickTranslation 循环同步 : " + shopifyRequest.getShopName());
-        //判断字符是否超限
+
+        // 判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
         appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopifyRequest.getShopName());
+
         //判断字符是否超限
         int usedChars = request1.getUsedChars();
 
@@ -199,16 +200,14 @@ public class TranslateController {
         }
         appInsights.trackTrace("clickTranslation 判断字符不超限 : " + shopifyRequest.getShopName());
 
-        //一个用户当前只能翻译一条语言，根据用户的status判断
+        // 一个用户当前只能翻译一条语言，根据用户的status判断
         appInsights.trackTrace("clickTranslation 判断用户是否有语言在翻译 : " + shopifyRequest.getShopName());
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request.getShopName());
-        for (Integer integer : integers) {
-            if (integer == 2) {
-                return new BaseResponse<>().CreateErrorResponse(HAS_TRANSLATED);
-            }
+        if (integers.contains(2)) {
+            return new BaseResponse<>().CreateErrorResponse(HAS_TRANSLATED);
         }
 
-        //判断是否有handle
+        // 判断是否有handle
         boolean handleFlag;
         List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
         if (translateModel.contains("handle")) {
@@ -218,23 +217,24 @@ public class TranslateController {
             handleFlag = false;
         }
         appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
-        //修改模块的排序
-        List<String> translateResourceDTOS = null;
-        try {
-            translateResourceDTOS = translateModel(translateModel);
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation translateModel errors : " + e.getMessage());
-        }
+
+        // 修改模块的排序
+        List<String> translateResourceDTOS = translateModel(translateModel);
         appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopifyRequest.getShopName());
-//      翻译
+
+        // 翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
         }
 
-        //在这里异步 全部走DB翻译
-        List<String> finalTranslateResourceDTOS = translateResourceDTOS;
+        // 在这里异步 全部走DB翻译
         executorService.submit(() -> {
-            rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), true, clickTranslateRequest.getTarget());
+            // 循环同步 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+            translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
+            appInsights.trackTrace("clickTranslation 循环同步 : " + shopifyRequest.getShopName());
+
+            // 存翻译参数到db
+            rabbitMqTranslateService.mqTranslateWrapper(clickTranslateRequest, shopifyRequest, translateResourceDTOS, request, handleFlag, clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), clickTranslateRequest.getTarget());
         });
 
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
