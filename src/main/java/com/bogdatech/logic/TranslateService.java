@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
@@ -72,6 +73,13 @@ public class TranslateService {
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
     public static ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+    // TODO 所有翻译的总入口
+    public void translate() {
+        // 手动点击翻译 则需要 shopName, source, target, resourceTypes
+        // 自动翻译, 则需要 shopName, source, target
+        // 同样的，私有key翻译也走这里，做一次分发
+    }
 
     // 用户卸载停止指定用户的翻译任务
     public void stopTranslation(String shopName) {
@@ -308,9 +316,7 @@ public class TranslateService {
 
         // 获取userTranslate是否是写入状态，是的话翻译100%
         Map<Object, Object> value = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
-//        Map<String, Object> value = userTranslate.get(shopName);
-
-        if (value.get("translation_status").equals(3)) {
+        if (CollectionUtils.isEmpty(value) || value.get("translation_status").equals(3)) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
             return progressData;
@@ -359,7 +365,5 @@ public class TranslateService {
         //调用图片翻译方法
         return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName);
     }
-
-
 }
 
