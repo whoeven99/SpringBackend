@@ -23,10 +23,8 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
@@ -422,27 +420,25 @@ public class TranslateController {
             return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
         }
 
-        translatesDOS.forEach(translatesDO -> {
+        for (TranslatesDO translatesDO : translatesDOS) {
             ProgressResponse.Progress progress = new ProgressResponse.Progress();
             progress.setStatus(translatesDO.getStatus());
             progress.setTarget(translatesDO.getTarget());
-            progress.setResourceType(translatesDO.getResourceType());
 
-            // 获取所有进度条
+            Map<String, String> map = translationParametersRedisService.hgetAll(generateProgressTranslationKey(shopName, source, translatesDO.getTarget()));
+            progress.setResourceType(map.get(TranslationParametersRedisService.TRANSLATING_MODULE));
+            progress.setValue(map.get(TranslationParametersRedisService.TRANSLATING_STRING));
+            progress.setTranslateStatus("3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_saving_shopify"
+                    : "2".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_translating"
+                    : "translation_process_init");
+
+            // 进度条数字
             Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
             appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + progressData);
-            if (progressData != null) {
-                // 正常处理
-                progress.setProgressData(progressData);
-            } else {
-                // 进度数据为空时，初始化一个空Map或默认值
-                progress.setProgressData(new HashMap<>());
-            }
-//             TODO 添加正在翻译的字符串
-//            Map<String, Object> usersValue = getUserValueMap(shopName);
-//            progress.setValue();
+            progress.setProgressData(progressData);
+
             list.add(progress);
-        });
+        }
         return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
     }
 

@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
@@ -325,9 +326,7 @@ public class TranslateService {
 
         // 获取userTranslate是否是写入状态，是的话翻译100%
         Map<Object, Object> value = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
-//        Map<String, Object> value = userTranslate.get(shopName);
-
-        if (value.get("translation_status").equals(3)) {
+        if (CollectionUtils.isEmpty(value) || value.get("translation_status").equals(3)) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
             return progressData;
