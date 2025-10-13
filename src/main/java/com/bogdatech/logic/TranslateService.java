@@ -6,6 +6,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -19,21 +20,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
-import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
@@ -60,20 +59,17 @@ public class TranslateService {
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
     private RedisProcessService redisProcessService;
+    @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
+
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     //判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
     public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
-    public static ConcurrentHashMap<String, Map<String, Object>> userTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
-    public static ConcurrentHashMap<String, Map<String, Object>> beforeUserTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
+//    public static ConcurrentHashMap<String, Map<String, Object>> userTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
+//    public static ConcurrentHashMap<String, Map<String, Object>> beforeUserTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
-    static ThreadFactory threadFactory = runnable -> {
-        Thread thread = new Thread(runnable);
-        thread.setName("my-thread-" + thread.getId());
-        thread.setUncaughtExceptionHandler((t, e) -> appInsights.trackTrace("线程 " + t.getName() + " 抛出异常: " + e.getMessage()));
-        return thread;
-    };
     public static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     // TODO 所有翻译的总入口
@@ -163,30 +159,6 @@ public class TranslateService {
         translation.put("translatableContentDigest", translatableContentDigest);
         return translation;
     }
-
-    //判断是否翻译的通用逻辑
-    public static boolean translationLogic(String key, String value, String type, String resourceType) {
-        //如果包含相对路径则跳过
-        if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
-                || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                || type.equals(("LIST_URL"))
-                || "JSON".equals(type)
-                || "JSON_STRING".equals(type)
-        ) {
-            return true;
-        }
-
-        //通用的不翻译数据
-        if (!generalTranslate(key, value)) {
-            return true;
-        }
-
-        if (PRODUCT_OPTION.equals(resourceType)) {
-            return "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value);
-        }
-        return false;
-    }
-
 
     //翻译单个文本数据
     public String translateSingleText(RegisterTransactionRequest request) {
@@ -305,7 +277,7 @@ public class TranslateService {
         }
 
         //分析获取到的数据，然后存储到list集合里面
-        JsonNode root = null;
+        JsonNode root;
         try {
             root = OBJECT_MAPPER.readTree(shopifyData);
         } catch (JsonProcessingException e) {
@@ -343,21 +315,19 @@ public class TranslateService {
     public Map<String, Integer> getProgressData(String shopName, String target, String source) {
         Map<String, Integer> progressData = new HashMap<>();
 
-        //获取用户数据库翻译状态，如果是已完成，返回100%进度
+        // 获取用户数据库翻译状态，如果是已完成，返回100%进度
         TranslatesDO translatesServiceOne = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
         if (translatesServiceOne != null && translatesServiceOne.getStatus() == 1) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
             return progressData;
         }
-        //获取userTranslate是否是写入状态，是的话翻译100%
-        Map<String, Object> value = userTranslate.get(shopName);
-        if (value == null) {
-            progressData.put("RemainingQuantity", 0);
-            progressData.put("TotalQuantity", 0);
-            return progressData;
-        }
-        if (value.get("value") == null && value.get("status").equals(3)) {
+
+        // 获取userTranslate是否是写入状态，是的话翻译100%
+        Map<Object, Object> value = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
+//        Map<String, Object> value = userTranslate.get(shopName);
+
+        if (value.get("translation_status").equals(3)) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
             return progressData;

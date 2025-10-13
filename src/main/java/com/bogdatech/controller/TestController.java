@@ -19,6 +19,7 @@ import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
@@ -42,6 +43,7 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -89,6 +91,8 @@ public class TestController {
     private RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
     private ITranslationCounterService translationCounterService;
+    @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
 
 
     @GetMapping("/ping")
@@ -209,7 +213,6 @@ public class TestController {
     @PutMapping("/testThread")
     public String logThreadPoolStatus(@RequestParam String shopName) {
         if (executorService instanceof ThreadPoolExecutor executor) {
-            String userTranslates = (" - 用户翻译Set： " + userTranslate + " ");
             String process = (" - 进程Set： " + redisIntegration.get(generateTranslateLockKey(shopName)) + " ");
             String userStopFlag = (" - 停止标志： " + userStopFlags);
             String executorServic = (" - 线程池状态：" + executorService + "  ");
@@ -226,7 +229,7 @@ public class TestController {
             String shutdown = (" - 是否已关闭(isShutdown): " + executor.isShutdown() + "  ");
             String terminated = (" - 是否终止(isTerminated): " + executor.isTerminated() + "  ");
             String terminating = (" - 正在终止中(isTerminating): " + executor.isTerminating() + "  ");
-            return userTranslates + process + userStopFlag + executorServic + crePoolSize + maximumPoolSize + poolSize + activeCount + completedTaskCount + taskCount + queue + remainingCapacity + allowsCoreThreadTimeOut + keepAliveTime + shutdown + terminated + terminating;
+            return process + userStopFlag + executorServic + crePoolSize + maximumPoolSize + poolSize + activeCount + completedTaskCount + taskCount + queue + remainingCapacity + allowsCoreThreadTimeOut + keepAliveTime + shutdown + terminated + terminating;
         }
         return null;
     }
@@ -291,8 +294,6 @@ public class TestController {
         //获取用户，redis锁情况
         translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
         boolean flag = redisTranslateLockService.setRemove(shopName);
-        Map<String, Object> translationStatusMap = getTranslationStatusMap(" ", 1);
-        userTranslate.put(shopName, translationStatusMap);
         return "是否解锁成功： " + flag;
     }
 
@@ -318,15 +319,6 @@ public class TestController {
     @GetMapping("/testRemove")
     public boolean testRemove(@RequestParam String taskId) {
         return userTranslationDataService.updateStatusTo2(taskId, 2);
-    }
-
-    /**
-     * 往缓存中插入数据
-     */
-    @GetMapping("/testInsertCache")
-    public void testInsertCache(@RequestParam String shopName, @RequestParam String value) {
-        Map<String, Object> translationStatusMap = getTranslationStatusMap(value, 2);
-        userTranslate.put(shopName, translationStatusMap);
     }
 
     /**
@@ -360,7 +352,7 @@ public class TestController {
      */
     @PostMapping("/getUserDataReport")
     public BaseResponse<Object> getUserDataReport(@RequestParam String shopName, @RequestBody UserDataReportVO userDataReportVO) {
-        String userDataReport = redisDataReportService.getUserDataReport(shopName, userDataReportVO.getStoreLanguage(), userDataReportVO.getTimestamp(), userDataReportVO.getDayData());
+        String userDataReport = redisDataReportService.getUserDataReport(shopName, userDataReportVO.getTimestamp(), userDataReportVO.getDayData());
         if (userDataReport != null) {
             return new BaseResponse<>().CreateSuccessResponse(userDataReport);
         }
@@ -454,7 +446,7 @@ public class TestController {
 
     @PostMapping("/mqTranslateWrapper")
     public BaseResponse<Object> mqTranslateWrapper(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
-        //判断前端传的数据是否完整，如果不完整，报错
+        // 判断前端传的数据是否完整，如果不完整，报错
         if (shopName == null || shopName.isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
                 || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
@@ -466,18 +458,17 @@ public class TestController {
             clickTranslateRequest.setIsCover(false);
         }
 
-        //暂时使所有用户的customKey失效
+        // 暂时使所有用户的customKey失效
         clickTranslateRequest.setCustomKey(null);
 
-        Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
-        userTranslate.put(shopName, translationStatusMap);
-        //将ClickTranslateRequest转换为TranslateRequest
+        // 将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
         int usedChars = request1.getUsedChars();
-        //判断是否有handle
+
+        // 判断是否有handle
         boolean handleFlag;
         List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
         if (translateModel.contains("handle")) {
@@ -487,7 +478,8 @@ public class TestController {
             handleFlag = false;
         }
         appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
-        //修改模块的排序
+
+        // 修改模块的排序
         List<String> translateResourceDTOS = null;
         try {
             translateResourceDTOS = translateModel(translateModel);
@@ -495,17 +487,26 @@ public class TestController {
             appInsights.trackTrace("clickTranslation translateModel errors : " + e.getMessage());
         }
         appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopifyRequest.getShopName());
-//      翻译
+
+        // 翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
         }
 
-        //在这里异步 全部走DB翻译
+        // 在这里异步 全部走DB翻译
         List<String> finalTranslateResourceDTOS = translateResourceDTOS;
         executorService.submit(() -> {
             rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), true, clickTranslateRequest.getTarget());
         });
         return new BaseResponse<>().CreateSuccessResponse("Translation started successfully");
+    }
+
+    /**
+     * 获取redis中的进度条数据
+     * */
+    @GetMapping("/getRedisTranslationData")
+    public Map<Object, Object> getRedisTranslationData(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
+        return translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
     }
 
 }

@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogdatech.logic.TranslateService.userTranslate;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
@@ -103,8 +102,6 @@ public class ArkTranslateIntegration {
             chatCompletion.getChoices().forEach(choice -> response.append(choice.getMessage().getContent()));
             long totalTokens = (long) (chatCompletion.getUsage().getTotalTokens() * MAGNIFICATION);
             int totalTokensInt = (int) totalTokens;
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
-            userTranslate.put(shopName, translationStatusMap);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             long promptTokens = chatCompletion.getUsage().getPromptTokens();
             printTranslateCost(totalTokensInt, (int) promptTokens, (int) completionTokens);
@@ -158,10 +155,6 @@ public class ArkTranslateIntegration {
             appInsights.trackTrace("totalTokens 用户 " + shopName);
             int totalTokensInt = (int) totalTokens;
             appInsights.trackTrace("totalTokensInt 用户 " + shopName);
-            Map<String, Object> translationStatusMap = getTranslationStatusMap(sourceText, 2);
-            appInsights.trackTrace("translationStatusMap 用户 " + shopName);
-            userTranslate.put(shopName, translationStatusMap);
-            appInsights.trackTrace("userTranslate 用户 " + shopName);
             long completionTokens = chatCompletion.getUsage().getCompletionTokens();
             appInsights.trackTrace("completionTokens 用户 " + shopName);
             long promptTokens = chatCompletion.getUsage().getPromptTokens();

@@ -54,16 +54,5 @@ public class UserPrivateTranslateController {
         return new BaseResponse<>().CreateErrorResponse(false);
     }
 
-    /**
-     * 根据传传入的值，选择不同的模型测试是否是正常的
-     * */
-    @PostMapping("/testPrivateModel")
-    public BaseResponse<Object> testPrivateModel(@RequestParam String shopName, @RequestBody TestPrivateModelVO data) {
-        String s = userPrivateTranslateService.testPrivateModel(shopName, data.getApiName(), data.getSourceText(), data.getTargetCode(), data.getPrompt());
-        if (s != null) {
-            return new BaseResponse<>().CreateSuccessResponse(s);
-        }
-        return new BaseResponse<>().CreateErrorResponse(false);
-    }
 
 }

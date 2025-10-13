@@ -17,19 +17,23 @@ import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.TranslateService.userStopFlags;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
@@ -55,7 +59,8 @@ public class TranslateController {
     private ITranslateTasksService iTranslateTasksService;
     @Autowired
     private RedisProcessService redisProcessService;
-
+    @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
 
     /**
      * 插入shop翻译项信息
@@ -95,14 +100,23 @@ public class TranslateController {
             TranslateArrayVO translateArrayVO = new TranslateArrayVO();
             TranslatesDO[] translatesDOResult = new TranslatesDO[translatesDOS.length];
             int i = 0;
-            //初始化 flag用于判断前端是否要继续请求
+            // 初始化 flag用于判断前端是否要继续请求
             boolean flag = false;
             for (TranslatesDO translatesDO : translatesDOS
             ) {
                 translatesDOResult[i] = translatesService.readTranslateDOByArray(translatesDO);
+
+                // 获取模块类型数据， 然后存到translatesDOResult[i]里面
+                Map<Object, Object> progressTranslationKey = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(translatesDOResult[i].getShopName(), translatesDOResult[i].getSource(), translatesDOResult[i].getTarget()));
+                Object translatingModule = progressTranslationKey.get("translating_module");
+                if (translatingModule != null) {
+                    translatesDOResult[i].setResourceType((String) translatingModule);
+                }
+
                 i++;
             }
-            //判断任务表里面是否存在该任务，存在将flag改为true
+
+            // 判断任务表里面是否存在该任务，存在将flag改为true
             List<TranslateTasksDO> list = iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
             if (!list.isEmpty()) {
                 flag = true;
@@ -123,8 +137,9 @@ public class TranslateController {
     @PostMapping("/getTranslateDOByShopNameAndSource")
     public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
         if (request != null) {
-            //改为返回状态为2的所有相关数据
-            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2).orderByDesc(TranslatesDO::getUpdateAt));
+            // 改为返回状态为2的所有相关数据
+            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2).orderByAsc(TranslatesDO::getUpdateAt));
+            appInsights.trackTrace("getTranslateDOByShopNameAndSource 获取到的相关数据： " + list.toString());
             if (list.isEmpty()) {
                 TranslatesDO translatesDO = translatesService.selectLatestOne(request);
                 list.add(translatesDO);
@@ -167,9 +182,6 @@ public class TranslateController {
 
         //暂时使所有用户的customKey失效
         clickTranslateRequest.setCustomKey(null);
-
-        Map<String, Object> translationStatusMap = getTranslationStatusMap(null, 1);
-        userTranslate.put(shopName, translationStatusMap);
         //将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
@@ -331,37 +343,23 @@ public class TranslateController {
      */
     @GetMapping("/getUserValue")
     public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
-        if (beforeUserTranslate.isEmpty()) {
-            beforeUserTranslate.put(shopName, getTranslationStatusMap("Searching for content to translate…", 2));
-        }
-        if (userTranslate.isEmpty()) {
-            userTranslate.put(shopName, getTranslationStatusMap("Searching for content to translate…", 2));
-        }
-        //获取当前用户前一次的value值
-        Map<String, Object> map = beforeUserTranslate.get(shopName);
-        Map<String, Object> value = userTranslate.get(shopName);
-        if (value == null) {
-            Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
-            return new BaseResponse<>().CreateSuccessResponse(translationStatusMap);
-        }
-        if (value.get("value") == null && value.get("status").equals(3)) {
-            return new BaseResponse<>().CreateSuccessResponse(value);
+        // TODO: 改多进度条展示的话，这个就没有用了， 这个目的是用来是测试的
+        // 获取该用户正在翻译语言
+        Map<String, Object> userTranslate = new HashMap<>();
+        List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2));
+        if (list.isEmpty()){
+            userTranslate.put("value", "There is currently no language being translated");
+            userTranslate.put("status", "4");
         }
 
-        if (value.get("value") == null && value.get("status").equals(2)) {
-            Map<String, Object> translationStatusMap = getTranslationStatusMap("Searching for content to translate…", 2);
-            return new BaseResponse<>().CreateSuccessResponse(translationStatusMap);
-        }
-        if (map == null) {
-            beforeUserTranslate.put(shopName, value);
-        } else {
-            //判断beforeUserTranslate与userTranslate里面的数据是否相同，相同的话，返回
-            value.putIfAbsent("value", "Searching for content to translate…");
-            if (map.get("value").equals(value.get("value"))) {
-                value.put("value", "Searching for content to translate…");
-            }
-        }
-        return new BaseResponse<>().CreateSuccessResponse(value);
+        TranslatesDO firstTranslatesDO = list.get(0);
+
+        Map<Object, Object> progressTranslationKey = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(firstTranslatesDO.getShopName(), firstTranslatesDO.getSource(), firstTranslatesDO.getTarget()));
+        appInsights.trackTrace("getUserValue translation_status :  " + progressTranslationKey);
+        userTranslate.put("value", progressTranslationKey.get("translating_string"));
+        userTranslate.put("status", progressTranslationKey.get("translation_status"));
+
+        return new BaseResponse<>().CreateSuccessResponse(userTranslate);
     }
 
     /**
