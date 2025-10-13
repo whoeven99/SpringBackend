@@ -134,8 +134,9 @@ public class TranslateController {
     @PostMapping("/getTranslateDOByShopNameAndSource")
     public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
         if (request != null) {
-            //改为返回状态为2的所有相关数据
+            // 改为返回状态为2的所有相关数据
             List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2).orderByAsc(TranslatesDO::getUpdateAt));
+            appInsights.trackTrace("getTranslateDOByShopNameAndSource 获取到的相关数据： " + list.toString());
             if (list.isEmpty()) {
                 TranslatesDO translatesDO = translatesService.selectLatestOne(request);
                 list.add(translatesDO);
@@ -341,12 +342,17 @@ public class TranslateController {
     public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
         // TODO: 改多进度条展示的话，这个就没有用了， 这个目的是用来是测试的
         // 获取该用户正在翻译语言
+        Map<String, Object> userTranslate = new HashMap<>();
         List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2));
+        if (list.isEmpty()){
+            userTranslate.put("value", "There is currently no language being translated");
+            userTranslate.put("status", "4");
+        }
+
         TranslatesDO firstTranslatesDO = list.get(0);
 
         Map<Object, Object> progressTranslationKey = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(firstTranslatesDO.getShopName(), firstTranslatesDO.getSource(), firstTranslatesDO.getTarget()));
-        System.out.println("translation_status :  " + progressTranslationKey);
-        Map<String, Object> userTranslate = new HashMap<>();
+        appInsights.trackTrace("getUserValue translation_status :  " + progressTranslationKey);
         userTranslate.put("value", progressTranslationKey.get("translating_string"));
         userTranslate.put("status", progressTranslationKey.get("translation_status"));
 
