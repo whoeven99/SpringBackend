@@ -2,7 +2,6 @@ package com.bogdatech.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -10,7 +9,6 @@ import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.DO.InitialTranslateTasksDO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
-import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.entity.VO.TranslateArrayVO;
@@ -25,25 +23,15 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
-import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TypeConversionUtils.*;
 
@@ -70,6 +58,12 @@ public class TranslateController {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
+
+    // 创建手动翻译任务
+    @PutMapping("/clickTranslation")
+    public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
+        return translateService.createInitialTask(request);
+    }
 
     /**
      * 插入shop翻译项信息
@@ -170,81 +164,6 @@ public class TranslateController {
             return new BaseResponse<>().CreateSuccessResponse(translatesDos);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
-    }
-
-    /**
-     * 通过TranslateResourceDTO获取定义好的数组，对其进行for循环，遍历获得query，通过发送shopify的API获得数据，获得数据后再通过百度翻译API翻译数据
-     */
-    @PutMapping("/clickTranslation")
-    public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
-        appInsights.trackTrace("clickTranslation : " + request);
-        // 判断前端传的数据是否完整，如果不完整，报错
-        if (shopName == null || shopName.isEmpty()
-                || request.getAccessToken() == null || request.getAccessToken().isEmpty()
-                || request.getSource() == null || request.getSource().isEmpty()
-                || request.getTarget() == null || request.getTarget().length == 0) {
-            return new BaseResponse<>().CreateErrorResponse("Missing parameters");
-        }
-
-        // TODO: 暂时使所有用户的customKey失效
-        request.setCustomKey(null);
-
-        // 判断字符是否超限
-        TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
-        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-        appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName);
-
-        // 如果字符超限，则直接返回字符超限
-        if (counterDO.getUsedChars() >= remainingChars) {
-            return new BaseResponse<>().CreateErrorResponse("Cannot translate because the character limit has been reached. Please upgrade your plan to continue translating.");
-        }
-        appInsights.trackTrace("clickTranslation 判断字符不超限 : " + shopName);
-
-        // 一个用户当前只能翻译一条语言，根据用户的status判断
-        appInsights.trackTrace("clickTranslation 判断用户是否有语言在翻译 : " + shopName);
-        // TODO 这个判断是不是要去掉了，还是怎么处理好一些
-        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(shopName);
-        if (integers.contains(2)) {
-            return new BaseResponse<>().CreateErrorResponse(HAS_TRANSLATED);
-        }
-
-        // 判断是否有 handle 模块
-        boolean handleFlag = false;
-        // TODO 这个前后端的字段名字，重新换一个
-        List<String> translateModel = request.getTranslateSettings3();
-        if (translateModel.contains("handle")) {
-            translateModel.removeIf("handle"::equals);
-            handleFlag = true;
-        }
-
-        appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + request.getTranslateSettings3()
-                + " handleFlag: " + handleFlag + " isCover: " + request.getIsCover());
-
-        // 修改模块的排序 TODO, translateModel的内容拆出来放这里
-        List<String> translateResourceDTOS = translateModel(translateModel);
-        appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopName);
-
-        if (CollectionUtils.isEmpty(translateResourceDTOS)) {
-            return new BaseResponse<>().CreateErrorResponse("Please select the module to be translated");
-        }
-
-        // 将ClickTranslateRequest转换为TranslateRequest
-        TranslateRequest translateRequest = ClickTranslateRequestToTranslateRequest(request);
-
-        // 循环同步 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
-        // TODO 这个其实是帮用户添加语言到shopify，也可以再task里面异步去做
-        translateService.isExistInDatabase(shopName, request, translateRequest);
-        appInsights.trackTrace("clickTranslation 循环同步 : " + shopName);
-
-        // 存翻译参数到db
-        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(translateRequest);
-        rabbitMqTranslateService.mqTranslateWrapper(request, shopifyRequest, translateResourceDTOS,
-                translateRequest, handleFlag, request.getIsCover(),
-                request.getCustomKey(), request.getTarget());
-        appInsights.trackTrace("mqTranslateWrapper开始: " + shopName);
-
-        // TODO 把request返回去的意义是什么？
-        return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
     //暂停翻译
@@ -462,6 +381,4 @@ public class TranslateController {
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
-
-
 }

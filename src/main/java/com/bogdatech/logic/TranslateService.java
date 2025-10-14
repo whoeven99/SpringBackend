@@ -2,12 +2,15 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -15,12 +18,17 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.bogdatech.utils.TypeConversionUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,17 +36,21 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
+import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.TRANSLATION_STATUS;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
+import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
+import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -64,22 +76,176 @@ public class TranslateService {
     private RedisProcessService redisProcessService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
+    private InitialTranslateTasksMapper initialTranslateTasksMapper;
+    @Autowired
+    private TranslationMonitorRedisService translationMonitorRedisService;
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     //判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
     public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
-//    public static ConcurrentHashMap<String, Map<String, Object>> userTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
-//    public static ConcurrentHashMap<String, Map<String, Object>> beforeUserTranslate = new ConcurrentHashMap<>(); // 存储每个用户的翻译设置
-    // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
-    public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();// 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
+
     public static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    // TODO 所有翻译的总入口
-    public void translate() {
+    // TODO 所有翻译的总入口 目前只有手动翻译
+    public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
         // 手动点击翻译 则需要 shopName, source, target, resourceTypes
         // 自动翻译, 则需要 shopName, source, target
         // 同样的，私有key翻译也走这里，做一次分发
+
+        appInsights.trackTrace("clickTranslation : " + request);
+        String shopName = request.getShopName();
+        // 判断前端传的数据是否完整，如果不完整，报错
+        if (shopName == null || shopName.isEmpty()
+                || request.getAccessToken() == null || request.getAccessToken().isEmpty()
+                || request.getSource() == null || request.getSource().isEmpty()
+                || request.getTarget() == null || request.getTarget().length == 0) {
+            return new BaseResponse<>().CreateErrorResponse("Missing parameters");
+        }
+
+        // TODO: 暂时使所有用户的customKey失效
+        request.setCustomKey(null);
+
+        // 判断字符是否超限
+        TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+        appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName);
+
+        // 如果字符超限，则直接返回字符超限
+        if (counterDO.getUsedChars() >= remainingChars) {
+            return new BaseResponse<>().CreateErrorResponse("Cannot translate because the character limit has been reached. Please upgrade your plan to continue translating.");
+        }
+        appInsights.trackTrace("clickTranslation 判断字符不超限 : " + shopName);
+
+        // 一个用户当前只能翻译一条语言，根据用户的status判断
+        appInsights.trackTrace("clickTranslation 判断用户是否有语言在翻译 : " + shopName);
+        // TODO 这个判断是不是要去掉了，还是怎么处理好一些
+        List<Integer> integers = translatesService.readStatusInTranslatesByShopName(shopName);
+        if (integers.contains(2)) {
+            return new BaseResponse<>().CreateErrorResponse(HAS_TRANSLATED);
+        }
+
+        // 判断是否有 handle 模块
+        boolean handleFlag = false;
+        // TODO 这个前后端的字段名字，重新换一个
+        List<String> translateModel = request.getTranslateSettings3();
+        if (translateModel.contains("handle")) {
+            translateModel.removeIf("handle"::equals);
+            handleFlag = true;
+        }
+
+        appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + request.getTranslateSettings3()
+                + " handleFlag: " + handleFlag + " isCover: " + request.getIsCover());
+
+        // 修改模块的排序 TODO, translateModel的内容拆出来放这里
+        List<String> translateResourceDTOS = translateModel(translateModel);
+        appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopName);
+
+        if (org.springframework.util.CollectionUtils.isEmpty(translateResourceDTOS)) {
+            return new BaseResponse<>().CreateErrorResponse("Please select the module to be translated");
+        }
+
+        // 将ClickTranslateRequest转换为TranslateRequest
+        TranslateRequest translateRequest = ClickTranslateRequestToTranslateRequest(request);
+
+        // 循环同步 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+        // TODO 这个其实是帮用户添加语言到shopify，也可以再task里面异步去做
+        this.isExistInDatabase(shopName, request, translateRequest);
+        appInsights.trackTrace("clickTranslation 循环同步 : " + shopName);
+
+        // 存翻译参数到db
+        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(translateRequest);
+        appInsights.trackTrace("mqTranslateWrapper开始: " + shopName);
+
+        boolean isCover = request.getIsCover();
+        String customKey = request.getCustomKey();
+        String[] targets = request.getTarget();
+        String source = translateRequest.getSource();
+
+        // 重置用户发送的邮件
+        userEmailStatus.put(shopName, new AtomicBoolean(false));
+
+        // 初始化用户的停止标志
+        userStopFlags.put(shopName, new AtomicBoolean(false));
+
+        // 修改自定义提示词
+        String cleanedText = null;
+        if (customKey != null) {
+            cleanedText = customKey.replaceAll("\\.{2,}", ".");
+        }
+        appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
+
+        // 改为循环遍历，将相关target状态改为2
+        List<String> listTargets = Arrays.asList(targets);
+        listTargets.forEach(target -> {
+            translatesService.updateTranslateStatus(
+                    shopName,
+                    2,
+                    target,
+                    source,
+                    translateRequest.getAccessToken()
+            );
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                appInsights.trackException(e);
+            }
+        });
+
+        appInsights.trackTrace("修改相关target状态改为2 : " + shopifyRequest.getShopName());
+
+        // 将模块数据List类型转化为Json类型
+        String resourceToJson = objectToJson(translateResourceDTOS);
+        appInsights.trackTrace("将模块数据List类型转化为Json类型 : " + shopifyRequest.getShopName() + " resourceToJson: " + resourceToJson);
+
+        // 将上一次initial表中taskType为 click的数据逻辑删除
+        try {
+            initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
+                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId()).set(InitialTranslateTasksDO::isDeleted, true));
+                appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务");
+            });
+        } catch (Exception e) {
+            appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务失败");
+            appInsights.trackException(e);
+        }
+
+        for (String target : targets) {
+            appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
+            translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(shopName, source, target), "");
+            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(1));
+            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
+            translationParametersRedisService.hsetProgressNumber(generateProgressTranslationKey(shopName, source, target), generateProcessKey(shopName, target));
+            redisProcessService.initProcessData(generateProcessKey(shopName, target));
+
+            // 将翻译项中的模块改为null
+            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                    .eq(TranslatesDO::getSource, source)
+                    .eq(TranslatesDO::getTarget, target)
+                    .set(TranslatesDO::getResourceType, null));
+
+            translateRequest.setTarget(target);
+            shopifyRequest.setTarget(target);
+
+            // 将线管参数存到数据库中
+            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0, translateRequest.getSource(), target, isCover, request.getTranslateSettings1(), request.getTranslateSettings2(), resourceToJson, cleanedText, request.getShopName(), handleFlag, CLICK_EMAIL, Timestamp.valueOf(LocalDateTime.now()), false);
+            try {
+                appInsights.trackTrace("将手动翻译参数存到数据库中");
+                int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
+                appInsights.trackTrace("将手动翻译参数存到数据库后： " + insert);
+
+                // Monitor 记录shop开始的时间（中国区时间）
+                String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                translationMonitorRedisService.hsetStartTranslationAt(shopName, chinaTime);
+            } catch (Exception e) {
+                appInsights.trackTrace("mqTranslateWrapper 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
+                appInsights.trackException(e);
+            }
+        }
+
+        // TODO 把request返回去的意义是什么？
+        return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
     // 用户卸载停止指定用户的翻译任务
