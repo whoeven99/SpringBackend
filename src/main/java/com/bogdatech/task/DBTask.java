@@ -102,7 +102,7 @@ public class DBTask {
         // 一个shop，多语言并行翻译
         map.forEach((target, list) -> {
             executorService.submit(() -> {
-                processTasksByTarget(shop, target, shopTasks);
+                processTasksByTarget(shop, target, new HashSet<>(list));
             });
         });
     }
