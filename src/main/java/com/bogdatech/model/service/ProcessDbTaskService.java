@@ -87,7 +87,6 @@ public class ProcessDbTaskService {
                     } else {
                         emailAutoTranslate(rabbitMqTranslateVO, task);
                     }
-                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(1));
                 } else {
                     // TODO 这是个fatalException 出现这种问题都是比较严重的问题 没翻译完为什么会出现email的任务
                     appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
