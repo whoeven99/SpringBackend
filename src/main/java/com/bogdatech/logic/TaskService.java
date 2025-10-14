@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -72,6 +73,8 @@ public class TaskService {
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private InitialTranslateRedisService initialTranslateRedisService;
 
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -249,6 +252,9 @@ public class TaskService {
         translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
         appInsights.trackTrace("TaskServiceLog 系统重启，获取翻译状态为2的任务数： " + allShopName.size());
 
+        // 将initial表中所有状态为2的任务状态改为0
+        initialTranslateTasksMapper.update(new UpdateWrapper<InitialTranslateTasksDO>().eq("status", 2).set("status", 0));
+
         // 循环处理获取到的任务，先将状态改为3，然后调用翻译API
         for (String shop : allShopName) {
             // 给这些用户添加停止标志符的状态
@@ -258,6 +264,9 @@ public class TaskService {
             // 删除redis里面的tl:锁值
             redisTranslateLockService.setRemove(shop);
             appInsights.trackTrace("TaskServiceLog 系统重启，删除锁： " + shop);
+
+            // 删除redis中initial shop的值
+            initialTranslateRedisService.setRemove(shop);
         }
     }
 
@@ -468,6 +477,7 @@ public class TaskService {
             waitTranslatingShopName = translateTasksService.listStatus0ShopName();
         } catch (Exception e) {
             System.err.println(e);
+            appInsights.trackException(e);
         }
 
         if (translatingShopName != null) {
