@@ -293,8 +293,7 @@ public class TranslateService {
      * 循环遍历数据库中是否有该条数据
      */
     public void isExistInDatabase(String shopName, ClickTranslateRequest clickTranslateRequest, TranslateRequest request) {
-        for (String target : clickTranslateRequest.getTarget()
-        ) {
+        for (String target : clickTranslateRequest.getTarget()) {
             request.setTarget(target);
             TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("source", clickTranslateRequest.getSource()).eq("target", request.getTarget()));
             if (one == null) {

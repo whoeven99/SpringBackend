@@ -2,16 +2,12 @@ package com.bogdatech.utils;
 
 import com.bogdatech.entity.DO.TranslateResourceDTO;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class ModelUtils {
-
     //将前端传的宽泛的模块解析成具体的翻译模块，并输出
     public static List<String> translateModel(List<String> list){
         return list.stream()
@@ -21,5 +17,4 @@ public class ModelUtils {
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
     }
-
 }
