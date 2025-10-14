@@ -48,7 +48,6 @@ import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.StringUtils.*;
@@ -496,7 +495,7 @@ public class TestController {
         // 在这里异步 全部走DB翻译
         List<String> finalTranslateResourceDTOS = translateResourceDTOS;
         executorService.submit(() -> {
-            rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), true, clickTranslateRequest.getTarget());
+//            rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), true, clickTranslateRequest.getTarget());
         });
         return new BaseResponse<>().CreateSuccessResponse("Translation started successfully");
     }

@@ -3,6 +3,7 @@ package com.bogdatech.utils;
 
 import com.bogdatech.exception.ClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import static com.bogdatech.enums.ErrorEnum.JSON_PARSE_ERROR;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
@@ -15,6 +16,7 @@ public class JsonUtils {
         try {
             return obj != null ? OBJECT_MAPPER.writeValueAsString(obj) : null;
         } catch (JsonProcessingException e) {
+            appInsights.trackException(e);
             throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
         }
     }
@@ -24,11 +26,21 @@ public class JsonUtils {
         try {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, clazz) : null;
         } catch (JsonProcessingException e) {
+            appInsights.trackException(e);
             throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
         }
     }
 
-    //判断一个string类型是不是Json数据
+    public static <T> T jsonToObject(String json, TypeReference<T> typeRef) {
+        try {
+            return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, typeRef) : null;
+        } catch (JsonProcessingException e) {
+            appInsights.trackException(e);
+            throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
+        }
+    }
+
+    // 判断一个string类型是不是Json数据
     public static boolean isJson(String str) {
         try {
             //清除空格

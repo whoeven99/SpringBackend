@@ -3,11 +3,9 @@ package com.bogdatech.integration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -64,6 +62,19 @@ public class RedisIntegration {
      */
     public Map<Object, Object> getHashAll(String key) {
         return redisTemplate.opsForHash().entries(key);
+    }
+
+    // TODO getHashAll 都挪到这里
+    public Map<String, String> hGetAll(String key) {
+        Map<Object, Object> map = redisTemplate.opsForHash().entries(key);
+        if (CollectionUtils.isEmpty(map)) {
+            return new HashMap<>();
+        }
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<Object, Object> entry : map.entrySet()) {
+            result.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+        }
+        return result;
     }
 
     /**

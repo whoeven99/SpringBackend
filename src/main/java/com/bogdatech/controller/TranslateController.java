@@ -6,6 +6,7 @@ import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
+import com.bogdatech.entity.DO.InitialTranslateTasksDO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
@@ -18,23 +19,20 @@ import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.MapUtils.getTranslationStatusMap;
 import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TypeConversionUtils.*;
@@ -60,6 +58,8 @@ public class TranslateController {
     private RedisProcessService redisProcessService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
+    private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
     /**
      * 插入shop翻译项信息
@@ -92,6 +92,7 @@ public class TranslateController {
     /**
      * 根据传入的数组获取对应的数据
      */
+    // TODO delete
     @PostMapping("/readTranslateDOByArray")
     public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO[] translatesDOS) {
         if (translatesDOS != null && translatesDOS.length > 0) {
@@ -131,6 +132,7 @@ public class TranslateController {
     /**
      * 根据传入的shopName和source，返回一个最新时间的翻译项数据，status为1-3
      */
+    // TODO delete
     @PostMapping("/getTranslateDOByShopNameAndSource")
     public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
         if (request != null) {
@@ -139,6 +141,7 @@ public class TranslateController {
             appInsights.trackTrace("getTranslateDOByShopNameAndSource 获取到的相关数据： " + list.toString());
             if (list.isEmpty()) {
                 TranslatesDO translatesDO = translatesService.selectLatestOne(request);
+                translatesDO.setAccessToken(null);
                 list.add(translatesDO);
                 return new BaseResponse<>().CreateSuccessResponse(list);
             }
@@ -165,7 +168,7 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
         appInsights.trackTrace("clickTranslation : " + clickTranslateRequest);
-        //判断前端传的数据是否完整，如果不完整，报错
+        // 判断前端传的数据是否完整，如果不完整，报错
         if (shopName == null || shopName.isEmpty()
                 || clickTranslateRequest.getAccessToken() == null || clickTranslateRequest.getAccessToken().isEmpty()
                 || clickTranslateRequest.getSource() == null || clickTranslateRequest.getSource().isEmpty()
@@ -173,23 +176,18 @@ public class TranslateController {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
 
-        if (clickTranslateRequest.getIsCover() == null) {
-            clickTranslateRequest.setIsCover(false);
-        }
-
-        //暂时使所有用户的customKey失效
+        // TODO: 暂时使所有用户的customKey失效
         clickTranslateRequest.setCustomKey(null);
-        //将ClickTranslateRequest转换为TranslateRequest
+
+        // 将ClickTranslateRequest转换为TranslateRequest
         TranslateRequest request = ClickTranslateRequestToTranslateRequest(clickTranslateRequest);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
-        //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
-        //循环同步
-        translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
-        appInsights.trackTrace("clickTranslation 循环同步 : " + shopifyRequest.getShopName());
-        //判断字符是否超限
+
+        // 判断字符是否超限
         TranslationCounterDO request1 = translationCounterService.readCharsByShopName(request.getShopName());
         Integer remainingChars = translationCounterService.getMaxCharsByShopName(request.getShopName());
         appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopifyRequest.getShopName());
+
         //判断字符是否超限
         int usedChars = request1.getUsedChars();
 
@@ -199,16 +197,14 @@ public class TranslateController {
         }
         appInsights.trackTrace("clickTranslation 判断字符不超限 : " + shopifyRequest.getShopName());
 
-        //一个用户当前只能翻译一条语言，根据用户的status判断
+        // 一个用户当前只能翻译一条语言，根据用户的status判断
         appInsights.trackTrace("clickTranslation 判断用户是否有语言在翻译 : " + shopifyRequest.getShopName());
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(request.getShopName());
-        for (Integer integer : integers) {
-            if (integer == 2) {
-                return new BaseResponse<>().CreateErrorResponse(HAS_TRANSLATED);
-            }
+        if (integers.contains(2)) {
+            return new BaseResponse<>().CreateErrorResponse(HAS_TRANSLATED);
         }
 
-        //判断是否有handle
+        // 判断是否有handle
         boolean handleFlag;
         List<String> translateModel = clickTranslateRequest.getTranslateSettings3();
         if (translateModel.contains("handle")) {
@@ -218,24 +214,23 @@ public class TranslateController {
             handleFlag = false;
         }
         appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + clickTranslateRequest.getTranslateSettings3() + " handleFlag: " + handleFlag + " isCover: " + clickTranslateRequest.getIsCover());
-        //修改模块的排序
-        List<String> translateResourceDTOS = null;
-        try {
-            translateResourceDTOS = translateModel(translateModel);
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation translateModel errors : " + e.getMessage());
-        }
+
+        // 修改模块的排序
+        List<String> translateResourceDTOS = translateModel(translateModel);
         appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopifyRequest.getShopName());
-//      翻译
+
+        // 翻译
         if (translateResourceDTOS == null || translateResourceDTOS.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
         }
 
-        //在这里异步 全部走DB翻译
-        List<String> finalTranslateResourceDTOS = translateResourceDTOS;
-        executorService.submit(() -> {
-            rabbitMqTranslateService.mqTranslateWrapper(shopifyRequest, finalTranslateResourceDTOS, request, remainingChars, usedChars, handleFlag, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), true, clickTranslateRequest.getTarget());
-        });
+        // 在这里异步 全部走DB翻译
+        // 循环同步 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+        translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
+        appInsights.trackTrace("clickTranslation 循环同步 : " + shopifyRequest.getShopName());
+
+        // 存翻译参数到db
+        rabbitMqTranslateService.mqTranslateWrapper(clickTranslateRequest, shopifyRequest, translateResourceDTOS, request, handleFlag, clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), clickTranslateRequest.getTarget());
 
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
@@ -344,7 +339,7 @@ public class TranslateController {
         // 获取该用户正在翻译语言
         Map<String, Object> userTranslate = new HashMap<>();
         List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2));
-        if (list.isEmpty()){
+        if (list.isEmpty()) {
             userTranslate.put("value", "There is currently no language being translated");
             userTranslate.put("status", "4");
         }
@@ -399,6 +394,48 @@ public class TranslateController {
         }
 
         return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    @PostMapping("/getAllProgressData")
+    public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::isDeleted, false).orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+
+        // 获取所有的TranslatesDO
+        ProgressResponse response = new ProgressResponse();
+        List<ProgressResponse.Progress> list = new ArrayList<>();
+        response.setList(list);
+        if (initialTranslateTasksDOS.isEmpty()) {
+            return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
+        }
+
+        for (InitialTranslateTasksDO initialTranslateTasksDO : initialTranslateTasksDOS) {
+            // 获取对应Translates表里面 对应语言的status
+            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, initialTranslateTasksDO.getTarget()).eq(TranslatesDO::getSource, source));
+
+            // 不返回状态为0的数据
+            if (translatesDO.getStatus() == 0) {
+                continue;
+            }
+
+            ProgressResponse.Progress progress = new ProgressResponse.Progress();
+            progress.setStatus(translatesDO.getStatus());
+            progress.setTarget(translatesDO.getTarget());
+
+            Map<String, String> map = translationParametersRedisService.hgetAll(generateProgressTranslationKey(shopName, source, translatesDO.getTarget()));
+            progress.setResourceType(map.get(TranslationParametersRedisService.TRANSLATING_MODULE));
+            progress.setValue(map.get(TranslationParametersRedisService.TRANSLATING_STRING));
+            progress.setTranslateStatus("3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_saving_shopify"
+                    : "2".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_translating"
+                    : "translation_process_init");
+
+            // 进度条数字
+            Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
+            appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + progressData);
+            progress.setProgressData(progressData);
+
+            list.add(progress);
+        }
+        return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
     }
 
     /**

@@ -2,9 +2,11 @@ package com.bogdatech.task;
 
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
+import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.model.service.ProcessDbTaskService;
+import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -32,6 +34,8 @@ public class DBTask {
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private ProcessDbTaskService processDbTaskService;
+    @Autowired
+    private RabbitMqTranslateService RabbitMqTranslateService;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @PostConstruct
@@ -60,7 +64,7 @@ public class DBTask {
         Set<String> translatingShops = redisTranslateLockService.members();
         appInsights.trackTrace("DBTaskLog Number of translating Shops: " + translatingShops.size() + " " + translatingShops);
 
-        // 对当前的shop轮询，抢到锁的时候，会在这个task把把当前shop的所有task都处理掉
+        // 对当前的shop轮询，抢到锁的时候，会在这个task把当前shop的所有task都处理掉
         for (String shop : shops) {
             // 该shop对应的所有task
             Set<TranslateTasksDO> shopTasks = tasks.stream()
@@ -102,6 +106,11 @@ public class DBTask {
 
         for (TranslateTasksDO task : taskList) {
             appInsights.trackTrace("DBTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
+
+            // 判断是否停止翻译
+            if (RabbitMqTranslateService.checkNeedStopped(task.getShopName(), new CharacterCountUtils())) {
+                return;
+            }
 
             processDbTaskService.runTask(task);
             appInsights.trackTrace("DBTaskLog task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);

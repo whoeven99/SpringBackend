@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
+
 @RestController
 @RequestMapping("/rating")
 public class DataRatingController {
@@ -36,7 +38,7 @@ public class DataRatingController {
         if (translationStatus == null || translationStatus.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
-        translationStatus.remove(source);
+        translationStatus.remove(getLanguageName(source));
         return new BaseResponse<>().CreateSuccessResponse(translationStatus);
     }
 

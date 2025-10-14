@@ -39,7 +39,7 @@ public class UserTrialsService {
      * 1,给前端一个查询接口
      *
      * @param shopName 商店名称
-     * @return Boolean 是否成功
+     * @return Boolean 是否免费 true 是已经免费使用，false，没有
      */
     public BaseResponse<Object> queryUserTrialByShopName(String shopName) {
         //判断是否购买过订阅计划，如果有则返回true

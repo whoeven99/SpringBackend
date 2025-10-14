@@ -4,6 +4,8 @@ import com.bogdatech.entity.DO.TranslateResourceDTO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -12,19 +14,12 @@ public class ModelUtils {
 
     //将前端传的宽泛的模块解析成具体的翻译模块，并输出
     public static List<String> translateModel(List<String> list){
-        List<TranslateResourceDTO> translateList = new ArrayList<>();
-        for (String model: list
-             ) {
-            List<TranslateResourceDTO> translateResourceList = TOKEN_MAP.get(model);
-            translateList.addAll(translateResourceList);
-        }
-        appInsights.trackTrace("translateList 添加成功");
-        List<String> translateModelList = new ArrayList<>();
-        for (TranslateResourceDTO resourceDTO: translateList){
-            translateModelList.add(resourceDTO.getResourceType());
-        }
-        appInsights.trackTrace("translateModelList 添加成功");
-        return translateModelList;
+        return list.stream()
+                .map(TOKEN_MAP::get)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .map(TranslateResourceDTO::getResourceType)
+                .toList();
     }
 
 }
