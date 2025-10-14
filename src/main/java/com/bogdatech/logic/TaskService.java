@@ -429,7 +429,7 @@ public class TaskService {
     /**
      * 获取所有的自动翻译用户，初始化用户状态
      */
-    @PostConstruct
+//    @PostConstruct
     public void initUserStatus() {
         //获取所有使用自动翻译的用户
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
