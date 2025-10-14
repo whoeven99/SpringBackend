@@ -415,6 +415,11 @@ public class TranslateController {
             // 获取对应Translates表里面 对应语言的status
             TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, initialTranslateTasksDO.getTarget()).eq(TranslatesDO::getSource, source));
 
+            // 不返回状态为0的数据
+            if (translatesDO.getStatus() == 0) {
+                continue;
+            }
+
             ProgressResponse.Progress progress = new ProgressResponse.Progress();
             progress.setStatus(translatesDO.getStatus());
             progress.setTarget(translatesDO.getTarget());
