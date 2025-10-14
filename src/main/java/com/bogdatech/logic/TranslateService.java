@@ -30,6 +30,7 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransacti
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.TRANSLATION_STATUS;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
@@ -316,11 +317,12 @@ public class TranslateService {
 
         // 获取userTranslate是否是写入状态，是的话翻译100%
         Map<Object, Object> value = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
-        if (CollectionUtils.isEmpty(value) || value.get("translation_status").equals(3)) {
+        if (CollectionUtils.isEmpty(value) || "3".equals(value.get(TRANSLATION_STATUS))) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
             return progressData;
         }
+
         //从redis中获取当前用户正在翻译的进度条数据
         String total = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL);
         String done = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_DONE);

@@ -313,9 +313,6 @@ public class RabbitMqTranslateService {
             // 修改之前的所有allTasks的字段
             translateTasksService.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, rabbitMqTranslateVO.getShopName()).set(TranslateTasksDO::getAllTasks, allTasks.getTotalChars()));
 
-            // 将进度条状态改为2
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), "Searching for content to translate…");
         } catch (Exception e) {
             appInsights.trackTrace("sendEmailTranslate 保存翻译任务失败 errors : " + e);
             appInsights.trackException(e);
