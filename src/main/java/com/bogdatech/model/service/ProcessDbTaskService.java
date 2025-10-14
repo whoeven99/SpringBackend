@@ -88,7 +88,6 @@ public class ProcessDbTaskService {
                         emailAutoTranslate(rabbitMqTranslateVO, task);
                     }
                     translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(1));
-                    translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(shopName, source, target), "");
                 } else {
                     // TODO 这是个fatalException 出现这种问题都是比较严重的问题 没翻译完为什么会出现email的任务
                     appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
@@ -323,11 +322,7 @@ public class ProcessDbTaskService {
                         .set(TranslationUsageDO::getConsumedTime, 0)
                         .set(TranslationUsageDO::getCreditCount, 0));
             }
-            //将翻译项中的模块改为null
-            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
-                    .eq(TranslatesDO::getSource, rabbitMqTranslateVO.getSource())
-                    .eq(TranslatesDO::getTarget, rabbitMqTranslateVO.getTarget())
-                    .set(TranslatesDO::getResourceType, null));
+
             appInsights.trackTrace("ProcessDBTaskLog 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
             //删除redis该用户相关进度条数据
             redisIntegration.delete(generateProcessKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()));

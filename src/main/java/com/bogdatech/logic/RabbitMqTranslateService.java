@@ -158,9 +158,18 @@ public class RabbitMqTranslateService {
 
         for (String target : targets) {
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
+            translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(shopName, source, target), "");
             translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(1));
             translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
             translationParametersRedisService.hsetProgressNumber(generateProgressTranslationKey(shopName, source, target), generateProcessKey(shopName, target));
+            redisProcessService.initProcessData(generateProcessKey(shopName, target));
+
+            // 将翻译项中的模块改为null
+            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                    .eq(TranslatesDO::getSource, source)
+                    .eq(TranslatesDO::getTarget, target)
+                    .set(TranslatesDO::getResourceType, null));
+
             request.setTarget(target);
             shopifyRequest.setTarget(target);
 
@@ -211,8 +220,6 @@ public class RabbitMqTranslateService {
 
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         CharacterCountUtils allTasks = new CharacterCountUtils();
-        redisProcessService.initProcessData(generateProcessKey(shopifyRequest.getShopName(), shopifyRequest.getTarget()));
-        appInsights.trackTrace("初始化进度条数据 " + shopifyRequest.getShopName());
 
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {
@@ -1156,10 +1163,6 @@ public class RabbitMqTranslateService {
                 translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
                 tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
                 translateTasksService.updateByTaskId(task.getTaskId(), 1);
-                translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
-                        .eq(TranslatesDO::getSource, source)
-                        .eq(TranslatesDO::getTarget, target)
-                        .set(TranslatesDO::getResourceType, null));
                 appInsights.trackTrace("clickTranslation 用户 " + shopName + " ciwi翻译结束 时间为： " + LocalDateTime.now());
                 //删除redis该用户相关进度条数据
                 redisIntegration.delete(generateProcessKey(shopName, target));
@@ -1214,11 +1217,6 @@ public class RabbitMqTranslateService {
             translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
             tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
             translateTasksService.updateByTaskId(task.getTaskId(), 1);
-            //将翻译项中的模块改为null
-            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
-                    .eq(TranslatesDO::getSource, source)
-                    .eq(TranslatesDO::getTarget, target)
-                    .set(TranslatesDO::getResourceType, null));
             appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
             //删除redis该用户相关进度条数据
             redisIntegration.delete(generateProcessKey(shopName, target));

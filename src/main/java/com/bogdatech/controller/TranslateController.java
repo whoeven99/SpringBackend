@@ -30,7 +30,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.HAS_TRANSLATED;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -226,14 +225,12 @@ public class TranslateController {
         }
 
         // 在这里异步 全部走DB翻译
-        executorService.submit(() -> {
-            // 循环同步 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
-            translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
-            appInsights.trackTrace("clickTranslation 循环同步 : " + shopifyRequest.getShopName());
+        // 循环同步 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+        translateService.isExistInDatabase(shopName, clickTranslateRequest, request);
+        appInsights.trackTrace("clickTranslation 循环同步 : " + shopifyRequest.getShopName());
 
-            // 存翻译参数到db
-            rabbitMqTranslateService.mqTranslateWrapper(clickTranslateRequest, shopifyRequest, translateResourceDTOS, request, handleFlag, clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), clickTranslateRequest.getTarget());
-        });
+        // 存翻译参数到db
+        rabbitMqTranslateService.mqTranslateWrapper(clickTranslateRequest, shopifyRequest, translateResourceDTOS, request, handleFlag, clickTranslateRequest.getIsCover(), clickTranslateRequest.getCustomKey(), clickTranslateRequest.getTarget());
 
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
