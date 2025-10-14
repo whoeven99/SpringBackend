@@ -2,9 +2,11 @@ package com.bogdatech.task;
 
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
+import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.model.service.ProcessDbTaskService;
+import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -32,6 +34,8 @@ public class DBTask {
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private ProcessDbTaskService processDbTaskService;
+    @Autowired
+    private RabbitMqTranslateService RabbitMqTranslateService;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @PostConstruct
@@ -102,6 +106,11 @@ public class DBTask {
 
         for (TranslateTasksDO task : taskList) {
             appInsights.trackTrace("DBTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
+
+            // 判断是否停止翻译
+            if (RabbitMqTranslateService.checkNeedStopped(task.getShopName(), new CharacterCountUtils())) {
+                return;
+            }
 
             processDbTaskService.runTask(task);
             appInsights.trackTrace("DBTaskLog task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);

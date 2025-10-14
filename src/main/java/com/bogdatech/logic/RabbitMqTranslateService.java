@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -35,6 +36,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
@@ -601,7 +603,7 @@ public class RabbitMqTranslateService {
     /**
      * 判断停止标识
      */
-    private boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
+    public boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
         if (userStopFlags.get(shopName).get()) {
             // 更新数据库中的已使用字符数
             appInsights.trackTrace("checkNeedStopped " + shopName + " 用户 消耗的token ： " + counter.getTotalChars());
@@ -1159,16 +1161,16 @@ public class RabbitMqTranslateService {
         counter.addChars(nowUserToken);
         if (nowUserTranslate == 2) {
             //将2改为1， 发送翻译成功的邮件
-            if ("ciwishop.myshopify.com".equals(shopName)) {
-                translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
-                tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
-                translateTasksService.updateByTaskId(task.getTaskId(), 1);
-                appInsights.trackTrace("clickTranslation 用户 " + shopName + " ciwi翻译结束 时间为： " + LocalDateTime.now());
-                //删除redis该用户相关进度条数据
-                redisIntegration.delete(generateProcessKey(shopName, target));
-            } else {
-                triggerSendEmailLater(shopName, target, source, accessToken, task, counter, startTime, startChars, limitChars);
-            }
+//            if ("ciwishop.myshopify.com".equals(shopName)) {
+//                translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
+//                tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
+//                translateTasksService.updateByTaskId(task.getTaskId(), 1);
+//                appInsights.trackTrace("clickTranslation 用户 " + shopName + " ciwi翻译结束 时间为： " + LocalDateTime.now());
+//                //删除redis该用户相关进度条数据
+//                redisIntegration.delete(generateProcessKey(shopName, target));
+//            } else {
+            triggerSendEmailLater(shopName, target, source, accessToken, task, counter, startTime, startChars, limitChars);
+//            }
         } else if (nowUserTranslate == 3) {
             //为3，发送部分翻译的邮件
             //将List<String> 转化位 List<TranslateResourceDTO>
