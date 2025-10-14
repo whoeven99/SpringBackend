@@ -101,13 +101,12 @@ public class RabbitMqTranslateService {
     public static String CLICK_EMAIL = "click"; // db 设置的10字符， 改动的时候需要注意
     public static String AUTO_EMAIL = "auto";
 
-    /**
-     * 加一层包装MQ翻译，用于自动翻译按顺序添加任务
-     */
-    public void mqTranslateWrapper(ClickTranslateRequest clickTranslateRequest, ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request, boolean handleFlag, boolean isCover, String customKey, String[] targets) {
+    public void mqTranslateWrapper(ClickTranslateRequest request, ShopifyRequest shopifyRequest,
+                                   List<String> translateResourceDTOS, TranslateRequest translateRequest, boolean handleFlag,
+                                   boolean isCover, String customKey, String[] targets) {
         appInsights.trackTrace("mqTranslateWrapper开始: " + shopifyRequest.getShopName());
         String shopName = shopifyRequest.getShopName();
-        String source = request.getSource();
+        String source = translateRequest.getSource();
 
         // 重置用户发送的邮件
         userEmailStatus.put(shopName, new AtomicBoolean(false));
@@ -116,11 +115,9 @@ public class RabbitMqTranslateService {
         userStopFlags.put(shopName, new AtomicBoolean(false));
 
         // 修改自定义提示词
-        String cleanedText;
+        String cleanedText = null;
         if (customKey != null) {
             cleanedText = customKey.replaceAll("\\.{2,}", ".");
-        } else {
-            cleanedText = null;
         }
         appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
 
@@ -132,7 +129,7 @@ public class RabbitMqTranslateService {
                     2,
                     target,
                     source,
-                    request.getAccessToken()
+                    translateRequest.getAccessToken()
             );
             try {
                 Thread.sleep(500);
@@ -172,11 +169,11 @@ public class RabbitMqTranslateService {
                     .eq(TranslatesDO::getTarget, target)
                     .set(TranslatesDO::getResourceType, null));
 
-            request.setTarget(target);
+            translateRequest.setTarget(target);
             shopifyRequest.setTarget(target);
 
             // 将线管参数存到数据库中
-            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), resourceToJson, cleanedText, clickTranslateRequest.getShopName(), handleFlag, CLICK_EMAIL, Timestamp.valueOf(LocalDateTime.now()), false);
+            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0, translateRequest.getSource(), target, isCover, request.getTranslateSettings1(), request.getTranslateSettings2(), resourceToJson, cleanedText, request.getShopName(), handleFlag, CLICK_EMAIL, Timestamp.valueOf(LocalDateTime.now()), false);
             try {
                 appInsights.trackTrace("将手动翻译参数存到数据库中");
                 int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
@@ -189,7 +186,6 @@ public class RabbitMqTranslateService {
                 appInsights.trackTrace("mqTranslateWrapper 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
                 appInsights.trackException(e);
             }
-
         }
     }
 

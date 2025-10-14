@@ -20,6 +20,7 @@ import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
@@ -401,9 +402,25 @@ public class TestController {
         return map;
     }
 
+    @Autowired
+    private InitialTranslateTasksMapper initialTranslateTasksMapper;
+
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
+        // Initial Task 未开始，进行中的任务
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS0 = initialTranslateTasksMapper.selectList(
+                new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getStatus, 0)
+                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS1 = initialTranslateTasksMapper.selectList(
+                new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getStatus, 1)
+                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+
         Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("Step0-创建总翻译任务的用户-未开始（则说明有问题）", initialTranslateTasksDOS0.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
+        responseMap.put("Step0-创建总翻译任务的用户-进行中", initialTranslateTasksDOS1.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
 
         List<TranslatesDO> startedTasks = translatesServiceImpl.getStatus2Data();
         Set<String> startedShops = startedTasks.stream().map(TranslatesDO::getShopName).collect(Collectors.toSet());
