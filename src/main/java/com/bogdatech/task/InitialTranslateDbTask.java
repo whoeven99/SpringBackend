@@ -1,7 +1,6 @@
 package com.bogdatech.task;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -20,9 +19,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,8 +40,6 @@ public class InitialTranslateDbTask {
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
     private IUsersService iUsersService;
-    @Autowired
-    private TranslationMonitorRedisService translationMonitorRedisService;
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -81,14 +75,14 @@ public class InitialTranslateDbTask {
                     .filter(taskDo -> taskDo.getShopName().equals(shop))
                     .collect(Collectors.toSet());
 
-            // 这一行的日志可以看到每个shop的clickTranslateDbTasks是否在减少
+            // 这一行的日志可以看到每个shop的InitialTranslateTasks是否在减少
             appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of shopTasks: " + shopTasks.size() + " need to translate of shop: " + shop);
 
             // 当前的加锁，只是为了保持一个shop只会被一个线程处理，防止进度条或者其他的状态不兼容并发翻译
             // 这里加锁的方式是将shop放进一个set
             if (initialTranslateRedisService.setAdd(shop)) {
                 appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask new shop start translate: " + shop);
-                System.out.println("scanAndSubmitInitialTranslateDbTask new shop start translate: " + shop);
+
                 executorService.submit(() -> {
                     try {
                         processInitialTasksOfShop(shop, shopTasks);
