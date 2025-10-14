@@ -2,6 +2,7 @@ package com.bogdatech.task;
 
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
+import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
@@ -21,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.jsonToObject;
 
 @Component
 @EnableScheduling
@@ -35,7 +37,7 @@ public class DBTask {
     @Autowired
     private ProcessDbTaskService processDbTaskService;
     @Autowired
-    private RabbitMqTranslateService RabbitMqTranslateService;
+    private RabbitMqTranslateService rabbitMqTranslateService;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @PostConstruct
@@ -78,37 +80,45 @@ public class DBTask {
             // 这里加锁的方式是将shop放进一个set
             if (redisTranslateLockService.setAdd(shop)) {
                 appInsights.trackTrace("DBTaskLog new shop start translate: " + shop);
-                executorService.submit(() -> {
-                    try {
-                        processTasksOfShop(shop, shopTasks);
-                    } finally {
-                        redisTranslateLockService.setRemove(shop);
-                    }
-                });
+                try {
+                    processTasks(shop, shopTasks);
+                } finally {
+                    redisTranslateLockService.setRemove(shop);
+                }
             }
         }
     }
 
-    private void processTasksOfShop(String shop, Set<TranslateTasksDO> shopTasks) {
-//        Map<String, List<RabbitMqTranslateVO>> targetMap = shopTasks.stream()
-//                .map(translateTasksDO -> jsonToObject(translateTasksDO.getPayload(), RabbitMqTranslateVO.class))
-//                .filter(Objects::nonNull)
-//                .collect(Collectors.groupingBy(RabbitMqTranslateVO::getTarget));
-//
-//        targetMap.forEach((target, list) -> {
-//            Map<String, List<RabbitMqTranslateVO>> modeMap = list.stream().collect(Collectors.groupingBy(RabbitMqTranslateVO::getModeType));
-//        });
+    private void processTasks(String shop, Set<TranslateTasksDO> shopTasks) {
+        // 根据target语言分组
+        Map<String, List<TranslateTasksDO>> map = shopTasks.stream()
+                .collect(Collectors.groupingBy(translateTasksDO -> {
+                    RabbitMqTranslateVO rabbitMqTranslateVO = jsonToObject(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
+                    // if == null
+                    String target = rabbitMqTranslateVO.getTarget();
+                    return target == null ? "" : target;
+                }));
 
+        // 一个shop，多语言并行翻译
+        map.forEach((target, list) -> {
+            executorService.submit(() -> {
+                processTasksByTarget(shop, target, shopTasks);
+            });
+        });
+    }
+
+    private void processTasksByTarget(String shop, String target, Set<TranslateTasksDO> shopTasks) {
+        appInsights.trackTrace("DBTaskLog processTasksByTarget START: " + target + " of shop: " + shop);
         // 按照创建时间排序，先创建的先翻译
         List<TranslateTasksDO> taskList = shopTasks.stream()
                 .sorted(Comparator.comparing(TranslateTasksDO::getCreatedAt))
-                .collect(Collectors.toList());
+                .toList();
 
         for (TranslateTasksDO task : taskList) {
             appInsights.trackTrace("DBTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
 
-            // 判断是否停止翻译
-            if (RabbitMqTranslateService.checkNeedStopped(task.getShopName(), new CharacterCountUtils())) {
+            if (rabbitMqTranslateService.checkNeedStopped(task.getShopName(), new CharacterCountUtils())) {
+                appInsights.trackTrace("DBTaskLog task stopped: " + task.getTaskId() + " of shop: " + shop);
                 return;
             }
 

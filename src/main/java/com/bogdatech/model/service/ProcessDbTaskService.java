@@ -65,14 +65,14 @@ public class ProcessDbTaskService {
     public void runTask(TranslateTasksDO task) {
         String shopName = task.getShopName();
         RabbitMqTranslateVO rabbitMqTranslateVO = jsonToObject(task.getPayload(), RabbitMqTranslateVO.class);
-        String source = rabbitMqTranslateVO.getSource();
-        String target = rabbitMqTranslateVO.getTarget();
         if (rabbitMqTranslateVO == null) {
             appInsights.trackTrace("ProcessDBTaskLog FatalException: " + shopName + " 解析失败 " + task.getPayload());
             //将taskId 改为10（暂定）
             translateTasksService.updateByTaskId(task.getTaskId(), 10);
             return;
         }
+        String source = rabbitMqTranslateVO.getSource();
+        String target = rabbitMqTranslateVO.getTarget();
 
         String shopifyData = rabbitMqTranslateVO.getShopifyData();
         try {
