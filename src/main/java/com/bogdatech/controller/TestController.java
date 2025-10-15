@@ -20,12 +20,14 @@ import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.model.service.ProcessDbTaskService;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -358,7 +360,31 @@ public class TestController {
         List<CharsOrdersDO> list = charsOrdersService.getCharsOrdersDoByShopName(shopName);
         Map<String, Object> map = new HashMap<>();
         map.put("CharsOrder", list);
+
+        //
+
+        //
+
+        //
         return map;
+    }
+
+    @Autowired
+    private TranslateProgressService translateProgressService;
+
+    // For Monitor
+    @GetMapping("/getProgressByShopName")
+    public List<ProgressResponse.Progress> getProgressByShopName(@RequestParam String shopName) {
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(
+                new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getShopName, shopName)
+                        .eq(InitialTranslateTasksDO::isDeleted, false)
+                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+        if (initialTranslateTasksDOS.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return translateProgressService.getAllProgressData(shopName, initialTranslateTasksDOS.get(0).getSource()).getResponse().getList();
     }
 
     @Autowired

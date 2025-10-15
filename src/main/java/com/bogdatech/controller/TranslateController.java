@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserTypeTokenService;
-import com.bogdatech.entity.DO.InitialTranslateTasksDO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.VO.ImageTranslateVO;
@@ -15,6 +14,7 @@ import com.bogdatech.entity.VO.TranslatingStopVO;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -22,8 +22,6 @@ import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
@@ -47,12 +45,19 @@ public class TranslateController {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
+    @Autowired
+    private TranslateProgressService translateProgressService;
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
         return translateService.createInitialTask(request);
+    }
+
+    @PostMapping("/getAllProgressData")
+    public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
+        return translateProgressService.getAllProgressData(shopName, source);
     }
 
     /**
@@ -309,54 +314,6 @@ public class TranslateController {
         }
 
         return new BaseResponse<>().CreateErrorResponse(false);
-    }
-
-    @PostMapping("/getAllProgressData")
-    public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::isDeleted, false).orderByAsc(InitialTranslateTasksDO::getCreatedAt));
-
-        // 获取所有的TranslatesDO
-        ProgressResponse response = new ProgressResponse();
-        List<ProgressResponse.Progress> list = new ArrayList<>();
-        response.setList(list);
-        if (initialTranslateTasksDOS.isEmpty()) {
-            return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
-        }
-
-        // 先获取所有的， 然后转化为map
-        List<TranslatesDO> translatesDOList = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source).orderByAsc(TranslatesDO::getUpdateAt));
-        Map<String, TranslatesDO> translatesMap = translatesDOList.stream()
-                .collect(Collectors.toMap(
-                        TranslatesDO::getTarget,  // key：target 字段
-                        Function.identity()      // value：整个对象本身
-                ));
-
-        for (InitialTranslateTasksDO initialTranslateTasksDO : initialTranslateTasksDOS) {
-            TranslatesDO translatesDO = translatesMap.get(initialTranslateTasksDO.getTarget());
-            // 不返回状态为0的数据
-            if (translatesDO.getStatus() == 0) {
-                continue;
-            }
-
-            ProgressResponse.Progress progress = new ProgressResponse.Progress();
-            progress.setStatus(translatesDO.getStatus());
-            progress.setTarget(translatesDO.getTarget());
-
-            Map<String, String> map = translationParametersRedisService.hgetAll(generateProgressTranslationKey(shopName, source, translatesDO.getTarget()));
-            progress.setResourceType(map.get(TranslationParametersRedisService.TRANSLATING_MODULE));
-            progress.setValue(map.get(TranslationParametersRedisService.TRANSLATING_STRING));
-            progress.setTranslateStatus("3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_saving_shopify"
-                    : "2".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_translating"
-                    : "translation_process_init");
-
-            // 进度条数字
-            Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
-            appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + progressData);
-            progress.setProgressData(progressData);
-
-            list.add(progress);
-        }
-        return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
     }
 
     /**
