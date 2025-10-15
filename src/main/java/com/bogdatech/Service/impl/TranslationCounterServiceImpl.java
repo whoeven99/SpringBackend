@@ -120,5 +120,10 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         return true;
     }
 
+    @Override
+    public TranslationCounterDO getTranslationCounterByShopName(String shopName) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
+    }
+
 
 }

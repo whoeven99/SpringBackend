@@ -53,4 +53,5 @@ public interface ITranslatesService extends IService<TranslatesDO> {
 
     void updateStopStatus(String shopName, String source);
 
+    List<TranslatesDO> listTranslatesDOByShopName(String shopName);
 }
