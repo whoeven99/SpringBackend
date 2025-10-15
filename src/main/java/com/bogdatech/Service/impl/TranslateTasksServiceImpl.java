@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -87,5 +88,10 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
     @Override
     public List<String> listStatus0ShopName() {
         return baseMapper.listStatus0ShopName();
+    }
+
+    @Override
+    public List<TranslateTasksDO> listTranslateStatus2And0TasksByShopName(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).and(wrapper -> wrapper.eq(TranslateTasksDO::getStatus, 2).or().eq(TranslateTasksDO::getStatus, 0)).orderByAsc(TranslateTasksDO::getCreatedAt));
     }
 }
