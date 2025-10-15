@@ -130,9 +130,9 @@ public class TranslateService {
         // 判断是否有 handle 模块
         boolean handleFlag = false;
         // TODO 这个前后端的字段名字，重新换一个
-        List<String> translateModel = request.getTranslateSettings3();
-        if (translateModel.contains("handle")) {
-            translateModel.removeIf("handle"::equals);
+        List<String> translateResourceType = request.getTranslateSettings3();
+        if (translateResourceType.contains("handle")) {
+            translateResourceType.removeIf("handle"::equals);
             handleFlag = true;
         }
 
@@ -140,7 +140,7 @@ public class TranslateService {
                 + " handleFlag: " + handleFlag + " isCover: " + request.getIsCover());
 
         // 修改模块的排序 TODO, translateModel的内容拆出来放这里
-        List<String> translateResourceDTOS = translateModel(translateModel);
+        List<String> translateResourceDTOS = translateModel(translateResourceType);
         appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopName);
 
         if (org.springframework.util.CollectionUtils.isEmpty(translateResourceDTOS)) {
