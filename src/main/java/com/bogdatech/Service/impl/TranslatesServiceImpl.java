@@ -205,13 +205,13 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public void updateStopStatus(String shopName, String source, String accessToken) {
+    public void updateStopStatus(String shopName, String source) {
         baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>()
                 .eq(TranslatesDO::getShopName, shopName)
                 .eq(TranslatesDO::getSource, source)
                 .eq(TranslatesDO::getStatus, 2)
                 .set(TranslatesDO::getStatus, 7)
-                .set(TranslatesDO::getAccessToken, accessToken));
+        );
 
     }
 }

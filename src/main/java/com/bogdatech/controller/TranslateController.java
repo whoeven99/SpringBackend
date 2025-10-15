@@ -24,12 +24,9 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
@@ -169,7 +166,7 @@ public class TranslateController {
     //暂停翻译
     @DeleteMapping("/stop")
     public void stop(@RequestParam String shopName) {
-        translateService.stopTranslation(shopName);
+        translateService.stopTranslationManually(shopName);
     }
 
 
@@ -291,24 +288,27 @@ public class TranslateController {
      */
     @PutMapping("/stopTranslatingTask")
     public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
-        appInsights.trackTrace("stopTranslatingTask 正在翻译的用户： " + userStopFlags);
-        AtomicBoolean stopFlag = userStopFlags.get(shopName);
-        stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
-        userStopFlags.put(shopName, stopFlag);
-        //获取所有的status为2的target
+        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
+        if (!stopFlag) {
+           return new BaseResponse<>().CreateErrorResponse("stopTranslatingTask 已经有停止标识， 需要删除后再次停止");
+        }
+
+        // 获取所有的status为2的target
         List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2).eq(TranslatesDO::getSource, translatingStopVO.getSource()).orderByAsc(TranslatesDO::getUpdateAt));
-        //将所有状态2的任务改成7
-        translatesService.updateStopStatus(shopName, translatingStopVO.getSource(), translatingStopVO.getAccessToken());
-        //将所有状态为0和2的子任务，改为7
+
+        // 将所有状态2的任务改成7
+        translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
+
+        // 将所有状态为0和2的task任务，改为7
         Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
-        if (flag && stopFlag.get()) {
-            //将redis进度条删除掉
+        if (flag) {
+            // 将redis进度条 total 和 done的数据初始化为0
             for (TranslatesDO translatesDO : list
             ) {
                 redisProcessService.initProcessData(generateProcessKey(shopName, translatesDO.getTarget()));
             }
             appInsights.trackTrace("stopTranslatingTask " + shopName + " 停止成功");
-            return new BaseResponse<>().CreateSuccessResponse(stopFlag);
+            return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }

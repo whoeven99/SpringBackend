@@ -89,6 +89,18 @@ public class UserPicturesController {
     }
 
     /**
+     * 根据前端传的shop,languageCode,拿这个语言下的全部图片
+     * */
+    @PostMapping("/getPictureDataByShopNameAndLanguageCode")
+    public BaseResponse<Object> getPictureDataByShopNameAndLanguageCode(@RequestParam("shopName") String shopName, @RequestParam("languageCode") String languageCode) {
+        List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("language_code", languageCode).eq("is_delete", false));
+        if (list != null) {
+            return new BaseResponse<>().CreateSuccessResponse(list);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    /**
      * 软删除用户图片数据
      * */
     @PostMapping("/deletePictureData")
@@ -97,18 +109,6 @@ public class UserPicturesController {
         if (b){
             userPicturesDO.setIsDelete(true);
             return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
-        }
-        return new BaseResponse<>().CreateErrorResponse(false);
-    }
-
-    /**
-     * 根据前端传的shop,languageCode,拿这个语言下的全部图片
-     * */
-    @PostMapping("/getPictureDataByShopNameAndLanguageCode")
-    public BaseResponse<Object> getPictureDataByShopNameAndLanguageCode(@RequestParam("shopName") String shopName, @RequestParam("languageCode") String languageCode) {
-        List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("language_code", languageCode).eq("is_delete", false));
-        if (list != null) {
-            return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }

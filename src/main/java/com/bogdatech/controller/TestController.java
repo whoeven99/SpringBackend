@@ -86,14 +86,9 @@ public class TestController {
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
-    private RedisIntegration redisIntegration;
-    @Autowired
-    private RabbitMqTranslateService rabbitMqTranslateService;
-    @Autowired
     private ITranslationCounterService translationCounterService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
-
 
     @GetMapping("/ping")
     public String ping() {
@@ -210,37 +205,11 @@ public class TestController {
         return replaceHyphensWithSpaces(value);
     }
 
-    @PutMapping("/testThread")
-    public String logThreadPoolStatus(@RequestParam String shopName) {
-        if (executorService instanceof ThreadPoolExecutor executor) {
-            String process = (" - 进程Set： " + redisIntegration.get(generateTranslateLockKey(shopName)) + " ");
-            String userStopFlag = (" - 停止标志： " + userStopFlags);
-            String executorServic = (" - 线程池状态：" + executorService + "  ");
-            String crePoolSize = (" - 核心线程数(corePoolSize): " + executor.getCorePoolSize() + "  ");
-            String maximumPoolSize = (" - 最大线程数(maximumPoolSize): " + executor.getMaximumPoolSize() + "  ");
-            String poolSize = (" - 当前线程池中线程数(poolSize): " + executor.getPoolSize() + "  ");
-            String activeCount = (" - 活跃线程数(activeCount): " + executor.getActiveCount() + "  ");
-            String completedTaskCount = (" - 已完成任务数(completedTaskCount): " + executor.getCompletedTaskCount() + "  ");
-            String taskCount = (" - 总任务数(taskCount): " + executor.getTaskCount() + "  ");
-            String queue = (" - 当前排队任务数(queue size): " + executor.getQueue().size() + "  ");
-            String remainingCapacity = (" - 队列剩余容量(remaining capacity): " + executor.getQueue().remainingCapacity() + "  ");
-            String allowsCoreThreadTimeOut = (" - 是否允许核心线程超时(allowsCoreThreadTimeOut): " + executor.allowsCoreThreadTimeOut() + "  ");
-            String keepAliveTime = (" - 线程空闲存活时间(keepAliveTime): " + executor.getKeepAliveTime(TimeUnit.SECONDS) + " 秒" + "  ");
-            String shutdown = (" - 是否已关闭(isShutdown): " + executor.isShutdown() + "  ");
-            String terminated = (" - 是否终止(isTerminated): " + executor.isTerminated() + "  ");
-            String terminating = (" - 正在终止中(isTerminating): " + executor.isTerminating() + "  ");
-            return process + userStopFlag + executorServic + crePoolSize + maximumPoolSize + poolSize + activeCount + completedTaskCount + taskCount + queue + remainingCapacity + allowsCoreThreadTimeOut + keepAliveTime + shutdown + terminated + terminating;
-        }
-        return null;
-    }
-
     // 停止mq翻译任务
     @PutMapping("/stopMqTask")
     public void stopMqTask(@RequestParam String shopName) {
-        appInsights.trackTrace("正在翻译的用户： " + userStopFlags);
-        AtomicBoolean stopFlag = userStopFlags.get(shopName);
-        if (stopFlag != null) {
-            stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
+        Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(shopName);
+        if (stopFlag) {
             appInsights.trackTrace("停止成功");
         }
     }
@@ -263,15 +232,6 @@ public class TestController {
     @PutMapping("/testDBTranslate")
     public void testDBTranslate() {
         dBTask.scanAndSubmitTasks();
-    }
-
-    /**
-     * 修改stopFlag
-     */
-    @PutMapping("/testStopFlagToTure")
-    public String testStopFlagToTure(@RequestParam String shopName, @RequestParam Boolean flag) {
-        userStopFlags.put(shopName, new AtomicBoolean(flag));
-        return userStopFlags.toString();
     }
 
     /**
@@ -309,7 +269,6 @@ public class TestController {
     public Boolean testUnlock(@RequestParam String shopName) {
         return redisTranslateLockService.setRemove(shopName);
     }
-
 
     @GetMapping("/testReadList")
     public List<UserTranslationDataDO> testreadList() {

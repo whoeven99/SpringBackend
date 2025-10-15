@@ -262,7 +262,7 @@ public class PrivateKeyService {
             iTranslatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             try {
                 //翻译成功后发送翻译成功的邮件
-                if (!userStopFlags.get(shopName).get()) {
+                if ("1".equals(translationParametersRedisService.getStopTranslationKey(shopName))) {
                     translateSuccessEmail(request, begin, Math.toIntExact(usedChars), Math.toIntExact(remainingChars), userKey);
                 }
             } catch (Exception e) {
@@ -272,7 +272,10 @@ public class PrivateKeyService {
 
         userTasks.put(shopName, future);  // 存储用户的任务
         userEmailStatus.put(shopName, new AtomicBoolean(false)); //重置用户发送的邮件
-        userStopFlags.put(shopName, new AtomicBoolean(false));  // 初始化用户的停止标志
+        Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(shopName);
+        if (stopFlag) {
+            appInsights.trackTrace("startPrivateTranslation 私有key任务启动，删除标识： " + shopName);
+        }
     }
 
     private void translating(TranslateRequest request, Long remainingChars, CharacterCountUtils counter, String apiKey, List<String> translateResourceDTOS, boolean isCover, Integer modelFlag, String apiModel, String userPrompt, boolean handleFlag) {
@@ -322,7 +325,7 @@ public class PrivateKeyService {
      * 判断停止标识
      */
     private boolean checkIsStopped(String shopName) {
-        if (userStopFlags.get(shopName).get()) {
+        if ("1".equals(translationParametersRedisService.getStopTranslationKey(shopName))) {
             // 将翻译状态为2改为“部分翻译”//
             iTranslatesService.updateStatusByShopNameAnd2(shopName);
             return true;

@@ -42,7 +42,7 @@ public class UserController {
     @DeleteMapping("/uninstall")
     public BaseResponse<Object> uninstallApp(@RequestBody UsersDO userRequest) {
         //卸载时，停止翻译
-        translateService.stopTranslation(userRequest.getShopName());
+        translateService.stopTranslationManually(userRequest.getShopName());
         //当卸载时，更新卸载时间
         return new BaseResponse<>().CreateSuccessResponse(userService.unInstallApp(userRequest));
     }

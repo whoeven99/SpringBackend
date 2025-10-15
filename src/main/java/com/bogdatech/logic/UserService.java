@@ -89,19 +89,24 @@ public class UserService {
             try {
                 String shopName = userRequest.getShopName();
                 appInsights.trackTrace("unInstallApp " + shopName + " 用户卸载应用");
-                //更改用户卸载翻译时间
+
+                // 更改用户卸载翻译时间
                 usersService.unInstallApp(userRequest);
-                //将用户定时任务的true都改为false
+
+                // 将用户定时任务的true都改为false
                 translatesService.updateAutoTranslateByShopNameToFalse(shopName);
-                //将用户翻译状态改为0
+
+                // 将用户翻译状态改为0
                 translatesService.updateAllStatusTo0(shopName);
-                //将用户ip关掉
-                //将词汇表改为0
+
+                // 将用户ip关掉
+                // 将词汇表改为0
                 iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", shopName).set("status", 0));
                 widgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", shopName).set("ip_open", false));
-                //获取用户订单表里计划为Active的订单
-                //删除对应的额度
-                //获取用户额度数据，判断是否是免费试用卸载，然后扣额度
+
+                // 获取用户订单表里计划为Active的订单
+                // 删除对应的额度
+                // 获取用户额度数据，判断是否是免费试用卸载，然后扣额度
                 translationCounterService.deleteTrialCounter(shopName);
 
                 return true;
