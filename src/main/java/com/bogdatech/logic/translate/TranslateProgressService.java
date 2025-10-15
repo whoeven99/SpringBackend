@@ -36,7 +36,7 @@ public class TranslateProgressService {
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
-    public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
+    public BaseResponse<ProgressResponse> getAllProgressData(String shopName, String source) {
         List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::isDeleted, false).orderByAsc(InitialTranslateTasksDO::getCreatedAt));
 
         // 获取所有的TranslatesDO
