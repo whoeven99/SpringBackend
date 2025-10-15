@@ -44,8 +44,8 @@ public class TranslationMonitorRedisService {
         redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "startTranslationAt", time);
     }
 
-    public void hsetModelCharsWithTime(String shopName, String modelType, int chars, String minutes) {
-        redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, modelType, "trans " + chars + " chars in " + minutes + " minutes");
+    public void hsetModelCharsWithTime(String shopName, String modelType, int chars, String seconds) {
+        redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, modelType, "trans " + chars + " chars in " + seconds + " seconds");
     }
 
     public void hsetLastTaskFinishAt(String shopName, String time) {
