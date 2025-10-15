@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
@@ -45,7 +46,6 @@ import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
-import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
@@ -82,11 +82,13 @@ public class TranslateService {
     private TranslationMonitorRedisService translationMonitorRedisService;
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    //判断是否可以终止翻译流程
-    public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
-    public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
-    public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();// 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
 
+    // 判断是否可以终止翻译流程
+    public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
+//    public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
+
+    // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
+    public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
     public static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     // TODO 所有翻译的总入口 目前只有手动翻译
@@ -130,17 +132,22 @@ public class TranslateService {
         // 判断是否有 handle 模块
         boolean handleFlag = false;
         // TODO 这个前后端的字段名字，重新换一个
-        List<String> translateModel = request.getTranslateSettings3();
-        if (translateModel.contains("handle")) {
-            translateModel.removeIf("handle"::equals);
+        List<String> translateResourceTypesList = request.getTranslateSettings3();
+        if (translateResourceTypesList.contains("handle")) {
+            translateResourceTypesList.removeIf("handle"::equals);
             handleFlag = true;
         }
 
         appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + request.getTranslateSettings3()
                 + " handleFlag: " + handleFlag + " isCover: " + request.getIsCover());
 
-        // 修改模块的排序 TODO, translateModel的内容拆出来放这里
-        List<String> translateResourceDTOS = translateModel(translateModel);
+        // 修改模块的排序
+        List<String> translateResourceDTOS = translateResourceTypesList.stream()
+                .map(TOKEN_MAP::get)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .map(TranslateResourceDTO::getResourceType)
+                .toList();
         appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopName);
 
         if (org.springframework.util.CollectionUtils.isEmpty(translateResourceDTOS)) {
@@ -168,7 +175,8 @@ public class TranslateService {
         userEmailStatus.put(shopName, new AtomicBoolean(false));
 
         // 初始化用户的停止标志
-        userStopFlags.put(shopName, new AtomicBoolean(false));
+        Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(shopName);
+        appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 初始化用户的停止标志: " + stopFlag);
 
         // 修改自定义提示词
         String cleanedText = null;
@@ -248,40 +256,31 @@ public class TranslateService {
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
-    // 用户卸载停止指定用户的翻译任务
-    public void stopTranslation(String shopName) {
-        AtomicBoolean stopFlag = userStopFlags.get(shopName);
-        if (stopFlag != null) {
-            stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
-            Future<?> future = userTasks.get(shopName);
-            if (future != null && !future.isDone()) {
-                future.cancel(true);  // 中断正在执行的任务
-                appInsights.trackTrace("stopTranslation 用户 " + shopName + " 的翻译任务已停止");
-                //将Task表DB中的status改为5
-                translateTasksService.updateStatusAllTo5ByShopName(shopName);
-//                 将翻译状态改为“部分翻译” shopName, status=3
-                translatesService.updateStatusByShopNameAnd2(shopName);
-            }
-        }
-    }
-
-    // 手动停止用户的翻译任务
+    /**
+     * 手动停止用户的翻译任务
+     * */
     public String stopTranslationManually(String shopName) {
-        AtomicBoolean stopFlag = userStopFlags.get(shopName);
-        if (stopFlag != null) {
-            stopFlag.set(true);  // 设置停止标志，任务会在合适的地方检查并终止
+        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
+        if (stopFlag) {
+            appInsights.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");
+
+            //将Task表DB中的status改为5
+            translateTasksService.updateStatusAllTo5ByShopName(shopName);
+
+            // 将翻译状态改为“部分翻译” shopName, status=3
+            translatesService.updateStatusByShopNameAnd2(shopName);
+
             Future<?> future = userTasks.get(shopName);
+
+            // 目前能用到的就是私有key
             if (future != null && !future.isDone()) {
-                future.cancel(true);  // 中断正在执行的任务
-                appInsights.trackTrace("用户 " + shopName + " 的翻译任务已停止");
-                //将Task表DB中的status改为5
-                translateTasksService.updateStatusAllTo5ByShopName(shopName);
-//                 将翻译状态改为“部分翻译” shopName, status=3
-                translatesService.updateStatusByShopNameAnd2(shopName);
-                return "翻译任务已停止";
+                // 中断正在执行的任务
+                future.cancel(true);
             }
+
+            return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
         }
-        return "无法停止翻译任务";
+        return "已经有停止标识， 需要删除后再次停止";
     }
 
     //google翻译接口

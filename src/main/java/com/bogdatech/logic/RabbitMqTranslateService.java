@@ -10,9 +10,7 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.RedisIntegration;
-import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -26,12 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
@@ -87,10 +83,6 @@ public class RabbitMqTranslateService {
     private RedisIntegration redisIntegration;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
-    @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
-    @Autowired
-    private TranslationMonitorRedisService translationMonitorRedisService;
 
     public static final int BATCH_SIZE = 50;
     public static String CLICK_EMAIL = "click"; // db 设置的10字符， 改动的时候需要注意
@@ -113,7 +105,7 @@ public class RabbitMqTranslateService {
      * @param customKey             自定义key
      * @param taskType              邮件类型
      */
-    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
+    public void initialTasks(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
         // 判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -448,7 +440,7 @@ public class RabbitMqTranslateService {
      * 翻译停止后，进度条就不加了
      */
     public void checkNeedAddProcessData(String shopName, String target) {
-        if (userStopFlags.get(shopName).get()) {
+        if (translationParametersRedisService.isStopped(shopName)) {
             redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
         }
     }
@@ -504,16 +496,18 @@ public class RabbitMqTranslateService {
      * 判断停止标识
      */
     public boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
-        if (userStopFlags.get(shopName).get()) {
+        if (translationParametersRedisService.isStopped(shopName)) {
             // 更新数据库中的已使用字符数
             appInsights.trackTrace("checkNeedStopped " + shopName + " 用户 消耗的token ： " + counter.getTotalChars());
-//            translationCounterService.updateUsedCharsByShopName(new TranslationCounterRequest(0, shopName, 0, counter.getTotalChars(), 0, 0, 0));
+
             // 将翻译状态为2改为“部分翻译”
             translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 7));
+
             // 将task表数据都改为 5
             translateTasksService.updateByShopName(shopName, 5);
             return true;
         }
+
         return false;
     }
 

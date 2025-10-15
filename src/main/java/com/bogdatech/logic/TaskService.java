@@ -8,13 +8,14 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import javax.annotation.PostConstruct;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -29,7 +30,6 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.userEmailStatus;
-import static com.bogdatech.logic.TranslateService.userStopFlags;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
@@ -66,15 +66,17 @@ public class TaskService {
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
-    @Autowired
     private ITranslationUsageService iTranslationUsageService;
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
     private InitialTranslateRedisService initialTranslateRedisService;
+    @Autowired
+    private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -258,8 +260,14 @@ public class TaskService {
         // 循环处理获取到的任务，先将状态改为3，然后调用翻译API
         for (String shop : allShopName) {
             // 给这些用户添加停止标志符的状态
-            userEmailStatus.put(shop, new AtomicBoolean(false)); //重置用户发送的邮件
-            userStopFlags.put(shop, new AtomicBoolean(false));  // 初始化用户的停止标志
+            // 重置用户发送的邮件
+            userEmailStatus.put(shop, new AtomicBoolean(false));
+
+            // 初始化用户的停止标志(删除标识)
+            Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(shop);
+            if (stopFlag) {
+                appInsights.trackTrace("TaskServiceLog 系统重启，删除标识： " + shop);
+            }
 
             // 删除redis里面的tl:锁值
             redisTranslateLockService.setRemove(shop);
@@ -320,7 +328,7 @@ public class TaskService {
 
             // 如果字符超限，则直接返回字符超限
             if (usedChars >= remainingChars) {
-                appInsights.trackTrace("该用户字符超限，不翻译了 ： " + shopName);
+                appInsights.trackTrace("autoTranslate 该用户字符超限，不翻译了 ： " + shopName);
                 continue;
             }
 
@@ -334,7 +342,10 @@ public class TaskService {
             // 将任务存到数据库等待翻译
             // 初始化用户状态
             userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-            userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+            Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(translatesDO.getShopName());
+            if (stopFlag) {
+                appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
+            }
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
             // 初始化计数器
@@ -343,7 +354,7 @@ public class TaskService {
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化计数器");
 
             // 调用DB翻译逻辑
-            rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
+            rabbitMqTranslateService.initialTasks(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
                             , translatesDO.getTarget()), counter, AUTO_TRANSLATE_MAP
                     , new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null)
                     , remainingChars, usedChars, false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
@@ -428,6 +439,7 @@ public class TaskService {
 
     /**
      * 获取所有的自动翻译用户，初始化用户状态
+     * 自动翻译的initial， 后面需要改下
      */
 //    @PostConstruct
     public void initUserStatus() {
@@ -464,7 +476,10 @@ public class TaskService {
 
             //初始化用户状态
             userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-            userStopFlags.put(translatesDO.getShopName(), new AtomicBoolean(false));  // 初始化用户的停止标志
+            Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(translatesDO.getShopName());
+            if (stopFlag) {
+                appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
+            }
         }
     }
 

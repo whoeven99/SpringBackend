@@ -13,7 +13,7 @@ public class TranslationParametersRedisService {
     private RedisIntegration redisIntegration;
 
     // 存储shop的停止标识
-    private static final String STOP_TRANSLATION_KEY = "stop_translation_key";
+    private static final String STOP_TRANSLATION_KEY = "stop_translation_key_";
 
     // 存储shop的翻译进度条参数  hash存
     private static final String PROGRESS_TRANSLATION_KEY = "pt:{shopName}:{source}:{target}";
@@ -75,5 +75,26 @@ public class TranslationParametersRedisService {
      * */
     public void hsetProgressNumber(String ptKey, String progressNumberKey) {
         redisIntegration.setHash(ptKey, "progress_number", progressNumberKey);
+    }
+
+    /**
+     * 存用户的停止标识，如果返回ture，存成功； 如果返回false，存失败
+     * */
+    public Boolean setStopTranslationKey(String shopName) {
+        return redisIntegration.setSet(STOP_TRANSLATION_KEY + shopName, "1");
+    }
+
+    /**
+     * 删除用户的停止标识
+     * */
+    public Boolean delStopTranslationKey(String shopName) {
+        return redisIntegration.delete(STOP_TRANSLATION_KEY + shopName);
+    }
+
+    /**
+     * 判断获取到的停止标识是否是 “1”
+     * */
+    public Boolean isStopped(String shopName) {
+        return "1".equals(redisIntegration.get(STOP_TRANSLATION_KEY + shopName));
     }
 }

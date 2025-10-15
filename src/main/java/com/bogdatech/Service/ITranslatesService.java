@@ -51,6 +51,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
 
     void insertShopTranslateInfoByShopify(ShopifyRequest shopifyRequest, String locale, String source);
 
-    void updateStopStatus(String shopName, String source, String accessToken);
+    void updateStopStatus(String shopName, String source);
 
 }
