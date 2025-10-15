@@ -362,10 +362,15 @@ public class TestController {
 
         // 获取用户额度表数据
         TranslationCounterDO translationCounterDO = translationCounterService.getTranslationCounterByShopName(shopName);
-        map.put("TranslationCounter", translationCounterDO);
+        map.put("TranslationCounter", new ArrayList<TranslationCounterDO>() {{
+            add(translationCounterDO);
+        }});
 
         // 获取initial表的数据
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::isDeleted, false));
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(
+                new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getShopName, shopName)
+                        .eq(InitialTranslateTasksDO::isDeleted, false));
         map.put("InitialTranslateTasks", initialTranslateTasksDOS);
 
         return map;
