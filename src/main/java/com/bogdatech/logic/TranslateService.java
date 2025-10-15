@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
@@ -45,7 +46,6 @@ import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
-import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
@@ -132,17 +132,22 @@ public class TranslateService {
         // 判断是否有 handle 模块
         boolean handleFlag = false;
         // TODO 这个前后端的字段名字，重新换一个
-        List<String> translateResourceType = request.getTranslateSettings3();
-        if (translateResourceType.contains("handle")) {
-            translateResourceType.removeIf("handle"::equals);
+        List<String> translateResourceTypesList = request.getTranslateSettings3();
+        if (translateResourceTypesList.contains("handle")) {
+            translateResourceTypesList.removeIf("handle"::equals);
             handleFlag = true;
         }
 
         appInsights.trackTrace("clickTranslation " + shopName + " 用户现在开始翻译 要翻译的数据 " + request.getTranslateSettings3()
                 + " handleFlag: " + handleFlag + " isCover: " + request.getIsCover());
 
-        // 修改模块的排序 TODO, translateModel的内容拆出来放这里
-        List<String> translateResourceDTOS = translateModel(translateResourceType);
+        // 修改模块的排序
+        List<String> translateResourceDTOS = translateResourceTypesList.stream()
+                .map(TOKEN_MAP::get)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .map(TranslateResourceDTO::getResourceType)
+                .toList();
         appInsights.trackTrace("clickTranslation 修改模块的排序成功 : " + shopName);
 
         if (org.springframework.util.CollectionUtils.isEmpty(translateResourceDTOS)) {

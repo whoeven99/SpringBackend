@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.entity.DO.InitialTranslateTasksDO;
 import com.bogdatech.entity.DO.TranslateTasksDO;
@@ -13,8 +12,6 @@ import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.entity.VO.TranslateArrayVO;
 import com.bogdatech.entity.VO.TranslatingStopVO;
-import com.bogdatech.logic.RabbitMqTranslateService;
-import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -25,11 +22,12 @@ import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @RestController
@@ -40,17 +38,11 @@ public class TranslateController {
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
-    private ITranslationCounterService translationCounterService;
-    @Autowired
     private IUserTypeTokenService userTypeTokenService;
     @Autowired
     private UserTypeTokenService userTypeTokensService;
     @Autowired
-    private RabbitMqTranslateService rabbitMqTranslateService;
-    @Autowired
     private ITranslateTasksService iTranslateTasksService;
-    @Autowired
-    private RedisProcessService redisProcessService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
@@ -59,6 +51,7 @@ public class TranslateController {
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
+        request.setShopName(shopName);
         return translateService.createInitialTask(request);
     }
 
@@ -330,10 +323,16 @@ public class TranslateController {
             return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
         }
 
-        for (InitialTranslateTasksDO initialTranslateTasksDO : initialTranslateTasksDOS) {
-            // 获取对应Translates表里面 对应语言的status
-            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, initialTranslateTasksDO.getTarget()).eq(TranslatesDO::getSource, source));
+        // 先获取所有的， 然后转化为map
+        List<TranslatesDO> translatesDOList = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source).orderByAsc(TranslatesDO::getUpdateAt));
+        Map<String, TranslatesDO> translatesMap = translatesDOList.stream()
+                .collect(Collectors.toMap(
+                        TranslatesDO::getTarget,  // key：target 字段
+                        Function.identity()      // value：整个对象本身
+                ));
 
+        for (InitialTranslateTasksDO initialTranslateTasksDO : initialTranslateTasksDOS) {
+            TranslatesDO translatesDO = translatesMap.get(initialTranslateTasksDO.getTarget());
             // 不返回状态为0的数据
             if (translatesDO.getStatus() == 0) {
                 continue;
