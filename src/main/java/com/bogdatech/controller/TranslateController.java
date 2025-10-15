@@ -290,11 +290,8 @@ public class TranslateController {
     public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
         Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
         if (!stopFlag) {
-           return new BaseResponse<>().CreateErrorResponse("stopTranslatingTask 已经有停止标识， 需要删除后再次停止");
+           return new BaseResponse<>().CreateErrorResponse("already stopped");
         }
-
-        // 获取所有的status为2的target
-        List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2).eq(TranslatesDO::getSource, translatingStopVO.getSource()).orderByAsc(TranslatesDO::getUpdateAt));
 
         // 将所有状态2的任务改成7
         translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
@@ -302,12 +299,6 @@ public class TranslateController {
         // 将所有状态为0和2的task任务，改为7
         Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
         if (flag) {
-            // 将redis进度条 total 和 done的数据初始化为0
-            for (TranslatesDO translatesDO : list
-            ) {
-                redisProcessService.initProcessData(generateProcessKey(shopName, translatesDO.getTarget()));
-            }
-            appInsights.trackTrace("stopTranslatingTask " + shopName + " 停止成功");
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse(false);

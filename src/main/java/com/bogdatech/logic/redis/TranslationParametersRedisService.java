@@ -85,18 +85,16 @@ public class TranslationParametersRedisService {
     }
 
     /**
-     * 获取用户的停止标识
-     * */
-    public String getStopTranslationKey(String shopName) {
-        return redisIntegration.get(STOP_TRANSLATION_KEY + shopName);
-    }
-
-    /**
      * 删除用户的停止标识
      * */
     public Boolean delStopTranslationKey(String shopName) {
         return redisIntegration.delete(STOP_TRANSLATION_KEY + shopName);
     }
 
-
+    /**
+     * 判断获取到的停止标识是否是 “1”
+     * */
+    public Boolean isStopped(String shopName) {
+        return "1".equals(redisIntegration.get(STOP_TRANSLATION_KEY + shopName));
+    }
 }

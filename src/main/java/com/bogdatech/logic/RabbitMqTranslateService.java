@@ -10,9 +10,7 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.RedisIntegration;
-import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -26,14 +24,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
@@ -90,110 +83,10 @@ public class RabbitMqTranslateService {
     private RedisIntegration redisIntegration;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
-    @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
-    @Autowired
-    private TranslationMonitorRedisService translationMonitorRedisService;
 
     public static final int BATCH_SIZE = 50;
     public static String CLICK_EMAIL = "click"; // db 设置的10字符， 改动的时候需要注意
     public static String AUTO_EMAIL = "auto";
-
-    /**
-     * 加一层包装MQ翻译，用于自动翻译按顺序添加任务
-     */
-    public void mqTranslateWrapper(ClickTranslateRequest clickTranslateRequest, ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request, boolean handleFlag, boolean isCover, String customKey, String[] targets) {
-        appInsights.trackTrace("mqTranslateWrapper开始: " + shopifyRequest.getShopName());
-        String shopName = shopifyRequest.getShopName();
-        String source = request.getSource();
-
-        // 重置用户发送的邮件
-        userEmailStatus.put(shopName, new AtomicBoolean(false));
-
-        // 初始化用户的停止标志
-        Boolean initStopFlag = translationParametersRedisService.delStopTranslationKey(shopName);
-        if (initStopFlag == null || !initStopFlag) {
-            appInsights.trackException(new Exception("mqTranslateWrapper 删除用户的停止标志失败， 也可能是redis里没有这个用户的停止标识"));
-            appInsights.trackTrace("mqTranslateWrapper 每日须看 删除用户的停止标志失败, 也可能是redis里没有这个用户的停止标识: " + shopName);
-        }
-
-        // 修改自定义提示词
-        String cleanedText;
-        if (customKey != null) {
-            cleanedText = customKey.replaceAll("\\.{2,}", ".");
-        } else {
-            cleanedText = null;
-        }
-        appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
-
-        // 改为循环遍历，将相关target状态改为2
-        List<String> listTargets = Arrays.asList(targets);
-        listTargets.forEach(target -> {
-            translatesService.updateTranslateStatus(
-                    shopName,
-                    2,
-                    target,
-                    source,
-                    request.getAccessToken()
-            );
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                appInsights.trackException(e);
-            }
-        });
-
-        appInsights.trackTrace("修改相关target状态改为2 : " + shopifyRequest.getShopName());
-
-        // 将模块数据List类型转化为Json类型
-        String resourceToJson = objectToJson(translateResourceDTOS);
-        appInsights.trackTrace("将模块数据List类型转化为Json类型 : " + shopifyRequest.getShopName() + " resourceToJson: " + resourceToJson);
-
-        // 将上一次initial表中taskType为 click的数据逻辑删除
-        try {
-            initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId()).set(InitialTranslateTasksDO::isDeleted, true));
-                appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务");
-            });
-        } catch (Exception e) {
-            appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务失败");
-            appInsights.trackException(e);
-        }
-
-        for (String target : targets) {
-            appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
-            translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(shopName, source, target), "");
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(1));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
-            translationParametersRedisService.hsetProgressNumber(generateProgressTranslationKey(shopName, source, target), generateProcessKey(shopName, target));
-            redisProcessService.initProcessData(generateProcessKey(shopName, target));
-
-            // 将翻译项中的模块改为null
-            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
-                    .eq(TranslatesDO::getSource, source)
-                    .eq(TranslatesDO::getTarget, target)
-                    .set(TranslatesDO::getResourceType, null));
-
-            request.setTarget(target);
-            shopifyRequest.setTarget(target);
-
-            // 将线管参数存到数据库中
-            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0, request.getSource(), target, isCover, clickTranslateRequest.getTranslateSettings1(), clickTranslateRequest.getTranslateSettings2(), resourceToJson, cleanedText, clickTranslateRequest.getShopName(), handleFlag, CLICK_EMAIL, Timestamp.valueOf(LocalDateTime.now()), false);
-            try {
-                appInsights.trackTrace("将手动翻译参数存到数据库中");
-                int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
-                appInsights.trackTrace("将手动翻译参数存到数据库后： " + insert);
-
-                // Monitor 记录shop开始的时间（中国区时间）
-                String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                translationMonitorRedisService.hsetStartTranslationAt(shopName, chinaTime);
-            } catch (Exception e) {
-                appInsights.trackTrace("mqTranslateWrapper 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
-                appInsights.trackException(e);
-            }
-
-        }
-    }
 
     /**
      * MQ翻译
@@ -212,7 +105,7 @@ public class RabbitMqTranslateService {
      * @param customKey             自定义key
      * @param taskType              邮件类型
      */
-    public void mqTranslate(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
+    public void initialTasks(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
         // 判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -547,8 +440,7 @@ public class RabbitMqTranslateService {
      * 翻译停止后，进度条就不加了
      */
     public void checkNeedAddProcessData(String shopName, String target) {
-        String stopTranslationKey = translationParametersRedisService.getStopTranslationKey(shopName);
-        if ("1".equals(stopTranslationKey)) {
+        if (translationParametersRedisService.isStopped(shopName)) {
             redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
         }
     }
@@ -604,8 +496,7 @@ public class RabbitMqTranslateService {
      * 判断停止标识
      */
     public boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
-        String stopTranslationKey = translationParametersRedisService.getStopTranslationKey(shopName);
-        if ("1".equals(stopTranslationKey)) {
+        if (translationParametersRedisService.isStopped(shopName)) {
             // 更新数据库中的已使用字符数
             appInsights.trackTrace("checkNeedStopped " + shopName + " 用户 消耗的token ： " + counter.getTotalChars());
 

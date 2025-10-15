@@ -262,7 +262,7 @@ public class PrivateKeyService {
             iTranslatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
             try {
                 //翻译成功后发送翻译成功的邮件
-                if ("1".equals(translationParametersRedisService.getStopTranslationKey(shopName))) {
+                if (translationParametersRedisService.isStopped(shopName)) {
                     translateSuccessEmail(request, begin, Math.toIntExact(usedChars), Math.toIntExact(remainingChars), userKey);
                 }
             } catch (Exception e) {
@@ -325,7 +325,7 @@ public class PrivateKeyService {
      * 判断停止标识
      */
     private boolean checkIsStopped(String shopName) {
-        if ("1".equals(translationParametersRedisService.getStopTranslationKey(shopName))) {
+        if (translationParametersRedisService.isStopped(shopName)) {
             // 将翻译状态为2改为“部分翻译”//
             iTranslatesService.updateStatusByShopNameAnd2(shopName);
             return true;

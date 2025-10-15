@@ -119,7 +119,7 @@ public class InitialTranslateDbTask {
             );
 
             // taskType为 click 是手动翻译邮件， auto 是自动翻译邮件 ， key 是私有key邮件（这个暂时未实现）
-            rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shop, userDO.getAccessToken(), API_VERSION_LAST, task.getTarget()), counter, modelList, new TranslateRequest(0, shop, userDO.getAccessToken(), task.getSource(), task.getTarget(), null), remainingChars, usedChars, task.isHandle(), task.getTranslateSettings1(), task.isCover(), task.getCustomKey(), task.getTaskType());
+            rabbitMqTranslateService.initialTasks(new ShopifyRequest(shop, userDO.getAccessToken(), API_VERSION_LAST, task.getTarget()), counter, modelList, new TranslateRequest(0, shop, userDO.getAccessToken(), task.getSource(), task.getTarget(), null), remainingChars, usedChars, task.isHandle(), task.getTranslateSettings1(), task.isCover(), task.getCustomKey(), task.getTaskType());
             appInsights.trackTrace("processInitialTasksOfShop task FINISH successfully: " + task.getTaskId() + " of shop: " + shop);
             initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, task.getTaskId()).set(InitialTranslateTasksDO::getStatus, 1));
         }

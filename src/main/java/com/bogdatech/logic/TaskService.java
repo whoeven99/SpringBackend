@@ -15,7 +15,7 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import javax.annotation.PostConstruct;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -354,7 +354,7 @@ public class TaskService {
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化计数器");
 
             // 调用DB翻译逻辑
-            rabbitMqTranslateService.mqTranslate(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
+            rabbitMqTranslateService.initialTasks(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
                             , translatesDO.getTarget()), counter, AUTO_TRANSLATE_MAP
                     , new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null)
                     , remainingChars, usedChars, false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
