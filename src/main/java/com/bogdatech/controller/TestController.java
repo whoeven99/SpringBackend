@@ -405,14 +405,14 @@ public class TestController {
                         .eq(InitialTranslateTasksDO::getStatus, 0)
                         .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
 
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS1 = initialTranslateTasksMapper.selectList(
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS2 = initialTranslateTasksMapper.selectList(
                 new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getStatus, 1)
+                        .eq(InitialTranslateTasksDO::getStatus, 2)
                         .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
 
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("Step0-创建总翻译任务的用户-未开始（则说明有问题）", initialTranslateTasksDOS0.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
-        responseMap.put("Step0-创建总翻译任务的用户-进行中", initialTranslateTasksDOS1.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
+        responseMap.put("Step0-创建总翻译任务的用户-进行中", initialTranslateTasksDOS2.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
 
         List<TranslatesDO> startedTasks = translatesServiceImpl.getStatus2Data();
         Set<String> startedShops = startedTasks.stream().map(TranslatesDO::getShopName).collect(Collectors.toSet());
