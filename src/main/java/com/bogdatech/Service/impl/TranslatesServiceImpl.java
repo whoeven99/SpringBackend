@@ -219,4 +219,9 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     public List<TranslatesDO> listTranslatesDOByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName));
     }
+
+    @Override
+    public TranslatesDO getSingleTranslateDO(String shopName, String source, String target) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source).eq(TranslatesDO::getTarget, target));
+    }
 }

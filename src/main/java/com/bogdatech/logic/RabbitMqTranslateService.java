@@ -37,6 +37,7 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
+import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
@@ -83,6 +84,8 @@ public class RabbitMqTranslateService {
     private RedisIntegration redisIntegration;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
+    private ITranslationCounterService iTranslationCounterService;
 
     public static final int BATCH_SIZE = 50;
     public static String CLICK_EMAIL = "click"; // db 设置的10字符， 改动的时候需要注意
@@ -94,18 +97,24 @@ public class RabbitMqTranslateService {
      * 根据翻译类型选择不同的邮件发送方式: true-> 手动； false-> 自动
      *
      * @param shopifyRequest        shopify请求参数
-     * @param counter               字符计数器
      * @param translateResourceDTOS 翻译模块顺序
      * @param request               翻译请求参数
-     * @param limitChars            限制字符
-     * @param usedChars             已使用字符
      * @param handleFlag            是否handle翻译
      * @param translationModel      翻译模型
      * @param isCover               是否覆盖
      * @param customKey             自定义key
      * @param taskType              邮件类型
      */
-    public void initialTasks(ShopifyRequest shopifyRequest, CharacterCountUtils counter, List<String> translateResourceDTOS, TranslateRequest request, int limitChars, int usedChars, boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
+    public void initialTasks(ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request, boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
+        // 获取已使用字符数和剩余字符数
+        TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(shopifyRequest.getShopName());
+        Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(shopifyRequest.getShopName());
+        int usedChars = translationCounterDO.getUsedChars();
+
+        // 初始化计数器
+        CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
+
         // 判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
@@ -152,6 +161,8 @@ public class RabbitMqTranslateService {
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
 
             try {
+                // TODO: 判断是否重复创建task。 1，判断模块是否正在翻译。 2，判断task是否已经存在
+                // 判断db里面，该用户，该模块status为0的task中， 是否存在，存在就不存了；不存在，就存
                 RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
                 dbTranslateVO.setShopifyData(query);
                 String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
@@ -1055,16 +1066,7 @@ public class RabbitMqTranslateService {
         counter.addChars(nowUserToken);
         if (nowUserTranslate == 2) {
             //将2改为1， 发送翻译成功的邮件
-//            if ("ciwishop.myshopify.com".equals(shopName)) {
-//                translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
-//                tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
-//                translateTasksService.updateByTaskId(task.getTaskId(), 1);
-//                appInsights.trackTrace("clickTranslation 用户 " + shopName + " ciwi翻译结束 时间为： " + LocalDateTime.now());
-//                //删除redis该用户相关进度条数据
-//                redisIntegration.delete(generateProcessKey(shopName, target));
-//            } else {
             triggerSendEmailLater(shopName, target, source, accessToken, task, counter, startTime, startChars, limitChars);
-//            }
         } else if (nowUserTranslate == 3) {
             //为3，发送部分翻译的邮件
             //将List<String> 转化位 List<TranslateResourceDTO>
@@ -1109,11 +1111,11 @@ public class RabbitMqTranslateService {
     public void triggerSendEmailLater(String shopName, String target, String source, String accessToken, TranslateTasksDO task, CharacterCountUtils counter, LocalDateTime startTime, Integer startChars, Integer limitChars) {
         // 创建一个任务 Runnable
         Runnable delayedTask = () -> {
-            appInsights.trackTrace("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now());
+            appInsights.trackTrace("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now() + " taskId: " + task.getTaskId());
             translatesService.updateTranslateStatus(shopName, 1, target, source, accessToken);
             tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), counter, startTime, startChars, limitChars, false);
             translateTasksService.updateByTaskId(task.getTaskId(), 1);
-            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
+            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now() + " taskId: " + task.getTaskId());
             //删除redis该用户相关进度条数据
             redisIntegration.delete(generateProcessKey(shopName, target));
         };

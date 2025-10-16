@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.bogdatech.enums.TranslateEnum.NOT_TRANSLATED;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -93,5 +94,11 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
     @Override
     public List<TranslateTasksDO> listTranslateStatus2And0TasksByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).and(wrapper -> wrapper.eq(TranslateTasksDO::getStatus, 2).or().eq(TranslateTasksDO::getStatus, 0)).orderByAsc(TranslateTasksDO::getCreatedAt));
+    }
+
+    @Override
+    public List<TranslateTasksDO> getTranslateTasksByShopNameAndSourceAndTarget(String shopName, String source, String target) {
+        String query = "\"source\":\"" + source + "\",\"target\":\"" + target + "\"";
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, NOT_TRANSLATED.getStatus()).like(TranslateTasksDO::getPayload, query));
     }
 }

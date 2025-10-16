@@ -7,7 +7,9 @@ import com.bogdatech.model.controller.request.TranslationCounterRequest;
 
 public interface ITranslationCounterService extends IService<TranslationCounterDO> {
     TranslationCounterDO readCharsByShopName(String shopName);
+
     int insertCharsByShopName(TranslationCounterRequest translationCounterRequest);
+
     int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest);
 
     Integer getMaxCharsByShopName(String shopName);
@@ -16,9 +18,9 @@ public interface ITranslationCounterService extends IService<TranslationCounterD
 
     TranslationCounterDO getOneForUpdate(String shopName);
 
-     Boolean updateAddUsedCharsByShopName(String shopName, Integer usedChars, Integer maxChars);
+    Boolean updateAddUsedCharsByShopName(String shopName, Integer usedChars, Integer maxChars);
 
-     Boolean deleteTrialCounter(String shopName);
+    Boolean deleteTrialCounter(String shopName);
 
     TranslationCounterDO getTranslationCounterByShopName(String shopName);
 }

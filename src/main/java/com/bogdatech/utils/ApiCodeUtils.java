@@ -158,7 +158,7 @@ public class ApiCodeUtils {
         languageMap.put("ml", "Malayalam");
         languageMap.put("mt", "Maltese");
         languageMap.put("gv", "Manx");
-        languageMap.put("mi", "Maori");
+        languageMap.put("mi", "Māori");
         languageMap.put("mr", "Marathi");
         languageMap.put("mn", "Mongolian");
         languageMap.put("ne", "Nepali");

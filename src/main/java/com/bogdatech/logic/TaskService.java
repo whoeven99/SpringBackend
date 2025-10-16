@@ -320,18 +320,6 @@ public class TaskService {
                 }
             }
 
-            // 判断该用户剩余token数是否足够，不够就不管了
-            // 判断字符是否超限
-            TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
-            Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-            int usedChars = request1.getUsedChars();
-
-            // 如果字符超限，则直接返回字符超限
-            if (usedChars >= remainingChars) {
-                appInsights.trackTrace("autoTranslate 该用户字符超限，不翻译了 ： " + shopName);
-                continue;
-            }
-
             // 判断这条翻译项在Usage表中是否存在，在的话跳过，不在的话插入
             TranslationUsageDO usageServiceOne = iTranslationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>().eq(TranslationUsageDO::getShopName, shopName).eq(TranslationUsageDO::getLanguageName, translatesDO.getTarget()));
             if (usageServiceOne == null) {
@@ -348,16 +336,11 @@ public class TaskService {
             }
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
-            // 初始化计数器
-            CharacterCountUtils counter = new CharacterCountUtils();
-            counter.addChars(usedChars);
-            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化计数器");
-
             // 调用DB翻译逻辑
             rabbitMqTranslateService.initialTasks(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
-                            , translatesDO.getTarget()), counter, AUTO_TRANSLATE_MAP
+                            , translatesDO.getTarget()), AUTO_TRANSLATE_MAP
                     , new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null)
-                    , remainingChars, usedChars, false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
+                    , false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
         }
     }
 

@@ -18,16 +18,12 @@ import static com.bogdatech.enums.ErrorEnum.*;
 @RestController
 @RequestMapping("/translationCounter")
 public class TranslationCounterController {
-
-    private final ITranslationCounterService iTranslationCounterService;
-    private final TranslationCounterService translationCounterService;
-    private final IUsersService usersService;
     @Autowired
-    public TranslationCounterController(ITranslationCounterService iTranslationCounterService, TranslationCounterService translationCounterService, IUsersService usersService) {
-        this.iTranslationCounterService = iTranslationCounterService;
-        this.translationCounterService = translationCounterService;
-        this.usersService = usersService;
-    }
+    private ITranslationCounterService iTranslationCounterService;
+    @Autowired
+    private TranslationCounterService translationCounterService;
+    @Autowired
+    private IUsersService usersService;
 
     //给用户添加一个免费额度
     @PostMapping("/insertCharsByShopName")
@@ -44,8 +40,6 @@ public class TranslationCounterController {
         }else {
             return new BaseResponse<>().CreateSuccessResponse(null);
         }
-
-
     }
 
     /**
