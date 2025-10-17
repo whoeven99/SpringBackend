@@ -13,6 +13,7 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
@@ -40,6 +41,7 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
+import static com.bogdatech.logic.redis.TranslationCounterRedisService.TASK_TOKEN_COUNTER;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.AESUtils.encryptMD5;
@@ -85,6 +87,8 @@ public class TestController {
     private ITranslatesService iTranslatesService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
+    @Autowired
+    private RedisIntegration redisIntegration;
 
     @GetMapping("/ping")
     public String ping() {
@@ -463,6 +467,9 @@ public class TestController {
      * */
     @GetMapping("/increase")
     public Long increase(@RequestParam String key, @RequestParam long value) {
+
+        String s = redisIntegration.getHash(key, TASK_TOKEN_COUNTER);
+        System.out.println("s = " + s);
         return translationCounterRedisService.increaseLanguage(key, value);
 //        return translationCounterRedisService.increaseTask(key, value);
     }

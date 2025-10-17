@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.logic.redis.TranslationCounterRedisService.getTaskTokenCounterKey;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
@@ -114,7 +113,7 @@ public class ALiYunTranslateIntegration {
             if (isSingleFlag){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             }else {
-                translationCounterRedisService.increaseTask(getTaskTokenCounterKey(shopName, target), totalToken);
+                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
                 translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
             }
 
@@ -188,7 +187,7 @@ public class ALiYunTranslateIntegration {
             if (isSingleFlag) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             } else {
-                translationCounterRedisService.increaseTask(getTaskTokenCounterKey(shopName, target), totalToken);
+                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
                 translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
             }
 
@@ -254,7 +253,7 @@ public class ALiYunTranslateIntegration {
             if (isSingleFlag){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             }else {
-                translationCounterRedisService.increaseTask(getTaskTokenCounterKey(shopName, target), totalToken);
+                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
                 translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
             }
             countUtils.addChars(totalToken);

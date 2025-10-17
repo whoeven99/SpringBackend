@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.logic.redis.TranslationCounterRedisService.getTaskTokenCounterKey;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
@@ -61,7 +60,7 @@ public class DeepLIntegration {
             if (isSingleFlag) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             } else {
-                translationCounterRedisService.increaseTask(getTaskTokenCounterKey(shopName, target), totalToken);
+                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
                 translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
             }
 

@@ -72,20 +72,25 @@ public class InitialTranslateDbTask {
     @Scheduled(fixedRate = 60 * 1000)
     public void scanAndSendEmail() {
         // 获取initial表里面 status=1 isDelete = false 的数据
-        List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getStatus, 1).eq(InitialTranslateTasksDO::isDeleted, false));
+        List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getStatus, 1).eq(InitialTranslateTasksDO::isDeleted, false).eq(InitialTranslateTasksDO::isSendEmail, false));
         for (InitialTranslateTasksDO task : initialTranslateTasks) {
             // 获取Translates表里面 status的值。 2  和  3，  2做完成的判断， 3做部分翻译的状态
             TranslatesDO translatesDO = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
+
             // 获取该用户accessToken
             UsersDO userDO = iUsersService.getUserByName(task.getShopName());
+
             // 获取该用户目前消耗额度值
             TranslationCounterDO translationCounterDO = iTranslationCounterService.getTranslationCounterByShopName(userDO.getShopName());
+
             // 获取该用户额度限制
             Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
+
             // 获取该用户 target 的 所有token 的值
             Long costToken = translationCounterRedisService.getLanguageData(generateProcessKey(task.getShopName(), task.getTarget()));
             Timestamp createdAt = task.getCreatedAt();
             LocalDateTime localDateTime = createdAt.toLocalDateTime();
+
             // 判断status的值
             if (translatesDO.getStatus() == 2) {
                 // 判断该用户task是否全部完成

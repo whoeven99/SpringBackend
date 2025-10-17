@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.RabbitMqTranslateService.initTranslateMap;
-import static com.bogdatech.logic.redis.TranslationCounterRedisService.getTaskTokenCounterKey;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
@@ -158,21 +157,21 @@ public class ProcessDbTaskService {
             }
 
             // 获取task级的redis中的数据是否为空，如果为空，继续； 不为空，将redis的值存db后，清空（可能是重启中断）
-            Long ttcData = translationCounterRedisService.getTtcData(getTaskTokenCounterKey(shopName, vo.getTarget()));
+            Long ttcData = translationCounterRedisService.getTtcData(generateProcessKey(shopName, vo.getTarget()));
             Boolean deleteFirstTtcData = false;
             if (ttcData != null && ttcData > 0) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, ttcData.intValue(), maxCharsByShopName);
-                deleteFirstTtcData = translationCounterRedisService.deleteTtcData(getTaskTokenCounterKey(shopName, vo.getTarget()));
+                deleteFirstTtcData = translationCounterRedisService.deleteTtcData(generateProcessKey(shopName, vo.getTarget()));
             }
             appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars() + " task数据是否删除：" + deleteFirstTtcData + " 删除前的数据：" + ttcData);
 
             translateByModeType(vo, counter);
 
-            Long ttcData2 = translationCounterRedisService.getTtcData(getTaskTokenCounterKey(shopName, vo.getTarget()));
+            Long ttcData2 = translationCounterRedisService.getTtcData(generateProcessKey(shopName, vo.getTarget()));
             Boolean deleteFirstTtcData2 = false;
             if (ttcData2 != null && ttcData2 > 0) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, ttcData2.intValue(), maxCharsByShopName);
-                deleteFirstTtcData2 = translationCounterRedisService.deleteTtcData(getTaskTokenCounterKey(shopName, vo.getTarget()));
+                deleteFirstTtcData2 = translationCounterRedisService.deleteTtcData(generateProcessKey(shopName, vo.getTarget()));
             }
             appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。 删除前的数据： " + deleteFirstTtcData2);
 

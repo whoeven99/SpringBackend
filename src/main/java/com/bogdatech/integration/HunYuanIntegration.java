@@ -13,7 +13,6 @@ import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogdatech.logic.redis.TranslationCounterRedisService.getTaskTokenCounterKey;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
@@ -102,7 +101,7 @@ public class HunYuanIntegration {
                 if (isSingleFlag){
                     translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
                 }else {
-                    translationCounterRedisService.increaseTask(getTaskTokenCounterKey(shopName,target), totalToken);
+                    translationCounterRedisService.increaseTask(generateProcessKey(shopName,target), totalToken);
                     translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
                 }
 
