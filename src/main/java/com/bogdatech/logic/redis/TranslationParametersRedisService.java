@@ -81,7 +81,8 @@ public class TranslationParametersRedisService {
      * 存用户的停止标识，如果返回ture，存成功； 如果返回false，存失败
      * */
     public Boolean setStopTranslationKey(String shopName) {
-        return redisIntegration.setSet(STOP_TRANSLATION_KEY + shopName, "1");
+        redisIntegration.set(STOP_TRANSLATION_KEY + shopName, "1");
+        return true;
     }
 
     /**

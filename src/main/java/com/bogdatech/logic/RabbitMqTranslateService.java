@@ -108,7 +108,8 @@ public class RabbitMqTranslateService {
      * @param customKey             自定义key
      * @param taskType              邮件类型
      */
-    public void initialTasks(ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request, boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
+    public void initialTasks(ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request,
+                             boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
         // 获取已使用字符数和剩余字符数
         TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(shopifyRequest.getShopName());
         Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(shopifyRequest.getShopName());
@@ -130,8 +131,7 @@ public class RabbitMqTranslateService {
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         CharacterCountUtils allTasks = new CharacterCountUtils();
 
-        for (TranslateResourceDTO translateResource : ALL_RESOURCES
-        ) {
+        for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
             appInsights.trackTrace("初始化task数据 " + shopifyRequest.getShopName() + " model: " + translateResource.getResourceType());
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             if (!translateResourceDTOS.contains(translateResource.getResourceType())) {
@@ -199,7 +199,8 @@ public class RabbitMqTranslateService {
         // 邮件相关参数
         switch (taskType) {
             case "click":
-                rabbitMqTranslateVO.setShopifyData(EMAIL);
+                // click会走initialDbtask发送邮件了 这里关掉
+//                rabbitMqTranslateVO.setShopifyData(EMAIL);
                 break;
             case "auto":
                 rabbitMqTranslateVO.setShopifyData(EMAIL_AUTO);
