@@ -217,18 +217,18 @@ public class TencentEmailService {
 
         // 共消耗的字符数
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        int endChars = remainingChars - usedChars;
+
         int costChars = costToken.intValue();
         String formattedNumber = formatter.format(costChars);
         templateData.put("credit_count", formattedNumber);
 
         // 还剩下的字符数
-        int remaining = remainingChars - endChars;
-        if (remaining < 0) {
+        int endChars = remainingChars - usedChars;
+        if (endChars < 0) {
             templateData.put("remaining_credits", "0");
 
         } else {
-            String formattedNumber2 = formatter.format(remaining);
+            String formattedNumber2 = formatter.format(endChars);
             templateData.put("remaining_credits", formattedNumber2);
         }
         appInsights.trackTrace(shopName + "  templateData ： " + templateData);
