@@ -1,6 +1,7 @@
 package com.bogdatech.integration;
 
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.deepl.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TimeOutUtils.*;
 import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
@@ -20,13 +22,16 @@ public class DeepLIntegration {
     private static final String API_URL = "https://api.deepl.com/v2/translate";
     @Autowired
     private ITranslationCounterService translationCounterService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
+
     DeepLClient client;
     private final int MAX_LIMIT = 500000;
 
     /**
      * 使用deepL进行翻译,计数翻译数
-     * */
-    public String translateByDeepL(String sourceText , String targetCode, CharacterCountUtils counter, String shopName, Integer limitChars) {
+     */
+    public String translateByDeepL(String sourceText, String targetCode, CharacterCountUtils counter, String shopName, Integer limitChars, boolean isSingleFlag) {
         //target要做映射
         client = new DeepLClient(API_KEY);
         TextResult result;
@@ -51,8 +56,15 @@ public class DeepLIntegration {
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
             printTranslateCost(totalToken, totalToken, totalToken);
-            appInsights.trackTrace( "clickTranslation translateByDeepL 用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
-            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            appInsights.trackTrace("clickTranslation translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
+            if (isSingleFlag) {
+                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            } else {
+//                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
+                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+                translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
+            }
+
             counter.addChars(totalToken);
             return targetText;
         } catch (Exception e) {
@@ -64,15 +76,15 @@ public class DeepLIntegration {
 
     /**
      * 用于用户deepL翻译
-     * */
-    public String privateTranslateByDeepL(String sourceText , String targetCode, CharacterCountUtils counter, String shopName, Integer limitChars, DeepLClient client) {
+     */
+    public String privateTranslateByDeepL(String sourceText, String targetCode, CharacterCountUtils counter, String shopName, Integer limitChars, DeepLClient client) {
         TextResult result;
         try {
             String target = DEEPL_LANGUAGE_MAP.get(targetCode);
             result = client.translateText(sourceText, null, target);
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
-            appInsights.trackTrace( "translateByDeepL 用户： " + shopName  + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
+            appInsights.trackTrace("translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
             translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             counter.addChars(totalToken);
             return targetText;
@@ -85,8 +97,8 @@ public class DeepLIntegration {
 
     /**
      * 在翻译前判断deepL额度是否足够,是继续翻译,不是改为ciwi翻译
-     * */
-    public Boolean isDeepLEnough(){
+     */
+    public Boolean isDeepLEnough() {
         client = new DeepLClient(API_KEY);
         try {
             Usage usage = client.getUsage();
@@ -100,8 +112,9 @@ public class DeepLIntegration {
 
     /**
      * deepL的语言映射规则
-     * */
+     */
     public static final Map<String, String> DEEPL_LANGUAGE_MAP = new HashMap<>();
+
     static {
         // 映射初始化
         DEEPL_LANGUAGE_MAP.put("ar", "AR");

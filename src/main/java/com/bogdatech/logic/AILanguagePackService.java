@@ -33,7 +33,7 @@ public class AILanguagePackService {
      * @param accessToken 店铺token
      * return true or false
      */
-    public String getCategoryByDescription(String shopName, String accessToken, CharacterCountUtils counter, Integer limitChars) {
+    public String getCategoryByDescription(String shopName, String accessToken, CharacterCountUtils counter, Integer limitChars, String target) {
         //先判断数据库中是否有数据
         String languagePackId = aiLanguagePacksService.getLanguagePackByShopName(shopName);
         if (languagePackId != null && !languagePackId.isEmpty()) {
@@ -52,7 +52,7 @@ public class AILanguagePackService {
         //判断description是否为空
         //调用混元生成类目
         String categoryPrompt = getCategoryPrompt();
-        String categoryText = hunYuanIntegration.hunYuanTranslate(description, categoryPrompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
+        String categoryText = hunYuanIntegration.hunYuanTranslate(description, categoryPrompt, counter, HUN_YUAN_MODEL, shopName, limitChars, target, false);
         if (categoryText == null || categoryText.isEmpty()) {
             appInsights.trackTrace("每日须看 getCategoryByDescription " + shopName + " description: " + description + "生成的类目数据为空");
             return null;

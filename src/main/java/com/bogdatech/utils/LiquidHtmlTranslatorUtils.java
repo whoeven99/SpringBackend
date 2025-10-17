@@ -231,7 +231,7 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * html的拆分翻译，放弃递归，改为json翻译
      */
-    public String newJsonTranslateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
+    public String newJsonTranslateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag) {
         if (!isHtml(html)) {
             return null;
         }
@@ -261,7 +261,7 @@ public class LiquidHtmlTranslatorUtils {
         appInsights.trackTrace("提取完所有的翻译文本 用户： " + request.getShopName());
 
         // 4. 每50条一次翻译
-        Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId, limitChars);
+        Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId, limitChars, isSingleFlag);
         appInsights.trackTrace("翻译完所有文本 用户： " + request.getShopName());
 
         // 5. 填回原处
@@ -314,7 +314,7 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 每50条文本翻译一次
      */
-    public Map<String, String> translateAllList(List<String> originalTexts, TranslateRequest request, CharacterCountUtils counter, String languagePack, Integer limitChars) {
+    public Map<String, String> translateAllList(List<String> originalTexts, TranslateRequest request, CharacterCountUtils counter, String languagePack, Integer limitChars, boolean isSingleFlag) {
         String target = request.getTarget();
         String shopName = request.getShopName();
         String source = request.getSource();
@@ -340,7 +340,7 @@ public class LiquidHtmlTranslatorUtils {
                 int tokens = calculateBaiLianToken(text);
                 // 如果加上这条会超过 1000 token，就先处理当前组
                 if (currentTokens + tokens > 1000 && !currentGroup.isEmpty()) {
-                    processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap);
+                    processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap, isSingleFlag);
                     currentGroup = new ArrayList<>();
                     currentTokens = 0;
                 }
@@ -352,7 +352,7 @@ public class LiquidHtmlTranslatorUtils {
 
             // 处理最后剩下的一组
             if (!currentGroup.isEmpty()) {
-                processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap);
+                processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap, isSingleFlag);
             }
         }
 
@@ -362,13 +362,13 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * 对拆分完的一批次进行翻译
      */
-    private void processBatch(List<String> texts, String requestShopName, String shopName, String prompt, String target, String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap) {
+    private void processBatch(List<String> texts, String requestShopName, String shopName, String prompt, String target, String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap, boolean isSingleFlag) {
         try {
             String sourceJson = objectToJson(texts);
             appInsights.trackTrace("开始模型翻译 用户： " + requestShopName);
-            String translated = jsoupUtils.translateByCiwiUserModel(target, sourceJson, shopName, source, counter, limitChars, prompt);
+            String translated = jsoupUtils.translateByCiwiUserModel(target, sourceJson, shopName, source, counter, limitChars, prompt, isSingleFlag);
             if (translated == null) {
-                translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName, limitChars);
+                translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName, limitChars, isSingleFlag);
             }
             appInsights.trackTrace("翻译结束 解析数据 用户 ：" + requestShopName);
             String parseJson = parseJson(translated, shopName);

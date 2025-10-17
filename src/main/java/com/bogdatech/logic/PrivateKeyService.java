@@ -193,7 +193,7 @@ public class PrivateKeyService {
             return new BaseResponse<>().CreateErrorResponse(clickTranslateRequest);
         }
         //私有key翻译
-        translatesService.updateTranslateStatus(request.getShopName(), 2, clickTranslateRequest.getTarget()[0], request.getSource(), request.getAccessToken());
+        translatesService.updateTranslateStatus(request.getShopName(), 2, clickTranslateRequest.getTarget()[0], request.getSource());
         startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey, translateResourceDTOS, clickTranslateRequest.getIsCover(), modelFlag, privateData.getApiModel(), privateData.getPromptWord(), handleFlag, userKey);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
     }
@@ -234,7 +234,7 @@ public class PrivateKeyService {
                     appInsights.trackException(e);
                     return;
                 }
-                iTranslatesService.updateTranslateStatus(shopName, 5, target, source, request.getAccessToken());
+                iTranslatesService.updateTranslateStatus(shopName, 5, target, source);
                 userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
                 //发送报错邮件
                 AtomicBoolean emailSent = userEmailStatus.computeIfAbsent(shopName, k -> new AtomicBoolean(false));
@@ -253,13 +253,13 @@ public class PrivateKeyService {
                 appInsights.trackException(e);
                 //更新初始值
                 userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
-                iTranslatesService.updateTranslateStatus(shopName, 5, target, source, request.getAccessToken());
+                iTranslatesService.updateTranslateStatus(shopName, 5, target, source);
                 return;
             }
             //更新数据库中的已使用字符数
             userPrivateService.updateUsedCharsByShopName(shopName, counter.getTotalChars());
             // 将翻译状态改为“已翻译”//
-            iTranslatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source, request.getAccessToken());
+            iTranslatesService.updateTranslateStatus(shopName, 1, request.getTarget(), source);
             try {
                 //翻译成功后发送翻译成功的邮件
                 if (translationParametersRedisService.isStopped(shopName)) {
@@ -622,7 +622,7 @@ public class PrivateKeyService {
         // 以用户数据进行判断
         UserPrivateTranslateDO userData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiName, apiName));
         if (userData.getUsedToken() >= userData.getTokenLimit()) {
-            translatesService.updateTranslateStatus(shopName, 5, translateRequest.getTarget(), translateRequest.getSource(), translateRequest.getAccessToken());
+            translatesService.updateTranslateStatus(shopName, 5, translateRequest.getTarget(), translateRequest.getSource());
             throw new ClientException(CHARACTER_LIMIT);
         }
     }

@@ -42,8 +42,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public int updateTranslateStatus(String shopName, int status, String target, String source, String accessToken) {
-        return baseMapper.updateTranslateStatus(status, shopName, target, source, accessToken);
+    public int updateTranslateStatus(String shopName, int status, String target, String source) {
+        return baseMapper.updateTranslateStatus(status, shopName, target, source);
     }
 
     @Override
@@ -218,5 +218,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public List<TranslatesDO> listTranslatesDOByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName));
+    }
+
+    @Override
+    public TranslatesDO getSingleTranslateDO(String shopName, String source, String target) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source).eq(TranslatesDO::getTarget, target));
     }
 }

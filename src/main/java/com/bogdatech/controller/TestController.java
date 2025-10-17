@@ -13,7 +13,9 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
@@ -82,6 +84,10 @@ public class TestController {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private ITranslatesService iTranslatesService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
+    @Autowired
+    private RedisIntegration redisIntegration;
 
     @GetMapping("/ping")
     public String ping() {
@@ -93,11 +99,6 @@ public class TestController {
     @PostMapping("/gpt")
     public String chat(@RequestBody GptVO gptVO) {
         return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", gptVO.getSourceText()), new CharacterCountUtils(), 2000000);
-    }
-
-    @PostMapping("/test/test1")
-    public int test1(@RequestBody TranslatesDO name) {
-        return translatesServiceImpl.updateTranslateStatus(name.getShopName(), name.getStatus(), name.getTarget(), name.getSource(), name.getAccessToken());
     }
 
     //通过测试环境调shopify的API
@@ -460,4 +461,12 @@ public class TestController {
         return translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
     }
 
+    /**
+     * 递增
+     * */
+    @GetMapping("/increase")
+    public Long increase(@RequestParam String key, @RequestParam long value) {
+        return translationCounterRedisService.increaseLanguage(key, value);
+//        return translationCounterRedisService.increaseTask(key, value);
+    }
 }

@@ -51,6 +51,13 @@ public class RedisIntegration {
     }
 
     /**
+     * 对指定 key 的值进行自增
+     */
+    public Long incrementValue(String key, long delta) {
+        return redisTemplate.opsForValue().increment(key, delta);
+    }
+
+    /**
      * hash get
      */
     public String getHash(String key, String field) {
@@ -120,6 +127,13 @@ public class RedisIntegration {
      */
     public Boolean delete(String key) {
         return redisTemplate.delete(key);
+    }
+
+    /**
+     * 删除Hash的field
+     * */
+    public boolean hashDelete(String key, String field) {
+        return redisTemplate.opsForHash().delete(key, field) > 0;
     }
 
     /**

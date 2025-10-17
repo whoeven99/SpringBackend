@@ -14,6 +14,7 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_PURCHASE_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_TASK_INTERRUPT_EMAIL;
@@ -149,7 +151,7 @@ public class TencentEmailService {
     }
 
     //翻译失败后发送邮件
-    public void translateFailEmail(String shopName, CharacterCountUtils counter, LocalDateTime begin, int beginChars, List<TranslateResourceDTO> resourceList, String target, String source) {
+    public void translateFailEmail(String shopName, LocalDateTime begin, List<TranslateResourceDTO> resourceList, String target, String source, Long costChars) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
         templateData.put("language", target);
@@ -174,65 +176,53 @@ public class TencentEmailService {
 
         //共消耗的字符数
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        int endChars = counter.getTotalChars();
-        int costChars = endChars - beginChars;
-        if (costChars <= 0) {
-            costChars = 0;
+
+        int costCharsInt = costChars.intValue();
+        if (costCharsInt <= 0) {
+            costCharsInt = 0;
         }
-        String formattedNumber = formatter.format(costChars);
+        String formattedNumber = formatter.format(costCharsInt);
         templateData.put("credit_count", formattedNumber);
         //由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         //存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
-        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0).orderByAsc(TranslateTasksDO::getCreatedAt)).forEach(translateTasksDO -> {
-            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")) {
-                //将这条数据里面的startChars改为现在的usedChars
-                try {
-                    RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
-                    data.setStartChars(counter.getTotalChars());
-                    String lastTime = String.valueOf(LocalDateTime.now());
-                    data.setStartTime(lastTime);
-                    String json = OBJECT_MAPPER.writeValueAsString(data);
-                    translateTasksDO.setPayload(json);
-                    //存回
-                    appInsights.trackTrace("clickTranslation translateFailEmail " + shopName + ": 部分翻译邮件修改后的数据为 ：" + data);
-                    iTranslateTasksService.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getTaskId, translateTasksDO.getTaskId()).set(TranslateTasksDO::getPayload, json));
-                } catch (JsonProcessingException e) {
-                    appInsights.trackException(e);
-                }
-            }
-        });
     }
 
     //翻译成功后发送邮件
-    public void translateSuccessEmail(TranslateRequest request, CharacterCountUtils counter, LocalDateTime begin, int beginChars, Integer remainingChars, Boolean isTask) {
+    public void translateSuccessEmail(TranslateRequest request, LocalDateTime begin, Long costToken, Integer usedChars, Integer remainingChars) {
         String shopName = request.getShopName();
-        //通过shopName获取用户信息 需要 {{user}} {{language}} {{credit_count}} {{time}} {{remaining_credits}}
+
+        // 通过shopName获取用户信息 需要 {{user}} {{language}} {{credit_count}} {{time}} {{remaining_credits}}
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
         templateData.put("language", request.getTarget());
+
         // 定义要移除的后缀
         String suffix = ".myshopify.com";
         String targetShop;
         targetShop = request.getShopName().substring(0, request.getShopName().length() - suffix.length());
         templateData.put("shop_name", targetShop);
-        //获取更新前后的时间
+
+        // 获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
 
         Duration duration = Duration.between(begin, end);
         long costTime = duration.toMinutes();
+        if (costTime < 0) {
+            costTime = 0;
+        }
         templateData.put("time", costTime + " minutes");
 
-        //共消耗的字符数
+        // 共消耗的字符数
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        int endChars = counter.getTotalChars();
-        int costChars = endChars - beginChars;
+        int endChars = remainingChars - usedChars;
+        int costChars = costToken.intValue();
         String formattedNumber = formatter.format(costChars);
         templateData.put("credit_count", formattedNumber);
 
-        //还剩下的字符数
+        // 还剩下的字符数
         int remaining = remainingChars - endChars;
         if (remaining < 0) {
             templateData.put("remaining_credits", "0");
@@ -242,33 +232,12 @@ public class TencentEmailService {
             templateData.put("remaining_credits", formattedNumber2);
         }
         appInsights.trackTrace(shopName + "  templateData ： " + templateData);
-        //由腾讯发送邮件
-        Boolean b;
-        if (isTask) {
-            autoTranslateSendEmail(request, costChars, costTime, remaining);
-        } else {
-            b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-            //存入数据库中
-            emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
-        }
-        iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, 0).orderByAsc(TranslateTasksDO::getCreatedAt)).forEach(translateTasksDO -> {
-            if (translateTasksDO.getPayload().contains("\"shopifyData\":\"EMAIL\"")) {
-                //将这条数据里面的startChars改为现在的usedChars
-                try {
-                    RabbitMqTranslateVO data = OBJECT_MAPPER.readValue(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
-                    data.setStartChars(counter.getTotalChars());
-                    String lastTime = String.valueOf(LocalDateTime.now());
-                    data.setStartTime(lastTime);
-                    String json = OBJECT_MAPPER.writeValueAsString(data);
-                    translateTasksDO.setPayload(json);
-                    //存回
-                    appInsights.trackTrace("translateSuccessEmail : 修改后的数据为 " + translateTasksDO);
-                    iTranslateTasksService.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getTaskId, translateTasksDO.getTaskId()).set(TranslateTasksDO::getPayload, json));
-                } catch (JsonProcessingException e) {
-                    appInsights.trackException(e);
-                }
-            }
-        });
+
+        // 由腾讯发送邮件
+        Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData, SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+
+        // 存入数据库中
+        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, flag ? 1 : 0));
     }
 
     /**
