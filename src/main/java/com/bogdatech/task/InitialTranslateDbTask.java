@@ -73,7 +73,11 @@ public class InitialTranslateDbTask {
     @Scheduled(fixedRate = 60 * 1000)
     public void scanAndSendEmail() {
         // 获取initial表里面 status=1 isDelete = false 的数据
-        List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getStatus, 1).eq(InitialTranslateTasksDO::isDeleted, false).eq(InitialTranslateTasksDO::isSendEmail, false));
+        List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(
+                new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getStatus, 1)
+                        .eq(InitialTranslateTasksDO::isDeleted, false)
+                        .eq(InitialTranslateTasksDO::isSendEmail, false));
         for (InitialTranslateTasksDO task : initialTranslateTasks) {
             // 获取Translates表里面 status的值。 2  和  3，  2做完成的判断， 3做部分翻译的状态
             TranslatesDO translatesDO = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
