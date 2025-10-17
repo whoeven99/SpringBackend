@@ -1084,7 +1084,7 @@ public class RabbitMqTranslateService {
         // 创建一个任务 Runnable
         Runnable delayedTask = () -> {
             appInsights.trackTrace("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now() );
-            translatesService.updateTranslateStatus(shopName, 1, target, source);
+//            translatesService.updateTranslateStatus(shopName, 1, target, source);
             tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), startTime, costToken, usedChars, limitChars);
             appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now() );
             initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
