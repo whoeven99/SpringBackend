@@ -168,9 +168,7 @@ public class ProcessDbTaskService {
 
             translateByModeType(vo, counter);
 
-            // 清空task级的redis数据
-            Boolean deletedSecondTtcData = translationCounterRedisService.deleteTtcData(getTaskTokenCounterKey(shopName, vo.getTarget()));
-            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。 task数据是否删除：" + deletedSecondTtcData);
+            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。 ");
 
             if (counter.getTotalChars() - usedChars > 0 && Duration.between(start, Instant.now()).toSeconds() > 0) {
 
