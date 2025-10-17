@@ -14,6 +14,7 @@ import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
@@ -82,6 +83,8 @@ public class TestController {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private ITranslatesService iTranslatesService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
 
     @GetMapping("/ping")
     public String ping() {
@@ -455,4 +458,12 @@ public class TestController {
         return translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
     }
 
+    /**
+     * 递增
+     * */
+    @GetMapping("/increase")
+    public Long increase(@RequestParam String key, @RequestParam long value) {
+        return translationCounterRedisService.increaseLanguage(key, value);
+//        return translationCounterRedisService.increaseTask(key, value);
+    }
 }
