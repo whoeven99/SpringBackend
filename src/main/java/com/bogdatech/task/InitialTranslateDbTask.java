@@ -107,7 +107,7 @@ public class InitialTranslateDbTask {
                     // 8分钟后， 发送邮件
                     // 修改语言状态为1
                     iTranslatesService.updateTranslateStatus(task.getShopName(), 1, task.getTarget(), task.getSource());
-                    rabbitMqTranslateService.triggerSendEmailLater(task.getShopName(), task.getSource(), task.getTarget(), userDO.getAccessToken(), localDateTime, costToken, translationCounterDO.getUsedChars(), limitChars);
+                    rabbitMqTranslateService.triggerSendEmailLater(task.getShopName(), task.getTarget(), task.getSource(), userDO.getAccessToken(), localDateTime, costToken, translationCounterDO.getUsedChars(), limitChars);
                 }
             } else if (translatesDO.getStatus() == 3 && !task.isSendEmail()) {
                 // 为3，发送部分翻译的邮件
