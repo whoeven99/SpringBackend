@@ -4,6 +4,8 @@ import com.bogdatech.integration.RedisIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Component
 public class TranslationCounterRedisService {
     @Autowired
@@ -27,6 +29,7 @@ public class TranslationCounterRedisService {
 
     // task 递增方法
     public Long increaseTask(String key, long value) {
+        appInsights.trackTrace("increaseTask key: " + key + " value: " + value);
         return redisIntegration.incrementValue(key, value);
     }
 
@@ -36,7 +39,7 @@ public class TranslationCounterRedisService {
         if (date == null || date.isEmpty() || "null".equals(date)) {
             return 0L;
         } else {
-            System.out.println("ttc: " + date);
+            appInsights.trackTrace("getTtcData: " + date);
             return Long.parseLong(date);
         }
     }
@@ -48,6 +51,7 @@ public class TranslationCounterRedisService {
 
     // language 递增方法 用的是进度条的key TRANSLATE_PROGRESS_KEY_TEMPLATE
     public Long increaseLanguage(String key, long value) {
+        appInsights.trackTrace("increaseLanguage key: " + key + " value: " + value);
         return redisIntegration.incrementHash(key, LANGUAGE_TOKEN_COUNTER, value);
     }
 
@@ -57,7 +61,7 @@ public class TranslationCounterRedisService {
         if (date == null || date.isEmpty() || "null".equals(date)) {
             return 0L;
         } else {
-            System.out.println("language: " + date);
+            appInsights.trackTrace("getLanguageData language: " + date);
             return Long.parseLong(date);
         }
     }
