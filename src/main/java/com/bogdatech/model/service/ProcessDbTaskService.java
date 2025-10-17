@@ -168,7 +168,13 @@ public class ProcessDbTaskService {
 
             translateByModeType(vo, counter);
 
-            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。 ");
+            Long ttcData2 = translationCounterRedisService.getTtcData(getTaskTokenCounterKey(shopName, vo.getTarget()));
+            Boolean deleteFirstTtcData2 = false;
+            if (ttcData2 != null && ttcData2 > 0) {
+                translationCounterService.updateAddUsedCharsByShopName(shopName, ttcData2.intValue(), maxCharsByShopName);
+                deleteFirstTtcData2 = translationCounterRedisService.deleteTtcData(getTaskTokenCounterKey(shopName, vo.getTarget()));
+            }
+            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。 删除前的数据： " + deleteFirstTtcData2);
 
             if (counter.getTotalChars() - usedChars > 0 && Duration.between(start, Instant.now()).toSeconds() > 0) {
 
