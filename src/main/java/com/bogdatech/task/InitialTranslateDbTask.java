@@ -24,6 +24,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
+import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
@@ -76,6 +77,10 @@ public class InitialTranslateDbTask {
         for (InitialTranslateTasksDO task : initialTranslateTasks) {
             // 获取Translates表里面 status的值。 2  和  3，  2做完成的判断， 3做部分翻译的状态
             TranslatesDO translatesDO = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
+            if (translatesDO.getStatus().equals(7)){
+                //手动暂停的的邮件不发送
+                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, task.getShopName()).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
+            }
 
             // 获取该用户accessToken
             UsersDO userDO = iUsersService.getUserByName(task.getShopName());

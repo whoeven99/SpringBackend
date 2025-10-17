@@ -60,7 +60,8 @@ public class DeepLIntegration {
             if (isSingleFlag) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             } else {
-                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
+//                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
+                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
                 translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
             }
 
