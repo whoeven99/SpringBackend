@@ -2,6 +2,7 @@ package com.bogdatech.utils;
 
 public class RedisKeyUtils {
     // 模板字符串，所有 key 统一放在这里
+    // 翻译进度条key
     private static final String TRANSLATE_PROGRESS_KEY_TEMPLATE = "tr:{shopName}:{targetCode}";
     // redis进度条 total
     public static final String PROGRESS_TOTAL = "total";

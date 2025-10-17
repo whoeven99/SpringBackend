@@ -95,11 +95,6 @@ public class TestController {
         return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", gptVO.getSourceText()), new CharacterCountUtils(), 2000000);
     }
 
-    @PostMapping("/test/test1")
-    public int test1(@RequestBody TranslatesDO name) {
-        return translatesServiceImpl.updateTranslateStatus(name.getShopName(), name.getStatus(), name.getTarget(), name.getSource(), name.getAccessToken());
-    }
-
     //通过测试环境调shopify的API
     @PostMapping("/test123")
     public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {

@@ -50,7 +50,7 @@ public class TranslateController {
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
-    public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
+        public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
         return translateService.createInitialTask(request);
     }

@@ -17,19 +17,19 @@ import com.aliyun.alimt20181012.Client;
 import com.aliyun.alimt20181012.models.*;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.logic.redis.TranslationCounterRedisService.getTaskTokenCounterKey;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.SwitchModelUtils.switchModel;
 import static com.bogdatech.utils.TimeOutUtils.*;
 
@@ -39,6 +39,8 @@ public class ALiYunTranslateIntegration {
     private ITranslationCounterService translationCounterService;
     @Autowired
     private IAPGUserCounterService iapgUserCounterService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
 
     public static com.aliyun.alimt20181012.Client createClient() {
         try {
@@ -66,7 +68,7 @@ public class ALiYunTranslateIntegration {
      * @param shopName   店铺名称
      * @return 翻译后的文本
      */
-    public String singleTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars) {
+    public String singleTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars, boolean isSingleFlag) {
         String model = switchModel(target);
         Generation gen = new Generation();
 
@@ -109,7 +111,13 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("singleTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
-            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            if (isSingleFlag){
+                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            }else {
+                translationCounterRedisService.increaseTask(getTaskTokenCounterKey(shopName, target), totalToken);
+                translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
+            }
+
             countUtils.addChars(totalToken);
         } catch (Exception e) {
             appInsights.trackTrace("singleTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
@@ -121,6 +129,7 @@ public class ALiYunTranslateIntegration {
 
     /**
      * qwen 单 user msg 翻译
+     * 翻译的计数改为redis计数
      *
      * @param text       要翻译的文本
      * @param prompt     提示词
@@ -129,7 +138,7 @@ public class ALiYunTranslateIntegration {
      * @param shopName   店铺名称
      * @return 翻译后的文本
      */
-    public String userTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars) {
+    public String userTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars, boolean isSingleFlag) {
         String model = switchModel(target);
         appInsights.trackTrace("model 用户 " + shopName);
         Generation gen = new Generation();
@@ -172,17 +181,18 @@ public class ALiYunTranslateIntegration {
 
             appInsights.trackTrace("userTranslate 用户 " + shopName);
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
-            appInsights.trackTrace("totalToken 用户 " + shopName);
             Integer inputTokens = call.getUsage().getInputTokens();
-            appInsights.trackTrace("inputTokens 用户 " + shopName);
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
-            appInsights.trackTrace("printTranslateCost 用户 " + shopName);
-            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
-            appInsights.trackTrace("updateAddUsedCharsByShopName 用户 " + shopName);
+            if (isSingleFlag) {
+                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            } else {
+                translationCounterRedisService.increaseTask(getTaskTokenCounterKey(shopName, target), totalToken);
+                translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
+            }
+
             countUtils.addChars(totalToken);
-            appInsights.trackTrace("countUtils 用户 " + shopName);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation userTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
@@ -202,7 +212,7 @@ public class ALiYunTranslateIntegration {
      * @param countUtils    计数器
      * @return 翻译后的文本
      */
-    public String callWithMessageMT(String model, String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars) {
+    public String callWithMessageMT(String model, String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars, boolean isSingleFlag) {
         Generation gen = new Generation();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
@@ -241,8 +251,12 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("callWithMessageMT 用户： " + shopName + " token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
-
-            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            if (isSingleFlag){
+                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            }else {
+                translationCounterRedisService.increaseTask(getTaskTokenCounterKey(shopName, target), totalToken);
+                translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
+            }
             countUtils.addChars(totalToken);
         } catch (Exception e) {
             appInsights.trackException(e);

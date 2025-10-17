@@ -57,7 +57,7 @@ public class JsoupUtils {
      * 翻译词汇表单行文本，保护变量、URL和符号
      */
     private String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
-                                                     Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType, String languagePackId, Integer limitChars) {
+                                                     Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType, String languagePackId, Integer limitChars, boolean isSingleFlag) {
         // 检查缓存
         String translatedCache = redisProcessService.getCacheData(request.getTarget(), text);
         if (translatedCache != null) {
@@ -75,14 +75,14 @@ public class JsoupUtils {
             //如果字符数低于5字符，用mt和qwen翻译
             if (cleanedText.length() <= 5) {
                 counter.addChars(googleCalculateToken(cleanedText));
-                String targetString = translateAndCount(request, counter, languagePackId, GENERAL, limitChars);
+                String targetString = translateAndCount(request, counter, languagePackId, GENERAL, limitChars, isSingleFlag);
                 redisProcessService.setCacheData(request.getTarget(), targetString, cleanedText);
                 return targetString;
             } else {
                 //如果字符数大于100字符，用大模型翻译
                 String glossaryString = glossaryText(keyMap1, keyMap0, cleanedText);
                 //根据关键词生成对应的提示词
-                String finalText = glossaryTranslationModel(request, counter, glossaryString, languagePackId, limitChars);
+                String finalText = glossaryTranslationModel(request, counter, glossaryString, languagePackId, limitChars, isSingleFlag);
                 redisProcessService.setCacheData(request.getTarget(), finalText, cleanedText);
                 return finalText;
             }
@@ -186,16 +186,16 @@ public class JsoupUtils {
      * @param languagePackId 语言包id
      *                       return String       翻译后的文本
      */
-    public String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
+    public String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag) {
         String sourceText = request.getContent();
 
         //从缓存中获取数据
         //判断是否符合mt翻译 ，是， 调用mt翻译。
         if (sourceText.length() <= 20) {
-            return checkTranslationApi(request, counter, limitChars, null);
+            return checkTranslationApi(request, counter, limitChars, null, isSingleFlag);
         }
 
-        return checkTranslationModel(request, counter, languagePackId, limitChars);
+        return checkTranslationModel(request, counter, languagePackId, limitChars, isSingleFlag);
     }
 
     /**
@@ -207,7 +207,7 @@ public class JsoupUtils {
      * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
+    public String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag) {
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
@@ -216,7 +216,7 @@ public class JsoupUtils {
 
         // 判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
-            return translateVariableData(request, counter, limitChars, targetLanguage, languagePackId);
+            return translateVariableData(request, counter, limitChars, targetLanguage, languagePackId, isSingleFlag);
 
         } else {
             prompt = getSimplePrompt(targetLanguage, languagePackId);
@@ -224,11 +224,11 @@ public class JsoupUtils {
         }
         try {
             // 对模型进行判断 , 1,ciwi 2,openai 3,deepL
-            return translateByCiwiModel(request, counter, limitChars, prompt);
+            return translateByCiwiModel(request, counter, limitChars, prompt, isSingleFlag);
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + shopName + " checkTranslationModel errors ： " + e.getMessage() + " sourceText: " + content);
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
+            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
         }
 
     }
@@ -243,7 +243,7 @@ public class JsoupUtils {
      * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString, String languagePackId, Integer limitChars) {
+    public String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString, String languagePackId, Integer limitChars, boolean isSingleFlag) {
 
         String target = request.getTarget();
         String content = request.getContent();
@@ -259,10 +259,10 @@ public class JsoupUtils {
         }
 
         try {
-            return translateByCiwiModel(request, counter, limitChars, prompt);
+            return translateByCiwiModel(request, counter, limitChars, prompt, isSingleFlag);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage() + " sourceText: " + content);
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
+            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
         }
     }
 
@@ -276,14 +276,14 @@ public class JsoupUtils {
      * @param limitChars 用户最大限制
      *                   return String 翻译后的文本
      */
-    public String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String translationModel) {
+    public String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String translationModel, boolean isSingleFlag) {
         String target = request.getTarget();
         String source = request.getSource();
         String content = request.getContent();
         //如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
         //目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.3s. 后面请求解决限制后，删掉这段代码。
         if (hasPlaceholders(content)) {
-            return translateVariableData(request, counter, limitChars, target, null);
+            return translateVariableData(request, counter, limitChars, target, null, isSingleFlag);
         }
 
         try {
@@ -296,13 +296,13 @@ public class JsoupUtils {
         String resultTranslation;
         try {
             if (DEEPL_MODEL.equals(translationModel) && !deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)) {
-                resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName(), limitChars);
+                resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName(), limitChars, isSingleFlag);
             } else if (QWEN_MT_CODES.contains(target) && QWEN_MT_CODES.contains(source)) {
-                resultTranslation = translateByQwenMt(request.getContent(), source, target, counter, request.getShopName(), limitChars);
+                resultTranslation = translateByQwenMt(request.getContent(), source, target, counter, request.getShopName(), limitChars, isSingleFlag);
             } else {
                 //qwen 短文本翻译
                 appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译： " + request.getContent() + " 提示词: " + prompt);
-                resultTranslation = aLiYunTranslateIntegration.singleTranslate(request.getContent(), prompt, counter, target, request.getShopName(), limitChars);
+                resultTranslation = aLiYunTranslateIntegration.singleTranslate(request.getContent(), prompt, counter, target, request.getShopName(), limitChars, isSingleFlag);
             }
             return resultTranslation;
 
@@ -310,24 +310,24 @@ public class JsoupUtils {
             //mt翻译失败的话，用其他大模型翻译
             appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译 errors : " + e.getMessage() + " sourceText: " + content);
-            resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName(), limitChars);
+            resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName(), limitChars, isSingleFlag);
             return resultTranslation;
         }
     }
 
     //包装一下调用百炼mt的方法
-    public String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars) {
+    public String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars, boolean isSingleFlag) {
         String changeSource = qwenMtCode(source);
         String changeTarget = qwenMtCode(target);
         try {
-            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
+            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars, isSingleFlag);
         } catch (Exception e) {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
                 appInsights.trackTrace("clickTranslation MT sleep errors ： " + ex.getMessage());
             }
-            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars);
+            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars, isSingleFlag);
         }
 
     }
@@ -343,24 +343,24 @@ public class JsoupUtils {
      *                       return String 翻译后的文本
      */
     public String translateAndCount(TranslateRequest request,
-                                    CharacterCountUtils counter, String languagePackId, String translateType, Integer limitChars) {
+                                    CharacterCountUtils counter, String languagePackId, String translateType, Integer limitChars, boolean isSingleFlag) {
         String text = request.getContent();
         // 检测text是不是全大写，如果是的话，最后翻译完也全大写
 
         String targetString;
         if (translateType.equals(HANDLE)) {
             if (text.length() <= 20) {
-                targetString = checkTranslationApi(request, counter, limitChars, null);
+                targetString = checkTranslationApi(request, counter, limitChars, null, isSingleFlag);
             } else {
-                targetString = translationHandle(request, counter, languagePackId, limitChars);
+                targetString = translationHandle(request, counter, languagePackId, limitChars, isSingleFlag);
             }
         } else {
-            targetString = translateByModel(request, counter, languagePackId, limitChars);
+            targetString = translateByModel(request, counter, languagePackId, limitChars, isSingleFlag);
         }
 
         if (targetString == null) {
             // 对null的处理，再次翻译
-            return checkTranslationModel(request, counter, languagePackId, limitChars);
+            return checkTranslationModel(request, counter, languagePackId, limitChars, isSingleFlag);
         }
 
         targetString = isHtmlEntity(targetString);
@@ -389,7 +389,7 @@ public class JsoupUtils {
             "id", "vi", "pt-BR", "it", "nl", "ru", "km", "cs", "pl", "fa", "he", "tr", "hi", "bn", "ur"
     ));
 
-    public String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars) {
+    public String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
         // 检查输入是否有效
         if (html == null || html.trim().isEmpty()) {
             return html;
@@ -415,14 +415,14 @@ public class JsoupUtils {
                     htmlTag.attr("lang", request.getTarget());
                 }
 
-                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars);
+                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
                 return doc.outerHtml();
             } else {
                 // 如果没有 <html> 标签，作为片段处理
                 Document doc = Jsoup.parseBodyFragment(html);
                 Element body = doc.body();
 
-                processNode(body, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars);
+                processNode(body, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
 
                 // 只返回子节点内容，不包含 <body>
                 StringBuilder result = new StringBuilder();
@@ -443,7 +443,7 @@ public class JsoupUtils {
      *
      * @param node 当前节点
      */
-    private void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars) {
+    private void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
         try {
             // 如果是元素节点
             if (node instanceof Element) {
@@ -461,7 +461,7 @@ public class JsoupUtils {
 
                 // 递归处理子节点
                 for (Node child : element.childNodes()) {
-                    processNode(child, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars);
+                    processNode(child, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
                 }
             }
             // 如果是文本节点
@@ -475,7 +475,7 @@ public class JsoupUtils {
                 }
 
                 // 使用缓存处理文本
-                String translatedText = translateTextWithCache(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars);
+                String translatedText = translateTextWithCache(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
@@ -489,7 +489,7 @@ public class JsoupUtils {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars) {
+    private String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
         // 检查缓存
         String translated = redisProcessService.getCacheData(request.getTarget(), text);
         if (translated != null) {
@@ -497,7 +497,7 @@ public class JsoupUtils {
         }
 
         // 处理文本中的变量和URL
-        String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars);
+        String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
 
         // 存入缓存
         redisProcessService.setCacheData(request.getTarget(), translatedText, text);
@@ -510,7 +510,7 @@ public class JsoupUtils {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars) {
+    private String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
         StringBuilder result = new StringBuilder();
         int lastEnd = 0;
 
@@ -549,7 +549,7 @@ public class JsoupUtils {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        appInsights.trackTrace("要翻译的文本： " + cleanedText);
-                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
+                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars, isSingleFlag);
                         targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     } catch (ClientException e) {
@@ -580,7 +580,7 @@ public class JsoupUtils {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                    appInsights.trackTrace("要翻译的文本： " + cleanedText);
-                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars);
+                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars, isSingleFlag);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);
                 } catch (ClientException e) {
@@ -603,7 +603,7 @@ public class JsoupUtils {
      * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public String translationHandle(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars) {
+    public String translationHandle(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag) {
 
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
@@ -615,55 +615,50 @@ public class JsoupUtils {
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
-            return translateByCiwiModel(request, counter, limitChars, languagePackId);
+            return translateByCiwiModel(request, counter, limitChars, languagePackId, isSingleFlag);
         } catch (Exception e) {
             appInsights.trackTrace("翻译handle数据报错 errors ： " + e.getMessage() + " sourceText: " + content);
             appInsights.trackException(e);
-            return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target, shopName, limitChars);
+            return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target, shopName, limitChars, isSingleFlag);
         }
     }
 
     /**
      * 变量翻译,目前暂定ciwi模型翻译
      */
-    public String translateVariableData(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String targetLanguage, String languagePackId) {
+    public String translateVariableData(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String targetLanguage, String languagePackId, boolean isSingleFlag) {
         String target = request.getTarget();
         String content = request.getContent();
         String shopName = request.getShopName();
         String variableString = getOuterString(content);
         String prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
         appInsights.trackTrace("模块文本： " + content + " variable提示词: " + prompt);
-        return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
+        return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
     }
 
     /**
      * ciwi 模型翻译   多 System User 翻译
      */
-    public String translateByCiwiModel(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String prompt) {
+    public String translateByCiwiModel(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String prompt, boolean isSingleFlag) {
         String target = request.getTarget();
         String content = request.getContent();
         String shopName = request.getShopName();
 
         // 目标语言是中文的，用qwen-max翻译
         if ("fr".equals(target) || "ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars);
+            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
         }
 
-        // hi用doubao-1.5-pro-256k翻译
-//        if ("hi".equals(target) || "th".equals(target)) {
-//            return arkTranslateIntegration.douBaoTranslate(shopName, prompt, content, counter, limitChars);
-//        }
-
-        return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars);
+        return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars, target, isSingleFlag);
     }
 
     /**
      * ciwi 单 User 翻译
      */
-    public String translateByCiwiUserModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt) {
+    public String translateByCiwiUserModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt, boolean isSingleFlag) {
         //hi用doubao-1.5-pro-256k翻译
         appInsights.trackTrace("千问翻译 用户： " + shopName);
-        return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars);
+        return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
     }
 
     /**

@@ -8,6 +8,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
@@ -80,6 +81,8 @@ public class TranslateService {
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -192,8 +195,7 @@ public class TranslateService {
                     shopName,
                     2,
                     target,
-                    source,
-                    translateRequest.getAccessToken()
+                    source
             );
             try {
                 Thread.sleep(500);
@@ -212,7 +214,10 @@ public class TranslateService {
         try {
             initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId()).set(InitialTranslateTasksDO::isDeleted, true));
-                appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务");
+
+                // 将language级别的token数据删除掉
+                boolean deletedLanguage = translationCounterRedisService.deleteLanguage(generateProcessKey(shopName, initialTranslateTasksDO.getTarget()));
+                appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务 是否删除languageToken： " + deletedLanguage);
             });
         } catch (Exception e) {
             appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务失败");
@@ -385,7 +390,7 @@ public class TranslateService {
         counter.addChars(usedChars);
         if (type.equals(URI) && "handle".equals(key)) {
             // 如果 key 为 "handle"，这里是要处理的代码
-            String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars);
+            String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars, true);
             if (targetString == null) {
                 return new BaseResponse<>().CreateErrorResponse(value);
             }
@@ -399,17 +404,17 @@ public class TranslateService {
                 TranslateRequest translateRequest = new TranslateRequest(0, shopName, null, source, target, value);
                 //单条翻译html，修改格式
                 if (resourceType.equals(METAFIELD)) {
-                    String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars);
+                    String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true);
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     appInsights.trackTrace(shopName + " 用户 ，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                     return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
                 }
 
-                String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars);
+                String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true);
                 appInsights.trackTrace(shopName + " 用户 ，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
-                String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, GENERAL, remainingChars);
+                String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, GENERAL, remainingChars, true);
                 appInsights.trackTrace(shopName + " 用户 ，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }

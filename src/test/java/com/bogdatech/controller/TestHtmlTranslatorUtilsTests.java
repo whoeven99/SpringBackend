@@ -54,7 +54,7 @@ public class TestHtmlTranslatorUtilsTests {
 
         String input = "just a plain text without tags";
         // 不 stub translateAllList，期望方法直接返回 null
-        String out = utilsSpy.newJsonTranslateHtml(input, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(input, req, null, null, null, false);
         assertNull(out, "非HTML输入应该返回 null");
     }
 
@@ -73,11 +73,11 @@ public class TestHtmlTranslatorUtilsTests {
 
         doReturn(translated)
                 .when(utilsSpy)
-                .translateAllList(anyList(), any(), any(), anyString(), any());
-        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any()))
+                .translateAllList(anyList(), any(), any(), anyString(), any(), false);
+        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any(), false))
                 .thenReturn("{\"hello\":\"bonjour\"}");
 
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
 
         assertNotNull(out);
         assertTrue(out.contains(">  bonjour  <"),
@@ -100,10 +100,10 @@ public class TestHtmlTranslatorUtilsTests {
         translated.put("My", "Mon");
         translated.put("Title", "Titre");
 
-        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any());
-        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any()))
+        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any(), false);
+        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any(), false))
                 .thenReturn("{\"My\":\"Mon\", \"Title\":\"Titre\"}");
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
         assertNotNull(out);
 
         // lang 属性
@@ -132,19 +132,19 @@ public class TestHtmlTranslatorUtilsTests {
 
         // stub translateAllList（这里不要 capture，用 any() 就好）
         doReturn(translated).when(utilsSpy)
-                .translateAllList(any(), any(), any(), any(), any());
+                .translateAllList(any(), any(), any(), any(), any(), false);
 
         // stub jsoupUtils
-        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any()))
+        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any(), false))
                 .thenReturn("{\"Duplicate\":\"DUP\", \"Unique\":\"UNQ\"}");
 
         // 调用被测方法
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
         assertNotNull(out);
 
         // verify + 捕获参数
         ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
-        verify(utilsSpy).translateAllList(captor.capture(), any(), any(), any(), any());
+        verify(utilsSpy).translateAllList(captor.capture(), any(), any(), any(), any(), false);
 
         // 验证捕获到的参数
         List<String> passedList = captor.getValue();
@@ -171,11 +171,11 @@ public class TestHtmlTranslatorUtilsTests {
         String html = "<div>   <p>    </p> \u00A0 </div>"; // 普通空格 + 不断行空格
 
         // 不 stub translateAllList，直接 verify never called
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
         assertNotNull(out);
 
         // translateAllList 应该从未被调用（因为 originalTexts 为空）
-        verify(utilsSpy, never()).translateAllList(anyList(), any(), any(), anyString(), any());
+        verify(utilsSpy, never()).translateAllList(anyList(), any(), any(), anyString(), any(), false);
     }
 
     /**
@@ -194,11 +194,11 @@ public class TestHtmlTranslatorUtilsTests {
         when(vocabularyService.getTranslateTextDataInVocabulary(anyString(), anyString(), anyString())).thenReturn(null);
 
         // mock JsoupUtils 的翻译调用，避免走真实逻辑
-        when(jsoupUtils.translateByCiwiUserModel(anyString(), anyString(), anyString(), anyString(), any(), any(), anyString()))
+        when(jsoupUtils.translateByCiwiUserModel(anyString(), anyString(), anyString(), anyString(), any(), any(), anyString(), false))
                 .thenReturn("{}"); // 返回空 JSON，模拟没有翻译
 
         String html = "<div> keep </div>";
-        String out = utils.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utils.newJsonTranslateHtml(html, req, null, null, null, false);
 
         assertNotNull(out);
         assertTrue(out.contains("keep"), "没有翻译结果时应保留原始文本");
@@ -217,11 +217,11 @@ public class TestHtmlTranslatorUtilsTests {
         String html = "<div><span><p>Hello</p>World</span><footer>Bye</footer></div>";
         Map<String, String> translated = Map.of("Hello", "Hola", "World", "Mundo", "Bye", "Adiós");
 
-        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any());
+        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any(), false);
         String s = OBJECT_MAPPER.writeValueAsString(translated);
-        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any()))
+        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any(), false))
                 .thenReturn(s);
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
 
         assertTrue(out.contains("Hola"));
         assertTrue(out.contains("Mundo"));
@@ -240,11 +240,11 @@ public class TestHtmlTranslatorUtilsTests {
                 + "<body><script>var a=1;</script><p>Text</p></body></html>";
 
         Map<String, String> translated = Map.of("Text", "Text_DE");
-        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any());
+        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any(), false);
         String s = OBJECT_MAPPER.writeValueAsString(translated);
-        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any()))
+        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any(), false))
                 .thenReturn(s);
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
 
         // 确认 script/style 保持不变
         assertTrue(out.contains("var a=1;"));
@@ -263,11 +263,11 @@ public class TestHtmlTranslatorUtilsTests {
 
         String html = "<p>A &amp; B&nbsp;C</p>";
         Map<String, String> translated = Map.of("A & B C", "A et B C");
-        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any());
+        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any(), false);
         String s = OBJECT_MAPPER.writeValueAsString(translated);
-        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any()))
+        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any(), false))
                 .thenReturn(s);
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
 
         assertTrue(out.contains("A et B"));
     }
@@ -296,17 +296,17 @@ public class TestHtmlTranslatorUtilsTests {
             translated.put("Text: 12312312312312312312312312312312312312312312312312312312312312312312312 : " + i, "T" + i);
         }
 
-        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any());
+        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any(), false);
         String s = OBJECT_MAPPER.writeValueAsString(translated);
-        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any()))
+        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any(), false))
                 .thenReturn(s);
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
 
         assertTrue(out.contains("T0") && out.contains("T59"));
 
         // 验证 translateAllList 被调用时 list size > 50
         ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
-        verify(utilsSpy).translateAllList(captor.capture(), any(), any(), any(), any());
+        verify(utilsSpy).translateAllList(captor.capture(), any(), any(), any(), any(), false);
         assertTrue(captor.getValue().size() >= 50);
     }
 
@@ -321,11 +321,11 @@ public class TestHtmlTranslatorUtilsTests {
 
         String html = "<div><img src='a.jpg'/><br/><p>Hi</p></div>";
         Map<String, String> translated = Map.of("Hi", "Hello");
-        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any());
+        doReturn(translated).when(utilsSpy).translateAllList(anyList(), any(), any(), anyString(), any(), false);
         String s = OBJECT_MAPPER.writeValueAsString(translated);
-        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any()))
+        when(jsoupUtils.translateByCiwiUserModel(any(), any(), any(), any(), any(), any(), any(), false))
                 .thenReturn(s);
-        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null);
+        String out = utilsSpy.newJsonTranslateHtml(html, req, null, null, null, false);
         assertTrue(out.contains("Hello"));
         assertTrue(out.contains("<img src=\"a.jpg\""));
     }

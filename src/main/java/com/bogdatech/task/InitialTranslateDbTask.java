@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.logic.TencentEmailService;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -13,17 +15,19 @@ import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
-import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
+import static com.bogdatech.utils.ListUtils.convertALL;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 
 @Component
 @EnableScheduling
@@ -42,6 +46,10 @@ public class InitialTranslateDbTask {
     private ITranslateTasksService iTranslateTasksService;
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
+    @Autowired
+    private TencentEmailService tencentEmailService;
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -61,40 +69,50 @@ public class InitialTranslateDbTask {
      * 已发送邮件，翻译任务完成 把发送邮件的标识存在initialTask里
      * dbtask的任务被中断，已发送邮件，翻译任务完成 把发送邮件的标识存在initialTask里
      */
-//    @Scheduled(fixedRate = 60 * 1000)
-//    public void scanAndSendEmail() {
-//        // 获取initial表里面 status=1 isDelete = false 的数据
-//        List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getStatus, 1).eq(InitialTranslateTasksDO::isDeleted, false));
-//        for (InitialTranslateTasksDO task : initialTranslateTasks) {
-//            // 获取Translates表里面 status的值。 2  和  3，  2做完成的判断， 3做部分翻译的状态
-//            TranslatesDO translatesDO = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
-//            // 获取该用户accessToken
-//            UsersDO userDO = iUsersService.getUserByName(task.getShopName());
-//            // 获取该用户目前消耗额度值
-//            TranslationCounterDO translationCounterDO = iTranslationCounterService.getTranslationCounterByShopName(userDO.getShopName());
-//            // 获取该用户额度限制
-//            Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
-//
-//            // 判断status的值
-//            if (translatesDO.getStatus() == 2) {
-//                // 判断该用户task是否全部完成
-//                List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
-//                System.out.println("translateTasks: " + translateTasks);
-//                Timestamp createdAt = task.getCreatedAt();
-//                // 先按原逻辑
-////                if (translateTasks.isEmpty()){
-//                if (translateTasks.size() == 1){
-//                    // 8分钟后， 发送邮件
-//                    CharacterCountUtils countUtils = new CharacterCountUtils();
-//                    countUtils.addChars(translationCounterDO.getUsedChars());
-//                    TranslateTasksDO emailTask = translateTasks.get(0);
-//                    rabbitMqTranslateService.triggerSendEmailLater(task.getShopName(), task.getSource(), task.getTarget(), userDO.getAccessToken(), emailTask, countUtils, , , limitChars);
-//                }
-//            } else if (translatesDO.getStatus() == 3) {
-//
-//            }
-//        }
-//    }
+    @Scheduled(fixedRate = 60 * 1000)
+    public void scanAndSendEmail() {
+        // 获取initial表里面 status=1 isDelete = false 的数据
+        List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getStatus, 1).eq(InitialTranslateTasksDO::isDeleted, false));
+        for (InitialTranslateTasksDO task : initialTranslateTasks) {
+            // 获取Translates表里面 status的值。 2  和  3，  2做完成的判断， 3做部分翻译的状态
+            TranslatesDO translatesDO = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
+            // 获取该用户accessToken
+            UsersDO userDO = iUsersService.getUserByName(task.getShopName());
+            // 获取该用户目前消耗额度值
+            TranslationCounterDO translationCounterDO = iTranslationCounterService.getTranslationCounterByShopName(userDO.getShopName());
+            // 获取该用户额度限制
+            Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
+            // 获取该用户 target 的 所有token 的值
+            Long costToken = translationCounterRedisService.getLanguageData(generateProcessKey(task.getShopName(), task.getTarget()));
+            Timestamp createdAt = task.getCreatedAt();
+            LocalDateTime localDateTime = createdAt.toLocalDateTime();
+            // 判断status的值
+            if (translatesDO.getStatus() == 2) {
+                // 判断该用户task是否全部完成
+                List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
+                System.out.println("translateTasks: " + translateTasks);
+
+                // 先按原逻辑
+                if (translateTasks.isEmpty() && !task.isSendEmail()){
+                    // 8分钟后， 发送邮件
+                    // 修改语言状态为1
+                    iTranslatesService.updateTranslateStatus(task.getShopName(), 1, task.getSource(), task.getTarget());
+                    rabbitMqTranslateService.triggerSendEmailLater(task.getShopName(), task.getSource(), task.getTarget(), userDO.getAccessToken(), localDateTime, costToken, translationCounterDO.getUsedChars(), limitChars);
+                }
+            } else if (translatesDO.getStatus() == 3 && !task.isSendEmail()) {
+                // 为3，发送部分翻译的邮件
+                // 将List<String> 转化位 List<TranslateResourceDTO>
+                List<String> translationList = jsonToObject(task.getTranslateSettings3(), new TypeReference<List<String>>() {});
+                if (translationList == null || translationList.isEmpty()){
+                    appInsights.trackTrace("scanAndSendEmail 每日须看 translationList: " + translationList);
+                    return;
+                }
+                List<TranslateResourceDTO> convertAll = convertALL(translationList);
+                tencentEmailService.translateFailEmail(task.getShopName(), localDateTime, convertAll, task.getTarget(), task.getSource(), costToken);
+                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, task.getTaskId()).set(InitialTranslateTasksDO::isSendEmail, 1));
+            }
+        }
+    }
 
 
     @Scheduled(fixedRate = 55 * 1000)
