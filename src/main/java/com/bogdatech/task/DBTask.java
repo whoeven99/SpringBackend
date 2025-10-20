@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -99,12 +100,25 @@ public class DBTask {
                     return target == null ? "" : target;
                 }));
 
+        CountDownLatch latch = new CountDownLatch(map.size());
+
         // 一个shop，多语言并行翻译
         map.forEach((target, list) -> {
             executorService.submit(() -> {
-                processTasksByTarget(shop, target, new HashSet<>(list));
+                try {
+                    processTasksByTarget(shop, target, new HashSet<>(list));
+                } finally {
+                    latch.countDown();
+                }
             });
         });
+
+        // 等待所有异步任务结束 否则解锁太快
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void processTasksByTarget(String shop, String target, Set<TranslateTasksDO> shopTasks) {
