@@ -22,9 +22,11 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
+import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
@@ -70,7 +72,7 @@ public class InitialTranslateDbTask {
      * 已发送邮件，翻译任务完成 把发送邮件的标识存在initialTask里
      * dbtask的任务被中断，已发送邮件，翻译任务完成 把发送邮件的标识存在initialTask里
      */
-    @Scheduled(fixedRate = 60 * 1000)
+    @Scheduled(fixedRate = 55 * 1000)
     public void scanAndSendEmail() {
         // 获取initial表里面 status=1 isDelete = false 的数据
         List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(
@@ -101,10 +103,11 @@ public class InitialTranslateDbTask {
             LocalDateTime localDateTime = createdAt.toLocalDateTime();
 
             // 判断status的值
-            if (translatesDO.getStatus() == 2) {
+            // 获取现在的initial表是否都创建完了
+            InitialTranslateTasksDO initialTranslateTasksDO = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, translatesDO.getShopName()).eq(InitialTranslateTasksDO::getSource, translatesDO.getSource()).eq(InitialTranslateTasksDO::getTarget, translatesDO.getTarget()).orderByDesc(InitialTranslateTasksDO::getCreatedAt)).stream().findFirst().orElse(null);
+            if (translatesDO.getStatus() == 2 && initialTranslateTasksDO != null && initialTranslateTasksDO.getStatus() == 1) {
                 // 判断该用户task是否全部完成
                 List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
-                System.out.println("translateTasks: " + translateTasks);
 
                 // 先按原逻辑
                 if (translateTasks.isEmpty() && !task.isSendEmail()){
@@ -129,7 +132,7 @@ public class InitialTranslateDbTask {
     }
 
 
-    @Scheduled(fixedRate = 55 * 1000)
+    @Scheduled(fixedRate = 30 * 1000)
     public void scanAndSubmitInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task
@@ -142,7 +145,9 @@ public class InitialTranslateDbTask {
 
         // 遍历clickTranslateTasks，生成initialTasks
         for (InitialTranslateTasksDO task : clickTranslateTasks) {
-            processInitialTasksOfShop(task);
+            executorService.submit(() -> {
+                processInitialTasksOfShop(task);
+            });
         }
     }
 

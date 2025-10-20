@@ -23,6 +23,7 @@ public class SaveShopifyDataTask {
      */
     @Scheduled(fixedDelay = 1000)
     public void getDataToSaveInShopify() {
+        // TODO: 3.2 翻译后的存shopify
         List<UserTranslationDataDO> userTranslationDataDOS = userTranslationDataService.selectTranslationDataList();
         for (UserTranslationDataDO data : userTranslationDataDOS
              ) {
