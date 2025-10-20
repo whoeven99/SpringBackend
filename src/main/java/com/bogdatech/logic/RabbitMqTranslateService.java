@@ -28,6 +28,8 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
@@ -614,7 +616,7 @@ public class RabbitMqTranslateService {
 
         // 先转成List，方便切片
         List<TranslateTextDO> list = new ArrayList<>(plainTextData);
-        appInsights.trackTrace("list : " + list.size());
+        appInsights.trackTrace("translatePlainTextData list : " + list.size() + " value: " + list.stream().map(TranslateTextDO::getSourceText).toList());
         List<String> untranslatedTextList = list.stream()
                 // 只保留那些 “newCacheAndDBTranslateData(...) 返回 false” 的元素
                 .filter(t -> !newCacheAndDBTranslateData(source, shopifyRequest, t, target))
@@ -623,6 +625,7 @@ public class RabbitMqTranslateService {
                 .distinct()
                 // 收集成一个 List<String>
                 .toList();
+        appInsights.trackTrace("translatePlainTextData untranslatedTextList : " + untranslatedTextList.size() + " value: " + untranslatedTextList);
         for (int i = 0; i < untranslatedTextList.size(); i += BATCH_SIZE) {
             // TODO: 2.2 翻译前的token校验
             if (checkNeedStopped(shopName, counter)) {
