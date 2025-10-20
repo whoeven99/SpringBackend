@@ -483,57 +483,8 @@ public class RabbitMqTranslateService {
      * 翻译停止后，进度条就不加了
      */
     public void checkNeedAddProcessData(String shopName, String target) {
-        if (translationParametersRedisService.isStopped(shopName)) {
+        if (!translationParametersRedisService.isStopped(shopName)) {
             redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
-        }
-    }
-
-    /**
-     * 通用html翻译
-     */
-    public void translateGeneralHtmlData(TranslateTextDO translateTextDO, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils counter, Map<String, Object> translation, ShopifyRequest shopifyRequest) {
-        String sourceText = translateTextDO.getSourceText();
-        String htmlTranslation;
-        String resourceId = translateTextDO.getResourceId();
-        String source = rabbitMqTranslateVO.getSource();
-        try {
-            appInsights.trackTrace("定义translateRequest 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
-            TranslateRequest translateRequest = new TranslateRequest(0, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), source, rabbitMqTranslateVO.getTarget(), translateTextDO.getSourceText());
-
-            // 都用分段html翻译
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), sourceText);
-
-            appInsights.trackTrace("修改进度条的数据 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
-            htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(sourceText, translateRequest, counter, rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getLimitChars(), false);
-            appInsights.trackTrace("完成翻译html 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
-            if (rabbitMqTranslateVO.getModeType().equals(METAFIELD)) {
-                // 对翻译后的html做格式处理
-                appInsights.trackTrace("html所在模块是METAFIELD 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
-                htmlTranslation = normalizeHtml(htmlTranslation);
-            }
-
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " html translation errors : " + e.getMessage() + " sourceText: " + sourceText);
-            shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);
-            return;
-        }
-        appInsights.trackTrace("存到shopify数据到数据库 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
-
-        // TODO: 3.1 翻译后的存db
-        shopifyService.saveToShopify(htmlTranslation, translation, resourceId, shopifyRequest);
-        printTranslation(htmlTranslation, sourceText, translation, shopifyRequest.getShopName(), rabbitMqTranslateVO.getModeType(), resourceId, source);
-
-        //如果翻译数据小于255，存到数据库
-        try {
-            appInsights.trackTrace("存到数据库 用户： " + rabbitMqTranslateVO.getShopName() + "，sourceText: " + sourceText);
-            if (htmlTranslation.length() >= 255) {
-                return;
-            }
-            // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-            vocabularyService.InsertOne(rabbitMqTranslateVO.getTarget(), htmlTranslation, source, sourceText);
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + "存储失败： " + e.getMessage() + " ，继续翻译");
         }
     }
 
@@ -672,7 +623,6 @@ public class RabbitMqTranslateService {
                 .distinct()
                 // 收集成一个 List<String>
                 .toList();
-        appInsights.trackTrace("untranslatedTextList : " + untranslatedTextList.size());
         for (int i = 0; i < untranslatedTextList.size(); i += BATCH_SIZE) {
             // TODO: 2.2 翻译前的token校验
             if (checkNeedStopped(shopName, counter)) {
@@ -685,12 +635,9 @@ public class RabbitMqTranslateService {
             // 取每次的50条（或剩余全部）
             int endIndex = Math.min(i + BATCH_SIZE, list.size());
             List<TranslateTextDO> batchList = list.subList(i, endIndex);
-            appInsights.trackTrace("batchList: " + batchList.size());
             List<String> untranslatedList = batchList.stream().map(TranslateTextDO::getSourceText).distinct().toList();
-            appInsights.trackTrace("untranslatedList: " + untranslatedList.size());
             // 根据不同的key类型，生成对应提示词，后翻译
             String prompt = getListPrompt(getLanguageName(target), vo.getLanguagePack(), translationKeyType, vo.getModeType());
-            appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedList);
             String translatedJson = translateBatch(translateRequestTemplate, untranslatedList, counter, limitChars, prompt, false);
 
             // 对null的处理
