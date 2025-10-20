@@ -663,6 +663,7 @@ public class RabbitMqTranslateService {
 
         // 先转成List，方便切片
         List<TranslateTextDO> list = new ArrayList<>(plainTextData);
+        appInsights.trackTrace("list : " + list.size());
         List<String> untranslatedTextList = list.stream()
                 // 只保留那些 “newCacheAndDBTranslateData(...) 返回 false” 的元素
                 .filter(t -> !newCacheAndDBTranslateData(source, shopifyRequest, t, target))
@@ -671,6 +672,7 @@ public class RabbitMqTranslateService {
                 .distinct()
                 // 收集成一个 List<String>
                 .toList();
+        appInsights.trackTrace("untranslatedTextList : " + untranslatedTextList.size());
         for (int i = 0; i < untranslatedTextList.size(); i += BATCH_SIZE) {
             // TODO: 2.2 翻译前的token校验
             if (checkNeedStopped(shopName, counter)) {
@@ -683,8 +685,9 @@ public class RabbitMqTranslateService {
             // 取每次的50条（或剩余全部）
             int endIndex = Math.min(i + BATCH_SIZE, list.size());
             List<TranslateTextDO> batchList = list.subList(i, endIndex);
+            appInsights.trackTrace("batchList: " + batchList.size());
             List<String> untranslatedList = batchList.stream().map(TranslateTextDO::getSourceText).distinct().toList();
-
+            appInsights.trackTrace("untranslatedList: " + untranslatedList.size());
             // 根据不同的key类型，生成对应提示词，后翻译
             String prompt = getListPrompt(getLanguageName(target), vo.getLanguagePack(), translationKeyType, vo.getModeType());
             appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedList);
