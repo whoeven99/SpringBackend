@@ -172,6 +172,8 @@ public class ProcessDbTaskService {
                 appInsights.trackTrace("clickTranslation " + vo.getShopName() + " shopifyDataByDb is null" + vo);
                 return;
             }
+
+            // TODO: 1.1 翻译前的过滤
             Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(
                     stringToJson(shopifyDataByDb), vo.getShopName(), vo.getIsCover(),
                     vo.getTarget());
@@ -187,6 +189,8 @@ public class ProcessDbTaskService {
             if (stringSetMap.isEmpty()) {
                 return;
             }
+
+            // TODO: 1.1 翻译前的过滤
 
             // TODO 1 获取stringSetMap之前的逻辑，都算作翻译前的过滤
 
