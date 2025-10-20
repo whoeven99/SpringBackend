@@ -70,7 +70,7 @@ public class InitialTranslateDbTask {
      * 已发送邮件，翻译任务完成 把发送邮件的标识存在initialTask里
      * dbtask的任务被中断，已发送邮件，翻译任务完成 把发送邮件的标识存在initialTask里
      */
-    @Scheduled(fixedRate = 60 * 1000)
+    @Scheduled(fixedRate = 30 * 1000)
     public void scanAndSendEmail() {
         // 获取initial表里面 status=1 isDelete = false 的数据
         List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(
@@ -129,7 +129,7 @@ public class InitialTranslateDbTask {
     }
 
 
-    @Scheduled(fixedRate = 55 * 1000)
+    @Scheduled(fixedRate = 30 * 1000)
     public void scanAndSubmitInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task

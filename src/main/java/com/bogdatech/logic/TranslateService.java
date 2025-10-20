@@ -74,7 +74,7 @@ public class TranslateService {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
-    private RedisProcessService redisProcessService;
+    public RedisProcessService redisProcessService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
