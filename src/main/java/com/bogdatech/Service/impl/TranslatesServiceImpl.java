@@ -118,25 +118,28 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public void updateStatus3To6(String shopName) {
-        TranslatesDO translatesDO = new TranslatesDO();
-        translatesDO.setStatus(6);
         final int maxRetries = 3;
         int attempt = 0;
-        boolean success = false;
-        while (attempt < maxRetries && !success) {
+
+        while (attempt < maxRetries) {
             attempt++;
             try {
-                //将所有状态3都改为6
-                int affectedRows = baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>()
-                        .eq(TranslatesDO::getShopName, shopName)
-                        .eq(TranslatesDO::getStatus, 3)
-                        .set(TranslatesDO::getStatus, 6)
+                int affectedRows = baseMapper.update(
+                        new LambdaUpdateWrapper<TranslatesDO>()
+                                .eq(TranslatesDO::getShopName, shopName)
+                                .eq(TranslatesDO::getStatus, 3)
+                                .set(TranslatesDO::getStatus, 6)
                 );
-                if (affectedRows > 0) {
-                    success = true;
-                }
+
+                appInsights.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
+
+                // 正常结束，无需再重试
+                break;
             } catch (Exception e) {
                 appInsights.trackException(e);
+                if (attempt >= maxRetries) {
+                    appInsights.trackTrace("updateStatus3To6: " + shopName + " 最终失败");
+                }
             }
         }
     }
