@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,89 +118,44 @@ public class ProcessDbTaskService {
 
     public void processTask(RabbitMqTranslateVO vo, TranslateTasksDO task, boolean isTranslationAuto) {
         String shopName = vo.getShopName();
-
-        // 获取现在的时间，后面做减法
         Instant start = Instant.now();
-
-        // 判断字符是否超限
         TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
-        Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
         int usedChars = counterDO.getUsedChars();
 
-        // Record monitor
-        translationMonitorRedisService.hsetUsedCharsOfShop(shopName, usedChars);
-        translationMonitorRedisService.hsetRemainingCharsOfShop(shopName, maxCharsByShopName);
+        // TODO 1.1 翻译前的校验 判断字符是否超限
+        checkTokenLimit(shopName, usedChars);
 
-        // 如果字符超限，则直接返回字符超限
-        if (usedChars >= maxCharsByShopName) {
-            appInsights.trackTrace("ProcessDBTaskLog 字符超限 " + shopName +" 当前消耗token为: " + usedChars);
-            //将用户所有task改为3
-            rabbitMqTranslateService.updateTranslateTasksStatus(shopName);
-            //将用户翻译状态也改为3
-            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
-            throw new ClientException("字符超限");
+        if (isTranslationAuto) {
+            appInsights.trackTrace("ProcessDBTaskLog isTranslationAuto 用户 " + shopName);
+            vo.setCustomKey(null);
         }
 
-        // 修改redis当前翻译模块的数据
-        translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(shopName, vo.getSource(), vo.getTarget()), vo.getModeType());
-        translatesService.updateTranslatesResourceType(shopName, vo.getTarget(), vo.getSource(), vo.getModeType());
+        appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译前 counter 1: " + usedChars);
 
-        // 修改数据库的模块翻译状态
-        translateTasksService.updateByTaskId(task.getTaskId(), 2);
-
+        appInsights.trackTrace("ProcessDBTaskLog translateByModeType：" + vo.getModeType()
+                + " 用户 ： " + vo.getShopName()
+                + " targetCode ：" + vo.getTarget()
+                + " source : " + vo.getSource());
         // 初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
 
         try {
-            if (isTranslationAuto) {
-                appInsights.trackTrace("ProcessDBTaskLog isTranslationAuto 用户 " + shopName);
-                vo.setCustomKey(null);
-            }
-
-            // 获取task级的redis中的数据是否为空，如果为空，继续； 不为空，将redis的值存db后，清空（可能是重启中断）
-            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译前 counter 1: " + counter.getTotalChars() );
-
-            appInsights.trackTrace("ProcessDBTaskLog translateByModeType：" + vo.getModeType()
-                    + " 用户 ： " + vo.getShopName()
-                    + " targetCode ：" + vo.getTarget()
-                    + " source : " + vo.getSource());
-
-            //根据DB的请求语句获取对应shopify值
-            String shopifyDataByDb = rabbitMqTranslateService.getShopifyDataByDb(vo);
-            if (shopifyDataByDb == null) {
-                // TODO 这里应该就是FatalException了，出现这个状况的话很严重
-                appInsights.trackTrace("clickTranslation " + vo.getShopName() + " shopifyDataByDb is null" + vo);
-                return;
-            }
-
-            // TODO: 1.1 翻译前的过滤
-            Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(
-                    stringToJson(shopifyDataByDb), vo.getShopName(), vo.getIsCover(),
-                    vo.getTarget());
-            if (needTranslatedData == null) {
-                return;
-            }
-            Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(
-                    vo.getModeType(), vo.getHandleFlag(), needTranslatedData,
-                    vo.getShopName(), vo.getTarget());
-            //将筛选好的数据分类
-            Map<String, Set<TranslateTextDO>> stringSetMap = rabbitMqTranslateService.filterTranslateMap(initTranslateMap(), filterTranslateData, vo.getGlossaryMap());
-            //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
-            if (stringSetMap.isEmpty()) {
-                return;
-            }
-
-            // TODO: 1.1 翻译前的过滤
-
-            // TODO 1 获取stringSetMap之前的逻辑，都算作翻译前的过滤
+            // TODO 1.2 翻译前 获取数据，过滤数据
+            Map<String, Set<TranslateTextDO>> stringSetMap = getFilteredTranslationData(vo);
 
             appInsights.trackTrace("ProcessDBTaskLog after FILTER, start translateByType：" + vo.getModeType()
                     + " shop ： " + vo.getShopName()
                     + " targetCode ：" + vo.getTarget()
                     + " source : " + vo.getSource());
 
-            // TODO 2 开始翻译流程
+            // TODO 2.1 翻译准备开始，设置状态
+            translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(
+                    shopName, vo.getSource(), vo.getTarget()), vo.getModeType());
+            translatesService.updateTranslatesResourceType(shopName, vo.getTarget(), vo.getSource(), vo.getModeType());
+            translateTasksService.updateByTaskId(task.getTaskId(), 2);
+
+            // TODO 2.2 开始翻译流程
             for (Map.Entry<String, Set<TranslateTextDO>> entry : stringSetMap.entrySet()) {
                 switch (entry.getKey()) {
                     case HTML:
@@ -226,6 +182,7 @@ public class ProcessDbTaskService {
 
             appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + vo.getModeType() + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。  " );
 
+            // 一些monitor
             if (counter.getTotalChars() - usedChars > 0 && Duration.between(start, Instant.now()).toSeconds() > 0) {
                 translationMonitorRedisService.hsetModelCharsWithTime(shopName, vo.getModeType(),
                         counter.getTotalChars() - usedChars,
@@ -253,6 +210,52 @@ public class ProcessDbTaskService {
         } finally {
             statisticalAutomaticTranslationData(isTranslationAuto, counter, usedChars, start, vo);
         }
+    }
+
+    private void checkTokenLimit(String shopName, int usedChars) {
+        Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
+
+        // Record monitor
+        translationMonitorRedisService.hsetUsedCharsOfShop(shopName, usedChars);
+        translationMonitorRedisService.hsetRemainingCharsOfShop(shopName, maxCharsByShopName);
+
+        // 如果字符超限，则直接返回字符超限
+        if (usedChars >= maxCharsByShopName) {
+            appInsights.trackTrace("ProcessDBTaskLog 字符超限 " + shopName +" 当前消耗token为: " + usedChars);
+            //将用户所有task改为3
+            rabbitMqTranslateService.updateTranslateTasksStatus(shopName);
+            //将用户翻译状态也改为3
+            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 3));
+            throw new ClientException("字符超限");
+        }
+    }
+
+    private Map<String, Set<TranslateTextDO>> getFilteredTranslationData(RabbitMqTranslateVO vo) {
+        //根据DB的请求语句获取对应shopify值
+        String shopifyDataByDb = rabbitMqTranslateService.getShopifyDataByDb(vo);
+        if (shopifyDataByDb == null) {
+            // TODO 这里应该就是FatalException了，出现这个状况的话很严重
+            appInsights.trackTrace("clickTranslation " + vo.getShopName() + " shopifyDataByDb is null" + vo);
+            return new HashMap<>();
+        }
+
+        Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(
+                stringToJson(shopifyDataByDb), vo.getShopName(), vo.getIsCover(),
+                vo.getTarget());
+        if (needTranslatedData == null) {
+            return new HashMap<>();
+        }
+        Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(
+                vo.getModeType(), vo.getHandleFlag(), needTranslatedData,
+                vo.getShopName(), vo.getTarget());
+        //将筛选好的数据分类
+        Map<String, Set<TranslateTextDO>> stringSetMap = rabbitMqTranslateService.filterTranslateMap(
+                initTranslateMap(), filterTranslateData, vo.getGlossaryMap());
+        //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
+        if (stringSetMap.isEmpty()) {
+            return new HashMap<>();
+        }
+        return stringSetMap;
     }
 
     /**
