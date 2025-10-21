@@ -214,10 +214,6 @@ public class TranslateService {
         try {
             initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId()).set(InitialTranslateTasksDO::isDeleted, true));
-
-                // 将language级别的token数据删除掉
-                boolean deletedLanguage = translationCounterRedisService.deleteLanguage(generateProcessKey(shopName, initialTranslateTasksDO.getTarget()));
-                appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务 是否删除 languageToken： " + deletedLanguage + " 语言是： " + initialTranslateTasksDO.getTarget());
             });
         } catch (Exception e) {
             appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务失败");
@@ -226,6 +222,10 @@ public class TranslateService {
 
         for (String target : targets) {
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
+            // 将language级别的token数据删除掉
+            boolean deletedLanguage = translationCounterRedisService.deleteLanguage(generateProcessKey(shopName, target));
+            appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除这个语言的language的token统计 是否删除 languageToken： " + deletedLanguage + " 语言是： " + target);
+
             translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(shopName, source, target), "");
             translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(1));
             translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");

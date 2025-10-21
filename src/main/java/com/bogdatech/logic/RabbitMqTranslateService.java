@@ -613,39 +613,43 @@ public class RabbitMqTranslateService {
         String source = vo.getSource();
         ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
         TranslateRequest translateRequestTemplate = new TranslateRequest(0, shopName, accessToken, source, target, null);
-
         // 先转成List，方便切片
         List<TranslateTextDO> list = new ArrayList<>(plainTextData);
-        appInsights.trackTrace("translatePlainTextData list : " + list.size() + " value: " + list.stream().map(TranslateTextDO::getSourceText).toList());
-        List<String> untranslatedTextList = list.stream()
-                // 只保留那些 “newCacheAndDBTranslateData(...) 返回 false” 的元素
-                .filter(t -> !newCacheAndDBTranslateData(source, shopifyRequest, t, target))
-                // 取出每个元素的 sourceText 字段
-                .map(TranslateTextDO::getSourceText)
-                .distinct()
-                // 收集成一个 List<String>
-                .toList();
-        appInsights.trackTrace("translatePlainTextData untranslatedTextList : " + untranslatedTextList.size() + " value: " + untranslatedTextList);
-        for (int i = 0; i < untranslatedTextList.size(); i += BATCH_SIZE) {
-            // TODO: 2.2 翻译前的token校验
+        for (int i = 0; i < list.size(); i += BATCH_SIZE) {
             if (checkNeedStopped(shopName, counter)) {
                 return;
             }
 
-            // TODO: 2.2 翻译前的token校验
+            // TODO： 2.2 翻译前的token校验
             updateCharsWhenExceedLimit(counter, shopName, limitChars, translateRequestTemplate);
 
             // 取每次的50条（或剩余全部）
             int endIndex = Math.min(i + BATCH_SIZE, list.size());
-            List<TranslateTextDO> batchList = list.subList(i, endIndex);
-            List<String> untranslatedList = batchList.stream().map(TranslateTextDO::getSourceText).distinct().toList();
+            List<TranslateTextDO> batch = list.subList(i, endIndex);
+
+            // 筛选出来要翻译的数据
+            List<String> untranslatedTexts = batch.stream()
+                    // 只保留那些 “newCacheAndDBTranslateData(...) 返回 false” 的元素
+                    .filter(t -> !newCacheAndDBTranslateData(source, shopifyRequest, t, target))
+                    // 取出每个元素的 sourceText 字段
+                    .map(TranslateTextDO::getSourceText)
+                    .distinct()
+                    // 收集成一个 List<String>
+                    .collect(Collectors.toList());
+
+            //TODO：更细致的判断额度是否足够，足够继续，不够返回，开始翻译
+            if (untranslatedTexts.isEmpty()) {
+                continue;
+            }
+
             // 根据不同的key类型，生成对应提示词，后翻译
             String prompt = getListPrompt(getLanguageName(target), vo.getLanguagePack(), translationKeyType, vo.getModeType());
-            String translatedJson = translateBatch(translateRequestTemplate, untranslatedList, counter, limitChars, prompt, false);
+            appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
+            String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt, false);
 
             // 对null的处理
             if (translatedJson == null) {
-                String json = objectToJson(untranslatedList);
+                String json = objectToJson(untranslatedTexts);
                 translatedJson = aLiYunTranslateIntegration.userTranslate(json, prompt, counter, target, shopName, limitChars, false);
             }
             appInsights.trackTrace("translatePlainTextData " + shopName + " source: " + source + " translatedJson : " + translatedJson);
@@ -655,7 +659,7 @@ public class RabbitMqTranslateService {
                 try {
                     Map<String, String> resultMap = OBJECT_MAPPER.readValue(translatedJson, new TypeReference<>() {
                     });
-                    for (TranslateTextDO item : batchList) {
+                    for (TranslateTextDO item : batch) {
                         String sourceText = item.getSourceText();
                         String targetText = resultMap.get(sourceText);
                         if (targetText == null) {
@@ -676,7 +680,7 @@ public class RabbitMqTranslateService {
                             redisProcessService.setCacheData(shopifyRequest.getTarget(), targetText, sourceText);
                         }
 
-                        // TODO: 3.1 翻译后的存db
+                        // TODO： 3.1 翻译后的存db
                         shopifyService.saveToShopify(targetText, translation,
                                 item.getResourceId(), shopifyRequest);
 
@@ -1022,9 +1026,12 @@ public class RabbitMqTranslateService {
      */
     public void triggerSendEmailLater(String shopName, String target, String source, String accessToken, LocalDateTime startTime, Long costToken, Integer usedChars, Integer limitChars) {
         // 创建一个任务 Runnable
+        // 修改进度条是写入
+        translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(3));
+        translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
+
         Runnable delayedTask = () -> {
             appInsights.trackTrace("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now());
-//            translatesService.updateTranslateStatus(shopName, 1, target, source);
             tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), startTime, costToken, usedChars, limitChars);
             appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
             initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
