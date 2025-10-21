@@ -490,18 +490,7 @@ public class JsoupUtils {
      * @return 翻译后的文本
      */
     private String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
-        // 检查缓存
-        String translated = redisProcessService.getCacheData(request.getTarget(), text);
-        if (translated != null) {
-            return translated;
-        }
-
-        // 处理文本中的变量和URL
-        String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
-
-        // 存入缓存
-        redisProcessService.setCacheData(request.getTarget(), translatedText, text);
-        return translatedText;
+        return translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
     }
 
     /**

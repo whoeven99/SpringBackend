@@ -834,13 +834,8 @@ public class RabbitMqTranslateService {
             //判断是否达到额度限制
             updateCharsWhenExceedLimit(counter, shopName, limitChars, new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-            //开始翻译
-            //缓存翻译和数据库翻译
-            if (cacheOrDatabaseTranslateData(value, source, translation, resourceId, shopifyRequest)) {
-                continue;
-            }
-
-            //词汇表翻译
+            // 开始翻译
+            // 词汇表翻译
             String targetText;
             TranslateRequest translateRequest = new TranslateRequest(0, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value);
 
@@ -877,7 +872,6 @@ public class RabbitMqTranslateService {
                     appInsights.trackTrace("每日须看 clickTranslation " + shopifyRequest.getShopName() + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
                     return;
                 }
-                redisProcessService.setCacheData(shopifyRequest.getTarget(), finalText, value);
 
                 // TODO；3.2 翻译后的存shopify
                 shopifyService.saveToShopify(finalText, translation, resourceId, shopifyRequest);
@@ -901,15 +895,19 @@ public class RabbitMqTranslateService {
 
         // 获取这个用户的已使用token数
         TranslationCounterDO translationCounterDO = translationCounterService.getOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
-        //已经使用的字符数
+
+        // 获取最新的remainingChars
+        Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
+
+        // 已经使用的字符数
         Integer usedChars;
         if (translationCounterDO != null) {
             usedChars = translationCounterDO.getUsedChars();
         } else {
             usedChars = counter.getTotalChars();
         }
-        if (usedChars >= remainingChars) {
-            appInsights.trackTrace("clickTranslation shopName 用户 消耗的token : " + shopName + " totalChars : " + usedChars + " limitChars : " + remainingChars);
+        if (usedChars >= maxCharsByShopName) {
+            appInsights.trackTrace("clickTranslation shopName 用户 消耗的token : " + shopName + " totalChars : " + usedChars + " limitChars : " + maxCharsByShopName);
             translatesService.updateTranslateStatus(shopName, 3, translateRequest.getTarget(), translateRequest.getSource());
             //将同一个shopName的task任务的状态。除邮件发送模块改为3.
             updateTranslateTasksStatus(shopName);
