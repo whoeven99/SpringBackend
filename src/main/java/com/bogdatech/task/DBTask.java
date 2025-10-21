@@ -80,12 +80,14 @@ public class DBTask {
             // 当前的加锁，只是为了保持一个shop只会被一个线程处理，防止进度条或者其他的状态不兼容并发翻译
             // 这里加锁的方式是将shop放进一个set
             if (redisTranslateLockService.setAdd(shop)) {
-                appInsights.trackTrace("DBTaskLog new shop start translate: " + shop);
-                try {
-                    processTasks(shop, shopTasks);
-                } finally {
-                    redisTranslateLockService.setRemove(shop);
-                }
+                executorService.submit(() -> {
+                    appInsights.trackTrace("DBTaskLog new shop start translate: " + shop);
+                    try {
+                        processTasks(shop, shopTasks);
+                    } finally {
+                        redisTranslateLockService.setRemove(shop);
+                    }
+                });
             }
         }
     }
