@@ -217,7 +217,7 @@ public class TranslateService {
 
                 // 将language级别的token数据删除掉
                 boolean deletedLanguage = translationCounterRedisService.deleteLanguage(generateProcessKey(shopName, initialTranslateTasksDO.getTarget()));
-                appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务 是否删除languageToken： " + deletedLanguage);
+                appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务 是否删除 languageToken： " + deletedLanguage + " 语言是： " + initialTranslateTasksDO.getTarget());
             });
         } catch (Exception e) {
             appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务失败");
