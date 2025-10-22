@@ -36,7 +36,7 @@ public class JsonUtils {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, typeRef) : null;
         } catch (JsonProcessingException e) {
             appInsights.trackException(e);
-            throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
+            return null;
         }
     }
 
