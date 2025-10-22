@@ -21,6 +21,8 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -208,7 +210,9 @@ public class ProcessDbTaskService {
                     rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, LIST_SINGLE);
                     break;
                 case GLOSSARY:
-                    rabbitMqTranslateService.translateGlossaryData(entry.getValue(), vo, counter);
+                    if (!CollectionUtils.isEmpty(vo.getGlossaryMap())) {
+                        rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, GLOSSARY);
+                    }
                     break;
                 default:
                     break;

@@ -1,5 +1,6 @@
 package com.bogdatech.logic.translate;
 
+import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -14,12 +15,16 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.bogdatech.constants.TranslateConstants.METAFIELD;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsoupUtils.glossaryText;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 
@@ -112,5 +117,56 @@ public class TranslateDataService {
             appInsights.trackTrace("clickTranslation " + shopName + " LIST errors 错误原因： " + e.getMessage());
         }
         return null;
+    }
+
+    public String translateGlossaryData(String value, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils counter,
+                                        ShopifyRequest shopifyRequest, String source,
+                                        Map<String, Object> translation, String resourceId, Integer limitChars,
+                                        Map<String, String> keyMap0, Map<String, String> keyMap1) {
+        String languagePack = rabbitMqTranslateVO.getLanguagePack();
+        String modeType = rabbitMqTranslateVO.getModeType();
+
+        TranslateRequest translateRequest = new TranslateRequest(0, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value);
+
+        String targetText;
+        // 判断是否为HTML
+        if (isHtml(value)) {
+            try {
+                targetText = jsoupUtils.translateGlossaryHtml(value, translateRequest, counter, null, keyMap0, keyMap1, languagePack, limitChars, false);
+                targetText = isHtmlEntity(targetText);
+            } catch (Exception e) {
+                shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
+                return null;
+            }
+
+            // TODO：3.2 翻译后的存shopify
+            shopifyService.saveToShopify(targetText, translation, resourceId, shopifyRequest);
+            printTranslation(targetText, value, translation, shopifyRequest.getShopName(), modeType, resourceId, source);
+            return null;
+        }
+
+        String finalText = null;
+
+        // 其他数据类型，对数据做处理再翻译
+        try {
+            // 用大模型翻译
+            String glossaryString = glossaryText(keyMap1, keyMap0, value);
+            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopifyRequest.getShopName(), source, shopifyRequest.getTarget()), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopifyRequest.getShopName(), source, shopifyRequest.getTarget()), value);
+
+            // 根据关键词生成对应的提示词
+            finalText = jsoupUtils.glossaryTranslationModel(translateRequest, counter, glossaryString, languagePack, limitChars, false);
+
+            // 对null的处理， 不翻译，看下打印情况
+            if (finalText == null) {
+                appInsights.trackTrace("每日须看 clickTranslation " + shopifyRequest.getShopName() + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
+                return null;
+            }
+
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " glossaryTranslationModel errors " + e + " sourceText: " + value);
+            shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
+        }
+        return finalText;
     }
 }
