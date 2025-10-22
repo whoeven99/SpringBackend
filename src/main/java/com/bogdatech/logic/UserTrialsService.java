@@ -85,7 +85,7 @@ public class UserTrialsService {
 
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
         // 判断now是否在trialStart 和 trialEnd 中间.  是，返回true； 否，返回false
-        if (userTrialsDO != null && userTrialsDO.getTrialStart().before(now) && userTrialsDO.getTrialEnd().after(now)) {
+        if (userTrialsDO != null && userTrialsDO.getTrialStart().before(now) && userTrialsDO.getTrialEnd().after(now) && !userTrialsDO.getIsTrialExpired()) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateSuccessResponse(false);
