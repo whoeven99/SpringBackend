@@ -3,12 +3,14 @@ package com.bogdatech.logic;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.IUserTranslationDataService;
 import com.bogdatech.entity.DO.UserTranslationDataDO;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.CloudInsertRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import static com.bogdatech.logic.ShopifyService.saveToShopify;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 
@@ -16,7 +18,8 @@ import static com.bogdatech.utils.JsonUtils.jsonToObject;
 public class UserTranslationDataService {
     @Autowired
     private IUserTranslationDataService userTranslationDataService;
-
+    @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
 
     /**
      * 将翻译后的文本以String的类型存储到数据库中
@@ -55,6 +58,7 @@ public class UserTranslationDataService {
             return ;
         }
         saveToShopify(cloudInsertRequest);
+        translationParametersRedisService.addWritingData(generateWriteStatusKey(cloudInsertRequest.getShopName(), cloudInsertRequest.getTarget()), WRITE_DONE, 1L);
 
         // 删除对应任务id
         userTranslationDataService.removeById(data.getTaskId());

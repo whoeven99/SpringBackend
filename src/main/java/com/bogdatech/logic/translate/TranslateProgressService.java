@@ -29,8 +29,6 @@ public class TranslateProgressService {
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
-    private ITranslateTasksService iTranslateTasksService;
-    @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
@@ -73,9 +71,15 @@ public class TranslateProgressService {
                     : "translation_process_init");
 
             // 进度条数字
-            Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
-            appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + progressData);
-            progress.setProgressData(progressData);
+            if ("3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS))){
+                Map<String, Integer> writingData = translationParametersRedisService.getWritingData(shopName, translatesDO.getTarget());
+                appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + writingData);
+                progress.setProgressData(writingData);
+            }else {
+                Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
+                appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + progressData);
+                progress.setProgressData(progressData);
+            }
 
             list.add(progress);
         }

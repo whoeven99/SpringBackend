@@ -6,6 +6,7 @@ import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -31,6 +32,8 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateWriteStatusKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
@@ -53,6 +56,8 @@ public class ShopifyService {
     private UserTranslationDataService userTranslationDataService;
     @Autowired
     private RedisTranslateUserStatusService redisTranslateUserStatusService;
+    @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
@@ -892,6 +897,7 @@ public class ShopifyService {
                 try {
                     insertFlag = userTranslationDataService.insertTranslationData(json, request.getShopName());
                     if (insertFlag) {
+                        translationParametersRedisService.addWritingData(generateWriteStatusKey(request.getShopName(), request.getTarget()), WRITE_TOTAL, 1L);
                         appInsights.trackTrace("saveToShopify 用户： " + request.getShopName() + " target: " + request.getTarget() + " 插入成功 数据是： " + json);
                         break; // 成功就跳出循环
                     } else {

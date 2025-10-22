@@ -7,6 +7,8 @@ import org.springframework.util.CollectionUtils;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Component
 public class RedisIntegration {
     @Autowired
@@ -39,7 +41,11 @@ public class RedisIntegration {
      * 不设置缓存的hash
      */
     public void setHash(String key, String field, Object value) {
-        redisTemplate.opsForHash().put(key, field, value);
+        try {
+            redisTemplate.opsForHash().put(key, field, value);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException setHash " + key + " " + field + " " + value + " " + e.getMessage());
+        }
     }
 
     /**

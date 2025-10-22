@@ -6,6 +6,7 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -27,6 +28,7 @@ import java.util.List;
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.TranslateService.executorService;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
@@ -53,6 +55,8 @@ public class InitialTranslateDbTask {
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private TencentEmailService tencentEmailService;
+    @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -118,6 +122,10 @@ public class InitialTranslateDbTask {
                     // 8分钟后， 发送邮件
                     // 修改语言状态为1
                     iTranslatesService.updateTranslateStatus(task.getShopName(), 1, task.getTarget(), task.getSource());
+
+                    // 修改进度条是写入
+                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), String.valueOf(3));
+                    translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
                     rabbitMqTranslateService.triggerSendEmailLater(task.getShopName(), task.getTarget(), task.getSource(), userDO.getAccessToken(), localDateTime, costToken, translationCounterDO.getUsedChars(), limitChars);
                 }
             } else if (translatesDO.getStatus() == 3 && !task.isSendEmail()) {
