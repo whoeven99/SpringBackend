@@ -27,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -696,18 +698,18 @@ public class RabbitMqTranslateService {
         translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(3));
         translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
 
-//        Runnable delayedTask = () -> {
+        Runnable delayedTask = () -> {
         appInsights.trackTrace("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now());
         tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), startTime, costToken, usedChars, limitChars);
         appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
         initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
-//        };
+        };
 
-//        // 设置执行时间为当前时间 + 10分钟（使用 Instant 代替 Date）
-//        Instant runAt = Instant.now().plusSeconds(8 * 60);
-//
-//        // 使用推荐的 API
-//        taskScheduler.schedule(delayedTask, runAt);
+        // 设置执行时间为当前时间 + 10分钟（使用 Instant 代替 Date）
+        Instant runAt = Instant.now().plusSeconds(8 * 60);
+
+        // 使用推荐的 API
+        taskScheduler.schedule(delayedTask, runAt);
     }
 
     private void prepareForGlossary(RabbitMqTranslateVO vo, String translationKeyType, Map<String, String> keyMap1, Map<String, String> keyMap0) {
