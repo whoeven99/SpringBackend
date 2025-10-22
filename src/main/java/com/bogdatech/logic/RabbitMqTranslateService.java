@@ -474,6 +474,7 @@ public class RabbitMqTranslateService {
                     shopName, source, limitChars, translationKeyType, translateRequestTemplate);
             if (CollectionUtils.isEmpty(resultMap)) {
                 appInsights.trackTrace("FatalException translatePlainTextData " + shopName + " source: " + source + " untranslatedTexts : " + untranslatedTexts);
+                continue;
             }
 
             // 处理翻译后的数据
@@ -500,6 +501,7 @@ public class RabbitMqTranslateService {
                 shopifyService.saveToShopify(targetText, translation, item.getResourceId(), shopifyRequest);
                 printTranslation(targetText, sourceText, translation, vo.getShopName(), vo.getModeType(), item.getResourceId(), vo.getSource());
                 checkNeedAddProcessData(shopifyRequest.getShopName(), shopifyRequest.getTarget());
+
                 try {
                     if (!URI.equals(item.getTextType())) {
                         vocabularyService.InsertOne(vo.getTarget(), targetText, vo.getSource(), sourceText);
