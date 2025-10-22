@@ -52,7 +52,12 @@ public class RedisIntegration {
      * hash 增加指定数据
      */
     public Long incrementHash(String key, String field, long value) {
-        return redisTemplate.opsForHash().increment(key, field, value);
+        try {
+            return redisTemplate.opsForHash().increment(key, field, value);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException incrementHash " + key + " " + field + " " + value + " " + e.getMessage());
+        }
+        return null;
     }
 
     /**
