@@ -83,6 +83,10 @@ public class InitialTranslateDbTask {
         for (InitialTranslateTasksDO task : initialTranslateTasks) {
             // 获取Translates表里面 status的值。 2  和  3，  2做完成的判断， 3做部分翻译的状态
             TranslatesDO translatesDO = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
+            if (translatesDO == null) {
+                continue;
+            }
+
             if (translatesDO.getStatus().equals(7)){
                 //手动暂停的的邮件不发送
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, task.getShopName()).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));

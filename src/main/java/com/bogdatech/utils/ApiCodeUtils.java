@@ -204,7 +204,7 @@ public class ApiCodeUtils {
         languageMap.put("th", "Thai");
         languageMap.put("bo", "Tibetan");
         languageMap.put("ti", "Tigrinya");
-        languageMap.put("to", "Tonga");
+        languageMap.put("to", "Tongan");
         languageMap.put("tr", "Turkish");
         languageMap.put("tk", "Turkmen");
         languageMap.put("uk", "Ukrainian");
