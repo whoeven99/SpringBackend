@@ -154,7 +154,7 @@ public class VocabularyServiceImpl extends ServiceImpl<VocabularyMapper, Vocabul
             //遍历results，获取source相同的值
             for (VocabularyDO vocabulary : results) {
                 String sourceText = getTargetLanguageText(vocabulary, source);
-                if (sourceText.equals(value)) {
+                if (value.equals(sourceText)) {
                     return getTargetLanguageText(vocabulary, target);
                 }
             }
