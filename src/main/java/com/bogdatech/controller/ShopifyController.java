@@ -22,6 +22,7 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.StringUtils.parsePlanName;
 
 @RestController
 @RequestMapping("/shopify")
@@ -183,7 +184,13 @@ public class ShopifyController {
 
         // 根据计划id 去查id名称
         String planType = iSubscriptionPlansService.getOne(new LambdaQueryWrapper<SubscriptionPlansDO>().eq(SubscriptionPlansDO::getPlanId, userSubscriptionsDO.getPlanId())).getPlanName();
-        subscriptionVO.setPlanType(planType);
+
+        // 判断计划名称
+        String parsePlanType = parsePlanName(planType);
+        if (parsePlanType == null) {
+            return new BaseResponse<>().CreateErrorResponse("parsePlanType is null");
+        }
+        subscriptionVO.setPlanType(parsePlanType);
 
         if (userSubscriptionsDO.getFeeType() == null) {
             userSubscriptionsDO.setFeeType(0);
