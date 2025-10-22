@@ -190,7 +190,7 @@ public class TranslateDataService {
         }
         appInsights.trackTrace("translatePlainTextData " + shopName + " source: " + source + " translatedJson : " + translatedJson);
         if (translatedJson != null) {
-            return JsonUtils.jsonToObject(translatedJson, new TypeReference<Map<String, String>>() {});
+            return JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
         }
         return new HashMap<>();
     }
@@ -201,7 +201,7 @@ public class TranslateDataService {
                                   Integer limitChars,
                                   String prompt, boolean isSingleFlag) {
         try {
-            String json = OBJECT_MAPPER.writeValueAsString(untranslatedTexts);
+            String json = objectToJson(untranslatedTexts);
             return jsoupUtils.translateByCiwiUserModel(translateRequest.getTarget(), json, translateRequest.getShopName(), translateRequest.getSource(), counter, limitChars, prompt, isSingleFlag);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation translateBatch 调用翻译接口失败: " + e.getMessage());
