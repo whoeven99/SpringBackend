@@ -892,6 +892,7 @@ public class ShopifyService {
                 try {
                     insertFlag = userTranslationDataService.insertTranslationData(json, request.getShopName());
                     if (insertFlag) {
+                        appInsights.trackTrace("saveToShopify 用户： " + request.getShopName() + " target: " + request.getTarget() + " 插入成功 数据是： " + json);
                         break; // 成功就跳出循环
                     } else {
                         throw new RuntimeException("插入返回false");
@@ -917,7 +918,7 @@ public class ShopifyService {
                 }
             }
         } catch (Exception e2) {
-            appInsights.trackTrace("saveToShopify " + request.getShopName() + " save to Shopify errors : " + e2.getMessage());
+            appInsights.trackTrace("saveToShopify 每日须看 " + request.getShopName() + " save to Shopify errors : " + e2.getMessage());
         }
     }
 }
