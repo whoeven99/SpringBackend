@@ -2,17 +2,20 @@ package com.bogdatech.logic.translate;
 
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsonUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,10 +23,13 @@ import java.util.Set;
 import static com.bogdatech.constants.TranslateConstants.METAFIELD;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
+import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.glossaryText;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.PlaceholderUtils.getListPrompt;
 import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
@@ -40,6 +46,8 @@ public class TranslateDataService {
     private RedisProcessService redisProcessService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
+    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
 
     public String translateHtmlData(String sourceText, RabbitMqTranslateVO vo, CharacterCountUtils counter,
                                     ShopifyRequest shopifyRequest, String source,
@@ -164,5 +172,41 @@ public class TranslateDataService {
             shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
         }
         return finalText;
+    }
+
+    public Map<String, String> translatePlainText(List<String> untranslatedTexts, RabbitMqTranslateVO vo,
+                                                  CharacterCountUtils counter, String shopName, String source,
+                                                  Integer limitChars, String translationKeyType,
+                                                  TranslateRequest translateRequestTemplate) {
+        // 根据不同的key类型，生成对应提示词，后翻译
+        String prompt = getListPrompt(getLanguageName(vo.getTarget()), vo.getLanguagePack(), translationKeyType, vo.getModeType());
+        appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
+        String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt, false);
+
+        // 如果主翻译服务 translateBatch 返回 null，则使用阿里云翻译服务作为备用
+        if (translatedJson == null) {
+            String json = objectToJson(untranslatedTexts);
+            translatedJson = aLiYunTranslateIntegration.userTranslate(json, prompt, counter, vo.getTarget(), shopName, limitChars, false);
+        }
+        appInsights.trackTrace("translatePlainTextData " + shopName + " source: " + source + " translatedJson : " + translatedJson);
+        if (translatedJson != null) {
+            return JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
+        }
+        return new HashMap<>();
+    }
+
+    private String translateBatch(TranslateRequest translateRequest,
+                                  List<String> untranslatedTexts,
+                                  CharacterCountUtils counter,
+                                  Integer limitChars,
+                                  String prompt, boolean isSingleFlag) {
+        try {
+            String json = objectToJson(untranslatedTexts);
+            return jsoupUtils.translateByCiwiUserModel(translateRequest.getTarget(), json, translateRequest.getShopName(), translateRequest.getSource(), counter, limitChars, prompt, isSingleFlag);
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation translateBatch 调用翻译接口失败: " + e.getMessage());
+            appInsights.trackException(e);
+            return null;
+        }
     }
 }
