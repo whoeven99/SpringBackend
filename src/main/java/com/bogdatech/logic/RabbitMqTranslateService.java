@@ -27,11 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.SHOPIFY_RETURN_ERROR;
@@ -41,7 +41,6 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.PlaceholderUtils.getListPrompt;
@@ -100,7 +99,6 @@ public class RabbitMqTranslateService {
      * MQ翻译
      * 读取该用户的shopify数据，然后循环获取模块数据
      * 根据翻译类型选择不同的邮件发送方式: true-> 手动； false-> 自动
-     *
      */
     public void initialTasks(ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request,
                              boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
@@ -701,10 +699,10 @@ public class RabbitMqTranslateService {
         translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
 
         Runnable delayedTask = () -> {
-            appInsights.trackTrace("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now());
-            tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), startTime, costToken, usedChars, limitChars);
-            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
-            initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
+        appInsights.trackTrace("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now());
+        tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), startTime, costToken, usedChars, limitChars);
+        appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
+        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
         };
 
         // 设置执行时间为当前时间 + 10分钟（使用 Instant 代替 Date）

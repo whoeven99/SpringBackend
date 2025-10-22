@@ -12,9 +12,11 @@ import com.bogdatech.mapper.TranslateTasksMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static com.bogdatech.enums.TranslateEnum.NOT_TRANSLATED;
+import static com.bogdatech.enums.TranslateEnum.TRANSLATING;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -37,7 +39,7 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
 
     @Override
     public List<TranslateTasksDO> find0StatusTasks() {
-        return baseMapper.selectList(new QueryWrapper<TranslateTasksDO>().eq("status", 0).orderBy(true, true , "created_at"));
+        return baseMapper.selectList(new QueryWrapper<TranslateTasksDO>().eq("status", 0).orderBy(true, true, "created_at"));
     }
 
     @Override
@@ -54,7 +56,7 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
     public int deleteStatus1Data() {
         //获取status为1的数据
         List<TranslateTasksDO> statusList = baseMapper.selectList(new QueryWrapper<TranslateTasksDO>().eq("status", 1));
-        if (statusList == null ||statusList.isEmpty() ) {
+        if (statusList == null || statusList.isEmpty()) {
             return 0;
         }
         //删除status为1的数据
@@ -99,6 +101,12 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
     @Override
     public List<TranslateTasksDO> getTranslateTasksByShopNameAndSourceAndTarget(String shopName, String source, String target) {
         String query = "\"source\":\"" + source + "\",\"target\":\"" + target + "\"";
-        return baseMapper.selectList(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).eq(TranslateTasksDO::getStatus, NOT_TRANSLATED.getStatus()).like(TranslateTasksDO::getPayload, query));
+        return baseMapper.selectList(
+                new LambdaQueryWrapper<TranslateTasksDO>()
+                        .eq(TranslateTasksDO::getShopName, shopName)
+                        .in(TranslateTasksDO::getStatus,
+                                Arrays.asList(NOT_TRANSLATED.getStatus(), TRANSLATING.getStatus()))
+                        .like(TranslateTasksDO::getPayload, query)
+        );
     }
 }
