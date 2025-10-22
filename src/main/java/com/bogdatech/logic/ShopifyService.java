@@ -882,10 +882,42 @@ public class ShopifyService {
             CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
             String json = objectToJson(cloudServiceRequest);
 
-            //存到数据库中
-            userTranslationDataService.insertTranslationData(json, request.getShopName());
-        } catch (Exception e) {
-            appInsights.trackTrace("saveToShopify " + request.getShopName() + " save to Shopify errors : " + e.getMessage());
+            // 存到数据库中
+            int maxRetries = 3;           // 最大重试次数
+            int retryCount = 0;           // 当前重试次数
+            long waitTime = 1000;         // 初始等待时间（毫秒） = 1s
+
+            boolean insertFlag;
+            while (retryCount < maxRetries) {
+                try {
+                    insertFlag = userTranslationDataService.insertTranslationData(json, request.getShopName());
+                    if (insertFlag) {
+                        break; // 成功就跳出循环
+                    } else {
+                        throw new RuntimeException("插入返回false");
+                    }
+                } catch (Exception e1) {
+                    retryCount++;
+                    if (retryCount >= maxRetries) {
+                        appInsights.trackTrace("saveToShopify 已达到最大重试次数，插入失败: " + request.getShopName() + " 要插入的数据" + json + e1.getMessage());
+                        break;
+                    }
+
+                    appInsights.trackTrace("saveToShopify 第 " + retryCount + " 次插入失败，" +
+                            "等待 " + waitTime + " 毫秒后重试..." + " 用户： " + request.getShopName() + " 要插入的数据" + json);
+
+                    try {
+                        Thread.sleep(waitTime);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+
+                    waitTime *= 2; // 等待时间翻倍（指数退避）
+                }
+            }
+        } catch (Exception e2) {
+            appInsights.trackTrace("saveToShopify " + request.getShopName() + " save to Shopify errors : " + e2.getMessage());
         }
     }
 }

@@ -32,11 +32,6 @@ public class SaveShopifyDataTask {
 
         for (UserTranslationDataDO data : userTranslationDataDOS
         ) {
-            userTranslationDataService.updateStatusTo2(data.getTaskId(), 2);
-        }
-
-        for (UserTranslationDataDO data : userTranslationDataDOS
-        ) {
             executorService.submit(() -> {
                 userTranslationDataService.translationDataToSave(data);
             });
