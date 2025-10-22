@@ -198,12 +198,12 @@ public class ShopifyController {
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
-        if ("ciwishop.myshopify.com".equals(shopName)) {
-            subscriptionVO.setUserSubscriptionPlan(6);
-            subscriptionVO.setCurrentPeriodEnd(null);
-            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
-            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
-        }
+//        if ("ciwishop.myshopify.com".equals(shopName)) {
+//            subscriptionVO.setUserSubscriptionPlan(6);
+//            subscriptionVO.setCurrentPeriodEnd(null);
+//            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
+//            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+//        }
 
         //如果是userSubscriptionPlan是1和2，传null
         if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2 || userSubscriptionPlan == 8) {
