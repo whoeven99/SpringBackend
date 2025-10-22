@@ -183,7 +183,7 @@ public class TranslateDataService {
         appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
         String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt, false);
 
-        // 对null的处理
+        // 如果主翻译服务 translateBatch 返回 null，则使用阿里云翻译服务作为备用
         if (translatedJson == null) {
             String json = objectToJson(untranslatedTexts);
             translatedJson = aLiYunTranslateIntegration.userTranslate(json, prompt, counter, vo.getTarget(), shopName, limitChars, false);
