@@ -197,22 +197,20 @@ public class ProcessDbTaskService {
     private void startTranslateDbTask(Map<String, Set<TranslateTextDO>> stringSetMap, RabbitMqTranslateVO vo, CharacterCountUtils counter) {
         for (Map.Entry<String, Set<TranslateTextDO>> entry : stringSetMap.entrySet()) {
             switch (entry.getKey()) {
+                case LIST_SINGLE:
                 case HTML:
-                    rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, HTML);
+                    rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, entry.getKey());
+                    break;
+                case GLOSSARY:
+                    if (!CollectionUtils.isEmpty(vo.getGlossaryMap())) {
+                        rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, GLOSSARY);
+                    }
                     break;
                 case PLAIN_TEXT:
                 case TITLE:
                 case META_TITLE:
                 case LOWERCASE_HANDLE:
                     rabbitMqTranslateService.translatePlainTextData(entry.getValue(), vo, counter, entry.getKey());
-                    break;
-                case LIST_SINGLE:
-                    rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, LIST_SINGLE);
-                    break;
-                case GLOSSARY:
-                    if (!CollectionUtils.isEmpty(vo.getGlossaryMap())) {
-                        rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, GLOSSARY);
-                    }
                     break;
                 default:
                     break;
