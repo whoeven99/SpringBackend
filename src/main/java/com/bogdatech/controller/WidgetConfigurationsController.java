@@ -29,7 +29,7 @@ public class WidgetConfigurationsController {
         int maxRetries = 3;
         int attempt = 0;
         boolean success = false;
-
+        appInsights.trackTrace("saveAndUpdateData 传的数据是： " + widgetConfigurationsDO);
         while (attempt < maxRetries && !success) {
             try {
                 b = widgetConfigurationsService.saveAndUpdateData(widgetConfigurationsDO);
