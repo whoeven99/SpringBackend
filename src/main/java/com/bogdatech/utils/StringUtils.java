@@ -222,8 +222,25 @@ public class StringUtils {
     }
 
     /**
-     * 将语言代码，转化为图片对应代码
+     * 判断计划名称 最终输出：Free || Basic || Pro || Premium
      * */
-
+    public static String parsePlanName(String planName) {
+        if (planName == null) {
+            return null;
+        }
+        if (planName.contains("Free")) {
+            return "Free";
+        }
+        if (planName.contains("Basic")) {
+            return "Basic";
+        }
+        if (planName.contains("Pro")) {
+            return "Pro";
+        }
+        if (planName.contains("Premium")) {
+            return "Premium";
+        }
+        return null;
+    }
 
 }

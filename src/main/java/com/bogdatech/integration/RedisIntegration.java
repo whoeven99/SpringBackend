@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -108,12 +107,6 @@ public class RedisIntegration {
         return redisTemplate.opsForValue().get(key) + "";
     }
 
-    /**
-     * keys
-     */
-    public Set<String> keys(String pattern) {
-        return redisTemplate.keys(pattern); // 匹配所有 key
-    }
 
     /**
      * multiGet

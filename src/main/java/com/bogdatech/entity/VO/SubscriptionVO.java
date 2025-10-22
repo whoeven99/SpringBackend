@@ -11,4 +11,5 @@ public class SubscriptionVO {
     private Integer userSubscriptionPlan;
     private String currentPeriodEnd;
     private Integer feeType;
+    private String planType;
 }
