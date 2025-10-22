@@ -40,6 +40,8 @@ public class ShopifyController {
     private IUsersService usersService;
     @Autowired
     private IUserTrialsService iUserTrialsService;
+    @Autowired
+    private ISubscriptionPlansService iSubscriptionPlansService;
 
     //通过测试环境调shopify的API
     @PostMapping("/test123")
@@ -173,10 +175,16 @@ public class ShopifyController {
         }
         SubscriptionVO subscriptionVO = new SubscriptionVO();
         UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getOne(new LambdaQueryWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName));
+
         if (userSubscriptionsDO == null) {
             appInsights.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
         }
+
+        // 根据计划id 去查id名称
+        String planType = iSubscriptionPlansService.getOne(new LambdaQueryWrapper<SubscriptionPlansDO>().eq(SubscriptionPlansDO::getPlanId, userSubscriptionsDO.getPlanId())).getPlanName();
+        subscriptionVO.setPlanType(planType);
+
         if (userSubscriptionsDO.getFeeType() == null) {
             userSubscriptionsDO.setFeeType(0);
         }
