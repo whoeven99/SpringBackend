@@ -468,7 +468,7 @@ public class RabbitMqTranslateService {
                 String targetText = resultMap.get(sourceText);
                 if (targetText == null) {
                     appInsights.trackTrace("FatalException translatePlainTextData " + shopName + " source: " + source + " untranslatedTexts : " + untranslatedTexts);
-                    continue;
+                    appInsights.trackTrace("FatalException translatePlainTextData " + shopName + " source: " + source + " missing translation for: " + sourceText);
                 }
 
                 translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), String.valueOf(2));
