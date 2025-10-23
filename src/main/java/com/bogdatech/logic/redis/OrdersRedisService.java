@@ -23,7 +23,8 @@ public class OrdersRedisService {
     }
 
     public void setOrderId(String shopName, String orderId) {
-        redisIntegration.expire(generalOrderIdKey(shopName, orderId), 43200);
+        redisIntegration.set(generalOrderIdKey(shopName, orderId), orderId);
+        redisIntegration.expire(generalOrderIdKey(shopName, orderId), 43200L);
     }
 
     public String getOrderId(String shopName, String orderId) {

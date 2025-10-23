@@ -85,7 +85,7 @@ public class TranslationCounterController {
         }
 
         // 获取用户accessToken
-        if (translationCounterService.updateOnceCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars(), addCharsVO.getSleepTime())){
+        if (translationCounterService.updateOnceCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars())){
             appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
         }

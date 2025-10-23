@@ -12,5 +12,4 @@ public class AddCharsVO {
     private Integer chars;
     private String gid; // 计划id
     private String accessToken;
-    private Long sleepTime;
 }
