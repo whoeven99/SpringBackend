@@ -321,15 +321,15 @@ public class RabbitMqTranslateService {
      * 根据从数据库获取的数据，请求shopify获取数据
      */
     public String getShopifyDataByDb(RabbitMqTranslateVO rabbitMqTranslateVO) {
-        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget(), null);
-        cloudServiceRequest.setBody(rabbitMqTranslateVO.getShopifyData());
-        ShopifyRequest shopifyRequest = new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget());
         String shopifyData = null;
         try {
             String env = System.getenv("ApplicationEnv");
             if ("prod".equals(env) || "dev".equals(env)) {
+                ShopifyRequest shopifyRequest = new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget());
                 shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, rabbitMqTranslateVO.getShopifyData()));
             } else {
+                CloudServiceRequest cloudServiceRequest = new CloudServiceRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget(), null);
+                cloudServiceRequest.setBody(rabbitMqTranslateVO.getShopifyData());
                 shopifyData = getShopifyDataByCloud(cloudServiceRequest);
             }
         } catch (Exception e) {
@@ -446,35 +446,29 @@ public class RabbitMqTranslateService {
             int endIndex = Math.min(i + BATCH_SIZE, list.size());
             List<TranslateTextDO> batch = list.subList(i, endIndex);
 
-            // 筛选出来要翻译的数据
-            List<String> untranslatedTexts = batch.stream()
-                    // 只保留那些 “newCacheAndDBTranslateData(...) 返回 false” 的元素
-                    .filter(t -> !newCacheAndDBTranslateData(source, shopifyRequest, t, target))
-                    // 取出每个元素的 sourceText 字段
-                    .map(TranslateTextDO::getSourceText)
-                    .distinct()
-                    // 收集成一个 List<String>
-                    .collect(Collectors.toList());
-
-            //TODO：更细致的判断额度是否足够，足够继续，不够返回，开始翻译
-            if (untranslatedTexts.isEmpty()) {
-                continue;
+            Map<String, String> cachedMap = new HashMap<>();
+            List<String> untranslatedTexts = new ArrayList<>();
+            for (TranslateTextDO translateTextDO : batch) {
+                String cache = isCached(translateTextDO.getSourceText(), target);
+                if (cache != null) {
+                    cachedMap.put(translateTextDO.getSourceText(), cache);
+                } else {
+                    untranslatedTexts.add(translateTextDO.getSourceText());
+                }
             }
 
             Map<String, String> resultMap = translateDataService.translatePlainText(untranslatedTexts, vo, counter,
                     shopName, source, limitChars, translationKeyType, translateRequestTemplate);
-            if (CollectionUtils.isEmpty(resultMap)) {
-                appInsights.trackTrace("FatalException translatePlainTextData " + shopName + " source: " + source + " untranslatedTexts : " + untranslatedTexts);
-                continue;
-            }
+
+            resultMap.putAll(cachedMap);
 
             // 处理翻译后的数据
             for (TranslateTextDO item : batch) {
                 String sourceText = item.getSourceText();
                 String targetText = resultMap.get(sourceText);
                 if (targetText == null) {
-                    appInsights.trackTrace("FatalException translatePlainTextData " + shopifyRequest.getShopName() + " 翻译结果缺失：" + sourceText);
-                    continue;
+                    appInsights.trackTrace("FatalException translatePlainTextData " + shopName + " source: " + source + " untranslatedTexts : " + untranslatedTexts);
+                    appInsights.trackTrace("FatalException translatePlainTextData " + shopName + " source: " + source + " missing translation for: " + sourceText);
                 }
 
                 translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), String.valueOf(2));
@@ -570,14 +564,14 @@ public class RabbitMqTranslateService {
         }
     }
 
-    /**
-     * 缓存翻译
-     */
+    // TODO 都改成isCached
     public boolean cacheOrDatabaseTranslateData(String value, String source, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
         //获取缓存数据
         String targetCache = redisProcessService.getCacheData(request.getTarget(), value);
         if (targetCache != null) {
             targetCache = isHtmlEntity(targetCache);
+
+            // TODO 这里要挪出去
             shopifyService.saveToShopify(targetCache, translation, resourceId, request);
             printTranslation(targetCache, value, translation, request.getShopName(), "Cache", resourceId, source);
 
@@ -588,22 +582,14 @@ public class RabbitMqTranslateService {
         return false;
     }
 
-    /**
-     * 合并新的缓存和数据库翻译
-     */
-    public boolean newCacheAndDBTranslateData(String source, ShopifyRequest request, TranslateTextDO translateTextDO, String target) {
-        String targetCache = redisProcessService.getCacheData(request.getTarget(), translateTextDO.getSourceText());
+    public String isCached(String value, String target) {
+        //获取缓存数据
+        String targetCache = redisProcessService.getCacheData(target, value);
         if (targetCache != null) {
             targetCache = isHtmlEntity(targetCache);
-            Map<String, Object> translation = createTranslationMap(target, translateTextDO.getTextKey(), translateTextDO.getDigest());
-            shopifyService.saveToShopify(targetCache, translation, translateTextDO.getResourceId(), request);
-            printTranslation(targetCache, translateTextDO.getSourceText(), translation, request.getShopName(), "Cache", translateTextDO.getResourceId(), source);
-
-            // 翻译进度条加1
-            checkNeedAddProcessData(request.getShopName(), request.getTarget());
-            return true;
+            return targetCache;
         }
-        return false;
+        return null;
     }
 
     /**
@@ -705,19 +691,16 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace("判断是否达到额度限制 用户： " + vo.getShopName());
             updateCharsWhenExceedLimit(counter, shopName, limitChars, new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-            //缓存翻译和数据库翻译
-            if (cacheOrDatabaseTranslateData(value, source, translation, resourceId, shopifyRequest)) {
-                continue;
-            }
-
             //开始翻译
-            String translatedValue = null;
-            if (translationKeyType.equals(LIST_SINGLE)) {
-                translatedValue = translateDataService.translateListSingleData(value, target, vo, counter, shopName, shopifyRequest, source, translation, translateTextDO.getResourceId());
-            } else if (translationKeyType.equals(HTML)) {
-                translatedValue = translateDataService.translateHtmlData(value, vo, counter, shopifyRequest, source, translation, resourceId);
-            } else if (translationKeyType.equals(GLOSSARY)) {
-                translatedValue = translateDataService.translateGlossaryData(value, vo, counter, shopifyRequest, source, translation, resourceId, limitChars, keyMap0, keyMap1);
+            String translatedValue = isCached(value, target);
+            if (translatedValue == null) {
+                if (translationKeyType.equals(LIST_SINGLE)) {
+                    translatedValue = translateDataService.translateListSingleData(value, target, vo, counter, shopName, shopifyRequest, source, translation, translateTextDO.getResourceId());
+                } else if (translationKeyType.equals(HTML)) {
+                    translatedValue = translateDataService.translateHtmlData(value, vo, counter, shopifyRequest, source, translation, resourceId);
+                } else if (translationKeyType.equals(GLOSSARY)) {
+                    translatedValue = translateDataService.translateGlossaryData(value, vo, counter, shopifyRequest, source, translation, resourceId, limitChars, keyMap0, keyMap1);
+                }
             }
 
             if (translatedValue == null) {
