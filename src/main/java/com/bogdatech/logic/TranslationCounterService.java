@@ -42,12 +42,20 @@ public class TranslationCounterService {
 
     public final String ACTIVE = "ACTIVE";
 
-    public Boolean updateOnceCharsByShopName(String shopName, String accessToken, String gid, Integer chars) {
+    public Boolean updateOnceCharsByShopName(String shopName, String accessToken, String gid, Integer chars, Long sleep) {
         // 添加订单标识
         ordersRedisService.setOrderId(shopName, gid);
 
         //根据gid，判断是否符合添加额度的条件
         appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars + " accessToken: " + accessToken);
+
+        if (sleep != null){
+            try {
+                Thread.sleep(sleep);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         return iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).setSql("chars = chars + " + chars));
     }
