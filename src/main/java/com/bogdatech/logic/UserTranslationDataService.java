@@ -92,10 +92,12 @@ public class UserTranslationDataService {
 
         Map<Object, Object> progressTranslationKey = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget()));
         String status = progressTranslationKey.get(TRANSLATION_STATUS).toString();
+        appInsights.trackTrace("translationDataToSave status: " + status + " shopName: " + translatesDO.getShopName() + " target: " + translatesDO.getTarget() + " source: " + translatesDO.getSource());
         if ("3".equals(status)) {
             // 判断是否该用户是否写入完成
             // 获取写入进度条数据,判断,如果写入的大于总共的, 修改翻译进度为1,修改进度条进度状态为4(写入完成)
             Map<String, Integer> writingData = translationParametersRedisService.getWritingData(cloudInsertRequest.getShopName(), cloudInsertRequest.getTarget());
+            appInsights.trackTrace("translationDataToSave writingData: " + writingData + " shopName: " + translatesDO.getShopName() + " target: " + translatesDO.getTarget() + " source: " + translatesDO.getSource());
             if (writingData != null && writingData.get(WRITE_DONE) != null && writingData.get(WRITE_TOTAL) != null && writingData.get(WRITE_DONE) >= writingData.get(WRITE_TOTAL)) {
                 // 修改翻译进度为1
                 boolean updateFlag = iTranslatesService.updateTranslateStatus(translatesDO.getShopName(), 1, translatesDO.getTarget(), translatesDO.getSource()) > 0;

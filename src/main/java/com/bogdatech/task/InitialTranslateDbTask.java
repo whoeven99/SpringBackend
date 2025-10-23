@@ -115,6 +115,7 @@ public class InitialTranslateDbTask {
                     // 修改进度条是写入
                     translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), String.valueOf(3));
                     translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
+                    appInsights.trackTrace("scanAndSendEmail 用户: " + initialTranslateTasksDO.getShopName() + " 翻译完成，正在写入.");
                 }
             } else if (translatesDO.getStatus() == 3 && !task.isSendEmail()) {
                 // 为3，发送部分翻译的邮件
