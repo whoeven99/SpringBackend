@@ -23,5 +23,6 @@ public class ProgressResponse {
         private String resourceType;
         private String value;
         private Map<String, Integer> progressData;
+        private Map<String, Integer> writingData;
     }
 }

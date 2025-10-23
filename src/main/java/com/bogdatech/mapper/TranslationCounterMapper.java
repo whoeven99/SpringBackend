@@ -26,12 +26,12 @@ public interface TranslationCounterMapper extends BaseMapper<TranslationCounterD
             "WHERE us.shop_name = #{shopName}")
     Integer getMaxCharsByShopName(String shopName);
 
-    @Update("UPDATE TranslationCounter WITH (UPDLOCK, ROWLOCK) SET chars = chars + #{chars} WHERE shop_name = #{shopName}")
+    @Update("UPDATE TranslationCounter  SET chars = chars + #{chars} WHERE shop_name = #{shopName}")
     Boolean updateCharsByShopName(String shopName, int chars);
 
-    @Select("SELECT * FROM TranslationCounter WITH (ROWLOCK, UPDLOCK) WHERE shop_name = #{shopName}")
+    @Select("SELECT * FROM TranslationCounter WHERE shop_name = #{shopName}")
     TranslationCounterDO getOneForUpdate(String shopName);
 
-    @Update("UPDATE TranslationCounter WITH (UPDLOCK, ROWLOCK) SET used_chars = used_chars + #{usedChars} WHERE shop_name = #{shopName} AND used_chars <= #{maxChars}")
+    @Update("UPDATE TranslationCounter SET used_chars = used_chars + #{usedChars} WHERE shop_name = #{shopName} AND used_chars <= #{maxChars}")
     Boolean updateAddUsedCharsByShopName(String shopName, Integer usedChars, Integer maxChars);
 }

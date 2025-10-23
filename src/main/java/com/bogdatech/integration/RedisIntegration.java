@@ -34,7 +34,11 @@ public class RedisIntegration {
      * 不设置缓存
      */
     public void set(String key, String value) {
-        redisTemplate.opsForValue().set(key, value);
+        try {
+            redisTemplate.opsForValue().set(key, value);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException set " + key + " " + value + " " + e.getMessage());
+        }
     }
 
     /**
@@ -130,7 +134,12 @@ public class RedisIntegration {
      * 删除缓存
      */
     public Boolean delete(String key) {
-        return redisTemplate.delete(key);
+        try {
+            return redisTemplate.delete(key);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException delete " + key + " " + e.getMessage());
+        }
+        return false;
     }
 
     /**

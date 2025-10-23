@@ -6,11 +6,15 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.integration.RedisIntegration;
+import com.bogdatech.logic.redis.OrdersRedisService;
 import com.bogdatech.mapper.TranslationCounterMapper;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.bogdatech.logic.redis.OrdersRedisService.generalOrderIdKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSingleQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -20,7 +24,8 @@ import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 @Service
 @Transactional
 public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounterMapper, TranslationCounterDO> implements ITranslationCounterService {
-
+    @Autowired
+    private OrdersRedisService ordersRedisService;
 
     @Override
     public TranslationCounterDO readCharsByShopName(String shopName) {
@@ -44,6 +49,9 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
 
     @Override
     public Boolean updateCharsByShopName(String shopName, String accessToken, String gid, Integer chars) {
+        // 添加订单标识
+        ordersRedisService.setOrderId(shopName, gid);
+
         //根据gid，判断是否符合添加额度的条件
         appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars + " accessToken: " + accessToken);
         //根据传来的gid获取， 判断调用那个方法，查询相关订阅信息

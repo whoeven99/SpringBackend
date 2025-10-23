@@ -178,6 +178,9 @@ public class TranslateDataService {
                                                   CharacterCountUtils counter, String shopName, String source,
                                                   Integer limitChars, String translationKeyType,
                                                   TranslateRequest translateRequestTemplate) {
+        if (untranslatedTexts.isEmpty()) {
+            return new HashMap<>();
+        }
         // 根据不同的key类型，生成对应提示词，后翻译
         String prompt = getListPrompt(getLanguageName(vo.getTarget()), vo.getLanguagePack(), translationKeyType, vo.getModeType());
         appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
