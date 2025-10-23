@@ -1,7 +1,6 @@
 package com.bogdatech.utils;
 
 
-import com.bogdatech.Service.IVocabularyService;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.RedisProcessService;
@@ -49,9 +48,6 @@ public class LiquidHtmlTranslatorUtils {
     private JsoupUtils jsoupUtils;
     @Autowired
     private RedisProcessService redisProcessService;
-    @Autowired
-    private IVocabularyService vocabularyService;
-
 
     /**
      * 清理文本格式：去除多余的换行符和空格
@@ -405,14 +401,6 @@ public class LiquidHtmlTranslatorUtils {
                 allTranslatedMap.put(sourceText, cacheData);
                 it.remove();
                 continue;
-            }
-
-            String dbData = vocabularyService.getTranslateTextDataInVocabulary(target, sourceText, source);
-            appInsights.trackTrace("db翻译 用户： " + shopName + " dbData " + dbData + " sourceText " + sourceText);
-            if (dbData != null) {
-                allTranslatedMap.put(sourceText, dbData);
-                redisProcessService.setCacheData(target, dbData, sourceText);
-                it.remove();
             }
         }
     }
