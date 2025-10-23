@@ -211,7 +211,7 @@ public class TranslationParametersRedisService {
             Long costToken = translationCounterRedisService.getLanguageData(generateProcessKey(shopName, target));
 
             // 获取initial task 的创建时间
-            InitialTranslateTasksDO initialTranslateTasksDO = initialTranslateTasksMapper.selectOne(new QueryWrapper<InitialTranslateTasksDO>().select("TOP 1 id").eq("status", 1).eq("deleted", false).eq("send_email", false).eq("shop_name", shopName).eq("target", target).eq("source", source));
+            InitialTranslateTasksDO initialTranslateTasksDO = initialTranslateTasksMapper.selectOne(new QueryWrapper<InitialTranslateTasksDO>().select("TOP 1 task_id").eq("status", 1).eq("deleted", false).eq("send_email", false).eq("shop_name", shopName).eq("target", target).eq("source", source));
 
             if (initialTranslateTasksDO == null) {
                 appInsights.trackTrace("FatalException translationDataToSave 获取initial task 失败 shopName : " + shopName + " target : " + target + " source : " + source);
