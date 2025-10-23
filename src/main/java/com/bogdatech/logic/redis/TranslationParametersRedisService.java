@@ -240,10 +240,9 @@ public class TranslationParametersRedisService {
      * 发送翻译成功的邮件
      */
     public void triggerSendEmailLater(String shopName, String target, String source, LocalDateTime startTime, Long costToken, Integer usedChars, Integer limitChars, String taskType) {
-        System.out.println("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now());
         tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, null, source, target, null), startTime, costToken, usedChars, limitChars);
         System.out.println("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, taskType).set(InitialTranslateTasksDO::isSendEmail, 1));
+        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, taskType).eq(InitialTranslateTasksDO::getTarget, target).eq(InitialTranslateTasksDO::getSource, source).set(InitialTranslateTasksDO::isSendEmail, 1));
     }
 
 }
