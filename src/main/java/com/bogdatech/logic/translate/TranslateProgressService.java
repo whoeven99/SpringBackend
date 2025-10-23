@@ -66,7 +66,7 @@ public class TranslateProgressService {
             Map<String, String> map = translationParametersRedisService.hgetAll(generateProgressTranslationKey(shopName, source, translatesDO.getTarget()));
             progress.setResourceType(map.get(TranslationParametersRedisService.TRANSLATING_MODULE));
             progress.setValue(map.get(TranslationParametersRedisService.TRANSLATING_STRING));
-            progress.setTranslateStatus("3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_saving_shopify"
+            progress.setTranslateStatus("4".equals(map.get(map.get(TranslationParametersRedisService.TRANSLATION_STATUS))) ? "translation_process_saved" : "3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_saving_shopify"
                     : "2".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_translating"
                     : "translation_process_init");
 

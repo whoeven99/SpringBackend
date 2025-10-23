@@ -44,6 +44,13 @@ public class TranslationParametersRedisService {
     }
 
     /**
+     * 删除写入key
+     * */
+    public void delWritingDataKey(String shopName, String target) {
+        redisIntegration.delete(generateWriteStatusKey(shopName, target));
+    }
+
+    /**
      * 存写入状态的数据 done 和 total
      */
     public Long addWritingData(String pwKey, String model, long data) {

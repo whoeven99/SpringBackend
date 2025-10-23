@@ -231,6 +231,7 @@ public class TranslateService {
             translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
             translationParametersRedisService.hsetProgressNumber(generateProgressTranslationKey(shopName, source, target), generateProcessKey(shopName, target));
             redisProcessService.initProcessData(generateProcessKey(shopName, target));
+            translationParametersRedisService.delWritingDataKey(shopName, target);
 
             // 将翻译项中的模块改为null
             translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
