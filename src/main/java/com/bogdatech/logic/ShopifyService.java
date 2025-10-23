@@ -10,6 +10,7 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsonUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -58,16 +59,8 @@ public class ShopifyService {
 
     //封装调用云服务器实现获取shopify数据的方法
     public static String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
-        // 使用 ObjectMapper 将对象转换为 JSON 字符串
-        String string;
-        try {
-            String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
-            string = sendShopifyPost("test123", requestBody);
-        } catch (Exception e) {
-            appInsights.trackException(e);
-            return null;
-        }
-        return string;
+        String requestBody = JsonUtils.objectToJson(cloudServiceRequest);
+        return sendShopifyPost("test123", requestBody);
     }
 
     // 包装一层，用于获取用户实际未翻译和部分翻译的语言数
@@ -75,12 +68,10 @@ public class ShopifyService {
         // 获取该用户所有的未翻译和部分翻译的所有token数据
         List<String> all = redisTranslateUserStatusService.getAll(request.getShopName(), source);
         int allLanguage = 1;
-        for (String status : all
-             ) {
+        for (String status : all) {
             if ("0".equals(status) || "3".equals(status) || "7".equals(status)){
                 allLanguage ++;
             }
-
         }
         if (allLanguage > 1) {
             allLanguage -= 1;

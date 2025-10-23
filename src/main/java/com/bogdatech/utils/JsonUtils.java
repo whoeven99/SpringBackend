@@ -17,7 +17,7 @@ public class JsonUtils {
             return obj != null ? OBJECT_MAPPER.writeValueAsString(obj) : null;
         } catch (JsonProcessingException e) {
             appInsights.trackException(e);
-            throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
+            return null;
         }
     }
 
