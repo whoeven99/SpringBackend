@@ -81,7 +81,7 @@ public class TranslationCounterController {
         String orderId = ordersRedisService.getOrderId(shopName, addCharsVO.getGid());
         if (!"null".equals(orderId)) {
             appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
-            return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
+            return new BaseResponse<>().CreateErrorResponse(false);
         }
 
         // 获取用户accessToken
