@@ -77,7 +77,7 @@ public class TranslateProgressService {
             if ("3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS))) {
                 Map<String, Integer> writingData = translationParametersRedisService.getWritingData(shopName, translatesDO.getTarget());
                 appInsights.trackTrace("getWritingData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + writingData);
-                progress.setProgressData(writingData);
+                progress.setWritingData(writingData);
             }
 
             list.add(progress);
