@@ -83,8 +83,6 @@ public class PrivateKeyService {
     @Autowired
     private  ShopifyHttpIntegration shopifyApiIntegration;
     @Autowired
-    private  IVocabularyService vocabularyService;
-    @Autowired
     private  SecretClient secretClient;
     @Autowired
     private  IUserTypeTokenService userTypeTokenService;
@@ -464,16 +462,6 @@ public class PrivateKeyService {
 
             shopifyService.saveToShopify(translatedText, translation, resourceId, request);
             printTranslation(translatedText, value, translation, request.getShopName(), resourceType, resourceId, source);
-            //存到数据库中
-            try {
-                if (handleType.equals(HANDLE)) {
-                    return;
-                }
-                // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-                vocabularyService.InsertOne(request.getTarget(), translatedText, source, value);
-            } catch (Exception e) {
-                appInsights.trackTrace("translate 存储失败 errors ： " + e.getMessage() + " ，继续翻译");
-            }
             return;
         }
 
@@ -496,14 +484,6 @@ public class PrivateKeyService {
                 String translatedValue = OBJECT_MAPPER.writeValueAsString(resultList);
                 shopifyService.saveToShopify(translatedValue, translation, resourceId, request);
                 printTranslation(translatedValue, value, translation, request.getShopName(), resourceType, resourceId, source);
-
-                //存到数据库中
-                try {
-                    // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-                    vocabularyService.InsertOne(request.getTarget(), translatedValue, source, value);
-                } catch (Exception e) {
-                    appInsights.trackTrace("translate 存储失败 errors ： " + e.getMessage() + " ，继续翻译");
-                }
             } catch (Exception e) {
                 //存原数据到shopify本地
                 shopifyService.saveToShopify(value, translation, resourceId, request);
@@ -683,17 +663,6 @@ public class PrivateKeyService {
             }
             shopifyService.saveToShopify(modelHtml, translation, resourceId, shopifyRequest);
             printTranslation(modelHtml, translateTextDO.getSourceText(), translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
-
-            // 如果翻译数据小于255，存到数据库
-            try {
-                if (modelHtml.length() >= 255) {
-                    continue;
-                }
-                // 255字符以内 和 数据库内有该数据类型 文本才能插入数据库
-                vocabularyService.InsertOne(target, modelHtml, source, translateTextDO.getSourceText());
-            } catch (Exception e) {
-                appInsights.trackTrace("translate 存储失败： " + e.getMessage() + " ，继续翻译");
-            }
         }
 
     }
