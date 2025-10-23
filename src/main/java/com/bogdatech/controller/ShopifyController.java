@@ -22,6 +22,7 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.StringUtils.parsePlanName;
 
 @RestController
 @RequestMapping("/shopify")
@@ -40,6 +41,8 @@ public class ShopifyController {
     private IUsersService usersService;
     @Autowired
     private IUserTrialsService iUserTrialsService;
+    @Autowired
+    private ISubscriptionPlansService iSubscriptionPlansService;
 
     //通过测试环境调shopify的API
     @PostMapping("/test123")
@@ -173,22 +176,34 @@ public class ShopifyController {
         }
         SubscriptionVO subscriptionVO = new SubscriptionVO();
         UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getOne(new LambdaQueryWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName));
+
         if (userSubscriptionsDO == null) {
             appInsights.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
         }
+
+        // 根据计划id 去查id名称
+        String planType = iSubscriptionPlansService.getOne(new LambdaQueryWrapper<SubscriptionPlansDO>().eq(SubscriptionPlansDO::getPlanId, userSubscriptionsDO.getPlanId())).getPlanName();
+
+        // 判断计划名称
+        String parsePlanType = parsePlanName(planType);
+        if (parsePlanType == null) {
+            return new BaseResponse<>().CreateErrorResponse("parsePlanType is null");
+        }
+        subscriptionVO.setPlanType(parsePlanType);
+
         if (userSubscriptionsDO.getFeeType() == null) {
             userSubscriptionsDO.setFeeType(0);
         }
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
-        if ("ciwishop.myshopify.com".equals(shopName)) {
-            subscriptionVO.setUserSubscriptionPlan(6);
-            subscriptionVO.setCurrentPeriodEnd(null);
-            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
-            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
-        }
+//        if ("ciwishop.myshopify.com".equals(shopName)) {
+//            subscriptionVO.setUserSubscriptionPlan(6);
+//            subscriptionVO.setCurrentPeriodEnd(null);
+//            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
+//            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+//        }
 
         //如果是userSubscriptionPlan是1和2，传null
         if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2 || userSubscriptionPlan == 8) {

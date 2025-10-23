@@ -6,6 +6,7 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
@@ -19,14 +20,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.TranslateService.executorService;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
@@ -53,6 +57,8 @@ public class InitialTranslateDbTask {
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private TencentEmailService tencentEmailService;
+    @Autowired
+    private TranslationParametersRedisService translationParametersRedisService;
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -87,7 +93,7 @@ public class InitialTranslateDbTask {
                 continue;
             }
 
-            if (translatesDO.getStatus().equals(7)){
+            if (translatesDO.getStatus().equals(7)) {
                 //手动暂停的的邮件不发送
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, task.getShopName()).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
             }
@@ -114,17 +120,22 @@ public class InitialTranslateDbTask {
                 List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
 
                 // 先按原逻辑
-                if (translateTasks.isEmpty() && !task.isSendEmail()){
+                if (translateTasks.isEmpty() && !task.isSendEmail()) {
                     // 8分钟后， 发送邮件
                     // 修改语言状态为1
                     iTranslatesService.updateTranslateStatus(task.getShopName(), 1, task.getTarget(), task.getSource());
+
+                    // 修改进度条是写入
+                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), String.valueOf(3));
+                    translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
                     rabbitMqTranslateService.triggerSendEmailLater(task.getShopName(), task.getTarget(), task.getSource(), userDO.getAccessToken(), localDateTime, costToken, translationCounterDO.getUsedChars(), limitChars);
                 }
             } else if (translatesDO.getStatus() == 3 && !task.isSendEmail()) {
                 // 为3，发送部分翻译的邮件
                 // 将List<String> 转化位 List<TranslateResourceDTO>
-                List<String> translationList = jsonToObject(task.getTranslateSettings3(), new TypeReference<List<String>>() {});
-                if (translationList == null || translationList.isEmpty()){
+                List<String> translationList = jsonToObject(task.getTranslateSettings3(), new TypeReference<List<String>>() {
+                });
+                if (translationList == null || translationList.isEmpty()) {
                     appInsights.trackTrace("scanAndSendEmail 每日须看 translationList: " + translationList);
                     return;
                 }
@@ -149,9 +160,7 @@ public class InitialTranslateDbTask {
 
         // 遍历clickTranslateTasks，生成initialTasks
         for (InitialTranslateTasksDO task : clickTranslateTasks) {
-            executorService.submit(() -> {
-                processInitialTasksOfShop(task);
-            });
+            processInitialTasksOfShop(task);
         }
     }
 

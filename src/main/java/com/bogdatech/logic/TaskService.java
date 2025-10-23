@@ -12,6 +12,7 @@ import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -318,6 +319,17 @@ public class TaskService {
                     appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了时间在登陆时间后");
                     continue;
                 }
+            }
+
+            // 判断字符是否超限
+            TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
+            Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+            appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName);
+
+            // 如果字符超限，则直接返回字符超限
+            if (counterDO.getUsedChars() >= remainingChars) {
+                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 字符超限");
+                continue;
             }
 
             // 判断这条翻译项在Usage表中是否存在，在的话跳过，不在的话插入

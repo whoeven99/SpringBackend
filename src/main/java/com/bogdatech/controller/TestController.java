@@ -2,6 +2,7 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.azure.core.annotation.Put;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
@@ -26,6 +27,7 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.model.service.ProcessDbTaskService;
+import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TimeOutUtils;
@@ -88,6 +90,8 @@ public class TestController {
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private RedisIntegration redisIntegration;
+    @Autowired
+    private AutoTranslateTask autoTranslate;
 
     @GetMapping("/ping")
     public String ping() {
@@ -468,5 +472,13 @@ public class TestController {
     public Long increase(@RequestParam String key, @RequestParam long value) {
         return translationCounterRedisService.increaseLanguage(key, value);
 //        return translationCounterRedisService.increaseTask(key, value);
+    }
+
+    /**
+     * 手动启动自动翻译
+     * */
+    @PutMapping("/startAuto")
+    public void startAuto() {
+        autoTranslate.autoTranslate();
     }
 }

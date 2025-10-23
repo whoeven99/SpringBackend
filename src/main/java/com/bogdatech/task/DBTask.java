@@ -49,7 +49,7 @@ public class DBTask {
     }
 
     // 每30秒钟轮询一次是否有新的shop需要翻译
-    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedRate = 50 * 1000)
     public void scanAndSubmitTasks() {
         // 统计待翻译的 task
         List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();

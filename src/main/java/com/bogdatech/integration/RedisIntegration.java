@@ -4,9 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class RedisIntegration {
@@ -40,14 +41,23 @@ public class RedisIntegration {
      * 不设置缓存的hash
      */
     public void setHash(String key, String field, Object value) {
-        redisTemplate.opsForHash().put(key, field, value);
+        try {
+            redisTemplate.opsForHash().put(key, field, value);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException setHash " + key + " " + field + " " + value + " " + e.getMessage());
+        }
     }
 
     /**
      * hash 增加指定数据
      */
     public Long incrementHash(String key, String field, long value) {
-        return redisTemplate.opsForHash().increment(key, field, value);
+        try {
+            return redisTemplate.opsForHash().increment(key, field, value);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException incrementHash " + key + " " + field + " " + value + " " + e.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -108,12 +118,6 @@ public class RedisIntegration {
         return redisTemplate.opsForValue().get(key) + "";
     }
 
-    /**
-     * keys
-     */
-    public Set<String> keys(String pattern) {
-        return redisTemplate.keys(pattern); // 匹配所有 key
-    }
 
     /**
      * multiGet

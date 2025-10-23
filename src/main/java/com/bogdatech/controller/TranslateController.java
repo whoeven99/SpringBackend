@@ -129,27 +129,6 @@ public class TranslateController {
     }
 
     /**
-     * 根据传入的shopName和source，返回一个最新时间的翻译项数据，status为1-3
-     */
-    // TODO delete
-    @PostMapping("/getTranslateDOByShopNameAndSource")
-    public BaseResponse<Object> getTranslateDOByShopNameAndSource(@RequestBody TranslateRequest request) {
-        if (request != null) {
-            // 改为返回状态为2的所有相关数据
-            List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, request.getShopName()).eq(TranslatesDO::getSource, request.getSource()).eq(TranslatesDO::getStatus, 2).orderByAsc(TranslatesDO::getUpdateAt));
-            appInsights.trackTrace("getTranslateDOByShopNameAndSource 获取到的相关数据： " + list.toString());
-            if (list.isEmpty()) {
-                TranslatesDO translatesDO = translatesService.selectLatestOne(request);
-                translatesDO.setAccessToken(null);
-                list.add(translatesDO);
-                return new BaseResponse<>().CreateSuccessResponse(list);
-            }
-            return new BaseResponse<>().CreateSuccessResponse(list);
-        }
-        return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
-    }
-
-    /**
      * 读取shopName的所有翻译状态信息
      */
     @GetMapping("/readInfoByShopName")
@@ -256,29 +235,6 @@ public class TranslateController {
         return translateService.singleTextTranslate(singleTranslateVO);
     }
 
-    /**
-     * 获取当前用户的value值
-     */
-    @GetMapping("/getUserValue")
-    public BaseResponse<Object> getUserValue(@RequestParam String shopName) {
-        // TODO: 改多进度条展示的话，这个就没有用了， 这个目的是用来是测试的
-        // 获取该用户正在翻译语言
-        Map<String, Object> userTranslate = new HashMap<>();
-        List<TranslatesDO> list = translatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getStatus, 2));
-        if (list.isEmpty()) {
-            userTranslate.put("value", "There is currently no language being translated");
-            userTranslate.put("status", "4");
-        }
-
-        TranslatesDO firstTranslatesDO = list.get(0);
-
-        Map<Object, Object> progressTranslationKey = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(firstTranslatesDO.getShopName(), firstTranslatesDO.getSource(), firstTranslatesDO.getTarget()));
-        appInsights.trackTrace("getUserValue translation_status :  " + progressTranslationKey);
-        userTranslate.put("value", progressTranslationKey.get("translating_string"));
-        userTranslate.put("status", progressTranslationKey.get("translation_status"));
-
-        return new BaseResponse<>().CreateSuccessResponse(userTranslate);
-    }
 
     /**
      * 停止翻译按钮
