@@ -8,12 +8,14 @@ import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
 import com.bogdatech.logic.TranslationCounterService;
+import com.bogdatech.logic.redis.OrdersRedisService;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.enums.ErrorEnum.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/translationCounter")
@@ -24,6 +26,8 @@ public class TranslationCounterController {
     private TranslationCounterService translationCounterService;
     @Autowired
     private IUsersService usersService;
+    @Autowired
+    private OrdersRedisService ordersRedisService;
 
     //给用户添加一个免费额度
     @PostMapping("/insertCharsByShopName")
@@ -72,8 +76,18 @@ public class TranslationCounterController {
     @PostMapping("/addCharsByShopName")
     public BaseResponse<Object> addCharsByShopName(@RequestParam String shopName, @RequestBody AddCharsVO addCharsVO) {
         UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
-        //获取用户accessToken
-        if (iTranslationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars())){
+
+        // 判断是否有订单标识 有的话 就直接返回true
+        String orderId = ordersRedisService.getOrderId(shopName, addCharsVO.getGid());
+        if (!"null".equals(orderId)) {
+            appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
+            return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
+        }
+
+        // 获取用户accessToken
+        if (translationCounterService.updateOnceCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars())){
+            boolean deletedFlag = ordersRedisService.delOrderId(shopName, addCharsVO.getGid());
+            appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " flag: " + deletedFlag  + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);

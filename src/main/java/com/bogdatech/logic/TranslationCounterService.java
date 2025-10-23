@@ -7,13 +7,17 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
+import com.bogdatech.logic.redis.OrdersRedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+
+import static com.bogdatech.requestBody.ShopifyRequestBody.getSingleQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
@@ -21,24 +25,31 @@ import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 
 @Component
 public class TranslationCounterService {
-
-    private final ICharsOrdersService iCharsOrdersService;
-    private final ISubscriptionPlansService iSubscriptionPlansService;
-    private final ITranslationCounterService iTranslationCounterService;
-    private final IUserTrialsService iUserTrialsService;
-    private final IUsersService iUsersService;
-    private final IUserSubscriptionsService iUserSubscriptionsService;
+    @Autowired
+    private ICharsOrdersService iCharsOrdersService;
+    @Autowired
+    private ISubscriptionPlansService iSubscriptionPlansService;
+    @Autowired
+    private ITranslationCounterService iTranslationCounterService;
+    @Autowired
+    private IUserTrialsService iUserTrialsService;
+    @Autowired
+    private IUsersService iUsersService;
+    @Autowired
+    private IUserSubscriptionsService iUserSubscriptionsService;
+    @Autowired
+    private OrdersRedisService ordersRedisService;
 
     public final String ACTIVE = "ACTIVE";
 
-    @Autowired
-    public TranslationCounterService(ICharsOrdersService iCharsOrdersService, ISubscriptionPlansService iSubscriptionPlansService, ITranslationCounterService iTranslationCounterService, IUserTrialsService iUserTrialsService, IUsersService iUsersService, IUserSubscriptionsService iUserSubscriptionsService) {
-        this.iCharsOrdersService = iCharsOrdersService;
-        this.iSubscriptionPlansService = iSubscriptionPlansService;
-        this.iTranslationCounterService = iTranslationCounterService;
-        this.iUserTrialsService = iUserTrialsService;
-        this.iUsersService = iUsersService;
-        this.iUserSubscriptionsService = iUserSubscriptionsService;
+    public Boolean updateOnceCharsByShopName(String shopName, String accessToken, String gid, Integer chars) {
+        // 添加订单标识
+        ordersRedisService.setOrderId(shopName, gid);
+
+        //根据gid，判断是否符合添加额度的条件
+        appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars + " accessToken: " + accessToken);
+
+        return iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).setSql("chars = chars + " + chars));
     }
 
     public Boolean addCharsByShopNameAfterSubscribe(String shopName, TranslationCharsVO translationCharsVO) {
