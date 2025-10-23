@@ -23,14 +23,11 @@ public class OrdersRedisService {
     }
 
     public void setOrderId(String shopName, String orderId) {
-        redisIntegration.set(generalOrderIdKey(shopName, orderId), orderId);
+        redisIntegration.expire(generalOrderIdKey(shopName, orderId), 43200);
     }
 
     public String getOrderId(String shopName, String orderId) {
         return redisIntegration.get(generalOrderIdKey(shopName, orderId));
     }
 
-    public boolean delOrderId(String shopName, String orderId) {
-         return redisIntegration.delete(generalOrderIdKey(shopName, orderId));
-    }
 }

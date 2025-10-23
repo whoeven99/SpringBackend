@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.redis.OrdersRedisService;
 import com.bogdatech.mapper.TranslationCounterMapper;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.bogdatech.logic.redis.OrdersRedisService.generalOrderIdKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSingleQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;

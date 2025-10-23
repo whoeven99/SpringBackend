@@ -86,8 +86,7 @@ public class TranslationCounterController {
 
         // 获取用户accessToken
         if (translationCounterService.updateOnceCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars(), addCharsVO.getSleepTime())){
-            boolean deletedFlag = ordersRedisService.delOrderId(shopName, addCharsVO.getGid());
-            appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " flag: " + deletedFlag  + " id: " + addCharsVO.getGid());
+            appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
