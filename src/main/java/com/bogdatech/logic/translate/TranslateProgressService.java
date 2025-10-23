@@ -70,15 +70,14 @@ public class TranslateProgressService {
                     : "2".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_translating"
                     : "translation_process_init");
 
-            // 进度条数字
-            if ("3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS))){
+            Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
+            appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + progressData);
+            progress.setProgressData(progressData);
+
+            if ("3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS))) {
                 Map<String, Integer> writingData = translationParametersRedisService.getWritingData(shopName, translatesDO.getTarget());
-                appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + writingData);
+                appInsights.trackTrace("getWritingData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + writingData);
                 progress.setProgressData(writingData);
-            }else {
-                Map<String, Integer> progressData = translateService.getProgressData(shopName, translatesDO.getTarget(), source);
-                appInsights.trackTrace("getAllProgressData " + shopName + " target : " + translatesDO.getTarget() + " " + source + " " + progressData);
-                progress.setProgressData(progressData);
             }
 
             list.add(progress);
