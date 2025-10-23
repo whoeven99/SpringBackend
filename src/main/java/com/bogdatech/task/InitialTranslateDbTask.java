@@ -112,6 +112,9 @@ public class InitialTranslateDbTask {
 
                 // 先按原逻辑
                 if (translateTasks.isEmpty() && !task.isSendEmail()) {
+                    // 判断是否可以发送邮件,改变状态
+                    translationParametersRedisService.translatedStatusAndSendEmail(task.getShopName(), task.getTarget(), task.getSource());
+
                     // 修改进度条是写入
                     translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), String.valueOf(3));
                     translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
