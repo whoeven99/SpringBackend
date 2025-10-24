@@ -9,4 +9,6 @@ public interface IUserTranslationDataService extends IService<UserTranslationDat
     Boolean insertTranslationData(String translationData, String shopName);
 
     List<UserTranslationDataDO> selectTranslationDataList();
+
+    List<UserTranslationDataDO> selectWritingDataByShopNameAndSourceAndTarget(String shopName, String target);
 }

@@ -16,7 +16,7 @@ import java.sql.Timestamp;
 public class InitialTranslateTasksDO {
     @TableId(type = IdType.AUTO)
     private String taskId;
-    private Integer status; // 0:未开始 1:已完成 2:进行中
+    private Integer status; // 0:未开始 1:task创建完成 2:进行中 3.翻译结束写入中 4.写入完成，翻译结束并且发完邮件了
     private String source; // 原语言
     private String target; // 目标语言
     private boolean cover = false; // 是否覆盖
