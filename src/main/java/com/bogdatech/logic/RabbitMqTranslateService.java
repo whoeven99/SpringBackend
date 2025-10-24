@@ -8,21 +8,15 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
-import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
@@ -51,33 +45,17 @@ public class RabbitMqTranslateService {
     @Autowired
     private ShopifyService shopifyService;
     @Autowired
-    private TencentEmailService tencentEmailService;
-    @Autowired
     private GlossaryService glossaryService;
     @Autowired
     private AILanguagePackService aiLanguagePackService;
     @Autowired
-    private JsoupUtils jsoupUtils;
-    @Autowired
-    private LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
-    @Autowired
     private ITranslateTasksService translateTasksService;
     @Autowired
-    private TaskScheduler taskScheduler;
-    @Autowired
-    private UserTypeTokenService userTypeTokenService;
-    @Autowired
     private RedisProcessService redisProcessService;
-    @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
-    @Autowired
-    private RedisIntegration redisIntegration;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
-    @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
     @Autowired
     private TranslateDataService translateDataService;
 
@@ -219,9 +197,6 @@ public class RabbitMqTranslateService {
         }
     }
 
-    /**
-     * 解析shopifyData的数据，递归获取，每250条数据作为一个翻译任务发送到队列里面
-     */
     public void parseShopifyData(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateResourceDTO translateResource, CharacterCountUtils allTasks) {
         JsonNode rootNode;
         try {
@@ -254,25 +229,21 @@ public class RabbitMqTranslateService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.path("endCursor");
                 translateResource.setAfter(endCursor.asText(null));
-                translateNextPageData(translateResource, rabbitMqTranslateVO, allTasks);
-            }
-        }
-    }
 
-    //递归处理下一页数据
-    private void translateNextPageData(TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
-        JsonNode nextPageData;
-        try {
-            nextPageData = fetchNextPage(translateContext, new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget()), rabbitMqTranslateVO, allTasks);
-            if (nextPageData == null) {
-                return;
+                JsonNode nextPageData;
+                try {
+                    nextPageData = fetchNextPage(translateResource, new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget()), rabbitMqTranslateVO, allTasks);
+                    if (nextPageData == null) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    return;
+                }
+                rabbitMqTranslateVO.setShopifyData(nextPageData.toString());
+                // 重新开始翻译流程
+                parseShopifyData(rabbitMqTranslateVO, translateResource, allTasks);
             }
-        } catch (Exception e) {
-            return;
         }
-        rabbitMqTranslateVO.setShopifyData(nextPageData.toString());
-        // 重新开始翻译流程
-        parseShopifyData(rabbitMqTranslateVO, translateContext, allTasks);
     }
 
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
@@ -573,16 +544,6 @@ public class RabbitMqTranslateService {
                 appInsights.trackException(e);
             }
         }
-    }
-
-    /**
-     * 异步8分钟后，发送翻译成功的邮件
-     */
-    public void triggerSendEmailLater(String shopName, String target, String source, String accessToken, LocalDateTime startTime, Long costToken, Integer usedChars, Integer limitChars, String taskType) {
-        appInsights.trackTrace("clickTranslation " + shopName + " 异步发送邮件: " + LocalDateTime.now());
-        tencentEmailService.translateSuccessEmail(new TranslateRequest(0, shopName, accessToken, source, target, null), startTime, costToken, usedChars, limitChars);
-        appInsights.trackTrace("clickTranslation 用户 " + shopName + " 翻译结束 时间为： " + LocalDateTime.now());
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, taskType).set(InitialTranslateTasksDO::isSendEmail, 1));
     }
 
     private void prepareForGlossary(RabbitMqTranslateVO vo, String translationKeyType, Map<String, String> keyMap1, Map<String, String> keyMap0) {
