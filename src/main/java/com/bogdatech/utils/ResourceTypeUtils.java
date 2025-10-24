@@ -7,11 +7,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import static com.bogdatech.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class ResourceTypeUtils {
-    public static TypeSplitResponse splitByType(String targetType, List<TranslateResourceDTO> resourceList){
+    public static TypeSplitResponse splitByType(String targetType, List<TranslateResourceDTO> resourceList) {
         List<TranslateResourceDTO> before;
         List<TranslateResourceDTO> after;
 
@@ -19,9 +20,20 @@ public class ResourceTypeUtils {
         StringBuilder afterType = new StringBuilder();
 
         if (targetType == null) {
-            for (String resource : EMAIL_MAP.values()) {
-                afterType.append(resource).append(",");
+            // 提前把 EMAIL_MAP 的 values 转成 Set，提高查找效率
+            Set<String> emailResources = new HashSet<>(EMAIL_MAP.values());
+
+            for (TranslateResourceDTO dto : resourceList) {
+                if (emailResources.contains(dto.getResourceType())) {
+                    afterType.append(dto.getResourceType()).append(",");
+                }
             }
+
+            // 去掉最后一个逗号
+            if (!afterType.isEmpty()) {
+                afterType.setLength(afterType.length() - 1);
+            }
+
             return new TypeSplitResponse(beforeType, afterType);
         }
         Set<String> beforeSet = new HashSet<>();
@@ -39,7 +51,7 @@ public class ResourceTypeUtils {
         // 如果没找到目标 type，返回空集合并打印错误信息
         if (index == -1) {
             appInsights.trackTrace("errors 错误：未找到 type 为 '" + targetType + "' 的资源");
-            after =  resourceList;
+            after = resourceList;
             for (TranslateResourceDTO resource : after) {
                 afterSet.add(EMAIL_MAP.get(resource.getResourceType()));
             }
@@ -51,9 +63,9 @@ public class ResourceTypeUtils {
 
         // 分割列表
         before = index > 0 ? resourceList.subList(0, index) : new ArrayList<>();
-        after = index < resourceList.size()? resourceList.subList(index, resourceList.size()) : new ArrayList<>();
+        after = index < resourceList.size() ? resourceList.subList(index, resourceList.size()) : new ArrayList<>();
         //根据TranslateResourceDTO来获取展示的类型名，且不重名
-        if (before.size() > 0){
+        if (before.size() > 0) {
             for (TranslateResourceDTO resource : before) {
                 if (EMAIL_MAP.containsKey(resource.getResourceType())) {
                     beforeSet.add(EMAIL_MAP.get(resource.getResourceType()));
@@ -61,7 +73,7 @@ public class ResourceTypeUtils {
             }
         }
 
-        if (after.size() > 0){
+        if (after.size() > 0) {
             for (TranslateResourceDTO resource : after) {
                 if (EMAIL_MAP.containsKey(resource.getResourceType())) {
                     afterSet.add(EMAIL_MAP.get(resource.getResourceType()));

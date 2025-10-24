@@ -137,8 +137,7 @@ public class InitialTranslateDbTask {
 
             // 3. 状态为3：部分翻译，发失败邮件
             if (translateStatus == 3 && !task.isSendEmail()) {
-                List<String> translationList = jsonToObject(task.getTranslateSettings3(), new TypeReference<>() {
-                });
+                List<String> translationList = jsonToObject(task.getTranslateSettings3(), new TypeReference<>() {});
                 if (translationList == null || translationList.isEmpty()) {
                     appInsights.trackTrace("scanAndSendEmail translationList为空: " + task.getShopName());
                     continue;
