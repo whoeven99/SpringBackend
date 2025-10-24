@@ -128,7 +128,7 @@ public class InitialTranslateDbTask {
             // 2. 状态为7：手动暂停 -> 不发邮件，只标记, 将状态改为4
             if (translateStatus == 7) {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, task.getShopName())
+                        .eq(InitialTranslateTasksDO::getTarget, task.getTaskId())
                         .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
                         .set(InitialTranslateTasksDO::isSendEmail, 1)
                         .set(InitialTranslateTasksDO::getStatus, 4));
@@ -210,10 +210,7 @@ public class InitialTranslateDbTask {
 
                 // 更新数据库 & Redis
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, task.getShopName())
-                        .eq(InitialTranslateTasksDO::getTaskType, task.getTaskType())
-                        .eq(InitialTranslateTasksDO::getTarget, task.getTarget())
-                        .eq(InitialTranslateTasksDO::getSource, task.getSource())
+                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
                         .set(InitialTranslateTasksDO::isSendEmail, 1)
                         .set(InitialTranslateTasksDO::getStatus, 4));
 
