@@ -98,15 +98,6 @@ public class InitialTranslateDbTask {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, task.getShopName()).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
             }
 
-            // 获取该用户accessToken
-            UsersDO userDO = iUsersService.getUserByName(task.getShopName());
-
-            // 获取该用户目前消耗额度值
-            TranslationCounterDO translationCounterDO = iTranslationCounterService.getTranslationCounterByShopName(userDO.getShopName());
-
-            // 获取该用户额度限制
-            Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
-
             // 获取该用户 target 的 所有token 的值
             Long costToken = translationCounterRedisService.getLanguageData(generateProcessKey(task.getShopName(), task.getTarget()));
             Timestamp createdAt = task.getCreatedAt();
@@ -121,14 +112,13 @@ public class InitialTranslateDbTask {
 
                 // 先按原逻辑
                 if (translateTasks.isEmpty() && !task.isSendEmail()) {
-                    // 8分钟后， 发送邮件
-                    // 修改语言状态为1
-                    iTranslatesService.updateTranslateStatus(task.getShopName(), 1, task.getTarget(), task.getSource());
+                    // 判断是否可以发送邮件,改变状态
+                    translationParametersRedisService.translatedStatusAndSendEmail(task.getShopName(), task.getTarget(), task.getSource());
 
                     // 修改进度条是写入
                     translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), String.valueOf(3));
                     translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
-                    rabbitMqTranslateService.triggerSendEmailLater(task.getShopName(), task.getTarget(), task.getSource(), userDO.getAccessToken(), localDateTime, costToken, translationCounterDO.getUsedChars(), limitChars);
+                    appInsights.trackTrace("scanAndSendEmail 用户: " + initialTranslateTasksDO.getShopName() + " 翻译完成，正在写入.");
                 }
             } else if (translatesDO.getStatus() == 3 && !task.isSendEmail()) {
                 // 为3，发送部分翻译的邮件

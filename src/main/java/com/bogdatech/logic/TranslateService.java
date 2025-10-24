@@ -41,8 +41,8 @@ import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTransla
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.TRANSLATION_STATUS;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.*;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.objectToJson;
@@ -231,6 +231,9 @@ public class TranslateService {
             translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
             translationParametersRedisService.hsetProgressNumber(generateProgressTranslationKey(shopName, source, target), generateProcessKey(shopName, target));
             redisProcessService.initProcessData(generateProcessKey(shopName, target));
+            translationParametersRedisService.delWritingDataKey(shopName, target);
+            translationParametersRedisService.addWritingData(generateWriteStatusKey(shopName, target), WRITE_TOTAL, 1L);
+            translationParametersRedisService.addWritingData(generateWriteStatusKey(shopName, target), WRITE_DONE, 1L);
 
             // 将翻译项中的模块改为null
             translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
