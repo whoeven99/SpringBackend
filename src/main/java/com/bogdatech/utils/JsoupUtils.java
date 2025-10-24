@@ -22,7 +22,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.DeepLIntegration.DEEPL_LANGUAGE_MAP;
-import static com.bogdatech.logic.RabbitMqTranslateService.extractTranslationsByResourceId;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
@@ -843,6 +842,33 @@ public class JsoupUtils {
             }
         }
         return new HashSet<>();
+    }
+
+    private static Map<String, TranslateTextDO> extractTranslationsByResourceId(JsonNode shopDataJson, String resourceId, String shopName) {
+        Map<String, TranslateTextDO> translations = new HashMap<>();
+        JsonNode translationsNode = shopDataJson.path("translatableContent");
+        if (translationsNode.isArray() && !translationsNode.isEmpty()) {
+            translationsNode.forEach(translation -> {
+                if (translation == null) {
+                    return;
+                }
+                if (translation.path("value").asText(null) == null || translation.path("key").asText(null) == null) {
+                    return;
+                }
+                //当用户修改数据后，outdated的状态为true，将该数据放入要翻译的集合中
+                TranslateTextDO translateTextDO = new TranslateTextDO();
+                String key = translation.path("key").asText(null);
+                translateTextDO.setTextKey(key);
+                translateTextDO.setSourceText(translation.path("value").asText(null));
+                translateTextDO.setSourceCode(translation.path("locale").asText(null));
+                translateTextDO.setDigest(translation.path("digest").asText(null));
+                translateTextDO.setTextType(translation.path("type").asText(null));
+                translateTextDO.setResourceId(resourceId);
+                translateTextDO.setShopName(shopName);
+                translations.put(key, translateTextDO);
+            });
+        }
+        return translations;
     }
 
     /**
