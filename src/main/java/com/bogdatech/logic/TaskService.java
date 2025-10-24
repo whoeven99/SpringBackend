@@ -298,8 +298,7 @@ public class TaskService {
             return;
         }
 
-        for (TranslatesDO translatesDO : translatesDOList
-        ) {
+        for (TranslatesDO translatesDO : translatesDOList) {
             String shopName = translatesDO.getShopName();
             appInsights.trackTrace("autoTranslate 用户: " + shopName);
 
@@ -349,10 +348,11 @@ public class TaskService {
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
             // 调用DB翻译逻辑
-            rabbitMqTranslateService.initialTasks(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
-                            , translatesDO.getTarget()), AUTO_TRANSLATE_MAP
-                    , new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null)
-                    , false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
+            rabbitMqTranslateService.initialTasks(
+                    new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST, translatesDO.getTarget()),
+                    AUTO_TRANSLATE_MAP,
+                    new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null),
+                    false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
         }
     }
 
