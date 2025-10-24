@@ -17,10 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
@@ -54,6 +56,8 @@ public class InitialTranslateDbTask {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private IInitialTranslateTasksService iInitialTranslateTasksService;
+    @Autowired
+    private IUserTranslationDataService iUserTranslationDataService;
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -157,9 +161,9 @@ public class InitialTranslateDbTask {
             if (translateStatus == 2 && task.getStatus() == 1) {
                 // 将initial status改为2
                 boolean updateFlag = iInitialTranslateTasksService.updateStatusByTaskId(task.getTaskId(), 2);
-                if (!updateFlag){
+                if (!updateFlag) {
                     appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
-                   continue;
+                    continue;
                 }
             }
 
@@ -189,6 +193,13 @@ public class InitialTranslateDbTask {
 
             // 6. 状态为1：全部完成，可以发成功邮件
             if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == 3) {
+                // 判断user_Translation_Data表 里面改用户语言是否完成写入
+                List<UserTranslationDataDO> userTranslationDataDOS = iUserTranslationDataService.selectWritingDataByShopNameAndSourceAndTarget(task.getShopName(), task.getTarget());
+                if (!userTranslationDataDOS.isEmpty()) {
+                    appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 翻译数据未写入完，等待写入。");
+                    continue;
+                }
+
                 TranslationCounterDO counter = iTranslationCounterService.getTranslationCounterByShopName(task.getShopName());
                 Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
 
