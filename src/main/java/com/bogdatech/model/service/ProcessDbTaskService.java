@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.logic.RabbitMqTranslateService.initTranslateMap;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
@@ -256,7 +255,7 @@ public class ProcessDbTaskService {
                 vo.getShopName(), vo.getTarget());
         //将筛选好的数据分类
         Map<String, Set<TranslateTextDO>> stringSetMap = rabbitMqTranslateService.filterTranslateMap(
-                initTranslateMap(), filterTranslateData, vo.getGlossaryMap());
+                RabbitMqTranslateService.initTranslateMap(), filterTranslateData, vo.getGlossaryMap());
         //实现功能： 分析三种类型数据， 添加模块标识，开始翻译
         if (stringSetMap.isEmpty()) {
             return new HashMap<>();
