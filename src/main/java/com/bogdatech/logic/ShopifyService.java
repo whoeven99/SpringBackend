@@ -117,12 +117,13 @@ public class ShopifyService {
             return;
         }
         translateObjectNode(rootNode, request, counter, translateResource);
-        // 递归处理下一页数据
-        newTranslateNextPage(rootNode, request, translateResource, counter);
-    }
 
-    //获取下一页数据
-    public void newTranslateNextPage(JsonNode rootNode, ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils counter) {
+        //1, 获取所有要翻译的数据, 将单个语言的所有数据都统计
+        Set<TranslateTextDO> needTranslatedData = translatedAllDataParse(rootNode, request.getShopName());
+        if (needTranslatedData != null) {
+            filterNeedTranslateSetAndCount(translateResource.getResourceType(), true, needTranslatedData, counter);
+        }
+
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = rootNode.path("translatableResources");
 
@@ -132,26 +133,21 @@ public class ShopifyService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.path("endCursor");
                 translateResource.setAfter(endCursor.asText(null));
-                translateNextPageData(request, translateResource, counter);
+
+                JsonNode nextPageData;
+                try {
+                    nextPageData = fetchNextPage(translateResource, request);
+                    if (nextPageData == null) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    return;
+                }
+                // 重新开始翻译流程
+                countBeforeTranslateChars(nextPageData.toString(), request, translateResource, counter);
             }
         }
     }
-
-    //递归处理下一页数据
-    private void translateNextPageData(ShopifyRequest request, TranslateResourceDTO translateResource, CharacterCountUtils counter) {
-        JsonNode nextPageData;
-        try {
-            nextPageData = fetchNextPage(translateResource, request);
-            if (nextPageData == null) {
-                return;
-            }
-        } catch (Exception e) {
-            return;
-        }
-        // 重新开始翻译流程
-        countBeforeTranslateChars(nextPageData.toString(), request, translateResource, counter);
-    }
-
 
     //将String数据转化为JsonNode数据
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
@@ -280,7 +276,6 @@ public class ShopifyService {
             counter.addChars(calculateBaiLianToken(translateTextDO.getSourceText()));
         }
     }
-
 
     /**
      * 解析shopifyData数据，将所有数据都存Set里面
