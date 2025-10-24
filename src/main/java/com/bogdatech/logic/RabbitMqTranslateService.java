@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -565,16 +566,28 @@ public class RabbitMqTranslateService {
     }
 
     public void translateData(Set<TranslateTextDO> translateTextDOS, RabbitMqTranslateVO vo, CharacterCountUtils counter, String translationKeyType) {
+        if (PLAIN_TEXT.equals(translationKeyType) || TITLE.equals(translationKeyType)
+                || META_TITLE.equals(translationKeyType) || LOWERCASE_HANDLE.equals(translationKeyType)) {
+            // Plain Text采用了50个的list翻译
+            translatePlainTextData(translateTextDOS, vo, counter, translationKeyType);
+            return;
+        }
+
+        // For GLOSSARY
+        Map<String, String> keyMap1 = new HashMap<>();
+        Map<String, String> keyMap0 = new HashMap<>();
+        if (GLOSSARY.equals(translationKeyType)) {
+            if (!CollectionUtils.isEmpty(vo.getGlossaryMap())) {
+                return;
+            }
+            prepareForGlossary(vo, translationKeyType, keyMap1, keyMap0);
+        }
+
         String shopName = vo.getShopName();
         String target = vo.getTarget();
         Integer limitChars = vo.getLimitChars();
         String accessToken = vo.getAccessToken();
         ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
-
-        // For GLOSSARY
-        Map<String, String> keyMap1 = new HashMap<>();
-        Map<String, String> keyMap0 = new HashMap<>();
-        prepareForGlossary(vo, translationKeyType, keyMap1, keyMap0);
 
         for (TranslateTextDO translateTextDO : translateTextDOS) {
             //根据模块选择翻译方法，先做普通翻译
@@ -609,7 +622,7 @@ public class RabbitMqTranslateService {
             }
 
             if (translatedValue == null) {
-                appInsights.trackTrace("FatalException translateData " + shopifyRequest.getShopName() + " source: " + source + " value : " + value);
+                appInsights.trackTrace("FatalException translateData is null: " + shopifyRequest.getShopName() + " source: " + source + " value : " + value);
                 continue;
             }
 
