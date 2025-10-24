@@ -55,14 +55,18 @@ public class TranslateDataService {
         String htmlTranslation;
         try {
             appInsights.trackTrace("定义translateRequest 用户： " + vo.getShopName() + "，sourceText: " + sourceText);
-            TranslateRequest translateRequest = new TranslateRequest(0, vo.getShopName(), vo.getAccessToken(), source, vo.getTarget(), sourceText);
+            TranslateRequest translateRequest = new TranslateRequest(0, vo.getShopName(), vo.getAccessToken(), source,
+                    vo.getTarget(), sourceText);
 
             // 都用分段html翻译
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), sourceText);
+            translationParametersRedisService.hsetTranslationStatus(
+                    generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(
+                    generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), sourceText);
 
             appInsights.trackTrace("修改进度条的数据 用户： " + vo.getShopName() + "，sourceText: " + sourceText);
-            htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(sourceText, translateRequest, counter, vo.getLanguagePack(), vo.getLimitChars(), false);
+            htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(sourceText, translateRequest, counter,
+                    vo.getLanguagePack(), vo.getLimitChars(), false);
             appInsights.trackTrace("完成翻译html 用户： " + vo.getShopName() + "，sourceText: " + sourceText);
             if (vo.getModeType().equals(METAFIELD)) {
                 // 对翻译后的html做格式处理
@@ -71,7 +75,8 @@ public class TranslateDataService {
             }
 
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + vo.getShopName() + " html translation errors : " + e.getMessage() + " sourceText: " + sourceText);
+            appInsights.trackTrace("clickTranslation " + vo.getShopName() + " html translation errors : " +
+                    e.getMessage() + " sourceText: " + sourceText);
             shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);
             return null;
         }
@@ -85,8 +90,10 @@ public class TranslateDataService {
                                           Map<String, Object> translation, String resourceId) {
         try {
             // 如果符合要求，则翻译，不符合要求则返回原值
-            List<String> resultList = OBJECT_MAPPER.readValue(value, new TypeReference<>() {
-            });
+            List<String> resultList = JsonUtils.jsonToObjectWithNull(value, new TypeReference<>() {});
+            if (resultList == null || resultList.isEmpty()) {
+                return value;
+            }
             for (int i = 0; i < resultList.size(); i++) {
                 String original = resultList.get(i);
                 if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
@@ -117,7 +124,7 @@ public class TranslateDataService {
                     //将数据填回去
                     resultList.set(i, translated);
                 }
-                return OBJECT_MAPPER.writeValueAsString(resultList);
+                return JsonUtils.objectToJson(resultList);
             }
         } catch (Exception e) {
             //存原数据到shopify本地
@@ -193,7 +200,12 @@ public class TranslateDataService {
         }
         appInsights.trackTrace("translatePlainTextData " + shopName + " source: " + source + " translatedJson : " + translatedJson);
         if (translatedJson != null) {
-            return JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
+            Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
+            if (map == null) {
+                appInsights.trackTrace("FatalException clickTranslation translatePlainTextData 用户： " + shopName + " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts);
+                return new HashMap<>();
+            }
+            return map;
         }
         return new HashMap<>();
     }

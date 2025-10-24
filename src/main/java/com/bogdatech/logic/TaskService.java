@@ -298,8 +298,7 @@ public class TaskService {
             return;
         }
 
-        for (TranslatesDO translatesDO : translatesDOList
-        ) {
+        for (TranslatesDO translatesDO : translatesDOList) {
             String shopName = translatesDO.getShopName();
             appInsights.trackTrace("autoTranslate 用户: " + shopName);
 
@@ -314,11 +313,10 @@ public class TaskService {
                 // 如果用户卸载了，但有登陆时间，需要判断两者的前后
                 if (usersDO.getLoginTime() == null) {
                     appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了未登陆");
-                    continue;
                 } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
                     appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了时间在登陆时间后");
-                    continue;
                 }
+                continue;
             }
 
             // 判断字符是否超限
@@ -349,10 +347,11 @@ public class TaskService {
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
             // 调用DB翻译逻辑
-            rabbitMqTranslateService.initialTasks(new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST
-                            , translatesDO.getTarget()), AUTO_TRANSLATE_MAP
-                    , new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null)
-                    , false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
+            rabbitMqTranslateService.initialTasks(
+                    new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST, translatesDO.getTarget()),
+                    AUTO_TRANSLATE_MAP,
+                    new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null),
+                    false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
         }
     }
 
