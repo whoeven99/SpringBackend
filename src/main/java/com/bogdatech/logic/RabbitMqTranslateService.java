@@ -95,82 +95,92 @@ public class RabbitMqTranslateService {
      */
     public void initialTasks(ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request,
                              boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
-        // 获取已使用字符数和剩余字符数
+        // 初始化计数器、词汇表和语言包
         TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(shopifyRequest.getShopName());
         Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(shopifyRequest.getShopName());
         int usedChars = translationCounterDO.getUsedChars();
 
-        // 初始化计数器
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
 
-        // 判断是否有同义词
         Map<String, Object> glossaryMap = new HashMap<>();
         glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
         appInsights.trackTrace("判断是否有同义词 " + shopifyRequest.getShopName());
 
-        // 获取目前所使用的AI语言包
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars, shopifyRequest.getTarget());
         appInsights.trackTrace("获取目前所使用的AI语言包 " + shopifyRequest.getShopName());
 
+        // 创建翻译VO对象
         RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         CharacterCountUtils allTasks = new CharacterCountUtils();
 
+        // 处理每个翻译资源
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-            appInsights.trackTrace("初始化task数据 " + shopifyRequest.getShopName() + " model: " + translateResource.getResourceType());
-            rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             if (!translateResourceDTOS.contains(translateResource.getResourceType())) {
                 continue;
             }
-            appInsights.trackTrace("判断模块是否存在 " + shopifyRequest.getShopName());
 
-            if (translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
+            if (shouldSkipResource(translateResource, request.getShopName())) {
                 continue;
             }
-            appInsights.trackTrace("网关不翻译 " + shopifyRequest.getShopName());
 
-            if (EXCLUDED_SHOPS.contains(request.getShopName()) && PRODUCT_MODEL.contains(translateResource.getResourceType())) {
-                continue;
-            }
-            appInsights.trackTrace("一些shop模块不翻译 " + shopifyRequest.getShopName());
-
-            // 定期检查是否停止
             if (checkNeedStopped(request.getShopName(), counter)) {
                 return;
             }
-            appInsights.trackTrace("用户翻译不停止 " + shopifyRequest.getShopName());
+
+            appInsights.trackTrace("初始化task数据 " + shopifyRequest.getShopName() + " model: " + translateResource.getResourceType());
+            rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
 
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource);
             appInsights.trackTrace("用户shopify翻译数据 " + shopifyRequest.getShopName());
 
             rabbitMqTranslateVO.setShopifyData(shopifyData);
-            rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
 
-            try {
-                // TODO: 判断是否重复创建task。 1，判断模块是否正在翻译。 2，判断task是否已经存在
-                // 判断db里面，该用户，该模块status为0的task中， 是否存在，存在就不存了；不存在，就存
-                RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
-                dbTranslateVO.setShopifyData(query);
-                String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
-                translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
-                appInsights.trackTrace("保存用户翻译数据到db " + shopifyRequest.getShopName());
+            saveTaskToDatabase(rabbitMqTranslateVO, query, allTasks);
 
-                allTasks.addChars(1);
-            } catch (Exception e) {
-                appInsights.trackTrace("clickTranslation 保存翻译任务失败 errors : " + e);
-                appInsights.trackException(e);
-            }
-
-            // 改为将请求数据存储到数据库中
+            // 解析Shopify数据
             parseShopifyData(rabbitMqTranslateVO, translateResource, allTasks);
         }
+
         rabbitMqTranslateVO.setTranslateList(translateResourceDTOS);
 
-        // 当模块都发送后，发送邮件模块
+        // 发送邮件模块
         appInsights.trackTrace("存邮件数据 " + rabbitMqTranslateVO.getShopName());
         sendEmailTranslate(rabbitMqTranslateVO, taskType, allTasks);
+    }
+
+    /**
+     * 检查是否需要跳过该资源
+     */
+    private boolean shouldSkipResource(TranslateResourceDTO translateResource, String shopName) {
+        if (translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
+            appInsights.trackTrace("网关不翻译 " + shopName);
+            return true;
+        }
+        if (EXCLUDED_SHOPS.contains(shopName) && PRODUCT_MODEL.contains(translateResource.getResourceType())) {
+            appInsights.trackTrace("一些shop模块不翻译 " + shopName);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 保存任务到数据库
+     */
+    private void saveTaskToDatabase(RabbitMqTranslateVO rabbitMqTranslateVO, String query, CharacterCountUtils allTasks) {
+        try {
+            RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
+            dbTranslateVO.setShopifyData(query);
+            String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
+            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
+            appInsights.trackTrace("保存用户翻译数据到db " + rabbitMqTranslateVO.getShopName());
+            allTasks.addChars(1);
+        } catch (Exception e) {
+            appInsights.trackTrace("clickTranslation 保存翻译任务失败 errors : " + e);
+            appInsights.trackException(e);
+        }
     }
 
     /**
@@ -226,94 +236,74 @@ public class RabbitMqTranslateService {
             return;
         }
 
-        translateNextPage(rootNode, translateResource, rabbitMqTranslateVO, allTasks);
-    }
-
-    //获取下一页数据
-    public void translateNextPage(JsonNode rootNode, TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = rootNode.path("translatableResources");
 
         // 获取nodes节点，再获取translatableContent节点，计数里面的value个数
-        countValue(translatableResourcesNode, rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget());
+        JsonNode nodes = translatableResourcesNode.path("nodes");
+        if (nodes == null) {
+            return;
+        }
+        appInsights.trackTrace("统计所有进度条数据  " + rabbitMqTranslateVO.getShopName());
+        for (JsonNode node : nodes) {
+            JsonNode translatableContent = node.path("translatableContent");
+            redisProcessService.addProcessData(generateProcessKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()), PROGRESS_TOTAL, (long) translatableContent.size());
+        }
+
         appInsights.trackTrace("统计完所有进度条数据  " + rabbitMqTranslateVO.getShopName());
         // 获取pageInfo节点
         JsonNode pageInfoNode = translatableResourcesNode.path("pageInfo");
         if (translatableResourcesNode.hasNonNull("pageInfo")) {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.path("endCursor");
-                translateContext.setAfter(endCursor.asText(null));
-                translateNextPageData(translateContext, rabbitMqTranslateVO, allTasks);
+                translateResource.setAfter(endCursor.asText(null));
+
+                JsonNode nextPageData;
+                try {
+                    ShopifyRequest request = new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget());
+                    CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
+                    String query = new ShopifyRequestBody().getAfterQuery(translateResource);
+                    //将请求数据存数据库中
+                    try {
+                        RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
+                        dbTranslateVO.setShopifyData(query);
+                        String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
+                        translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
+                        appInsights.trackTrace("保存用户shopify到db  " + request.getShopName());
+                        allTasks.addChars(1);
+                    } catch (Exception e) {
+                        appInsights.trackTrace("clickTranslation fetchNextPage 保存翻译任务失败 errors " + e);
+                    }
+                    cloudServiceRequest.setBody(query);
+
+                    String env = System.getenv("ApplicationEnv");
+                    String infoByShopify;
+                    if ("prod".equals(env) || "dev".equals(env)) {
+                        infoByShopify = String.valueOf(getInfoByShopify(request, query));
+                    } else {
+                        infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
+                    }
+
+                    try {
+                        if (infoByShopify == null || infoByShopify.isEmpty()) {
+                            nextPageData = null;
+                        } else {
+                            nextPageData = OBJECT_MAPPER.readTree(infoByShopify);
+                        }
+                    } catch (JsonProcessingException e) {
+                        throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
+                    }
+
+                    if (nextPageData == null) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    return;
+                }
+                rabbitMqTranslateVO.setShopifyData(nextPageData.toString());
+                // 重新开始翻译流程
+                parseShopifyData(rabbitMqTranslateVO, translateResource, allTasks);
             }
-        }
-    }
-
-    /**
-     * 根据shopify返回的字段，统计里面的value值
-     */
-    public void countValue(JsonNode translatableResourcesNode, String shopName, String target) {
-        JsonNode nodes = translatableResourcesNode.path("nodes");
-        if (nodes == null) {
-            return;
-        }
-        appInsights.trackTrace("统计所有进度条数据  " + shopName);
-        for (JsonNode node : nodes) {
-            JsonNode translatableContent = node.path("translatableContent");
-            redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL, (long) translatableContent.size());
-        }
-    }
-
-
-    //递归处理下一页数据
-    private void translateNextPageData(TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
-        JsonNode nextPageData;
-        try {
-            nextPageData = fetchNextPage(translateContext, new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget()), rabbitMqTranslateVO, allTasks);
-            if (nextPageData == null) {
-                return;
-            }
-        } catch (Exception e) {
-            return;
-        }
-        rabbitMqTranslateVO.setShopifyData(nextPageData.toString());
-        // 重新开始翻译流程
-        parseShopifyData(rabbitMqTranslateVO, translateContext, allTasks);
-    }
-
-    public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-        String query = new ShopifyRequestBody().getAfterQuery(translateResource);
-        //将请求数据存数据库中
-        try {
-            RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
-            dbTranslateVO.setShopifyData(query);
-            String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
-            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
-            appInsights.trackTrace("保存用户shopify到db  " + request.getShopName());
-            allTasks.addChars(1);
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation fetchNextPage 保存翻译任务失败 errors " + e);
-        }
-        cloudServiceRequest.setBody(query);
-        return getShopifyJsonNode(request, cloudServiceRequest, query);
-    }
-
-    public static JsonNode getShopifyJsonNode(ShopifyRequest request, CloudServiceRequest cloudServiceRequest, String query) {
-        String env = System.getenv("ApplicationEnv");
-        String infoByShopify;
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(request, query));
-        } else {
-            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
-        }
-
-        try {
-            if (infoByShopify == null || infoByShopify.isEmpty()) {
-                return null;
-            }
-            return OBJECT_MAPPER.readTree(infoByShopify);
-        } catch (JsonProcessingException e) {
-            throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
         }
     }
 
@@ -321,15 +311,16 @@ public class RabbitMqTranslateService {
      * 根据从数据库获取的数据，请求shopify获取数据
      */
     public String getShopifyDataByDb(RabbitMqTranslateVO rabbitMqTranslateVO) {
+        ShopifyRequest shopifyRequest = new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget());
+        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget(), null);
+        cloudServiceRequest.setBody(rabbitMqTranslateVO.getShopifyData());
+
         String shopifyData = null;
         try {
             String env = System.getenv("ApplicationEnv");
             if ("prod".equals(env) || "dev".equals(env)) {
-                ShopifyRequest shopifyRequest = new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget());
                 shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, rabbitMqTranslateVO.getShopifyData()));
             } else {
-                CloudServiceRequest cloudServiceRequest = new CloudServiceRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget(), null);
-                cloudServiceRequest.setBody(rabbitMqTranslateVO.getShopifyData());
                 shopifyData = getShopifyDataByCloud(cloudServiceRequest);
             }
         } catch (Exception e) {
@@ -416,10 +407,6 @@ public class RabbitMqTranslateService {
         return false;
     }
 
-    /**
-     * 文本翻译
-     * 修改翻译的逻辑，暂定获取每50条数据，
-     */
     public void translatePlainTextData(Set<TranslateTextDO> plainTextData, RabbitMqTranslateVO vo, CharacterCountUtils counter, String translationKeyType) {
         if (plainTextData.isEmpty()) {
             return;
@@ -467,8 +454,8 @@ public class RabbitMqTranslateService {
                 String sourceText = item.getSourceText();
                 String targetText = resultMap.get(sourceText);
                 if (targetText == null) {
-                    appInsights.trackTrace("FatalException translatePlainTextData " + shopName + " source: " + source + " untranslatedTexts : " + untranslatedTexts);
                     appInsights.trackTrace("FatalException translatePlainTextData " + shopName + " source: " + source + " missing translation for: " + sourceText);
+                    continue;
                 }
 
                 translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), String.valueOf(2));
@@ -477,12 +464,10 @@ public class RabbitMqTranslateService {
                 // 存储翻译后的数据
                 Map<String, Object> translation = createTranslationMap(vo.getTarget(), item.getTextKey(), item.getDigest());
 
-                // 添加缓存
+                // TODO： 3.1 翻译后的存db
                 if (!URI.equals(item.getTextType())) {
                     redisProcessService.setCacheData(shopifyRequest.getTarget(), targetText, sourceText);
                 }
-
-                // TODO： 3.1 翻译后的存db
                 shopifyService.saveToShopify(targetText, translation, item.getResourceId(), shopifyRequest);
                 printTranslation(targetText, sourceText, translation, vo.getShopName(), vo.getModeType(), item.getResourceId(), vo.getSource());
                 checkNeedAddProcessData(shopifyRequest.getShopName(), shopifyRequest.getTarget());
@@ -597,7 +582,8 @@ public class RabbitMqTranslateService {
      */
     public void updateTranslateTasksStatus(String shopName) {
         //获取shopName所有status为0的task
-        List<TranslateTasksDO> list = translateTasksService.list(new QueryWrapper<TranslateTasksDO>().eq("status", 0).eq("shop_name", shopName));
+        List<TranslateTasksDO> list = translateTasksService.list(new QueryWrapper<TranslateTasksDO>()
+                .eq("status", 0).eq("shop_name", shopName));
         //遍历task，然后解析数据，将除email的task都改为3
         for (TranslateTasksDO translateTasksDO : list) {
             //解析数据
