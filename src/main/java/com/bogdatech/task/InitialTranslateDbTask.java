@@ -113,6 +113,7 @@ public class InitialTranslateDbTask {
                         .in(InitialTranslateTasksDO::getStatus, Arrays.asList(1, 2, 3))
                         .eq(InitialTranslateTasksDO::isDeleted, false)
                         .eq(InitialTranslateTasksDO::isSendEmail, false)
+                        .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
         );
 
         for (InitialTranslateTasksDO task : taskList) {
@@ -129,7 +130,6 @@ public class InitialTranslateDbTask {
             if (translateStatus == 7) {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
-                        .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
                         .set(InitialTranslateTasksDO::isSendEmail, true)
                         .set(InitialTranslateTasksDO::getStatus, 4));
                 continue;
