@@ -339,7 +339,7 @@ public class TaskService {
                 continue;
             }
 
-            String userCode = "\"locale\": \"" + translatesDO.getTarget() + "\"";
+            String userCode = "\"" + translatesDO.getTarget() + "\"";
             if (!shopifyByQuery.contains(userCode)){
                 // 将用户的自动翻译标识改为false
                 translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());

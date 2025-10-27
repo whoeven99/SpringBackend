@@ -50,6 +50,8 @@ public class JsoupUtils {
     private DeepLIntegration deepLIntegration;
     @Autowired
     private RedisProcessService redisProcessService;
+    @Autowired
+    private ChatGptIntegration chatGptIntegration;
 
 
     /**
@@ -642,9 +644,14 @@ public class JsoupUtils {
 
     /**
      * ciwi 单 User 翻译
+     * gpt 翻译
      */
-    public String translateByCiwiUserModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt, boolean isSingleFlag) {
-        appInsights.trackTrace("千问翻译 用户： " + shopName);
+    public String translateByCiwiOrGptModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt, boolean isSingleFlag, String translationModel) {
+        appInsights.trackTrace("千问或gpt翻译 用户： " + shopName + " 模型类型： " + translationModel);
+        if ("2".equals(translationModel)) {
+            // gpt 翻译
+            return chatGptIntegration.chatWithGpt(prompt, content, shopName, target, counter, limitChars);
+        }
         return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
     }
 
