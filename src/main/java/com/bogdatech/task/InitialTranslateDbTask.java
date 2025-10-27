@@ -57,6 +57,8 @@ public class InitialTranslateDbTask {
     private IInitialTranslateTasksService iInitialTranslateTasksService;
     @Autowired
     private IUserTranslationDataService iUserTranslationDataService;
+    @Autowired
+    private ITranslationCounterService iTranslationCounterService;
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
