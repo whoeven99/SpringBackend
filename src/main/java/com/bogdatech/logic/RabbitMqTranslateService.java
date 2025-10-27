@@ -64,13 +64,27 @@ public class RabbitMqTranslateService {
     public static String CLICK_EMAIL = "click"; // db 设置的10字符， 改动的时候需要注意
     public static String AUTO_EMAIL = "auto";
 
-    /**
-     * MQ翻译
-     * 读取该用户的shopify数据，然后循环获取模块数据
-     * 根据翻译类型选择不同的邮件发送方式: true-> 手动； false-> 自动
-     */
-    public void initialTasks(ShopifyRequest shopifyRequest, List<String> translateResourceDTOS, TranslateRequest request,
-                             boolean handleFlag, String translationModel, boolean isCover, String customKey, String taskType) {
+    public void initialTasks(String shopName, String accessToken,
+                             String source, String target,
+                             List<String> translateResourceDTOS,
+                             boolean handleFlag,
+                             String translationModel,
+                             boolean isCover,
+                             String customKey,
+                             String taskType) {
+        ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
+        TranslateRequest translateRequest = new TranslateRequest(0, shopName, accessToken, source, target, null);
+        initialTasks(shopifyRequest, translateResourceDTOS, translateRequest, handleFlag, translationModel, isCover, customKey, taskType);
+    }
+
+    public void initialTasks(ShopifyRequest shopifyRequest,
+                             List<String> translateResourceDTOS,
+                             TranslateRequest request,
+                             boolean handleFlag,
+                             String translationModel,
+                             boolean isCover,
+                             String customKey,
+                             String taskType) {
         // 初始化计数器、词汇表和语言包
         TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(shopifyRequest.getShopName());
         Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(shopifyRequest.getShopName());
@@ -103,6 +117,7 @@ public class RabbitMqTranslateService {
             if (checkNeedStopped(request.getShopName(), counter)) {
                 return;
             }
+            rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
 
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource);
@@ -112,7 +127,6 @@ public class RabbitMqTranslateService {
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
 
             appInsights.trackTrace("初始化task数据 " + shopifyRequest.getShopName() + " model: " + translateResource.getResourceType());
-            rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             saveTaskToDatabase(rabbitMqTranslateVO, query, allTasks);
 
             // 解析Shopify数据
@@ -217,6 +231,7 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace("统计所有进度条数据  " + rabbitMqTranslateVO.getShopName());
             for (JsonNode node : nodes) {
                 JsonNode translatableContent = node.path("translatableContent");
+                +1;
                 redisProcessService.addProcessData(generateProcessKey(
                         rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()), PROGRESS_TOTAL,
                         (long) translatableContent.size());
@@ -621,6 +636,8 @@ public class RabbitMqTranslateService {
                 }
             }
 
+            //翻译进度条加1
+            checkNeedAddProcessData(shopName, target);
             if (translatedValue == null) {
                 appInsights.trackTrace("FatalException translateData is null: " + shopifyRequest.getShopName() + " source: " + source + " value : " + value);
                 continue;
@@ -629,8 +646,6 @@ public class RabbitMqTranslateService {
             // TODO: 3.1 翻译后的存db
             shopifyService.saveToShopify(translatedValue, translation, resourceId, shopifyRequest);
             printTranslation(translatedValue, value, translation, shopName, type, resourceId, source);
-            //翻译进度条加1
-            checkNeedAddProcessData(shopName, target);
         }
     }
 }

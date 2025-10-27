@@ -206,13 +206,6 @@ public class TranslateResourceDTO {
         EMAIL_MAP.put(SHOP_POLICY,"policies");
     }
 
-    //自动翻译模块顺序
-    public static final List<String> AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
-            ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP,
-            ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, ONLINE_STORE_THEME_SETTINGS_CATEGORY,
-            ONLINE_STORE_THEME_LOCALE_CONTENT, COLLECTION, PRODUCT, PRODUCT_OPTION, PRODUCT_OPTION_VALUE, ARTICLE, PAGE, METAFIELD
-    ));
-
     private String resourceType;
     private String first;
     private String target;

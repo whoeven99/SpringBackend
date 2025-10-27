@@ -12,8 +12,6 @@ import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
-import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +24,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.entity.DO.TranslateResourceDTO.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
@@ -349,13 +346,23 @@ public class TaskService {
 
             // 调用DB翻译逻辑
             rabbitMqTranslateService.initialTasks(
-                    new ShopifyRequest(shopName, translatesDO.getAccessToken(), API_VERSION_LAST, translatesDO.getTarget()),
+                    shopName, translatesDO.getAccessToken(),
+                    translatesDO.getSource(), translatesDO.getTarget(),
                     AUTO_TRANSLATE_MAP,
-                    new TranslateRequest(0, shopName, translatesDO.getAccessToken(), translatesDO.getSource(), translatesDO.getTarget(), null),
-                    false, "1", false, EMAIL_TRANSLATE, AUTO_EMAIL);
+                    false,
+                    "1",
+                    false,
+                    EMAIL_TRANSLATE,
+                    AUTO_EMAIL);
         }
     }
 
+    //自动翻译模块顺序
+    public static final List<String> AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
+            ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP,
+            ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, ONLINE_STORE_THEME_SETTINGS_CATEGORY,
+            ONLINE_STORE_THEME_LOCALE_CONTENT, COLLECTION, PRODUCT, PRODUCT_OPTION, PRODUCT_OPTION_VALUE, ARTICLE, PAGE, METAFIELD
+    ));
 
     /**
      * 获取所有计划不过期的用户，判断是否过期

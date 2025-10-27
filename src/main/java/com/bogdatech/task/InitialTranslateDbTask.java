@@ -9,7 +9,6 @@ import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
@@ -24,12 +23,10 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
 
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
-import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
@@ -51,8 +48,6 @@ public class InitialTranslateDbTask {
     private ITranslatesService iTranslatesService;
     @Autowired
     private ITranslateTasksService iTranslateTasksService;
-    @Autowired
-    private ITranslationCounterService iTranslationCounterService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
@@ -136,7 +131,6 @@ public class InitialTranslateDbTask {
         }
     }
 
-
     @Scheduled(fixedRate = 30 * 1000)
     public void scanAndSubmitInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
@@ -166,8 +160,15 @@ public class InitialTranslateDbTask {
         });
 
         // taskType为 click 是手动翻译邮件， auto 是自动翻译邮件 ， key 是私有key邮件（这个暂时未实现）
-        rabbitMqTranslateService.initialTasks(new ShopifyRequest(shop, userDO.getAccessToken(), API_VERSION_LAST, singleTask.getTarget()), modelList, new TranslateRequest(0, shop, userDO.getAccessToken(), singleTask.getSource(), singleTask.getTarget(), null), singleTask.isHandle(), singleTask.getTranslateSettings1(), singleTask.isCover(), singleTask.getCustomKey(), singleTask.getTaskType());
+        rabbitMqTranslateService.initialTasks(
+                shop, userDO.getAccessToken(),
+                singleTask.getSource(), singleTask.getTarget(),
+                modelList,
+                singleTask.isHandle(),
+                singleTask.getTranslateSettings1(),
+                singleTask.isCover(),
+                singleTask.getCustomKey(),
+                singleTask.getTaskType());
         appInsights.trackTrace("processInitialTasksOfShop task FINISH successfully: " + singleTask.getTaskId() + " of shop: " + shop);
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId()).set(InitialTranslateTasksDO::getStatus, 1));
     }
 }
