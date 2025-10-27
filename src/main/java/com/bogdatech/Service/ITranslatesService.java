@@ -56,4 +56,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     List<TranslatesDO> listTranslatesDOByShopName(String shopName);
 
     TranslatesDO getSingleTranslateDO(String shopName, String source, String target);
+
+    void updateAutoTranslateByShopNameAndTargetToFalse(String shopName, String target);
 }

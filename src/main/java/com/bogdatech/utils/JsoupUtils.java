@@ -644,7 +644,6 @@ public class JsoupUtils {
      * ciwi 单 User 翻译
      */
     public String translateByCiwiUserModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt, boolean isSingleFlag) {
-        //hi用doubao-1.5-pro-256k翻译
         appInsights.trackTrace("千问翻译 用户： " + shopName);
         return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
     }
@@ -703,13 +702,6 @@ public class JsoupUtils {
                 continue;
             }
 
-            //产品的筛选规则
-            if (PRODUCT_OPTION.equals(modeType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
-                iterator.remove();
-                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
-                continue;
-            }
-
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(modeType)) {
                 //如果是html放html文本里面
@@ -718,8 +710,8 @@ public class JsoupUtils {
                 }
 
                 //对key中包含slide  slideshow  general.lange 的数据不翻译
-                if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
-                    printTranslateReason(value + "是包含slide,slideshow和general.lange的key是： " + key);
+                if (key.contains("general.lange")) {
+                    printTranslateReason(value + "是包含general.lange的key是： " + key);
                     iterator.remove();
                     redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                     continue;
@@ -744,14 +736,6 @@ public class JsoupUtils {
                         redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                         continue;
                     }
-                }
-            }
-            //对METAOBJECT字段翻译
-            if (modeType.equals(METAOBJECT)) {
-                if (isJson(value)) {
-                    iterator.remove();
-                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
-                    continue;
                 }
             }
 

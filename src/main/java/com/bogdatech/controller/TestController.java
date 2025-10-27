@@ -2,7 +2,6 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.azure.core.annotation.Put;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
@@ -14,7 +13,6 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;

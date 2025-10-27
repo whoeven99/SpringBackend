@@ -31,6 +31,7 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.userEmailStatus;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
@@ -328,6 +329,21 @@ public class TaskService {
             // 如果字符超限，则直接返回字符超限
             if (counterDO.getUsedChars() >= remainingChars) {
                 appInsights.trackTrace("autoTranslate 用户: " + shopName + " 字符超限");
+                continue;
+            }
+
+            // 判断这条语言是否在用户本地存在
+            String shopifyByQuery = getShopifyByQuery(getShopLanguageQuery(), shopName, usersDO.getAccessToken());
+            if (shopifyByQuery == null) {
+                appInsights.trackTrace("FatalException autoTranslate 用户: " + shopName + " 获取用户本地语言数据失败");
+                continue;
+            }
+
+            String userCode = "\"locale\": \"" + translatesDO.getTarget() + "\"";
+            if (!shopifyByQuery.contains(userCode)){
+                // 将用户的自动翻译标识改为false
+                translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());
+                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 用户本地语言数据不存在 target: " + translatesDO.getTarget());
                 continue;
             }
 
