@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.UsersDO;
@@ -17,7 +18,7 @@ public class UserServiceImpl extends ServiceImpl<UsersMapper, UsersDO> implement
 
     @Override
     public UsersDO getUserByName(String shopName) {
-        return baseMapper.getUserByName(shopName);
+        return baseMapper.selectOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
     }
 
     @Override

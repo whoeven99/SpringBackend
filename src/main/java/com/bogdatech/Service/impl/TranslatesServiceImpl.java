@@ -227,4 +227,9 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     public TranslatesDO getSingleTranslateDO(String shopName, String source, String target) {
         return baseMapper.selectOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source).eq(TranslatesDO::getTarget, target));
     }
+
+    @Override
+    public void updateAutoTranslateByShopNameAndTargetToFalse(String shopName, String target) {
+        baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).set(TranslatesDO::getAutoTranslate, false));
+    }
 }

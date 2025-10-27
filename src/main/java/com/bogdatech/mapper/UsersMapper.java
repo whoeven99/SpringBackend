@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface UsersMapper extends BaseMapper<UsersDO> {
-    @Select("SELECT shop_name, first_name, last_name, user_tag, email  FROM Users WHERE shop_name = #{shopName}")
+    @Select("SELECT shop_name, first_name, last_name, user_tag, email, access_token  FROM Users WHERE shop_name = #{shopName}")
     UsersDO getUserByName(String shopName);
 
     @Update("UPDATE Users SET uninstall_time = GETDATE()  WHERE shop_name = #{shopName}")
