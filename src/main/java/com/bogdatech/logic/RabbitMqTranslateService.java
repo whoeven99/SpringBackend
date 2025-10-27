@@ -117,7 +117,6 @@ public class RabbitMqTranslateService {
             if (checkNeedStopped(request.getShopName(), counter)) {
                 return;
             }
-            rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
 
             translateResource.setTarget(request.getTarget());
             String shopifyData = getShopifyData(shopifyRequest, translateResource);
@@ -127,6 +126,7 @@ public class RabbitMqTranslateService {
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
 
             appInsights.trackTrace("初始化task数据 " + shopifyRequest.getShopName() + " model: " + translateResource.getResourceType());
+            rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             saveTaskToDatabase(rabbitMqTranslateVO, query, allTasks);
 
             // 解析Shopify数据
@@ -231,7 +231,6 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace("统计所有进度条数据  " + rabbitMqTranslateVO.getShopName());
             for (JsonNode node : nodes) {
                 JsonNode translatableContent = node.path("translatableContent");
-                +1;
                 redisProcessService.addProcessData(generateProcessKey(
                         rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()), PROGRESS_TOTAL,
                         (long) translatableContent.size());
@@ -245,21 +244,25 @@ public class RabbitMqTranslateService {
             if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
                 JsonNode endCursor = pageInfoNode.path("endCursor");
                 translateResource.setAfter(endCursor.asText(null));
-
-                JsonNode nextPageData;
-                try {
-                    nextPageData = fetchNextPage(translateResource, new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget()), rabbitMqTranslateVO, allTasks);
-                    if (nextPageData == null) {
-                        return;
-                    }
-                } catch (Exception e) {
-                    return;
-                }
-                rabbitMqTranslateVO.setShopifyData(nextPageData.toString());
-                // 重新开始翻译流程
-                parseShopifyData(rabbitMqTranslateVO, translateResource, allTasks);
+                translateNextPageData(translateResource, rabbitMqTranslateVO, allTasks);
             }
         }
+    }
+
+    //递归处理下一页数据
+    private void translateNextPageData(TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
+        JsonNode nextPageData;
+        try {
+            nextPageData = fetchNextPage(translateContext, new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget()), rabbitMqTranslateVO, allTasks);
+            if (nextPageData == null) {
+                return;
+            }
+        } catch (Exception e) {
+            return;
+        }
+        rabbitMqTranslateVO.setShopifyData(nextPageData.toString());
+        // 重新开始翻译流程
+        parseShopifyData(rabbitMqTranslateVO, translateContext, allTasks);
     }
 
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
