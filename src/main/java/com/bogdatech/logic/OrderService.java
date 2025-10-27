@@ -10,7 +10,6 @@ import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -18,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.ANNUAL_FEE;
 import static com.bogdatech.constants.TranslateConstants.MONTHLY_FEE;
@@ -139,12 +137,12 @@ public class OrderService {
     }
 
     public String getLatestActiveSubscribeId(String shopName) {
-        CharsOrdersDO charsOrdersDO = charsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>()
+        CharsOrdersDO charsOrdersDO = charsOrdersService.list(new LambdaQueryWrapper<CharsOrdersDO>()
                 .eq(CharsOrdersDO::getShopName, shopName)
                 .eq(CharsOrdersDO::getStatus, "ACTIVE")
-                .like(CharsOrdersDO::getId, "AppSubscription")
                 .orderByDesc(CharsOrdersDO::getCreatedAt)
-                .last("OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY"));
+                ).stream().filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
+                .toList().get(0);
         if (charsOrdersDO != null) {
             return charsOrdersDO.getId();
         }

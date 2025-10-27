@@ -1,16 +1,13 @@
 package com.bogdatech.task;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.bogdatech.Service.ITranslateTasksService;
-import com.bogdatech.Service.ITranslatesService;
+import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.Service.IUsersService;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
@@ -22,19 +19,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
-import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
+import static com.bogdatech.utils.RedisKeyUtils.*;
 
 @Component
 @EnableScheduling
@@ -59,6 +54,10 @@ public class InitialTranslateDbTask {
     private TencentEmailService tencentEmailService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
+    private IInitialTranslateTasksService iInitialTranslateTasksService;
+    @Autowired
+    private IUserTranslationDataService iUserTranslationDataService;
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -71,71 +70,6 @@ public class InitialTranslateDbTask {
         appInsights.trackTrace("processInitialTasksOfShop init");
         initialTranslateRedisService.setDelete(); // 删掉翻译中的所有shop
     }
-
-    /**
-     * 定时查询是否有用户翻译完成，然后发送邮件
-     * 判断条件：dbtask的task都执行成功，并且initial task status = 1
-     * 已发送邮件，翻译任务完成 把发送邮件的标识存在initialTask里
-     * dbtask的任务被中断，已发送邮件，翻译任务完成 把发送邮件的标识存在initialTask里
-     */
-    @Scheduled(fixedRate = 55 * 1000)
-    public void scanAndSendEmail() {
-        // 获取initial表里面 status=1 isDelete = false 的数据
-        List<InitialTranslateTasksDO> initialTranslateTasks = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getStatus, 1)
-                        .eq(InitialTranslateTasksDO::isDeleted, false)
-                        .eq(InitialTranslateTasksDO::isSendEmail, false));
-        for (InitialTranslateTasksDO task : initialTranslateTasks) {
-            // 获取Translates表里面 status的值。 2  和  3，  2做完成的判断， 3做部分翻译的状态
-            TranslatesDO translatesDO = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
-            if (translatesDO == null) {
-                continue;
-            }
-
-            if (translatesDO.getStatus().equals(7)) {
-                //手动暂停的的邮件不发送
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, task.getShopName()).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).set(InitialTranslateTasksDO::isSendEmail, 1));
-            }
-
-            // 获取该用户 target 的 所有token 的值
-            Long costToken = translationCounterRedisService.getLanguageData(generateProcessKey(task.getShopName(), task.getTarget()));
-            Timestamp createdAt = task.getCreatedAt();
-            LocalDateTime localDateTime = createdAt.toLocalDateTime();
-
-            // 判断status的值
-            // 获取现在的initial表是否都创建完了
-            InitialTranslateTasksDO initialTranslateTasksDO = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getShopName, translatesDO.getShopName()).eq(InitialTranslateTasksDO::getSource, translatesDO.getSource()).eq(InitialTranslateTasksDO::getTarget, translatesDO.getTarget()).orderByDesc(InitialTranslateTasksDO::getCreatedAt)).stream().findFirst().orElse(null);
-            if (translatesDO.getStatus() == 2 && initialTranslateTasksDO != null && initialTranslateTasksDO.getStatus() == 1) {
-                // 判断该用户task是否全部完成
-                List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
-
-                // 先按原逻辑
-                if (translateTasks.isEmpty() && !task.isSendEmail()) {
-                    // 判断是否可以发送邮件,改变状态
-                    translationParametersRedisService.translatedStatusAndSendEmail(task.getShopName(), task.getTarget(), task.getSource());
-
-                    // 修改进度条是写入
-                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), String.valueOf(3));
-                    translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
-                    appInsights.trackTrace("scanAndSendEmail 用户: " + initialTranslateTasksDO.getShopName() + " 翻译完成，正在写入.");
-                }
-            } else if (translatesDO.getStatus() == 3 && !task.isSendEmail()) {
-                // 为3，发送部分翻译的邮件
-                // 将List<String> 转化位 List<TranslateResourceDTO>
-                List<String> translationList = jsonToObject(task.getTranslateSettings3(), new TypeReference<List<String>>() {
-                });
-                if (translationList == null || translationList.isEmpty()) {
-                    appInsights.trackTrace("scanAndSendEmail 每日须看 translationList: " + translationList);
-                    return;
-                }
-                List<TranslateResourceDTO> convertAll = convertALL(translationList);
-                tencentEmailService.translateFailEmail(task.getShopName(), localDateTime, convertAll, task.getTarget(), task.getSource(), costToken);
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, task.getTaskId()).set(InitialTranslateTasksDO::isSendEmail, 1));
-            }
-        }
-    }
-
 
     @Scheduled(fixedRate = 30 * 1000)
     public void scanAndSubmitInitialTranslateDbTask() {
@@ -170,4 +104,123 @@ public class InitialTranslateDbTask {
         appInsights.trackTrace("processInitialTasksOfShop task FINISH successfully: " + singleTask.getTaskId() + " of shop: " + shop);
         initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId()).set(InitialTranslateTasksDO::getStatus, 1));
     }
+
+    @Scheduled(fixedDelay = 5 * 60 * 1000)
+    public void scanAndSendEmail() {
+        // 1. 查询待处理任务
+        List<InitialTranslateTasksDO> taskList = initialTranslateTasksMapper.selectList(
+                new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                        .in(InitialTranslateTasksDO::getStatus, Arrays.asList(1, 2, 3))
+                        .eq(InitialTranslateTasksDO::isDeleted, false)
+                        .eq(InitialTranslateTasksDO::isSendEmail, false)
+                        .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
+        );
+
+        for (InitialTranslateTasksDO task : taskList) {
+            TranslatesDO translate = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
+            if (translate == null) {
+                continue;
+            }
+
+            Long costToken = translationCounterRedisService.getLanguageData(generateProcessKey(task.getShopName(), task.getTarget()));
+            LocalDateTime createdAt = task.getCreatedAt().toLocalDateTime();
+            int translateStatus = translate.getStatus();
+
+            // 2. 状态为7：手动暂停 -> 不发邮件，只标记, 将状态改为4
+            if (translateStatus == 7) {
+                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
+                        .set(InitialTranslateTasksDO::isSendEmail, true)
+                        .set(InitialTranslateTasksDO::getStatus, 4));
+                continue;
+            }
+
+            // 3. 状态为3：部分翻译，发失败邮件
+            if (translateStatus == 3 && !task.isSendEmail()) {
+                List<String> translationList = jsonToObject(task.getTranslateSettings3(), new TypeReference<>() {});
+                if (translationList == null || translationList.isEmpty()) {
+                    appInsights.trackTrace("scanAndSendEmail translationList为空: " + task.getShopName());
+                    continue;
+                }
+
+                List<TranslateResourceDTO> resourceList = convertALL(translationList);
+                tencentEmailService.translateFailEmail(task.getShopName(), createdAt, resourceList,
+                        task.getTarget(), task.getSource(), costToken);
+
+                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
+                        .set(InitialTranslateTasksDO::isSendEmail, true)
+                        .set(InitialTranslateTasksDO::getStatus, 4));
+
+                appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 发送部分翻译邮件成功。");
+                continue;
+            }
+
+            // 4. 进度条状态1 改为 状态为2：翻译中
+            if (translateStatus == 2 && task.getStatus() == 1) {
+                // 将initial status改为2
+                boolean updateFlag = iInitialTranslateTasksService.updateStatusByTaskId(task.getTaskId(), 2);
+                if (!updateFlag) {
+                    appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
+                    continue;
+                }
+            }
+
+            // 5. 状态为2：翻译中 判断是否完成
+            if (translateStatus == 2 && task.getStatus() == 2) {
+                List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
+
+                if (translateTasks.isEmpty()) {
+                    boolean updated = iTranslatesService.updateTranslateStatus(task.getShopName(), 1, task.getTarget(), task.getSource()) > 0;
+                    if (!updated) {
+                        appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
+                        continue;
+                    }
+
+                    // 更新 Redis 状态（翻译完成）
+                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "3");
+                    translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
+                    boolean updateFlag3 = iInitialTranslateTasksService.updateStatusByTaskId(task.getTaskId(), 3);
+                    if (!updateFlag3) {
+                        appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
+                        continue;
+                    }
+                    appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 翻译完成，写入状态3。");
+                }
+                continue;
+            }
+
+            // 6. 状态为1：全部完成，可以发成功邮件
+            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == 3) {
+                // 判断user_Translation_Data表 里面改用户语言是否完成写入
+                List<UserTranslationDataDO> userTranslationDataDOS = iUserTranslationDataService.selectWritingDataByShopNameAndTarget(task.getShopName(), task.getTarget());
+                if (!userTranslationDataDOS.isEmpty()) {
+                    appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 翻译数据未写入完，等待写入。");
+                    continue;
+                }
+
+                TranslationCounterDO counter = iTranslationCounterService.getTranslationCounterByShopName(task.getShopName());
+                Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
+
+                tencentEmailService.translateSuccessEmail(
+                        new TranslateRequest(0, task.getShopName(), null, task.getSource(), task.getTarget(), null),
+                        createdAt, costToken, counter.getUsedChars(), limitChars
+                );
+
+                // 更新数据库 & Redis
+                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
+                        .set(InitialTranslateTasksDO::isSendEmail, true)
+                        .set(InitialTranslateTasksDO::getStatus, 4));
+
+                translationParametersRedisService.hsetTranslationStatus(
+                        generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "4");
+                translationParametersRedisService.hsetTranslatingString(
+                        generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
+
+                appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 翻译成功邮件已发送。");
+            }
+        }
+    }
+
 }

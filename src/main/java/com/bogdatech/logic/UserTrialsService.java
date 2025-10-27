@@ -45,8 +45,10 @@ public class UserTrialsService {
      */
     public BaseResponse<Object> queryUserTrialByShopName(String shopName) {
         //判断是否购买过订阅计划，如果有则返回true
-        List<CharsOrdersDO> charsOrdersDOList = iCharsOrdersService.list(new QueryWrapper<CharsOrdersDO>().eq("shop_name", shopName).like("id", "AppSubscription").eq("status", "ACTIVE"));
-        if (charsOrdersDOList != null && !charsOrdersDOList.isEmpty()) {
+        List<CharsOrdersDO> charsOrdersDOList = iCharsOrdersService.list(new QueryWrapper<CharsOrdersDO>().eq("shop_name", shopName)
+                .eq("status", "ACTIVE"))
+                .stream().filter(data -> data.getShopName() != null && data.getId().contains("AppSubscription")).toList();
+        if (!charsOrdersDOList.isEmpty()) {
             appInsights.trackTrace("queryUserTrialByShopName " + shopName + " 返回的charsOrdersDOList 值为 ： " + charsOrdersDOList);
             return new BaseResponse<>().CreateErrorResponse(charsOrdersDOList);
         }

@@ -89,8 +89,6 @@ public class TestController {
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
-    private RedisIntegration redisIntegration;
-    @Autowired
     private AutoTranslateTask autoTranslate;
 
     @GetMapping("/ping")
@@ -471,7 +469,6 @@ public class TestController {
     @GetMapping("/increase")
     public Long increase(@RequestParam String key, @RequestParam long value) {
         return translationCounterRedisService.increaseLanguage(key, value);
-//        return translationCounterRedisService.increaseTask(key, value);
     }
 
     /**

@@ -223,15 +223,12 @@ public class ShopifyController {
         }
 
         //根据shopName查询用户订阅计划，最新的那个，再根据最新的resourceId，查询是否过期
-        CharsOrdersDO charsOrdersDO = charsOrdersService.getOne(new QueryWrapper<CharsOrdersDO>()
-                .select(
-                        "TOP 1 id"
-                )
-                .eq("shop_name", shopName)
-                .like("id", "AppSubscription")
-                .eq("status", "ACTIVE")
-                .orderByDesc("updated_date")
-        );
+        CharsOrdersDO charsOrdersDO = charsOrdersService.list(new QueryWrapper<CharsOrdersDO>()
+                        .eq("shop_name", shopName)
+                        .eq("status", "ACTIVE")
+                        .orderByDesc("updated_date"))
+                .stream().filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
+                .findFirst().orElse(null);
 
         if (charsOrdersDO == null) {
             return new BaseResponse<>().CreateErrorResponse("charsOrdersDO is null");
@@ -317,9 +314,6 @@ public class ShopifyController {
             return new BaseResponse<>().CreateErrorResponse(s);
         }
     }
-
-
-
 
 
 }
