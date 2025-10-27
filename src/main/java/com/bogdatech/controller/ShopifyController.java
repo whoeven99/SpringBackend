@@ -198,12 +198,12 @@ public class ShopifyController {
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
-//        if ("ciwishop.myshopify.com".equals(shopName)) {
-//            subscriptionVO.setUserSubscriptionPlan(6);
-//            subscriptionVO.setCurrentPeriodEnd(null);
-//            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
-//            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
-//        }
+        if ("5bf8b3.myshopify.com".equals(shopName) || "c5ba7c-7c.myshopify.com".equals(shopName) || "digitevil.myshopify.com".equals(shopName)) {
+            subscriptionVO.setUserSubscriptionPlan(6);
+            subscriptionVO.setCurrentPeriodEnd(null);
+            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
 
         //如果是userSubscriptionPlan是1和2，传null
         if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2 || userSubscriptionPlan == 8) {
@@ -223,15 +223,12 @@ public class ShopifyController {
         }
 
         //根据shopName查询用户订阅计划，最新的那个，再根据最新的resourceId，查询是否过期
-        CharsOrdersDO charsOrdersDO = charsOrdersService.getOne(new QueryWrapper<CharsOrdersDO>()
-                .select(
-                        "TOP 1 id"
-                )
-                .eq("shop_name", shopName)
-                .like("id", "AppSubscription")
-                .eq("status", "ACTIVE")
-                .orderByDesc("updated_date")
-        );
+        CharsOrdersDO charsOrdersDO = charsOrdersService.list(new QueryWrapper<CharsOrdersDO>()
+                        .eq("shop_name", shopName)
+                        .eq("status", "ACTIVE")
+                        .orderByDesc("updated_date"))
+                .stream().filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
+                .findFirst().orElse(null);
 
         if (charsOrdersDO == null) {
             return new BaseResponse<>().CreateErrorResponse("charsOrdersDO is null");
@@ -317,9 +314,6 @@ public class ShopifyController {
             return new BaseResponse<>().CreateErrorResponse(s);
         }
     }
-
-
-
 
 
 }

@@ -209,11 +209,6 @@ public class ShopifyService {
                 continue;
             }
 
-            //产品的筛选规则
-            if (PRODUCT_OPTION.equals(modeType) && "color".equalsIgnoreCase(value) || "size".equalsIgnoreCase(value)) {
-                continue;
-            }
-
             //如果是theme模块的数据
             if (TRANSLATABLE_RESOURCE_TYPES.contains(modeType)) {
                 //如果是html放html文本里面

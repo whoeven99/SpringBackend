@@ -630,7 +630,7 @@ public class RabbitMqTranslateService {
                 if (translationKeyType.equals(LIST_SINGLE)) {
                     translatedValue = translateDataService.translateListSingleData(value, target, vo, counter, shopName, shopifyRequest, source, translation, translateTextDO.getResourceId());
                 } else if (translationKeyType.equals(HTML)) {
-                    translatedValue = translateDataService.translateHtmlData(value, vo, counter, shopifyRequest, source, translation, resourceId);
+                    translatedValue = translateDataService.translateHtmlData(value, vo, counter, shopifyRequest, source, translation, resourceId, vo.getTranslationModel());
                 } else if (translationKeyType.equals(GLOSSARY)) {
                     translatedValue = translateDataService.translateGlossaryData(value, vo, counter, shopifyRequest, source, translation, resourceId, limitChars, keyMap0, keyMap1);
                 }

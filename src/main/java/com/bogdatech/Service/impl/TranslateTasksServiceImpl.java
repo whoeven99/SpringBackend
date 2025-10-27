@@ -104,9 +104,7 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
         return baseMapper.selectList(
                 new LambdaQueryWrapper<TranslateTasksDO>()
                         .eq(TranslateTasksDO::getShopName, shopName)
-                        .in(TranslateTasksDO::getStatus,
-                                Arrays.asList(NOT_TRANSLATED.getStatus(), TRANSLATING.getStatus()))
-                        .like(TranslateTasksDO::getPayload, query)
-        );
+                        .in(TranslateTasksDO::getStatus, Arrays.asList(NOT_TRANSLATED.getStatus(), TRANSLATING.getStatus()))
+        ).stream().filter(data -> data.getPayload().contains(query)).toList();
     }
 }

@@ -78,9 +78,5 @@ public class UserTranslationDataService {
 
         // 删除对应任务id
         userTranslationDataService.removeById(data.getTaskId());
-
-        // 获取正在翻译的语言
-        TranslatesDO translatesDO = iTranslatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, cloudInsertRequest.getShopName()).eq(TranslatesDO::getTarget, cloudInsertRequest.getTarget()).eq(TranslatesDO::getStatus, 2));
-        translationParametersRedisService.translatedStatusAndSendEmail(translatesDO.getShopName(), translatesDO.getTarget(), translatesDO.getSource());
     }
 }

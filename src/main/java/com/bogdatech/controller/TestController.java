@@ -2,7 +2,6 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.azure.core.annotation.Put;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
@@ -14,7 +13,6 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
@@ -89,8 +87,6 @@ public class TestController {
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
-    private RedisIntegration redisIntegration;
-    @Autowired
     private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
@@ -104,7 +100,7 @@ public class TestController {
 
     @PostMapping("/gpt")
     public String chat(@RequestBody GptVO gptVO) {
-        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), new TranslateRequest(0, "ciwishop.myshopify.com", null, "en", "zh-CN", gptVO.getSourceText()), new CharacterCountUtils(), 2000000);
+        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), "ciwishop.myshopify.com", null, new CharacterCountUtils(), 2000000);
     }
 
     //通过测试环境调shopify的API
@@ -476,7 +472,6 @@ public class TestController {
     @GetMapping("/increase")
     public Long increase(@RequestParam String key, @RequestParam long value) {
         return translationCounterRedisService.increaseLanguage(key, value);
-//        return translationCounterRedisService.increaseTask(key, value);
     }
 
     /**
