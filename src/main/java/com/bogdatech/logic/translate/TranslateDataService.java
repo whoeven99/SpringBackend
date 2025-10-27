@@ -1,6 +1,5 @@
 package com.bogdatech.logic.translate;
 
-import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.*;
@@ -18,10 +17,8 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.bogdatech.constants.TranslateConstants.METAFIELD;
-import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -30,7 +27,6 @@ import static com.bogdatech.utils.JsoupUtils.glossaryText;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.PlaceholderUtils.getListPrompt;
-import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 
@@ -51,7 +47,7 @@ public class TranslateDataService {
 
     public String translateHtmlData(String sourceText, RabbitMqTranslateVO vo, CharacterCountUtils counter,
                                     ShopifyRequest shopifyRequest, String source,
-                                    Map<String, Object> translation, String resourceId) {
+                                    Map<String, Object> translation, String resourceId, String translationModel) {
         String htmlTranslation;
         try {
             appInsights.trackTrace("定义translateRequest 用户： " + vo.getShopName() + "，sourceText: " + sourceText);
@@ -66,7 +62,7 @@ public class TranslateDataService {
 
             appInsights.trackTrace("修改进度条的数据 用户： " + vo.getShopName() + "，sourceText: " + sourceText);
             htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(sourceText, translateRequest, counter,
-                    vo.getLanguagePack(), vo.getLimitChars(), false);
+                    vo.getLanguagePack(), vo.getLimitChars(), false, translationModel);
             appInsights.trackTrace("完成翻译html 用户： " + vo.getShopName() + "，sourceText: " + sourceText);
             if (vo.getModeType().equals(METAFIELD)) {
                 // 对翻译后的html做格式处理
@@ -191,7 +187,7 @@ public class TranslateDataService {
         // 根据不同的key类型，生成对应提示词，后翻译
         String prompt = getListPrompt(getLanguageName(vo.getTarget()), vo.getLanguagePack(), translationKeyType, vo.getModeType());
         appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
-        String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt, false);
+        String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt, false, vo.getTranslationModel());
 
         // 如果主翻译服务 translateBatch 返回 null，则使用阿里云翻译服务作为备用
         if (translatedJson == null) {
@@ -214,10 +210,10 @@ public class TranslateDataService {
                                   List<String> untranslatedTexts,
                                   CharacterCountUtils counter,
                                   Integer limitChars,
-                                  String prompt, boolean isSingleFlag) {
+                                  String prompt, boolean isSingleFlag, String translationModel) {
         try {
             String json = objectToJson(untranslatedTexts);
-            return jsoupUtils.translateByCiwiUserModel(translateRequest.getTarget(), json, translateRequest.getShopName(), translateRequest.getSource(), counter, limitChars, prompt, isSingleFlag);
+            return jsoupUtils.translateByCiwiOrGptModel(translateRequest.getTarget(), json, translateRequest.getShopName(), translateRequest.getSource(), counter, limitChars, prompt, isSingleFlag, translationModel);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation translateBatch 调用翻译接口失败: " + e.getMessage());
             appInsights.trackException(e);
