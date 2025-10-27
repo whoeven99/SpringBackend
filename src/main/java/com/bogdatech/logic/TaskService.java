@@ -334,12 +334,13 @@ public class TaskService {
 
             // 判断这条语言是否在用户本地存在
             String shopifyByQuery = getShopifyByQuery(getShopLanguageQuery(), shopName, usersDO.getAccessToken());
+            appInsights.trackTrace("autoTranslate 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
             if (shopifyByQuery == null) {
                 appInsights.trackTrace("FatalException autoTranslate 用户: " + shopName + " 获取用户本地语言数据失败");
                 continue;
             }
 
-            String userCode = "\"locale\": \"" + translatesDO.getTarget() + "\"";
+            String userCode = "\"" + translatesDO.getTarget() + "\"";
             if (!shopifyByQuery.contains(userCode)){
                 // 将用户的自动翻译标识改为false
                 translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());
