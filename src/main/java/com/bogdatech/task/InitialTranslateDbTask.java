@@ -105,7 +105,7 @@ public class InitialTranslateDbTask {
         initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId()).set(InitialTranslateTasksDO::getStatus, 1));
     }
 
-    @Scheduled(fixedRate = 55 * 1000)
+    @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void scanAndSendEmail() {
         // 1. 查询待处理任务
         List<InitialTranslateTasksDO> taskList = initialTranslateTasksMapper.selectList(
@@ -128,9 +128,9 @@ public class InitialTranslateDbTask {
             // 2. 状态为7：手动暂停 -> 不发邮件，只标记, 将状态改为4
             if (translateStatus == 7) {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getTarget, task.getTaskId())
+                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
                         .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
-                        .set(InitialTranslateTasksDO::isSendEmail, 1)
+                        .set(InitialTranslateTasksDO::isSendEmail, true)
                         .set(InitialTranslateTasksDO::getStatus, 4));
                 continue;
             }
@@ -149,14 +149,14 @@ public class InitialTranslateDbTask {
 
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
-                        .set(InitialTranslateTasksDO::isSendEmail, 1)
+                        .set(InitialTranslateTasksDO::isSendEmail, true)
                         .set(InitialTranslateTasksDO::getStatus, 4));
 
                 appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 发送部分翻译邮件成功。");
                 continue;
             }
 
-            // 4. 状态1 改为 状态为2：翻译中
+            // 4. 进度条状态1 改为 状态为2：翻译中
             if (translateStatus == 2 && task.getStatus() == 1) {
                 // 将initial status改为2
                 boolean updateFlag = iInitialTranslateTasksService.updateStatusByTaskId(task.getTaskId(), 2);
@@ -193,7 +193,7 @@ public class InitialTranslateDbTask {
             // 6. 状态为1：全部完成，可以发成功邮件
             if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == 3) {
                 // 判断user_Translation_Data表 里面改用户语言是否完成写入
-                List<UserTranslationDataDO> userTranslationDataDOS = iUserTranslationDataService.selectWritingDataByShopNameAndSourceAndTarget(task.getShopName(), task.getTarget());
+                List<UserTranslationDataDO> userTranslationDataDOS = iUserTranslationDataService.selectWritingDataByShopNameAndTarget(task.getShopName(), task.getTarget());
                 if (!userTranslationDataDOS.isEmpty()) {
                     appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 翻译数据未写入完，等待写入。");
                     continue;
@@ -210,7 +210,7 @@ public class InitialTranslateDbTask {
                 // 更新数据库 & Redis
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
-                        .set(InitialTranslateTasksDO::isSendEmail, 1)
+                        .set(InitialTranslateTasksDO::isSendEmail, true)
                         .set(InitialTranslateTasksDO::getStatus, 4));
 
                 translationParametersRedisService.hsetTranslationStatus(
