@@ -105,7 +105,7 @@ public class InitialTranslateDbTask {
         initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId()).set(InitialTranslateTasksDO::getStatus, 1));
     }
 
-    @Scheduled(fixedDelay = 5 * 60 * 1000)
+    @Scheduled(fixedDelay = 60 * 1000)
     public void scanAndSendEmail() {
         // 1. 查询待处理任务
         List<InitialTranslateTasksDO> taskList = initialTranslateTasksMapper.selectList(
