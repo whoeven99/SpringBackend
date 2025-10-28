@@ -88,6 +88,8 @@ public class TestController {
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private AutoTranslateTask autoTranslate;
+    @Autowired
+    private ITranslatesService translatesService;
 
     @GetMapping("/ping")
     public String ping() {
@@ -422,6 +424,9 @@ public class TestController {
         // 统计待翻译的 task
         List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
         responseMap.put("总的子任务数量", tasks.size());
+
+        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        responseMap.put("自动翻译的任务数量", translatesDOList.size());
 
         // 统计shopName数量
         Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());

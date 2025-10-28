@@ -157,7 +157,9 @@ public class ProcessDbTaskService {
             translateTasksService.updateByTaskId(task.getTaskId(), 2);
 
             // TODO 2.2 开始翻译流程
-            startTranslateDbTask(stringSetMap, vo, counter);
+            for (Map.Entry<String, Set<TranslateTextDO>> entry : stringSetMap.entrySet()) {
+                rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, entry.getKey());
+            }
 
             // TODO 3 翻译后，存数据，记录等逻辑，拆出来
 
@@ -190,30 +192,6 @@ public class ProcessDbTaskService {
             translateTasksService.updateByTaskId(task.getTaskId(), 4);
         } finally {
             statisticalAutomaticTranslationData(isTranslationAuto, counter, usedChars, start, vo);
-        }
-    }
-
-    private void startTranslateDbTask(Map<String, Set<TranslateTextDO>> stringSetMap, RabbitMqTranslateVO vo, CharacterCountUtils counter) {
-        for (Map.Entry<String, Set<TranslateTextDO>> entry : stringSetMap.entrySet()) {
-            switch (entry.getKey()) {
-                case LIST_SINGLE:
-                case HTML:
-                    rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, entry.getKey());
-                    break;
-                case GLOSSARY:
-                    if (!CollectionUtils.isEmpty(vo.getGlossaryMap())) {
-                        rabbitMqTranslateService.translateData(entry.getValue(), vo, counter, GLOSSARY);
-                    }
-                    break;
-                case PLAIN_TEXT:
-                case TITLE:
-                case META_TITLE:
-                case LOWERCASE_HANDLE:
-                    rabbitMqTranslateService.translatePlainTextData(entry.getValue(), vo, counter, entry.getKey());
-                    break;
-                default:
-                    break;
-            }
         }
     }
 

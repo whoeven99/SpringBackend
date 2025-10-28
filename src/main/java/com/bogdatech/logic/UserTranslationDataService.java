@@ -73,7 +73,8 @@ public class UserTranslationDataService {
             return;
         }
         saveToShopify(cloudInsertRequest);
-        translationParametersRedisService.addWritingData(generateWriteStatusKey(cloudInsertRequest.getShopName(), cloudInsertRequest.getTarget()), WRITE_DONE, 1L);
+        translationParametersRedisService.addWritingData(generateWriteStatusKey(
+                cloudInsertRequest.getShopName(), cloudInsertRequest.getTarget()), WRITE_DONE, 1L);
 
         // 删除对应任务id
         userTranslationDataService.removeById(data.getTaskId());
