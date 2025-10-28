@@ -8,6 +8,8 @@ import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import java.util.List;
 import static com.bogdatech.constants.TranslateConstants.OPENAI_MAGNIFICATION;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TimeOutUtils.*;
 import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
@@ -30,11 +33,13 @@ public class ChatGptIntegration {
     private String deploymentName;
     @Autowired
     private ITranslationCounterService translationCounterService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
 
     /**
      * Azure服务器调用gpt
      */
-    public String chatWithGpt(String prompt, String sourceText, String shopName, String target, CharacterCountUtils counter, Integer limitChars) {
+    public String chatWithGpt(String prompt, String sourceText, String shopName, String target, CharacterCountUtils counter, Integer limitChars, boolean isSingleFlag) {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
@@ -82,7 +87,12 @@ public class ChatGptIntegration {
             int completionToken = chatCompletions.getUsage().getCompletionTokens();
             printTranslateCost(allToken, promptToken, completionToken);
             appInsights.trackTrace("clickTranslation chatWithGpt 用户： " + shopName + " 翻译的文本： " + sourceText + " token openai : " + target + " all: " + allToken + " input : " + promptToken + " output : " + completionToken);
-            translationCounterService.updateAddUsedCharsByShopName(shopName, allToken, limitChars);
+            if (isSingleFlag) {
+                translationCounterService.updateAddUsedCharsByShopName(shopName, allToken, limitChars);
+            } else {
+                translationCounterService.updateAddUsedCharsByShopName(shopName, allToken, limitChars);
+                translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), allToken);
+            }
             counter.addChars(allToken);
             return content;
         } catch (Exception e) {
