@@ -52,7 +52,7 @@ public class TranslationCounterRedisService {
         if (date == null || date.isEmpty() || "null".equals(date)) {
             return 0L;
         } else {
-            appInsights.trackTrace("getLanguageData language: " + date);
+            appInsights.trackTrace("getLanguageData language: " + date + " 用户数据： " + key);
             return Long.parseLong(date);
         }
     }

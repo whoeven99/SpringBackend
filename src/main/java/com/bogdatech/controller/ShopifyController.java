@@ -23,6 +23,7 @@ import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.parsePlanName;
+import static com.bogdatech.utils.WhiteListUtils.checkWhiteList;
 
 @RestController
 @RequestMapping("/shopify")
@@ -198,11 +199,9 @@ public class ShopifyController {
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
-        if ("5bf8b3.myshopify.com".equals(shopName) || "c5ba7c-7c.myshopify.com".equals(shopName) || "digitevil.myshopify.com".equals(shopName)) {
-            subscriptionVO.setUserSubscriptionPlan(6);
-            subscriptionVO.setCurrentPeriodEnd(null);
-            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
-            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        BaseResponse<Object> objectBaseResponse = checkWhiteList(shopName, subscriptionVO, userSubscriptionsDO.getFeeType());
+        if (objectBaseResponse != null) {
+            return objectBaseResponse;
         }
 
         //如果是userSubscriptionPlan是1和2，传null

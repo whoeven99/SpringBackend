@@ -650,7 +650,7 @@ public class JsoupUtils {
         appInsights.trackTrace("千问或gpt翻译 用户： " + shopName + " 模型类型： " + translationModel);
         if ("2".equals(translationModel)) {
             // gpt 翻译
-            return chatGptIntegration.chatWithGpt(prompt, content, shopName, target, counter, limitChars);
+            return chatGptIntegration.chatWithGpt(prompt, content, shopName, target, counter, limitChars, isSingleFlag);
         }
         return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
     }
