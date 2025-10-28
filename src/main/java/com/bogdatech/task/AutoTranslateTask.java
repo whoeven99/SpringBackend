@@ -11,7 +11,6 @@ import static com.bogdatech.logic.TranslateService.executorService;
 
 @Component
 @EnableScheduling
-@EnableAsync
 public class AutoTranslateTask {
 
     @Autowired
