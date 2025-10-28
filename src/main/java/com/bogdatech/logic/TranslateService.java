@@ -35,6 +35,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
+import static com.bogdatech.integration.ALiYunTranslateIntegration.TRANSLATE_APP;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
@@ -537,7 +538,7 @@ public class TranslateService {
         //获取用户最大额度限制
         Integer maxCharsByShopName = iTranslationCounterService.getMaxCharsByShopName(shopName);
         //调用图片翻译方法
-        return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName);
+        return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName, TRANSLATE_APP);
     }
 }
 
