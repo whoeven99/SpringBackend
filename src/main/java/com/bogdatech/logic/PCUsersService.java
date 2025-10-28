@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.entity.DO.PCUsersDO;
+import com.bogdatech.entity.VO.PCUserPointsVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class PCUsersService {
@@ -45,8 +47,21 @@ public class PCUsersService {
         }
         boolean flag = ipcUserService.updatePurchasePointsByShopName(shopName, chars);
         if (flag){
+            appInsights.trackTrace("addPurchasePoints 添加额度成功 " + shopName + " chars: " + chars);
             return new BaseResponse<>().CreateSuccessResponse("添加成功");
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+    }
+
+    public BaseResponse<Object> getPurchasePoints(String shopName) {
+        PCUsersDO userByShopName = ipcUserService.getUserByShopName(shopName);
+        if (userByShopName == null){
+            return new BaseResponse<>().CreateErrorResponse("用户不存在");
+        }
+        PCUserPointsVO purchasePoints = new PCUserPointsVO();
+        purchasePoints.setPurchasePoints(userByShopName.getPurchasePoints());
+        purchasePoints.setUsedPoints(userByShopName.getUsedPoints());
+        purchasePoints.setShopName(shopName);
+        return new BaseResponse<>().CreateSuccessResponse(purchasePoints);
     }
 }

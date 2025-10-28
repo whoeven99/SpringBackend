@@ -26,4 +26,9 @@ public class PCUsersController {
         return pcUsersService.addPurchasePoints(shopName, addCharsVO.getChars());
     }
 
+    // 查询额度
+    @PostMapping("/getPurchasePoints")
+    public BaseResponse<Object> getPurchasePoints(@RequestParam String shopName){
+        return pcUsersService.getPurchasePoints(shopName);
+    }
 }
