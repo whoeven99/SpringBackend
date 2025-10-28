@@ -12,6 +12,7 @@ public class WhiteListUtils {
             subscriptionVO.setUserSubscriptionPlan(6);
             subscriptionVO.setCurrentPeriodEnd(null);
             subscriptionVO.setFeeType(feeType);
+            subscriptionVO.setPlanType("Premium");
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
         return null;
