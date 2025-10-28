@@ -1,0 +1,12 @@
+package com.bogdatech.Service;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.bogdatech.entity.DO.PCUsersDO;
+
+public interface IPCUserService extends IService<PCUsersDO> {
+    PCUsersDO getUserByShopName(String shopName);
+
+    boolean saveSingleUser(PCUsersDO pcUsersDO);
+
+    boolean updateSingleUser(PCUsersDO pcUsersDO);
+}
