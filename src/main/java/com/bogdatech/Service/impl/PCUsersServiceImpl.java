@@ -24,4 +24,9 @@ public class PCUsersServiceImpl extends ServiceImpl<PCUsersMapper, PCUsersDO> im
     public boolean updateSingleUser(PCUsersDO pcUsersDO) {
         return baseMapper.update(pcUsersDO, new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, pcUsersDO.getShopName())) > 0;
     }
+
+    @Override
+    public boolean updatePurchasePointsByShopName(String shopName, Integer chars) {
+        return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName).setSql("purchase_points = purchase_points + " + chars)) > 0;
+    }
 }

@@ -2,11 +2,14 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.entity.DO.PCUsersDO;
+import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+
+import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 
 @Component
 public class PCUsersService {
@@ -32,5 +35,18 @@ public class PCUsersService {
             pcUsers.setLoginTime(now);
             ipcUserService.updateSingleUser(pcUsersDO);
         }
+    }
+
+    public BaseResponse<Object> addPurchasePoints(String shopName, Integer chars) {
+        PCUsersDO userByShopName = ipcUserService.getUserByShopName(shopName);
+        // 先简单的添加额度， 订单表后面再做
+        if (userByShopName == null){
+            return new BaseResponse<>().CreateErrorResponse("用户不存在");
+        }
+        boolean flag = ipcUserService.updatePurchasePointsByShopName(shopName, chars);
+        if (flag){
+            return new BaseResponse<>().CreateSuccessResponse("添加成功");
+        }
+        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
     }
 }

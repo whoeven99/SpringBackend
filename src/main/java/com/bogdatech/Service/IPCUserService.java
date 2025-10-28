@@ -9,4 +9,6 @@ public interface IPCUserService extends IService<PCUsersDO> {
     boolean saveSingleUser(PCUsersDO pcUsersDO);
 
     boolean updateSingleUser(PCUsersDO pcUsersDO);
+
+    boolean updatePurchasePointsByShopName(String shopName, Integer chars);
 }
