@@ -595,7 +595,7 @@ public class RabbitMqTranslateService {
         Map<String, String> keyMap1 = new HashMap<>();
         Map<String, String> keyMap0 = new HashMap<>();
         if (GLOSSARY.equals(translationKeyType)) {
-            if (!CollectionUtils.isEmpty(vo.getGlossaryMap())) {
+            if (CollectionUtils.isEmpty(vo.getGlossaryMap())) {
                 return;
             }
             prepareForGlossary(vo, translationKeyType, keyMap1, keyMap0);
