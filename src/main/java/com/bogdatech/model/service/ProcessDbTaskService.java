@@ -13,6 +13,7 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.integration.RedisIntegration;
+import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
@@ -61,6 +62,8 @@ public class ProcessDbTaskService {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
+    @Autowired
+    private ShopifyService shopifyService;
 
     /**
      * 重新实现邮件发送方法。 能否获取这条数据之前是否有其他项没完成，没完成的话继续完成；完成的话，走发送邮件的逻辑。
@@ -215,7 +218,7 @@ public class ProcessDbTaskService {
 
     private Map<String, Set<TranslateTextDO>> getFilteredTranslationData(RabbitMqTranslateVO vo) {
         //根据DB的请求语句获取对应shopify值
-        String shopifyDataByDb = rabbitMqTranslateService.getShopifyDataByDb(vo);
+        String shopifyDataByDb = shopifyService.getShopifyData(vo.getShopName(), vo.getAccessToken(), APIVERSION, vo.getShopifyData());
         if (shopifyDataByDb == null) {
             // TODO 这里应该就是FatalException了，出现这个状况的话很严重
             appInsights.trackTrace("clickTranslation " + vo.getShopName() + " shopifyDataByDb is null" + vo);

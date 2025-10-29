@@ -161,6 +161,8 @@ public class TaskService {
     public JSONObject analyzeOrderData(UserPriceRequest userPriceRequest) {
         String query = getSubscriptionQuery(userPriceRequest.getSubscriptionId());
         String infoByShopify;
+
+        // TODO shopify service
         String env = System.getenv("ApplicationEnv");
         //根据新的集合获取这个订阅计划的信息
         if ("prod".equals(env) || "dev".equals(env)) {

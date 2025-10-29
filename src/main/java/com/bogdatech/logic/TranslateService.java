@@ -296,6 +296,7 @@ public class TranslateService {
         return getGoogleTranslationWithRetry(request);
     }
 
+    // TODO 2
     //获取用户对应模块的文本数据
     public static String getShopifyData(ShopifyRequest shopifyRequest, TranslateResourceDTO translateResource) {
         CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);

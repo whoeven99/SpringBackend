@@ -814,6 +814,7 @@ public class PrivateKeyService {
         String query = new ShopifyRequestBody().getAfterQuery(translateResource);
         cloudServiceRequest.setBody(query);
 
+        // TODO shopify service
         String env = System.getenv("ApplicationEnv");
         String infoByShopify;
         if ("prod".equals(env) || "dev".equals(env)) {

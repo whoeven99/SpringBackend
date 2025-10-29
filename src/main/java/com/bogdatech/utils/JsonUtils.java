@@ -11,6 +11,15 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class JsonUtils {
 
+    public static JsonNode readTree(String str) {
+        try {
+            return OBJECT_MAPPER.readTree(str);
+        } catch (JsonProcessingException e) {
+            appInsights.trackException(e);
+            return null;
+        }
+    }
+
     // 将对象转换为JSON字符串
     public static String objectToJson(Object obj) {
         try {
