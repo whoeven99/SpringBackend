@@ -137,6 +137,7 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> updateUserPic(String shopName, PCUserPicturesDO pcUserPicturesDO) {
+        pcUserPicturesDO.setShopName(shopName);
         // 判断是否存在， 存在则更新，不存在则插入
         List<PCUserPicturesDO> userPicByShopNameAndImageIdAndLanguageCode = ipcUserPicturesService.getUserPicByShopNameAndImageIdAndLanguageCode(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getLanguageCode());
         boolean flag = false;
