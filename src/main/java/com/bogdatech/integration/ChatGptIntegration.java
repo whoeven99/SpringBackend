@@ -47,14 +47,11 @@ public class ChatGptIntegration {
                 .buildClient();
 
         // 模拟聊天交互
-        ChatMessage messagereq = new ChatMessage(ChatRole.USER);
-        ChatMessage messagersy = new ChatMessage(ChatRole.SYSTEM);
-        messagersy.setContent(prompt);
-        messagereq.setContent(sourceText);
-
+        ChatMessage userMessage = new ChatMessage(ChatRole.USER);
+        userMessage.setContent(prompt + "\n" + sourceText); // 合并 prompt 和 sourceText
         List<ChatMessage> prompts = new ArrayList<>();
-        prompts.add(messagereq);
-        prompts.add(messagersy);
+        prompts.add(userMessage);
+
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
                 .setMaxTokens(16000)
                 .setTemperature(0.7)

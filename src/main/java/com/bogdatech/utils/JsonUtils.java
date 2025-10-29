@@ -43,7 +43,7 @@ public class JsonUtils {
     public static <T> T jsonToObjectWithNull(String json, TypeReference<T> typeRef) {
         try {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, typeRef) : null;
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             appInsights.trackException(e);
             return null;
         }
