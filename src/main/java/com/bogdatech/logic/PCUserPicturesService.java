@@ -89,7 +89,7 @@ public class PCUserPicturesService {
 
         // 获取用户最大额度限制
         Integer maxCharsByShopName = pcUsersDO.getPurchasePoints();
-        if (pcUsersDO.getUsedPoints() >= maxCharsByShopName){
+        if (pcUsersDO.getUsedPoints() >= maxCharsByShopName) {
             return new BaseResponse<>().CreateErrorResponse("额度不够");
         }
 
@@ -121,7 +121,7 @@ public class PCUserPicturesService {
 
         // 获取用户最大额度限制
         Integer maxCharsByShopName = pcUsersDO.getPurchasePoints();
-        if (pcUsersDO.getUsedPoints() >= maxCharsByShopName){
+        if (pcUsersDO.getUsedPoints() >= maxCharsByShopName) {
             return new BaseResponse<>().CreateErrorResponse("额度不够");
         }
 
@@ -137,7 +137,15 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> updateUserPic(String shopName, PCUserPicturesDO pcUserPicturesDO) {
-        boolean flag = ipcUserPicturesService.updatePictureData(shopName, pcUserPicturesDO);
+        // 判断是否存在， 存在则更新，不存在则插入
+        List<PCUserPicturesDO> userPicByShopNameAndImageIdAndLanguageCode = ipcUserPicturesService.getUserPicByShopNameAndImageIdAndLanguageCode(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getLanguageCode());
+        boolean flag = false;
+        if (userPicByShopNameAndImageIdAndLanguageCode == null || userPicByShopNameAndImageIdAndLanguageCode.isEmpty()) {
+            flag = ipcUserPicturesService.insertPictureData(pcUserPicturesDO);
+        } else {
+            flag = ipcUserPicturesService.updatePictureData(shopName, pcUserPicturesDO);
+        }
+
         if (flag) {
             return new BaseResponse<>().CreateSuccessResponse(pcUserPicturesDO);
         }
