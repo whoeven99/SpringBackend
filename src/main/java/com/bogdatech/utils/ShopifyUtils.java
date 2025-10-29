@@ -21,6 +21,7 @@ public class ShopifyUtils {
     public static String getShopifyByQuery(String query, String shopName, String accessToken){
         String infoByShopify;
         String env = System.getenv("ApplicationEnv");
+        // TODO shopify service
         //根据新的集合获取这个订阅计划的信息
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, null), query));

@@ -1,6 +1,8 @@
 package com.bogdatech.integration;
 
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.model.controller.request.CloudServiceRequest;
+import com.bogdatech.utils.JsonUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -17,6 +19,18 @@ import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class TestingEnvironmentIntegration {
+
+    public String sendShopifyPost(String api, String shopName, String accessToken, String apiVersion, String query) {
+        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
+        cloudServiceRequest.setShopName(shopName);
+        cloudServiceRequest.setAccessToken(accessToken);
+        cloudServiceRequest.setTarget(apiVersion);
+        cloudServiceRequest.setBody(query);
+
+        String requestBody = JsonUtils.objectToJson(cloudServiceRequest);
+        return sendShopifyPost(api, requestBody);
+    }
+
     /**
      * 本地调用test环境
      */

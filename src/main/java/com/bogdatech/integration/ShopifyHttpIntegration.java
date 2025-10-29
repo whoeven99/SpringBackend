@@ -18,6 +18,14 @@ import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class ShopifyHttpIntegration {
+    public String sendShopifyPost(String shopName, String accessToken, String apiVersion,
+                                  String stringQuery, Map<String, Object> variables) {
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(shopName);
+        request.setAccessToken(accessToken);
+        request.setApiVersion(apiVersion);
+        return sendShopifyPost(request, stringQuery, variables);
+    }
 
     // 设置头部信息
     //查询数据
@@ -66,6 +74,14 @@ public class ShopifyHttpIntegration {
             return null;
         }
         return responseContent;
+    }
+
+    public String getInfoByShopify(String shopName, String accessToken, String apiVersion, String query) {
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(shopName);
+        request.setAccessToken(accessToken);
+        request.setApiVersion(apiVersion);
+        return String.valueOf(getInfoByShopify(request, query));
     }
 
     public static JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {

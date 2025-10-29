@@ -6,6 +6,8 @@ import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -59,6 +61,10 @@ public class ShopifyService {
     private RedisTranslateUserStatusService redisTranslateUserStatusService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
+    private ShopifyHttpIntegration shopifyHttpIntegration;
+    @Autowired
+    private TestingEnvironmentIntegration testingEnvironmentIntegration;
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
@@ -66,6 +72,16 @@ public class ShopifyService {
     public static String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
         String requestBody = JsonUtils.objectToJson(cloudServiceRequest);
         return sendShopifyPost("test123", requestBody);
+    }
+
+    public String getShopifyData(String shopName, String accessToken, String apiVersion, String query) {
+        String env = System.getenv("ApplicationEnv");
+        if ("prod".equals(env) || "dev".equals(env)) {
+            return shopifyHttpIntegration.getInfoByShopify(shopName, accessToken, apiVersion, query);
+        } else {
+            // 本地调用shopify
+            return testingEnvironmentIntegration.sendShopifyPost("test123", shopName, accessToken, apiVersion, query);
+        }
     }
 
     // 包装一层，用于获取用户实际未翻译和部分翻译的语言数
@@ -88,25 +104,11 @@ public class ShopifyService {
     // 获得翻译前一共需要消耗的字符数
     public int getTotalWords(ShopifyRequest request, String method, TranslateResourceDTO translateResource) {
         CharacterCountUtils counter = new CharacterCountUtils();
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
-        String env = System.getenv("ApplicationEnv");
         translateResource.setTarget(request.getTarget());
         String query = shopifyRequestBody.getFirstQuery(translateResource);
-        cloudServiceRequest.setBody(query);
-        String infoByShopify;
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(request, query));
-        } else {
-            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
-        }
-        try {
-            if (infoByShopify == null || infoByShopify.isEmpty()) {
-                return 0;
-            }
-            countBeforeTranslateChars(infoByShopify, request, translateResource, counter);
-        } catch (Exception e) {
-            appInsights.trackTrace("getTotalWords " + request.getShopName() + "用户 " + request.getTarget() + " 统计字符数失败 errors ： " + e.getMessage());
-        }
+
+        String infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), request.getApiVersion(), query);
+        countBeforeTranslateChars(infoByShopify, request, translateResource, counter);
         return counter.getTotalChars();
     }
 

@@ -13,6 +13,7 @@ import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsonUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -119,7 +120,9 @@ public class RabbitMqTranslateService {
             }
 
             translateResource.setTarget(request.getTarget());
-            String shopifyData = getShopifyData(shopifyRequest, translateResource);
+            String shopifyData = shopifyService.getShopifyData(
+                    shopifyRequest.getShopName(), shopifyRequest.getAccessToken(),
+                    shopifyRequest.getApiVersion(), new ShopifyRequestBody().getFirstQuery(translateResource));
             appInsights.trackTrace("用户shopify翻译数据 " + shopifyRequest.getShopName());
 
             rabbitMqTranslateVO.setShopifyData(shopifyData);
@@ -266,7 +269,6 @@ public class RabbitMqTranslateService {
     }
 
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks) {
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
         String query = new ShopifyRequestBody().getAfterQuery(translateResource);
         //将请求数据存数据库中
         try {
@@ -279,47 +281,9 @@ public class RabbitMqTranslateService {
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation fetchNextPage 保存翻译任务失败 errors " + e);
         }
-        cloudServiceRequest.setBody(query);
 
-        String env = System.getenv("ApplicationEnv");
-        String infoByShopify;
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(request, query));
-        } else {
-            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
-        }
-
-        try {
-            if (infoByShopify == null || infoByShopify.isEmpty()) {
-                return null;
-            }
-            return OBJECT_MAPPER.readTree(infoByShopify);
-        } catch (JsonProcessingException e) {
-            throw new ClientException(SHOPIFY_RETURN_ERROR.getErrMsg());
-        }
-    }
-
-    /**
-     * 根据从数据库获取的数据，请求shopify获取数据
-     */
-    public String getShopifyDataByDb(RabbitMqTranslateVO rabbitMqTranslateVO) {
-        String shopifyData = null;
-        try {
-            String env = System.getenv("ApplicationEnv");
-            if ("prod".equals(env) || "dev".equals(env)) {
-                ShopifyRequest shopifyRequest = new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget());
-                shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, rabbitMqTranslateVO.getShopifyData()));
-            } else {
-                CloudServiceRequest cloudServiceRequest = new CloudServiceRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget(), null);
-                cloudServiceRequest.setBody(rabbitMqTranslateVO.getShopifyData());
-                shopifyData = getShopifyDataByCloud(cloudServiceRequest);
-            }
-        } catch (Exception e) {
-            // 如果出现异常，则跳过, 翻译其他的内容
-            //更新当前字符数
-            appInsights.trackTrace("clickTranslation " + rabbitMqTranslateVO.getShopName() + " Failed to get Shopify data errors : " + e.getMessage());
-        }
-        return shopifyData;
+        String infoByShopify = shopifyService.getShopifyData(request.getShopName(), request.getAccessToken(), request.getApiVersion(), query);
+        return JsonUtils.readTree(infoByShopify);
     }
 
     /**

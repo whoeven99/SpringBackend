@@ -3,6 +3,7 @@ package com.bogdatech.task;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.enums.InitialTaskStatusEnum;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -12,7 +13,6 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -24,7 +24,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -76,7 +75,10 @@ public class InitialTranslateDbTask {
     public void scanAndSubmitInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task
-        List<InitialTranslateTasksDO> clickTranslateTasks = initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getStatus, 0).orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+        List<InitialTranslateTasksDO> clickTranslateTasks = initialTranslateTasksMapper.selectList(
+                new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
+                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
 
         appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
@@ -91,27 +93,29 @@ public class InitialTranslateDbTask {
 
     private void processInitialTasksOfShop(InitialTranslateTasksDO singleTask) {
         String shop = singleTask.getShopName();
+
         // 获取用户的accessToken
         UsersDO userDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, singleTask.getShopName()));
         appInsights.trackTrace("processInitialTasksOfShop task START: " + singleTask.getTaskId() + " of shop: " + shop);
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId()).set(InitialTranslateTasksDO::getStatus, 2));
-
-        // 转化模块类型
-        List<String> modelList = jsonToObject(singleTask.getTranslateSettings3(), new TypeReference<List<String>>() {
-        });
+        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                .eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId())
+                .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
 
         // taskType为 click 是手动翻译邮件， auto 是自动翻译邮件 ， key 是私有key邮件（这个暂时未实现）
         rabbitMqTranslateService.initialTasks(
                 shop, userDO.getAccessToken(),
                 singleTask.getSource(), singleTask.getTarget(),
-                modelList,
+                jsonToObject(singleTask.getTranslateSettings3(), new TypeReference<List<String>>() {}),
                 singleTask.isHandle(),
                 singleTask.getTranslateSettings1(),
                 singleTask.isCover(),
                 singleTask.getCustomKey(),
                 singleTask.getTaskType());
+
         appInsights.trackTrace("processInitialTasksOfShop task FINISH successfully: " + singleTask.getTaskId() + " of shop: " + shop);
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId()).set(InitialTranslateTasksDO::getStatus, 1));
+        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                .eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId())
+                .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATED.status));
     }
 
     @Scheduled(fixedDelay = 60 * 1000)
@@ -119,7 +123,10 @@ public class InitialTranslateDbTask {
         // 1. 查询待处理任务
         List<InitialTranslateTasksDO> taskList = initialTranslateTasksMapper.selectList(
                 new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .in(InitialTranslateTasksDO::getStatus, Arrays.asList(1, 2, 3))
+                        .in(InitialTranslateTasksDO::getStatus, Arrays.asList(
+                                InitialTaskStatusEnum.TASKS_CREATING.status,
+                                InitialTaskStatusEnum.TASKS_CREATED.status,
+                                InitialTaskStatusEnum.TRANSLATED_WRITING_SHOPIFY.status))
                         .eq(InitialTranslateTasksDO::isDeleted, false)
                         .eq(InitialTranslateTasksDO::isSendEmail, false)
                         .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
@@ -140,7 +147,7 @@ public class InitialTranslateDbTask {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
                         .set(InitialTranslateTasksDO::isSendEmail, true)
-                        .set(InitialTranslateTasksDO::getStatus, 4));
+                        .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TRANSLATED_WRITTEN.status));
                 continue;
             }
 
@@ -159,7 +166,7 @@ public class InitialTranslateDbTask {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
                         .set(InitialTranslateTasksDO::isSendEmail, true)
-                        .set(InitialTranslateTasksDO::getStatus, 4));
+                        .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TRANSLATED_WRITTEN.status));
 
                 appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 发送部分翻译邮件成功。");
                 continue;
