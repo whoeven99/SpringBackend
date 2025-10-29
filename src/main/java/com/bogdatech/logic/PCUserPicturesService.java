@@ -1,5 +1,6 @@
 package com.bogdatech.logic;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IPCUserPicturesService;
 import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.entity.DO.PCUserPicturesDO;
@@ -151,5 +152,21 @@ public class PCUserPicturesService {
             return new BaseResponse<>().CreateSuccessResponse(pcUserPicturesDO);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    public BaseResponse<Object> selectPictureDataByShopNameAndProductIdAndLanguageCode(String shopName, String productId, String languageCode) {
+        List<PCUserPicturesDO> list = ipcUserPicturesService.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getProductId, productId).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
+        if (list != null) {
+            return new BaseResponse<>().CreateSuccessResponse(list);
+        }
+        return new BaseResponse<>().CreateErrorResponse("null");
+    }
+
+    public BaseResponse<Object> selectPicturesByShopNameAndLanguageCode(String shopName, String languageCode) {
+        List<PCUserPicturesDO> list = ipcUserPicturesService.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
+        if (list != null) {
+            return new BaseResponse<>().CreateSuccessResponse(list);
+        }
+        return new BaseResponse<>().CreateErrorResponse("null");
     }
 }
