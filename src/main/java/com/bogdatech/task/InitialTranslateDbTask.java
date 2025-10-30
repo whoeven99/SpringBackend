@@ -277,13 +277,7 @@ public class InitialTranslateDbTask {
 
                 TranslationCounterDO counter = iTranslationCounterService.getTranslationCounterByShopName(task.getShopName());
                 Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
-                tencentEmailService.emailAutoTranslate(task.getShopName(), task.getTarget(), createdAt, counter.getUsedChars(), limitChars);
-
-                // 更新状态
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
-                        .set(InitialTranslateTasksDO::getStatus, 4)
-                        .set(InitialTranslateTasksDO::isSendEmail, true));
+                tencentEmailService.emailAutoTranslate(task.getShopName(), task.getTarget(), createdAt, counter.getUsedChars(), limitChars, task.getTaskId());
             }
         }
     }

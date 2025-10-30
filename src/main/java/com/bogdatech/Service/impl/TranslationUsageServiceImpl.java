@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+
 @Service
 public class TranslationUsageServiceImpl extends ServiceImpl<TranslationUsageMapper, TranslationUsageDO> implements ITranslationUsageService {
     @Override
@@ -41,6 +43,7 @@ public class TranslationUsageServiceImpl extends ServiceImpl<TranslationUsageMap
     public Boolean judgeSendAutoEmail(List<TranslatesDO> translatesDOList, String shopName) {
         //判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
         List<TranslationUsageDO> translationUsageDOS = baseMapper.selectList(new QueryWrapper<TranslationUsageDO>().eq("shop_name", shopName).eq("status", 1));
+        appInsights.trackTrace("emailAutoTranslate 用户： " + shopName + " 已翻译列表大小为： " + translationUsageDOS.size() + " 自动翻译列表： " + translationUsageDOS);
         //发送邮件
         return translationUsageDOS.size() == translatesDOList.size();
     }
