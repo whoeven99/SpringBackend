@@ -377,7 +377,7 @@ public class TencentEmailService {
             // 判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
             List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("auto_translate", true));
             appInsights.trackTrace("emailAutoTranslate 用户： " + shopName + " 自动翻译列表大小为： " + list.size() + " 自动翻译列表： " + list);
-            Boolean b = translationUsageService.judgeSendAutoEmail(list, target);
+            Boolean b = translationUsageService.judgeSendAutoEmail(list, shopName);
             if (b) {
                 appInsights.trackTrace("emailAutoTranslate 用户 " + shopName + " 条件符合发送邮件 时间为： " + LocalDateTime.now());
                 sendAutoTranslateEmail(shopName);

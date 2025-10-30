@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
@@ -27,9 +26,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
-import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
@@ -275,9 +272,8 @@ public class InitialTranslateDbTask {
                     continue;
                 }
 
-                TranslationCounterDO counter = iTranslationCounterService.getTranslationCounterByShopName(task.getShopName());
                 Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
-                tencentEmailService.emailAutoTranslate(task.getShopName(), task.getTarget(), createdAt, counter.getUsedChars(), limitChars, task.getTaskId());
+                tencentEmailService.emailAutoTranslate(task.getShopName(), task.getTarget(), createdAt, Math.toIntExact(costToken), limitChars, task.getTaskId());
             }
         }
     }
