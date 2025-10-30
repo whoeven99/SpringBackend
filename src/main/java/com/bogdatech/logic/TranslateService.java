@@ -14,7 +14,6 @@ import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
@@ -24,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -35,11 +33,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
-import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
@@ -49,7 +45,6 @@ import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
-import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
@@ -83,6 +78,8 @@ public class TranslateService {
     private TranslationMonitorRedisService translationMonitorRedisService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
+    @Autowired
+    private ShopifyService shopifyService;
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -296,28 +293,6 @@ public class TranslateService {
         return getGoogleTranslationWithRetry(request);
     }
 
-    // TODO 2
-    //获取用户对应模块的文本数据
-    public static String getShopifyData(ShopifyRequest shopifyRequest, TranslateResourceDTO translateResource) {
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
-        String query = new ShopifyRequestBody().getFirstQuery(translateResource);
-        cloudServiceRequest.setBody(query);
-        String shopifyData = null;
-        try {
-            String env = System.getenv("ApplicationEnv");
-            if ("prod".equals(env) || "dev".equals(env)) {
-                shopifyData = String.valueOf(getInfoByShopify(shopifyRequest, query));
-            } else {
-                shopifyData = getShopifyDataByCloud(cloudServiceRequest);
-            }
-        } catch (Exception e) {
-            // 如果出现异常，则跳过, 翻译其他的内容
-            //更新当前字符数
-            appInsights.trackTrace("Failed to get Shopify data: " + e.getMessage());
-        }
-        return shopifyData;
-    }
-
     public static final Set<String> EXCLUDED_SHOPS = new HashSet<>(Arrays.asList(
             "qnxrrk-2n.myshopify.com",
             "gemxco.myshopify.com"
@@ -435,14 +410,12 @@ public class TranslateService {
      */
     public void syncShopifyAndDatabase(TranslateRequest request) {
         // 获取用户数据
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.translateRequestToCloudServiceRequest(request);
         ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
         String query = getLanguagesQuery();
-        cloudServiceRequest.setBody(query);
         String shopifyData;
         JsonNode root;
         try {
-            shopifyData = getShopifyByQuery(query, request.getShopName(), request.getAccessToken());
+            shopifyData = shopifyService.getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
             root = OBJECT_MAPPER.readTree(shopifyData);
         } catch (Exception e) {
             appInsights.trackException(e);

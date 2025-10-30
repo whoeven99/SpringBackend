@@ -198,7 +198,7 @@ public class TranslateDataService {
         if (translatedJson != null) {
             Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
             if (map == null) {
-                appInsights.trackTrace("FatalException clickTranslation translatePlainTextData 用户： " + shopName + " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts);
+                appInsights.trackTrace("FatalException clickTranslation translatePlainTextData 用户： " + shopName + " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts + " 翻译的文本： " + translatedJson);
                 return new HashMap<>();
             }
             return map;

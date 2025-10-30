@@ -13,20 +13,14 @@ import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.model.controller.request.CloudServiceRequest;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.Random;
-
 import static com.bogdatech.constants.TranslateConstants.APIVERSION;
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.APGUserGeneratedTaskService.*;
-import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.requestBody.ShopifyRequestBody.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;

@@ -129,7 +129,6 @@ public class InitialTranslateDbTask {
                                 InitialTaskStatusEnum.TRANSLATED_WRITING_SHOPIFY.status))
                         .eq(InitialTranslateTasksDO::isDeleted, false)
                         .eq(InitialTranslateTasksDO::isSendEmail, false)
-                        .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
         );
 
         for (InitialTranslateTasksDO task : taskList) {
@@ -218,10 +217,16 @@ public class InitialTranslateDbTask {
                 TranslationCounterDO counter = iTranslationCounterService.getTranslationCounterByShopName(task.getShopName());
                 Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(task.getShopName());
 
-                tencentEmailService.translateSuccessEmail(
-                        new TranslateRequest(0, task.getShopName(), null, task.getSource(), task.getTarget(), null),
-                        createdAt, costToken, counter.getUsedChars(), limitChars
-                );
+                // 判断是手动翻译还是自动翻译
+                if (CLICK_EMAIL.equals(task.getTaskType())) {
+                    tencentEmailService.translateSuccessEmail(
+                            new TranslateRequest(0, task.getShopName(), null, task.getSource(), task.getTarget(), null),
+                            createdAt, costToken, counter.getUsedChars(), limitChars
+                    );
+                }else {
+                    tencentEmailService.emailAutoTranslate(task.getShopName(), task.getTarget(), createdAt, counter.getUsedChars(), limitChars);
+                }
+
 
                 // 更新数据库 & Redis
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()

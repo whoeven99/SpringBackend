@@ -3,44 +3,42 @@ package com.bogdatech.logic;
 import com.bogdatech.Service.IAILanguagePacksService;
 import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.integration.HunYuanIntegration;
-import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.logic.TranslateService.getShopifyData;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.PlaceholderUtils.getCategoryPrompt;
 
 @Component
 public class AILanguagePackService {
-    private final IAILanguagePacksService aiLanguagePacksService;
-    private final HunYuanIntegration hunYuanIntegration;
-
     @Autowired
-    public AILanguagePackService(IAILanguagePacksService aiLanguagePacksService, HunYuanIntegration hunYuanIntegration) {
-        this.aiLanguagePacksService = aiLanguagePacksService;
-        this.hunYuanIntegration = hunYuanIntegration;
-    }
+    private IAILanguagePacksService aiLanguagePacksService;
+    @Autowired
+    private HunYuanIntegration hunYuanIntegration;
+    @Autowired
+    private ShopifyService shopifyService;
 
     /**
      * 获取用户的beta_description，根据这个由混元生成类目
-     * @param shopName 店铺名称
+     *
+     * @param shopName    店铺名称
      * @param accessToken 店铺token
-     * return true or false
+     *                    return true or false
      */
     public String getCategoryByDescription(String shopName, String accessToken, CharacterCountUtils counter, Integer limitChars, String target) {
-        //先判断数据库中是否有数据
+        // 先判断数据库中是否有数据
         String languagePackId = aiLanguagePacksService.getLanguagePackByShopName(shopName);
         if (languagePackId != null && !languagePackId.isEmpty()) {
             return languagePackId;
         }
 
-        String shopifyData = getShopifyData(new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, "zh-CN"), new TranslateResourceDTO(SHOP, MAX_LENGTH, "zh-CN", ""));
+        String query = new ShopifyRequestBody().getFirstQuery(new TranslateResourceDTO(SHOP, MAX_LENGTH, "zh-CN", ""));
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
         if (shopifyData == null || shopifyData.isEmpty()) {
             return null;
         }

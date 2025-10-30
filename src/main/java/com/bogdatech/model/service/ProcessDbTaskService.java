@@ -12,23 +12,17 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.logic.TencentEmailService;
-import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import static com.bogdatech.constants.TranslateConstants.*;
@@ -36,7 +30,6 @@ import static com.bogdatech.logic.redis.TranslationParametersRedisService.genera
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.JsonUtils.stringToJson;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 
 @Service
 public class ProcessDbTaskService {
@@ -53,15 +46,11 @@ public class ProcessDbTaskService {
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
-    private RedisIntegration redisIntegration;
-    @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
     @Autowired
     private JsoupUtils jsoupUtils;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
-    @Autowired
-    private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private ShopifyService shopifyService;
 
@@ -78,38 +67,18 @@ public class ProcessDbTaskService {
             translateTasksService.updateByTaskId(task.getTaskId(), 10);
             return;
         }
-        String source = rabbitMqTranslateVO.getSource();
-        String target = rabbitMqTranslateVO.getTarget();
 
-        String shopifyData = rabbitMqTranslateVO.getShopifyData();
         try {
-            // TODO 等email都转到initialTasks后，这里可以删掉
-            if (EMAIL.equals(shopifyData) || EMAIL_AUTO.equals(shopifyData)) {
-                // email任务
-                boolean canSendEmail = translateTasksService.listBeforeEmailTask(shopName, task.getTaskId());
-                if (canSendEmail) {
-                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(3));
-                    translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), "");
-                    if (EMAIL.equals(shopifyData)) {
-                        translateTasksService.updateByTaskId(task.getTaskId(), 1);
-                    } else {
-                        emailAutoTranslate(rabbitMqTranslateVO, task);
-                    }
-                } else {
-                    // TODO 这是个fatalException 出现这种问题都是比较严重的问题 没翻译完为什么会出现email的任务
-                    appInsights.trackTrace(shopName + " 还有数据没有翻译完: " + task.getTaskId() + "，继续翻译");
-                }
-            } else {
-                // 将redis状态中改为2
-                translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), String.valueOf(2));
-                translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), "Searching for content to translate…");
+            // 将redis状态中改为2
+            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), "Searching for content to translate…");
 
-                // 普通翻译任务
-                processTask(rabbitMqTranslateVO, task, EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey()));
+            // 普通翻译任务
+            processTask(rabbitMqTranslateVO, task, EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey()));
 
-                // 将用户task改为1
-                translateTasksService.updateByTaskId(task.getTaskId(), 1);
-            }
+            // 将用户task改为1
+            translateTasksService.updateByTaskId(task.getTaskId(), 1);
+
             // 删除所有status为1的数据
             translateTasksService.deleteStatus1Data();
         } catch (ClientException e1) {
@@ -193,8 +162,6 @@ public class ProcessDbTaskService {
             appInsights.trackException(e);
             appInsights.trackTrace("ProcessDBTaskLog " + shopName + " 处理消息失败 errors : " + e);
             translateTasksService.updateByTaskId(task.getTaskId(), 4);
-        } finally {
-            statisticalAutomaticTranslationData(isTranslationAuto, counter, usedChars, start, vo);
         }
     }
 
@@ -207,7 +174,7 @@ public class ProcessDbTaskService {
 
         // 如果字符超限，则直接返回字符超限
         if (usedChars >= maxCharsByShopName) {
-            appInsights.trackTrace("ProcessDBTaskLog 字符超限 " + shopName +" 当前消耗token为: " + usedChars);
+            appInsights.trackTrace("ProcessDBTaskLog 字符超限 " + shopName + " 当前消耗token为: " + usedChars);
             //将用户所有task改为3
             rabbitMqTranslateService.updateTranslateTasksStatus(shopName);
             //将用户翻译状态也改为3
@@ -275,47 +242,6 @@ public class ProcessDbTaskService {
                     .set(TranslationUsageDO::getRemainingCredits, rabbitMqTranslateVO.getLimitChars() - one.getUsedChars())
                     .set(TranslationUsageDO::getCreditCount, usageServiceOne.getCreditCount() + translatedChars));
         } catch (Exception e) {
-            appInsights.trackException(e);
-        }
-    }
-
-    /**
-     * EMAIL_AUTO的邮件发送
-     */
-    public void emailAutoTranslate(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateTasksDO task) {
-        try {
-            String shopName = rabbitMqTranslateVO.getShopName();
-            // 判断数据库里面是否存在该语言
-            // 使用自动翻译的发送邮件逻辑
-            // 将status改为2
-            translateTasksService.updateByTaskId(task.getTaskId(), 2);
-            boolean update = translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                    .eq(TranslationUsageDO::getShopName, shopName)
-                    .eq(TranslationUsageDO::getLanguageName, rabbitMqTranslateVO.getTarget())
-                    .set(TranslationUsageDO::getStatus, 1));
-            if (update) {
-                translateTasksService.removeById(task.getTaskId());
-            }
-
-            // 判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
-            List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", task.getShopName()).eq("auto_translate", true));
-            Boolean b = translationUsageService.judgeSendAutoEmail(list, rabbitMqTranslateVO.getShopName());
-            if (b) {
-                tencentEmailService.sendAutoTranslateEmail(shopName);
-                //将所有status, remaining，consumed， credit都改为0
-                translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                        .eq(TranslationUsageDO::getShopName, task.getShopName())
-                        .set(TranslationUsageDO::getStatus, 0)
-                        .set(TranslationUsageDO::getRemainingCredits, 0)
-                        .set(TranslationUsageDO::getConsumedTime, 0)
-                        .set(TranslationUsageDO::getCreditCount, 0));
-            }
-
-            appInsights.trackTrace("ProcessDBTaskLog 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
-            // 删除redis该用户相关进度条数据
-            redisIntegration.delete(generateProcessKey(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()));
-        } catch (Exception e) {
-            appInsights.trackTrace("ProcessDBTaskLog " + rabbitMqTranslateVO.getShopName() + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
         }
     }

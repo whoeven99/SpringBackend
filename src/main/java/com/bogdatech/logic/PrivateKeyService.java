@@ -301,7 +301,8 @@ public class PrivateKeyService {
                 return;
             }
             translateResource.setTarget(request.getTarget());
-            String shopifyData = getShopifyData(shopifyRequest, translateResource);
+            String query = new ShopifyRequestBody().getFirstQuery(translateResource);
+            String shopifyData = shopifyService.getShopifyData(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), API_VERSION_LAST, query);
             TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, Math.toIntExact(remainingChars), glossaryMap, request.getSource(), null, apiKey, handleFlag, isCover, modelFlag, apiModel, userPrompt);
             translateJson(translateContext);
 
@@ -810,18 +811,8 @@ public class PrivateKeyService {
 
     //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(request);
         String query = new ShopifyRequestBody().getAfterQuery(translateResource);
-        cloudServiceRequest.setBody(query);
-
-        // TODO shopify service
-        String env = System.getenv("ApplicationEnv");
-        String infoByShopify;
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(request, query));
-        } else {
-            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
-        }
+        String infoByShopify = shopifyService.getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
 
         try {
             return OBJECT_MAPPER.readTree(infoByShopify);

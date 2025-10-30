@@ -207,7 +207,6 @@ public class TencentEmailService {
 
         // 获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
-
         Duration duration = Duration.between(begin, end);
         long costTime = duration.toMinutes();
         if (costTime < 0) {
@@ -360,5 +359,45 @@ public class TencentEmailService {
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144923L, templateData, APG_TASK_INTERRUPT_EMAIL, TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
         //存入数据库中
         iapgEmailService.saveEmail(new APGEmailDO(null, apgUsersDO.getId(), TENCENT_FROM_EMAIL, apgUsersDO.getEmail(), APG_TASK_INTERRUPT_EMAIL, b));
+    }
+
+    /**
+     * EMAIL_AUTO的邮件发送
+     */
+    public void emailAutoTranslate(String shopName, String target, LocalDateTime begin, int usedChars, int limitChars) {
+        try {
+            // 获取更新前后的时间
+            LocalDateTime end = LocalDateTime.now();
+            Duration duration = Duration.between(begin, end);
+            long costTime = duration.toMinutes();
+            int endChars = limitChars - usedChars;
+            // 判断数据库里面是否存在该语言
+            translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
+                    .eq(TranslationUsageDO::getShopName, shopName)
+                    .eq(TranslationUsageDO::getLanguageName, target)
+                    .set(TranslationUsageDO::getConsumedTime, costTime)
+                    .set(TranslationUsageDO::getCreditCount, usedChars)
+                    .set(TranslationUsageDO::getRemainingCredits, endChars)
+                    .set(TranslationUsageDO::getStatus, 1));
+
+            // 判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
+            List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("auto_translate", true));
+            Boolean b = translationUsageService.judgeSendAutoEmail(list, target);
+            if (b) {
+                sendAutoTranslateEmail(shopName);
+                //将所有status, remaining，consumed， credit都改为0
+                translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
+                        .eq(TranslationUsageDO::getShopName, shopName)
+                        .set(TranslationUsageDO::getStatus, 0)
+                        .set(TranslationUsageDO::getRemainingCredits, 0)
+                        .set(TranslationUsageDO::getConsumedTime, 0)
+                        .set(TranslationUsageDO::getCreditCount, 0));
+            }
+
+            appInsights.trackTrace("ProcessDBTaskLog 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
+        } catch (Exception e) {
+            appInsights.trackTrace("ProcessDBTaskLog " + shopName + " 邮件发送 errors : " + e);
+            appInsights.trackException(e);
+        }
     }
 }
