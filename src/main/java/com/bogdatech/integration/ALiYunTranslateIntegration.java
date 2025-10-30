@@ -19,6 +19,7 @@ import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.CharacterCountUtils;
+import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;
@@ -29,7 +30,6 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
-import static com.bogdatech.utils.SwitchModelUtils.switchModel;
 import static com.bogdatech.utils.TimeOutUtils.*;
 
 @Component
@@ -40,6 +40,15 @@ public class ALiYunTranslateIntegration {
     private IAPGUserCounterService iapgUserCounterService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
+
+    // 根据语言代码切换模型
+    public static String switchModel(String languageCode) {
+        return switch (languageCode) {
+//            case "en", "zh-CN", "de", "ja", "it", "ru", "zh-TW", "da", "nl", "id", "th", "vi", "uk", "fr", "ko", "hi", "bg", "cs", "el", "hr", "lt", "nb", "pl", "ro", "sk", "sv", "ar", "no" -> "qwen-plus";
+            default -> "qwen-max-latest"; //32k token
+        };
+//        return "qwen-max";
+    }
 
     public static com.aliyun.alimt20181012.Client createClient() {
         try {
@@ -127,26 +136,65 @@ public class ALiYunTranslateIntegration {
         return content;
     }
 
-    /**
-     * qwen 单 user msg 翻译
-     * 翻译的计数改为redis计数
-     *
-     * @param text       要翻译的文本
-     * @param prompt     提示词
-     * @param target     目标语言代码
-     * @param countUtils 计数器
-     * @param shopName   店铺名称
-     * @return 翻译后的文本
-     */
-    public String userTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars, boolean isSingleFlag) {
+    public Pair<String, Integer> userTranslate(String text, String prompt, String target, String shopName) {
         String model = switchModel(target);
-        appInsights.trackTrace("model 用户 " + shopName);
         Generation gen = new Generation();
-        appInsights.trackTrace("gen 用户 " + shopName);
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
                 .content(prompt + text)
                 .build();
+
+        GenerationParam param = GenerationParam.builder()
+                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .model(model)
+                .messages(Collections.singletonList(userMsg))
+                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .build();
+
+        String content;
+        int totalToken;
+        try {
+            GenerationResult call = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return gen.call(param);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("FatalException userTranslate call errors ： " + e.getMessage() +
+                                    " translateText : " + text + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (call == null) {
+                return null;
+            }
+            content = call.getOutput().getChoices().get(0).getMessage().getContent();
+
+            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            Integer inputTokens = call.getUsage().getInputTokens();
+            Integer outputTokens = call.getUsage().getOutputTokens();
+            appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content +
+                    " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " +
+                    outputTokens);
+            return new Pair<>(content, totalToken);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException userTranslate all errors ： " + e.getMessage() + " translateText : " + text);
+            appInsights.trackException(e);
+            return new Pair<>(null, 0);
+        }
+    }
+
+    public String userTranslate(String text, String prompt, CharacterCountUtils countUtils, String target, String shopName, Integer limitChars, boolean isSingleFlag) {
+        String model = switchModel(target);
+        Generation gen = new Generation();
+        Message userMsg = Message.builder()
+                .role(Role.USER.getValue())
+                .content(prompt + text)
+                .build();
+
         appInsights.trackTrace("userMsg 用户 " + shopName);
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
@@ -158,7 +206,6 @@ public class ALiYunTranslateIntegration {
         appInsights.trackTrace("param 用户 " + shopName);
         String content;
         int totalToken;
-        appInsights.trackTrace("totalToken 用户 " + shopName);
         try {
             GenerationResult call = callWithTimeoutAndRetry(() -> {
                         try {
@@ -184,23 +231,21 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            printTranslateCost(totalToken, inputTokens, outputTokens);
+//            printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             } else {
-//                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
                 translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
             }
 
             countUtils.addChars(totalToken);
+            return content;
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation userTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
             return null;
         }
-        return content;
-
     }
 
     /**

@@ -19,7 +19,6 @@ import static com.bogdatech.constants.TranslateConstants.METAFIELD;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.glossaryText;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
@@ -196,39 +195,32 @@ public class TranslateDataService {
         // 根据不同的key类型，生成对应提示词，后翻译
         String prompt = PlaceholderUtils.getListPrompt(getLanguageName(vo.getTarget()), vo.getLanguagePack(), translationKeyType, vo.getModeType());
         appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
-        String translatedJson = translateBatch(translateRequestTemplate, untranslatedTexts, counter, limitChars, prompt, false, vo.getTranslationModel());
+
+        String untranslatedTextsJson = JsonUtils.objectToJson(untranslatedTexts);
+        String translatedJson = jsoupUtils.translateByCiwiOrGptModel(translateRequestTemplate.getTarget(), untranslatedTextsJson,
+                translateRequestTemplate.getShopName(), translateRequestTemplate.getSource(), counter, limitChars, prompt,
+                false, vo.getTranslationModel());
 
         // 如果主翻译服务 translateBatch 返回 null，则使用阿里云翻译服务作为备用
         if (translatedJson == null) {
-            String json = objectToJson(untranslatedTexts);
-            translatedJson = aLiYunTranslateIntegration.userTranslate(json, prompt, counter, vo.getTarget(), shopName, limitChars, false);
+            translatedJson = aLiYunTranslateIntegration.userTranslate(untranslatedTextsJson, prompt, counter, vo.getTarget(), shopName, limitChars, false);
         }
+
         appInsights.trackTrace("TranslateDataServiceLog PlainText 用户： " + vo.getShopName() + "，sourceText: " + untranslatedTexts
                 + " translatedJson: " + translatedJson);
-        if (translatedJson != null) {
-            Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
-            if (map == null) {
-                appInsights.trackTrace("FatalException clickTranslation translatePlainTextData 用户： " + shopName +
-                        " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts + " 返回值: " + translatedJson);
-                return new HashMap<>();
-            }
-            return map;
-        }
-        return new HashMap<>();
-    }
 
-    private String translateBatch(TranslateRequest translateRequest,
-                                  List<String> untranslatedTexts,
-                                  CharacterCountUtils counter,
-                                  Integer limitChars,
-                                  String prompt, boolean isSingleFlag, String translationModel) {
-        try {
-            String json = objectToJson(untranslatedTexts);
-            return jsoupUtils.translateByCiwiOrGptModel(translateRequest.getTarget(), json, translateRequest.getShopName(), translateRequest.getSource(), counter, limitChars, prompt, isSingleFlag, translationModel);
-        } catch (Exception e) {
-            appInsights.trackTrace("FatalException clickTranslation translateBatch 调用翻译接口失败: " + e.getMessage());
-            appInsights.trackException(e);
-            return null;
+        if (translatedJson == null) {
+            appInsights.trackTrace("FatalException TranslateDataServiceLog translatePlainTextData 用户： " + shopName +
+                    " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts + " 返回值: " + translatedJson);
+            return new HashMap<>();
         }
+
+        Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
+        if (map == null) {
+            appInsights.trackTrace("FatalException TranslateDataServiceLog translatePlainTextData 用户： " + shopName +
+                    " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts + " 返回值: " + translatedJson);
+            return new HashMap<>();
+        }
+        return map;
     }
 }

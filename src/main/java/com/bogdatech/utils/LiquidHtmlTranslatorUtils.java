@@ -227,15 +227,18 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * html的拆分翻译，放弃递归，改为json翻译
      */
-    public String newJsonTranslateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag, String translationModel) {
+    public String newJsonTranslateHtml(String html, TranslateRequest request, CharacterCountUtils counter,
+                                       String languagePackId, Integer limitChars, boolean isSingleFlag, String translationModel) {
         if (!isHtml(html)) {
             return null;
         }
 
         html = isHtmlEntity(html); //判断是否含有HTML实体,然后解码
+
         //1, 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
         appInsights.trackTrace("定义translateRequest 用户： " + request.getShopName());
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
+
         appInsights.trackTrace("解析html 用户： " + request.getShopName());
         Document doc = parseHtml(html, request.getTarget(), hasHtmlTag);
 

@@ -100,7 +100,8 @@ public class TestController {
 
     @PostMapping("/gpt")
     public String chat(@RequestBody GptVO gptVO) {
-        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), "ciwishop.myshopify.com", null, new CharacterCountUtils(), 2000000, false);
+//        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), "ciwishop.myshopify.com", null, new CharacterCountUtils(), 2000000, false);
+        return "";
     }
 
     //通过测试环境调shopify的API
