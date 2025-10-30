@@ -20,10 +20,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -59,6 +62,7 @@ public class InitialTranslateDbTask {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
 
+    private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(3); // 创建initial初始化线程池
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
      */
@@ -69,6 +73,19 @@ public class InitialTranslateDbTask {
         }
         appInsights.trackTrace("processInitialTasksOfShop init");
         initialTranslateRedisService.setDelete(); // 删掉翻译中的所有shop
+    }
+
+    @PreDestroy
+    public void shutdownExecutor() {
+        initialExecutorService.shutdown(); // 停止接收新任务
+        try {
+            if (!initialExecutorService.awaitTermination(5, TimeUnit.MINUTES)) { // 等待任务完成
+                throw new IllegalStateException("任务未能在关闭前完成");
+            }
+        } catch (InterruptedException e) {
+            appInsights.trackException(e);
+            Thread.currentThread().interrupt(); // 恢复中断状态
+        }
     }
 
     @Scheduled(fixedRate = 30 * 1000)
@@ -87,7 +104,9 @@ public class InitialTranslateDbTask {
 
         // 遍历clickTranslateTasks，生成initialTasks
         for (InitialTranslateTasksDO task : clickTranslateTasks) {
-            processInitialTasksOfShop(task);
+            initialExecutorService.submit(() -> {
+                processInitialTasksOfShop(task);
+            });
         }
     }
 
