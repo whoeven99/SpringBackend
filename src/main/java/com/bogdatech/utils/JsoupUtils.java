@@ -1,14 +1,17 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.KeywordVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
 import com.bogdatech.logic.RedisProcessService;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import kotlin.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -52,7 +55,10 @@ public class JsoupUtils {
     private RedisProcessService redisProcessService;
     @Autowired
     private ChatGptIntegration chatGptIntegration;
-
+    @Autowired
+    private ITranslationCounterService translationCounterService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
 
     /**
      * 翻译词汇表单行文本，保护变量、URL和符号
@@ -646,13 +652,25 @@ public class JsoupUtils {
      * ciwi 单 User 翻译
      * gpt 翻译
      */
-    public String translateByCiwiOrGptModel(String target, String content, String shopName, String source, CharacterCountUtils counter, Integer limitChars, String prompt, boolean isSingleFlag, String translationModel) {
+    public String translateByCiwiOrGptModel(String target, String content, String shopName, String source,
+                                            CharacterCountUtils counter, Integer limitChars, String prompt,
+                                            boolean isSingleFlag, String translationModel) {
         appInsights.trackTrace("千问或gpt翻译 用户： " + shopName + " 模型类型： " + translationModel);
+        Pair<String, Integer> pair;
         if ("2".equals(translationModel)) {
-            // gpt 翻译
-            return chatGptIntegration.chatWithGpt(prompt, content, shopName, target, counter, limitChars, isSingleFlag);
+            pair = chatGptIntegration.chatWithGpt(prompt, content, shopName, target);
+        } else {
+            pair = aLiYunTranslateIntegration.userTranslate(content, prompt, target, shopName);
         }
-        return aLiYunTranslateIntegration.userTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
+
+        if (isSingleFlag) {
+            translationCounterService.updateAddUsedCharsByShopName(shopName, pair.getSecond(), limitChars);
+        } else {
+            translationCounterService.updateAddUsedCharsByShopName(shopName, pair.getSecond(), limitChars);
+            translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), pair.getSecond());
+        }
+        counter.addChars(pair.getSecond());
+        return pair.getFirst();
     }
 
     /**
