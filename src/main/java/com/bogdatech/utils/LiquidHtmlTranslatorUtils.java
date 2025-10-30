@@ -75,7 +75,6 @@ public class LiquidHtmlTranslatorUtils {
     }
 
     //判断是否含有HTML实体
-    // TODO move to HtmlTranslate
     public static String isHtmlEntity(String text) {
         int i = 0;
         while (!text.equals(StringEscapeUtils.unescapeHtml4(text))) {
@@ -228,7 +227,6 @@ public class LiquidHtmlTranslatorUtils {
     /**
      * html的拆分翻译，放弃递归，改为json翻译
      */
-    // TODO move to HtmlTranslate
     public String newJsonTranslateHtml(String html, TranslateRequest request, CharacterCountUtils counter,
                                        String languagePackId, Integer limitChars, boolean isSingleFlag, String translationModel) {
         if (!isHtml(html)) {
