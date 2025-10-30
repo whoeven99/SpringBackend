@@ -132,9 +132,9 @@ public class InitialTranslateDbTask {
                 singleTask.getTaskType());
 
         appInsights.trackTrace("processInitialTasksOfShop task FINISH successfully: " + singleTask.getTaskId() + " of shop: " + shop);
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                .eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId())
-                .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATED.status));
+//        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+//                .eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId())
+//                .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATED.status));
     }
 
     @Scheduled(fixedDelay = 60 * 1000)
