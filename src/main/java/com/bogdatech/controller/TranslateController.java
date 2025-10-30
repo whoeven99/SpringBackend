@@ -238,7 +238,6 @@ public class TranslateController {
         return translateService.singleTextTranslate(singleTranslateVO);
     }
 
-
     /**
      * 停止翻译按钮
      * 将所有状态0和状态2的任务改成7
