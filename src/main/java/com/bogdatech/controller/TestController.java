@@ -9,9 +9,9 @@ import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
-import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.RateHttpIntegration;
+import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
@@ -476,5 +476,13 @@ public class TestController {
     @PutMapping("/startAuto")
     public void startAuto() {
         autoTranslate.autoTranslate();
+    }
+
+    /**
+     * 测试删除shopify数据方法
+     */
+    @GetMapping("/testDeleteShopifyData")
+    public String testDeleteShopifyData(@RequestParam String resourceId, @RequestParam String locals, @RequestParam String translationKeys, @RequestParam String accessToken) {
+        return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
     }
 }

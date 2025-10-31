@@ -221,4 +221,24 @@ public class ShopifyRequestBody {
                 }
                 """;
     }
+
+    /**
+     * 删除翻译
+     */
+    public static String deleteTranslationQuery() {
+        return """
+                mutation translationsRemove($resourceId: ID!, $translationKeys: [String!]!, $locales: [String!]!) {
+                  translationsRemove(resourceId: $resourceId, translationKeys: $translationKeys, locales: $locales) {
+                    userErrors {
+                      message
+                      field
+                    }
+                    translations {
+                      key
+                      value
+                    }
+                  }
+                }
+                """;
+    }
 }
