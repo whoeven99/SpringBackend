@@ -404,7 +404,8 @@ public class TencentEmailService {
                         .eq(InitialTranslateTasksDO::getTaskType, AUTO_EMAIL)
                         .in(InitialTranslateTasksDO::getTarget, targetList)
                         .set(InitialTranslateTasksDO::getStatus, 4)
-                        .set(InitialTranslateTasksDO::isSendEmail, true));
+                        .set(InitialTranslateTasksDO::isSendEmail, true)
+                        .set(InitialTranslateTasksDO::isDeleted, true));
             }
 
             appInsights.trackTrace("emailAutoTranslate 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());
