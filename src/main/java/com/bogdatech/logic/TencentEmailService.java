@@ -11,6 +11,7 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_PURCHASE_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_TASK_INTERRUPT_EMAIL;
@@ -33,6 +35,7 @@ import static com.bogdatech.constants.MailChimpConstants.TRANSLATION_FAILED_SUBJ
 import static com.bogdatech.constants.MailChimpConstants.APG_INIT_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_GENERATE_SUCCESS;
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
+import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.parseShopName;
@@ -390,8 +393,16 @@ public class TencentEmailService {
                         .set(TranslationUsageDO::getCreditCount, 0));
 
                 // 更新状态
+                List<String> targetList = list.stream().map(TranslatesDO::getTarget).toList();
+                if (targetList.isEmpty()){
+                    appInsights.trackTrace("emailAutoTranslate 用户 " + shopName + " targetList为空 " + list);
+                    return;
+                }
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getTaskId, taskId)
+                        .eq(InitialTranslateTasksDO::getShopName, shopName)
+                        .eq(InitialTranslateTasksDO::getStatus, 1)
+                        .eq(InitialTranslateTasksDO::getTaskType, AUTO_EMAIL)
+                        .in(InitialTranslateTasksDO::getTarget, targetList)
                         .set(InitialTranslateTasksDO::getStatus, 4)
                         .set(InitialTranslateTasksDO::isSendEmail, true));
             }
