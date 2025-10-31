@@ -12,6 +12,7 @@ import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
@@ -358,7 +359,7 @@ public class TaskService {
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
             // 将自动翻译的任务初始化，存到initial表中
-            String resourceToJson = objectToJson(AUTO_TRANSLATE_MAP);
+            String resourceToJson = JsonUtils.objectToJson(AUTO_TRANSLATE_MAP);
             InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
                     translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
                     , "1", resourceToJson, null, shopName, false, AUTO_EMAIL,

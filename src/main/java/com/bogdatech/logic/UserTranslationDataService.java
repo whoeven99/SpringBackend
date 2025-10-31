@@ -12,6 +12,7 @@ import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudInsertRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -61,7 +62,7 @@ public class UserTranslationDataService {
         // 将payload解析
         CloudInsertRequest cloudInsertRequest;
         try {
-            cloudInsertRequest = jsonToObject(payload, CloudInsertRequest.class);
+            cloudInsertRequest = JsonUtils.jsonToObject(payload, CloudInsertRequest.class);
         } catch (Exception e) {
             appInsights.trackTrace("translationDataToSave 存储失败 errors : " + e.getMessage());
             appInsights.trackException(e);

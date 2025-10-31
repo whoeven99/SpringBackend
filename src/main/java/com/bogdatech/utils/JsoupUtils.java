@@ -1,6 +1,7 @@
 package com.bogdatech.utils;
 
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.KeywordVO;
 import com.bogdatech.exception.ClientException;
@@ -24,10 +25,10 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.DeepLIntegration.DEEPL_LANGUAGE_MAP;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
-import static com.bogdatech.utils.ApiCodeUtils.qwenMtCode;
 import static com.bogdatech.utils.CalculateTokenUtils.googleCalculateToken;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.isJson;
@@ -81,7 +82,7 @@ public class JsoupUtils {
             //根据文本条件翻译
             //如果字符数低于5字符，用mt和qwen翻译
             if (cleanedText.length() <= 5) {
-                counter.addChars(googleCalculateToken(cleanedText));
+                counter.addChars(CalculateTokenUtils.googleCalculateToken(cleanedText));
                 String targetString = translateAndCount(request, counter, languagePackId, GENERAL, limitChars, isSingleFlag);
                 redisProcessService.setCacheData(request.getTarget(), targetString, cleanedText);
                 return targetString;
@@ -106,7 +107,7 @@ public class JsoupUtils {
      **/
     public static String glossaryText(Map<String, String> keyMap1, Map<String, String> keyMap0, String cleanedText) {
         //根据keyMap1和keyMap0提取关键词
-        List<KeywordVO> KeywordVOs = mergeKeywordMap(keyMap0, keyMap1);
+        List<KeywordVO> KeywordVOs = CaseSensitiveUtils.mergeKeywordMap(keyMap0, keyMap1);
         String glossaryString = null;
         int i = 0;
         for (KeywordVO entry : KeywordVOs) {
@@ -324,8 +325,8 @@ public class JsoupUtils {
 
     //包装一下调用百炼mt的方法
     public String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars, boolean isSingleFlag) {
-        String changeSource = qwenMtCode(source);
-        String changeTarget = qwenMtCode(target);
+        String changeSource = ApiCodeUtils.qwenMtCode(source);
+        String changeTarget = ApiCodeUtils.qwenMtCode(target);
         try {
             return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars, isSingleFlag);
         } catch (Exception e) {
@@ -902,5 +903,15 @@ public class JsoupUtils {
             });
         }
         return partTranslateTextDOSet;
+    }
+
+    // 将前端传的宽泛的模块解析成具体的翻译模块，并输出
+    public static List<String> translateModel(List<String> list){
+        return list.stream()
+                .map(TOKEN_MAP::get)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .map(TranslateResourceDTO::getResourceType)
+                .toList();
     }
 }

@@ -11,6 +11,8 @@ import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.requestBody.ShopifyRequestBody;
+import com.bogdatech.utils.AppInsightsUtils;
+import com.bogdatech.utils.CaseSensitiveUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -28,7 +30,6 @@ import static com.bogdatech.logic.redis.TranslationParametersRedisService.genera
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.PrintUtils.printTranslation;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 
 @Service
@@ -349,7 +350,7 @@ public class RabbitMqTranslateService {
                     redisProcessService.setCacheData(shopifyRequest.getTarget(), targetText, sourceText);
                 }
                 shopifyService.saveToShopify(targetText, translation, item.getResourceId(), shopifyRequest);
-                printTranslation(targetText, sourceText, translation, vo.getShopName(), vo.getModeType(), item.getResourceId(), vo.getSource());
+                AppInsightsUtils.printTranslation(targetText, sourceText, translation, vo.getShopName(), vo.getModeType(), item.getResourceId(), vo.getSource());
                 checkNeedAddProcessData(shopifyRequest.getShopName(), shopifyRequest.getTarget());
             }
         }
@@ -368,7 +369,7 @@ public class RabbitMqTranslateService {
                 boolean success = false;
                 for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
                     String glossaryKey = entry.getKey();
-                    if (containsValue(value, glossaryKey) || containsValueIgnoreCase(value, glossaryKey)) {
+                    if (CaseSensitiveUtils.containsValue(value, glossaryKey) || CaseSensitiveUtils.containsValueIgnoreCase(value, glossaryKey)) {
                         stringSetMap.get(GLOSSARY).add(translateTextDO);
                         success = true;
                         break;
@@ -438,7 +439,7 @@ public class RabbitMqTranslateService {
 
             // TODO 这里要挪出去
             shopifyService.saveToShopify(targetCache, translation, resourceId, request);
-            printTranslation(targetCache, value, translation, request.getShopName(), "Cache", resourceId, source);
+            AppInsightsUtils.printTranslation(targetCache, value, translation, request.getShopName(), "Cache", resourceId, source);
 
             // 翻译进度条加1
             checkNeedAddProcessData(request.getShopName(), request.getTarget());
@@ -567,7 +568,7 @@ public class RabbitMqTranslateService {
 
             // TODO: 3.1 翻译后的存db
             shopifyService.saveToShopify(translatedValue, translation, resourceId, shopifyRequest);
-            printTranslation(translatedValue, value, translation, shopName, type, resourceId, source);
+            AppInsightsUtils.printTranslation(translatedValue, value, translation, shopName, type, resourceId, source);
         }
     }
 }

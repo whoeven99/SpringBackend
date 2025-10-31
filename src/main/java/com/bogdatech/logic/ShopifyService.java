@@ -14,6 +14,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsonUtils;
+import com.bogdatech.utils.StringUtils;
 import com.bogdatech.utils.TypeConversionUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -41,7 +42,6 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
 
 @Service
@@ -717,7 +717,7 @@ public class ShopifyService {
                 //如果是METAFIELD模块的数据
                 if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
                     //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
-                    if (isValidString(value)) {
+                    if (StringUtils.isValidString(value)) {
                         translatedCounter.addChars(1);
                     }
                 } else if (!LIST_SINGLE_LINE_TEXT_FIELD.equals(type)) {
@@ -868,7 +868,7 @@ public class ShopifyService {
             variables.put("translations", translations);
 //        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
             CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
-            String json = objectToJson(cloudServiceRequest);
+            String json = JsonUtils.objectToJson(cloudServiceRequest);
 
             // 存到数据库中
             int maxRetries = 3;           // 最大重试次数

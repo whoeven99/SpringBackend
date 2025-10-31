@@ -21,7 +21,6 @@ import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.PlaceholderUtils.*;
 import static com.bogdatech.utils.StringUtils.parseJson;
@@ -39,7 +38,6 @@ public class LiquidHtmlTranslatorUtils {
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
     public final static Set<String> NO_TRANSLATE_TAGS = Set.of("script", "style", "meta", "svg", "canvas", "link");
-    private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00\uDFFF])+");
     private static final String STYLE_TEXT = "data-id";
 
     @Autowired
@@ -363,7 +361,7 @@ public class LiquidHtmlTranslatorUtils {
      */
     private void processBatch(List<String> texts, String requestShopName, String shopName, String prompt, String target, String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap, boolean isSingleFlag, String translationModel) {
         try {
-            String sourceJson = objectToJson(texts);
+            String sourceJson = JsonUtils.objectToJson(texts);
             appInsights.trackTrace("开始模型翻译 用户： " + requestShopName);
             String translated = jsoupUtils.translateByCiwiOrGptModel(target, sourceJson, shopName, source, counter, limitChars, prompt, isSingleFlag, translationModel);
             if (translated == null) {

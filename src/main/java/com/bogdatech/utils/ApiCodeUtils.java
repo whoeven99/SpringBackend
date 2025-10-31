@@ -19,16 +19,6 @@ public class ApiCodeUtils {
         };
     }
 
-    //阿里云代码处理
-    public static String aliyunTransformCode(String code) {
-        return switch (code) {
-            case "zh-CN" -> "zh"; // 简体中文
-            case "zh-TW" -> "zh-tw"; // 繁体中文
-            case "ckb", "ce", "hr", "ff", "ki", "dz", "lu", "nd", "nb", "nn", "os", "ps", "pt-BR", "pt-PT", "sc", "gd", "sr", "ii", "bo", "uk", "ug" -> "#N/A";
-            default -> code;
-        };
-    }
-
     //火山代码处理
     public static String huoShanTransformCode(String code) {
         return switch (code) {
@@ -67,14 +57,6 @@ public class ApiCodeUtils {
             case "bn" -> "Bengali"; // 孟加拉语
             case "ur" -> "Urdu"; // 乌尔都语
             default -> code;
-        };
-    }
-
-    public static boolean isDatabaseLanguage(String languageCode) {
-        return switch (languageCode) {
-            case "en", "es", "fr", "de", "pt-BR", "pt-PT", "zh-CN", "zh-TW", "ja", "it", "ru", "ko", "nl", "da", "hi", "bg", "cs", "el", "fi", "hr", "hu", "id", "lt", "nb", "pl", "ro", "sk", "sl", "sv", "th", "tr", "vi", "ar", "no", "uk", "lv", "et" ->
-                    true;  // 语言代码有效
-            default -> false; // 语言代码无效
         };
     }
 

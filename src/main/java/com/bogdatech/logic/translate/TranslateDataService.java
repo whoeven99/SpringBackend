@@ -10,11 +10,9 @@ import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.constants.TranslateConstants.METAFIELD;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
@@ -22,7 +20,6 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.glossaryText;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 
 @Component
@@ -89,7 +86,7 @@ public class TranslateDataService {
         try {
             for (int i = 0; i < resultList.size(); i++) {
                 String original = resultList.get(i);
-                if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
+                if (!StringUtils.isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
                     // 走翻译流程
                     String targetCache = redisProcessService.getCacheData(target, value);
                     if (targetCache != null) {
