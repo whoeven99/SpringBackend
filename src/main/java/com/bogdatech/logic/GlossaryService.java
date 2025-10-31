@@ -20,15 +20,15 @@ public class GlossaryService {
     }
 
     //判断词汇表中要判断的词
-    public void getGlossaryByShopName(ShopifyRequest request, Map<String, Object> glossaryMap) {
-        GlossaryDO[] glossaryDOS = glossaryService.getGlossaryByShopName(request.getShopName());
+    public void getGlossaryByShopName(String shopName, String target, Map<String, Object> glossaryMap) {
+        GlossaryDO[] glossaryDOS = glossaryService.getGlossaryByShopName(shopName);
         if (glossaryDOS == null) {
             return; // 如果术语表为空，直接返回
         }
 
         for (GlossaryDO glossaryDO : glossaryDOS) {
             // 判断语言范围是否符合
-            if (glossaryDO.getRangeCode().equals(request.getTarget()) || "ALL".equals(glossaryDO.getRangeCode())) {
+            if (glossaryDO.getRangeCode().equals(target) || "ALL".equals(glossaryDO.getRangeCode())) {
                 // 判断术语是否启用
                 if (glossaryDO.getStatus() != 1) {
                     continue;

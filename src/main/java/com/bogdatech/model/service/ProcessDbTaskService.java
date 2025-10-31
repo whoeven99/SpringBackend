@@ -1,7 +1,5 @@
 package com.bogdatech.model.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
@@ -13,7 +11,6 @@ import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.ShopifyService;
-import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -43,8 +40,6 @@ public class ProcessDbTaskService {
     private ITranslateTasksService translateTasksService;
     @Autowired
     private ITranslationUsageService translationUsageService;
-    @Autowired
-    private TencentEmailService tencentEmailService;
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
     @Autowired

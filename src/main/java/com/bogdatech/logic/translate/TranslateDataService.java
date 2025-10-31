@@ -1,10 +1,8 @@
 package com.bogdatech.logic.translate;
 
-import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -13,6 +11,8 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.constants.TranslateConstants.METAFIELD;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
@@ -37,11 +37,9 @@ public class TranslateDataService {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
 
-    public String translateHtmlData(String sourceText,
-                                    String shopName, String target, String accessToken, String languagePack, Integer limitChars, String modeType,
-                                    CharacterCountUtils counter,
-                                    ShopifyRequest shopifyRequest, String source,
-                                    Map<String, Object> translation, String resourceId, String translationModel) {
+    public String translateHtmlData(String sourceText, String shopName, String target, String accessToken,
+                                    String languagePack, Integer limitChars, String modeType, CharacterCountUtils counter,
+                                    String source, Map<String, Object> translation, String resourceId, String translationModel) {
         appInsights.trackTrace("TranslateDataServiceLog translateHtmlData 用户： " + shopName + "，sourceText: " + sourceText);
 
         // 进度条
@@ -68,7 +66,8 @@ public class TranslateDataService {
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + shopName + " html translation errors : " +
                     e.getMessage() + " sourceText: " + sourceText);
-            shopifyService.saveToShopify(sourceText, translation, resourceId, shopifyRequest);
+            // TODO 这里存这个干什么 又没翻译
+            shopifyService.saveToShopify(sourceText, translation, resourceId, shopName, accessToken, target, API_VERSION_LAST);
             return null;
         }
 
@@ -76,10 +75,9 @@ public class TranslateDataService {
         return htmlTranslation;
     }
 
-    public String translateListSingleData(String value, String target,
-                                          String languagePack, Integer limitChars,
-                                          CharacterCountUtils counter, String shopName, ShopifyRequest shopifyRequest, String source,
-                                          Map<String, Object> translation, String resourceId) {
+    public String translateListSingleData(String value, String target, String languagePack, Integer limitChars,
+                                          CharacterCountUtils counter, String shopName, String accessToken,
+                                          String source, Map<String, Object> translation, String resourceId) {
         appInsights.trackTrace("TranslateDataServiceLog ListSingleData 用户： " + shopName + "，sourceText: " + value);
         // 如果符合要求，则翻译，不符合要求则返回原值
         List<String> resultList = JsonUtils.jsonToObjectWithNull(value, new TypeReference<>() {});
@@ -102,14 +100,14 @@ public class TranslateDataService {
                             source, target), value);
 
                     String translated = jsoupUtils.translateByModel(
-                            new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value),
+                            new TranslateRequest(0, shopName, accessToken, source, target, value),
                             counter, languagePack, limitChars, false);
 
                     // 对null的处理
                     if (translated == null) {
                         appInsights.trackTrace("FatalException 每日须看 translateMetafieldTextData 用户： " + shopName + " 翻译失败，翻译内容为空 value: " + value);
                         translated = jsoupUtils.checkTranslationModel(
-                                new TranslateRequest(0, shopName, shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value),
+                                new TranslateRequest(0, shopName, accessToken, source, target, value),
                                 counter, languagePack, limitChars, false);
                         resultList.set(i, translated);
                         continue;
@@ -124,21 +122,19 @@ public class TranslateDataService {
             return JsonUtils.objectToJson(resultList);
         } catch (Exception e) {
             //存原数据到shopify本地
-            shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
+            shopifyService.saveToShopify(value, translation, resourceId, shopName, accessToken, target, API_VERSION_LAST);
             appInsights.trackTrace("clickTranslation " + shopName + " LIST errors 错误原因： " + e.getMessage());
         }
         return null;
     }
 
-    public String translateGlossaryData(String value,
-                                        String shopName, String languagePack,
-                                        CharacterCountUtils counter,
-                                        ShopifyRequest shopifyRequest, String source,
+    public String translateGlossaryData(String value, String shopName, String languagePack, String accessToken,
+                                        CharacterCountUtils counter, String source, String target,
                                         Map<String, Object> translation, String resourceId, Integer limitChars,
                                         Map<String, String> keyMap0, Map<String, String> keyMap1) {
         appInsights.trackTrace("TranslateDataServiceLog translateGlossaryData 用户： " + shopName + "，sourceText: " + value);
 
-        TranslateRequest translateRequest = new TranslateRequest(0, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), source, shopifyRequest.getTarget(), value);
+        TranslateRequest translateRequest = new TranslateRequest(0, shopName, accessToken, source, target, value);
 
         String targetText;
         // 判断是否为HTML
@@ -147,8 +143,8 @@ public class TranslateDataService {
                 targetText = jsoupUtils.translateGlossaryHtml(value, translateRequest, counter, null, keyMap0, keyMap1, languagePack, limitChars, false);
                 targetText = isHtmlEntity(targetText);
             } catch (Exception e) {
-                appInsights.trackTrace("FatalException translateGlossaryData is html failed " + shopifyRequest.getShopName() + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
-                shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
+                appInsights.trackTrace("FatalException translateGlossaryData is html failed " + shopName + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
+                shopifyService.saveToShopify(value, translation, resourceId, shopName, accessToken, target, API_VERSION_LAST);
                 return null;
             }
 
@@ -163,31 +159,30 @@ public class TranslateDataService {
         try {
             // 用大模型翻译
             String glossaryString = glossaryText(keyMap1, keyMap0, value);
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopifyRequest.getShopName(), source, shopifyRequest.getTarget()), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopifyRequest.getShopName(), source, shopifyRequest.getTarget()), value);
+            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
 
             // 根据关键词生成对应的提示词
             finalText = jsoupUtils.glossaryTranslationModel(translateRequest, counter, glossaryString, languagePack, limitChars, false);
 
             // 对null的处理， 不翻译，看下打印情况
             if (finalText == null) {
-                appInsights.trackTrace("FatalException 每日须看 clickTranslation " + shopifyRequest.getShopName() + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
+                appInsights.trackTrace("FatalException 每日须看 clickTranslation " + shopName + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
                 return null;
             }
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopifyRequest.getShopName() + " glossaryTranslationModel errors " + e + " sourceText: " + value);
-            shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
+            appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors " + e + " sourceText: " + value);
+            shopifyService.saveToShopify(value, translation, resourceId, shopName, accessToken, target, API_VERSION_LAST);
         }
         appInsights.trackTrace("TranslateDataServiceLog translateGlossaryData notHtml 成功 用户： " + shopName +
                 "，sourceText: " + value + " translatedText: " + finalText);
         return finalText;
     }
 
-    public Map<String, String> translatePlainText(List<String> untranslatedTexts,
-                                                  String target, String languagePack, String modelType, String translationModel,
-                                                  CharacterCountUtils counter, String shopName,
-                                                  Integer limitChars, String translationKeyType,
-                                                  TranslateRequest translateRequestTemplate) {
+    public Map<String, String> translatePlainText(List<String> untranslatedTexts, String source, String target,
+                                                  String languagePack, String modelType, String translationModel,
+                                                  CharacterCountUtils counter, String shopName, Integer limitChars,
+                                                  String translationKeyType) {
         appInsights.trackTrace("TranslateDataServiceLog PlainText 用户： " + shopName + "，sourceText: " + untranslatedTexts);
 
         if (untranslatedTexts.isEmpty()) {
@@ -198,8 +193,8 @@ public class TranslateDataService {
         appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
 
         String untranslatedTextsJson = JsonUtils.objectToJson(untranslatedTexts);
-        String translatedJson = jsoupUtils.translateByCiwiOrGptModel(translateRequestTemplate.getTarget(), untranslatedTextsJson,
-                translateRequestTemplate.getShopName(), translateRequestTemplate.getSource(), counter, limitChars, prompt,
+        String translatedJson = jsoupUtils.translateByCiwiOrGptModel(target, untranslatedTextsJson,
+                shopName, source, counter, limitChars, prompt,
                 false, translationModel);
 
         // 如果主翻译服务 translateBatch 返回 null，则使用阿里云翻译服务作为备用
