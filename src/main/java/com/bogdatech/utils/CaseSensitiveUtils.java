@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 public class CaseSensitiveUtils {
     public static TelemetryClient appInsights = new TelemetryClient();
 
-    //区分大小写
+    // 区分大小写
     public static boolean containsValue(String text, String value) {
         if (text == null || value == null) {
             return false;
@@ -20,47 +20,12 @@ public class CaseSensitiveUtils {
         return text.contains(value);
     }
 
-    //不区分大小写
+    // 不区分大小写
     public static boolean containsValueIgnoreCase(String text, String value) {
         if (text == null || value == null) {
             return false;
         }
         return text.toLowerCase().contains(value.toLowerCase());
-    }
-
-    // 替换关键词为占位符
-    public static String extractKeywords(String text, Map<String, String> placeholders, Map<String, String> keywordTranslationMap, Map<String, String> keyMap0, String source) {
-        List<KeywordVO> allKeywords = mergeKeywordMap(keyMap0, keywordTranslationMap);
-
-        // 依次替换关键词
-        int i = 0;
-        String targetText = text; // 初始化为原始 text
-        for (KeywordVO entry : allKeywords) {
-            String keyword = entry.keyword;
-            String placeholder = "#_" + i++;
-            placeholders.put(placeholder, entry.translation); // 存储翻译
-            if (entry.caseSensitive) {
-                targetText = targetText.replaceAll("\\b" + Pattern.quote(keyword) + "\\b", placeholder); // 使用上一次的 targetText
-                if (targetText.equals(text)) { // 比较原始 text
-                    targetText = targetText.replaceAll(Pattern.quote(keyword), placeholder);
-                }
-            } else {
-                targetText = targetText.replaceAll("(?i)\\b" + Pattern.quote(keyword) + "\\b", placeholder); // 使用上一次的 targetText
-                if (targetText.equals(text)) { // 比较原始 text
-                    targetText = targetText.replaceAll(Pattern.quote(keyword), placeholder);
-                }
-            }
-        }
-
-        return targetText;
-    }
-
-    // 将占位符还原为关键词
-    public static String restoreKeywords(String translatedText, Map<String, String> placeholders) {
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            translatedText = translatedText.replace(entry.getKey(), entry.getValue());
-        }
-        return translatedText;
     }
 
     /**

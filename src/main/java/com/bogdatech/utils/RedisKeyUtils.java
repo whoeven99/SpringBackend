@@ -19,7 +19,6 @@ public class RedisKeyUtils {
     public static final String CLIENT_ID_SET = "ci:{shopName}:{language}:{yyyyMMdd}:{eventName}";
     // 翻译商店锁
     public static final String TRANSLATE_LOCK = "tl:{shopName}";
-    public static final String TRANSLATE_LOCK_TRUE = "1";
     // redis 存用户查询语言状态（翻译状态）
     public static final String TRANSLATE_USER_STATUS = "us:{shopName}:{sourceCode}:{targetCode}";
 
@@ -34,16 +33,6 @@ public class RedisKeyUtils {
         return TRANSLATE_USER_STATUS.replace("{shopName}", shopName)
                 .replace("{sourceCode}", sourceCode)
                 .replace("{targetCode}", targetCode);
-    }
-
-    /**
-     * 生成翻译锁的 key
-     * */
-    public static String generateTranslateLockKey(String shopName) {
-        if (shopName == null) {
-            return null;
-        }
-        return TRANSLATE_LOCK.replace("{shopName}", shopName);
     }
 
     /**

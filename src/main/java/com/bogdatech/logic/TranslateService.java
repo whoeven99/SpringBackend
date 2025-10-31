@@ -15,10 +15,7 @@ import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
-import com.bogdatech.utils.LiquidHtmlTranslatorUtils;
-import com.bogdatech.utils.TypeConversionUtils;
+import com.bogdatech.utils.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,7 +196,7 @@ public class TranslateService {
         appInsights.trackTrace("修改相关target状态改为2 : " + shopName);
 
         // 将模块数据List类型转化为Json类型
-        String resourceToJson = objectToJson(translateResourceDTOS);
+        String resourceToJson = JsonUtils.objectToJson(translateResourceDTOS);
         appInsights.trackTrace("将模块数据List类型转化为Json类型 : " + shopName + " resourceToJson: " + resourceToJson);
 
         // 将上一次initial表中taskType为 click的数据逻辑删除

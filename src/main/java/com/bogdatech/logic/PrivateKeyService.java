@@ -9,13 +9,15 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
+import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
-import com.bogdatech.utils.TypeConversionUtils;
+import com.bogdatech.utils.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,9 +41,6 @@ import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.*;
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.RabbitMqTranslateService.*;
-import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.UserTypeTokenService.getUserTranslatedToken;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
@@ -51,11 +50,8 @@ import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.ListUtils.convertALL;
 import static com.bogdatech.utils.ListUtils.sort;
-import static com.bogdatech.utils.ModelUtils.translateModel;
 import static com.bogdatech.utils.PlaceholderUtils.getGlossaryPrompt;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
-import static com.bogdatech.utils.PrintUtils.printTranslation;
-import static com.bogdatech.utils.RegularJudgmentUtils.isValidString;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
 import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
@@ -95,7 +91,7 @@ public class PrivateKeyService {
     @Autowired
     private  PrivateIntegration privateIntegration;
     @Autowired
-    private JsoupUtils jsoupUtils;
+    private TranslateDataService translatedDataService;
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
@@ -397,11 +393,11 @@ public class PrivateKeyService {
     //方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
     private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
         //将node转换为json字符串
-        Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(node, translateContext.getShopifyRequest().getShopName(), translateContext.getIsCover(), null);
+        Set<TranslateTextDO> needTranslatedData = translatedDataService.translatedDataParse(node, translateContext.getShopifyRequest().getShopName(), translateContext.getIsCover(), null);
         if (needTranslatedData == null) {
             return;
         }
-        Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(translateContext.getTranslateResource().getResourceType(), translateContext.getHandleFlag(), needTranslatedData, null, null);
+        Set<TranslateTextDO> filterTranslateData = translatedDataService.filterNeedTranslateSet(translateContext.getTranslateResource().getResourceType(), translateContext.getHandleFlag(), needTranslatedData, null, null);
         //将翻译的数据分类，提示词，普通文本，html
         Map<String, Set<TranslateTextDO>> stringSetMap = RabbitMqTranslateService.initTranslateMap();
         //将筛选好的数据分类
@@ -450,7 +446,7 @@ public class PrivateKeyService {
 
         if (SINGLE_LINE_TEXT_FIELD.equals(resourceType) && !isHtml(value)) {
             //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
-            if (isValidString(value)) {
+            if (StringUtils.isValidString(value)) {
                 return;
             }
 
@@ -462,7 +458,7 @@ public class PrivateKeyService {
             }
 
             shopifyService.saveToShopify(translatedText, translation, resourceId, request);
-            printTranslation(translatedText, value, translation, request.getShopName(), resourceType, resourceId, source);
+            AppInsightsUtils.printTranslation(translatedText, value, translation, request.getShopName(), resourceType, resourceId, source);
             return;
         }
 
@@ -474,7 +470,7 @@ public class PrivateKeyService {
                 });
                 for (int i = 0; i < resultList.size(); i++) {
                     String original = resultList.get(i);
-                    if (!isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
+                    if (!StringUtils.isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
                         //走翻译流程
                         String translatedText = translateByModel(translateContext, value, request, apiKey);
                         //将数据填回去
@@ -484,7 +480,7 @@ public class PrivateKeyService {
                 //将list数据转为String 再存储到shopify本地
                 String translatedValue = OBJECT_MAPPER.writeValueAsString(resultList);
                 shopifyService.saveToShopify(translatedValue, translation, resourceId, request);
-                printTranslation(translatedValue, value, translation, request.getShopName(), resourceType, resourceId, source);
+                AppInsightsUtils.printTranslation(translatedValue, value, translation, request.getShopName(), resourceType, resourceId, source);
             } catch (Exception e) {
                 //存原数据到shopify本地
                 shopifyService.saveToShopify(value, translation, resourceId, request);
@@ -586,7 +582,7 @@ public class PrivateKeyService {
                     }
                     redisProcessService.setCacheData(shopifyRequest.getTarget(), finalText, value);
                     shopifyService.saveToShopify(finalText, translation, resourceId, shopifyRequest);
-                    printTranslation(finalText, value, translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
+                    AppInsightsUtils.printTranslation(finalText, value, translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
                 } catch (Exception e) {
                     appInsights.trackTrace("translate glossaryTranslationModel errors " + e);
                     shopifyService.saveToShopify(value, translation, resourceId, shopifyRequest);
@@ -663,7 +659,7 @@ public class PrivateKeyService {
                 modelHtml = normalizeHtml(modelHtml);
             }
             shopifyService.saveToShopify(modelHtml, translation, resourceId, shopifyRequest);
-            printTranslation(modelHtml, translateTextDO.getSourceText(), translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
+            AppInsightsUtils.printTranslation(modelHtml, translateTextDO.getSourceText(), translation, shopifyRequest.getShopName(), translateContext.getTranslateResource().getResourceType(), resourceId, source);
         }
 
     }
@@ -733,7 +729,7 @@ public class PrivateKeyService {
 
         // 翻译成功后，将翻译后的数据存shopify本地中
         saveToShopify(targetValue, translation, resourceId, request);
-        printTranslation(targetValue, value, translation, request.getShopName() + PRIVATE_KEY, resourceType, resourceId, source);
+        AppInsightsUtils.printTranslation(targetValue, value, translation, request.getShopName() + PRIVATE_KEY, resourceType, resourceId, source);
 
     }
 
