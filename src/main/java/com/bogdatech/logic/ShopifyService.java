@@ -90,8 +90,8 @@ public class ShopifyService {
         List<String> all = redisTranslateUserStatusService.getAll(request.getShopName(), source);
         int allLanguage = 1;
         for (String status : all) {
-            if ("0".equals(status) || "3".equals(status) || "7".equals(status)){
-                allLanguage ++;
+            if ("0".equals(status) || "3".equals(status) || "7".equals(status)) {
+                allLanguage++;
             }
         }
         if (allLanguage > 1) {
@@ -852,8 +852,17 @@ public class ShopifyService {
         }
     }
 
+    public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId,
+                              String shopName, String accessToken, String target, String apiVersion) {
+        saveToShopify(translatedValue, translation, resourceId, new ShopifyRequest(shopName, accessToken, target, apiVersion));
+    }
+
     //将翻译后的数据存shopify本地中
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
+        String shopName = request.getShopName();
+        String accessToken = request.getAccessToken();
+        String target = request.getTarget();
+        String apiVersion = request.getApiVersion();
         try {
             // 创建一个新的映射，避免修改原始的 translation
             Map<String, Object> newTranslation = new HashMap<>(translation);
@@ -867,7 +876,7 @@ public class ShopifyService {
             Object[] translations = new Object[]{newTranslation};
             variables.put("translations", translations);
 //        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
-            CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(request.getShopName(), request.getAccessToken(), request.getApiVersion(), request.getTarget(), variables);
+            CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(shopName, accessToken, apiVersion, target, variables);
             String json = objectToJson(cloudServiceRequest);
 
             // 存到数据库中
@@ -878,10 +887,10 @@ public class ShopifyService {
             boolean insertFlag;
             while (retryCount < maxRetries) {
                 try {
-                    insertFlag = userTranslationDataService.insertTranslationData(json, request.getShopName());
+                    insertFlag = userTranslationDataService.insertTranslationData(json, shopName);
                     if (insertFlag) {
-                        translationParametersRedisService.addWritingData(generateWriteStatusKey(request.getShopName(), request.getTarget()), WRITE_TOTAL, 1L);
-                        appInsights.trackTrace("saveToShopify 用户： " + request.getShopName() + " target: " + request.getTarget() + " 插入成功 数据是： " + json);
+                        translationParametersRedisService.addWritingData(generateWriteStatusKey(shopName, target), WRITE_TOTAL, 1L);
+                        appInsights.trackTrace("saveToShopify 用户： " + shopName + " target: " + target + " 插入成功 数据是： " + json);
                         break; // 成功就跳出循环
                     } else {
                         throw new RuntimeException("插入返回false");
@@ -889,12 +898,12 @@ public class ShopifyService {
                 } catch (Exception e1) {
                     retryCount++;
                     if (retryCount >= maxRetries) {
-                        appInsights.trackTrace("saveToShopify 已达到最大重试次数，插入失败: " + request.getShopName() + " 要插入的数据" + json + e1.getMessage());
+                        appInsights.trackTrace("saveToShopify 已达到最大重试次数，插入失败: " + shopName + " 要插入的数据" + json + e1.getMessage());
                         break;
                     }
 
                     appInsights.trackTrace("saveToShopify 第 " + retryCount + " 次插入失败，" +
-                            "等待 " + waitTime + " 毫秒后重试..." + " 用户： " + request.getShopName() + " 要插入的数据" + json);
+                            "等待 " + waitTime + " 毫秒后重试..." + " 用户： " + shopName + " 要插入的数据" + json);
 
                     try {
                         Thread.sleep(waitTime);
@@ -907,7 +916,7 @@ public class ShopifyService {
                 }
             }
         } catch (Exception e2) {
-            appInsights.trackTrace("saveToShopify 每日须看 " + request.getShopName() + " save to Shopify errors : " + e2.getMessage());
+            appInsights.trackTrace("saveToShopify 每日须看 " + shopName + " save to Shopify errors : " + e2.getMessage());
         }
     }
 }
