@@ -32,8 +32,6 @@ public class UserTranslationDataService {
     private IUserTranslationDataService userTranslationDataService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
-    @Autowired
-    private ITranslatesService iTranslatesService;
 
 
     /**

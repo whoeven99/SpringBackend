@@ -11,7 +11,6 @@ import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
-import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
@@ -21,13 +20,11 @@ import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.model.service.ProcessDbTaskService;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
-import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,8 +49,6 @@ import static com.bogdatech.utils.StringUtils.*;
 public class TestController {
     @Autowired
     private TranslatesServiceImpl translatesServiceImpl;
-    @Autowired
-    private ChatGptIntegration chatGptIntegration;
     @Autowired
     private TaskService taskService;
     @Autowired
@@ -317,7 +312,7 @@ public class TestController {
 
     /**
      * 加密后输出数据
-     * */
+     */
     @GetMapping("/testEncryptMD5")
     public String testEncryptMD5(@RequestParam String source) {
         return encryptMD5(source);
@@ -325,7 +320,7 @@ public class TestController {
 
     /**
      * 测试时间超时的问题
-     * */
+     */
     @GetMapping("/testTimeOut")
     public void testTimeOut() throws Exception {
         String s = TimeOutUtils.callWithTimeoutAndRetry(() -> {
@@ -461,7 +456,7 @@ public class TestController {
 
     /**
      * 获取redis中的进度条数据
-     * */
+     */
     @GetMapping("/getRedisTranslationData")
     public Map<Object, Object> getRedisTranslationData(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
         return translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
@@ -469,7 +464,7 @@ public class TestController {
 
     /**
      * 递增
-     * */
+     */
     @GetMapping("/increase")
     public Long increase(@RequestParam String key, @RequestParam long value) {
         return translationCounterRedisService.increaseLanguage(key, value);
@@ -477,7 +472,7 @@ public class TestController {
 
     /**
      * 手动启动自动翻译
-     * */
+     */
     @PutMapping("/startAuto")
     public void startAuto() {
         autoTranslate.autoTranslate();

@@ -14,12 +14,8 @@ import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,7 +27,7 @@ import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 
 @Component
@@ -69,14 +65,13 @@ public class TaskService {
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
-    private RabbitMqTranslateService rabbitMqTranslateService;
-    @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private InitialTranslateRedisService initialTranslateRedisService;
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
-
+    @Autowired
+    private ShopifyService shopifyService;
 
     //异步调用根据订阅信息，判断是否添加额度的方法
     public void judgeAddChars() {
@@ -255,8 +250,8 @@ public class TaskService {
         translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
         appInsights.trackTrace("TaskServiceLog 系统重启，获取翻译状态为2的任务数： " + allShopName.size());
 
-        // 将initial表中所有状态为2的任务状态改为0
-        initialTranslateTasksMapper.update(new UpdateWrapper<InitialTranslateTasksDO>().eq("status", 2).set("status", 0));
+//        // 将initial表中所有状态为2的任务状态改为0
+//        initialTranslateTasksMapper.update(new UpdateWrapper<InitialTranslateTasksDO>().eq("status", 2).set("status", 0));
 
         // 循环处理获取到的任务，先将状态改为3，然后调用翻译API
         for (String shop : allShopName) {
@@ -332,7 +327,7 @@ public class TaskService {
             }
 
             // 判断这条语言是否在用户本地存在
-            String shopifyByQuery = getShopifyByQuery(getShopLanguageQuery(), shopName, usersDO.getAccessToken());
+            String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, getShopLanguageQuery());
             appInsights.trackTrace("autoTranslate 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
             if (shopifyByQuery == null) {
                 appInsights.trackTrace("FatalException autoTranslate 用户: " + shopName + " 获取用户本地语言数据失败");
@@ -356,23 +351,27 @@ public class TaskService {
 
             // 将任务存到数据库等待翻译
             // 初始化用户状态
-            userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
             Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(translatesDO.getShopName());
             if (stopFlag) {
                 appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
             }
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
-            // 调用DB翻译逻辑
-            rabbitMqTranslateService.initialTasks(
-                    shopName, translatesDO.getAccessToken(),
-                    translatesDO.getSource(), translatesDO.getTarget(),
-                    AUTO_TRANSLATE_MAP,
-                    false,
-                    "1",
-                    false,
-                    EMAIL_TRANSLATE,
-                    AUTO_EMAIL);
+            // 将自动翻译的任务初始化，存到initial表中
+            String resourceToJson = objectToJson(AUTO_TRANSLATE_MAP);
+            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
+                    translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
+                    , "1", resourceToJson, null, shopName, false, AUTO_EMAIL,
+                    Timestamp.valueOf(LocalDateTime.now()), false);
+            try {
+                appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);
+                int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
+                appInsights.trackTrace("将自动翻译参数存到数据库后： " + insert);
+            } catch (Exception e) {
+                appInsights.trackTrace("autoTranslate 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
+                appInsights.trackException(e);
+            }
+
         }
     }
 
@@ -416,7 +415,7 @@ public class TaskService {
 
                 // 如果订单存在，并且支付成功，添加相关计划额度；如果订单不存在，说明他未支付，修改免费试用计划表
                 String subscriptionQuery = getSubscriptionQuery(latestActiveSubscribeId);
-                String shopifyByQuery = getShopifyByQuery(subscriptionQuery, shopName, usersDO.getAccessToken());
+                String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, subscriptionQuery);
 
                 // 判断和解析相关数据
                 JSONObject queryValid = isQueryValid(shopifyByQuery);
@@ -454,52 +453,6 @@ public class TaskService {
                 // 如果订单存在，并且支付成功，添加相关计划额度
                 Boolean flag = translationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), latestActiveSubscribeId, charsByPlanName);
                 appInsights.trackTrace(shopName + " 用户 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
-            }
-        }
-    }
-
-    /**
-     * 获取所有的自动翻译用户，初始化用户状态
-     * 自动翻译的initial， 后面需要改下
-     */
-//    @PostConstruct
-    public void initUserStatus() {
-        //获取所有使用自动翻译的用户
-        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
-        for (TranslatesDO translatesDO : translatesDOList
-        ) {
-            String shopName = translatesDO.getShopName();
-
-            //判断这些用户是否卸载了，卸载了就不管了
-            UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
-            if (usersDO == null) {
-                appInsights.trackTrace("initUserStatus shopName: " + shopName);
-                continue;
-            }
-            if (usersDO.getUninstallTime() != null) {
-                //如果用户卸载了，但有登陆时间，需要判断两者的前后
-                if (usersDO.getLoginTime() == null) {
-                    continue;
-                } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
-                    continue;
-                }
-            }
-
-            //判断该用户剩余token数是否足够，不够就不管了
-            //判断字符是否超限
-            TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
-            Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-            int usedChars = request1.getUsedChars();
-            // 如果字符超限，则直接返回字符超限
-            if (usedChars >= remainingChars) {
-                continue;
-            }
-
-            //初始化用户状态
-            userEmailStatus.put(translatesDO.getShopName(), new AtomicBoolean(false)); //重置用户发送的邮件
-            Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(translatesDO.getShopName());
-            if (stopFlag) {
-                appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
             }
         }
     }

@@ -163,7 +163,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                 .ne("source", source)
                 .set("auto_translate", false));
         if (flag > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate));
+            return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate, null));
         } else {
             return new BaseResponse<>().CreateErrorResponse("更新失败");
         }

@@ -12,4 +12,5 @@ public class AutoTranslateRequest {
     private String source; //原语言
     private String target; //目标语言
     private Boolean autoTranslate;
+    private String accessToken;
 }
