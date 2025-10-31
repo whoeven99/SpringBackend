@@ -66,6 +66,7 @@ public class InitialTranslateDbTask {
     private ITranslationCounterService iTranslationCounterService;
 
     private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(3); // 创建initial初始化线程池
+    private final ExecutorService manualExecutorService = Executors.newFixedThreadPool(1);
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -80,10 +81,12 @@ public class InitialTranslateDbTask {
     }
 
     @PreDestroy
-    public void shutdownExecutor() {
+    public void preDestroy() {
         initialExecutorService.shutdown(); // 停止接收新任务
+        manualExecutorService.shutdown();
         try {
-            if (!initialExecutorService.awaitTermination(5, TimeUnit.MINUTES)) { // 等待任务完成
+            if (!initialExecutorService.awaitTermination(5, TimeUnit.MINUTES)
+                    || !manualExecutorService.awaitTermination(5, TimeUnit.MINUTES)) { // 等待任务完成
                 throw new IllegalStateException("任务未能在关闭前完成");
             }
         } catch (InterruptedException e) {
@@ -101,14 +104,16 @@ public class InitialTranslateDbTask {
                         .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
                         .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
 
-        appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
+        appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
             return;
         }
 
         // 遍历clickTranslateTasks，生成initialTasks
         for (InitialTranslateTasksDO task : clickTranslateTasks) {
-            processInitialTasksOfShop(task);
+            manualExecutorService.submit(() -> {
+                processInitialTasksOfShop(task);
+            });
         }
     }
 
