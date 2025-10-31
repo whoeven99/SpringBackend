@@ -22,11 +22,13 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
+import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
@@ -96,6 +98,13 @@ public class InitialTranslateDbTask {
                 new LambdaQueryWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
                         .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+
+        // 按照taskType排序，click优先
+        clickTranslateTasks = clickTranslateTasks.stream()
+                .sorted(Comparator.comparing(
+                        (InitialTranslateTasksDO task) -> !CLICK_EMAIL.equals(task.getTaskType())
+                ))
+                .toList();
 
         appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
