@@ -133,8 +133,7 @@ public class InitialTranslateDbTask {
         rabbitMqTranslateService.initialTasks(
                 shop, userDO.getAccessToken(),
                 singleTask.getSource(), singleTask.getTarget(),
-                jsonToObject(singleTask.getTranslateSettings3(), new TypeReference<List<String>>() {
-                }),
+                jsonToObject(singleTask.getTranslateSettings3(), new TypeReference<List<String>>() {}),
                 singleTask.isHandle(),
                 singleTask.getTranslateSettings1(),
                 singleTask.isCover(),
