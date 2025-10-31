@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
 import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
@@ -90,21 +92,36 @@ public class InitialTranslateDbTask {
         }
     }
 
+    // 手动翻译初始化
     @Scheduled(fixedRate = 30 * 1000)
-    public void scanAndSubmitInitialTranslateDbTask() {
+    public void scanAndSubmitClickTranslateDbTask() {
+        List<InitialTranslateTasksDO> clickTranslateTasks = initialTranslateTasksMapper.selectList(
+                new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
+                        .eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL)
+                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+
+        appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
+        if (clickTranslateTasks.isEmpty()) {
+            return;
+        }
+
+        // 遍历clickTranslateTasks，生成initialTasks
+        for (InitialTranslateTasksDO task : clickTranslateTasks) {
+            processInitialTasksOfShop(task);
+        }
+    }
+
+    // 自动翻译初始化
+    @Scheduled(fixedRate = 50 * 1000)
+    public void scanAndSubmitAutoInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task
         List<InitialTranslateTasksDO> clickTranslateTasks = initialTranslateTasksMapper.selectList(
                 new LambdaQueryWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
+                        .eq(InitialTranslateTasksDO::getTaskType, AUTO_EMAIL)
                         .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
-
-        // 按照taskType排序，click优先
-        clickTranslateTasks = clickTranslateTasks.stream()
-                .sorted(Comparator.comparing(
-                        (InitialTranslateTasksDO task) -> !CLICK_EMAIL.equals(task.getTaskType())
-                ))
-                .toList();
 
         appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
@@ -133,7 +150,8 @@ public class InitialTranslateDbTask {
         rabbitMqTranslateService.initialTasks(
                 shop, userDO.getAccessToken(),
                 singleTask.getSource(), singleTask.getTarget(),
-                jsonToObject(singleTask.getTranslateSettings3(), new TypeReference<List<String>>() {}),
+                jsonToObject(singleTask.getTranslateSettings3(), new TypeReference<List<String>>() {
+                }),
                 singleTask.isHandle(),
                 singleTask.getTranslateSettings1(),
                 singleTask.isCover(),
