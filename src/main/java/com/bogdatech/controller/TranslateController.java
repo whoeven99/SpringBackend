@@ -227,7 +227,7 @@ public class TranslateController {
         UsersDO usersDO = iUsersService.getUserByName(request.getShopName());
         if (one == null) {
             //走同步逻辑
-            translateService.syncShopifyAndDatabase(new TranslateRequest(0, request.getShopName(), usersDO.getAccessToken(), request.getSource(), request.getTarget(), null));
+            translateService.syncShopifyAndDatabase(request.getShopName(), usersDO.getAccessToken(), request.getSource());
         }
         return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(), request.getSource(), request.getTarget());
     }

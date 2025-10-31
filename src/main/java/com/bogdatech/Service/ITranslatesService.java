@@ -49,7 +49,7 @@ public interface ITranslatesService extends IService<TranslatesDO> {
 
     void updateAllStatusTo0(String shopName);
 
-    void insertShopTranslateInfoByShopify(ShopifyRequest shopifyRequest, String locale, String source);
+    void insertShopTranslateInfoByShopify(String shopName, String accessToken, String locale, String source);
 
     void updateStopStatus(String shopName, String source);
 

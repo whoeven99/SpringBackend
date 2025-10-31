@@ -11,6 +11,7 @@ import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -35,7 +36,7 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
-import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
+import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
 import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
@@ -57,9 +58,7 @@ public class TranslateService {
     @Autowired
     private ITranslationCounterService translationCounterService;
     @Autowired
-    private LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
-    @Autowired
-    private JsoupUtils jsoupUtils;
+    private TranslateDataService translateDataService;
     @Autowired
     private ITranslateTasksService translateTasksService;
     @Autowired
@@ -85,11 +84,10 @@ public class TranslateService {
 
     // 判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
-//    public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
 
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
-    public static ExecutorService executorService = Executors.newFixedThreadPool(10);
+    public static ExecutorService executorService = Executors.newFixedThreadPool(50);
 
     // TODO 所有翻译的总入口 目前只有手动翻译
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
@@ -97,7 +95,7 @@ public class TranslateService {
         // 自动翻译, 则需要 shopName, source, target
         // 同样的，私有key翻译也走这里，做一次分发
 
-        appInsights.trackTrace("clickTranslation : " + request);
+        appInsights.trackTrace("createInitialTask : " + request);
         String shopName = request.getShopName();
         // 判断前端传的数据是否完整，如果不完整，报错
         if (shopName == null || shopName.isEmpty()
@@ -117,7 +115,8 @@ public class TranslateService {
 
         // 如果字符超限，则直接返回字符超限
         if (counterDO.getUsedChars() >= remainingChars) {
-            return new BaseResponse<>().CreateErrorResponse("Cannot translate because the character limit has been reached. Please upgrade your plan to continue translating.");
+            return new BaseResponse<>().CreateErrorResponse(
+                    "Cannot translate because the character limit has been reached. Please upgrade your plan to continue translating.");
         }
         appInsights.trackTrace("clickTranslation 判断字符不超限 : " + shopName);
 
@@ -154,22 +153,18 @@ public class TranslateService {
             return new BaseResponse<>().CreateErrorResponse("Please select the module to be translated");
         }
 
-        // 将ClickTranslateRequest转换为TranslateRequest
-        TranslateRequest translateRequest = ClickTranslateRequestToTranslateRequest(request);
-
         // 循环同步 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
         // TODO 这个其实是帮用户添加语言到shopify，也可以再task里面异步去做
-        this.isExistInDatabase(shopName, request, translateRequest);
+        this.isExistInDatabase(shopName, request.getTarget(), request.getSource(), request.getAccessToken());
         appInsights.trackTrace("clickTranslation 循环同步 : " + shopName);
 
         // 存翻译参数到db
-        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(translateRequest);
         appInsights.trackTrace("mqTranslateWrapper开始: " + shopName);
 
         boolean isCover = request.getIsCover();
         String customKey = request.getCustomKey();
         String[] targets = request.getTarget();
-        String source = translateRequest.getSource();
+        String source = request.getSource();
 
         // 重置用户发送的邮件
         userEmailStatus.put(shopName, new AtomicBoolean(false));
@@ -183,7 +178,7 @@ public class TranslateService {
         if (customKey != null) {
             cleanedText = customKey.replaceAll("\\.{2,}", ".");
         }
-        appInsights.trackTrace("修改自定义提示词 : " + shopifyRequest.getShopName());
+        appInsights.trackTrace("修改自定义提示词 : " + shopName);
 
         // 改为循环遍历，将相关target状态改为2
         List<String> listTargets = Arrays.asList(targets);
@@ -201,16 +196,22 @@ public class TranslateService {
             }
         });
 
-        appInsights.trackTrace("修改相关target状态改为2 : " + shopifyRequest.getShopName());
+        appInsights.trackTrace("修改相关target状态改为2 : " + shopName);
 
         // 将模块数据List类型转化为Json类型
         String resourceToJson = objectToJson(translateResourceDTOS);
-        appInsights.trackTrace("将模块数据List类型转化为Json类型 : " + shopifyRequest.getShopName() + " resourceToJson: " + resourceToJson);
+        appInsights.trackTrace("将模块数据List类型转化为Json类型 : " + shopName + " resourceToJson: " + resourceToJson);
 
         // 将上一次initial表中taskType为 click的数据逻辑删除
         try {
-            initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getSource, source).eq(InitialTranslateTasksDO::getShopName, shopName).eq(InitialTranslateTasksDO::getTaskType, CLICK_EMAIL).eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>().eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId()).set(InitialTranslateTasksDO::isDeleted, true));
+            initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                    .eq(InitialTranslateTasksDO::getSource, source)
+                    .eq(InitialTranslateTasksDO::getShopName, shopName).
+                    eq(InitialTranslateTasksDO::getTaskType, MANUAL)
+                    .eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
+                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                        .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
+                        .set(InitialTranslateTasksDO::isDeleted, true));
             });
         } catch (Exception e) {
             appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务失败");
@@ -218,7 +219,7 @@ public class TranslateService {
         }
 
         for (String target : targets) {
-            appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopifyRequest.getShopName());
+            appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopName);
             // 将language级别的token数据删除掉
             boolean deletedLanguage = translationCounterRedisService.deleteLanguage(generateProcessKey(shopName, target));
             appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除这个语言的language的token统计 是否删除 languageToken： " + deletedLanguage + " 语言是： " + target);
@@ -238,11 +239,11 @@ public class TranslateService {
                     .eq(TranslatesDO::getTarget, target)
                     .set(TranslatesDO::getResourceType, null));
 
-            translateRequest.setTarget(target);
-            shopifyRequest.setTarget(target);
-
             // 将线管参数存到数据库中
-            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0, translateRequest.getSource(), target, isCover, false, request.getTranslateSettings1(), request.getTranslateSettings2(), resourceToJson, cleanedText, request.getShopName(), handleFlag, CLICK_EMAIL, Timestamp.valueOf(LocalDateTime.now()), false);
+            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(
+                    null, 0, source, target, isCover, false,
+                    request.getTranslateSettings1(), request.getTranslateSettings2(), resourceToJson, cleanedText,
+                    shopName, handleFlag, MANUAL, Timestamp.valueOf(LocalDateTime.now()), false);
             try {
                 appInsights.trackTrace("将手动翻译参数存到数据库中");
                 int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
@@ -302,7 +303,6 @@ public class TranslateService {
             PRODUCT_OPTION,
             PRODUCT_OPTION_VALUE
     ));
-
 
     public static Map<String, Object> createTranslationMap(String target, String key, String translatableContentDigest) {
         Map<String, Object> translation = new HashMap<>();
@@ -369,7 +369,7 @@ public class TranslateService {
         counter.addChars(usedChars);
         if (type.equals(URI) && "handle".equals(key)) {
             // 如果 key 为 "handle"，这里是要处理的代码
-            String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars, true);
+            String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars, true);
             if (targetString == null) {
                 return new BaseResponse<>().CreateErrorResponse(value);
             }
@@ -383,17 +383,17 @@ public class TranslateService {
                 TranslateRequest translateRequest = new TranslateRequest(0, shopName, null, source, target, value);
                 //单条翻译html，修改格式
                 if (resourceType.equals(METAFIELD)) {
-                    String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
+                    String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     appInsights.trackTrace(shopName + " 用户 ，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                     return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
                 }
 
-                String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
+                String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
                 appInsights.trackTrace(shopName + " 用户 ，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
-                String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, GENERAL, remainingChars, true);
+                String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, GENERAL, remainingChars, true);
                 appInsights.trackTrace(shopName + " 用户 ，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }
@@ -408,14 +408,12 @@ public class TranslateService {
     /**
      * 用户shopify和数据库同步的方法
      */
-    public void syncShopifyAndDatabase(TranslateRequest request) {
-        // 获取用户数据
-        ShopifyRequest shopifyRequest = TypeConversionUtils.convertTranslateRequestToShopifyRequest(request);
+    public void syncShopifyAndDatabase(String shopName, String accessToken, String source) {
         String query = getLanguagesQuery();
         String shopifyData;
         JsonNode root;
         try {
-            shopifyData = shopifyService.getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
+            shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
             root = OBJECT_MAPPER.readTree(shopifyData);
         } catch (Exception e) {
             appInsights.trackException(e);
@@ -430,7 +428,7 @@ public class TranslateService {
                 String locale = node.path("locale").asText(null);
                 if (locale != null) {
                     //存储到数据库中
-                    translatesService.insertShopTranslateInfoByShopify(shopifyRequest, locale, request.getSource());
+                    translatesService.insertShopTranslateInfoByShopify(shopName, accessToken, locale, source);
                 }
             }
         }
@@ -439,13 +437,15 @@ public class TranslateService {
     /**
      * 循环遍历数据库中是否有该条数据
      */
-    public void isExistInDatabase(String shopName, ClickTranslateRequest clickTranslateRequest, TranslateRequest request) {
-        for (String target : clickTranslateRequest.getTarget()) {
-            request.setTarget(target);
-            TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("source", clickTranslateRequest.getSource()).eq("target", request.getTarget()));
+    public void isExistInDatabase(String shopName, String[] targets, String source, String accessToken) {
+        for (String target : targets) {
+            TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>()
+                    .eq("shop_name", shopName)
+                    .eq("source", source)
+                    .eq("target", target));
             if (one == null) {
                 //走同步逻辑
-                syncShopifyAndDatabase(request);
+                syncShopifyAndDatabase(shopName, accessToken, source);
             }
         }
     }

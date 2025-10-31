@@ -198,12 +198,14 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public void insertShopTranslateInfoByShopify(ShopifyRequest shopifyRequest, String locale, String source) {
+    public void insertShopTranslateInfoByShopify(String shopName, String accessToken, String locale, String source) {
         //获取shopify店铺信息
-        TranslatesDO translatesDO = baseMapper.selectOne(new QueryWrapper<TranslatesDO>().eq("shop_name", shopifyRequest.getShopName()).eq("source", source).eq("target", locale));
+        TranslatesDO translatesDO = baseMapper.selectOne(new QueryWrapper<TranslatesDO>()
+                .eq("shop_name", shopName)
+                .eq("source", source).eq("target", locale));
         if (translatesDO == null) {
             //插入这条数据
-            baseMapper.insertShopTranslateInfo(source, shopifyRequest.getAccessToken(), locale, shopifyRequest.getShopName(), 0);
+            baseMapper.insertShopTranslateInfo(source, accessToken, locale, shopName, 0);
         }
     }
 

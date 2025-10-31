@@ -12,6 +12,7 @@ import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
@@ -21,7 +22,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
+import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
@@ -224,10 +225,16 @@ public class TaskService {
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
             Boolean flag = translationCounterService.updateCharsByShopName(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), userPriceRequest.getSubscriptionId(), chars);
             appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars + " 是否成功： " + flag);
-            //将用户免费Ip清零
+
+            // 将用户免费Ip清零
             iUserIpService.update(new UpdateWrapper<UserIpDO>().eq("shop_name", userPriceRequest.getShopName()).set("times", 0).set("first_email", 0).set("second_email", 0));
-            //修改该用户过期时间
+
+            // 修改该用户过期时间
             iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, userPriceRequest.getShopName()).set(UserSubscriptionsDO::getEndDate, subEnd));
+
+            // 修改Translates表中，状态3 - 》 6
+            translatesService.updateStatus3To6(userPriceRequest.getShopName());
+
             if ("Starter".equals(name)) {
                 return;
             }
@@ -318,7 +325,7 @@ public class TaskService {
             // 判断字符是否超限
             TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
             Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-            appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName);
+            appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName + " remainingChars: " + remainingChars + " usedChars: " + counterDO.getUsedChars());
 
             // 如果字符超限，则直接返回字符超限
             if (counterDO.getUsedChars() >= remainingChars) {
@@ -358,10 +365,10 @@ public class TaskService {
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
             // 将自动翻译的任务初始化，存到initial表中
-            String resourceToJson = objectToJson(AUTO_TRANSLATE_MAP);
+            String resourceToJson = JsonUtils.objectToJson(AUTO_TRANSLATE_MAP);
             InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
                     translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
-                    , "1", resourceToJson, null, shopName, false, AUTO_EMAIL,
+                    , "1", resourceToJson, null, shopName, false, AUTO,
                     Timestamp.valueOf(LocalDateTime.now()), false);
             try {
                 appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);

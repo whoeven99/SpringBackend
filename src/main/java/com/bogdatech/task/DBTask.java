@@ -96,6 +96,7 @@ public class DBTask {
         // 根据target语言分组
         Map<String, List<TranslateTasksDO>> map = shopTasks.stream()
                 .collect(Collectors.groupingBy(translateTasksDO -> {
+                    // TODO 删掉这个VO，把所有字段展开，存到tasksDO里
                     RabbitMqTranslateVO rabbitMqTranslateVO = jsonToObject(translateTasksDO.getPayload(), RabbitMqTranslateVO.class);
                     // if == null
                     String target = rabbitMqTranslateVO.getTarget();

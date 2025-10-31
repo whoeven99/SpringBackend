@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
-import static com.bogdatech.logic.RabbitMqTranslateService.CLICK_EMAIL;
+import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
+import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
@@ -102,7 +102,7 @@ public class InitialTranslateDbTask {
         // 按照taskType排序，click优先
         clickTranslateTasks = clickTranslateTasks.stream()
                 .sorted(Comparator.comparing(
-                        (InitialTranslateTasksDO task) -> !CLICK_EMAIL.equals(task.getTaskType())
+                        (InitialTranslateTasksDO task) -> !MANUAL.equals(task.getTaskType())
                 ))
                 .toList();
 
@@ -267,7 +267,7 @@ public class InitialTranslateDbTask {
             }
 
             // 自动翻译邮件是不会改Translates表状态的，所以要单独处理
-            if (AUTO_EMAIL.equals(task.getTaskType()) && task.getStatus() == 1 && !task.isSendEmail()) {
+            if (AUTO.equals(task.getTaskType()) && task.getStatus() == 1 && !task.isSendEmail()) {
                 List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
                 if (!translateTasks.isEmpty()) {
                     continue;
