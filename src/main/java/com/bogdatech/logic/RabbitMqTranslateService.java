@@ -288,15 +288,13 @@ public class RabbitMqTranslateService {
         return false;
     }
 
-    public void translatePlainTextData(Set<TranslateTextDO> plainTextData, RabbitMqTranslateVO vo, CharacterCountUtils counter, String translationKeyType) {
+    public void translatePlainTextData(Set<TranslateTextDO> plainTextData,
+                                       String shopName, String source, String target, String accessToken, Integer limitChars,
+                                       String languagePack, String modelType, String translationModel,
+                                       CharacterCountUtils counter, String translationKeyType) {
         if (plainTextData.isEmpty()) {
             return;
         }
-        String shopName = vo.getShopName();
-        String target = vo.getTarget();
-        Integer limitChars = vo.getLimitChars();
-        String accessToken = vo.getAccessToken();
-        String source = vo.getSource();
         ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
 
         TranslateRequest translateRequestTemplate = new TranslateRequest(0, shopName, accessToken, source, target, null);
@@ -325,8 +323,9 @@ public class RabbitMqTranslateService {
                 }
             }
 
-            Map<String, String> resultMap = translateDataService.translatePlainText(untranslatedTexts, vo, counter,
-                    shopName, source, limitChars, translationKeyType, translateRequestTemplate);
+            Map<String, String> resultMap = translateDataService.translatePlainText(untranslatedTexts,
+                    target, languagePack, modelType, translationModel,
+                    counter, shopName, limitChars, translationKeyType, translateRequestTemplate);
 
             resultMap.putAll(cachedMap);
 
@@ -339,18 +338,18 @@ public class RabbitMqTranslateService {
                     continue;
                 }
 
-                translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), String.valueOf(2));
-                translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(vo.getShopName(), vo.getSource(), vo.getTarget()), sourceText);
+                translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+                translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), sourceText);
 
                 // 存储翻译后的数据
-                Map<String, Object> translation = createTranslationMap(vo.getTarget(), item.getTextKey(), item.getDigest());
+                Map<String, Object> translation = createTranslationMap(target, item.getTextKey(), item.getDigest());
 
                 // TODO： 3.1 翻译后的存db
                 if (!URI.equals(item.getTextType())) {
                     redisProcessService.setCacheData(shopifyRequest.getTarget(), targetText, sourceText);
                 }
                 shopifyService.saveToShopify(targetText, translation, item.getResourceId(), shopifyRequest);
-                AppInsightsUtils.printTranslation(targetText, sourceText, translation, vo.getShopName(), vo.getModeType(), item.getResourceId(), vo.getSource());
+                AppInsightsUtils.printTranslation(targetText, sourceText, translation, shopName, modelType, item.getResourceId(), source);
                 checkNeedAddProcessData(shopifyRequest.getShopName(), shopifyRequest.getTarget());
             }
         }
@@ -485,11 +484,12 @@ public class RabbitMqTranslateService {
         }
     }
 
-    private void prepareForGlossary(RabbitMqTranslateVO vo, String translationKeyType, Map<String, String> keyMap1, Map<String, String> keyMap0) {
+    private void prepareForGlossary(String shopName, Map<String, Object> glossaryMap,
+                                    String translationKeyType, Map<String, String> keyMap1, Map<String, String> keyMap0) {
         if (translationKeyType.equals(GLOSSARY)) {
             // 将glossaryMap中所有caseSensitive为1的数据存到一个Map集合里面
-            appInsights.trackTrace("clickTranslation shopName : " + vo.getShopName() + " , glossaryDO : " + vo.getGlossaryMap());
-            for (Map.Entry<String, Object> entry : vo.getGlossaryMap().entrySet()) {
+            appInsights.trackTrace("clickTranslation shopName : " + shopName + " , glossaryDO : " + glossaryMap);
+            for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
                 GlossaryDO glossaryDO = OBJECT_MAPPER.convertValue(entry.getValue(), GlossaryDO.class);
 
                 if (glossaryDO.getCaseSensitive() == 1) {
@@ -503,11 +503,18 @@ public class RabbitMqTranslateService {
         }
     }
 
-    public void translateData(Set<TranslateTextDO> translateTextDOS, RabbitMqTranslateVO vo, CharacterCountUtils counter, String translationKeyType) {
+    public void translateData(Set<TranslateTextDO> translateTextDOS,
+                              String shopName, String source, String target, Integer limitChars,
+                              String accessToken, String languagePack, String modeType,
+                              String translationModel, Map<String, Object> glossaryMap,
+                              CharacterCountUtils counter, String translationKeyType) {
         if (PLAIN_TEXT.equals(translationKeyType) || TITLE.equals(translationKeyType)
                 || META_TITLE.equals(translationKeyType) || LOWERCASE_HANDLE.equals(translationKeyType)) {
             // Plain Text采用了50个的list翻译
-            translatePlainTextData(translateTextDOS, vo, counter, translationKeyType);
+            translatePlainTextData(translateTextDOS,
+                    shopName, source, target, accessToken, limitChars,
+                    languagePack, modeType, translationModel,
+                    counter, translationKeyType);
             return;
         }
 
@@ -515,47 +522,50 @@ public class RabbitMqTranslateService {
         Map<String, String> keyMap1 = new HashMap<>();
         Map<String, String> keyMap0 = new HashMap<>();
         if (GLOSSARY.equals(translationKeyType)) {
-            if (CollectionUtils.isEmpty(vo.getGlossaryMap())) {
+            if (CollectionUtils.isEmpty(glossaryMap)) {
                 return;
             }
-            prepareForGlossary(vo, translationKeyType, keyMap1, keyMap0);
+            prepareForGlossary(shopName, glossaryMap, translationKeyType, keyMap1, keyMap0);
         }
-
-        String shopName = vo.getShopName();
-        String target = vo.getTarget();
-        Integer limitChars = vo.getLimitChars();
-        String accessToken = vo.getAccessToken();
         ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
 
         for (TranslateTextDO translateTextDO : translateTextDOS) {
             //根据模块选择翻译方法，先做普通翻译
             //判断是否停止翻译
             // TODO: 2.2 翻译中的token校验
-            if (checkNeedStopped(vo.getShopName(), counter)) {
+            if (checkNeedStopped(shopName, counter)) {
                 return;
             }
 
             String value = translateTextDO.getSourceText();
             String resourceId = translateTextDO.getResourceId();
-            String source = vo.getSource();
             String key = translateTextDO.getTextKey();
             String digest = translateTextDO.getDigest();
             String type = translateTextDO.getTextType();
             Map<String, Object> translation = createTranslationMap(target, key, digest);
 
             // TODO：2.2 翻译中的token校验
-            appInsights.trackTrace("判断是否达到额度限制 用户： " + vo.getShopName());
+            appInsights.trackTrace("判断是否达到额度限制 用户： " + shopName);
             updateCharsWhenExceedLimit(counter, shopName, limitChars, new TranslateRequest(0, shopName, accessToken, source, target, null));
 
             //开始翻译
             String translatedValue = isCached(value, target);
             if (translatedValue == null) {
                 if (translationKeyType.equals(LIST_SINGLE)) {
-                    translatedValue = translateDataService.translateListSingleData(value, target, vo, counter, shopName, shopifyRequest, source, translation, translateTextDO.getResourceId());
+                    translatedValue = translateDataService.translateListSingleData(
+                            value, target,
+                            languagePack, limitChars,
+                            counter, shopName, shopifyRequest, source, translation, translateTextDO.getResourceId());
                 } else if (translationKeyType.equals(HTML)) {
-                    translatedValue = translateDataService.translateHtmlData(value, vo, counter, shopifyRequest, source, translation, resourceId, vo.getTranslationModel());
+                    translatedValue = translateDataService.translateHtmlData(
+                            value,
+                            shopName, target, accessToken, languagePack, limitChars, modeType,
+                            counter, shopifyRequest, source, translation, resourceId, translationModel);
                 } else if (translationKeyType.equals(GLOSSARY)) {
-                    translatedValue = translateDataService.translateGlossaryData(value, vo, counter, shopifyRequest, source, translation, resourceId, limitChars, keyMap0, keyMap1);
+                    translatedValue = translateDataService.translateGlossaryData(
+                            value,
+                            shopName, languagePack,
+                            counter, shopifyRequest, source, translation, resourceId, limitChars, keyMap0, keyMap1);
                 }
             }
 
