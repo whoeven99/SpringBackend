@@ -11,6 +11,7 @@ import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -54,9 +55,7 @@ public class TranslateService {
     @Autowired
     private ITranslationCounterService translationCounterService;
     @Autowired
-    private LiquidHtmlTranslatorUtils liquidHtmlTranslatorUtils;
-    @Autowired
-    private JsoupUtils jsoupUtils;
+    private TranslateDataService translateDataService;
     @Autowired
     private ITranslateTasksService translateTasksService;
     @Autowired
@@ -366,7 +365,7 @@ public class TranslateService {
         counter.addChars(usedChars);
         if (type.equals(URI) && "handle".equals(key)) {
             // 如果 key 为 "handle"，这里是要处理的代码
-            String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars, true);
+            String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars, true);
             if (targetString == null) {
                 return new BaseResponse<>().CreateErrorResponse(value);
             }
@@ -380,17 +379,17 @@ public class TranslateService {
                 TranslateRequest translateRequest = new TranslateRequest(0, shopName, null, source, target, value);
                 //单条翻译html，修改格式
                 if (resourceType.equals(METAFIELD)) {
-                    String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
+                    String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     appInsights.trackTrace(shopName + " 用户 ，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                     return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
                 }
 
-                String htmlTranslation = liquidHtmlTranslatorUtils.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
+                String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
                 appInsights.trackTrace(shopName + " 用户 ，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
-                String targetString = jsoupUtils.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, GENERAL, remainingChars, true);
+                String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, GENERAL, remainingChars, true);
                 appInsights.trackTrace(shopName + " 用户 ，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }

@@ -9,6 +9,7 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
@@ -90,7 +91,7 @@ public class PrivateKeyService {
     @Autowired
     private  PrivateIntegration privateIntegration;
     @Autowired
-    private JsoupUtils jsoupUtils;
+    private TranslateDataService translatedDataService;
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
@@ -392,11 +393,11 @@ public class PrivateKeyService {
     //方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
     private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
         //将node转换为json字符串
-        Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(node, translateContext.getShopifyRequest().getShopName(), translateContext.getIsCover(), null);
+        Set<TranslateTextDO> needTranslatedData = translatedDataService.translatedDataParse(node, translateContext.getShopifyRequest().getShopName(), translateContext.getIsCover(), null);
         if (needTranslatedData == null) {
             return;
         }
-        Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(translateContext.getTranslateResource().getResourceType(), translateContext.getHandleFlag(), needTranslatedData, null, null);
+        Set<TranslateTextDO> filterTranslateData = translatedDataService.filterNeedTranslateSet(translateContext.getTranslateResource().getResourceType(), translateContext.getHandleFlag(), needTranslatedData, null, null);
         //将翻译的数据分类，提示词，普通文本，html
         Map<String, Set<TranslateTextDO>> stringSetMap = RabbitMqTranslateService.initTranslateMap();
         //将筛选好的数据分类

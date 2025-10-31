@@ -225,10 +225,16 @@ public class TaskService {
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
             Boolean flag = translationCounterService.updateCharsByShopName(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), userPriceRequest.getSubscriptionId(), chars);
             appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars + " 是否成功： " + flag);
-            //将用户免费Ip清零
+
+            // 将用户免费Ip清零
             iUserIpService.update(new UpdateWrapper<UserIpDO>().eq("shop_name", userPriceRequest.getShopName()).set("times", 0).set("first_email", 0).set("second_email", 0));
-            //修改该用户过期时间
+
+            // 修改该用户过期时间
             iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, userPriceRequest.getShopName()).set(UserSubscriptionsDO::getEndDate, subEnd));
+
+            // 修改Translates表中，状态3 - 》 6
+            translatesService.updateStatus3To6(userPriceRequest.getShopName());
+
             if ("Starter".equals(name)) {
                 return;
             }
