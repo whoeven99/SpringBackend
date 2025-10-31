@@ -13,6 +13,7 @@ import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ public class ProcessDbTaskService {
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
     @Autowired
-    private JsoupUtils jsoupUtils;
+    private TranslateDataService translateDataService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
@@ -203,12 +204,12 @@ public class ProcessDbTaskService {
             return new HashMap<>();
         }
 
-        Set<TranslateTextDO> needTranslatedData = jsoupUtils.translatedDataParse(
+        Set<TranslateTextDO> needTranslatedData = translateDataService.translatedDataParse(
                 stringToJson(shopifyDataByDb), shopName, isCover, target);
         if (needTranslatedData == null) {
             return new HashMap<>();
         }
-        Set<TranslateTextDO> filterTranslateData = jsoupUtils.filterNeedTranslateSet(
+        Set<TranslateTextDO> filterTranslateData = translateDataService.filterNeedTranslateSet(
                 modeType, handleFlag, needTranslatedData, shopName, target);
         //将筛选好的数据分类
         Map<String, Set<TranslateTextDO>> stringSetMap = rabbitMqTranslateService.filterTranslateMap(

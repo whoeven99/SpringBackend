@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUserPrivateTranslateService;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
+import com.bogdatech.utils.AppInsightsUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -95,7 +96,7 @@ public class PrivateIntegration {
 
                 // 获取 total_tokens
                 int totalTokens = obj.getJSONObject("usage").getIntValue("total_tokens");
-                printPrivateTranslateCost(totalTokens);
+                AppInsightsUtils.printPrivateTranslateCost(totalTokens);
                 appInsights.trackTrace("translateByGpt " + shopName + " 用户 openai 私有key翻译 all: " + totalTokens + " sourceText: " + prompt + " targetText : " + content);
                 iUserPrivateTranslateService.updateUserUsedCount(OPENAI_MODEL, totalTokens, shopName, limit);
             }else {
@@ -136,7 +137,7 @@ public class PrivateIntegration {
             String responseBody = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             jsonObject = JSONObject.parseObject(responseBody);
             // 获取翻译结果
-            printPrivateTranslateCost(encodedQuery.length());
+            AppInsightsUtils.printPrivateTranslateCost(encodedQuery.length());
             JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");

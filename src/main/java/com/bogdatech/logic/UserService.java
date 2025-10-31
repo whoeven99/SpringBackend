@@ -8,6 +8,7 @@ import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.utils.AESUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,7 @@ public class UserService {
     //添加用户
     public BaseResponse<Object> addUser(UsersDO usersDO) {
         try {
-            String encryptionEmail = encrypt(usersDO.getEmail());
+            String encryptionEmail = AESUtils.encrypt(usersDO.getEmail());
             if (encryptionEmail != null) {
                 usersDO.setEncryptionEmail(encryptionEmail);
             }
@@ -183,7 +184,7 @@ public class UserService {
         }
         String encryptionEmail = null;
         try {
-            encryptionEmail = encrypt(usersDO.getEmail());
+            encryptionEmail = AESUtils.encrypt(usersDO.getEmail());
         } catch (Exception e) {
             appInsights.trackTrace("getEncryptedEmail " + shopName + "加密邮箱失败");
         }

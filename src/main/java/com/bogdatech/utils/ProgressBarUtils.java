@@ -84,7 +84,6 @@ public class ProgressBarUtils {
             case SELLING_PLAN_GROUP:
                 progressData.put("RemainingQuantity", 1);
                 return progressData;
-
             default:
                 progressData.put("RemainingQuantity", 0);
                 return progressData;

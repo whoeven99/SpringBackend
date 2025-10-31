@@ -23,15 +23,6 @@ public class AESUtils {
         return Base64.getEncoder().encodeToString(encryptedBytes);
     }
 
-    // 解密
-    public static String decrypt(String encryptedText) throws Exception {
-        SecretKeySpec key = new SecretKeySpec(SECRET_KEY.getBytes(), ALGORITHM);
-        Cipher cipher = Cipher.getInstance(ALGORITHM);
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedText));
-        return new String(decryptedBytes);
-    }
-
     /**
      * 对sourceText做MD5加密
      * */

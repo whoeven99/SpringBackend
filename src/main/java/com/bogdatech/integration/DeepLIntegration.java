@@ -2,6 +2,7 @@ package com.bogdatech.integration;
 
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.deepl.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ public class DeepLIntegration {
             appInsights.trackTrace("result: " + result);
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
-            printTranslateCost(totalToken, totalToken, totalToken);
+            AppInsightsUtils.printTranslateCost(totalToken, totalToken, totalToken);
             appInsights.trackTrace("clickTranslation translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
             if (isSingleFlag) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);

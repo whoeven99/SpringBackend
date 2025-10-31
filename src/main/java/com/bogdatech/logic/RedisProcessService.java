@@ -1,6 +1,7 @@
 package com.bogdatech.logic;
 
 import com.bogdatech.integration.RedisIntegration;
+import com.bogdatech.utils.AESUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +47,7 @@ public class RedisProcessService {
      * @param sourceValue 源语言文本
      * */
     public void setCacheData(String targetCode, String targetValue, String sourceValue){
-        String encryptedSource = encryptMD5(sourceValue);
+        String encryptedSource = AESUtils.encryptMD5(sourceValue);
         String key = generateCacheKey(targetCode, encryptedSource);
         redisIntegration.set(key, targetValue, DAY_14);
     }
@@ -58,7 +59,7 @@ public class RedisProcessService {
      * @param sourceValue 源语言文本
      * */
     public String getCacheData(String targetCode, String sourceValue){
-        String encryptedSource = encryptMD5(sourceValue);
+        String encryptedSource = AESUtils.encryptMD5(sourceValue);
         String key = generateCacheKey(targetCode, encryptedSource);
         String text = redisIntegration.get(key);
         if (text != null && !"null".equals(text)){
