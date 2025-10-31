@@ -502,18 +502,17 @@ public class RabbitMqTranslateService {
         }
     }
 
-    public void translateData(Set<TranslateTextDO> translateTextDOS, RabbitMqTranslateVO vo, CharacterCountUtils counter, String translationKeyType) {
-        String shopName = vo.getShopName();
-        String target = vo.getTarget();
-        Integer limitChars = vo.getLimitChars();
-        String accessToken = vo.getAccessToken();
-
+    public void translateData(Set<TranslateTextDO> translateTextDOS,
+                              String shopName, String source, String target, Integer limitChars,
+                              String accessToken, String languagePack, String modeType,
+                              String translationModel, Map<String, Object> glossaryMap,
+                              CharacterCountUtils counter, String translationKeyType) {
         if (PLAIN_TEXT.equals(translationKeyType) || TITLE.equals(translationKeyType)
                 || META_TITLE.equals(translationKeyType) || LOWERCASE_HANDLE.equals(translationKeyType)) {
             // Plain Text采用了50个的list翻译
             translatePlainTextData(translateTextDOS,
-                    shopName, vo.getSource(), target, accessToken, vo.getLimitChars(),
-                    vo.getLanguagePack(), vo.getModeType(), vo.getTranslationModel(),
+                    shopName, source, target, accessToken, limitChars,
+                    languagePack, modeType, translationModel,
                     counter, translationKeyType);
             return;
         }
@@ -522,10 +521,10 @@ public class RabbitMqTranslateService {
         Map<String, String> keyMap1 = new HashMap<>();
         Map<String, String> keyMap0 = new HashMap<>();
         if (GLOSSARY.equals(translationKeyType)) {
-            if (CollectionUtils.isEmpty(vo.getGlossaryMap())) {
+            if (CollectionUtils.isEmpty(glossaryMap)) {
                 return;
             }
-            prepareForGlossary(shopName, vo.getGlossaryMap(), translationKeyType, keyMap1, keyMap0);
+            prepareForGlossary(shopName, glossaryMap, translationKeyType, keyMap1, keyMap0);
         }
         ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
 
@@ -539,7 +538,6 @@ public class RabbitMqTranslateService {
 
             String value = translateTextDO.getSourceText();
             String resourceId = translateTextDO.getResourceId();
-            String source = vo.getSource();
             String key = translateTextDO.getTextKey();
             String digest = translateTextDO.getDigest();
             String type = translateTextDO.getTextType();
@@ -555,17 +553,17 @@ public class RabbitMqTranslateService {
                 if (translationKeyType.equals(LIST_SINGLE)) {
                     translatedValue = translateDataService.translateListSingleData(
                             value, target,
-                            vo.getLanguagePack(), vo.getLimitChars(),
+                            languagePack, limitChars,
                             counter, shopName, shopifyRequest, source, translation, translateTextDO.getResourceId());
                 } else if (translationKeyType.equals(HTML)) {
                     translatedValue = translateDataService.translateHtmlData(
                             value,
-                            shopName, target, accessToken, vo.getLanguagePack(), vo.getLimitChars(), vo.getModeType(),
-                            counter, shopifyRequest, source, translation, resourceId, vo.getTranslationModel());
+                            shopName, target, accessToken, languagePack, limitChars, modeType,
+                            counter, shopifyRequest, source, translation, resourceId, translationModel);
                 } else if (translationKeyType.equals(GLOSSARY)) {
                     translatedValue = translateDataService.translateGlossaryData(
                             value,
-                            shopName, vo.getLanguagePack(),
+                            shopName, languagePack,
                             counter, shopifyRequest, source, translation, resourceId, limitChars, keyMap0, keyMap1);
                 }
             }
