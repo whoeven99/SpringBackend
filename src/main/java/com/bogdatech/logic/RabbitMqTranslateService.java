@@ -67,36 +67,25 @@ public class RabbitMqTranslateService {
                              boolean isCover,
                              String customKey,
                              String taskType) {
-        ShopifyRequest shopifyRequest = new ShopifyRequest(shopName, accessToken, API_VERSION_LAST, target);
-        TranslateRequest translateRequest = new TranslateRequest(0, shopName, accessToken, source, target, null);
-        initialTasks(shopifyRequest, translateResourceDTOS, translateRequest, handleFlag, translationModel, isCover, customKey, taskType);
-    }
-
-    public void initialTasks(ShopifyRequest shopifyRequest,
-                             List<String> translateResourceDTOS,
-                             TranslateRequest request,
-                             boolean handleFlag,
-                             String translationModel,
-                             boolean isCover,
-                             String customKey,
-                             String taskType) {
         // 初始化计数器、词汇表和语言包
-        TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(shopifyRequest.getShopName());
-        Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(shopifyRequest.getShopName());
+        TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(shopName);
+        Integer limitChars = iTranslationCounterService.getMaxCharsByShopName(shopName);
         int usedChars = translationCounterDO.getUsedChars();
 
         CharacterCountUtils counter = new CharacterCountUtils();
         counter.addChars(usedChars);
 
         Map<String, Object> glossaryMap = new HashMap<>();
-        glossaryService.getGlossaryByShopName(shopifyRequest, glossaryMap);
-        appInsights.trackTrace("判断是否有同义词 " + shopifyRequest.getShopName());
+        glossaryService.getGlossaryByShopName(shopName, target, glossaryMap);
+        appInsights.trackTrace("判断是否有同义词 " + shopName);
 
-        String languagePackId = aiLanguagePackService.getCategoryByDescription(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), counter, limitChars, shopifyRequest.getTarget());
-        appInsights.trackTrace("获取目前所使用的AI语言包 " + shopifyRequest.getShopName());
+        String languagePackId = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, counter, limitChars, target);
+        appInsights.trackTrace("获取目前所使用的AI语言包 " + shopName);
 
         // 创建翻译VO对象
-        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), request.getSource(), request.getTarget(), languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars, LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
+        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopName, accessToken,
+                source, target, languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars,
+                LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         CharacterCountUtils allTasks = new CharacterCountUtils();
 
         // 处理每个翻译资源
@@ -105,24 +94,24 @@ public class RabbitMqTranslateService {
                 continue;
             }
 
-            if (shouldSkipResource(translateResource, request.getShopName())) {
+            if (shouldSkipResource(translateResource, shopName)) {
                 continue;
             }
 
-            if (checkNeedStopped(request.getShopName(), counter)) {
+            if (checkNeedStopped(shopName, counter)) {
                 return;
             }
 
-            translateResource.setTarget(request.getTarget());
+            translateResource.setTarget(target);
             String shopifyData = shopifyService.getShopifyData(
-                    shopifyRequest.getShopName(), shopifyRequest.getAccessToken(),
-                    shopifyRequest.getApiVersion(), new ShopifyRequestBody().getFirstQuery(translateResource));
-            appInsights.trackTrace("用户shopify翻译数据 " + shopifyRequest.getShopName());
+                    shopName, accessToken,
+                    API_VERSION_LAST, new ShopifyRequestBody().getFirstQuery(translateResource));
+            appInsights.trackTrace("用户shopify翻译数据 " + shopName);
 
             rabbitMqTranslateVO.setShopifyData(shopifyData);
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
 
-            appInsights.trackTrace("初始化task数据 " + shopifyRequest.getShopName() + " model: " + translateResource.getResourceType());
+            appInsights.trackTrace("初始化task数据 " + shopName + " model: " + translateResource.getResourceType());
             rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
             if (AUTO_EMAIL.equals(taskType)){
                 rabbitMqTranslateVO.setCustomKey(AUTO_EMAIL);
@@ -345,11 +334,11 @@ public class RabbitMqTranslateService {
 
                 // TODO： 3.1 翻译后的存db
                 if (!URI.equals(item.getTextType())) {
-                    redisProcessService.setCacheData(shopifyRequest.getTarget(), targetText, sourceText);
+                    redisProcessService.setCacheData(target, targetText, sourceText);
                 }
                 shopifyService.saveToShopify(targetText, translation, item.getResourceId(), shopifyRequest);
                 printTranslation(targetText, sourceText, translation, shopName, modelType, item.getResourceId(), source);
-                checkNeedAddProcessData(shopifyRequest.getShopName(), shopifyRequest.getTarget());
+                checkNeedAddProcessData(shopName, target);
             }
         }
     }
@@ -571,7 +560,7 @@ public class RabbitMqTranslateService {
             //翻译进度条加1
             checkNeedAddProcessData(shopName, target);
             if (translatedValue == null) {
-                appInsights.trackTrace("FatalException translateData is null: " + shopifyRequest.getShopName() + " source: " + source + " value : " + value);
+                appInsights.trackTrace("FatalException translateData is null: " + shopName + " source: " + source + " value : " + value);
                 continue;
             }
 
