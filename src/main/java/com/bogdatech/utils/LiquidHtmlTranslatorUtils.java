@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
@@ -236,10 +237,8 @@ public class LiquidHtmlTranslatorUtils {
         html = isHtmlEntity(html); //判断是否含有HTML实体,然后解码
 
         //1, 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
-        appInsights.trackTrace("定义translateRequest 用户： " + request.getShopName());
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
 
-        appInsights.trackTrace("解析html 用户： " + request.getShopName());
         Document doc = parseHtml(html, request.getTarget(), hasHtmlTag);
 
         // 2. 收集所有 TextNode
@@ -247,7 +246,6 @@ public class LiquidHtmlTranslatorUtils {
         for (Element element : doc.getAllElements()) {
             nodes.addAll(element.textNodes());
         }
-        appInsights.trackTrace("收集完所有的TextNode 用户： " + request.getShopName());
 
         // 3. 提取要翻译文本
         List<String> originalTexts = new ArrayList<>();
@@ -257,25 +255,19 @@ public class LiquidHtmlTranslatorUtils {
                 originalTexts.add(text);
             }
         }
-        appInsights.trackTrace("提取完所有的翻译文本 用户： " + request.getShopName());
 
         // 4. 每50条一次翻译
         Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId, limitChars, isSingleFlag, translationModel);
-        appInsights.trackTrace("翻译完所有文本 用户： " + request.getShopName());
 
         // 5. 填回原处
-        appInsights.trackTrace("填回原处前 用户： " + request.getShopName());
         fillBackTranslatedData(nodes, translatedTexts, request.getTarget(), request.getShopName());
-        appInsights.trackTrace("填回原处后 用户： " + request.getShopName());
 
         // 输出翻译后的 HTML
         if (hasHtmlTag) {
-            appInsights.trackTrace("输出翻译后的 HTML 1 用户： " + request.getShopName());
             String results = doc.outerHtml(); // 返回完整的HTML结构
             results = isHtmlEntity(results);
             return results;
         } else {
-            appInsights.trackTrace("输出翻译后的 HTML 2 用户： " + request.getShopName());
             Element body = doc.body();
             // 只返回子节点内容，不包含 <body>
             StringBuilder results = new StringBuilder();
@@ -311,7 +303,7 @@ public class LiquidHtmlTranslatorUtils {
     }
 
     /**
-     * 每50条文本翻译一次
+     * 解析后的html，进行批量翻译 TODO 是不是可以和plainText的批量翻译放一起？
      */
     public Map<String, String> translateAllList(List<String> originalTexts, TranslateRequest request, CharacterCountUtils counter, String languagePack, Integer limitChars, boolean isSingleFlag, String translationModel) {
         String target = request.getTarget();
