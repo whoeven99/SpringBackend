@@ -319,7 +319,7 @@ public class TaskService {
             // 判断字符是否超限
             TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
             Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-            appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName);
+            appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName + " remainingChars: " + remainingChars + " usedChars: " + counterDO.getUsedChars());
 
             // 如果字符超限，则直接返回字符超限
             if (counterDO.getUsedChars() >= remainingChars) {
