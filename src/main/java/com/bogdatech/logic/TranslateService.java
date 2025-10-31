@@ -39,7 +39,6 @@ import static com.bogdatech.logic.redis.TranslationParametersRedisService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
@@ -81,7 +80,6 @@ public class TranslateService {
 
     // 判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
-//    public static ConcurrentHashMap<String, AtomicBoolean> userStopFlags = new ConcurrentHashMap<>(); // 存储每个用户的停止标志
 
     // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
     public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
