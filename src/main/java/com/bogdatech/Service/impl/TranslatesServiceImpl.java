@@ -117,7 +117,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public void updateStatus3To6(String shopName) {
+    public boolean updateStatus3To6(String shopName) {
         final int maxRetries = 3;
         int attempt = 0;
 
@@ -134,7 +134,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                 appInsights.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
 
                 // 正常结束，无需再重试
-                break;
+                return true;
             } catch (Exception e) {
                 appInsights.trackException(e);
                 if (attempt >= maxRetries) {
@@ -142,6 +142,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                 }
             }
         }
+        return false;
     }
 
     @Override
@@ -163,7 +164,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                 .ne("source", source)
                 .set("auto_translate", false));
         if (flag > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate));
+            return new BaseResponse<>().CreateSuccessResponse(new AutoTranslateRequest(shopName, source, target, autoTranslate, null));
         } else {
             return new BaseResponse<>().CreateErrorResponse("更新失败");
         }

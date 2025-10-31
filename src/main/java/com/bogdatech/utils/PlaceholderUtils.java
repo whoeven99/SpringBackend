@@ -97,62 +97,6 @@ public class PlaceholderUtils {
     }
 
     /**
-     * key值提示词
-     * @param target 目标语言
-     * @param languagePackId 语言包
-     * @param key 各类key值
-     * @param customKey 用户自定义提示词
-     * */
-    public static String getKeyPrompt(String target, String languagePackId, String key, String customKey) {
-        boolean hasLanguagePackId = languagePackId != null && !languagePackId.isEmpty();
-        boolean hasCustomKey = customKey != null && !customKey.isEmpty();
-        boolean hasKey = key != null && !key.isEmpty();
-        if (hasLanguagePackId && hasCustomKey && hasKey) {
-            //判断CustomKey里面是否包含using terminology and tone appropriate for 则使用customKey里面的文本。
-            if (customKey.contains("using terminology and tone appropriate for")) {
-                return "Translate the following " + key + " into " + target + " " + customKey + " Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-            }
-            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". " + customKey + " Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        } else if (hasLanguagePackId && hasKey) {
-            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        } else if (hasCustomKey && hasKey) {
-            return "Translate the following " + key + " into " + target + ". " + customKey + " Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        }else if (!hasKey) {
-            if (languagePackId != null && !languagePackId.isEmpty()){
-                return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-            }
-            return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        }
-        return "Translate the following " + key + " into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-    }
-
-    /**
-     * openai key 提示词
-     * */
-    public static String getOpenaiKeyPrompt(String target, String languagePackId, String key, String customKey) {
-        boolean hasLanguagePackId = languagePackId != null && !languagePackId.isEmpty();
-        boolean hasCustomKey = customKey != null && !customKey.isEmpty();
-        boolean hasKey = key != null && !key.isEmpty();
-        if (hasLanguagePackId && hasCustomKey && hasKey) {
-            //判断CustomKey里面是否包含using terminology and tone appropriate for 则使用customKey里面的文本。
-            if (customKey.contains("using terminology and tone appropriate for")) {
-                return "Translate the following " + key + " into " + target + " " + customKey + " If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
-            }
-            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". " + customKey + " If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
-        } else if (hasLanguagePackId && hasKey) {
-            return "Translate the following " + key + " into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
-        } else if (hasCustomKey && hasKey) {
-            return "Translate the following " + key + " into " + target + ". " + customKey + " If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
-        }else if (!hasKey) {
-            if (languagePackId != null && !languagePackId.isEmpty()){
-                return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
-            }
-            return "Translate the following text into " + target + ". If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
-        }
-        return "Translate the following " + key + " into " + target + ". If already in " + target + ", return unchanged. Output only the final result. No comments, no source text. Preserve original casing";
-    }
-
-    /**
      * 变量提示词
      *
      * @param target         目标语言
@@ -190,7 +134,6 @@ public class PlaceholderUtils {
      */
     public static String getHandlePrompt(String target) {
         return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-//        return "Translate each word in the following handle into " + target + ". Keep the '-' separators as they are. Output only the translated handle.";
     }
 
 
@@ -221,14 +164,6 @@ public class PlaceholderUtils {
             return "Translate the following HTML content to " + target  + ". Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
         }
         return "Translate the following HTML content to " + target + "  with " + languagePackId + " appropriate terminology and tone. Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
-    }
-
-    /**
-     * 政策 html提示词
-     * @param target 目标语言
-     * */
-    public static String getPolicyPrompt(String target) {
-        return "Translate the following shop policy HTML content into " + target + ". Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
     }
 
     /**
@@ -291,9 +226,7 @@ public class PlaceholderUtils {
 
         return switch (key) {
             case "title" ->  prefix + " title";
-//            case "body_html" -> prefix + (modelType.equals("article") ? " content" : " description");
             case "meta_title" -> prefix + " meta title";
-//            case "meta_description" -> prefix + " meta description";
             default -> null;
         };
     }

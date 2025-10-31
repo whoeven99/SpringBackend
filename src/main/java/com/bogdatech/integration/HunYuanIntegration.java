@@ -2,6 +2,7 @@ package com.bogdatech.integration;
 
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
@@ -96,7 +97,7 @@ public class HunYuanIntegration {
                 int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
                 long completionTokens = resp.getUsage().getCompletionTokens();
                 long promptTokens = resp.getUsage().getPromptTokens();
-                printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
+                AppInsightsUtils.printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
                 appInsights.trackTrace("hunYuanTranslate 混元信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                 if (isSingleFlag){
                     translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);

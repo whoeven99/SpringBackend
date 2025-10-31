@@ -6,16 +6,14 @@ import com.bogdatech.entity.DO.CurrenciesDO;
 import com.bogdatech.mapper.CurrenciesMapper;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.utils.ShopifyUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.MapUtils.getCurrencyDOS;
 
 @Service
 @Transactional
@@ -61,7 +59,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
             return new BaseResponse<>().CreateErrorResponse(false);
         }
         for (CurrenciesDO currenciesDO : list) {
-            Map<String, Object> currencyDOS = new java.util.HashMap<>(getCurrencyDOS(currenciesDO));
+            Map<String, Object> currencyDOS = new java.util.HashMap<>(ShopifyUtils.getCurrencyDOS(currenciesDO));
             mapList.add(currencyDOS);
         }
         return new BaseResponse<>().CreateSuccessResponse(mapList);
@@ -74,7 +72,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
             appInsights.trackTrace("getCurrencyWithSymbol No currency found for shopName: " + request.getShopName() + " and currencyCode: " + request.getCurrencyCode());
             return null;
         }
-        return new java.util.HashMap<>(getCurrencyDOS(currencyByShopNameAndCurrencyCode));
+        return new java.util.HashMap<>(ShopifyUtils.getCurrencyDOS(currencyByShopNameAndCurrencyCode));
     }
 
     @Override

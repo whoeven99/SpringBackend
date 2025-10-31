@@ -11,6 +11,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
 import java.util.Map;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TimeOutUtils.*;
@@ -18,6 +20,14 @@ import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class ShopifyHttpIntegration {
+    public String sendShopifyPost(String shopName, String accessToken, String apiVersion,
+                                  String stringQuery, Map<String, Object> variables) {
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(shopName);
+        request.setAccessToken(accessToken);
+        request.setApiVersion(apiVersion);
+        return sendShopifyPost(request, stringQuery, variables);
+    }
 
     // 设置头部信息
     //查询数据
@@ -66,6 +76,14 @@ public class ShopifyHttpIntegration {
             return null;
         }
         return responseContent;
+    }
+
+    public String getInfoByShopify(String shopName, String accessToken, String apiVersion, String query) {
+        ShopifyRequest request = new ShopifyRequest();
+        request.setShopName(shopName);
+        request.setAccessToken(accessToken);
+        request.setApiVersion(apiVersion);
+        return String.valueOf(getInfoByShopify(request, query));
     }
 
     public static JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {
@@ -137,7 +155,19 @@ public class ShopifyHttpIntegration {
         return null;
     }
 
-
+    // 删除用户数据
+    public static String deleteTranslateData(String shopName, String accessToken, String resourceId, String locals, String translationKeys) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("resourceId", resourceId);
+        String[] localsString = {locals};
+        variables.put("locales", localsString);
+        String[] translationKeysString = {translationKeys};
+        variables.put("translationKeys", translationKeysString);
+        ShopifyRequest shopifyRequest = new ShopifyRequest();
+        shopifyRequest.setShopName(shopName);
+        shopifyRequest.setAccessToken(accessToken);
+        return sendShopifyPost(shopifyRequest, ShopifyRequestBody.deleteTranslationQuery(), variables);
+    }
 }
 
 

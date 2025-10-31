@@ -22,11 +22,6 @@ public class JudgeTranslateUtils {
             ONLINE_STORE_THEME_LOCALE_CONTENT
     );
 
-    //白名单数据
-    public static final Pattern TRANSLATABLE_KEY_PATTERN =
-            Pattern.compile(".*(heading|description|content|title|label|product|faq|header|des|custom_html|text|slide|name|checkout).*");
-
-
     // 明确不翻译的key集合
     private static final Set<String> NO_TRANSLATE_KEYS = new HashSet<>();
 
@@ -131,16 +126,15 @@ public class JudgeTranslateUtils {
                     "\\+86\\s?1\\d{10}|" +                                                  // 中国大陆手机号码
                     "00\\d{1,3}\\s?1\\d{10}|" +                                             // 国际拨号前缀
                     "\\+\\d{8,15}"
-    );//包含电话号码
+    );// 包含电话号码
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-    );//包含邮箱
+    );// 包含邮箱
     public static final Pattern BASE64_PATTERN = Pattern.compile("^(?=[A-Za-z0-9+/]*[A-Z])(?=[A-Za-z0-9+/]*[a-z])(?=[A-Za-z0-9+/]*[0-9])(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"); // Base64编码
     private static final Pattern HASH_PATTERN = Pattern.compile("^[a-fA-F0-9]{64}$"); // 64位十六进制字符串
     private static final Pattern CLASS_HASH_PATTERN = Pattern.compile("^[a-fA-F0-9]{32}$"); // 32位十六进制字符串
     // 长度限制常量
     private static final int HASH_PREFIX_MAX_LENGTH = 90;
-    private static final int HASH_CONTAINS_MAX_LENGTH = 30;
     private static final int SLASH_CONTAINS_MAX_LENGTH = 20; // 可改为15
     private static final Pattern ICON_MATH_PATTERN = Pattern.compile(".*\\.icon_\\d+:.*"); // icon_X 类型
     public static final Pattern GENERAL_OR_SECTION_PATTERN = Pattern.compile("^(general|section)\\."); // general.开头的key

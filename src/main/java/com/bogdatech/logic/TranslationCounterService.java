@@ -5,22 +5,18 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
-import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
 import com.bogdatech.logic.redis.OrdersRedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-
-import static com.bogdatech.requestBody.ShopifyRequestBody.getSingleQuery;
+import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 
 @Component
@@ -39,6 +35,8 @@ public class TranslationCounterService {
     private IUserSubscriptionsService iUserSubscriptionsService;
     @Autowired
     private OrdersRedisService ordersRedisService;
+    @Autowired
+    private ShopifyService shopifyService;
 
     public final String ACTIVE = "ACTIVE";
 
@@ -58,7 +56,7 @@ public class TranslationCounterService {
         translationCharsVO.setAccessToken(userByName.getAccessToken());
         //根据传来的gid获取，相关订阅信息
         String subscriptionQuery = getSubscriptionQuery(translationCharsVO.getSubGid());
-        String shopifyByQuery = getShopifyByQuery(subscriptionQuery, shopName, userByName.getAccessToken());
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, userByName.getAccessToken(), API_VERSION_LAST, subscriptionQuery);
         appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
         //判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);

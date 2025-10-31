@@ -12,18 +12,15 @@ import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.DO.WidgetConfigurationsDO;
-import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.constants.TranslateConstants.IS_PUBLISH;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
-import static com.bogdatech.utils.ShopifyUtils.getShopifyByQuery;
 
 @Service
 public class DataRatingService {
@@ -37,6 +34,8 @@ public class DataRatingService {
     private IUsersService iUsersService;
     @Autowired
     private RedisTranslateUserStatusService redisTranslateUserStatusService;
+    @Autowired
+    private ShopifyService shopifyService;
 
     /**
      * 术语表， switch表，  自动翻译
@@ -81,7 +80,7 @@ public class DataRatingService {
         List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
 
         // 2，从shopify中获取所有的语言状态数据
-        String shopifyByQuery = getShopifyByQuery(getShopLanguageQuery(), shopName, usersDO.getAccessToken());
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, getShopLanguageQuery());
         if (shopifyByQuery == null) {
             return null;
         }

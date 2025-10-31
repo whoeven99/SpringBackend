@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserTypeTokenService;
+import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.entity.VO.TranslateArrayVO;
@@ -15,7 +17,6 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
@@ -44,7 +45,7 @@ public class TranslateController {
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
+    private IUsersService iUsersService;
     @Autowired
     private TranslateProgressService translateProgressService;
 
@@ -212,19 +213,25 @@ public class TranslateController {
 
     //当支付成功后，调用该方法，将该用户的状态3，改为状态6
     @PostMapping("/updateStatus")
-    public void updateStatus3To6(@RequestBody TranslateRequest request) {
-        translatesService.updateStatus3To6(request.getShopName());
+    public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
+        if (translatesService.updateStatus3To6(request.getShopName())){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
+        }
     }
 
     //用户是否选择定时任务的方法
     @PostMapping("/updateAutoTranslateByData")
     public BaseResponse<Object> updateStatusByShopName(@RequestBody AutoTranslateRequest request) {
-
-        //判断用户的语言是否在数据库中，在不做操作，不在，进行同步
+        // 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
         TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", request.getShopName()).eq("source", request.getSource()).eq("target", request.getTarget()));
+
+        // 获取用户token
+        UsersDO usersDO = iUsersService.getUserByName(request.getShopName());
         if (one == null) {
             //走同步逻辑
-            translateService.syncShopifyAndDatabase(new TranslateRequest(0, request.getShopName(), null, request.getSource(), request.getTarget(), null));
+            translateService.syncShopifyAndDatabase(new TranslateRequest(0, request.getShopName(), usersDO.getAccessToken(), request.getSource(), request.getTarget(), null));
         }
         return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(), request.getSource(), request.getTarget());
     }
@@ -234,7 +241,6 @@ public class TranslateController {
     public BaseResponse<Object> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
         return translateService.singleTextTranslate(singleTranslateVO);
     }
-
 
     /**
      * 停止翻译按钮

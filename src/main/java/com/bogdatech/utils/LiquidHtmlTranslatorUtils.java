@@ -2,31 +2,15 @@ package com.bogdatech.utils;
 
 
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.logic.RedisProcessService;
-import com.bogdatech.model.controller.request.TranslateRequest;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
-import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
-import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
-import static com.bogdatech.utils.JsoupUtils.isHtml;
-import static com.bogdatech.utils.PlaceholderUtils.*;
-import static com.bogdatech.utils.StringUtils.parseJson;
 
-@Component
 public class LiquidHtmlTranslatorUtils {
 
     // 不翻译的URL模式
@@ -39,15 +23,7 @@ public class LiquidHtmlTranslatorUtils {
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
     // 从配置文件读取不翻译的标签，默认为 "style,img,script"
     public final static Set<String> NO_TRANSLATE_TAGS = Set.of("script", "style", "meta", "svg", "canvas", "link");
-    private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\p{So}\\p{Cn}]|(?:[\uD83C-\uDBFF\uDC00\uDFFF])+");
     private static final String STYLE_TEXT = "data-id";
-
-    @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
-    @Autowired
-    private JsoupUtils jsoupUtils;
-    @Autowired
-    private RedisProcessService redisProcessService;
 
     /**
      * 清理文本格式：去除多余的换行符和空格
@@ -225,70 +201,6 @@ public class LiquidHtmlTranslatorUtils {
     }
 
     /**
-     * html的拆分翻译，放弃递归，改为json翻译
-     */
-    public String newJsonTranslateHtml(String html, TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag, String translationModel) {
-        if (!isHtml(html)) {
-            return null;
-        }
-
-        html = isHtmlEntity(html); //判断是否含有HTML实体,然后解码
-        //1, 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
-        appInsights.trackTrace("定义translateRequest 用户： " + request.getShopName());
-        boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
-        appInsights.trackTrace("解析html 用户： " + request.getShopName());
-        Document doc = parseHtml(html, request.getTarget(), hasHtmlTag);
-
-        // 2. 收集所有 TextNode
-        List<TextNode> nodes = new ArrayList<>();
-        for (Element element : doc.getAllElements()) {
-            nodes.addAll(element.textNodes());
-        }
-        appInsights.trackTrace("收集完所有的TextNode 用户： " + request.getShopName());
-
-        // 3. 提取要翻译文本
-        List<String> originalTexts = new ArrayList<>();
-        for (TextNode node : nodes) {
-            String text = node.text().trim();
-            if (!text.isEmpty() && !originalTexts.contains(text)) {
-                originalTexts.add(text);
-            }
-        }
-        appInsights.trackTrace("提取完所有的翻译文本 用户： " + request.getShopName());
-
-        // 4. 每50条一次翻译
-        Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId, limitChars, isSingleFlag, translationModel);
-        appInsights.trackTrace("翻译完所有文本 用户： " + request.getShopName());
-
-        // 5. 填回原处
-        appInsights.trackTrace("填回原处前 用户： " + request.getShopName());
-        fillBackTranslatedData(nodes, translatedTexts, request.getTarget(), request.getShopName());
-        appInsights.trackTrace("填回原处后 用户： " + request.getShopName());
-
-        // 输出翻译后的 HTML
-        if (hasHtmlTag) {
-            appInsights.trackTrace("输出翻译后的 HTML 1 用户： " + request.getShopName());
-            String results = doc.outerHtml(); // 返回完整的HTML结构
-            results = isHtmlEntity(results);
-            return results;
-        } else {
-            appInsights.trackTrace("输出翻译后的 HTML 2 用户： " + request.getShopName());
-            Element body = doc.body();
-            // 只返回子节点内容，不包含 <body>
-            StringBuilder results = new StringBuilder();
-            for (Node child : body.childNodes()) {
-                if (child != null) {
-                    String childHtml = child.outerHtml(); // 或 child.toString()
-                    results.append(childHtml);
-                }
-            }
-            String output2 = results.toString();
-            output2 = isHtmlEntity(output2);
-            return output2;
-        }
-    }
-
-    /**
      * 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
      */
     public static Document parseHtml(String html, String target, boolean hasHtmlTag) {
@@ -305,148 +217,5 @@ public class LiquidHtmlTranslatorUtils {
         }
         doc.outputSettings().prettyPrint(false);
         return doc;
-    }
-
-    /**
-     * 每50条文本翻译一次
-     */
-    public Map<String, String> translateAllList(List<String> originalTexts, TranslateRequest request, CharacterCountUtils counter, String languagePack, Integer limitChars, boolean isSingleFlag, String translationModel) {
-        String target = request.getTarget();
-        String shopName = request.getShopName();
-        String source = request.getSource();
-        String prompt = getListPrompt(getLanguageName(target), languagePack, null, null);
-        appInsights.trackTrace("translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 待翻译文本 : " + originalTexts.size() + "条");
-        Map<String, String> allTranslatedMap = new HashMap<>();
-        //先缓存翻译一次
-        cacheAndDbTranslateData(originalTexts, target, source, allTranslatedMap, shopName);
-        appInsights.trackTrace("缓存翻译完成 用户： " + request.getShopName());
-        for (int i = 0; i < originalTexts.size(); i += BATCH_SIZE) {
-            int endIndex = Math.min(i + BATCH_SIZE, originalTexts.size());
-            List<String> batch = originalTexts.subList(i, endIndex);
-            appInsights.trackTrace("取对应数据 用户： " + request.getShopName() + endIndex);
-            if (batch.isEmpty()) {
-                continue;
-            }
-
-            // 二次切分：每批次最多 1000 token
-            List<String> currentGroup = new ArrayList<>();
-            int currentTokens = 0;
-            appInsights.trackTrace("二次切分前 用户： " + request.getShopName() + " currentGroup : " + currentGroup + " currentTokens : " + currentTokens);
-            for (String text : batch) {
-                int tokens = calculateBaiLianToken(text);
-                // 如果加上这条会超过 1000 token，就先处理当前组
-                if (currentTokens + tokens > 1000 && !currentGroup.isEmpty()) {
-                    processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap, isSingleFlag, translationModel);
-                    currentGroup = new ArrayList<>();
-                    currentTokens = 0;
-                }
-
-                currentGroup.add(text);
-                currentTokens += tokens;
-                appInsights.trackTrace("1000token以内的数据： " + currentTokens + " currentGroup : " + currentGroup);
-            }
-
-            // 处理最后剩下的一组
-            if (!currentGroup.isEmpty()) {
-                processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap, isSingleFlag, translationModel);
-            }
-        }
-
-        return allTranslatedMap;
-    }
-
-    /**
-     * 对拆分完的一批次进行翻译
-     */
-    private void processBatch(List<String> texts, String requestShopName, String shopName, String prompt, String target, String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap, boolean isSingleFlag, String translationModel) {
-        try {
-            String sourceJson = objectToJson(texts);
-            appInsights.trackTrace("开始模型翻译 用户： " + requestShopName);
-            String translated = jsoupUtils.translateByCiwiOrGptModel(target, sourceJson, shopName, source, counter, limitChars, prompt, isSingleFlag, translationModel);
-            if (translated == null) {
-                translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName, limitChars, isSingleFlag);
-            }
-            appInsights.trackTrace("翻译结束 解析数据 用户 ：" + requestShopName);
-            String parseJson = parseJson(translated, shopName);
-            Map<String, String> resultMap = OBJECT_MAPPER.readValue(parseJson, new TypeReference<>() {
-            });
-            appInsights.trackTrace("解析后的数据： "  + requestShopName + " resultMap" + resultMap.toString());
-            allTranslatedMap.putAll(resultMap);
-            appInsights.trackTrace("存完数据 用户： " + shopName + " sourceJson: " + sourceJson);
-        } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("translateAllList 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 未翻译文本 : " + texts);
-        }
-    }
-
-    // 模拟批量翻译
-    private static Map<String, String> fakeTranslateAll(List<String> texts) {
-        Map<String, String> resultMap = new HashMap<>();
-        for (String t : texts) {
-            resultMap.put(t, "Z " + t + " Z");
-        }
-        return resultMap;
-    }
-
-    /**
-     * 用缓存和db，翻译List<String>类型的数据
-     */
-    public void cacheAndDbTranslateData(List<String> originalTexts, String target, String source, Map<String, String> allTranslatedMap, String shopName) {
-        Iterator<String> it = originalTexts.iterator();
-        while (it.hasNext()) {
-            String sourceText = it.next();
-            String cacheData = redisProcessService.getCacheData(target, sourceText);
-            appInsights.trackTrace("redis翻译 用户： " + shopName + " cacheData " + cacheData + " sourceText " + sourceText);
-            if (cacheData != null) {
-                allTranslatedMap.put(sourceText, cacheData);
-                it.remove();
-                continue;
-            }
-        }
-    }
-
-    /**
-     * 将翻译后的数据填回原处
-     * */
-    public void fillBackTranslatedData(List<TextNode> nodes, Map<String, String> translatedTexts, String target, String shopName) {
-        for (TextNode node : nodes) {
-            String text = node.getWholeText();
-            if (!text.isEmpty()) {
-                //记录空格，还需要填回
-                // Step 1: 记录开头和结尾的空格数量
-                // 匹配前导空格
-                appInsights.trackTrace("匹配前导空格 用户： " + shopName);
-                Matcher leadingMatcher = Pattern.compile("^(\\p{Zs}+)").matcher(text);
-                String leading = leadingMatcher.find() ? leadingMatcher.group(1) : "";
-                // 匹配尾随空格
-                appInsights.trackTrace("匹配尾随空格 用户： " + shopName);
-                Matcher trailingMatcher = Pattern.compile("(\\p{Zs}+)$").matcher(text);
-                String trailing = trailingMatcher.find() ? trailingMatcher.group(1) : "";
-                // 去掉前后空格，得到核心文本
-                appInsights.trackTrace("去掉前后空格 用户： " + shopName);
-                int begin = leading.length();
-                int end = text.length() - trailing.length();
-                String core = (begin >= end) ? "" : text.substring(begin, end);
-                // 拼回原来的空格
-                appInsights.trackTrace("拼回原来的空格 用户： " + shopName);
-                String targetText = translatedTexts.get(core);
-                if (core.isEmpty()) {
-                    // 没有核心文本，只保留原始空格（避免被清空，也避免重复加）
-                    targetText = text;
-                    appInsights.trackTrace("fillBackTranslatedData targetText 没有被翻译，原文是: " + targetText);
-                } else {
-                    //添加到缓存里面
-                    appInsights.trackTrace("添加到缓存前 用户： " + shopName);
-                    redisProcessService.setCacheData(target, targetText, core);
-                    if (targetText != null && !targetText.trim().isEmpty()) {
-                        targetText = leading + targetText + trailing;
-                    } else {
-                        targetText = leading + core + trailing;
-                    }
-                }
-                appInsights.trackTrace("添加到缓存后 用户： " + shopName);
-                node.text(targetText);
-            }
-        }
     }
 }

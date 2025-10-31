@@ -9,10 +9,9 @@ import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
-import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
-import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
+import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
@@ -21,13 +20,12 @@ import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.model.service.ProcessDbTaskService;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
-import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +41,6 @@ import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
-import static com.bogdatech.utils.AESUtils.encryptMD5;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.StringUtils.*;
@@ -52,8 +49,6 @@ import static com.bogdatech.utils.StringUtils.*;
 public class TestController {
     @Autowired
     private TranslatesServiceImpl translatesServiceImpl;
-    @Autowired
-    private ChatGptIntegration chatGptIntegration;
     @Autowired
     private TaskService taskService;
     @Autowired
@@ -88,6 +83,8 @@ public class TestController {
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private AutoTranslateTask autoTranslate;
+    @Autowired
+    private ITranslatesService translatesService;
 
     @GetMapping("/ping")
     public String ping() {
@@ -98,7 +95,8 @@ public class TestController {
 
     @PostMapping("/gpt")
     public String chat(@RequestBody GptVO gptVO) {
-        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), "ciwishop.myshopify.com", null, new CharacterCountUtils(), 2000000, false);
+//        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), "ciwishop.myshopify.com", null, new CharacterCountUtils(), 2000000, false);
+        return "";
     }
 
     //通过测试环境调shopify的API
@@ -215,9 +213,9 @@ public class TestController {
     @PutMapping("/testDBTranslate2")
     public void testDBTranslate2(@RequestParam String taskId) {
         //根据id获取数据，转化为规定数据类型
-        RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
-        processDbTaskService.processTask(dataToProcess, new TranslateTasksDO(), false);
-        translateTasksService.updateByTaskId(taskId, 1);
+//        RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
+//        processDbTaskService.processTask(dataToProcess, new TranslateTasksDO(), false);
+//        translateTasksService.updateByTaskId(taskId, 1);
     }
 
     /**
@@ -314,15 +312,15 @@ public class TestController {
 
     /**
      * 加密后输出数据
-     * */
+     */
     @GetMapping("/testEncryptMD5")
     public String testEncryptMD5(@RequestParam String source) {
-        return encryptMD5(source);
+        return AESUtils.encryptMD5(source);
     }
 
     /**
      * 测试时间超时的问题
-     * */
+     */
     @GetMapping("/testTimeOut")
     public void testTimeOut() throws Exception {
         String s = TimeOutUtils.callWithTimeoutAndRetry(() -> {
@@ -423,6 +421,9 @@ public class TestController {
         List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
         responseMap.put("总的子任务数量", tasks.size());
 
+        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        responseMap.put("自动翻译的任务数量", translatesDOList.size());
+
         // 统计shopName数量
         Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
         responseMap.put("Step2-创建了翻译子任务的用户", shops);
@@ -455,7 +456,7 @@ public class TestController {
 
     /**
      * 获取redis中的进度条数据
-     * */
+     */
     @GetMapping("/getRedisTranslationData")
     public Map<Object, Object> getRedisTranslationData(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
         return translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
@@ -463,7 +464,7 @@ public class TestController {
 
     /**
      * 递增
-     * */
+     */
     @GetMapping("/increase")
     public Long increase(@RequestParam String key, @RequestParam long value) {
         return translationCounterRedisService.increaseLanguage(key, value);
@@ -471,9 +472,17 @@ public class TestController {
 
     /**
      * 手动启动自动翻译
-     * */
+     */
     @PutMapping("/startAuto")
     public void startAuto() {
         autoTranslate.autoTranslate();
+    }
+
+    /**
+     * 测试删除shopify数据方法
+     */
+    @GetMapping("/testDeleteShopifyData")
+    public String testDeleteShopifyData(@RequestParam String resourceId, @RequestParam String locals, @RequestParam String translationKeys, @RequestParam String accessToken) {
+        return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
     }
 }

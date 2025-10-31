@@ -124,7 +124,7 @@ public class DBTask {
     }
 
     private void processTasksByTarget(String shop, String target, Set<TranslateTasksDO> shopTasks) {
-        appInsights.trackTrace("DBTaskLog processTasksByTarget START: " + target + " of shop: " + shop);
+        appInsights.trackTrace("DBTaskLog processTasksByTarget START: " + target + " of shop: " + shop + " with " + shopTasks.size() + " tasks");
         // 按照创建时间排序，先创建的先翻译
         List<TranslateTasksDO> taskList = shopTasks.stream()
                 .sorted(Comparator.comparing(TranslateTasksDO::getCreatedAt))

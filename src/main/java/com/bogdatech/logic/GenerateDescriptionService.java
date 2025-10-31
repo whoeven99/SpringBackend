@@ -13,19 +13,14 @@ import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.model.controller.request.CloudServiceRequest;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.Random;
-
+import static com.bogdatech.constants.TranslateConstants.APIVERSION;
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.APGUserGeneratedTaskService.*;
-import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.requestBody.ShopifyRequestBody.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
@@ -38,19 +33,18 @@ import static com.bogdatech.utils.TypeConversionUtils.userTemplateToTemplateDTO;
 @Service
 public class GenerateDescriptionService {
 
-    private final IAPGUserCounterService iapgUserCounterService;
-    private final IAPGUserTemplateService iapgUserTemplateService;
-    private final IAPGOfficialTemplateService iapgOfficialTemplateService;
-    private final IAPGUserProductService iapgUserProductService;
-    private final ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
-    public GenerateDescriptionService(IAPGUserCounterService iapgUserCounterService, IAPGUserTemplateService iapgUserTemplateService, IAPGOfficialTemplateService iapgOfficialTemplateService, IAPGUserProductService iapgUserProductService, ALiYunTranslateIntegration aLiYunTranslateIntegration) {
-        this.iapgUserCounterService = iapgUserCounterService;
-        this.iapgUserTemplateService = iapgUserTemplateService;
-        this.iapgOfficialTemplateService = iapgOfficialTemplateService;
-        this.iapgUserProductService = iapgUserProductService;
-        this.aLiYunTranslateIntegration = aLiYunTranslateIntegration;
-    }
+    private IAPGUserCounterService iapgUserCounterService;
+    @Autowired
+    private IAPGUserTemplateService iapgUserTemplateService;
+    @Autowired
+    private IAPGOfficialTemplateService iapgOfficialTemplateService;
+    @Autowired
+    private IAPGUserProductService iapgUserProductService;
+    @Autowired
+    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private ShopifyService shopifyService;
 
     /**
      * 生成产品描述
@@ -98,7 +92,7 @@ public class GenerateDescriptionService {
      * */
     public ProductDTO getProductsQueryByProductId(String productId, String shopName, String accessToken) {
         String productDataQuery = getProductDataQuery(productId);
-        String productData = getShopifyDataByEnv(shopName, accessToken, productDataQuery);
+        String productData = shopifyService.getShopifyData(shopName, accessToken, APIVERSION, productDataQuery);
         ProductDTO productDTO = new ProductDTO();
         // 对productData进行解析，输出productDTO类型数据
         try {
@@ -115,27 +109,6 @@ public class GenerateDescriptionService {
             appInsights.trackException(e);
             return null;
         }
-    }
-
-    /**
-     *  包装下调用获取shopify数据的接口
-     **/
-    public String getShopifyDataByEnv(String shopName, String accessToken, String query) {
-        String env = System.getenv("ApplicationEnv");
-        String infoByShopify;
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(shopName);
-        request.setAccessToken(accessToken);
-        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
-        cloudServiceRequest.setShopName(shopName);
-        cloudServiceRequest.setBody(query);
-        cloudServiceRequest.setAccessToken(accessToken);
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(request, query));
-        } else {
-            infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
-        }
-        return infoByShopify;
     }
 
     /**

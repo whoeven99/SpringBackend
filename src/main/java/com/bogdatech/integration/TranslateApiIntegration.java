@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
+import com.bogdatech.utils.AppInsightsUtils;
 import com.volcengine.model.request.translate.TranslateTextRequest;
 import com.volcengine.model.response.translate.TranslateTextResponse;
 import com.volcengine.service.translate.ITranslateService;
@@ -18,15 +19,10 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.DigestUtils;
-
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Random;
-
-import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -101,7 +97,7 @@ public class TranslateApiIntegration {
             JSONObject translation = translationsArray.getJSONObject(0);
             result = translation.getString("translatedText");
             int totalToken = encodedQuery.length();
-            printTranslateCost(totalToken, totalToken, totalToken);
+            AppInsightsUtils.printTranslateCost(totalToken, totalToken, totalToken);
         } catch (Exception e) {
             appInsights.trackTrace("信息：" + e.getMessage());
         }
