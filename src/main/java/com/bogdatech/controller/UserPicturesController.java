@@ -27,7 +27,7 @@ public class UserPicturesController {
         this.iUserPicturesService = iUserPicturesService;
     }
 
-    private final List<String> allowedMimeTypes = List.of(
+    public static List<String> allowedMimeTypes = List.of(
             "image/jpeg",
             "image/png",
             "image/webp",
