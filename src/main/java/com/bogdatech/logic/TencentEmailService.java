@@ -35,7 +35,7 @@ import static com.bogdatech.constants.MailChimpConstants.TRANSLATION_FAILED_SUBJ
 import static com.bogdatech.constants.MailChimpConstants.APG_INIT_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_GENERATE_SUCCESS;
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
-import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
+import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.parseShopName;
@@ -401,7 +401,7 @@ public class TencentEmailService {
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getShopName, shopName)
                         .eq(InitialTranslateTasksDO::getStatus, 1)
-                        .eq(InitialTranslateTasksDO::getTaskType, AUTO_EMAIL)
+                        .eq(InitialTranslateTasksDO::getTaskType, AUTO)
                         .in(InitialTranslateTasksDO::getTarget, targetList)
                         .set(InitialTranslateTasksDO::getStatus, 4)
                         .set(InitialTranslateTasksDO::isSendEmail, true)

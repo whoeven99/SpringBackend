@@ -22,7 +22,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.RabbitMqTranslateService.AUTO_EMAIL;
+import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
@@ -368,7 +368,7 @@ public class TaskService {
             String resourceToJson = JsonUtils.objectToJson(AUTO_TRANSLATE_MAP);
             InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
                     translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
-                    , "1", resourceToJson, null, shopName, false, AUTO_EMAIL,
+                    , "1", resourceToJson, null, shopName, false, AUTO,
                     Timestamp.valueOf(LocalDateTime.now()), false);
             try {
                 appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);
