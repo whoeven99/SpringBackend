@@ -132,11 +132,10 @@ public class RabbitMqTranslateService {
         String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, graphQuery);
         ShopifyGraphResponse shopifyRes = JsonUtils.jsonToObject(shopifyData, ShopifyGraphResponse.class);
 
-        // TODO 代码里很多地方都在轮询获取shopify数据，找一下，我来合并到一起
         while (shopifyRes != null) {
             // 存db
             try {
-                // TODO @庄泽 check一下vo里面哪些字段是用不到的，可以删掉
+
                 RabbitMqTranslateVO vo = new RabbitMqTranslateVO(graphQuery, shopName, accessToken,
                         source, target, languagePackId, handleFlag, glossaryMap, modelType, limitChars, usedChars,
                         LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);

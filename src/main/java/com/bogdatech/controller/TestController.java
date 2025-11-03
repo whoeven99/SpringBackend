@@ -16,6 +16,7 @@ import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
@@ -506,6 +507,24 @@ public class TestController {
     @PutMapping("/startAuto")
     public void startAuto() {
         autoTranslate.autoTranslate();
+    }
+
+    // 测试glossary缓存
+    @GetMapping("/getGlossary")
+    public Map<String, String> getGlossary() {
+        return TranslateDataService.glossaryCache;
+    }
+
+    // 存glossary 缓存
+    @GetMapping("/setGlossary")
+    public void setGlossary(@RequestParam String shopName, @RequestParam String sourceText, @RequestParam String target, @RequestParam String targetText) {
+        TranslateDataService.glossaryCache.put(TranslateDataService.generateGlossaryKey(shopName, target, sourceText), targetText);
+    }
+
+    // 获取glossary 缓存
+    @GetMapping("/getGlossaryCache")
+    public String getGlossaryCache(@RequestParam String shopName, @RequestParam String sourceText, @RequestParam String target) {
+        return TranslateDataService.glossaryCache.get(TranslateDataService.generateGlossaryKey(shopName, target, sourceText));
     }
 
     /**
