@@ -28,24 +28,4 @@ public class RabbitMqTranslateVO implements Serializable {
     private String translationModel; //用户翻译模型
     private Boolean isCover; //用户是否覆盖翻译
     private String customKey; //用户自定义key
-
-    public RabbitMqTranslateVO copy(RabbitMqTranslateVO rabbitMqTranslateVO) {
-        this.shopifyData = rabbitMqTranslateVO.getShopifyData();
-        this.shopName = rabbitMqTranslateVO.getShopName();
-        this.accessToken = rabbitMqTranslateVO.getAccessToken();
-        this.source = rabbitMqTranslateVO.getSource();
-        this.target = rabbitMqTranslateVO.getTarget();
-        this.languagePack = rabbitMqTranslateVO.getLanguagePack();
-        this.handleFlag = rabbitMqTranslateVO.getHandleFlag();
-        this.glossaryMap = rabbitMqTranslateVO.getGlossaryMap();
-        this.modeType = rabbitMqTranslateVO.getModeType();
-        this.limitChars = rabbitMqTranslateVO.getLimitChars();
-        this.startChars = rabbitMqTranslateVO.getStartChars();
-        this.startTime = rabbitMqTranslateVO.getStartTime();
-        this.translateList = rabbitMqTranslateVO.getTranslateList();
-        this.isCover = rabbitMqTranslateVO.getIsCover();
-        this.translationModel = rabbitMqTranslateVO.getTranslationModel();
-        this.customKey = rabbitMqTranslateVO.getCustomKey();
-        return this;
-    }
 }

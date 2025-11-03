@@ -7,16 +7,11 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
 import com.bogdatech.exception.ClientException;
+import com.bogdatech.integration.model.ShopifyGraphResponse;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.model.controller.request.*;
-import com.bogdatech.requestBody.ShopifyRequestBody;
-import com.bogdatech.utils.AppInsightsUtils;
-import com.bogdatech.utils.CaseSensitiveUtils;
-import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsonUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.bogdatech.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
@@ -83,19 +78,15 @@ public class RabbitMqTranslateService {
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, counter, limitChars, target);
         appInsights.trackTrace("获取目前所使用的AI语言包 " + shopName);
 
-        // 创建翻译VO对象
-        RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(null, shopName, accessToken,
-                source, target, languagePackId, handleFlag, glossaryMap, null, limitChars, usedChars,
-                LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
         CharacterCountUtils allTasks = new CharacterCountUtils();
-
         // 处理每个翻译资源
         for (TranslateResourceDTO translateResource : ALL_RESOURCES) {
-            if (!translateResourceDTOS.contains(translateResource.getResourceType())) {
+            String resourceType = translateResource.getResourceType();
+            if (!translateResourceDTOS.contains(resourceType)) {
                 continue;
             }
 
-            if (shouldSkipResource(translateResource, shopName)) {
+            if (shouldSkipResource(resourceType, shopName)) {
                 continue;
             }
 
@@ -103,134 +94,84 @@ public class RabbitMqTranslateService {
                 return;
             }
 
-            translateResource.setTarget(target);
-            String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST,
-                    new ShopifyRequestBody().getFirstQuery(translateResource));
+            appInsights.trackTrace("初始化task数据 " + shopName + " model: " + resourceType);
 
-            rabbitMqTranslateVO.setShopifyData(shopifyData);
-
-            String query = new ShopifyRequestBody().getFirstQuery(translateResource);
-
-            appInsights.trackTrace("初始化task数据 " + shopName + " model: " + translateResource.getResourceType());
-            rabbitMqTranslateVO.setModeType(translateResource.getResourceType());
-            if (AUTO.equals(taskType)){
-                rabbitMqTranslateVO.setCustomKey(AUTO);
-            }
-            saveTaskToDatabase(rabbitMqTranslateVO, query, allTasks);
-
-            // 解析Shopify数据
-            parseShopifyData(rabbitMqTranslateVO, translateResource, allTasks, taskType);
+            // 扫描商店数据，创建子任务
+            parseShopifyData(
+                    shopName, accessToken,
+                    source, target, languagePackId, handleFlag, glossaryMap,
+                    translateResource.getResourceType(), limitChars, usedChars,
+                    translateResourceDTOS, translationModel, isCover, AUTO.equals(taskType) ? AUTO : customKey,
+                    resourceType, translateResource.getFirst(), allTasks);
         }
     }
 
     /**
      * 检查是否需要跳过该资源
      */
-    private boolean shouldSkipResource(TranslateResourceDTO translateResource, String shopName) {
-        if (translateResource.getResourceType().equals(PAYMENT_GATEWAY)) {
+    private boolean shouldSkipResource(String resourceType, String shopName) {
+        if (resourceType.equals(PAYMENT_GATEWAY)) {
             appInsights.trackTrace("网关不翻译 " + shopName);
             return true;
         }
-        if (EXCLUDED_SHOPS.contains(shopName) && PRODUCT_MODEL.contains(translateResource.getResourceType())) {
+        if (EXCLUDED_SHOPS.contains(shopName) && PRODUCT_MODEL.contains(resourceType)) {
             appInsights.trackTrace("一些shop模块不翻译 " + shopName);
             return true;
         }
         return false;
     }
 
-    /**
-     * 保存任务到数据库
-     */
-    private void saveTaskToDatabase(RabbitMqTranslateVO rabbitMqTranslateVO, String query, CharacterCountUtils allTasks) {
-        try {
-            RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
-            dbTranslateVO.setShopifyData(query);
-            String json = JsonUtils.objectToJson(dbTranslateVO);
-            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(),
-                    null, null));
-            appInsights.trackTrace("保存用户翻译数据到db " + rabbitMqTranslateVO.getShopName());
-            allTasks.addChars(1);
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation 保存翻译任务失败 errors : " + e);
-            appInsights.trackException(e);
-        }
-    }
+    public void parseShopifyData(
+            String shopName, String accessToken,
+            String source, String target, String languagePackId, boolean handleFlag, Map<String, Object> glossaryMap,
+            String modelType, Integer limitChars, int usedChars,
+            List<String> translateResourceDTOS, String translationModel, boolean isCover, String customKey,
+            String resourceType, String first, CharacterCountUtils allTasks) {
+        // 第一个节点
+        String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first, target);
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, graphQuery);
+        ShopifyGraphResponse shopifyRes = JsonUtils.jsonToObject(shopifyData, ShopifyGraphResponse.class);
 
-    public void parseShopifyData(RabbitMqTranslateVO rabbitMqTranslateVO, TranslateResourceDTO translateResource,
-                                 CharacterCountUtils allTasks, String taskType) {
-        JsonNode rootNode;
-        try {
-            rootNode = OBJECT_MAPPER.readTree(rabbitMqTranslateVO.getShopifyData());
-            appInsights.trackTrace("解析数据 " + rabbitMqTranslateVO.getShopName());
-        } catch (JsonProcessingException e) {
-            appInsights.trackTrace("clickTranslation rootNode errors： " + e.getMessage());
-            return;
-        }
+        // TODO 代码里很多地方都在轮询获取shopify数据，找一下，我来合并到一起
+        while (shopifyRes != null) {
+            // 存db
+            try {
+                // TODO @庄泽 check一下vo里面哪些字段是用不到的，可以删掉
+                RabbitMqTranslateVO vo = new RabbitMqTranslateVO(graphQuery, shopName, accessToken,
+                        source, target, languagePackId, handleFlag, glossaryMap, modelType, limitChars, usedChars,
+                        LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
+                translateTasksService.save(new TranslateTasksDO(null, 0, JsonUtils.objectToJson(vo), shopName, null, null));
+                allTasks.addChars(1);
+            } catch (Exception e) {
+                appInsights.trackTrace("clickTranslation 保存翻译任务失败 errors : " + e);
+                appInsights.trackException(e);
+            }
 
-        // 获取translatableResources节点
-        JsonNode translatableResourcesNode = rootNode.path("translatableResources");
+            // 收集数据总数 -> 给进度条使用
+            if (shopifyRes.getTranslatableResources() != null
+                    && shopifyRes.getTranslatableResources().getNodes() != null) {
+                shopifyRes.getTranslatableResources().getNodes().forEach(node -> {
+                        if (node.getTranslatableContent() != null) {
+                            redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL,
+                                    (long) node.getTranslatableContent().size());
+                        }
+                    }
+                );
+            }
 
-        // 获取nodes节点，再获取translatableContent节点，计数里面的value个数
-        JsonNode nodes = translatableResourcesNode.path("nodes");
-        if (nodes != null) {
-            appInsights.trackTrace("统计所有进度条数据  " + rabbitMqTranslateVO.getShopName());
-            for (JsonNode node : nodes) {
-                JsonNode translatableContent = node.path("translatableContent");
-                redisProcessService.addProcessData(generateProcessKey(
-                        rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getTarget()), PROGRESS_TOTAL,
-                        (long) translatableContent.size());
+            // 保存数据 并轮询下一页
+            if (shopifyRes.getTranslatableResources() != null
+                    && shopifyRes.getTranslatableResources().getPageInfo() != null
+                    && shopifyRes.getTranslatableResources().getPageInfo().isHasNextPage()) {
+                String endCursor = shopifyRes.getTranslatableResources().getPageInfo().getEndCursor();
+                graphQuery = ShopifyRequestUtils.getQuery(resourceType, first, target, endCursor);
+
+                String nextShopifyData = shopifyService.getShopifyData(shopName, accessToken, APIVERSION, graphQuery);
+                shopifyRes = JsonUtils.jsonToObject(nextShopifyData, ShopifyGraphResponse.class);
+            } else {
+                break;
             }
         }
-
-        appInsights.trackTrace("统计完所有进度条数据  " + rabbitMqTranslateVO.getShopName());
-        // 获取pageInfo节点
-        JsonNode pageInfoNode = translatableResourcesNode.path("pageInfo");
-        if (translatableResourcesNode.hasNonNull("pageInfo")) {
-            if (pageInfoNode.hasNonNull("hasNextPage") && pageInfoNode.get("hasNextPage").asBoolean()) {
-                JsonNode endCursor = pageInfoNode.path("endCursor");
-                translateResource.setAfter(endCursor.asText(null));
-                translateNextPageData(translateResource, rabbitMqTranslateVO, allTasks, taskType);
-            }
-        }
-    }
-
-    //递归处理下一页数据
-    private void translateNextPageData(TranslateResourceDTO translateContext, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks, String taskType) {
-        JsonNode nextPageData;
-        try {
-            nextPageData = fetchNextPage(translateContext, new ShopifyRequest(rabbitMqTranslateVO.getShopName(), rabbitMqTranslateVO.getAccessToken(), APIVERSION, rabbitMqTranslateVO.getTarget()), rabbitMqTranslateVO, allTasks, taskType);
-            if (nextPageData == null) {
-                return;
-            }
-        } catch (Exception e) {
-            return;
-        }
-        rabbitMqTranslateVO.setShopifyData(nextPageData.toString());
-        // 重新开始翻译流程
-        parseShopifyData(rabbitMqTranslateVO, translateContext, allTasks, taskType);
-    }
-
-    public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request, RabbitMqTranslateVO rabbitMqTranslateVO, CharacterCountUtils allTasks, String taskType) {
-        String query = new ShopifyRequestBody().getAfterQuery(translateResource);
-
-        // TODO 这里引用 saveTaskToDatabase 那个方法，不要单独写了
-        //将请求数据存数据库中
-        try {
-            RabbitMqTranslateVO dbTranslateVO = new RabbitMqTranslateVO().copy(rabbitMqTranslateVO);
-            dbTranslateVO.setShopifyData(query);
-            String json = OBJECT_MAPPER.writeValueAsString(dbTranslateVO);
-            if (AUTO.equals(taskType)){
-                rabbitMqTranslateVO.setCustomKey(AUTO);
-            }
-            translateTasksService.save(new TranslateTasksDO(null, 0, json, rabbitMqTranslateVO.getShopName(), null, null));
-            appInsights.trackTrace("保存用户shopify到db  " + request.getShopName());
-            allTasks.addChars(1);
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation fetchNextPage 保存翻译任务失败 errors " + e);
-        }
-
-        String infoByShopify = shopifyService.getShopifyData(request.getShopName(), request.getAccessToken(), request.getApiVersion(), query);
-        return JsonUtils.readTree(infoByShopify);
     }
 
     /**
