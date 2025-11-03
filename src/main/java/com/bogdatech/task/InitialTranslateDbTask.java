@@ -65,8 +65,8 @@ public class InitialTranslateDbTask {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
 
-    private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(3); // 创建initial初始化线程池
-    private final ExecutorService manualExecutorService = Executors.newFixedThreadPool(1);
+    private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(5); // 创建initial初始化线程池
+    private final ExecutorService manualExecutorService = Executors.newFixedThreadPool(5);
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -96,13 +96,14 @@ public class InitialTranslateDbTask {
     }
 
     // 手动翻译初始化
-    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void scanAndSubmitClickTranslateDbTask() {
         List<InitialTranslateTasksDO> clickTranslateTasks = initialTranslateTasksMapper.selectList(
                 new LambdaQueryWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
                         .eq(InitialTranslateTasksDO::getTaskType, MANUAL)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+                        .orderByAsc(InitialTranslateTasksDO::getShopName)
+                        .last("LIMIT 10"));
 
         appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
@@ -118,7 +119,7 @@ public class InitialTranslateDbTask {
     }
 
     // 自动翻译初始化
-    @Scheduled(fixedRate = 50 * 1000)
+    @Scheduled(fixedDelay = 50 * 1000)
     public void scanAndSubmitAutoInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task
@@ -126,7 +127,8 @@ public class InitialTranslateDbTask {
                 new LambdaQueryWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
                         .eq(InitialTranslateTasksDO::getTaskType, AUTO)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+                        .orderByAsc(InitialTranslateTasksDO::getShopName)
+                        .last("LIMIT 10"));
 
         appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
@@ -234,7 +236,7 @@ public class InitialTranslateDbTask {
             }
 
             // 5. 状态为2：翻译中 判断是否完成
-            if (translateStatus == 2 && task.getStatus() == 2) {
+            if (translateStatus == 2 && task.getStatus() == 2 && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
                 List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
 
                 if (translateTasks.isEmpty()) {
@@ -258,7 +260,7 @@ public class InitialTranslateDbTask {
             }
 
             // 6. 状态为1：全部完成，可以发成功邮件
-            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == 3) {
+            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == 3 && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
                 // 判断user_Translation_Data表 里面改用户语言是否完成写入
                 List<UserTranslationDataDO> userTranslationDataDOS = iUserTranslationDataService.selectWritingDataByShopNameAndTarget(task.getShopName(), task.getTarget());
                 if (!userTranslationDataDOS.isEmpty()) {

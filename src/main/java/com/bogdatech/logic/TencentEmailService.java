@@ -122,13 +122,12 @@ public class TencentEmailService {
             if (remainingCredits < 0) {
                 remainingCredits = 0;
             }
-            //将consumedTime转化为分钟
-            Integer consumedTime = (int) Math.ceil(translationUsageDO.getConsumedTime() / 60.0);
+
             divBuilder.append("<div class=\"language-block\">");
             divBuilder.append("<h4>").append(translationUsageDO.getLanguageName()).append("</h4>");
             divBuilder.append("<ul>");
             divBuilder.append("<li><span>Credits Used:</span> ").append(translationUsageDO.getCreditCount()).append(" credits used").append("</li>");
-            divBuilder.append("<li><span>Translation Time:</span> ").append(consumedTime).append(" minutes").append("</li>");
+            divBuilder.append("<li><span>Translation Time:</span> ").append(translationUsageDO.getConsumedTime()).append(" minutes").append("</li>");
             divBuilder.append("<li><span>Credits Remaining:</span> ").append(remainingCredits).append(" credits left").append("</li>");
             divBuilder.append("</ul>");
             divBuilder.append("</div>");
