@@ -4,6 +4,7 @@ import com.bogdatech.entity.DO.TranslateResourceDTO;
 
 public class ShopifyRequestBody {
 
+    // TODO move to ShopifyRequestUtils
     public String getFirstQuery(TranslateResourceDTO translateResourceDTO) {
         return "{\n" +
                 "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ") {\n" +
@@ -31,6 +32,7 @@ public class ShopifyRequestBody {
                 "}";
     }
 
+    // TODO move to ShopifyRequestUtils
     public String getAfterQuery(TranslateResourceDTO translateResourceDTO) {
         return "{\n" +
                 "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ", after: " + "\"" + translateResourceDTO.getAfter() + "\"" + ") {\n" +
