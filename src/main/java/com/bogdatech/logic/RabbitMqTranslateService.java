@@ -99,10 +99,10 @@ public class RabbitMqTranslateService {
             // 扫描商店数据，创建子任务
             parseShopifyData(
                     shopName, accessToken,
-                    source, target, languagePackId, handleFlag, glossaryMap, translateResource.getResourceType(), limitChars, usedChars,
+                    source, target, languagePackId, handleFlag, glossaryMap,
+                    translateResource.getResourceType(), limitChars, usedChars,
                     translateResourceDTOS, translationModel, isCover, AUTO.equals(taskType) ? AUTO : customKey,
-                    resourceType, translateResource.getFirst(),
-                    allTasks);
+                    resourceType, translateResource.getFirst(), allTasks);
         }
     }
 
@@ -121,55 +121,38 @@ public class RabbitMqTranslateService {
         return false;
     }
 
-    /**
-     * 保存任务到数据库
-     */
-    private void saveTaskToDatabase(
-            String shopName, String accessToken,
-            String source, String target, String languagePackId, boolean handleFlag, Map<String, Object> glossaryMap,
-            String modelType, Integer limitChars, int usedChars,
-            List<String> translateResourceDTOS, String translationModel, boolean isCover, String customKey,
-            String query, CharacterCountUtils allTasks) {
-        try {
-            RabbitMqTranslateVO rabbitMqTranslateVO = new RabbitMqTranslateVO(query, shopName, accessToken,
-                    source, target, languagePackId, handleFlag, glossaryMap, modelType, limitChars, usedChars,
-                    LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
-
-            translateTasksService.save(new TranslateTasksDO(null, 0, JsonUtils.objectToJson(rabbitMqTranslateVO), shopName,
-                    null, null));
-            appInsights.trackTrace("保存用户翻译数据到db " + shopName);
-            allTasks.addChars(1);
-        } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation 保存翻译任务失败 errors : " + e);
-            appInsights.trackException(e);
-        }
-    }
-
     public void parseShopifyData(
             String shopName, String accessToken,
             String source, String target, String languagePackId, boolean handleFlag, Map<String, Object> glossaryMap,
             String modelType, Integer limitChars, int usedChars,
             List<String> translateResourceDTOS, String translationModel, boolean isCover, String customKey,
             String resourceType, String first, CharacterCountUtils allTasks) {
-        String graphQuery = ShopifyRequestUtils.getFirstQuery(resourceType, first, target);
+        // 第一个节点
+        String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first, target);
         String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, graphQuery);
-
-        // 首次保存任务到数据库
-//        this.saveTaskToDatabase(
-//                shopName, accessToken,
-//                source, target, languagePackId, handleFlag, glossaryMap, modelType, limitChars, usedChars,
-//                translateResourceDTOS, translationModel, isCover, customKey,
-//                graphQuery, allTasks);
-
         ShopifyGraphResponse shopifyRes = JsonUtils.jsonToObject(shopifyData, ShopifyGraphResponse.class);
+
+        // TODO 代码里很多地方都在轮询获取shopify数据，找一下，我来合并到一起
         while (shopifyRes != null) {
+            // 存db
+            try {
+                // TODO @庄泽 check一下vo里面哪些字段是用不到的，可以删掉
+                RabbitMqTranslateVO vo = new RabbitMqTranslateVO(graphQuery, shopName, accessToken,
+                        source, target, languagePackId, handleFlag, glossaryMap, modelType, limitChars, usedChars,
+                        LocalDateTime.now().toString(), translateResourceDTOS, translationModel, isCover, customKey);
+                translateTasksService.save(new TranslateTasksDO(null, 0, JsonUtils.objectToJson(vo), shopName, null, null));
+                allTasks.addChars(1);
+            } catch (Exception e) {
+                appInsights.trackTrace("clickTranslation 保存翻译任务失败 errors : " + e);
+                appInsights.trackException(e);
+            }
+
             // 收集数据总数 -> 给进度条使用
             if (shopifyRes.getTranslatableResources() != null
                     && shopifyRes.getTranslatableResources().getNodes() != null) {
                 shopifyRes.getTranslatableResources().getNodes().forEach(node -> {
                         if (node.getTranslatableContent() != null) {
-                            redisProcessService.addProcessData(
-                                    generateProcessKey(shopName, target), PROGRESS_TOTAL,
+                            redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL,
                                     (long) node.getTranslatableContent().size());
                         }
                     }
@@ -181,13 +164,9 @@ public class RabbitMqTranslateService {
                     && shopifyRes.getTranslatableResources().getPageInfo() != null
                     && shopifyRes.getTranslatableResources().getPageInfo().isHasNextPage()) {
                 String endCursor = shopifyRes.getTranslatableResources().getPageInfo().getEndCursor();
-                String nextGraphQuery = ShopifyRequestUtils.getAfterQuery(resourceType, first, target, endCursor);
-//                this.saveTaskToDatabase(shopName, accessToken,
-//                            source, target, languagePackId, handleFlag, glossaryMap, resourceType, limitChars, usedChars,
-//                            translateResourceDTOS, translationModel, isCover, customKey,
-//                            nextGraphQuery, allTasks);
+                graphQuery = ShopifyRequestUtils.getQuery(resourceType, first, target, endCursor);
 
-                String nextShopifyData = shopifyService.getShopifyData(shopName, accessToken, APIVERSION, nextGraphQuery);
+                String nextShopifyData = shopifyService.getShopifyData(shopName, accessToken, APIVERSION, graphQuery);
                 shopifyRes = JsonUtils.jsonToObject(nextShopifyData, ShopifyGraphResponse.class);
             } else {
                 break;
