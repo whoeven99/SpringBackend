@@ -63,8 +63,8 @@ public class InitialTranslateDbTask {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
 
-    private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(3); // 创建initial初始化线程池
-    private final ExecutorService manualExecutorService = Executors.newFixedThreadPool(1);
+    private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(5); // 创建initial初始化线程池
+    private final ExecutorService manualExecutorService = Executors.newFixedThreadPool(5);
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -94,13 +94,14 @@ public class InitialTranslateDbTask {
     }
 
     // 手动翻译初始化
-    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void scanAndSubmitClickTranslateDbTask() {
         List<InitialTranslateTasksDO> clickTranslateTasks = initialTranslateTasksMapper.selectList(
                 new LambdaQueryWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
                         .eq(InitialTranslateTasksDO::getTaskType, MANUAL)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+                        .orderByAsc(InitialTranslateTasksDO::getShopName)
+                        .last("LIMIT 10"));
 
         appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
@@ -116,7 +117,7 @@ public class InitialTranslateDbTask {
     }
 
     // 自动翻译初始化
-    @Scheduled(fixedRate = 50 * 1000)
+    @Scheduled(fixedDelay = 50 * 1000)
     public void scanAndSubmitAutoInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task
@@ -124,7 +125,8 @@ public class InitialTranslateDbTask {
                 new LambdaQueryWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
                         .eq(InitialTranslateTasksDO::getTaskType, AUTO)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+                        .orderByAsc(InitialTranslateTasksDO::getShopName)
+                        .last("LIMIT 10"));
 
         appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
