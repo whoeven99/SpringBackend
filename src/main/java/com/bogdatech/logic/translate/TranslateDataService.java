@@ -24,6 +24,7 @@ import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,6 +72,9 @@ public class TranslateDataService {
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
 
+    // glossary 内存翻译  key
+    public static String GLOSSARY_CACHE_KEY = "{shopName}:{targetCode}:{sourceText}";
+    public static final ConcurrentHashMap<String, String> glossaryCache = new ConcurrentHashMap<>();
 
     public String translateHtmlData(String sourceText, String shopName, String target, String accessToken,
                                     String languagePack, Integer limitChars, String modeType, CharacterCountUtils counter,
@@ -165,6 +169,16 @@ public class TranslateDataService {
         return null;
     }
 
+    // glossary 的缓存翻译 GLOSSARY_CACHE_KEY {shopName}:{targetCode}:{sourceText}
+    public static String generateGlossaryKey(String shopName, String targetCode, String sourceText){
+        if (shopName != null && targetCode != null && sourceText != null) {
+            return GLOSSARY_CACHE_KEY.replace("{shopName}", shopName)
+                    .replace("{targetCode}", targetCode)
+                    .replace("{sourceText}", sourceText);
+        }
+        return "null";
+    }
+
     public String translateGlossaryData(String value, String shopName, String languagePack, String accessToken,
                                         CharacterCountUtils counter, String source, String target,
                                         Map<String, Object> translation, String resourceId, Integer limitChars,
@@ -194,6 +208,13 @@ public class TranslateDataService {
 
         // 其他数据类型，对数据做处理再翻译
         try {
+            // glossary缓存翻译
+            String glossaryData = glossaryCache.get(generateGlossaryKey(shopName, target, value));
+
+            if (glossaryData != null) {
+                return glossaryData;
+            }
+
             // 用大模型翻译
             String glossaryString = glossaryText(keyMap1, keyMap0, value);
             translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
@@ -207,6 +228,9 @@ public class TranslateDataService {
                 appInsights.trackTrace("FatalException 每日须看 clickTranslation " + shopName + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
                 return null;
             }
+
+            // 将翻译结果存入缓存
+            glossaryCache.put(generateGlossaryKey(shopName, target, value), finalText);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors " + e + " sourceText: " + value);
             shopifyService.saveToShopify(value, translation, resourceId, shopName, accessToken, target, API_VERSION_LAST);

@@ -1,6 +1,7 @@
 package com.bogdatech.task;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.InitialTaskStatusEnum;
@@ -98,12 +99,15 @@ public class InitialTranslateDbTask {
     // 手动翻译初始化
     @Scheduled(fixedDelay = 30 * 1000)
     public void scanAndSubmitClickTranslateDbTask() {
-        List<InitialTranslateTasksDO> clickTranslateTasks = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
-                        .eq(InitialTranslateTasksDO::getTaskType, MANUAL)
-                        .orderByAsc(InitialTranslateTasksDO::getShopName)
-                        .last("LIMIT 10"));
+        Page<InitialTranslateTasksDO> page = new Page<>(1, 10);
+        LambdaQueryWrapper<InitialTranslateTasksDO> wrapper = new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
+                .eq(InitialTranslateTasksDO::getTaskType, MANUAL)
+                .orderByAsc(InitialTranslateTasksDO::getShopName);
+        initialTranslateTasksMapper.selectPage(page, wrapper);
+
+        List<InitialTranslateTasksDO> clickTranslateTasks = page.getRecords();
+        System.out.println("clickTranslateTasks: " + clickTranslateTasks);
 
         appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
@@ -123,12 +127,16 @@ public class InitialTranslateDbTask {
     public void scanAndSubmitAutoInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task
-        List<InitialTranslateTasksDO> clickTranslateTasks = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
-                        .eq(InitialTranslateTasksDO::getTaskType, AUTO)
-                        .orderByAsc(InitialTranslateTasksDO::getShopName)
-                        .last("LIMIT 10"));
+        Page<InitialTranslateTasksDO> page = new Page<>(1, 10);
+
+        LambdaQueryWrapper<InitialTranslateTasksDO> wrapper = new LambdaQueryWrapper<InitialTranslateTasksDO>()
+                .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
+                .eq(InitialTranslateTasksDO::getTaskType, AUTO)
+                .orderByAsc(InitialTranslateTasksDO::getShopName);
+        initialTranslateTasksMapper.selectPage(page, wrapper);
+
+        List<InitialTranslateTasksDO> clickTranslateTasks = page.getRecords();
+        System.out.println("clickTranslateTasks: " + clickTranslateTasks);
 
         appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
