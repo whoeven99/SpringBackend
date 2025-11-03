@@ -23,12 +23,10 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
@@ -234,7 +232,7 @@ public class InitialTranslateDbTask {
             }
 
             // 5. 状态为2：翻译中 判断是否完成
-            if (translateStatus == 2 && task.getStatus() == 2) {
+            if (translateStatus == 2 && task.getStatus() == 2 && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
                 List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
 
                 if (translateTasks.isEmpty()) {
@@ -258,7 +256,7 @@ public class InitialTranslateDbTask {
             }
 
             // 6. 状态为1：全部完成，可以发成功邮件
-            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == 3) {
+            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == 3 && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
                 // 判断user_Translation_Data表 里面改用户语言是否完成写入
                 List<UserTranslationDataDO> userTranslationDataDOS = iUserTranslationDataService.selectWritingDataByShopNameAndTarget(task.getShopName(), task.getTarget());
                 if (!userTranslationDataDOS.isEmpty()) {
