@@ -3,10 +3,7 @@ package com.bogdatech.logic.translate;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.integration.ChatGptIntegration;
-import com.bogdatech.integration.DeepLIntegration;
-import com.bogdatech.integration.HunYuanIntegration;
+import com.bogdatech.integration.*;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -23,6 +20,7 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -117,7 +115,8 @@ public class TranslateDataService {
                                           String source, Map<String, Object> translation, String resourceId) {
         appInsights.trackTrace("TranslateDataServiceLog ListSingleData 用户： " + shopName + "，sourceText: " + value);
         // 如果符合要求，则翻译，不符合要求则返回原值
-        List<String> resultList = JsonUtils.jsonToObjectWithNull(value, new TypeReference<>() {});
+        List<String> resultList = JsonUtils.jsonToObjectWithNull(value, new TypeReference<>() {
+        });
         if (resultList == null || resultList.isEmpty()) {
             return value;
         }
@@ -248,7 +247,8 @@ public class TranslateDataService {
             return new HashMap<>();
         }
 
-        Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
+        Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {
+        });
         if (map == null) {
             appInsights.trackTrace("FatalException TranslateDataServiceLog translatePlainTextData 用户： " + shopName +
                     " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts + " 返回值: " + translatedJson);
@@ -795,11 +795,7 @@ public class TranslateDataService {
         String shopName = request.getShopName();
 
         // 目标语言是中文的，用qwen-max翻译
-        if ("fr".equals(target) || "ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
-        }
-
-        return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars, target, isSingleFlag);
+        return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
     }
 
     /**
@@ -830,7 +826,7 @@ public class TranslateDataService {
     /**
      * 遍历needTranslatedSet, 对Set集合进行通用规则的筛选，返回筛选后的数据
      */
-    public Set<TranslateTextDO> filterNeedTranslateSet(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet, String shopName, String target) {
+    public Set<TranslateTextDO> filterNeedTranslateSet(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet, String shopName, String target, String accessToken) {
         Iterator<TranslateTextDO> iterator = needTranslateSet.iterator();
         while (iterator.hasNext()) {
             TranslateTextDO translateTextDO = iterator.next();
@@ -839,6 +835,10 @@ public class TranslateDataService {
             // 当 value 为空时跳过
             if (!isValueBlank(value)) {
                 iterator.remove(); //  安全删除
+
+                // 还要删除这条语言
+                ShopifyHttpIntegration.deleteTranslateData(shopName, accessToken, translateTextDO.getResourceId(), target, translateTextDO.getTextKey());
+                appInsights.trackTrace("filterNeedTranslateSet 用户： " + shopName + " token: " + accessToken + " 删除这条语言: " + translateTextDO.getResourceId() + " key: " + translateTextDO.getTextKey() + " target: " + target);
                 redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                 continue;
             }
@@ -896,7 +896,7 @@ public class TranslateDataService {
                     continue;
                 }
 
-                if (key.contains("block") && key.contains("add_button_selector")){
+                if (key.contains("block") && key.contains("add_button_selector")) {
                     printTranslateReason(value + "是包含block,add_button_selector的key是： " + key);
                     iterator.remove();
                     redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
@@ -1161,7 +1161,7 @@ public class TranslateDataService {
             String parseJson = parseJson(translated, shopName);
             Map<String, String> resultMap = OBJECT_MAPPER.readValue(parseJson, new TypeReference<>() {
             });
-            appInsights.trackTrace("解析后的数据： "  + requestShopName + " resultMap" + resultMap.toString());
+            appInsights.trackTrace("解析后的数据： " + requestShopName + " resultMap" + resultMap.toString());
             allTranslatedMap.putAll(resultMap);
             appInsights.trackTrace("存完数据 用户： " + shopName + " sourceJson: " + sourceJson);
         } catch (Exception e) {
@@ -1189,7 +1189,7 @@ public class TranslateDataService {
 
     /**
      * 将翻译后的数据填回原处
-     * */
+     */
     public void fillBackTranslatedData(List<TextNode> nodes, Map<String, String> translatedTexts, String target, String shopName) {
         for (TextNode node : nodes) {
             String text = node.getWholeText();

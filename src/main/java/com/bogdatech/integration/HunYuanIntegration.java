@@ -117,6 +117,7 @@ public class HunYuanIntegration {
             appInsights.trackTrace("hunYuanTranslate 混元报错信息 errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
             return null;
         } catch (Exception e) {
+            appInsights.trackException(e);
             return null;
         }
     }

@@ -39,7 +39,6 @@ import static com.bogdatech.logic.redis.TranslationParametersRedisService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
@@ -508,7 +507,7 @@ public class TranslateService {
         //获取用户最大额度限制
         Integer maxCharsByShopName = iTranslationCounterService.getMaxCharsByShopName(shopName);
         //调用图片翻译方法
-        return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName);
+        return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName, ALiYunTranslateIntegration.TRANSLATE_APP);
     }
 }
 
