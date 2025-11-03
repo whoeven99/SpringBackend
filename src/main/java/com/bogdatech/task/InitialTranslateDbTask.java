@@ -107,7 +107,6 @@ public class InitialTranslateDbTask {
         initialTranslateTasksMapper.selectPage(page, wrapper);
 
         List<InitialTranslateTasksDO> clickTranslateTasks = page.getRecords();
-        System.out.println("clickTranslateTasks: " + clickTranslateTasks);
 
         appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
@@ -136,7 +135,6 @@ public class InitialTranslateDbTask {
         initialTranslateTasksMapper.selectPage(page, wrapper);
 
         List<InitialTranslateTasksDO> clickTranslateTasks = page.getRecords();
-        System.out.println("clickTranslateTasks: " + clickTranslateTasks);
 
         appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
