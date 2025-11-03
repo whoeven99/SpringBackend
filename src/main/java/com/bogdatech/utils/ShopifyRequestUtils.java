@@ -16,7 +16,7 @@ public class ShopifyRequestUtils {
     public static String query =
             "    nodes {\n" +
             "      resourceId\n" +
-            "      translations(locale: %target%) {\n" +
+            "      translations(locale: \"%target%\") {\n" +
             "        locale\n" +
             "        value\n" +
             "        key\n" +
