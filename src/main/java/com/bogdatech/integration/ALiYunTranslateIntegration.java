@@ -524,7 +524,7 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("textTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
-            ipcUserService.updateUsedPointsByShopName(shopName, totalToken, limitChars);
+            ipcUserService.updateUsedPointsByShopName(shopName, 200, limitChars);
 
         } catch (Exception e) {
             appInsights.trackTrace("textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
