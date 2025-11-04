@@ -30,7 +30,7 @@ public class TranslationCounterRedisService {
     // language 递增方法 用的是进度条的key TRANSLATE_PROGRESS_KEY_TEMPLATE
     public Long increaseLanguage(String shopName, String target, long value, String translateType) {
         String key = generateProcessKey(shopName, target);
-        appInsights.trackTrace("测试 increaseLanguage ： translateType： " + translateType + " key: " + key);
+
         if (RabbitMqTranslateService.AUTO.equals(translateType)) {
             return redisIntegration.incrementHash(key, AUTO_LANGUAGE_TOKEN_COUNTER, value);
         } else {
@@ -42,7 +42,7 @@ public class TranslationCounterRedisService {
     public Long getLanguageData(String shopName, String target, String translateType) {
         String key = generateProcessKey(shopName, target);
         String date = null;
-        appInsights.trackTrace("测试 getLanguageData ： translateType： " + translateType + " key: " + key);
+
         if (RabbitMqTranslateService.AUTO.equals(translateType)) {
             date = redisIntegration.getHash(key, AUTO_LANGUAGE_TOKEN_COUNTER);
         } else {
@@ -60,7 +60,6 @@ public class TranslationCounterRedisService {
     // 删除language 对应的数据
     public boolean deleteLanguage(String shopName, String target, String translateType) {
         String key = generateProcessKey(shopName, target);
-        appInsights.trackTrace("测试 deleteLanguage ： translateType： " + translateType + " key: " + key);
 
         if (RabbitMqTranslateService.AUTO.equals(translateType)) {
             return redisIntegration.hashDelete(key, AUTO_LANGUAGE_TOKEN_COUNTER);
