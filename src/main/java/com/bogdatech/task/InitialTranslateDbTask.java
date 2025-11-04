@@ -196,7 +196,7 @@ public class InitialTranslateDbTask {
                 continue;
             }
 
-            Long costToken = translationCounterRedisService.getLanguageData(generateProcessKey(task.getShopName(), task.getTarget()));
+            Long costToken = translationCounterRedisService.getLanguageData(task.getShopName(), task.getTarget(), task.getTaskType());
             LocalDateTime createdAt = task.getCreatedAt().toLocalDateTime();
             int translateStatus = translate.getStatus();
 

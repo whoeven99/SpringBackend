@@ -146,7 +146,12 @@ public class RedisIntegration {
      * 删除Hash的field
      * */
     public boolean hashDelete(String key, String field) {
-        return redisTemplate.opsForHash().delete(key, field) > 0;
+        try {
+            return redisTemplate.opsForHash().delete(key, field) > 0;
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException hashDelete " + key + " " + e.getMessage());
+        }
+        return false;
     }
 
     /**

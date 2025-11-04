@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
@@ -28,7 +29,6 @@ import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
 
 @Component
@@ -73,6 +73,9 @@ public class TaskService {
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
     @Autowired
     private ShopifyService shopifyService;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
+
 
     //异步调用根据订阅信息，判断是否添加额度的方法
     public void judgeAddChars() {
@@ -342,7 +345,7 @@ public class TaskService {
             }
 
             String userCode = "\"" + translatesDO.getTarget() + "\"";
-            if (!shopifyByQuery.contains(userCode)){
+            if (!shopifyByQuery.contains(userCode)) {
                 // 将用户的自动翻译标识改为false
                 translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());
                 appInsights.trackTrace("autoTranslate 用户: " + shopName + " 用户本地语言数据不存在 target: " + translatesDO.getTarget());
@@ -363,6 +366,9 @@ public class TaskService {
                 appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
             }
             appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
+
+            // 在自动翻译初始化时，按target，将对应的计数删除
+            translationCounterRedisService.deleteLanguage(shopName, translatesDO.getTarget(), AUTO);
 
             // 将自动翻译的任务初始化，存到initial表中
             String resourceToJson = JsonUtils.objectToJson(AUTO_TRANSLATE_MAP);

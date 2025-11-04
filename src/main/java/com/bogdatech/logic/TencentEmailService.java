@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.integration.EmailIntegration;
+import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
@@ -37,6 +38,7 @@ import static com.bogdatech.constants.MailChimpConstants.APG_GENERATE_SUCCESS;
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.parseShopName;
 
@@ -58,8 +60,10 @@ public class TencentEmailService {
     private IAPGEmailService iapgEmailService;
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
+    @Autowired
+    private TranslationCounterRedisService translationCounterRedisService;
 
-    //由腾讯发送邮件
+    // 由腾讯发送邮件
     public void sendEmailByEmail(TencentSendEmailRequest tencentSendEmailRequest) {
         emailIntegration.sendEmailByTencent(tencentSendEmailRequest);
     }
@@ -397,6 +401,7 @@ public class TencentEmailService {
                     appInsights.trackTrace("emailAutoTranslate 用户 " + shopName + " targetList为空 " + list);
                     return;
                 }
+
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getShopName, shopName)
                         .eq(InitialTranslateTasksDO::getStatus, 1)
