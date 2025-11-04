@@ -43,7 +43,6 @@ import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
-import static com.bogdatech.utils.TypeConversionUtils.ClickTranslateRequestToTranslateRequest;
 import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -217,7 +216,7 @@ public class TranslateService {
         for (String target : targets) {
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopName);
             // 将language级别的token数据删除掉
-            boolean deletedLanguage = translationCounterRedisService.deleteLanguage(generateProcessKey(shopName, target));
+            boolean deletedLanguage = translationCounterRedisService.deleteLanguage(shopName, target, MANUAL);
             appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除这个语言的language的token统计 是否删除 languageToken： " + deletedLanguage + " 语言是： " + target);
 
             translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(shopName, source, target), "");
@@ -365,7 +364,9 @@ public class TranslateService {
         counter.addChars(usedChars);
         if (type.equals(URI) && "handle".equals(key)) {
             // 如果 key 为 "handle"，这里是要处理的代码
-            String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, HANDLE, remainingChars, true);
+            String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName
+                    , null, source, target, value), counter, null, HANDLE
+                    , remainingChars, true, MANUAL);
             if (targetString == null) {
                 return new BaseResponse<>().CreateErrorResponse(value);
             }
@@ -379,17 +380,21 @@ public class TranslateService {
                 TranslateRequest translateRequest = new TranslateRequest(0, shopName, null, source, target, value);
                 //单条翻译html，修改格式
                 if (resourceType.equals(METAFIELD)) {
-                    String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
+                    String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter
+                            , null, remainingChars, true, "1", MANUAL);
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     appInsights.trackTrace(shopName + " 用户 ，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                     return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
                 }
 
-                String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter, null, remainingChars, true, "1");
+                String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter
+                        , null, remainingChars, true, "1", MANUAL);
                 appInsights.trackTrace(shopName + " 用户 ，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
-                String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName, null, source, target, value), counter, null, GENERAL, remainingChars, true);
+                String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName
+                        , null, source, target, value), counter, null, GENERAL
+                        , remainingChars, true, MANUAL);
                 appInsights.trackTrace(shopName + " 用户 ，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
             }

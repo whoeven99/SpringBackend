@@ -497,8 +497,8 @@ public class TestController {
      * 递增
      */
     @GetMapping("/increase")
-    public Long increase(@RequestParam String key, @RequestParam long value) {
-        return translationCounterRedisService.increaseLanguage(key, value);
+    public Long increase(@RequestParam String shopName, @RequestParam String target, @RequestParam long value, @RequestParam String type) {
+        return translationCounterRedisService.increaseLanguage(shopName, target, value, type);
     }
 
     /**

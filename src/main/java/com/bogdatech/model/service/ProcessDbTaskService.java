@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
@@ -74,7 +75,7 @@ public class ProcessDbTaskService {
                     rabbitMqTranslateVO.getAccessToken(), rabbitMqTranslateVO.getLanguagePack(), rabbitMqTranslateVO.getTranslationModel(),
                     rabbitMqTranslateVO.getGlossaryMap(), rabbitMqTranslateVO.getLimitChars(), rabbitMqTranslateVO.getShopifyData(),
                     rabbitMqTranslateVO.getHandleFlag(), rabbitMqTranslateVO.getIsCover(),
-                    task, EMAIL_TRANSLATE.equals(rabbitMqTranslateVO.getCustomKey()));
+                    task, AUTO.equals(rabbitMqTranslateVO.getCustomKey()), rabbitMqTranslateVO.getCustomKey());
 
             // 将用户task改为1
             translateTasksService.updateByTaskId(task.getTaskId(), 1);
@@ -92,8 +93,8 @@ public class ProcessDbTaskService {
     public void processTask(String shopName, String modelType, String source, String target,
                             String accessToken, String languagePack, String translationModel,
                             Map<String, Object> glossaryMap, Integer limitChars, String shopifyData,
-                            Boolean handleFlag, Boolean isCover,
-                            TranslateTasksDO task, boolean isTranslationAuto) {
+                            Boolean handleFlag, Boolean isCover, TranslateTasksDO task
+            , boolean isTranslationAuto, String translateType) {
         Instant start = Instant.now();
         TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
         int usedChars = counterDO.getUsedChars();
@@ -140,7 +141,7 @@ public class ProcessDbTaskService {
                         shopName, source, target, limitChars,
                         accessToken, languagePack, modelType,
                         translationModel, glossaryMap,
-                        counter, entry.getKey());
+                        counter, entry.getKey(), translateType);
             }
 
             // TODO 3 翻译后，存数据，记录等逻辑，拆出来

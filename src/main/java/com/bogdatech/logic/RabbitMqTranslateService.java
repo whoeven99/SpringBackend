@@ -75,7 +75,8 @@ public class RabbitMqTranslateService {
         glossaryService.getGlossaryByShopName(shopName, target, glossaryMap);
         appInsights.trackTrace("判断是否有同义词 " + shopName);
 
-        String languagePackId = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, counter, limitChars, target);
+        String languagePackId = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, counter
+                , limitChars, target, MANUAL);
         appInsights.trackTrace("获取目前所使用的AI语言包 " + shopName);
 
         CharacterCountUtils allTasks = new CharacterCountUtils();
@@ -222,7 +223,7 @@ public class RabbitMqTranslateService {
     public void translatePlainTextData(Set<TranslateTextDO> plainTextData,
                                        String shopName, String source, String target, String accessToken, Integer limitChars,
                                        String languagePack, String modelType, String translationModel,
-                                       CharacterCountUtils counter, String translationKeyType) {
+                                       CharacterCountUtils counter, String translationKeyType, String translateType) {
         if (plainTextData.isEmpty()) {
             return;
         }
@@ -253,7 +254,7 @@ public class RabbitMqTranslateService {
 
             Map<String, String> resultMap = translateDataService.translatePlainText(untranslatedTexts,
                     source, target, languagePack, modelType, translationModel,
-                    counter, shopName, limitChars, translationKeyType);
+                    counter, shopName, limitChars, translationKeyType, translateType);
 
             resultMap.putAll(cachedMap);
 
@@ -430,12 +431,12 @@ public class RabbitMqTranslateService {
                               String shopName, String source, String target, Integer limitChars,
                               String accessToken, String languagePack, String modeType,
                               String translationModel, Map<String, Object> glossaryMap,
-                              CharacterCountUtils counter, String translationKeyType) {
+                              CharacterCountUtils counter, String translationKeyType, String translateType) {
         if (PLAIN_TEXT.equals(translationKeyType) || TITLE.equals(translationKeyType)
                 || META_TITLE.equals(translationKeyType) || LOWERCASE_HANDLE.equals(translationKeyType)) {
             // Plain Text采用了50个的list翻译
             translatePlainTextData(translateTextDOS, shopName, source, target, accessToken, limitChars,
-                    languagePack, modeType, translationModel, counter, translationKeyType);
+                    languagePack, modeType, translationModel, counter, translationKeyType, translateType);
             return;
         }
 
@@ -473,15 +474,15 @@ public class RabbitMqTranslateService {
                 if (translationKeyType.equals(LIST_SINGLE)) {
                     translatedValue = translateDataService.translateListSingleData(
                             value, target, languagePack, limitChars, counter, shopName, accessToken,
-                            source, translation, translateTextDO.getResourceId());
+                            source, translation, translateTextDO.getResourceId(), translateType);
                 } else if (translationKeyType.equals(HTML)) {
                     translatedValue = translateDataService.translateHtmlData(
                             value, shopName, target, accessToken, languagePack, limitChars, modeType,
-                            counter, source, translation, resourceId, translationModel);
+                            counter, source, translation, resourceId, translationModel, translateType);
                 } else if (translationKeyType.equals(GLOSSARY)) {
                     translatedValue = translateDataService.translateGlossaryData(
                             value, shopName, languagePack, accessToken, counter, source, target,
-                            translation, resourceId, limitChars, keyMap0, keyMap1);
+                            translation, resourceId, limitChars, keyMap0, keyMap1, translateType);
                 }
             }
 
