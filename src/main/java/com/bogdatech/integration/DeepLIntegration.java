@@ -32,7 +32,8 @@ public class DeepLIntegration {
     /**
      * 使用deepL进行翻译,计数翻译数
      */
-    public String translateByDeepL(String sourceText, String targetCode, CharacterCountUtils counter, String shopName, Integer limitChars, boolean isSingleFlag) {
+    public String translateByDeepL(String sourceText, String targetCode, CharacterCountUtils counter, String shopName
+            , Integer limitChars, boolean isSingleFlag, String translateType) {
         //target要做映射
         client = new DeepLClient(API_KEY);
         TextResult result;
@@ -63,7 +64,7 @@ public class DeepLIntegration {
             } else {
 //                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
-                translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
+                translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
 
             counter.addChars(totalToken);

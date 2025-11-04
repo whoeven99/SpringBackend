@@ -402,11 +402,6 @@ public class TencentEmailService {
                     return;
                 }
 
-                // 在发送邮件后将自动翻译里面的target对应的计数都删除
-                targetList.forEach(singleTarget -> {
-                    translationCounterRedisService.deleteLanguage(generateProcessKey(shopName, singleTarget));
-                });
-
                 initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                         .eq(InitialTranslateTasksDO::getShopName, shopName)
                         .eq(InitialTranslateTasksDO::getStatus, 1)

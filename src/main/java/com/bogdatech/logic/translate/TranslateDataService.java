@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.DeepLIntegration.DEEPL_LANGUAGE_MAP;
@@ -62,8 +61,6 @@ public class TranslateDataService {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
-    private HunYuanIntegration hunYuanIntegration;
-    @Autowired
     private DeepLIntegration deepLIntegration;
     @Autowired
     private ChatGptIntegration chatGptIntegration;
@@ -78,7 +75,8 @@ public class TranslateDataService {
 
     public String translateHtmlData(String sourceText, String shopName, String target, String accessToken,
                                     String languagePack, Integer limitChars, String modeType, CharacterCountUtils counter,
-                                    String source, Map<String, Object> translation, String resourceId, String translationModel) {
+                                    String source, Map<String, Object> translation, String resourceId,
+                                    String translationModel, String translateType) {
         appInsights.trackTrace("TranslateDataServiceLog translateHtmlData 用户： " + shopName + "，sourceText: " + sourceText);
 
         // 进度条
@@ -93,7 +91,7 @@ public class TranslateDataService {
                     sourceText,
                     new TranslateRequest(0, shopName, accessToken, source, target, sourceText),
                     counter,
-                    languagePack, limitChars, false, translationModel);
+                    languagePack, limitChars, false, translationModel, translateType);
             appInsights.trackTrace("TranslateDataServiceLog translateHtmlData 完成 用户： " + shopName + "，sourceText: " + sourceText +
                     " translatedText: " + htmlTranslation);
             if (modeType.equals(METAFIELD)) {
@@ -118,10 +116,12 @@ public class TranslateDataService {
 
     public String translateListSingleData(String value, String target, String languagePack, Integer limitChars,
                                           CharacterCountUtils counter, String shopName, String accessToken,
-                                          String source, Map<String, Object> translation, String resourceId) {
+                                          String source, Map<String, Object> translation, String resourceId,
+                                          String translateType) {
         appInsights.trackTrace("TranslateDataServiceLog ListSingleData 用户： " + shopName + "，sourceText: " + value);
         // 如果符合要求，则翻译，不符合要求则返回原值
-        List<String> resultList = JsonUtils.jsonToObjectWithNull(value, new TypeReference<>() {});
+        List<String> resultList = JsonUtils.jsonToObjectWithNull(value, new TypeReference<>() {
+        });
         if (resultList == null || resultList.isEmpty()) {
             return value;
         }
@@ -142,14 +142,14 @@ public class TranslateDataService {
 
                     String translated = translateByModel(
                             new TranslateRequest(0, shopName, accessToken, source, target, value),
-                            counter, languagePack, limitChars, false);
+                            counter, languagePack, limitChars, false, translateType);
 
                     // 对null的处理
                     if (translated == null) {
                         appInsights.trackTrace("FatalException 每日须看 translateMetafieldTextData 用户： " + shopName + " 翻译失败，翻译内容为空 value: " + value);
                         translated = checkTranslationModel(
                                 new TranslateRequest(0, shopName, accessToken, source, target, value),
-                                counter, languagePack, limitChars, false);
+                                counter, languagePack, limitChars, false, translateType);
                         resultList.set(i, translated);
                         continue;
                     }
@@ -170,7 +170,7 @@ public class TranslateDataService {
     }
 
     // glossary 的缓存翻译 GLOSSARY_CACHE_KEY {shopName}:{targetCode}:{sourceText}
-    public static String generateGlossaryKey(String shopName, String targetCode, String sourceText){
+    public static String generateGlossaryKey(String shopName, String targetCode, String sourceText) {
         if (shopName != null && targetCode != null && sourceText != null) {
             return GLOSSARY_CACHE_KEY.replace("{shopName}", shopName)
                     .replace("{targetCode}", targetCode)
@@ -182,7 +182,7 @@ public class TranslateDataService {
     public String translateGlossaryData(String value, String shopName, String languagePack, String accessToken,
                                         CharacterCountUtils counter, String source, String target,
                                         Map<String, Object> translation, String resourceId, Integer limitChars,
-                                        Map<String, String> keyMap0, Map<String, String> keyMap1) {
+                                        Map<String, String> keyMap0, Map<String, String> keyMap1, String translateType) {
         appInsights.trackTrace("TranslateDataServiceLog translateGlossaryData 用户： " + shopName + "，sourceText: " + value);
 
         TranslateRequest translateRequest = new TranslateRequest(0, shopName, accessToken, source, target, value);
@@ -191,7 +191,8 @@ public class TranslateDataService {
         // 判断是否为HTML
         if (isHtml(value)) {
             try {
-                targetText = translateGlossaryHtml(value, translateRequest, counter, null, keyMap0, keyMap1, languagePack, limitChars, false);
+                targetText = translateGlossaryHtml(value, translateRequest, counter, null, keyMap0
+                        , keyMap1, languagePack, limitChars, false, translateType);
                 targetText = isHtmlEntity(targetText);
             } catch (Exception e) {
                 appInsights.trackTrace("FatalException translateGlossaryData is html failed " + shopName + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
@@ -221,7 +222,7 @@ public class TranslateDataService {
             translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
 
             // 根据关键词生成对应的提示词
-            finalText = glossaryTranslationModel(translateRequest, counter, glossaryString, languagePack, limitChars, false);
+            finalText = glossaryTranslationModel(translateRequest, counter, glossaryString, languagePack, limitChars, false, translateType);
 
             // 对null的处理， 不翻译，看下打印情况
             if (finalText == null) {
@@ -243,7 +244,7 @@ public class TranslateDataService {
     public Map<String, String> translatePlainText(List<String> untranslatedTexts, String source, String target,
                                                   String languagePack, String modelType, String translationModel,
                                                   CharacterCountUtils counter, String shopName, Integer limitChars,
-                                                  String translationKeyType) {
+                                                  String translationKeyType, String translateType) {
         appInsights.trackTrace("TranslateDataServiceLog PlainText 用户： " + shopName + "，sourceText: " + untranslatedTexts);
 
         if (untranslatedTexts.isEmpty()) {
@@ -256,11 +257,11 @@ public class TranslateDataService {
         String untranslatedTextsJson = JsonUtils.objectToJson(untranslatedTexts);
         String translatedJson = translateByCiwiOrGptModel(target, untranslatedTextsJson,
                 shopName, source, counter, limitChars, prompt,
-                false, translationModel);
+                false, translationModel, translateType);
 
         // 如果主翻译服务 translateBatch 返回 null，则使用阿里云翻译服务作为备用
         if (translatedJson == null) {
-            translatedJson = aLiYunTranslateIntegration.userTranslate(untranslatedTextsJson, prompt, counter, target, shopName, limitChars, false);
+            translatedJson = aLiYunTranslateIntegration.userTranslate(untranslatedTextsJson, prompt, counter, target, shopName, limitChars, false, translateType);
         }
 
         appInsights.trackTrace("TranslateDataServiceLog PlainText 用户： " + shopName + "，sourceText: " + untranslatedTexts
@@ -272,7 +273,8 @@ public class TranslateDataService {
             return new HashMap<>();
         }
 
-        Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {});
+        Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {
+        });
         if (map == null) {
             appInsights.trackTrace("FatalException TranslateDataServiceLog translatePlainTextData 用户： " + shopName +
                     " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts + " 返回值: " + translatedJson);
@@ -285,7 +287,8 @@ public class TranslateDataService {
      * 翻译词汇表单行文本，保护变量、URL和符号
      */
     private String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
-                                                     Map<String, String> keyMap1, Map<String, String> keyMap0, String resourceType, String languagePackId, Integer limitChars, boolean isSingleFlag) {
+                                                     Map<String, String> keyMap1, Map<String, String> keyMap0
+            , String resourceType, String languagePackId, Integer limitChars, boolean isSingleFlag, String translateType) {
         // 检查缓存
         String translatedCache = redisProcessService.getCacheData(request.getTarget(), text);
         if (translatedCache != null) {
@@ -303,14 +306,15 @@ public class TranslateDataService {
             //如果字符数低于5字符，用mt和qwen翻译
             if (cleanedText.length() <= 5) {
                 counter.addChars(CalculateTokenUtils.googleCalculateToken(cleanedText));
-                String targetString = translateAndCount(request, counter, languagePackId, GENERAL, limitChars, isSingleFlag);
+                String targetString = translateAndCount(request, counter, languagePackId, GENERAL
+                        , limitChars, isSingleFlag, translateType);
                 redisProcessService.setCacheData(request.getTarget(), targetString, cleanedText);
                 return targetString;
             } else {
                 //如果字符数大于100字符，用大模型翻译
                 String glossaryString = glossaryText(keyMap1, keyMap0, cleanedText);
                 //根据关键词生成对应的提示词
-                String finalText = glossaryTranslationModel(request, counter, glossaryString, languagePackId, limitChars, isSingleFlag);
+                String finalText = glossaryTranslationModel(request, counter, glossaryString, languagePackId, limitChars, isSingleFlag, translateType);
                 redisProcessService.setCacheData(request.getTarget(), finalText, cleanedText);
                 return finalText;
             }
@@ -385,16 +389,17 @@ public class TranslateDataService {
      * @param languagePackId 语言包id
      *                       return String       翻译后的文本
      */
-    public String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag) {
+    public String translateByModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId
+            , Integer limitChars, boolean isSingleFlag, String translateType) {
         String sourceText = request.getContent();
 
         //从缓存中获取数据
         //判断是否符合mt翻译 ，是， 调用mt翻译。
         if (sourceText.length() <= 20) {
-            return checkTranslationApi(request, counter, limitChars, null, isSingleFlag);
+            return checkTranslationApi(request, counter, limitChars, null, isSingleFlag, translateType);
         }
 
-        return checkTranslationModel(request, counter, languagePackId, limitChars, isSingleFlag);
+        return checkTranslationModel(request, counter, languagePackId, limitChars, isSingleFlag, translateType);
     }
 
     /**
@@ -406,7 +411,7 @@ public class TranslateDataService {
      * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag) {
+    public String checkTranslationModel(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag, String translateType) {
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
         String content = request.getContent();
@@ -415,7 +420,7 @@ public class TranslateDataService {
 
         // 判断target里面是否含有变量，如果没有，输入极简提示词；如果有，输入变量提示词
         if (hasPlaceholders(content)) {
-            return translateVariableData(request, counter, limitChars, targetLanguage, languagePackId, isSingleFlag);
+            return translateVariableData(request, counter, limitChars, targetLanguage, languagePackId, isSingleFlag, translateType);
 
         } else {
             prompt = getSimplePrompt(targetLanguage, languagePackId);
@@ -423,11 +428,11 @@ public class TranslateDataService {
         }
         try {
             // 对模型进行判断 , 1,ciwi 2,openai 3,deepL
-            return translateByCiwiModel(request, counter, limitChars, prompt, isSingleFlag);
+            return translateByCiwiModel(request, counter, limitChars, prompt, isSingleFlag, translateType);
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + shopName + " checkTranslationModel errors ： " + e.getMessage() + " sourceText: " + content);
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
+            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag, translateType);
         }
 
     }
@@ -442,7 +447,8 @@ public class TranslateDataService {
      * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString, String languagePackId, Integer limitChars, boolean isSingleFlag) {
+    public String glossaryTranslationModel(TranslateRequest request, CharacterCountUtils counter, String glossaryString
+            , String languagePackId, Integer limitChars, boolean isSingleFlag, String translateType) {
 
         String target = request.getTarget();
         String content = request.getContent();
@@ -458,10 +464,10 @@ public class TranslateDataService {
         }
 
         try {
-            return translateByCiwiModel(request, counter, limitChars, prompt, isSingleFlag);
+            return translateByCiwiModel(request, counter, limitChars, prompt, isSingleFlag, translateType);
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage() + " sourceText: " + content);
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
+            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag, translateType);
         }
     }
 
@@ -475,14 +481,15 @@ public class TranslateDataService {
      * @param limitChars 用户最大限制
      *                   return String 翻译后的文本
      */
-    public String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String translationModel, boolean isSingleFlag) {
+    public String checkTranslationApi(TranslateRequest request, CharacterCountUtils counter, Integer limitChars
+            , String translationModel, boolean isSingleFlag, String translateType) {
         String target = request.getTarget();
         String source = request.getSource();
         String content = request.getContent();
         //如果source和target都是QwenMT支持的语言，则调用QwenMT的API。 反之亦然
         //目前做个初步的限制，每次用mt翻译前都sleep一下，防止调用频率过高。0.3s. 后面请求解决限制后，删掉这段代码。
         if (hasPlaceholders(content)) {
-            return translateVariableData(request, counter, limitChars, target, null, isSingleFlag);
+            return translateVariableData(request, counter, limitChars, target, null, isSingleFlag, translateType);
         }
 
         try {
@@ -495,13 +502,16 @@ public class TranslateDataService {
         String resultTranslation;
         try {
             if (DEEPL_MODEL.equals(translationModel) && !deepLIntegration.isDeepLEnough() && DEEPL_LANGUAGE_MAP.containsKey(target)) {
-                resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName(), limitChars, isSingleFlag);
+                resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName()
+                        , limitChars, isSingleFlag, translateType);
             } else if (JsoupUtils.QWEN_MT_CODES.contains(target) && JsoupUtils.QWEN_MT_CODES.contains(source)) {
-                resultTranslation = translateByQwenMt(request.getContent(), source, target, counter, request.getShopName(), limitChars, isSingleFlag);
+                resultTranslation = translateByQwenMt(request.getContent(), source, target, counter
+                        , request.getShopName(), limitChars, isSingleFlag, translateType);
             } else {
                 //qwen 短文本翻译
                 appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译： " + request.getContent() + " 提示词: " + prompt);
-                resultTranslation = aLiYunTranslateIntegration.singleTranslate(request.getContent(), prompt, counter, target, request.getShopName(), limitChars, isSingleFlag);
+                resultTranslation = aLiYunTranslateIntegration.singleTranslate(request.getContent(), prompt, counter
+                        , target, request.getShopName(), limitChars, isSingleFlag, translateType);
             }
             return resultTranslation;
 
@@ -509,24 +519,28 @@ public class TranslateDataService {
             //mt翻译失败的话，用其他大模型翻译
             appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation " + request.getShopName() + " 短文本翻译 errors : " + e.getMessage() + " sourceText: " + content);
-            resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName(), limitChars, isSingleFlag);
+            resultTranslation = deepLIntegration.translateByDeepL(content, target, counter, request.getShopName()
+                    , limitChars, isSingleFlag, translateType);
             return resultTranslation;
         }
     }
 
     //包装一下调用百炼mt的方法
-    public String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils, String shopName, Integer limitChars, boolean isSingleFlag) {
+    public String translateByQwenMt(String translateText, String source, String target, CharacterCountUtils countUtils
+            , String shopName, Integer limitChars, boolean isSingleFlag, String translateType) {
         String changeSource = ApiCodeUtils.qwenMtCode(source);
         String changeTarget = ApiCodeUtils.qwenMtCode(target);
         try {
-            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars, isSingleFlag);
+            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget
+                    , countUtils, shopName, limitChars, isSingleFlag, translateType);
         } catch (Exception e) {
             try {
                 sleep(1000);
             } catch (InterruptedException ex) {
                 appInsights.trackTrace("clickTranslation MT sleep errors ： " + ex.getMessage());
             }
-            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource, changeTarget, countUtils, shopName, limitChars, isSingleFlag);
+            return aLiYunTranslateIntegration.callWithMessageMT(QWEN_MT, translateText, changeSource
+                    , changeTarget, countUtils, shopName, limitChars, isSingleFlag, translateType);
         }
 
     }
@@ -538,34 +552,35 @@ public class TranslateDataService {
      * @param request        翻译所需要的数据
      * @param counter        计数器
      * @param languagePackId 语言包id
-     * @param translateType  翻译类型
+     * @param handleData     handle相关数据
      *                       return String 翻译后的文本
      */
     public String translateAndCount(TranslateRequest request,
-                                    CharacterCountUtils counter, String languagePackId, String translateType, Integer limitChars, boolean isSingleFlag) {
+                                    CharacterCountUtils counter, String languagePackId, String handleData
+            , Integer limitChars, boolean isSingleFlag, String translateType) {
         String text = request.getContent();
         // 检测text是不是全大写，如果是的话，最后翻译完也全大写
 
         String targetString;
-        if (translateType.equals(HANDLE)) {
+        if (handleData.equals(HANDLE)) {
             if (text.length() <= 20) {
-                targetString = checkTranslationApi(request, counter, limitChars, null, isSingleFlag);
+                targetString = checkTranslationApi(request, counter, limitChars, null, isSingleFlag, translateType);
             } else {
-                targetString = translationHandle(request, counter, languagePackId, limitChars, isSingleFlag);
+                targetString = translationHandle(request, counter, languagePackId, limitChars, isSingleFlag, translateType);
             }
         } else {
-            targetString = translateByModel(request, counter, languagePackId, limitChars, isSingleFlag);
+            targetString = translateByModel(request, counter, languagePackId, limitChars, isSingleFlag, translateType);
         }
 
         if (targetString == null) {
             // 对null的处理，再次翻译
-            return checkTranslationModel(request, counter, languagePackId, limitChars, isSingleFlag);
+            return checkTranslationModel(request, counter, languagePackId, limitChars, isSingleFlag, translateType);
         }
 
         targetString = isHtmlEntity(targetString);
 
         // 判断translateType是不是handle，再决定是否添加到缓存
-        if (!translateType.equals(HANDLE)) {
+        if (!handleData.equals(HANDLE)) {
             redisProcessService.setCacheData(request.getTarget(), targetString, text);
         }
 
@@ -574,7 +589,9 @@ public class TranslateDataService {
         return targetString;
     }
 
-    public String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
+    public String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter
+            , String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId
+            , Integer limitChars, boolean isSingleFlag, String translateType) {
         // 检查输入是否有效
         if (html == null || html.trim().isEmpty()) {
             return html;
@@ -600,14 +617,16 @@ public class TranslateDataService {
                     htmlTag.attr("lang", request.getTarget());
                 }
 
-                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
+                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars
+                        , isSingleFlag, translateType);
                 return doc.outerHtml();
             } else {
                 // 如果没有 <html> 标签，作为片段处理
                 Document doc = Jsoup.parseBodyFragment(html);
                 Element body = doc.body();
 
-                processNode(body, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
+                processNode(body, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars
+                        , isSingleFlag, translateType);
 
                 // 只返回子节点内容，不包含 <body>
                 StringBuilder result = new StringBuilder();
@@ -628,7 +647,9 @@ public class TranslateDataService {
      *
      * @param node 当前节点
      */
-    private void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
+    private void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType
+            , Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars
+            , boolean isSingleFlag, String translateType) {
         try {
             // 如果是元素节点
             if (node instanceof Element) {
@@ -646,7 +667,8 @@ public class TranslateDataService {
 
                 // 递归处理子节点
                 for (Node child : element.childNodes()) {
-                    processNode(child, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
+                    processNode(child, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars
+                            , isSingleFlag, translateType);
                 }
             }
             // 如果是文本节点
@@ -660,7 +682,8 @@ public class TranslateDataService {
                 }
 
                 // 使用缓存处理文本
-                String translatedText = translateTextWithCache(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
+                String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0
+                        , keyMap1, languagePackId, limitChars, isSingleFlag, translateType);
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
@@ -668,15 +691,6 @@ public class TranslateDataService {
         }
     }
 
-    /**
-     * 使用缓存处理文本内容，保护变量和URL
-     *
-     * @param text 输入文本
-     * @return 翻译后的文本
-     */
-    private String translateTextWithCache(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
-        return translateTextWithProtection(text, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars, isSingleFlag);
-    }
 
     /**
      * 处理文本内容，保护变量和URL
@@ -684,7 +698,9 @@ public class TranslateDataService {
      * @param text 输入文本
      * @return 翻译后的文本
      */
-    private String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter, String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars, boolean isSingleFlag) {
+    private String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter
+            , String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId
+            , Integer limitChars, boolean isSingleFlag, String translateType) {
         StringBuilder result = new StringBuilder();
         int lastEnd = 0;
 
@@ -723,7 +739,8 @@ public class TranslateDataService {
                         request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                        appInsights.trackTrace("要翻译的文本： " + cleanedText);
-                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars, isSingleFlag);
+                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0
+                                , resourceType, languagePackId, limitChars, isSingleFlag, translateType);
                         targetString = isHtmlEntity(targetString);
                         result.append(targetString);
                     } catch (ClientException e) {
@@ -754,7 +771,8 @@ public class TranslateDataService {
                     request.setContent(cleanedText);
 //                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
 //                    appInsights.trackTrace("要翻译的文本： " + cleanedText);
-                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0, resourceType, languagePackId, limitChars, isSingleFlag);
+                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0
+                            , resourceType, languagePackId, limitChars, isSingleFlag, translateType);
                     targetString = isHtmlEntity(targetString);
                     result.append(targetString);
                 } catch (ClientException e) {
@@ -777,7 +795,8 @@ public class TranslateDataService {
      * @param languagePackId 语言包id
      * @return String 翻译后的文本
      */
-    public String translationHandle(TranslateRequest request, CharacterCountUtils counter, String languagePackId, Integer limitChars, boolean isSingleFlag) {
+    public String translationHandle(TranslateRequest request, CharacterCountUtils counter, String languagePackId
+            , Integer limitChars, boolean isSingleFlag, String translateType) {
 
         String target = request.getTarget();
         String targetLanguage = getLanguageName(target);
@@ -789,41 +808,42 @@ public class TranslateDataService {
         appInsights.trackTrace("普通文本： " + content + " Handle提示词: " + prompt);
         try {
             //目标语言是中文的，用qwen-max翻译
-            return translateByCiwiModel(request, counter, limitChars, languagePackId, isSingleFlag);
+            return translateByCiwiModel(request, counter, limitChars, languagePackId, isSingleFlag, translateType);
         } catch (Exception e) {
             appInsights.trackTrace("翻译handle数据报错 errors ： " + e.getMessage() + " sourceText: " + content);
             appInsights.trackException(e);
-            return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target, shopName, limitChars, isSingleFlag);
+            return aLiYunTranslateIntegration.singleTranslate(fixContent, prompt, counter, target, shopName
+                    , limitChars, isSingleFlag, translateType);
         }
     }
 
     /**
      * 变量翻译,目前暂定ciwi模型翻译
      */
-    public String translateVariableData(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String targetLanguage, String languagePackId, boolean isSingleFlag) {
+    public String translateVariableData(TranslateRequest request, CharacterCountUtils counter, Integer limitChars
+            , String targetLanguage, String languagePackId, boolean isSingleFlag, String translateType) {
         String target = request.getTarget();
         String content = request.getContent();
         String shopName = request.getShopName();
         String variableString = getOuterString(content);
         String prompt = getVariablePrompt(targetLanguage, variableString, languagePackId);
         appInsights.trackTrace("模块文本： " + content + " variable提示词: " + prompt);
-        return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
+        return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars
+                , isSingleFlag, translateType);
     }
 
     /**
      * ciwi 模型翻译   多 System User 翻译
      */
-    public String translateByCiwiModel(TranslateRequest request, CharacterCountUtils counter, Integer limitChars, String prompt, boolean isSingleFlag) {
+    public String translateByCiwiModel(TranslateRequest request, CharacterCountUtils counter, Integer limitChars
+            , String prompt, boolean isSingleFlag, String translateType) {
         String target = request.getTarget();
         String content = request.getContent();
         String shopName = request.getShopName();
 
         // 目标语言是中文的，用qwen-max翻译
-        if ("fr".equals(target) || "ko".equals(target) || "es".equals(target) || "de".equals(target) || "it".equals(target) || "nl".equals(target) || "ro".equals(request.getSource()) || "en".equals(target) || "zh-CN".equals(target) || "zh-TW".equals(target) || "fil".equals(target) || "ar".equals(target) || "el".equals(target)) {
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag);
-        }
-
-        return hunYuanIntegration.hunYuanTranslate(content, prompt, counter, HUN_YUAN_MODEL, shopName, limitChars, target, isSingleFlag);
+        return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars
+                , isSingleFlag, translateType);
     }
 
     /**
@@ -832,7 +852,7 @@ public class TranslateDataService {
      */
     public String translateByCiwiOrGptModel(String target, String content, String shopName, String source,
                                             CharacterCountUtils counter, Integer limitChars, String prompt,
-                                            boolean isSingleFlag, String translationModel) {
+                                            boolean isSingleFlag, String translationModel, String translateType) {
         appInsights.trackTrace("千问或gpt翻译 用户： " + shopName + " 模型类型： " + translationModel);
         Pair<String, Integer> pair;
         if ("2".equals(translationModel)) {
@@ -845,7 +865,7 @@ public class TranslateDataService {
             translationCounterService.updateAddUsedCharsByShopName(shopName, pair.getSecond(), limitChars);
         } else {
             translationCounterService.updateAddUsedCharsByShopName(shopName, pair.getSecond(), limitChars);
-            translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), pair.getSecond());
+            translationCounterRedisService.increaseLanguage(shopName, target, pair.getSecond(), translateType);
         }
         counter.addChars(pair.getSecond());
         return pair.getFirst();
@@ -920,7 +940,7 @@ public class TranslateDataService {
                     continue;
                 }
 
-                if (key.contains("block") && key.contains("add_button_selector")){
+                if (key.contains("block") && key.contains("add_button_selector")) {
                     printTranslateReason(value + "是包含block,add_button_selector的key是： " + key);
                     iterator.remove();
                     redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
@@ -1059,7 +1079,8 @@ public class TranslateDataService {
      * html的拆分翻译，放弃递归，改为json翻译
      */
     public String newJsonTranslateHtml(String html, TranslateRequest request, CharacterCountUtils counter,
-                                       String languagePackId, Integer limitChars, boolean isSingleFlag, String translationModel) {
+                                       String languagePackId, Integer limitChars, boolean isSingleFlag
+            , String translationModel, String translateType) {
         if (!isHtml(html)) {
             return null;
         }
@@ -1091,7 +1112,8 @@ public class TranslateDataService {
         appInsights.trackTrace("提取完所有的翻译文本 用户： " + request.getShopName());
 
         // 4. 每50条一次翻译
-        Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId, limitChars, isSingleFlag, translationModel);
+        Map<String, String> translatedTexts = translateAllList(originalTexts, request, counter, languagePackId
+                , limitChars, isSingleFlag, translationModel, translateType);
         appInsights.trackTrace("翻译完所有文本 用户： " + request.getShopName());
 
         // 5. 填回原处
@@ -1125,7 +1147,9 @@ public class TranslateDataService {
     /**
      * 每50条文本翻译一次
      */
-    public Map<String, String> translateAllList(List<String> originalTexts, TranslateRequest request, CharacterCountUtils counter, String languagePack, Integer limitChars, boolean isSingleFlag, String translationModel) {
+    public Map<String, String> translateAllList(List<String> originalTexts, TranslateRequest request
+            , CharacterCountUtils counter, String languagePack, Integer limitChars, boolean isSingleFlag
+            , String translationModel, String translateType) {
         String target = request.getTarget();
         String shopName = request.getShopName();
         String source = request.getSource();
@@ -1151,7 +1175,8 @@ public class TranslateDataService {
                 int tokens = calculateBaiLianToken(text);
                 // 如果加上这条会超过 1000 token，就先处理当前组
                 if (currentTokens + tokens > 1000 && !currentGroup.isEmpty()) {
-                    processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap, isSingleFlag, translationModel);
+                    processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter
+                            , limitChars, allTranslatedMap, isSingleFlag, translationModel, translateType);
                     currentGroup = new ArrayList<>();
                     currentTokens = 0;
                 }
@@ -1163,7 +1188,8 @@ public class TranslateDataService {
 
             // 处理最后剩下的一组
             if (!currentGroup.isEmpty()) {
-                processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars, allTranslatedMap, isSingleFlag, translationModel);
+                processBatch(currentGroup, request.getShopName(), shopName, prompt, target, source, counter, limitChars
+                        , allTranslatedMap, isSingleFlag, translationModel, translateType);
             }
         }
 
@@ -1173,19 +1199,23 @@ public class TranslateDataService {
     /**
      * 对拆分完的一批次进行翻译
      */
-    private void processBatch(List<String> texts, String requestShopName, String shopName, String prompt, String target, String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap, boolean isSingleFlag, String translationModel) {
+    private void processBatch(List<String> texts, String requestShopName, String shopName, String prompt, String target
+            , String source, CharacterCountUtils counter, Integer limitChars, Map<String, String> allTranslatedMap
+            , boolean isSingleFlag, String translationModel, String translateType) {
         try {
             String sourceJson = JsonUtils.objectToJson(texts);
             appInsights.trackTrace("开始模型翻译 用户： " + requestShopName);
-            String translated = translateByCiwiOrGptModel(target, sourceJson, shopName, source, counter, limitChars, prompt, isSingleFlag, translationModel);
+            String translated = translateByCiwiOrGptModel(target, sourceJson, shopName, source, counter,
+                    limitChars, prompt, isSingleFlag, translationModel, translateType);
             if (translated == null) {
-                translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName, limitChars, isSingleFlag);
+                translated = aLiYunTranslateIntegration.userTranslate(sourceJson, prompt, counter, target, shopName
+                        , limitChars, isSingleFlag, translateType);
             }
             appInsights.trackTrace("翻译结束 解析数据 用户 ：" + requestShopName);
             String parseJson = parseJson(translated, shopName);
             Map<String, String> resultMap = OBJECT_MAPPER.readValue(parseJson, new TypeReference<>() {
             });
-            appInsights.trackTrace("解析后的数据： "  + requestShopName + " resultMap" + resultMap.toString());
+            appInsights.trackTrace("解析后的数据： " + requestShopName + " resultMap" + resultMap.toString());
             allTranslatedMap.putAll(resultMap);
             appInsights.trackTrace("存完数据 用户： " + shopName + " sourceJson: " + sourceJson);
         } catch (Exception e) {
@@ -1213,7 +1243,7 @@ public class TranslateDataService {
 
     /**
      * 将翻译后的数据填回原处
-     * */
+     */
     public void fillBackTranslatedData(List<TextNode> nodes, Map<String, String> translatedTexts, String target, String shopName) {
         for (TextNode node : nodes) {
             String text = node.getWholeText();

@@ -54,7 +54,8 @@ public class HunYuanIntegration {
      * @param shopName   店铺名称
      * @return 翻译后的文本
      **/
-    public String hunYuanTranslate(String sourceText, String prompt, CharacterCountUtils countUtils, String model, String shopName, Integer limitChars, String target, boolean isSingleFlag) {
+    public String hunYuanTranslate(String sourceText, String prompt, CharacterCountUtils countUtils, String model
+            , String shopName, Integer limitChars, String target, boolean isSingleFlag, String translateType) {
         // 1. 创建 ChatCompletions 请求
         ChatCompletionsRequest req = new ChatCompletionsRequest();
         // 设置模型名称（请确认具体名称，假设为 "hunyuan-turbo-s"）
@@ -104,7 +105,7 @@ public class HunYuanIntegration {
                 }else {
 //                    translationCounterRedisService.increaseTask(generateProcessKey(shopName,target), totalToken);
                     translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
-                    translationCounterRedisService.increaseLanguage(generateProcessKey(shopName, target), totalToken);
+                    translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
                 }
 
                 countUtils.addChars(totalToken);
