@@ -32,7 +32,7 @@ public class PCUserPicturesService {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
 
-    public static String CDN_URL = "http://img.bogdatech.com";
+    public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
 
     public BaseResponse<Object> insertPicToDbAndCloud(MultipartFile file, String shopName, String pcUserPicturesDoJson) {
