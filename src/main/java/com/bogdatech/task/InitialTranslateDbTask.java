@@ -88,7 +88,7 @@ public class InitialTranslateDbTask {
         try {
             if (!initialExecutorService.awaitTermination(5, TimeUnit.MINUTES)
                     || !manualExecutorService.awaitTermination(5, TimeUnit.MINUTES)) { // 等待任务完成
-                throw new IllegalStateException("任务未能在关闭前完成");
+                throw new IllegalStateException("任务未能在关闭前完成 ");
             }
         } catch (InterruptedException e) {
             appInsights.trackException(e);
