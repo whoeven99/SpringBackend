@@ -107,7 +107,7 @@ public class ProcessDbTaskService {
 //            vo.setCustomKey(null);
         }
 
-        appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + modelType + " 模块开始翻译前 counter 1: " + usedChars);
+        appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + modelType + " 模块开始翻译前 counter 1: " + usedChars + usedChars + " target: " + target);
 
         appInsights.trackTrace("ProcessDBTaskLog translateByModeType：" + modelType
                 + " 用户 ： " + shopName
@@ -146,7 +146,7 @@ public class ProcessDbTaskService {
 
             // TODO 3 翻译后，存数据，记录等逻辑，拆出来
 
-            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + modelType + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。  " );
+            appInsights.trackTrace("ProcessDBTaskLog 用户 ： " + shopName + " " + modelType + " 模块开始翻译后 counter 2: " + counter.getTotalChars() + " 单模块翻译结束。  " + usedChars + " target: " + target);
 
             // 一些monitor
             if (counter.getTotalChars() - usedChars > 0 && Duration.between(start, Instant.now()).toSeconds() > 0) {

@@ -854,7 +854,7 @@ public class ShopifyService {
 
     public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId,
                               String shopName, String accessToken, String target, String apiVersion) {
-        saveToShopify(translatedValue, translation, resourceId, new ShopifyRequest(shopName, accessToken, target, apiVersion));
+        saveToShopify(translatedValue, translation, resourceId, new ShopifyRequest(shopName, accessToken, apiVersion, target));
     }
 
     //将翻译后的数据存shopify本地中
