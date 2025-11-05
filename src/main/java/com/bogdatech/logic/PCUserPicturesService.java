@@ -170,7 +170,9 @@ public class PCUserPicturesService {
         if (list != null) {
             // 替换图片url
             list.forEach(pic -> {
-                pic.setImageAfterUrl(pic.getImageAfterUrl().replace(COS_URL, CDN_URL));
+                if (pic.getImageAfterUrl() != null) {
+                    pic.setImageAfterUrl(pic.getImageAfterUrl().replace(COS_URL, CDN_URL));
+                }
             });
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
@@ -181,7 +183,9 @@ public class PCUserPicturesService {
         List<PCUserPicturesDO> list = ipcUserPicturesService.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
         if (list != null) {
             list.forEach(pic -> {
-                pic.setImageAfterUrl(pic.getImageAfterUrl().replace(COS_URL, CDN_URL));
+                if (pic.getImageAfterUrl() != null) {
+                    pic.setImageAfterUrl(pic.getImageAfterUrl().replace(COS_URL, CDN_URL));
+                }
             });
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
