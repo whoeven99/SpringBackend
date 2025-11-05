@@ -3,6 +3,7 @@ package com.bogdatech.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IUserPicturesService;
 import com.bogdatech.entity.DO.UserPicturesDO;
+import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,20 +20,16 @@ import static com.bogdatech.utils.StringUtils.convertUrlToMultipartFile;
 @RestController
 @RequestMapping("/picture")
 public class UserPicturesController {
-
-    private final IUserPicturesService iUserPicturesService;
-
     @Autowired
-    public UserPicturesController(IUserPicturesService iUserPicturesService) {
-        this.iUserPicturesService = iUserPicturesService;
-    }
+    private IUserPicturesService iUserPicturesService;
 
     public static List<String> allowedMimeTypes = List.of(
             "image/jpeg",
             "image/png",
             "image/webp",
             "image/heic",
-            "image/gif"
+            "image/gif",
+            "image/jpg"
     );
 
     /**
@@ -83,6 +80,10 @@ public class UserPicturesController {
     public BaseResponse<Object> getPictureDataByShopNameAndResourceIdAndPictureId(@RequestParam("shopName") String shopName, @RequestBody UserPicturesDO userPicturesDO) {
         List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("image_id", userPicturesDO.getImageId()).eq("language_code", userPicturesDO.getLanguageCode()).eq("is_delete", false));
         if (list != null) {
+            // 替换图片url
+            list.forEach(pic -> {
+                pic.setImageAfterUrl(pic.getImageAfterUrl().replace(PCUserPicturesService.COS_URL, PCUserPicturesService.CDN_URL));
+            });
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
@@ -95,6 +96,9 @@ public class UserPicturesController {
     public BaseResponse<Object> getPictureDataByShopNameAndLanguageCode(@RequestParam("shopName") String shopName, @RequestParam("languageCode") String languageCode) {
         List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("language_code", languageCode).eq("is_delete", false));
         if (list != null) {
+            list.forEach(pic -> {
+                pic.setImageAfterUrl(pic.getImageAfterUrl().replace(PCUserPicturesService.COS_URL, PCUserPicturesService.CDN_URL));
+            });
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse(false);

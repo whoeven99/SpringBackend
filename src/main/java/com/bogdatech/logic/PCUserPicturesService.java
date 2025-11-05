@@ -32,6 +32,9 @@ public class PCUserPicturesService {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
 
+    public static String CDN_URL = "http://img.bogdatech.com";
+    public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
+
     public BaseResponse<Object> insertPicToDbAndCloud(MultipartFile file, String shopName, String pcUserPicturesDoJson) {
         //解析userPicturesDO
         PCUserPicturesDO pcUserPicturesDO = null;
@@ -157,6 +160,10 @@ public class PCUserPicturesService {
     public BaseResponse<Object> selectPictureDataByShopNameAndProductIdAndLanguageCode(String shopName, String productId, String languageCode) {
         List<PCUserPicturesDO> list = ipcUserPicturesService.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getProductId, productId).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
         if (list != null) {
+            // 替换图片url
+            list.forEach(pic -> {
+                pic.setImageAfterUrl(pic.getImageAfterUrl().replace(COS_URL, CDN_URL));
+            });
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse("null");
@@ -165,6 +172,9 @@ public class PCUserPicturesService {
     public BaseResponse<Object> selectPicturesByShopNameAndLanguageCode(String shopName, String languageCode) {
         List<PCUserPicturesDO> list = ipcUserPicturesService.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
         if (list != null) {
+            list.forEach(pic -> {
+                pic.setImageAfterUrl(pic.getImageAfterUrl().replace(COS_URL, CDN_URL));
+            });
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse("null");
