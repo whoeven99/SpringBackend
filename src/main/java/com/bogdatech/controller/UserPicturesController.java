@@ -32,7 +32,8 @@ public class UserPicturesController {
             "image/png",
             "image/webp",
             "image/heic",
-            "image/gif"
+            "image/gif",
+            "image/jpg"
     );
 
     /**
