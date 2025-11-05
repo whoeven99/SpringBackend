@@ -18,6 +18,7 @@ import com.aliyun.alimt20181012.models.*;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -360,7 +361,7 @@ public class ALiYunTranslateIntegration {
             if (TRANSLATE_APP.equals(appModel)){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
             }else {
-                ipcUserService.updateUsedPointsByShopName(shopName, PIC_FEE, limitChars);
+                ipcUserService.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
             }
             targetPicUrl = body.getData().finalImageUrl;
         } catch (Exception error) {
@@ -526,7 +527,7 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("textTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
-            ipcUserService.updateUsedPointsByShopName(shopName, 200, limitChars);
+            ipcUserService.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_ALT_FEE, limitChars);
 
         } catch (Exception e) {
             appInsights.trackTrace("textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
