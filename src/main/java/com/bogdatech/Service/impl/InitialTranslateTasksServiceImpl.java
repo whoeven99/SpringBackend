@@ -7,6 +7,8 @@ import com.bogdatech.entity.DO.InitialTranslateTasksDO;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class InitialTranslateTasksServiceImpl extends ServiceImpl<InitialTranslateTasksMapper, InitialTranslateTasksDO> implements IInitialTranslateTasksService {
     @Override
@@ -14,5 +16,10 @@ public class InitialTranslateTasksServiceImpl extends ServiceImpl<InitialTransla
         return baseMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                 .eq(InitialTranslateTasksDO::getTaskId, taskId)
                 .set(InitialTranslateTasksDO::getStatus, i)) > 0;
+    }
+
+    @Override
+    public List<InitialTranslateTasksDO> selectTop10Tasks(int status, String manual) {
+        return baseMapper.selectTop10Tasks(status, manual);
     }
 }
