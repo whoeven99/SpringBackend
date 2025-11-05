@@ -463,7 +463,7 @@ public class TranslateService {
         }
 
         // 获取userTranslate是否是写入状态，是的话翻译100%
-        Map<Object, Object> value = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
+        Map<String, String> value = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
         if (CollectionUtils.isEmpty(value) || "3".equals(value.get(TRANSLATION_STATUS))) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);

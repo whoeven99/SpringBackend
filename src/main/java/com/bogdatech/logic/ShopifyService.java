@@ -89,6 +89,10 @@ public class ShopifyService {
         // 获取该用户所有的未翻译和部分翻译的所有token数据
         List<String> all = redisTranslateUserStatusService.getAll(request.getShopName(), source);
         int allLanguage = 1;
+        if (all == null || all.isEmpty()){
+            return 0;
+        }
+
         for (String status : all) {
             if ("0".equals(status) || "3".equals(status) || "7".equals(status)) {
                 allLanguage++;
