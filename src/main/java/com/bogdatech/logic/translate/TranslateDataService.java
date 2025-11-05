@@ -883,8 +883,8 @@ public class TranslateDataService {
                 iterator.remove(); //  安全删除
 
                 // 还要删除这条语言
-                ShopifyHttpIntegration.deleteTranslateData(shopName, accessToken, translateTextDO.getResourceId(), target, translateTextDO.getTextKey());
-                appInsights.trackTrace("filterNeedTranslateSet 用户： " + shopName + " token: " + accessToken + " 删除这条语言: " + translateTextDO.getResourceId() + " key: " + translateTextDO.getTextKey() + " target: " + target);
+//                ShopifyHttpIntegration.deleteTranslateData(shopName, accessToken, translateTextDO.getResourceId(), target, translateTextDO.getTextKey());
+//                appInsights.trackTrace("filterNeedTranslateSet 用户： " + shopName + " token: " + accessToken + " 删除这条语言: " + translateTextDO.getResourceId() + " key: " + translateTextDO.getTextKey() + " target: " + target);
                 redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                 continue;
             }
