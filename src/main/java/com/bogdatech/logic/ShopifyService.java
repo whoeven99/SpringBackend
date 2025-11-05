@@ -88,7 +88,7 @@ public class ShopifyService {
     public int getUnTranslatedToken(ShopifyRequest request, String method, TranslateResourceDTO translateResource, String source) {
         // 获取该用户所有的未翻译和部分翻译的所有token数据
         List<String> all = redisTranslateUserStatusService.getAll(request.getShopName(), source);
-
+        System.out.println("all: " + all);
         if (all.isEmpty()){
             return 0;
         }

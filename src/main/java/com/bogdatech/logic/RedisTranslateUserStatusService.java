@@ -35,7 +35,9 @@ public class RedisTranslateUserStatusService {
      */
     public List<String> getAll(String shopName, String sourceCode) {
         // 获取该用户所有语言
+        // TODO 获取的是历史数据，要从shopify获取
         List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, sourceCode));
+        System.out.println("list: " + list);
         Set<String> keys = new HashSet<>();
         list.stream().map(TranslatesDO::getTarget).forEach(targetCode -> {
                     String key = generateTranslateUserStatusKey(shopName, sourceCode, targetCode);
@@ -43,6 +45,7 @@ public class RedisTranslateUserStatusService {
                 }
         );
 
+        System.out.println("keys: " + keys);
         if (keys.isEmpty()) {
             return Collections.emptyList();
         }
