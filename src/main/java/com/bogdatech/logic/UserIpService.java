@@ -17,20 +17,15 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 public class UserIpService {
-    private final IUserSubscriptionsService iUserSubscriptionsService;
-    private final IUserIpService iUserIpService;
-    private final TencentEmailService tencentEmailService;
-    private final ITranslationCounterService iTranslationCounterService;
-    private final TransactionTemplate transactionTemplate;
-
     @Autowired
-    public UserIpService(IUserSubscriptionsService iUserSubscriptionsService, IUserIpService iUserIpService, TencentEmailService tencentEmailService, ITranslationCounterService iTranslationCounterService, TransactionTemplate transactionTemplate) {
-        this.iUserSubscriptionsService = iUserSubscriptionsService;
-        this.iUserIpService = iUserIpService;
-        this.tencentEmailService = tencentEmailService;
-        this.iTranslationCounterService = iTranslationCounterService;
-        this.transactionTemplate = transactionTemplate;
-    }
+    private IUserSubscriptionsService iUserSubscriptionsService;
+    @Autowired
+    private IUserIpService iUserIpService;
+    @Autowired
+    private TencentEmailService tencentEmailService;
+    @Autowired
+    private ITranslationCounterService iTranslationCounterService;
+
 
     /**
      * 检查额度是否足够，足够+1. 到达相关百分比，发邮件
