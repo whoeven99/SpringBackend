@@ -24,11 +24,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
-
 import static com.bogdatech.logic.PrivateKeyService.GOOGLE_MODEL;
 import static com.bogdatech.logic.PrivateKeyService.OPENAI_MODEL;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
-import static com.bogdatech.utils.AppInsightsUtils.printPrivateTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.getFullHtmlPrompt;

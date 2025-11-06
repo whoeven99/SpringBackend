@@ -512,7 +512,7 @@ public class TranslateService {
         //获取用户最大额度限制
         Integer maxCharsByShopName = iTranslationCounterService.getMaxCharsByShopName(shopName);
         //调用图片翻译方法
-        return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName);
+        return aLiYunTranslateIntegration.callWithPic(sourceCode, targetCode, imageUrl, shopName, maxCharsByShopName, ALiYunTranslateIntegration.TRANSLATE_APP);
     }
 }
 

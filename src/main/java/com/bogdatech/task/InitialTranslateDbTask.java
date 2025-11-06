@@ -24,12 +24,10 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
