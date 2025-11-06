@@ -415,10 +415,14 @@ public class TranslateService {
         JsonNode root;
         try {
             shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
-            root = OBJECT_MAPPER.readTree(shopifyData);
+            root = JsonUtils.readTree(shopifyData);
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
+            return;
+        }
+
+        if (root == null) {
             return;
         }
 
