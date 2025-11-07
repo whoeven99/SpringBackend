@@ -31,4 +31,10 @@ public class PCUsersController {
     public BaseResponse<Object> getPurchasePoints(@RequestParam String shopName){
         return pcUsersService.getPurchasePoints(shopName);
     }
+
+    // 用户卸载
+    @PostMapping("/uninstall")
+    public BaseResponse<Object> uninstall(@RequestParam String shopName){
+        return pcUsersService.uninstall(shopName);
+    }
 }

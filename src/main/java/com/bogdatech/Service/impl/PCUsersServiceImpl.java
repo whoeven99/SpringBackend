@@ -8,6 +8,9 @@ import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.mapper.PCUsersMapper;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
 @Service
 public class PCUsersServiceImpl extends ServiceImpl<PCUsersMapper, PCUsersDO> implements IPCUserService {
     @Override
@@ -33,6 +36,13 @@ public class PCUsersServiceImpl extends ServiceImpl<PCUsersMapper, PCUsersDO> im
     @Override
     public boolean updateUsedPointsByShopName(String shopName, int picFee, Integer limitChars) {
         return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName).setSql("used_points = used_points + " + picFee)) > 0;
+    }
+
+    @Override
+    public boolean updateUninstallByShopName(String shopName) {
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName)
+                .set(PCUsersDO::getUninstallTime, now)) > 0;
     }
 
 }
