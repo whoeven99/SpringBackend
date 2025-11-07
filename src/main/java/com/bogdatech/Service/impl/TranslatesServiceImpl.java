@@ -178,8 +178,9 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
 
     @Override
-    public void updateAutoTranslateByShopNameToFalse(String shopName) {
-        baseMapper.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).set("auto_translate", false));
+    public boolean updateAutoTranslateByShopNameToFalse(String shopName) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                .set(TranslatesDO::getAutoTranslate, false)) > 0;
     }
 
     @Override
@@ -233,5 +234,30 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public void updateAutoTranslateByShopNameAndTargetToFalse(String shopName, String target) {
         baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).set(TranslatesDO::getAutoTranslate, false));
+    }
+
+    @Override
+    public List<TranslatesDO> selectTranslatesByShopNameAndAutoTranslate(String shopName, int i) {
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getAutoTranslate, i));
+    }
+
+    @Override
+    public List<TranslatesDO> selectTranslatesByShopNameAndSouce(String shopName, String source) {
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                .eq(TranslatesDO::getSource, source));
+    }
+
+    @Override
+    public boolean updateResourceTypeToNull(String shopName, String source, String target) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                .eq(TranslatesDO::getSource, source)
+                .eq(TranslatesDO::getTarget, target)
+                .set(TranslatesDO::getResourceType, null)) > 0;
+    }
+
+    @Override
+    public boolean updateStatusByShopNameAndStatus(String shopName, int sourceStatus, int targetStatus) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                .eq(TranslatesDO::getStatus, 2).set(TranslatesDO::getStatus, 7)) > 0;
     }
 }

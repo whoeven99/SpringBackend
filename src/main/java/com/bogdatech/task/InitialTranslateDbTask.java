@@ -1,7 +1,5 @@
 package com.bogdatech.task;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.InitialTaskStatusEnum;
@@ -9,34 +7,28 @@ import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.logic.RabbitMqTranslateService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
-import static com.bogdatech.utils.RedisKeyUtils.*;
 
 @Component
 @EnableScheduling
@@ -45,8 +37,6 @@ public class InitialTranslateDbTask {
     private RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
     private InitialTranslateRedisService initialTranslateRedisService;
-    @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
     @Autowired
     private IUsersService iUsersService;
     @Autowired
@@ -138,11 +128,10 @@ public class InitialTranslateDbTask {
         String shop = singleTask.getShopName();
 
         // 获取用户的accessToken
-        UsersDO userDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, singleTask.getShopName()));
+        UsersDO userDO = iUsersService.getUserByName(singleTask.getShopName());
+
         appInsights.trackTrace("processInitialTasksOfShop task START: " + singleTask.getTaskId() + " of shop: " + shop);
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                .eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId())
-                .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
+        iInitialTranslateTasksService.updateStatusByTaskId(singleTask.getTaskId(), InitialTaskStatusEnum.TASKS_CREATING.status);
 
         // taskType为 click 是手动翻译邮件， auto 是自动翻译邮件 ， key 是私有key邮件（这个暂时未实现）
         rabbitMqTranslateService.initialTasks(
@@ -157,23 +146,16 @@ public class InitialTranslateDbTask {
                 singleTask.getTaskType());
 
         appInsights.trackTrace("processInitialTasksOfShop task FINISH successfully: " + singleTask.getTaskId() + " of shop: " + shop);
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                .eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId())
-                .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATED.status));
+        iInitialTranslateTasksService.updateStatusByTaskId(singleTask.getTaskId(), InitialTaskStatusEnum.TASKS_CREATED.status);
+
     }
 
     @Scheduled(fixedDelay = 60 * 1000)
     public void scanAndSendEmail() {
         // 1. 查询待处理任务
-        List<InitialTranslateTasksDO> taskList = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .in(InitialTranslateTasksDO::getStatus, Arrays.asList(
-                                InitialTaskStatusEnum.TASKS_CREATING.status,
-                                InitialTaskStatusEnum.TASKS_CREATED.status,
-                                InitialTaskStatusEnum.TRANSLATED_WRITING_SHOPIFY.status))
-                        .eq(InitialTranslateTasksDO::isDeleted, false)
-                        .eq(InitialTranslateTasksDO::isSendEmail, false)
-        );
+        List<InitialTranslateTasksDO> taskList = iInitialTranslateTasksService.selectTasksByStatusAndNotSendEmail(
+                        Arrays.asList(InitialTaskStatusEnum.TASKS_CREATING.status, InitialTaskStatusEnum.TASKS_CREATED.status,
+                                InitialTaskStatusEnum.TRANSLATED_WRITING_SHOPIFY.status), false);
 
         for (InitialTranslateTasksDO task : taskList) {
             TranslatesDO translate = iTranslatesService.getSingleTranslateDO(task.getShopName(), task.getSource(), task.getTarget());
@@ -187,10 +169,7 @@ public class InitialTranslateDbTask {
 
             // 2. 状态为7：手动暂停 -> 不发邮件，只标记, 将状态改为4
             if (translateStatus == 7) {
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
-                        .set(InitialTranslateTasksDO::isSendEmail, true)
-                        .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TRANSLATED_WRITTEN.status));
+                iInitialTranslateTasksService.updateStatusAndSendEmailByTaskId(task.getTaskId(), InitialTaskStatusEnum.TRANSLATED_WRITTEN.status, true);
                 continue;
             }
 
@@ -207,12 +186,7 @@ public class InitialTranslateDbTask {
                 tencentEmailService.translateFailEmail(task.getShopName(), createdAt, resourceList,
                         task.getTarget(), task.getSource(), costToken);
 
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
-                        .set(InitialTranslateTasksDO::isSendEmail, true)
-                        .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TRANSLATED_WRITTEN.status));
-
-                appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 发送部分翻译邮件成功。");
+                iInitialTranslateTasksService.updateStatusAndSendEmailByTaskId(task.getTaskId(), InitialTaskStatusEnum.TRANSLATED_WRITTEN.status, true);
                 continue;
             }
 
@@ -269,10 +243,8 @@ public class InitialTranslateDbTask {
                 );
 
                 // 更新数据库 & Redis
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getTaskId, task.getTaskId())
-                        .set(InitialTranslateTasksDO::isSendEmail, true)
-                        .set(InitialTranslateTasksDO::getStatus, 4));
+                iInitialTranslateTasksService.updateStatusAndSendEmailByTaskId(task.getTaskId()
+                        , InitialTaskStatusEnum.TRANSLATED_WRITTEN.status, true);
 
                 translationParametersRedisService.hsetTranslationStatus(
                         generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "4");

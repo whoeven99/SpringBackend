@@ -10,16 +10,13 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/private/translate")
 public class UserPrivateTranslateController {
-    private final UserPrivateTranslateService userPrivateTranslateService;
-
     @Autowired
-    public UserPrivateTranslateController(UserPrivateTranslateService userPrivateTranslateService) {
-        this.userPrivateTranslateService = userPrivateTranslateService;
-    }
+    private UserPrivateTranslateService userPrivateTranslateService;
 
     /**
      * 配置用户私有模型
      * */
+    // TODO test
     @PostMapping("/configPrivateModel")
     public BaseResponse<Object> configPrivateModel(@RequestParam String shopName, @RequestBody UserPrivateTranslateDO data) {
         boolean flag;

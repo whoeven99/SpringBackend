@@ -2,17 +2,14 @@ package com.bogdatech.logic;
 
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.IUserPrivateTranslateService;
 import com.bogdatech.entity.DO.UserPrivateTranslateDO;
-import com.bogdatech.integration.PrivateIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.UserPrivateUtils.getApiKey;
 
-@Service
+@Component
 public class UserPrivateTranslateService {
     @Autowired
     private IUserPrivateTranslateService iUserPrivateTranslateService;
@@ -22,21 +19,15 @@ public class UserPrivateTranslateService {
     public Boolean configPrivateModel(String shopName, UserPrivateTranslateDO data) {
         data.setShopName(shopName);
         //判断这个值在DB中是否存在。存在一系列操作后，插入；不存在，更新相关数据
-        UserPrivateTranslateDO dbData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>()
-                .eq(UserPrivateTranslateDO::getShopName, shopName)
-                .eq(UserPrivateTranslateDO::getApiName, data.getApiName()));
+        UserPrivateTranslateDO dbData = iUserPrivateTranslateService.getPrivateDataByShopNameAndApiName(shopName, data.getApiName());
+
         String userKey = getApiKey(shopName, data.getApiName());
         if (dbData != null) {
             // 仅更新 api_model，prompt_word，token_limit ，is_selected
             appInsights.trackTrace("configPrivateModel " + shopName + "userKey: " + userKey);
             KeyVaultSecret keyVaultSecret = secretClient.setSecret(userKey, data.getApiKey());
-            return iUserPrivateTranslateService.update(new LambdaUpdateWrapper<UserPrivateTranslateDO>()
-                    .eq(UserPrivateTranslateDO::getShopName, shopName)
-                    .eq(UserPrivateTranslateDO::getApiName, data.getApiName())
-                    .set(UserPrivateTranslateDO::getApiModel, data.getApiModel())
-                    .set(UserPrivateTranslateDO::getPromptWord, data.getPromptWord())
-                    .set(UserPrivateTranslateDO::getTokenLimit, data.getTokenLimit())
-                    .set(UserPrivateTranslateDO::getIsSelected, data.getIsSelected()));
+            return iUserPrivateTranslateService.updateUserDataByShopNameAndApiName(shopName, data.getApiName()
+                    , data.getApiModel(), data.getPromptWord(), data.getTokenLimit(), data.getIsSelected());
         }
 
         //将数据存到Azure服务器里面
@@ -52,7 +43,8 @@ public class UserPrivateTranslateService {
 
     public UserPrivateTranslateDO getUserPrivateData(String shopName, Integer apiName) {
         // 从数据中获取相关数据
-        UserPrivateTranslateDO one = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiName, apiName));
+        UserPrivateTranslateDO one = iUserPrivateTranslateService.getPrivateDataByShopNameAndApiName(shopName, apiName);
+
         if (one == null) {
             return null;
         }
@@ -65,20 +57,14 @@ public class UserPrivateTranslateService {
         data.setShopName(shopName);
 
         // 判断这个值在DB中是否存在。存在一系列操作后，插入；不存在，更新相关数据
-        UserPrivateTranslateDO dbData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>()
-                .eq(UserPrivateTranslateDO::getShopName, shopName)
-                .eq(UserPrivateTranslateDO::getApiName, data.getApiName()));
+        UserPrivateTranslateDO dbData = iUserPrivateTranslateService.getPrivateDataByShopNameAndApiName(shopName, data.getApiName());
+
         String userKey = getApiKey(shopName, data.getApiName());
         if (dbData != null) {
             // 仅更新 api_model，prompt_word，token_limit ，is_selected
             appInsights.trackTrace("configPrivateModelExceptApiKey " + shopName + " userKey: " + userKey);
-            return iUserPrivateTranslateService.update(new LambdaUpdateWrapper<UserPrivateTranslateDO>()
-                    .eq(UserPrivateTranslateDO::getShopName, shopName)
-                    .eq(UserPrivateTranslateDO::getApiName, data.getApiName())
-                    .set(UserPrivateTranslateDO::getApiModel, data.getApiModel())
-                    .set(UserPrivateTranslateDO::getPromptWord, data.getPromptWord())
-                    .set(UserPrivateTranslateDO::getTokenLimit, data.getTokenLimit())
-                    .set(UserPrivateTranslateDO::getIsSelected, data.getIsSelected()));
+            return iUserPrivateTranslateService.updateUserDataByShopNameAndApiName(shopName, data.getApiName()
+                    , data.getApiModel(), data.getPromptWord(), data.getTokenLimit(), data.getIsSelected());
         }
 
         // 将数据存到数据库中

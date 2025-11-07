@@ -1,8 +1,5 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
@@ -12,7 +9,6 @@ import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.*;
@@ -67,7 +63,7 @@ public class TranslateService {
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
+    private IInitialTranslateTasksService iInitialTranslateTasksService;
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
     @Autowired
@@ -117,6 +113,7 @@ public class TranslateService {
 
         // 一个用户当前只能翻译一条语言，根据用户的status判断
         appInsights.trackTrace("clickTranslation 判断用户是否有语言在翻译 : " + shopName);
+
         // TODO 这个判断是不是要去掉了，还是怎么处理好一些
         List<Integer> integers = translatesService.readStatusInTranslatesByShopName(shopName);
         if (integers.contains(2)) {
@@ -125,6 +122,7 @@ public class TranslateService {
 
         // 判断是否有 handle 模块
         boolean handleFlag = false;
+
         // TODO 这个前后端的字段名字，重新换一个
         List<String> translateResourceTypesList = request.getTranslateSettings3();
         if (translateResourceTypesList.contains("handle")) {
@@ -198,20 +196,7 @@ public class TranslateService {
         appInsights.trackTrace("将模块数据List类型转化为Json类型 : " + shopName + " resourceToJson: " + resourceToJson);
 
         // 将上一次initial表中taskType为 click的数据逻辑删除
-        try {
-            initialTranslateTasksMapper.selectList(new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                    .eq(InitialTranslateTasksDO::getSource, source)
-                    .eq(InitialTranslateTasksDO::getShopName, shopName).
-                    eq(InitialTranslateTasksDO::getTaskType, MANUAL)
-                    .eq(InitialTranslateTasksDO::isDeleted, false)).forEach(initialTranslateTasksDO -> {
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
-                        .set(InitialTranslateTasksDO::isDeleted, true));
-            });
-        } catch (Exception e) {
-            appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除一个任务失败");
-            appInsights.trackException(e);
-        }
+        iInitialTranslateTasksService.deleteInitialTasksByShopNameAndSourceAndTargetAndTaskType(shopName, source, MANUAL);
 
         for (String target : targets) {
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopName);
@@ -229,10 +214,8 @@ public class TranslateService {
             translationParametersRedisService.addWritingData(generateWriteStatusKey(shopName, target), WRITE_DONE, 1L);
 
             // 将翻译项中的模块改为null
-            translatesService.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
-                    .eq(TranslatesDO::getSource, source)
-                    .eq(TranslatesDO::getTarget, target)
-                    .set(TranslatesDO::getResourceType, null));
+            translatesService.updateResourceTypeToNull(shopName, source, target);
+
 
             // 将线管参数存到数据库中
             InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(
@@ -240,8 +223,7 @@ public class TranslateService {
                     request.getTranslateSettings1(), request.getTranslateSettings2(), resourceToJson, cleanedText,
                     shopName, handleFlag, MANUAL, Timestamp.valueOf(LocalDateTime.now()), false);
             try {
-                appInsights.trackTrace("将手动翻译参数存到数据库中");
-                int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
+                boolean insert = iInitialTranslateTasksService.save(initialTranslateTasksDO);
                 appInsights.trackTrace("将手动翻译参数存到数据库后： " + insert);
 
                 // Monitor 记录shop开始的时间（中国区时间）
@@ -253,19 +235,18 @@ public class TranslateService {
             }
         }
 
-        // TODO 把request返回去的意义是什么？
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
     /**
      * 手动停止用户的翻译任务
-     * */
+     */
     public String stopTranslationManually(String shopName) {
         Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
         if (stopFlag) {
             appInsights.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");
 
-            //将Task表DB中的status改为5
+            // 将Task表DB中的status改为5
             translateTasksService.updateStatusAllTo5ByShopName(shopName);
 
             // 将翻译状态改为“部分翻译” shopName, status=3
@@ -311,7 +292,8 @@ public class TranslateService {
     public String translateSingleText(RegisterTransactionRequest request) {
         TranslateRequest translateRequest = TypeConversionUtils.registerTransactionRequestToTranslateRequest(request);
         request.setValue(getGoogleTranslationWithRetry(translateRequest));
-        //保存翻译后的数据到shopify本地
+
+        // 保存翻译后的数据到shopify本地
         Map<String, Object> variables = getVariables(request);
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(translateRequest);
         return registerTransaction(shopifyRequest, variables);
@@ -365,7 +347,7 @@ public class TranslateService {
         if (type.equals(URI) && "handle".equals(key)) {
             // 如果 key 为 "handle"，这里是要处理的代码
             String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName
-                    , null, source, target, value), counter, null, HANDLE
+                            , null, source, target, value), counter, null, HANDLE
                     , remainingChars, true, MANUAL);
             if (targetString == null) {
                 return new BaseResponse<>().CreateErrorResponse(value);
@@ -393,7 +375,7 @@ public class TranslateService {
                 return new BaseResponse<>().CreateSuccessResponse(htmlTranslation);
             } else {
                 String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName
-                        , null, source, target, value), counter, null, GENERAL
+                                , null, source, target, value), counter, null, GENERAL
                         , remainingChars, true, MANUAL);
                 appInsights.trackTrace(shopName + " 用户 ，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 return new BaseResponse<>().CreateSuccessResponse(targetString);
@@ -440,12 +422,9 @@ public class TranslateService {
      */
     public void isExistInDatabase(String shopName, String[] targets, String source, String accessToken) {
         for (String target : targets) {
-            TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>()
-                    .eq("shop_name", shopName)
-                    .eq("source", source)
-                    .eq("target", target));
+            TranslatesDO one = translatesService.getSingleTranslateDO(shopName, source, target);
             if (one == null) {
-                //走同步逻辑
+                // 走同步逻辑
                 syncShopifyAndDatabase(shopName, accessToken, source);
             }
         }
@@ -455,7 +434,7 @@ public class TranslateService {
         Map<String, Integer> progressData = new HashMap<>();
 
         // 获取用户数据库翻译状态，如果是已完成，返回100%进度
-        TranslatesDO translatesServiceOne = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
+        TranslatesDO translatesServiceOne = translatesService.getSingleTranslateDO(shopName, source, target);
         if (translatesServiceOne != null && translatesServiceOne.getStatus() == 1) {
             progressData.put("RemainingQuantity", 0);
             progressData.put("TotalQuantity", 1);
@@ -475,7 +454,8 @@ public class TranslateService {
         String done = redisProcessService.getFieldProcessData(generateProcessKey(shopName, target), PROGRESS_DONE);
         if (total == null || done == null || "null".equals(total) || "null".equals(done)) {
             //根据用户当前的模块从静态数据做判断
-            TranslatesDO translatesDO = translatesService.getOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).eq(TranslatesDO::getSource, source));
+            TranslatesDO translatesDO = translatesService.getSingleTranslateDO(shopName, source, target);
+
             if (translatesDO == null) {
                 appInsights.trackTrace("getProgressData 用户： " + shopName + " target: " + target + " 数据库中不存在该条数据");
                 return null;
@@ -504,7 +484,8 @@ public class TranslateService {
     public String imageTranslate(String sourceCode, String targetCode, String imageUrl, String shopName, String accessToken) {
         appInsights.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + sourceCode + " targetCode " + targetCode + " imageUrl " + imageUrl + " accessToken " + accessToken);
         //获取用户token，判断是否和数据库中一致再选择是否调用
-        UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+        UsersDO usersDO = iUsersService.getUserByName(shopName);
+
         if (!usersDO.getAccessToken().equals(accessToken)) {
             return null;
         }

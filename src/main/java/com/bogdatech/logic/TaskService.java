@@ -3,9 +3,6 @@ package com.bogdatech.logic;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
@@ -22,9 +19,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
-import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
@@ -88,7 +83,8 @@ public class TaskService {
                 continue;
             }
             //根据shopName获取User表对应的accessToken，重新生成一个数据类型  判断是否是卸载，如果卸载， 不计算
-            UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>().eq("shop_name", charsOrdersDO.getShopName()));
+            UsersDO usersDO = usersService.getUserByName(charsOrdersDO.getShopName());
+
             if (usersDO == null) {
                 continue;
             }
@@ -156,25 +152,19 @@ public class TaskService {
         }
     }
 
-    //根据用户accessToken和订单id分析数据，获取数据
+    // 根据用户accessToken和订单id分析数据，获取数据
     public JSONObject analyzeOrderData(UserPriceRequest userPriceRequest) {
         String query = getSubscriptionQuery(userPriceRequest.getSubscriptionId());
-        String infoByShopify;
 
         // TODO shopify service
-        String env = System.getenv("ApplicationEnv");
-        //根据新的集合获取这个订阅计划的信息
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, null), query));
-        } else {
-            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, "en", query));
-        }
+        String infoByShopify = shopifyService.getShopifyData(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, query);
 
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
             appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务根据订单id: " + userPriceRequest.getSubscriptionId() + "获取数据失败" + " token: " + userPriceRequest.getAccessToken());
             return null;
         }
+
         JSONObject node = root.getJSONObject("node");
         if (node == null || node.isEmpty()) {
             //用户卸载，计划会被取消，但不确定其他情况
@@ -184,10 +174,10 @@ public class TaskService {
     }
 
 
-    //获取用户订阅选项并判断是否添加额度
+    // 获取用户订阅选项并判断是否添加额度
     public void addCharsByUserData(UserPriceRequest userPriceRequest) {
 
-        //根据新的集合获取这个订阅计划的信息
+        // 根据新的集合获取这个订阅计划的信息
         JSONObject node = analyzeOrderData(userPriceRequest);
         if (node == null) {
             appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 获取不到计划的相关数据，获取为null " + userPriceRequest);
@@ -195,34 +185,33 @@ public class TaskService {
         }
         String name = node.getString("name");
         String status = node.getString("status");
-        String createdAt = node.getString("createdAt");
         String currentPeriodEnd = node.getString("currentPeriodEnd");
-        //用户购买订阅时间
+
+        // 用户购买订阅时间
         LocalDateTime buyCreate = userPriceRequest.getCreateAt();
         Instant buyCreateInstant = buyCreate.atZone(ZoneId.of("UTC")).toInstant();
-        //订阅开始时间
-        Instant created = Instant.parse(createdAt);
-        //订阅结束时间
+
+        // 订阅结束时间
         Instant end = Instant.parse(currentPeriodEnd);
         LocalDateTime subEnd = end.atZone(ZoneOffset.UTC).toLocalDateTime();
-        //当前时间
+
+        // 当前时间
         Instant now = Instant.now();
 
         // 只处理活跃、非试用、且还在本期内的订阅
         if (!"ACTIVE".equals(status) || now.isAfter(end)) {
-//            appInsights.trackTrace("不满足条件");
             return;
         }
 
-        //计算当前是第几个月
+        // 计算当前是第几个月
         int billingCycle = (int) ChronoUnit.DAYS.between(buyCreateInstant, now) / 30 + 1;
-//        appInsights.trackTrace("billingCycle = " + billingCycle);
 
         // 如果这一周期还没发放过额度，则发放并记录
-        SubscriptionQuotaRecordDO quotaRecordDO = subscriptionQuotaRecordService.getOne(new QueryWrapper<SubscriptionQuotaRecordDO>().eq("subscription_id", userPriceRequest.getSubscriptionId()).eq("billing_cycle", billingCycle));
+        SubscriptionQuotaRecordDO quotaRecordDO = subscriptionQuotaRecordService
+                .getSubscriptionQuotaRecordDataByIdAndBillingCycle(userPriceRequest.getSubscriptionId(), billingCycle);
+
         if (quotaRecordDO == null) {
             // 满足条件，执行添加字符的逻辑
-//            appInsights.trackTrace("满足条件，执行添加字符的逻辑");
             // 根据计划获取对应的字符
             Integer chars = subscriptionPlansService.getCharsByPlanName(name);
             subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
@@ -230,10 +219,11 @@ public class TaskService {
             appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars + " 是否成功： " + flag);
 
             // 将用户免费Ip清零
-            iUserIpService.update(new UpdateWrapper<UserIpDO>().eq("shop_name", userPriceRequest.getShopName()).set("times", 0).set("first_email", 0).set("second_email", 0));
+            iUserIpService.resetUsersFreeIp(userPriceRequest.getShopName());
 
             // 修改该用户过期时间
-            iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, userPriceRequest.getShopName()).set(UserSubscriptionsDO::getEndDate, subEnd));
+            iUserSubscriptionsService.updateUserExpirationTime(userPriceRequest.getShopName(), subEnd);
+
 
             // 修改Translates表中，状态3 - 》 6
             translatesService.updateStatus3To6(userPriceRequest.getShopName());
@@ -248,16 +238,11 @@ public class TaskService {
     //当自动重启后，重启翻译状态为2的任务
     public void translateStatus2WhenSystemRestart() {
         // 查找翻译状态为2的任务
-        QueryWrapper<TranslateTasksDO> wrapper = new QueryWrapper<>();
-        wrapper.select("DISTINCT shop_name");
-
-        List<Map<String, Object>> maps = translateTasksService.listMaps(wrapper);
-        List<String> allShopName = maps.stream()
-                .map(m -> (String) m.get("shop_name"))
-                .toList();
+        List<String> allShopName = translateTasksService.selectShopNamesWhenStatus2();
 
         // 将所有状态为2的任务状态改为0
-        translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
+        translateTasksService.updateStatus2To0();
+
         appInsights.trackTrace("TaskServiceLog 系统重启，获取翻译状态为2的任务数： " + allShopName.size());
 
 //        // 将initial表中所有状态为2的任务状态改为0
@@ -305,7 +290,6 @@ public class TaskService {
 
         for (TranslatesDO translatesDO : translatesDOList) {
             String shopName = translatesDO.getShopName();
-            appInsights.trackTrace("autoTranslate 用户: " + shopName);
 
             // 判断这些用户是否卸载了，卸载了就不管了
             UsersDO usersDO = usersService.getUserByName(shopName);
@@ -338,7 +322,7 @@ public class TaskService {
 
             // 判断这条语言是否在用户本地存在
             String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, getShopLanguageQuery());
-            appInsights.trackTrace("autoTranslate 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
+
             if (shopifyByQuery == null) {
                 appInsights.trackTrace("FatalException autoTranslate 用户: " + shopName + " 获取用户本地语言数据失败");
                 continue;
@@ -365,7 +349,6 @@ public class TaskService {
             if (stopFlag) {
                 appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
             }
-            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
             // 在自动翻译初始化时，按target，将对应的计数删除
             translationCounterRedisService.deleteLanguage(shopName, translatesDO.getTarget(), AUTO);
@@ -400,10 +383,12 @@ public class TaskService {
      */
     public void freeTrialTask() {
         // 获取所有免费计划不过期的用户
-        List<UserTrialsDO> notTrialExpired = iUserTrialsService.list(new QueryWrapper<UserTrialsDO>().eq("is_trial_expired", false));
+        List<UserTrialsDO> notTrialExpired = iUserTrialsService.selectTrialsByIsTrialExpired(false);
+
         if (notTrialExpired == null || notTrialExpired.isEmpty()) {
             return;
         }
+
         // 循环检测是否过期
         for (UserTrialsDO userTrialsDO : notTrialExpired) {
             // 判断是否过期
@@ -424,7 +409,7 @@ public class TaskService {
                     appInsights.trackTrace("freeTrialTask  latestActiveSubscribeId的数据为null，用户是：" + shopName);
                     continue;
                 }
-                UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+                UsersDO usersDO = usersService.getUserByName(shopName);
 
                 // 如果订单存在，并且支付成功，添加相关计划额度；如果订单不存在，说明他未支付，修改免费试用计划表
                 String subscriptionQuery = getSubscriptionQuery(latestActiveSubscribeId);
@@ -441,19 +426,20 @@ public class TaskService {
                 if (!"ACTIVE".equals(status)) {
                     try {
                         // 将免费试用计划表里的状态改为true
-                        iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialExpired, true));
+                        iUserTrialsService.updateTrialsExpiredByShopName(shopName, true);
 
                         // 将用户计划改为2
-                        iUserSubscriptionsService.update(new UpdateWrapper<UserSubscriptionsDO>().eq("shop_name", userTrialsDO.getShopName()).set("plan_id", 2));
+                        iUserSubscriptionsService.updateUserSubscription(shopName, 2);
 
                         // 修改用户定时翻译任务
-                        translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", userTrialsDO.getShopName()).set("auto_translate", false));
+                        translatesService.updateAutoTranslateByShopNameToFalse(shopName);
 
                         // 修改用户IP开关方法
-                        iWidgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userTrialsDO.getShopName()).set("ip_open", false));
+                        iWidgetConfigurationsService.updateWidgetIpOpenByShopName(shopName, false);
 
                         // 词汇表改为0
-                        iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userTrialsDO.getShopName()).set("status", 0));
+                        iGlossaryService.updateGlossaryStatusByShopName(userTrialsDO.getShopName(), 0);
+
                     } catch (Exception e) {
                         appInsights.trackTrace(userTrialsDO.getShopName() + "用户  errors 修改用户计划失败: " + e.getMessage());
                     }
@@ -461,7 +447,7 @@ public class TaskService {
                 }
 
                 // 将免费试用计划表里的状态改为true
-                iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialExpired, true));
+                iUserTrialsService.updateTrialsExpiredByShopName(shopName, true);
 
                 // 如果订单存在，并且支付成功，添加相关计划额度
                 Boolean flag = translationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), latestActiveSubscribeId, charsByPlanName);

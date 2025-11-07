@@ -7,4 +7,6 @@ public interface IWidgetConfigurationsService extends IService<WidgetConfigurati
     Boolean saveAndUpdateData(WidgetConfigurationsDO widgetConfigurationsDO);
 
     WidgetConfigurationsDO getData(String shopName);
+
+    boolean updateWidgetIpOpenByShopName(String shopName, boolean flag);
 }

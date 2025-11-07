@@ -6,7 +6,6 @@ import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ChatGptIntegration;
 import com.bogdatech.integration.DeepLIntegration;
-import com.bogdatech.integration.HunYuanIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;

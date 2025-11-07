@@ -13,6 +13,9 @@ import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.Timestamp;
+
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSingleQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
@@ -131,6 +134,19 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     @Override
     public TranslationCounterDO getTranslationCounterByShopName(String shopName) {
         return baseMapper.selectOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
+    }
+
+    @Override
+    public Boolean updateUserCharsByShopName(String shopName, Integer chars) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName)
+                .setSql("chars = chars + " + chars)) > 0;
+    }
+
+    @Override
+    public boolean updateFreeTrialDateByShopName(String shopName, Timestamp afterTrialDaysTimestamp, int i, Integer charsByPlan) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName)
+                .set(TranslationCounterDO::getGoogleChars, charsByPlan + 200000)
+                .set(TranslationCounterDO::getOpenAiChars, 1).setSql("chars = chars + " + charsByPlan)) > 0;
     }
 
 

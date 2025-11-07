@@ -3,7 +3,6 @@ package com.bogdatech.logic;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUsersService;
@@ -13,7 +12,7 @@ import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ import static com.bogdatech.constants.TranslateConstants.IS_PUBLISH;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 
-@Service
+@Component
 public class DataRatingService {
     @Autowired
     private IGlossaryService iGlossaryService;
@@ -43,7 +42,7 @@ public class DataRatingService {
      */
     public Map<String, Boolean> queryDBConfiguration(String shopName) {
         Map<String, Boolean> configurationMap = new HashMap<>();
-        //1, 查询术语表
+        // 1, 查询术语表
         GlossaryDO[] glossaryByShopName = iGlossaryService.getGlossaryByShopName(shopName);
         if (glossaryByShopName.length > 0) {
             configurationMap.put("glossary", true);
@@ -51,7 +50,7 @@ public class DataRatingService {
             configurationMap.put("glossary", false);
         }
 
-        //2，查询switch表
+        // 2，查询switch表
         WidgetConfigurationsDO data = iWidgetConfigurationsService.getData(shopName);
         if (data != null) {
             configurationMap.put("switch", data.getLanguageSelector());
@@ -59,8 +58,8 @@ public class DataRatingService {
             configurationMap.put("switch", false);
         }
 
-        //3，查询自动翻译表
-        List<TranslatesDO> one = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getAutoTranslate, 1));
+        // 3，查询自动翻译表
+        List<TranslatesDO> one = iTranslatesService.selectTranslatesByShopNameAndAutoTranslate(shopName, 1);
         if (one != null && !one.isEmpty()) {
             configurationMap.put("autoTranslate", true);
         } else {
@@ -76,8 +75,8 @@ public class DataRatingService {
     public Map<String, Integer> getTranslationStatus(String shopName, String source) {
         // 1， 从db获取用户token和相关翻译数据， 存入Map中
         Map<String, Integer> statusMap = new HashMap<>();
-        UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
-        List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
+        UsersDO usersDO = iUsersService.getUserByName(shopName);
+        List<TranslatesDO> list = iTranslatesService.selectTranslatesByShopNameAndSouce(shopName, source);
 
         // 2，从shopify中获取所有的语言状态数据
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, getShopLanguageQuery());

@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IUserPicturesService;
 import com.bogdatech.entity.DO.UserPicturesDO;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -8,7 +7,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 import static com.bogdatech.integration.HunYuanBucketIntegration.uploadFile;
@@ -19,13 +17,8 @@ import static com.bogdatech.utils.StringUtils.convertUrlToMultipartFile;
 @RestController
 @RequestMapping("/picture")
 public class UserPicturesController {
-
-    private final IUserPicturesService iUserPicturesService;
-
     @Autowired
-    public UserPicturesController(IUserPicturesService iUserPicturesService) {
-        this.iUserPicturesService = iUserPicturesService;
-    }
+    private IUserPicturesService iUserPicturesService;
 
     private final List<String> allowedMimeTypes = List.of(
             "image/jpeg",
@@ -81,7 +74,9 @@ public class UserPicturesController {
      */
     @PostMapping("/getPictureDataByShopNameAndResourceIdAndPictureId")
     public BaseResponse<Object> getPictureDataByShopNameAndResourceIdAndPictureId(@RequestParam("shopName") String shopName, @RequestBody UserPicturesDO userPicturesDO) {
-        List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("image_id", userPicturesDO.getImageId()).eq("language_code", userPicturesDO.getLanguageCode()).eq("is_delete", false));
+        // TODO test
+        List<UserPicturesDO> list = iUserPicturesService.selectPicturesByShopNameAndImageIdAndLanguageCode(shopName, userPicturesDO.getImageId(), userPicturesDO.getLanguageCode());
+
         if (list != null) {
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
@@ -93,7 +88,8 @@ public class UserPicturesController {
      * */
     @PostMapping("/getPictureDataByShopNameAndLanguageCode")
     public BaseResponse<Object> getPictureDataByShopNameAndLanguageCode(@RequestParam("shopName") String shopName, @RequestParam("languageCode") String languageCode) {
-        List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("language_code", languageCode).eq("is_delete", false));
+        List<UserPicturesDO> list = iUserPicturesService.selectPicturesBySHopNameAndLanguageCode(shopName, languageCode);
+
         if (list != null) {
             return new BaseResponse<>().CreateSuccessResponse(list);
         }

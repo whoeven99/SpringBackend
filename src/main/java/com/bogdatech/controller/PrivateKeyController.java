@@ -9,6 +9,7 @@ import com.bogdatech.model.controller.request.UserPrivateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.integration.PrivateIntegration.googleTranslate;
 import static com.bogdatech.utils.StringUtils.replaceDot;
@@ -16,20 +17,17 @@ import static com.bogdatech.utils.StringUtils.replaceDot;
 @RestController
 @RequestMapping("/privateKey")
 public class PrivateKeyController {
-    private final PrivateKeyService privateKeyService;
-    private final SecretClient secretClient;
-    private final IUserPrivateService userPrivateService;
-
     @Autowired
-    public PrivateKeyController(PrivateKeyService privateKeyService, SecretClient secretClient, IUserPrivateService userPrivateService) {
-        this.privateKeyService = privateKeyService;
-        this.secretClient = secretClient;
-        this.userPrivateService = userPrivateService;
-    }
+    private PrivateKeyService privateKeyService;
+    @Autowired
+    private SecretClient secretClient;
+    @Autowired
+    private IUserPrivateService userPrivateService;
+
 
     /**
      * 用户通过私有key翻译
-     * */
+     */
     @PutMapping("/translate")
     public BaseResponse<Object> translate(@RequestParam String shopName, @RequestBody ClickTranslateRequest clickTranslateRequest) {
         return privateKeyService.judgePrivateKey(shopName, clickTranslateRequest);
@@ -38,7 +36,7 @@ public class PrivateKeyController {
 
     /**
      * 存用户的Google的apikey
-     * */
+     */
     @PutMapping("/saveGoogleKey")
     public BaseResponse<Object> saveGoogleKey(@RequestBody UserPrivateRequest userPrivateRequest) {
         //调一次google接口， 用于判断key值是否有效
@@ -54,7 +52,7 @@ public class PrivateKeyController {
         Integer i = null;
         String googleKey = shopName + "-" + GOOGLE;
 //        appInsights.trackTrace("shopName: " + shopName);
-        if (userPrivateRequest.getModel().equals(GOOGLE) && userPrivateRequest.getAmount()!=null && userPrivateRequest.getSecret() != null) {
+        if (userPrivateRequest.getModel().equals(GOOGLE) && userPrivateRequest.getAmount() != null && userPrivateRequest.getSecret() != null) {
             //新增或修改google相关方法
             i = userPrivateService.addOrUpdateGoogleUserData(userPrivateRequest.getShopName(), googleKey, userPrivateRequest.getAmount());
         }
@@ -70,5 +68,4 @@ public class PrivateKeyController {
     }
 
 
-    
 }

@@ -2,8 +2,6 @@ package com.bogdatech.controller;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.*;
@@ -17,12 +15,10 @@ import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.logic.translate.TranslateProgressService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
-import com.bogdatech.model.service.ProcessDbTaskService;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.AESUtils;
@@ -57,8 +53,6 @@ public class TestController {
     @Autowired
     private UserTypeTokenService userTypeTokenService;
     @Autowired
-    private ProcessDbTaskService processDbTaskService;
-    @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
     private ITranslateTasksService translateTasksService;
@@ -88,6 +82,8 @@ public class TestController {
     private ITranslatesService translatesService;
     @Autowired
     private RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private IInitialTranslateTasksService iInitialTranslateTasksService;
 
     @GetMapping("/ping")
     public String ping() {
@@ -236,18 +232,6 @@ public class TestController {
         }
     }
 
-
-    /**
-     * 输入任务id，实现该任务的翻译
-     */
-    @PutMapping("/testDBTranslate2")
-    public void testDBTranslate2(@RequestParam String taskId) {
-        //根据id获取数据，转化为规定数据类型
-//        RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
-//        processDbTaskService.processTask(dataToProcess, new TranslateTasksDO(), false);
-//        translateTasksService.updateByTaskId(taskId, 1);
-    }
-
     /**
      * 启动DB翻译
      */
@@ -273,8 +257,9 @@ public class TestController {
      */
     @PutMapping("/testRecover")
     public String testRecover(@RequestParam String shopName) {
-        //获取用户，redis锁情况
-        translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
+        // 获取用户，redis锁情况
+        translateTasksService.updateStatusByShopNameAndStatus(shopName, 2, 4);
+
         boolean flag = redisTranslateLockService.setRemove(shopName);
         return "是否解锁成功： " + flag;
     }
@@ -307,7 +292,7 @@ public class TestController {
      */
     @GetMapping("/testAPGStop")
     public boolean userMaxLimit(@RequestParam String shopName) {
-        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO usersDO = iapgUsersService.getUserByShopName(shopName);
         return GENERATE_SHOP.add(usersDO.getId());
     }
 
@@ -396,10 +381,7 @@ public class TestController {
         }});
 
         // 获取initial表的数据
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, shopName)
-                        .eq(InitialTranslateTasksDO::isDeleted, false));
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS = iInitialTranslateTasksService.selectTasksByShopNameAndIsDeleted(shopName);
         map.put("InitialTranslateTasks", initialTranslateTasksDOS);
 
         return map;
@@ -411,11 +393,8 @@ public class TestController {
     // For Monitor
     @GetMapping("/getProgressByShopName")
     public List<ProgressResponse.Progress> getProgressByShopName(@RequestParam String shopName) {
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, shopName)
-                        .eq(InitialTranslateTasksDO::isDeleted, false)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS = iInitialTranslateTasksService.selectTasksByShopNameAndIsDeletedOrderByCreatedAt(shopName);
+
         if (initialTranslateTasksDOS.isEmpty()) {
             return new ArrayList<>();
         }
@@ -423,21 +402,12 @@ public class TestController {
         return translateProgressService.getAllProgressData(shopName, initialTranslateTasksDOS.get(0).getSource()).getResponse().getList();
     }
 
-    @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
         // Initial Task 未开始，进行中的任务
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS0 = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getStatus, 0)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
-
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS2 = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getStatus, 2)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS0 = iInitialTranslateTasksService.selectTaskByStatusOrderByCreatedAt(0);
+        List<InitialTranslateTasksDO> initialTranslateTasksDOS2 = iInitialTranslateTasksService.selectTaskByStatusOrderByCreatedAt(2);
 
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("Step0-创建总翻译任务的用户-未开始（则说明有问题）", initialTranslateTasksDOS0.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));

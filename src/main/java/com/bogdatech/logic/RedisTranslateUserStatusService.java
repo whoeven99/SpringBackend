@@ -1,12 +1,10 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.integration.RedisIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -14,7 +12,7 @@ import java.util.Set;
 
 import static com.bogdatech.utils.RedisKeyUtils.generateTranslateUserStatusKey;
 
-@Service
+@Component
 public class RedisTranslateUserStatusService {
     @Autowired
     private RedisIntegration redisIntegration;
@@ -35,7 +33,8 @@ public class RedisTranslateUserStatusService {
      */
     public List<String> getAll(String shopName, String sourceCode) {
         // 获取该用户所有语言
-        List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, sourceCode));
+        List<TranslatesDO> list = iTranslatesService.selectTranslatesByShopNameAndSouce(shopName, sourceCode);
+
         Set<String> keys = new HashSet<>();
         list.stream().map(TranslatesDO::getTarget).forEach(targetCode -> {
                     String key = generateTranslateUserStatusKey(shopName, sourceCode, targetCode);
