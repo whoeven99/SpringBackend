@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserLiquidService {
@@ -32,5 +33,10 @@ public class UserLiquidService {
 
         boolean updateFlag = iUserLiquidService.updateLiquidData(shopName, userLiquidDO);
         return new BaseResponse<>().CreateSuccessResponse(updateFlag);
+    }
+
+    public BaseResponse<Object> parseLiquidDataByShopNameAndLanguage(String shopName, String language) {
+        List<UserLiquidDO> userLiquidDOS = iUserLiquidService.selectLiquidData(shopName, language, null);
+        Map<String, String> liquidMap = userLiquidDOS.stream().filter(liquid -> liquid.getLiquidBeforeTranslation() != null);
     }
 }
