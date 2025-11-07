@@ -15,4 +15,6 @@ public interface IPCUserPicturesService extends IService<PCUserPicturesDO> {
     boolean updatePictureData(String shopName, PCUserPicturesDO pcUserPicturesDO);
 
     List<PCUserPicturesDO> getUserPicByShopNameAndImageIdAndLanguageCode(String shopName, String imageId, String languageCode);
+
+    boolean updatePictureAfterUrl(String shopName, String imageId, String imageBeforeUrl, String languageCode);
 }

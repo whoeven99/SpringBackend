@@ -59,4 +59,12 @@ public class PCUserPicturesServiceImpl extends ServiceImpl<PCUserPicturesMapper,
     public List<PCUserPicturesDO> getUserPicByShopNameAndImageIdAndLanguageCode(String shopName, String imageId, String languageCode) {
         return baseMapper.selectList(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getImageId, imageId).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
     }
+
+    @Override
+    public boolean updatePictureAfterUrl(String shopName, String imageId, String imageBeforeUrl, String languageCode) {
+        return baseMapper.update(new LambdaUpdateWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName)
+                .eq(PCUserPicturesDO::getImageId, imageId).eq(PCUserPicturesDO::getImageBeforeUrl, imageBeforeUrl)
+                .eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0)
+                .set(PCUserPicturesDO::getImageAfterUrl, null)) > 0;
+    }
 }
