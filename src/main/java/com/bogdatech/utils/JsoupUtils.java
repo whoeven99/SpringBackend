@@ -6,8 +6,12 @@ import com.bogdatech.entity.VO.KeywordVO;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 
 @Component
@@ -87,5 +91,17 @@ public class JsoupUtils {
                 .flatMap(List::stream)
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
+    }
+
+    // 解析html的数据
+    public static List<String> extractTextFromHtml(String html) {
+        Document doc = Jsoup.parse(html);
+        Elements allElements = doc.body().getAllElements();
+
+        return allElements.stream()
+                .map(Element::ownText)
+                .map(String::trim)
+                .filter(text -> !text.isEmpty())
+                .collect(Collectors.toList());
     }
 }
