@@ -191,4 +191,12 @@ public class PCUserPicturesService {
         }
         return new BaseResponse<>().CreateErrorResponse("null");
     }
+
+    public BaseResponse<Object> deleteTranslateUrl(String shopName, PCUserPicturesDO pcUserPicturesDO) {
+        boolean flag = ipcUserPicturesService.updatePictureAfterUrl(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getImageBeforeUrl(), pcUserPicturesDO.getLanguageCode());
+        if (flag) {
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
 }
