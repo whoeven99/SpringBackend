@@ -23,4 +23,10 @@ public class UserLiquidController {
     public BaseResponse<Object> insertShopNameLiquidData(@RequestParam String shopName, @RequestBody UserLiquidDO userLiquidDO) {
         return userLiquidService.insertShopNameLiquidData(shopName, userLiquidDO);
     }
+
+    // 获取用户语言对应下的所有数据，解析后返回给前端
+    @PostMapping("/parseLiquidDataByShopNameAndLanguage")
+    public BaseResponse<Object> parseLiquidDataByShopNameAndLanguage(@RequestParam String shopName, @RequestParam String language) {
+        return userLiquidService.parseLiquidDataByShopNameAndLanguage(shopName, language);
+    }
 }
