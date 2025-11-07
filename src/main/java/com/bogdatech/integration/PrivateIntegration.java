@@ -24,7 +24,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
-
 import static com.bogdatech.logic.PrivateKeyService.GOOGLE_MODEL;
 import static com.bogdatech.logic.PrivateKeyService.OPENAI_MODEL;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;

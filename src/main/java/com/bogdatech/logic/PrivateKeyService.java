@@ -396,7 +396,7 @@ public class PrivateKeyService {
         if (needTranslatedData == null) {
             return;
         }
-        Set<TranslateTextDO> filterTranslateData = translatedDataService.filterNeedTranslateSet(translateContext.getTranslateResource().getResourceType(), translateContext.getHandleFlag(), needTranslatedData, null, null);
+        Set<TranslateTextDO> filterTranslateData = translatedDataService.filterNeedTranslateSet(translateContext.getTranslateResource().getResourceType(), translateContext.getHandleFlag(), needTranslatedData, translateContext.getShopifyRequest().getShopName(), null, translateContext.getShopifyRequest().getAccessToken());
         //将翻译的数据分类，提示词，普通文本，html
         Map<String, Set<TranslateTextDO>> stringSetMap = RabbitMqTranslateService.initTranslateMap();
         //将筛选好的数据分类
