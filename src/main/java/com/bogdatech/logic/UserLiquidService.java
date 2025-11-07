@@ -37,6 +37,6 @@ public class UserLiquidService {
 
     public BaseResponse<Object> parseLiquidDataByShopNameAndLanguage(String shopName, String language) {
         List<UserLiquidDO> userLiquidDOS = iUserLiquidService.selectLiquidData(shopName, language, null);
-        Map<String, String> liquidMap = userLiquidDOS.stream().filter(liquid -> liquid.getLiquidBeforeTranslation() != null);
+        return new BaseResponse<>().CreateSuccessResponse(userLiquidDOS);
     }
 }
