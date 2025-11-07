@@ -1,7 +1,5 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserTypeTokenService;
@@ -51,7 +49,7 @@ public class TranslateController {
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
-        public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
+    public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
         return translateService.createInitialTask(request);
     }
@@ -91,8 +89,8 @@ public class TranslateController {
 
     /**
      * 根据传入的数组获取对应的数据
+     * 前端目前还有用
      */
-    // TODO delete
     @PostMapping("/readTranslateDOByArray")
     public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO[] translatesDOS) {
         if (translatesDOS != null && translatesDOS.length > 0) {
@@ -116,13 +114,14 @@ public class TranslateController {
             }
 
             // 判断任务表里面是否存在该任务，存在将flag改为true
-            List<TranslateTasksDO> list = iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
+            List<TranslateTasksDO> list = iTranslateTasksService.selectTasksByShopNameAndStatus02(translatesDOS[0].getShopName());
+
             if (!list.isEmpty()) {
                 flag = true;
             }
             translateArrayVO.setTranslatesDOResult(translatesDOResult);
             translateArrayVO.setFlag(flag);
-            appInsights.trackTrace("readTranslateDOByArray : " + Arrays.toString(translatesDOS));
+
             return new BaseResponse<>().CreateSuccessResponse(translateArrayVO);
         } else {
             return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
@@ -225,7 +224,7 @@ public class TranslateController {
     @PostMapping("/updateAutoTranslateByData")
     public BaseResponse<Object> updateStatusByShopName(@RequestBody AutoTranslateRequest request) {
         // 判断用户的语言是否在数据库中，在不做操作，不在，进行同步
-        TranslatesDO one = translatesService.getOne(new QueryWrapper<TranslatesDO>().eq("shop_name", request.getShopName()).eq("source", request.getSource()).eq("target", request.getTarget()));
+        TranslatesDO one = translatesService.getSingleTranslateDO(request.getShopName(), request.getSource(), request.getTarget());
 
         // 获取用户token
         UsersDO usersDO = iUsersService.getUserByName(request.getShopName());
@@ -250,7 +249,7 @@ public class TranslateController {
     public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
         Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
         if (!stopFlag) {
-           return new BaseResponse<>().CreateErrorResponse("already stopped");
+            return new BaseResponse<>().CreateErrorResponse("already stopped");
         }
 
         // 将所有状态2的任务改成7

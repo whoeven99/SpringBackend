@@ -1,21 +1,16 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserIpService;
 import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.DO.UserIpDO;
-import com.bogdatech.mapper.UserIpMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
-@Service
+@Component
 public class UserIpService {
     @Autowired
     private IUserSubscriptionsService iUserSubscriptionsService;
@@ -58,7 +53,8 @@ public class UserIpService {
                 userIpDO.setFirstEmail(true);
                 userIpDO.setTimes(currentTimes + 1);
                 userIpDO.setAllTimes(userIpDO.getAllTimes() + 1);
-                return iUserIpService.update(userIpDO, new UpdateWrapper<UserIpDO>().eq("shop_name", shopName).eq("first_email", false));
+                return iUserIpService.updateIpByFirstEmailAndShopName(userIpDO, shopName, false);
+
             }
         }
 
@@ -68,7 +64,8 @@ public class UserIpService {
                 userIpDO.setSecondEmail(true);
                 userIpDO.setTimes(currentTimes + 1);
                 userIpDO.setAllTimes(userIpDO.getAllTimes() + 1);
-                return iUserIpService.update(userIpDO, new UpdateWrapper<UserIpDO>().eq("shop_name", shopName).eq("second_email", false));
+                return iUserIpService.updateIpBySecondEmailAndShopName(userIpDO, shopName, false);
+
             }
         }
 
@@ -76,7 +73,7 @@ public class UserIpService {
         if (currentTimes > freeIp) {
             //加锁查询检查用户额度是否足够
             TranslationCounterDO translationCounterDO = iTranslationCounterService.getOneForUpdate(shopName);
-//            appInsights.trackTrace("translationCounterDO = " + translationCounterDO);
+
             if (translationCounterDO == null) {
                 return false;
             }

@@ -5,6 +5,8 @@ import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.VO.AddCharsVO;
 import com.bogdatech.model.controller.request.TranslationCounterRequest;
 
+import java.sql.Timestamp;
+
 public interface ITranslationCounterService extends IService<TranslationCounterDO> {
     TranslationCounterDO readCharsByShopName(String shopName);
 
@@ -23,4 +25,8 @@ public interface ITranslationCounterService extends IService<TranslationCounterD
     Boolean deleteTrialCounter(String shopName);
 
     TranslationCounterDO getTranslationCounterByShopName(String shopName);
+
+    Boolean updateUserCharsByShopName(String shopName, Integer chars);
+
+    boolean updateFreeTrialDateByShopName(String shopName, Timestamp afterTrialDaysTimestamp, int i, Integer charsByPlan);
 }

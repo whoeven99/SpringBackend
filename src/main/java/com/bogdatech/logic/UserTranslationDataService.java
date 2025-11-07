@@ -1,33 +1,18 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserTranslationDataService;
 import com.bogdatech.entity.DO.*;
-import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudInsertRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import org.springframework.stereotype.Component;
 import java.util.List;
-import java.util.Map;
-
 import static com.bogdatech.logic.ShopifyService.saveToShopify;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.jsonToObject;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 
-@Service
+@Component
 public class UserTranslationDataService {
     @Autowired
     private IUserTranslationDataService userTranslationDataService;
@@ -50,7 +35,7 @@ public class UserTranslationDataService {
     }
 
     public boolean updateStatusTo2(String taskId, int status) {
-        return userTranslationDataService.update(new LambdaUpdateWrapper<UserTranslationDataDO>().eq(UserTranslationDataDO::getTaskId, taskId).set(UserTranslationDataDO::getStatus, status));
+        return userTranslationDataService.updateTranslationStatusByTaskId(taskId, status);
     }
 
     /**

@@ -2,8 +2,6 @@ package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SubscriptionVO;
@@ -176,7 +174,8 @@ public class ShopifyController {
             return new BaseResponse<>().CreateErrorResponse("shopName is null");
         }
         SubscriptionVO subscriptionVO = new SubscriptionVO();
-        UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getOne(new LambdaQueryWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName));
+        UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getSubscriptionDataByShopName(shopName);
+
 
         if (userSubscriptionsDO == null) {
             appInsights.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
@@ -184,7 +183,8 @@ public class ShopifyController {
         }
 
         // 根据计划id 去查id名称
-        String planType = iSubscriptionPlansService.getOne(new LambdaQueryWrapper<SubscriptionPlansDO>().eq(SubscriptionPlansDO::getPlanId, userSubscriptionsDO.getPlanId())).getPlanName();
+        String planType = iSubscriptionPlansService.getSubscriptionPlanByPlanId(userSubscriptionsDO.getPlanId()).getPlanName();
+
 
         // 判断计划名称
         String parsePlanType = parsePlanName(planType);
@@ -215,32 +215,28 @@ public class ShopifyController {
         if (userSubscriptionPlan == 7) {
             subscriptionVO.setUserSubscriptionPlan(7);
             //根据shopName获取订阅计划过期的时间
-            UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
+            UserTrialsDO userTrialsDO = iUserTrialsService.getUserTrialByShopName(shopName);
             subscriptionVO.setCurrentPeriodEnd(String.valueOf(userTrialsDO.getTrialEnd()));
             subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 
         //根据shopName查询用户订阅计划，最新的那个，再根据最新的resourceId，查询是否过期
-        CharsOrdersDO charsOrdersDO = charsOrdersService.list(new QueryWrapper<CharsOrdersDO>()
-                        .eq("shop_name", shopName)
-                        .eq("status", "ACTIVE")
-                        .orderByDesc("updated_date"))
+        CharsOrdersDO charsOrdersDO = charsOrdersService.selectOrderByShopNameAndStatusOrderByDesc(shopName, "ACTIVE")
                 .stream().filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
                 .findFirst().orElse(null);
 
         if (charsOrdersDO == null) {
             return new BaseResponse<>().CreateErrorResponse("charsOrdersDO is null");
         }
-        UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>()
-                .eq("shop_name", shopName)
-        );
+        UsersDO usersDO = usersService.getUserByName(shopName);
 
-        //通过charsOrdersDO的id，获取信息
+        // 通过charsOrdersDO的id，获取信息
         String query = getSubscriptionQuery(charsOrdersDO.getId());
         String infoByShopify;
         String env = System.getenv("ApplicationEnv");
-        //根据新的集合获取这个订阅计划的信息
+
+        // 根据新的集合获取这个订阅计划的信息
         if ("prod".equals(env) || "dev".equals(env)) {
             infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(usersDO.getShopName(), usersDO.getAccessToken(), API_VERSION_LAST, null), query));
         } else {
@@ -252,11 +248,12 @@ public class ShopifyController {
             subscriptionVO.setCurrentPeriodEnd(null);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
-        //根据订阅计划信息，判断是否是第一个月的开始
+
+        // 根据订阅计划信息，判断是否是第一个月的开始
         JSONObject root = JSON.parseObject(infoByShopify);
         JSONObject node = root.getJSONObject("node");
         if (node == null || node.isEmpty()) {
-            //用户卸载，计划会被取消，但不确定其他情况
+            // 用户卸载，计划会被取消，但不确定其他情况
             subscriptionVO.setFeeType(0);
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);
@@ -268,14 +265,14 @@ public class ShopifyController {
         return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
     }
 
-    //根据前端传来的值，返回对应的图片信息
+    // 根据前端传来的值，返回对应的图片信息
     @PostMapping("/getImageInfo")
     public BaseResponse<Object> getImageInfo(@RequestBody String[] strings) {
         Map<String, Object> imageInfo = shopifyService.getImageInfo(strings);
         return new BaseResponse<>().CreateSuccessResponse(imageInfo);
     }
 
-    //计算被翻译项的总数和已翻译的个数
+    // 计算被翻译项的总数和已翻译的个数
     @PostMapping("/getTranslationItemsInfo")
     public BaseResponse<Object> getTranslationItemsInfo(@RequestBody ResourceTypeRequest request) {
         Map<String, Map<String, Object>> translationItemsInfo;
@@ -287,19 +284,19 @@ public class ShopifyController {
         }
     }
 
-    //先从数据库中获取在调用getItemsByShopName
+    // 先从数据库中获取在调用getItemsByShopName
     @PostMapping("/getItemsInSqlByShopName")
     public BaseResponse<Object> getItemsInSqlByShopName(@RequestBody ResourceTypeRequest request) {
         return shopifyService.getItemsByShopName(request);
     }
 
-    //修改单行文本
+    // 修改单行文本
     @PostMapping("/updateItem")
     public String updateItem(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
         return shopifyService.updateShopifySingleData(registerTransactionRequest);
     }
 
-    //修改多条文本
+    // 修改多条文本
     @PostMapping("/updateItems")
     public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
         if (registerTransactionRequest.isEmpty()) {
@@ -313,6 +310,4 @@ public class ShopifyController {
             return new BaseResponse<>().CreateErrorResponse(s);
         }
     }
-
-
 }

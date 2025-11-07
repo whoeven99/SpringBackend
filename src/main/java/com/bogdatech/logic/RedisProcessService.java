@@ -3,12 +3,10 @@ package com.bogdatech.logic;
 import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.utils.AESUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import static com.bogdatech.utils.AESUtils.encryptMD5;
+import org.springframework.stereotype.Component;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 
-@Service
+@Component
 public class RedisProcessService {
 
     @Autowired

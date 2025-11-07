@@ -1,5 +1,7 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.entity.DO.GlossaryDO;
@@ -31,5 +33,11 @@ public class GlossaryServiceImpl extends ServiceImpl<GlossaryMapper, GlossaryDO>
     @Override
     public GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText, String rangeCode) {
         return baseMapper.getSingleGlossaryByShopNameAndSource(shopName, sourceText, rangeCode);
+    }
+
+    @Override
+    public boolean updateGlossaryStatusByShopName(String shopName, int status) {
+        return baseMapper.update(new LambdaUpdateWrapper<GlossaryDO>().eq(GlossaryDO::getShopName, shopName)
+                .set(GlossaryDO::getStatus, status)) > 0;
     }
 }

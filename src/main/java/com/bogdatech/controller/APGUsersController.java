@@ -1,8 +1,6 @@
 package com.bogdatech.controller;
 
-import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUsersDO;
-import com.bogdatech.logic.APGTemplateService;
 import com.bogdatech.logic.APGUserService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,12 +11,8 @@ import static com.bogdatech.utils.RetryUtils.retryWithParam;
 @RestController
 @RequestMapping("/apg/users")
 public class APGUsersController {
-    private final APGUserService apgUserService;
-
     @Autowired
-    public APGUsersController(APGUserService apgUserService) {
-        this.apgUserService = apgUserService;
-    }
+    private APGUserService apgUserService;
 
     /**
      * 存储用户的信息

@@ -1,6 +1,7 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ITranslationUsageService;
@@ -75,6 +76,27 @@ public class TranslationUsageServiceImpl extends ServiceImpl<TranslationUsageMap
         for (TranslationUsageDO usageDO : toInsert) {
             baseMapper.insert(usageDO);
         }
+    }
+
+    @Override
+    public boolean updateUsageDataByShopName(String shopName, int status, int remainingCredits, int consumedTime, int creditCount) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslationUsageDO>()
+                .eq(TranslationUsageDO::getShopName, shopName)
+                .set(TranslationUsageDO::getStatus, status)
+                .set(TranslationUsageDO::getRemainingCredits, remainingCredits)
+                .set(TranslationUsageDO::getConsumedTime, consumedTime)
+                .set(TranslationUsageDO::getCreditCount, creditCount)) > 0;
+    }
+
+    @Override
+    public boolean updateUsageToCompleteByShopNameAndTarget(String shopName, String target, long costTime, int usedChars, int endChars, int i) {
+        return  baseMapper.update(new LambdaUpdateWrapper<TranslationUsageDO>()
+                .eq(TranslationUsageDO::getShopName, shopName)
+                .eq(TranslationUsageDO::getLanguageName, target)
+                .set(TranslationUsageDO::getConsumedTime, costTime)
+                .set(TranslationUsageDO::getCreditCount, usedChars)
+                .set(TranslationUsageDO::getRemainingCredits, endChars)
+                .set(TranslationUsageDO::getStatus, i)) > 0;
     }
 
 }
