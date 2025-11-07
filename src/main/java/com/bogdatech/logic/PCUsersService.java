@@ -27,7 +27,7 @@ public class PCUsersService {
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
             pcUsersDO.setCreateAt(now);
             pcUsersDO.setLoginTime(now);
-            pcUsersDO.setPurchasePoints(5000);
+            pcUsersDO.setPurchasePoints(50000);
             ipcUserService.saveSingleUser(pcUsersDO);
         } else {
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
@@ -64,5 +64,13 @@ public class PCUsersService {
         purchasePoints.setUsedPoints(userByShopName.getUsedPoints());
         purchasePoints.setShopName(shopName);
         return new BaseResponse<>().CreateSuccessResponse(purchasePoints);
+    }
+
+    public BaseResponse<Object> uninstall(String shopName) {
+        boolean flag = ipcUserService.updateUninstallByShopName(shopName);
+        if (flag){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 }
