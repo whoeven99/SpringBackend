@@ -27,7 +27,7 @@ public class PCUsersService {
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
             pcUsersDO.setCreateAt(now);
             pcUsersDO.setLoginTime(now);
-            pcUsersDO.setPurchasePoints(50000);
+            pcUsersDO.setPurchasePoints(5000);
             ipcUserService.saveSingleUser(pcUsersDO);
         } else {
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
