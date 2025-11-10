@@ -8,7 +8,7 @@ import java.util.List;
 public interface IInitialTranslateTasksService extends IService<InitialTranslateTasksDO> {
     boolean updateStatusByTaskId(String taskId, int status);
 
-    List<InitialTranslateTasksDO> selectTop10Tasks(int status, String manual);
+    List<InitialTranslateTasksDO> selectTop10Tasks(int status, String auto);
 
     boolean updateAutoInitialDataByShopNameAndStatus(String shopName, int sourceStatus, List<String> targetList, int targetStatus, boolean isSendEmail, boolean isDeleted);
 

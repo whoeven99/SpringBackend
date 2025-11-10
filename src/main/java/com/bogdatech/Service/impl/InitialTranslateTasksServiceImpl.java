@@ -9,9 +9,7 @@ import com.bogdatech.enums.InitialTaskStatusEnum;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
-
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
 
@@ -25,8 +23,8 @@ public class InitialTranslateTasksServiceImpl extends ServiceImpl<InitialTransla
     }
 
     @Override
-    public List<InitialTranslateTasksDO> selectTop10Tasks(int status, String manual) {
-        return baseMapper.selectTop10Tasks(status, manual);
+    public List<InitialTranslateTasksDO> selectTop10Tasks(int status, String type) {
+        return baseMapper.selectTop10Tasks(status, type);
     }
 
     @Override

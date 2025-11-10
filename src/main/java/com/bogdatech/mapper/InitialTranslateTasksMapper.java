@@ -21,5 +21,4 @@ public interface InitialTranslateTasksMapper extends BaseMapper<InitialTranslate
             @Param("status") Integer status,
             @Param("taskType") String taskType
     );
-
 }
