@@ -459,7 +459,7 @@ public class TestController {
      * 获取redis中的进度条数据
      */
     @GetMapping("/getRedisTranslationData")
-    public Map<Object, Object> getRedisTranslationData(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
+    public Map<String, String> getRedisTranslationData(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
         return translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
     }
 
