@@ -215,8 +215,12 @@ public class TranslateController {
 
     //当支付成功后，调用该方法，将该用户的状态3，改为状态6
     @PostMapping("/updateStatus")
-    public void updateStatus3To6(@RequestBody TranslateRequest request) {
-        translatesService.updateStatus3To6(request.getShopName());
+    public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
+        if (translatesService.updateStatus3To6(request.getShopName())){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
+        }
     }
 
     //用户是否选择定时任务的方法

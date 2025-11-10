@@ -11,6 +11,7 @@ import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.RateHttpIntegration;
+import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
@@ -524,5 +525,13 @@ public class TestController {
     @GetMapping("/getGlossaryCache")
     public String getGlossaryCache(@RequestParam String shopName, @RequestParam String sourceText, @RequestParam String target) {
         return TranslateDataService.glossaryCache.get(TranslateDataService.generateGlossaryKey(shopName, target, sourceText));
+    }
+
+    /**
+     * 测试删除shopify数据方法
+     */
+    @GetMapping("/testDeleteShopifyData")
+    public String testDeleteShopifyData(@RequestParam String resourceId, @RequestParam String locals, @RequestParam String translationKeys, @RequestParam String accessToken) {
+        return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
     }
 }

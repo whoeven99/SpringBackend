@@ -201,7 +201,7 @@ public class ProcessDbTaskService {
         String shopifyDataByDb = shopifyService.getShopifyData(shopName, accessToken, APIVERSION, shopifyData);
         if (shopifyDataByDb == null) {
             // TODO 这里应该就是FatalException了，出现这个状况的话很严重
-            appInsights.trackTrace("clickTranslation " + shopName + " shopifyDataByDb is null" );
+            appInsights.trackTrace("FatalException clickTranslation " + shopName + " shopifyDataByDb is null" );
             return new HashMap<>();
         }
 
@@ -211,7 +211,7 @@ public class ProcessDbTaskService {
             return new HashMap<>();
         }
         Set<TranslateTextDO> filterTranslateData = translateDataService.filterNeedTranslateSet(
-                modeType, handleFlag, needTranslatedData, shopName, target);
+                modeType, handleFlag, needTranslatedData, shopName, target, accessToken);
         //将筛选好的数据分类
         Map<String, Set<TranslateTextDO>> stringSetMap = rabbitMqTranslateService.filterTranslateMap(
                 RabbitMqTranslateService.initTranslateMap(), filterTranslateData, glossaryMap);

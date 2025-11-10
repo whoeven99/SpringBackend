@@ -3,10 +3,7 @@ package com.bogdatech.logic.translate;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.integration.ChatGptIntegration;
-import com.bogdatech.integration.DeepLIntegration;
-import com.bogdatech.integration.HunYuanIntegration;
+import com.bogdatech.integration.*;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -23,6 +20,7 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -874,7 +872,7 @@ public class TranslateDataService {
     /**
      * 遍历needTranslatedSet, 对Set集合进行通用规则的筛选，返回筛选后的数据
      */
-    public Set<TranslateTextDO> filterNeedTranslateSet(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet, String shopName, String target) {
+    public Set<TranslateTextDO> filterNeedTranslateSet(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet, String shopName, String target, String accessToken) {
         Iterator<TranslateTextDO> iterator = needTranslateSet.iterator();
         while (iterator.hasNext()) {
             TranslateTextDO translateTextDO = iterator.next();
@@ -883,6 +881,10 @@ public class TranslateDataService {
             // 当 value 为空时跳过
             if (!isValueBlank(value)) {
                 iterator.remove(); //  安全删除
+
+                // 还要删除这条语言
+//                ShopifyHttpIntegration.deleteTranslateData(shopName, accessToken, translateTextDO.getResourceId(), target, translateTextDO.getTextKey());
+//                appInsights.trackTrace("filterNeedTranslateSet 用户： " + shopName + " token: " + accessToken + " 删除这条语言: " + translateTextDO.getResourceId() + " key: " + translateTextDO.getTextKey() + " target: " + target);
                 redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                 continue;
             }
