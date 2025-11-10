@@ -16,7 +16,6 @@ import java.sql.Timestamp;
 public class UserLiquidDO {
     @TableId(type = IdType.AUTO)
     private Integer id;
-    private String liquidId;
     private String shopName;
     private String liquidBeforeTranslation;
     private String liquidAfterTranslation;

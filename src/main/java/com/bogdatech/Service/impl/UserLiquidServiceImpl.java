@@ -13,30 +13,23 @@ import java.util.List;
 @Service
 public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiquidDO> implements IUserLiquidService {
     @Override
-    public List<UserLiquidDO> selectLiquidData(String shopName, String languageCode, String liquidId) {
-        // 动态生成查询语句
+    public List<UserLiquidDO> selectLiquidData(String shopName) {
         LambdaQueryWrapper<UserLiquidDO> queryWrapper = new LambdaQueryWrapper<UserLiquidDO>()
                 .select(
-                        UserLiquidDO::getLiquidId,
                         UserLiquidDO::getShopName,
                         UserLiquidDO::getLiquidBeforeTranslation,
                         UserLiquidDO::getLiquidAfterTranslation,
                         UserLiquidDO::getLanguageCode
                 )
-                .eq(UserLiquidDO::getShopName, shopName)
-                .eq(UserLiquidDO::getLanguageCode, languageCode)    ;
-
-        if (liquidId != null && !liquidId.isEmpty()) {
-            queryWrapper.eq(UserLiquidDO::getLiquidId, liquidId);
-        }
-
-        return this.list(queryWrapper);
+                .eq(UserLiquidDO::getShopName, shopName);
+        return baseMapper.selectList(queryWrapper);
     }
 
+
     @Override
-    public UserLiquidDO getLiquidData(String shopName, String languageCode, String liquidId, String liquidBeforeTranslation) {
+    public UserLiquidDO getLiquidData(String shopName, String languageCode, String liquidBeforeTranslation) {
         return this.getOne(new LambdaQueryWrapper<UserLiquidDO>().eq(UserLiquidDO::getShopName, shopName)
-                .eq(UserLiquidDO::getLanguageCode, languageCode).eq(UserLiquidDO::getLiquidId, liquidId)
+                .eq(UserLiquidDO::getLanguageCode, languageCode)
                 .eq(UserLiquidDO::getLiquidBeforeTranslation, liquidBeforeTranslation));
     }
 
@@ -45,7 +38,13 @@ public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiq
         Timestamp now = Timestamp.valueOf(LocalDateTime.now());
         userLiquidDO.setUpdatedAt(now);
         return this.update(userLiquidDO, new LambdaQueryWrapper<UserLiquidDO>().eq(UserLiquidDO::getShopName, shopName)
-                .eq(UserLiquidDO::getLanguageCode, userLiquidDO.getLanguageCode()).eq(UserLiquidDO::getLiquidId, userLiquidDO.getLiquidId())
+                .eq(UserLiquidDO::getLanguageCode, userLiquidDO.getLanguageCode())
                 .eq(UserLiquidDO::getLiquidBeforeTranslation, userLiquidDO.getLiquidBeforeTranslation()));
+    }
+
+    @Override
+    public List<UserLiquidDO> selectLiquidDataByShopNameAndLanguageCode(String shopName, String languageCode) {
+        return baseMapper.selectList(new LambdaQueryWrapper<UserLiquidDO>().eq(UserLiquidDO::getShopName, shopName)
+                .eq(UserLiquidDO::getLanguageCode, languageCode));
     }
 }
