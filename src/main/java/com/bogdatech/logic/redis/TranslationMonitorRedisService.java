@@ -52,7 +52,7 @@ public class TranslationMonitorRedisService {
         redisIntegration.setHash(TRANSLATION_MONITOR_KEY + '_' + shopName, "lastTaskFinishAt", time);
     }
 
-    public Map<Object, Object> getShopTranslationStats(String shopName) {
-        return redisIntegration.getHashAll(TRANSLATION_MONITOR_KEY + '_' + shopName);
+    public Map<String, String> getShopTranslationStats(String shopName) {
+        return redisIntegration.hGetAll(TRANSLATION_MONITOR_KEY + '_' + shopName);
     }
 }
