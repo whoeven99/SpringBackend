@@ -28,6 +28,7 @@ import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.StringUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
