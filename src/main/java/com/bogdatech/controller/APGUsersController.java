@@ -16,12 +16,13 @@ public class APGUsersController {
 
     /**
      * 存储用户的信息
+     *
      * @param shopName 店铺名称
-     * @param usersDO 用户信息
+     * @param usersDO  用户信息
      * @return BaseResponse<Object>
-     * */
+     */
     @PostMapping("/insertOrUpdateApgUser")
-    public BaseResponse<Object> insertOrUpdateApgUser(@RequestParam String shopName, @RequestBody APGUsersDO usersDO){
+    public BaseResponse<Object> insertOrUpdateApgUser(@RequestParam String shopName, @RequestBody APGUsersDO usersDO) {
         usersDO.setShopName(shopName);
         boolean result = retryWithParam(
                 apgUserService::insertOrUpdateApgUser,  // 方法引用，等同于 input -> service.insertOrUpdateApgUser(input)
@@ -30,7 +31,7 @@ public class APGUsersController {
                 1000,     // 初始延迟时间：1秒
                 8000      // 最大延迟时间：8秒
         );
-        if (result){
+        if (result) {
             return new BaseResponse<>().CreateSuccessResponse(usersDO);
         }
         return new BaseResponse<>().CreateErrorResponse(usersDO);
@@ -38,9 +39,9 @@ public class APGUsersController {
 
     /**
      * 用户卸载对应方法
-     * */
+     */
     @DeleteMapping("/uninstallUser")
-    public BaseResponse<Object> uninstallUser(@RequestParam String shopName){
+    public BaseResponse<Object> uninstallUser(@RequestParam String shopName) {
         apgUserService.uninstallUser(shopName);
         return null;
     }

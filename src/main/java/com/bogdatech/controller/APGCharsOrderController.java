@@ -11,7 +11,7 @@ import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
 @RequestMapping("/apg/orders")
 public class APGCharsOrderController {
     @Autowired
-    private APGCharsOrderService orderService;
+    private  APGCharsOrderService orderService;
 
     //存储和更新订单
     @PostMapping("/insertOrUpdateOrder")
