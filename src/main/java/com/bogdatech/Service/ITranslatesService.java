@@ -43,7 +43,7 @@ public interface ITranslatesService extends IService<TranslatesDO> {
 
     List<TranslatesDO> readAllTranslates();
 
-    void updateAutoTranslateByShopNameToFalse(String shopName);
+    boolean updateAutoTranslateByShopNameToFalse(String shopName);
 
     void insertLanguageStatus(TranslateRequest request);
 
@@ -58,4 +58,12 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     TranslatesDO getSingleTranslateDO(String shopName, String source, String target);
 
     void updateAutoTranslateByShopNameAndTargetToFalse(String shopName, String target);
+
+    List<TranslatesDO> selectTranslatesByShopNameAndAutoTranslate(String shopName, int i);
+
+    List<TranslatesDO> selectTranslatesByShopNameAndSouce(String shopName, String source);
+
+    boolean updateResourceTypeToNull(String shopName, String source, String target);
+
+    boolean updateStatusByShopNameAndStatus(String shopName, int sourceStatus, int targetStatus);
 }

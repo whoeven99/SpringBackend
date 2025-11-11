@@ -9,6 +9,7 @@ import com.bogdatech.entity.DO.CharsOrdersDO;
 import com.bogdatech.entity.DO.UserTrialsDO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
-@Service
+@Component
 public class UserTrialsService {
     @Autowired
     private IUserTrialsService iUserTrialsService;
@@ -33,7 +34,6 @@ public class UserTrialsService {
      * @return Boolean 是否成功
      */
     public Boolean insertUserTrial(String shopName) {
-        //        Boolean userSubscription = iUserSubscriptionsService.updateUserSubscription(shopName, 7);
         return iUserTrialsService.insertUserTrial(shopName);
     }
 
@@ -45,8 +45,7 @@ public class UserTrialsService {
      */
     public BaseResponse<Object> queryUserTrialByShopName(String shopName) {
         //判断是否购买过订阅计划，如果有则返回true
-        List<CharsOrdersDO> charsOrdersDOList = iCharsOrdersService.list(new QueryWrapper<CharsOrdersDO>().eq("shop_name", shopName)
-                .eq("status", "ACTIVE"))
+        List<CharsOrdersDO> charsOrdersDOList = iCharsOrdersService.selectOrdersByShopNameAndStatus(shopName, "ACTIVE")
                 .stream().filter(data -> data.getShopName() != null && data.getId().contains("AppSubscription")).toList();
         if (!charsOrdersDOList.isEmpty()) {
             appInsights.trackTrace("queryUserTrialByShopName " + shopName + " 返回的charsOrdersDOList 值为 ： " + charsOrdersDOList);
@@ -64,10 +63,11 @@ public class UserTrialsService {
      */
     public BaseResponse<Object> isShowFreePlan(String shopName) {
         //从数据库中获取是否弹出免费试用的弹窗
-        UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
+        UserTrialsDO userTrialsDO = iUserTrialsService.getUserTrialByShopName(shopName);
         if (userTrialsDO != null && !userTrialsDO.getIsTrialShow()) {
-            //将弹窗状态改为true
-            boolean update = iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialShow, true));
+            // 将弹窗状态改为true
+            boolean update = iUserTrialsService.updateTrialShowByShopName(shopName, true);
+
             if (update) {
                 return new BaseResponse<>().CreateSuccessResponse(true);
             }
@@ -84,10 +84,11 @@ public class UserTrialsService {
     public BaseResponse<Object> isInFreePlanTime(String shopName) {
         // 获取该用户是否在免费试用期间
         Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        UserTrialsDO userTrialsDO = iUserTrialsService.getUserTrialByShopName(shopName);
 
-        UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
         // 判断now是否在trialStart 和 trialEnd 中间.  是，返回true； 否，返回false
-        if (userTrialsDO != null && userTrialsDO.getTrialStart().before(now) && userTrialsDO.getTrialEnd().after(now) && !userTrialsDO.getIsTrialExpired()) {
+        if (userTrialsDO != null && userTrialsDO.getTrialStart().before(now) && userTrialsDO.getTrialEnd().after(now)
+                && !userTrialsDO.getIsTrialExpired()) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateSuccessResponse(false);

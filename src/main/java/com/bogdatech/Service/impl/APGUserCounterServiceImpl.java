@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IAPGUserCounterService;
@@ -76,6 +77,11 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
     @Override
     public Boolean updateUserToken(Long userId, Integer token) {
         return baseMapper.updateUserToken(userId, token) > 0;
+    }
+
+    @Override
+    public APGUserCounterDO getUserCounterByUserId(Long id) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<APGUserCounterDO>().eq(APGUserCounterDO::getUserId, id));
     }
 
 }

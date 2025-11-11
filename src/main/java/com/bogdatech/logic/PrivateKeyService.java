@@ -2,7 +2,6 @@ package com.bogdatech.logic;
 
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.*;
@@ -16,7 +15,6 @@ import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -146,7 +144,8 @@ public class PrivateKeyService {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
         //判断字符是否超限
-        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiKey, userKey));
+        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getPrivateDataByShopNameAndUserKey(shopName, userKey);
+
         if (privateData == null) {
             return new BaseResponse<>().CreateErrorResponse(request);
         }
@@ -510,7 +509,7 @@ public class PrivateKeyService {
         for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
             GlossaryDO glossaryDO = OBJECT_MAPPER.convertValue(entry.getValue(), GlossaryDO.class);
             appInsights.trackTrace("translate shopName : " + shopName + " , glossaryDO : " + glossaryDO);
-//            GlossaryDO glossaryDO = (GlossaryDO) entry.getValue();
+
             if (glossaryDO.getCaseSensitive() == 1) {
                 keyMap1.put(glossaryDO.getSourceText(), glossaryDO.getTargetText());
                 continue;
@@ -597,7 +596,8 @@ public class PrivateKeyService {
         request.setShopName(shopName);
 
         // 以用户数据进行判断
-        UserPrivateTranslateDO userData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiName, apiName));
+        UserPrivateTranslateDO userData = iUserPrivateTranslateService.getPrivateDataByShopNameAndApiName(shopName, apiName);
+
         if (userData.getUsedToken() >= userData.getTokenLimit()) {
             translatesService.updateTranslateStatus(shopName, 5, translateRequest.getTarget(), translateRequest.getSource());
             throw new ClientException(CHARACTER_LIMIT);
@@ -781,9 +781,9 @@ public class PrivateKeyService {
             String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
             String env = System.getenv("ApplicationEnv");
             if ("prod".equals(env) || "dev".equals(env)) {
-                shopifyApiIntegration.registerTransaction(request, body);
+                ShopifyHttpIntegration.registerTransaction(request, body);
             } else {
-                testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
+                TestingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
             }
 
         } catch (JsonProcessingException | ClientException e) {
@@ -822,59 +822,67 @@ public class PrivateKeyService {
         Map<String, String> templateData = new HashMap<>();
         templateData.put("language", target);
         templateData.put("user", usersDO.getFirstName());
+
         // 定义要移除的后缀
         String suffix = ".myshopify.com";
         String TargetShop;
         TargetShop = shopName.substring(0, shopName.length() - suffix.length());
         templateData.put("shop_name", TargetShop);
-        //获取用户已翻译的和未翻译的文本
-        //通过shopName获取翻译到那个文本
+
+        // 获取用户已翻译的和未翻译的文本
+        // 通过shopName获取翻译到那个文本
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
         TypeSplitResponse typeSplitResponse = splitByType(resourceType, resourceList);
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
-        //获取更新前后的时间
+
+        // 获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
 
         Duration duration = Duration.between(begin, end);
         long costTime = duration.toMinutes();
         templateData.put("time", costTime + " minutes");
 
-        //共消耗的字符数
-        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiKey, userKey));
+        // 共消耗的字符数
+        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getPrivateDataByShopNameAndUserKey(shopName, userKey);
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         int endChars = Math.toIntExact(privateData.getUsedToken());
         int costChars = endChars - beginChars;
         String formattedNumber = formatter.format(costChars);
         templateData.put("credit_count", formattedNumber);
-        //由腾讯发送邮件
+
+        // 由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137439L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        //存入数据库中
+
+        // 存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }
 
     public void translateSuccessEmail(TranslateRequest request, LocalDateTime begin, int beginChars, Integer remainingChars, String userKey) {
         String shopName = request.getShopName();
-        //通过shopName获取用户信息 需要 {{user}} {{language}} {{credit_count}} {{time}} {{remaining_credits}}
+
+        // 通过shopName获取用户信息 需要 {{user}} {{language}} {{credit_count}} {{time}} {{remaining_credits}}
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
         templateData.put("language", request.getTarget());
+
         // 定义要移除的后缀
         String suffix = ".myshopify.com";
         String TargetShop;
         TargetShop = request.getShopName().substring(0, request.getShopName().length() - suffix.length());
         templateData.put("shop_name", TargetShop);
-        //获取更新前后的时间
+
+        // 获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
 
         Duration duration = Duration.between(begin, end);
         long costTime = duration.toMinutes();
         templateData.put("time", costTime + " minutes");
 
-        //共消耗的字符数
-        //获取当前已消耗的token
-        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getOne(new LambdaQueryWrapper<UserPrivateTranslateDO>().eq(UserPrivateTranslateDO::getShopName, shopName).eq(UserPrivateTranslateDO::getApiKey, userKey));
+        // 共消耗的字符数
+        // 获取当前已消耗的token
+        UserPrivateTranslateDO privateData = iUserPrivateTranslateService.getPrivateDataByShopNameAndUserKey(shopName, userKey);
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         int endChars = Math.toIntExact(privateData.getUsedToken());
         int costChars = endChars - beginChars;

@@ -14,13 +14,8 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/translationUsage")
 public class TranslationUsageController {
-
-    private final ITranslationUsageService translationUsageService;
-
     @Autowired
-    public TranslationUsageController(ITranslationUsageService translationUsageService) {
-        this.translationUsageService = translationUsageService;
-    }
+    private ITranslationUsageService translationUsageService;
 
     @PostMapping("/getTranslationUsage")
     public String getTranslationUsage() {

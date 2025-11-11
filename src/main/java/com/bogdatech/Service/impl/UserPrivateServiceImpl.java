@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserPrivateService;
@@ -42,5 +43,11 @@ public class UserPrivateServiceImpl extends ServiceImpl<UserPrivateMapper, UserP
     @Override
     public Boolean updateAmountAndGoogleKey(String shopName) {
         return baseMapper.updateAmountAndGoogleKey(0, null, 0, shopName);
+    }
+
+    @Override
+    public boolean updatePrivateUserByShopName(UserPrivateDO userPrivateDO, String shopName) {
+        return baseMapper.update(userPrivateDO, new LambdaQueryWrapper<UserPrivateDO>()
+                .eq(UserPrivateDO::getShopName, shopName)) > 0;
     }
 }

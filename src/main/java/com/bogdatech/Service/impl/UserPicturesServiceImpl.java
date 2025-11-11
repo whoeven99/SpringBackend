@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -7,6 +8,8 @@ import com.bogdatech.Service.IUserPicturesService;
 import com.bogdatech.entity.DO.UserPicturesDO;
 import com.bogdatech.mapper.UserPicturesMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserPicturesServiceImpl extends ServiceImpl<UserPicturesMapper, UserPicturesDO> implements IUserPicturesService {
@@ -28,5 +31,18 @@ public class UserPicturesServiceImpl extends ServiceImpl<UserPicturesMapper, Use
     @Override
     public boolean deletePictureData(String shopName, String imageId, String imageBeforeUrl, String languageCode) {
         return baseMapper.update(new UpdateWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("image_id", imageId).eq("image_before_url", imageBeforeUrl).eq("language_code", languageCode).set("is_delete", true)) > 0;
+    }
+
+    @Override
+    public List<UserPicturesDO> selectPicturesByShopNameAndImageIdAndLanguageCode(String shopName, String imageId, String languageCode) {
+        return baseMapper.selectList(new LambdaQueryWrapper<UserPicturesDO>().eq(UserPicturesDO::getShopName, shopName)
+                .eq(UserPicturesDO::getImageId, imageId).eq(UserPicturesDO::getLanguageCode, languageCode)
+                .eq(UserPicturesDO::getIsDelete, false));
+    }
+
+    @Override
+    public List<UserPicturesDO> selectPicturesBySHopNameAndLanguageCode(String shopName, String languageCode) {
+        return baseMapper.selectList(new LambdaQueryWrapper<UserPicturesDO>().eq(UserPicturesDO::getShopName, shopName)
+                .eq(UserPicturesDO::getLanguageCode, languageCode).eq(UserPicturesDO::getIsDelete, false));
     }
 }

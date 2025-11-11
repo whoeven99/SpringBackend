@@ -10,12 +10,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/private")
 public class UserPrivateController {
 
-    private final UserPrivateService userPrivateService;
-
     @Autowired
-    public UserPrivateController(UserPrivateService userPrivateService) {
-        this.userPrivateService = userPrivateService;
-    }
+    private UserPrivateService userPrivateService;
+
 
     @PostMapping("/saveUserData")
     public BaseResponse<Object> saveUserData(@RequestBody UserPrivateRequest userPrivateRequest) {

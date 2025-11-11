@@ -1,8 +1,5 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.RabbitMqTranslateVO;
@@ -14,7 +11,7 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -27,7 +24,7 @@ import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 
-@Service
+@Component
 @EnableAsync
 public class RabbitMqTranslateService {
     @Autowired
@@ -210,7 +207,7 @@ public class RabbitMqTranslateService {
             appInsights.trackTrace("checkNeedStopped " + shopName + " 用户 消耗的token ： " + counter.getTotalChars());
 
             // 将翻译状态为2改为“部分翻译”
-            translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", shopName).eq("status", 2).set("status", 7));
+            translatesService.updateStatusByShopNameAndStatus(shopName, 2, 7);
 
             // 将task表数据都改为 5
             translateTasksService.updateByShopName(shopName, 5);
@@ -341,8 +338,7 @@ public class RabbitMqTranslateService {
         request.setShopName(shopName);
 
         // 获取这个用户的已使用token数
-        TranslationCounterDO translationCounterDO = translationCounterService.getOne(
-                new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
+        TranslationCounterDO translationCounterDO = translationCounterService.getTranslationCounterByShopName(shopName);
 
         // 获取最新的remainingChars
         Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
@@ -397,22 +393,24 @@ public class RabbitMqTranslateService {
      * 将同一个shopNmae的task任务的状态。除邮件发送模块改为3.
      */
     public void updateTranslateTasksStatus(String shopName) {
-        //获取shopName所有status为0的task
-        List<TranslateTasksDO> list = translateTasksService.list(new QueryWrapper<TranslateTasksDO>()
-                .eq("status", 0)
-                .eq("shop_name", shopName));
-        //遍历task，然后解析数据，将除email的task都改为3
-        for (TranslateTasksDO translateTasksDO : list) {
-            // TODO 改成批量的
-            translateTasksService.updateByTaskId(translateTasksDO.getTaskId(), 3);
-        }
+        // 批量修改 将所有状态为0的task都改为3
+        translateTasksService.updateStatus0To3ByShopName(shopName);
+
+//        // 获取shopName所有status为0的task
+//        List<TranslateTasksDO> list = translateTasksService.selectTasksByShopNameAndStatus(shopName, 0);
+//
+//        // 遍历task，然后解析数据，将除email的task都改为3
+//        for (TranslateTasksDO translateTasksDO : list) {
+//            // TODO 改成批量的
+//            translateTasksService.updateByTaskId(translateTasksDO.getTaskId(), 3);
+//        }
     }
 
     private void prepareForGlossary(String shopName, Map<String, Object> glossaryMap,
                                     String translationKeyType, Map<String, String> keyMap1, Map<String, String> keyMap0) {
         if (translationKeyType.equals(GLOSSARY)) {
             // 将glossaryMap中所有caseSensitive为1的数据存到一个Map集合里面
-            appInsights.trackTrace("clickTranslation shopName : " + shopName + " , glossaryDO : " + glossaryMap);
+
             for (Map.Entry<String, Object> entry : glossaryMap.entrySet()) {
                 GlossaryDO glossaryDO = OBJECT_MAPPER.convertValue(entry.getValue(), GlossaryDO.class);
 

@@ -2,11 +2,11 @@ package com.bogdatech.logic;
 
 import com.bogdatech.integration.RedisIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
-@Service
+@Component
 public class RedisTranslateLockService {
     @Autowired
     private RedisIntegration redisIntegration;

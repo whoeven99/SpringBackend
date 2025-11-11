@@ -11,4 +11,6 @@ public interface IUserTranslationDataService extends IService<UserTranslationDat
     List<UserTranslationDataDO> selectTranslationDataList();
 
     List<UserTranslationDataDO> selectWritingDataByShopNameAndTarget(String shopName, String target);
+
+    boolean updateTranslationStatusByTaskId(String taskId, int status);
 }

@@ -9,11 +9,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/rightsAndInterests")
 public class RightsAndInterestController {
-    private final IRightsAndInterestsService rightsAndInterestsService;
     @Autowired
-    public RightsAndInterestController(IRightsAndInterestsService rightsAndInterestsService) {
-        this.rightsAndInterestsService = rightsAndInterestsService;
-    }
+    private IRightsAndInterestsService rightsAndInterestsService;
 
     // 读取所有权益
     @GetMapping("/readRightsAndInterests")

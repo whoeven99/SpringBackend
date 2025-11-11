@@ -14,13 +14,8 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/widgetConfigurations")
 public class WidgetConfigurationsController {
-
-    private final IWidgetConfigurationsService widgetConfigurationsService;
-
     @Autowired
-    public WidgetConfigurationsController(IWidgetConfigurationsService widgetConfigurationsService) {
-        this.widgetConfigurationsService = widgetConfigurationsService;
-    }
+    private IWidgetConfigurationsService widgetConfigurationsService;
 
     //供前端插入和更新数据API
     @PostMapping("/saveAndUpdateData")

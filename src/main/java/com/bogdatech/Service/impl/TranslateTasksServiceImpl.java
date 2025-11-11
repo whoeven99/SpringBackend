@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.bogdatech.enums.TranslateEnum.NOT_TRANSLATED;
 import static com.bogdatech.enums.TranslateEnum.TRANSLATING;
@@ -106,5 +107,46 @@ public class TranslateTasksServiceImpl extends ServiceImpl<TranslateTasksMapper,
                         .eq(TranslateTasksDO::getShopName, shopName)
                         .in(TranslateTasksDO::getStatus, Arrays.asList(NOT_TRANSLATED.getStatus(), TRANSLATING.getStatus()))
         ).stream().filter(data -> data.getPayload().contains(query)).toList();
+    }
+
+    @Override
+    public List<TranslateTasksDO> selectTasksByShopNameAndStatus02(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName).in(TranslateTasksDO::getStatus, 0, 2));
+    }
+
+    @Override
+    public List<TranslateTasksDO> selectTasksByShopNameAndStatus(String shopName, int i) {
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslateTasksDO>()
+                .eq(TranslateTasksDO::getStatus, i)
+                .eq(TranslateTasksDO::getShopName, shopName));
+    }
+
+    @Override
+    public boolean updateStatus0To3ByShopName(String shopName) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, shopName)
+                .eq(TranslateTasksDO::getStatus, 0).set(TranslateTasksDO::getStatus, 3)) > 0;
+    }
+
+    @Override
+    public boolean updateStatus2To0() {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getStatus, 2)
+                .set(TranslateTasksDO::getStatus, 0)) > 0;
+    }
+
+    @Override
+    public List<String> selectShopNamesWhenStatus2() {
+        QueryWrapper<TranslateTasksDO> wrapper = new QueryWrapper<>();
+        wrapper.select("DISTINCT shop_name");
+
+        List<Map<String, Object>> maps = this.listMaps(wrapper);
+        return maps.stream()
+                .map(m -> (String) m.get("shop_name"))
+                .toList();
+    }
+
+    @Override
+    public boolean updateStatusByShopNameAndStatus(String shopName, int sourceStatus, int targetStatus) {
+        return baseMapper.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName)
+                .and(wrapper -> wrapper.eq("status", sourceStatus)).set("status", targetStatus)) > 0;
     }
 }

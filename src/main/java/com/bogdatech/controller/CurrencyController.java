@@ -7,20 +7,15 @@ import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Map;
 
 @RestController
 @RequestMapping("/currency")
 public class CurrencyController {
-
-    private final ICurrenciesService currencyService;
-    private final PurchaseService purchaseService;
     @Autowired
-    public CurrencyController(ICurrenciesService currencyService, PurchaseService purchaseService) {
-        this.currencyService = currencyService;
-        this.purchaseService = purchaseService;
-    }
+    private ICurrenciesService currencyService;
+    @Autowired
+    private PurchaseService purchaseService;
 
     //根据传入的货币代码插入货币信息
     @PostMapping("/insertCurrency")

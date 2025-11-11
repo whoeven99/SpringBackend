@@ -13,12 +13,8 @@ import static com.bogdatech.enums.ErrorEnum.*;
 @RestController
 @RequestMapping("/glossary")
 public class GlossaryController {
-
-    private final IGlossaryService glossaryService;
     @Autowired
-    public GlossaryController(IGlossaryService glossaryService) {
-        this.glossaryService = glossaryService;
-    }
+    private IGlossaryService glossaryService;
 
     /**
      * 插入glossary数据

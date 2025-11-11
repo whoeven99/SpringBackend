@@ -11,17 +11,13 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/IpSwitch")
 public class UserIPSwitchController {
-    private final IUserIPSwitchService userIPSwitchService;
-
     @Autowired
-    public UserIPSwitchController(IUserIPSwitchService userIPSwitchService) {
-        this.userIPSwitchService = userIPSwitchService;
-    }
+    private IUserIPSwitchService userIpSwitchService;
 
     @PostMapping("/insertSwitch")
     public BaseResponse<Object> insertSwitch(@RequestBody UserIPSwitchDO userIPSwitchDO) {
 
-        int i = userIPSwitchService.insertSwitch(userIPSwitchDO);
+        int i = userIpSwitchService.insertSwitch(userIPSwitchDO);
         if (i > 0 ) {
             return new BaseResponse<>().CreateSuccessResponse(userIPSwitchDO.getSwitchId());
         }else {
@@ -32,7 +28,7 @@ public class UserIPSwitchController {
     @GetMapping("/getSwitchId")
     public BaseResponse<Object> getSwitchId(String shopName) {
         try {
-            return new BaseResponse<>().CreateSuccessResponse(userIPSwitchService.getSwitchId(shopName));
+            return new BaseResponse<>().CreateSuccessResponse(userIpSwitchService.getSwitchId(shopName));
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("getSwitchId error: " + e.getMessage());

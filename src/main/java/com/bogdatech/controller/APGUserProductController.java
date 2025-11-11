@@ -11,20 +11,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/apg/product")
 public class APGUserProductController {
-    private final APGUserProductService apgUserProductService;
-
     @Autowired
-    public APGUserProductController(APGUserProductService apgUserProductService) {
-        this.apgUserProductService = apgUserProductService;
-    }
+    private APGUserProductService apgUserProductService;
 
     /**
      * 根据产品id，获取用户产品数据
-     * */
+     */
     @PostMapping("/getProductsByListId")
-    public BaseResponse<Object> getProductsByListId(@RequestParam String shopName, @RequestBody List<String> listId){
+    public BaseResponse<Object> getProductsByListId(@RequestParam String shopName, @RequestBody List<String> listId) {
         List<APGUserProductDO> listData = apgUserProductService.getProductsByListId(shopName, listId);
-        if (listData != null){
+        if (listData != null) {
             return new BaseResponse<>().CreateSuccessResponse(listData);
         }
         return new BaseResponse<>().CreateErrorResponse((Object) null);
@@ -32,24 +28,24 @@ public class APGUserProductController {
 
     /**
      * 假删除产品数据
-     * */
+     */
     @GetMapping("/deleteProduct")
-    public BaseResponse<Object> deleteProduct(@RequestParam String shopName, @RequestParam String listId){
+    public BaseResponse<Object> deleteProduct(@RequestParam String shopName, @RequestParam String listId) {
         Boolean result = apgUserProductService.deleteProduct(shopName, listId);
-        if (result){
+        if (result) {
             return new BaseResponse<>().CreateSuccessResponse(true);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
     }
 
     /**
      * 存储或更新用户产品
-     * */
+     */
     @PostMapping("/saveOrUpdateProduct")
-    public BaseResponse<Object> saveOrUpdateProduct(@RequestParam String shopName, @RequestBody APGUserProductDO apgUserProductDO){
+    public BaseResponse<Object> saveOrUpdateProduct(@RequestParam String shopName, @RequestBody APGUserProductDO apgUserProductDO) {
         Boolean result = apgUserProductService.saveOrUpdateProduct(shopName, apgUserProductDO);
-        if (result){
+        if (result) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
             return new BaseResponse<>().CreateErrorResponse(false);

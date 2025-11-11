@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IUserPicturesService;
 import com.bogdatech.entity.DO.UserPicturesDO;
 import com.bogdatech.logic.PCUserPicturesService;
@@ -9,7 +8,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 import static com.bogdatech.integration.HunYuanBucketIntegration.uploadFile;
@@ -78,7 +76,9 @@ public class UserPicturesController {
      */
     @PostMapping("/getPictureDataByShopNameAndResourceIdAndPictureId")
     public BaseResponse<Object> getPictureDataByShopNameAndResourceIdAndPictureId(@RequestParam("shopName") String shopName, @RequestBody UserPicturesDO userPicturesDO) {
-        List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("image_id", userPicturesDO.getImageId()).eq("language_code", userPicturesDO.getLanguageCode()).eq("is_delete", false));
+        // TODO test
+        List<UserPicturesDO> list = iUserPicturesService.selectPicturesByShopNameAndImageIdAndLanguageCode(shopName, userPicturesDO.getImageId(), userPicturesDO.getLanguageCode());
+
         if (list != null) {
             // 替换图片url
             list.forEach(pic -> {
@@ -96,7 +96,8 @@ public class UserPicturesController {
      * */
     @PostMapping("/getPictureDataByShopNameAndLanguageCode")
     public BaseResponse<Object> getPictureDataByShopNameAndLanguageCode(@RequestParam("shopName") String shopName, @RequestParam("languageCode") String languageCode) {
-        List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("language_code", languageCode).eq("is_delete", false));
+        List<UserPicturesDO> list = iUserPicturesService.selectPicturesBySHopNameAndLanguageCode(shopName, languageCode);
+
         if (list != null) {
             list.forEach(pic -> {
                 if (pic.getImageAfterUrl() != null) {

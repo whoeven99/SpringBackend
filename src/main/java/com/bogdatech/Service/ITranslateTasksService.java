@@ -31,4 +31,16 @@ public interface ITranslateTasksService extends IService<TranslateTasksDO> {
     List<TranslateTasksDO> listTranslateStatus2And0TasksByShopName(String shopName);
 
     List<TranslateTasksDO> getTranslateTasksByShopNameAndSourceAndTarget(String shopName, String source, String target);
+
+    List<TranslateTasksDO> selectTasksByShopNameAndStatus02(String shopName);
+
+    List<TranslateTasksDO> selectTasksByShopNameAndStatus(String shopName, int i);
+
+    boolean updateStatus0To3ByShopName(String shopName);
+
+    boolean updateStatus2To0();
+
+    List<String> selectShopNamesWhenStatus2();
+
+    boolean updateStatusByShopNameAndStatus(String shopName, int sourceStatus, int targetStatus);
 }

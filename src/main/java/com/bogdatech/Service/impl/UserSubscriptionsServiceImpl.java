@@ -1,5 +1,7 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserSubscriptionsService;
@@ -8,6 +10,8 @@ import com.bogdatech.mapper.UserSubscriptionsMapper;
 import com.bogdatech.model.controller.request.UserSubscriptionsRequest;
 import com.bogdatech.utils.TypeConversionUtils;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsMapper, UserSubscriptionsDO> implements IUserSubscriptionsService {
@@ -25,7 +29,8 @@ public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsM
 
     @Override
     public Boolean updateUserSubscription(String shopName, int planId) {
-        return baseMapper.update(new UpdateWrapper<UserSubscriptionsDO>().set("plan_id", planId).eq("shop_name", shopName)) > 0;
+        return baseMapper.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName)
+                .set(UserSubscriptionsDO::getPlanId, planId)) > 0;
     }
 
 
@@ -35,6 +40,31 @@ public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsM
         userSubscriptionsDO.setShopName(shopName);
         userSubscriptionsDO.setPlanId(planId);
         return baseMapper.update(userSubscriptionsDO, new UpdateWrapper<UserSubscriptionsDO>().eq("shop_name", shopName));
+    }
+
+    @Override
+    public boolean updateFeeTypeByShopName(String shopName, int feeType) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName).set(UserSubscriptionsDO::getFeeType, feeType)) > 0;
+    }
+
+    @Override
+    public UserSubscriptionsDO getSubscriptionDataByShopName(String shopName) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName));
+    }
+
+    @Override
+    public boolean updateFeeTypeAndEndDateByShopName(String shopName, Integer feeType, LocalDateTime subEnd) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserSubscriptionsDO>()
+                .eq(UserSubscriptionsDO::getShopName, shopName)
+                .set(UserSubscriptionsDO::getFeeType, feeType)
+                .set(UserSubscriptionsDO::getEndDate, subEnd)) > 0;
+    }
+
+    @Override
+    public boolean updateUserExpirationTime(String shopName, LocalDateTime subEnd) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserSubscriptionsDO>()
+                .eq(UserSubscriptionsDO::getShopName, shopName)
+                .set(UserSubscriptionsDO::getEndDate, subEnd)) > 0;
     }
 
 

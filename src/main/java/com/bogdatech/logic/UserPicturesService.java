@@ -1,7 +1,7 @@
 package com.bogdatech.logic;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class UserPicturesService {
 }

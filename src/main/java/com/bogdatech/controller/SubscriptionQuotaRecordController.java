@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.ISubscriptionQuotaRecordService;
 import com.bogdatech.entity.DO.SubscriptionQuotaRecordDO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +13,9 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/subscriptionQuotaRecord")
 public class SubscriptionQuotaRecordController {
-
-    private final ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
-
     @Autowired
-    public SubscriptionQuotaRecordController(ISubscriptionQuotaRecordService subscriptionQuotaRecordService) {
-        this.subscriptionQuotaRecordService = subscriptionQuotaRecordService;
-    }
+    private ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
+
 
     //在购买订阅之后，给用户添加对应的订阅信息
     @PutMapping("/addSubscriptionQuotaRecord")
@@ -30,13 +25,14 @@ public class SubscriptionQuotaRecordController {
         int attempt = 0;
         boolean success = false;
 
-        //如果数据库中含有这条数据，就不插入了
-        SubscriptionQuotaRecordDO byId = subscriptionQuotaRecordService.getOne(new QueryWrapper<SubscriptionQuotaRecordDO>().eq("subscription_id", subscriptionQuotaRecordDO.getSubscriptionId()).eq("billing_cycle", 1));
+        // 如果数据库中含有这条数据，就不插入了
+        SubscriptionQuotaRecordDO byId = subscriptionQuotaRecordService.getSubscriptionQuotaRecordDataByIdAndBillingCycle(subscriptionQuotaRecordDO.getSubscriptionId(), 1);
         appInsights.trackTrace("addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 这条数据只是判断是否要往数据库存值 byId: " + byId);
         if (byId != null){
             appInsights.trackTrace("addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 数据库中含有这条数据，就不插入了");
             return;
         }
+
         // 重试逻辑
         while (attempt < maxRetries && !success) {
             try {

@@ -2,30 +2,22 @@ package com.bogdatech.logic;
 
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IUserPrivateService;
 import com.bogdatech.entity.DO.UserPrivateDO;
 import com.bogdatech.model.controller.request.UserPrivateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.replaceDot;
 
 @Component
 public class UserPrivateService {
-
-    private final IUserPrivateService userPrivateService;
-    private final SecretClient secretClient;
-
     @Autowired
-    public UserPrivateService(IUserPrivateService userPrivateService, SecretClient secretClient) {
-        this.userPrivateService = userPrivateService;
-        this.secretClient = secretClient;
-    }
+    private IUserPrivateService userPrivateService;
+    @Autowired
+    private SecretClient secretClient;
 
     public BaseResponse<Object> saveOrUpdateUserData(UserPrivateRequest userPrivateRequest) {
         String model = userPrivateRequest.getModel();
@@ -57,7 +49,8 @@ public class UserPrivateService {
             if (user != null) {
                 //更新
                 //openaiKey和googleKey为空则不更新
-                userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(SHOP_NAME, userPrivateDO.getShopName()));
+                userPrivateService.updatePrivateUserByShopName(userPrivateDO, userPrivateDO.getShopName());
+
                 //更新Azure的keyVault
 
             } else {
@@ -88,7 +81,7 @@ public class UserPrivateService {
                 if (userPrivateDO == null) {
                     return new BaseResponse<>().CreateSuccessResponse(new UserPrivateDO());
                 }
-                if (userPrivateDO.getGoogleKey() == null){
+                if (userPrivateDO.getGoogleKey() == null) {
                     userPrivateDO.setId(null);
                     return new BaseResponse<>().CreateSuccessResponse(userPrivateDO);
                 }
@@ -120,7 +113,7 @@ public class UserPrivateService {
         //更新用户
         UserPrivateDO userPrivateDO = new UserPrivateDO();
         userPrivateDO.setUsedAmount(usedChars);
-        userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(SHOP_NAME, shopName));
+        userPrivateService.updatePrivateUserByShopName(userPrivateDO, shopName);
     }
 
     //删除用户数据

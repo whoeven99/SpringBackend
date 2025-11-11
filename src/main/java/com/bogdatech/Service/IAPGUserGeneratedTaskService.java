@@ -7,4 +7,8 @@ public interface IAPGUserGeneratedTaskService extends IService<APGUserGeneratedT
     Boolean updateStatusByUserId(Long userId, int i);
 
     Boolean updateStatusTo2(Long id);
+
+    APGUserGeneratedTaskDO getTaskByUserId(Long id);
+
+    Boolean updateTaskByUserId(APGUserGeneratedTaskDO apgUserGeneratedTaskDO, Long id);
 }

@@ -1,6 +1,8 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserTrialsService;
 import com.bogdatech.entity.DO.UserTrialsDO;
@@ -8,6 +10,7 @@ import com.bogdatech.mapper.UserTrialsMapper;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -32,5 +35,27 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
             return userTrialsDO.getIsTrialExpired();
         }
         return null;
+    }
+
+    @Override
+    public UserTrialsDO getUserTrialByShopName(String shopName) {
+        return this.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
+    }
+
+    @Override
+    public boolean updateTrialsExpiredByShopName(String shopName, boolean trialsExpired) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName)
+                .set(UserTrialsDO::getIsTrialExpired, trialsExpired)) > 0;
+    }
+
+    @Override
+    public boolean updateTrialShowByShopName(String shopName, boolean b) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName)
+                .set(UserTrialsDO::getIsTrialShow, b)) > 0;
+    }
+
+    @Override
+    public List<UserTrialsDO> selectTrialsByIsTrialExpired(boolean trialExpired) {
+        return  baseMapper.selectList(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getIsTrialShow, false));
     }
 }

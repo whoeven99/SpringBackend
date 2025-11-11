@@ -19,4 +19,7 @@ public interface IUserTypeTokenService extends IService<UserTypeTokenDO> {
 
     void insertInitial(String shopName);
 
+    UserTypeTokenDO getUserTypeByTranslationId(Integer translationId);
+
+    UserTypeTokenDO getUserTypeByShopName(String shopName);
 }

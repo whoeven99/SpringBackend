@@ -1,7 +1,5 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.APGOfficialTemplateDO;
 import com.bogdatech.entity.DO.APGUserCounterDO;
@@ -16,7 +14,7 @@ import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import java.util.Random;
 import static com.bogdatech.constants.TranslateConstants.APIVERSION;
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
@@ -30,7 +28,7 @@ import static com.bogdatech.utils.StringUtils.countWords;
 import static com.bogdatech.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
 import static com.bogdatech.utils.TypeConversionUtils.userTemplateToTemplateDTO;
 
-@Service
+@Component
 public class GenerateDescriptionService {
 
     @Autowired
@@ -54,8 +52,9 @@ public class GenerateDescriptionService {
      * @return 产品描述
      */
     public String generateDescription(APGUsersDO usersDO, GenerateDescriptionVO generateDescriptionVO, CharacterCountUtils counter, Integer userMaxLimit, ProductDTO product) {
-        //判断额度是否足够，然后决定是否继续调用
-        APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
+        // 判断额度是否足够，然后决定是否继续调用
+        APGUserCounterDO counterDO = iapgUserCounterService.getUserCounterByUserId(usersDO.getId());
+
         if (counterDO.getUserToken() >= userMaxLimit) {
             throw new ClientException(CHARACTER_LIMIT);
         }
@@ -115,14 +114,16 @@ public class GenerateDescriptionService {
      * 根据模板id获取模板数据
      * */
     public TemplateDTO getTemplateById(Long templateId, Long userId, Boolean templateType) {
-        //根据templateType选择官方或用户模板
+        // 根据templateType选择官方或用户模板
         if (templateType) {
-            //获取用户模板
-            APGUserTemplateDO one = iapgUserTemplateService.getOne(new LambdaQueryWrapper<APGUserTemplateDO>().eq(APGUserTemplateDO::getUserId, userId).eq(APGUserTemplateDO::getId, templateId));
+            // 获取用户模板
+            APGUserTemplateDO one = iapgUserTemplateService.getUserTemplateByUserIdAndTemplateId(userId, templateId);
+
             return userTemplateToTemplateDTO(one);
         }else {
-            //获取官方模板
-            APGOfficialTemplateDO one = iapgOfficialTemplateService.getOne(new LambdaQueryWrapper<APGOfficialTemplateDO>().eq(APGOfficialTemplateDO::getId, templateId));
+            // 获取官方模板
+            APGOfficialTemplateDO one = iapgOfficialTemplateService.getOfficialTemplateById(templateId);
+
             return officialTemplateToTemplateDTO(one);
         }
     }

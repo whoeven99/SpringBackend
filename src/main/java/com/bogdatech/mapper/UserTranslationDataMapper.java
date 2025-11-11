@@ -10,16 +10,18 @@ import java.util.List;
 @Mapper
 public interface UserTranslationDataMapper extends BaseMapper<UserTranslationDataDO> {
     @Select("""
-            WITH RankedData AS (
-                SELECT *,
-                       ROW_NUMBER() OVER (PARTITION BY shop_name ORDER BY created_at DESC) AS rn
-                FROM User_Translation_Data
-                WHERE Status = 0
-            )
-            SELECT TOP 8 *
-            FROM RankedData
-            WHERE rn = 1;
-
+            SELECT TOP 8 utd.*
+                         FROM User_Translation_Data utd
+                         JOIN (
+                             SELECT shop_name, MAX(created_at) AS max_created_at
+                             FROM User_Translation_Data
+                             WHERE Status = 0
+                             GROUP BY shop_name
+                         ) latest
+                             ON utd.shop_name = latest.shop_name
+                            AND utd.created_at = latest.max_created_at
+                         WHERE utd.Status = 0
+                         ORDER BY utd.created_at DESC;
             """)
     List<UserTranslationDataDO> selectTranslationDataList();
 }
