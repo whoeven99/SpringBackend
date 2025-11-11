@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class APGCharsOrderServiceImpl extends ServiceImpl<APGCharsOrderMapper, APGCharsOrderDO> implements IAPGCharsOrderService {
     @Override
-    public Boolean updateStatusByShopName(Long id, String status) {
+    public Boolean updateStatusByShopName(String id, String status) {
         return baseMapper.updateStatusByShopName(id, status);
     }
 }
