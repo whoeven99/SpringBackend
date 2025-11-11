@@ -10,13 +10,8 @@ import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
 @RestController
 @RequestMapping("/apg/orders")
 public class APGCharsOrderController {
-
-    private final APGCharsOrderService orderService;
-
     @Autowired
-    public APGCharsOrderController(APGCharsOrderService orderService) {
-        this.orderService = orderService;
-    }
+    private  APGCharsOrderService orderService;
 
     //存储和更新订单
     @PostMapping("/insertOrUpdateOrder")
