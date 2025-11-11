@@ -34,12 +34,13 @@ public class APGCharsOrderService {
             appInsights.trackTrace("APGCharsOrderService 用户 " + shopName + " usersDO is null ");
             return false;
         }
-        APGCharsOrderDO charsOrdersServiceById = charsOrdersService.getById(usersDO.getId());
+
+        APGCharsOrderDO charsOrdersServiceById = charsOrdersService.getById(charsOrdersDO.getId());
         if (charsOrdersServiceById == null) {
             charsOrdersDO.setUserId(usersDO.getId());
             return charsOrdersService.save(charsOrdersDO);
         } else {
-            return charsOrdersService.updateStatusByShopName(usersDO.getId(), charsOrdersDO.getStatus());
+            return charsOrdersService.updateStatusByShopName(charsOrdersServiceById.getId(), charsOrdersDO.getStatus());
         }
     }
 
