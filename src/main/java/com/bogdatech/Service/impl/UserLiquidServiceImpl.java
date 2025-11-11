@@ -33,9 +33,9 @@ public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiq
     @Override
     public UserLiquidDO getLiquidData(String shopName, String liquidAfterTranslation, String languageCode, String liquidBeforeTranslation) {
         return this.getOne(new LambdaQueryWrapper<UserLiquidDO>().eq(UserLiquidDO::getShopName, shopName)
-                .eq(UserLiquidDO::getLiquidAfterTranslation, liquidAfterTranslation)
                 .eq(UserLiquidDO::getLanguageCode, languageCode)
-                .eq(UserLiquidDO::getLiquidBeforeTranslation, liquidBeforeTranslation));
+                .apply("HASHBYTES('SHA2_256', CONVERT(VARBINARY(1000), liquid_before_translation)) = HASHBYTES('SHA2_256', CONVERT(VARBINARY(1000), {0}))", liquidBeforeTranslation)
+                .apply("HASHBYTES('SHA2_256', CONVERT(VARBINARY(1000), liquid_after_translation)) = HASHBYTES('SHA2_256', CONVERT(VARBINARY(1000), {0}))", liquidAfterTranslation));
     }
 
     @Override
