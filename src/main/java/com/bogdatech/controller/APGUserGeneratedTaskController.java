@@ -29,20 +29,17 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RequestMapping("/apg/userGeneratedTask")
 @EnableAsync
 public class APGUserGeneratedTaskController {
-    private final APGUserGeneratedTaskService apgUserGeneratedTaskService;
-    private final IAPGUsersService iapgUsersService;
-    private final IAPGUserPlanService iapgUserPlanService;
-    private final IAPGUserCounterService iapgUserCounterService;
-    private final IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
-
     @Autowired
-    public APGUserGeneratedTaskController(APGUserGeneratedTaskService apgUserGeneratedTaskService, IAPGUsersService iapgUsersService, IAPGUserPlanService iapgUserPlanService, IAPGUserCounterService iapgUserCounterService, IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService) {
-        this.apgUserGeneratedTaskService = apgUserGeneratedTaskService;
-        this.iapgUsersService = iapgUsersService;
-        this.iapgUserPlanService = iapgUserPlanService;
-        this.iapgUserCounterService = iapgUserCounterService;
-        this.iapgUserGeneratedSubtaskService = iapgUserGeneratedSubtaskService;
-    }
+    private APGUserGeneratedTaskService apgUserGeneratedTaskService;
+    @Autowired
+    private IAPGUsersService iapgUsersService;
+    @Autowired
+    private IAPGUserPlanService iapgUserPlanService;
+    @Autowired
+    private IAPGUserCounterService iapgUserCounterService;
+    @Autowired
+    private IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
+
 
     /**
      * 初始化或更新相关数据
@@ -106,7 +103,7 @@ public class APGUserGeneratedTaskController {
             //将该用户的状态3，4改为9 （问题数据）
             iapgUserGeneratedSubtaskService.update34StatusTo9(usersDO.getId());
             apgUserGeneratedTaskService.batchGenerateDescription(usersDO, shopName, generateDescriptionsVO);
-        }catch (ClientException e1){
+        } catch (ClientException e1) {
             //发送对应邮件
             //修改状态
             appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
@@ -126,7 +123,7 @@ public class APGUserGeneratedTaskController {
 
     /**
      * 查看GENERATE_SHOP里面的用户数据
-     * */
+     */
     @GetMapping("/getGenerateShop")
     public BaseResponse<Object> getGenerateShop() {
         return new BaseResponse<>().CreateSuccessResponse(GENERATE_SHOP);
@@ -134,7 +131,7 @@ public class APGUserGeneratedTaskController {
 
     /**
      * 删除Generate_shop里面的用户数据
-     * */
+     */
     @GetMapping("/deleteGenerateShop")
     public BaseResponse<Object> deleteGenerateShop(@RequestParam String shopName) {
         //根据shopName，获取userId
@@ -145,7 +142,7 @@ public class APGUserGeneratedTaskController {
 
     /**
      * 停止用户批量翻译
-     * */
+     */
     @PutMapping("/stopBatchGenerateDescription")
     public BaseResponse<Object> stopBatchGenerateDescription(@RequestParam String shopName) {
         //根据shopName，获取userId
@@ -156,14 +153,14 @@ public class APGUserGeneratedTaskController {
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
         if (Boolean.TRUE.equals(result) && updateFlag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
     }
 
     /**
      * 查看用户停止状态
-     * */
+     */
     @GetMapping("/getStopFlag")
     public BaseResponse<Object> getStopFlag() {
         return new BaseResponse<>().CreateSuccessResponse(GENERATE_SHOP_STOP_FLAG);
