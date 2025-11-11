@@ -31,6 +31,7 @@ public class APGUserService {
         APGUsersDO shopName = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", usersDO.getShopName()));
         boolean flag;
         if (shopName == null) {
+            usersDO.setId(null);
             flag = iapgUsersService.save(usersDO);
             APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
             if (userDO == null) {

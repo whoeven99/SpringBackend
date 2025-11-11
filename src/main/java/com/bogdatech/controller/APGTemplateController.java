@@ -35,7 +35,7 @@ public class APGTemplateController {
         //获取用户id
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
-            return null;
+            return new BaseResponse<>().CreateErrorResponse("shopName not exist");
         }
         if (templateDTO.getTemplateClass()) {
             //获取用户模板
