@@ -7,6 +7,7 @@ import com.bogdatech.Service.IUserLiquidService;
 import com.bogdatech.entity.DO.UserLiquidDO;
 import com.bogdatech.mapper.UserLiquidMapper;
 import org.springframework.stereotype.Service;
+
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,7 @@ public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiq
     @Override
     public UserLiquidDO getLiquidData(String shopName, String liquidAfterTranslation, String languageCode, String liquidBeforeTranslation) {
         return this.getOne(new LambdaQueryWrapper<UserLiquidDO>().eq(UserLiquidDO::getShopName, shopName)
+                .eq(UserLiquidDO::getLiquidAfterTranslation, liquidAfterTranslation)
                 .eq(UserLiquidDO::getLanguageCode, languageCode)
                 .eq(UserLiquidDO::getLiquidBeforeTranslation, liquidBeforeTranslation));
     }
