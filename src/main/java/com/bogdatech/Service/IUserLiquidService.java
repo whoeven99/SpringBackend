@@ -7,7 +7,7 @@ import java.util.List;
 public interface IUserLiquidService extends IService<UserLiquidDO> {
     List<UserLiquidDO> selectLiquidData(String shopName);
 
-    UserLiquidDO getLiquidData(String shopName, String languageCode, String liquidBeforeTranslation);
+    UserLiquidDO getLiquidData(String shopName, String liquidAfterTranslation, String languageCode, String liquidBeforeTranslation);
 
     boolean updateLiquidDataById(UserLiquidDO userLiquidDO);
 

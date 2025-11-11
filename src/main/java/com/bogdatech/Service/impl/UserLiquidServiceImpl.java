@@ -30,7 +30,7 @@ public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiq
 
 
     @Override
-    public UserLiquidDO getLiquidData(String shopName, String languageCode, String liquidBeforeTranslation) {
+    public UserLiquidDO getLiquidData(String shopName, String liquidAfterTranslation, String languageCode, String liquidBeforeTranslation) {
         return this.getOne(new LambdaQueryWrapper<UserLiquidDO>().eq(UserLiquidDO::getShopName, shopName)
                 .eq(UserLiquidDO::getLanguageCode, languageCode)
                 .eq(UserLiquidDO::getLiquidBeforeTranslation, liquidBeforeTranslation));
