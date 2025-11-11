@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,6 +72,8 @@ public class TaskService {
     private ShopifyService shopifyService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
+    @Autowired
+    private TranslationMonitorRedisService translationMonitorRedisService;
 
 
     //异步调用根据订阅信息，判断是否添加额度的方法
@@ -361,6 +365,10 @@ public class TaskService {
                     Timestamp.valueOf(LocalDateTime.now()), false);
             try {
                 appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);
+
+                // Monitor 记录shop开始的时间（中国区时间）
+                String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                translationMonitorRedisService.hsetStartTranslationAt(shopName, chinaTime);
                 int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
                 appInsights.trackTrace("将自动翻译参数存到数据库后： " + insert);
             } catch (Exception e) {

@@ -30,7 +30,7 @@ public class APGTemplateController {
         //获取用户id
         APGUsersDO userDO = iapgUsersService.getUserByShopName(shopName);
         if (userDO == null) {
-            return null;
+            return new BaseResponse<>().CreateErrorResponse("shopName not exist");
         }
         if (templateDTO.getTemplateClass()) {
             //获取用户模板

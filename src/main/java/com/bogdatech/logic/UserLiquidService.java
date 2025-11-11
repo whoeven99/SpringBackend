@@ -2,12 +2,11 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.IUserLiquidService;
 import com.bogdatech.entity.DO.UserLiquidDO;
-import com.bogdatech.entity.VO.InsertLiquidVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.JsonUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,57 +19,44 @@ public class UserLiquidService {
     public BaseResponse<Object> selectShopNameLiquidData(String shopName) {
         // 第一版 只传shopName
         List<UserLiquidDO> userLiquidList = iUserLiquidService.selectLiquidData(shopName);
-
-        // 分组：按 shopName + liquidBeforeTranslation 分组
-        List<Map<String, String>> result = userLiquidList.stream()
-                .collect(Collectors.groupingBy(
-                        item -> item.getShopName() + "_" + item.getLiquidBeforeTranslation()
-                ))
-                .values().stream()
-                .map(list -> {
-                    UserLiquidDO first = list.get(0);
-                    Map<String, String> targetJson = list.stream()
-                            .collect(Collectors.toMap(
-                                    UserLiquidDO::getLanguageCode,
-                                    UserLiquidDO::getLiquidAfterTranslation
-                            ));
-                    Map<String, String> map = new HashMap<>();
-                    map.put("shop", first.getShopName());
-                    map.put("sourceText", first.getLiquidBeforeTranslation());
-                    map.put("targetJson", JsonUtils.objectToJson(targetJson));
-                    return map;
-                })
-                .toList();
-
-        return new BaseResponse<>().CreateSuccessResponse(result);
+        return new BaseResponse<>().CreateSuccessResponse(userLiquidList);
     }
 
-    public BaseResponse<Object> insertShopNameLiquidData(String shopName, InsertLiquidVO insertLiquidVO) {
-        // 解析targetJson数据
-        Map<String, String> liquidResponse = JsonUtils.jsonToObjectWithNull(insertLiquidVO.getTargetJson(), new TypeReference<Map<String, String>>() {
-        });
-        if (liquidResponse == null) {
-            return new BaseResponse<>().CreateErrorResponse("targetJson is null");
+    public BaseResponse<Object> insertShopNameLiquidData(String shopName, UserLiquidDO userLiquidDO) {
+        // 判断这个值在数据库中是否存在， 不存在插入；存在，更新
+        if (shopName == null || userLiquidDO == null) {
+            return new BaseResponse<>().CreateErrorResponse("Invalid input parameters");
         }
 
-        List<Boolean> result = new ArrayList<>();
-        for (Map.Entry<String, String> entry : liquidResponse.entrySet()) {
-            // 判断这个值在数据库中是否存在， 不存在插入；存在，更新
-            UserLiquidDO liquidData = iUserLiquidService.getLiquidData(shopName, entry.getKey(), insertLiquidVO.getSourceText());
-            UserLiquidDO userLiquidDO = new UserLiquidDO();
-            userLiquidDO.setShopName(shopName);
-            userLiquidDO.setLiquidBeforeTranslation(insertLiquidVO.getSourceText());
-            userLiquidDO.setLiquidAfterTranslation(entry.getValue());
-            userLiquidDO.setLanguageCode(entry.getKey());
-            if (liquidData == null) {
-                boolean save = iUserLiquidService.save(userLiquidDO);
-                result.add(save);
-            } else {
-                boolean updateFlag = iUserLiquidService.updateLiquidData(shopName, userLiquidDO);
-                result.add(updateFlag);
-            }
+        userLiquidDO.setShopName(shopName);
+
+        // 查询是否存在
+        UserLiquidDO existing = iUserLiquidService.getLiquidData(
+                shopName,
+                userLiquidDO.getLanguageCode(),
+                userLiquidDO.getLiquidBeforeTranslation()
+        );
+
+        boolean isSuccess;
+        UserLiquidDO resultData;
+
+        if (existing == null) {
+            // 插入逻辑
+            isSuccess = iUserLiquidService.save(userLiquidDO);
+            resultData = isSuccess
+                    ? iUserLiquidService.getLiquidData(shopName, userLiquidDO.getLanguageCode(), userLiquidDO.getLiquidBeforeTranslation())
+                    : null;
+        } else {
+            // 更新逻辑（保持 id 一致）
+            userLiquidDO.setId(existing.getId());
+            isSuccess = iUserLiquidService.updateLiquidDataById(userLiquidDO);
+            resultData = isSuccess ? userLiquidDO : null;
         }
-        return new BaseResponse<>().CreateSuccessResponse(result);
+
+        if (isSuccess) {
+            return new BaseResponse<>().CreateSuccessResponse(resultData);
+        }
+        return new BaseResponse<>().CreateErrorResponse(null, "Database operation failed");
     }
 
     public BaseResponse<Object> parseLiquidDataByShopNameAndLanguage(String shopName, String languageCode) {
@@ -99,5 +85,19 @@ public class UserLiquidService {
                 ));
 
         return new BaseResponse<>().CreateSuccessResponse(resultMap);
+    }
+
+    public BaseResponse<Object> deleteLiquidDataByIds(String shopName, List<Integer> ids) {
+        if (ids == null || ids.isEmpty() || shopName == null) {
+            return new BaseResponse<>().CreateErrorResponse("Invalid input parameters");
+        }
+
+        // 根据ids 逻辑删除数据
+        boolean flag = iUserLiquidService.deleteLiquidDataByIds(shopName, ids);
+        if (flag) {
+            return new BaseResponse<>().CreateSuccessResponse(ids);
+        } else {
+            return new BaseResponse<>().CreateErrorResponse(null, "Database operation failed");
+        }
     }
 }

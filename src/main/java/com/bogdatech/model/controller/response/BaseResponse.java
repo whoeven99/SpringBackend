@@ -24,6 +24,13 @@ public class BaseResponse<T> {
         return this;
     }
 
+    public BaseResponse<T> CreateErrorResponse(T response, String errorMsg) {
+        this.success = false;
+        this.response = response;
+        this.errorMsg = errorMsg;
+        return this;
+    }
+
     public BaseResponse<T> CreateErrorResponse(ErrorEnum errorEnum) {
         this.success = false;
         this.errorMsg = errorEnum.getErrMsg();

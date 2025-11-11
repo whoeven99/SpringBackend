@@ -235,12 +235,13 @@ public class TranslateService {
             }
         }
 
+        request.setAccessToken(null);
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
     /**
      * 手动停止用户的翻译任务
-     */
+     * */
     public String stopTranslationManually(String shopName) {
         Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
         if (stopFlag) {

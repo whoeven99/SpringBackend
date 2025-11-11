@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class InsertLiquidVO {
+    private Integer id;
     private String sourceText;
     private String targetJson;
 }

@@ -23,4 +23,8 @@ public class UserLiquidDO {
     private boolean isDeleted = false;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+
+    public boolean getIsDeleted() {
+        return isDeleted;
+    }
 }
