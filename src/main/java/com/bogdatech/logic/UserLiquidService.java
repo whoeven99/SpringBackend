@@ -29,28 +29,37 @@ public class UserLiquidService {
         }
 
         userLiquidDO.setShopName(shopName);
-
-        // 查询是否存在
-        UserLiquidDO existing = iUserLiquidService.getLiquidData(
-                shopName,
-                userLiquidDO.getLanguageCode(),
-                userLiquidDO.getLiquidBeforeTranslation()
-        );
-
-        boolean isSuccess;
         UserLiquidDO resultData;
+        boolean isSuccess;
 
-        if (existing == null) {
-            // 插入逻辑
+        // 判断有没有传 id ， 没有，就存； 有的话，就更新
+        // 查询 id 是否存在
+        if (userLiquidDO.getId() == null) {
+            // 如果id为空，就写入
             isSuccess = iUserLiquidService.save(userLiquidDO);
             resultData = isSuccess
-                    ? iUserLiquidService.getLiquidData(shopName, userLiquidDO.getLanguageCode(), userLiquidDO.getLiquidBeforeTranslation())
+                    ? iUserLiquidService.getLiquidData(shopName, userLiquidDO.getLiquidAfterTranslation(), userLiquidDO.getLanguageCode(), userLiquidDO.getLiquidBeforeTranslation())
                     : null;
+
         } else {
-            // 更新逻辑（保持 id 一致）
-            userLiquidDO.setId(existing.getId());
+            // 查询是否存在
+            UserLiquidDO existing = iUserLiquidService.getLiquidData(
+                    shopName,
+                    userLiquidDO.getLiquidAfterTranslation(),
+                    userLiquidDO.getLanguageCode(),
+                    userLiquidDO.getLiquidBeforeTranslation()
+            );
+
+            if (existing != null) {
+                return new BaseResponse<>().CreateErrorResponse("Liquid data already exists");
+            }
+
             isSuccess = iUserLiquidService.updateLiquidDataById(userLiquidDO);
             resultData = isSuccess ? userLiquidDO : null;
+        }
+        if (resultData != null) {
+            resultData.setUpdatedAt(null);
+            resultData.setCreatedAt(null);
         }
 
         if (isSuccess) {
