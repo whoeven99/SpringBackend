@@ -70,26 +70,33 @@ public class UserLiquidService {
 
     public BaseResponse<Object> parseLiquidDataByShopNameAndLanguage(String shopName, String languageCode) {
         List<UserLiquidDO> userLiquids = iUserLiquidService.selectLiquidDataByShopNameAndLanguageCode(shopName, languageCode);
-        Map<String, String> resultMap = new LinkedHashMap<>();
         if (userLiquids == null || userLiquids.isEmpty()) {
-            return new BaseResponse<>().CreateSuccessResponse(resultMap);
+            return new BaseResponse<>().CreateErrorResponse("No data found");
         }
 
         // 解析userLiquidDOS  将里面的数据处理后返回
         // json 不返回
-        resultMap = userLiquids.stream().filter(item -> item.getLiquidBeforeTranslation() != null && item.getLiquidAfterTranslation() != null)
+        Map<String, List<Object>> resultMap = userLiquids.stream()
+                .filter(item -> item.getLiquidBeforeTranslation() != null
+                        && item.getLiquidAfterTranslation() != null)
                 .flatMap(item -> {
                     String before = item.getLiquidBeforeTranslation();
                     String after = item.getLiquidAfterTranslation();
+                    Boolean replacementMethod = item.getReplacementMethod();
+
                     if (JsonUtils.isJson(before) || JsonUtils.isJson(after)) {
                         return Stream.empty(); // 跳过该项
                     }
 
-                    return Stream.of(Map.entry(before, after));
-                }).collect(Collectors.toMap(
+                    Map.Entry<String, List<Object>> entry =
+                            Map.entry(before, List.of(after, replacementMethod));
+
+                    return Stream.of(entry);
+                })
+                .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (v1, v2) -> v1, // 如果 key 重复，保留第一个
+                        (v1, v2) -> v1,
                         LinkedHashMap::new
                 ));
 

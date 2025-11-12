@@ -22,7 +22,8 @@ public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiq
                         UserLiquidDO::getShopName,
                         UserLiquidDO::getLiquidBeforeTranslation,
                         UserLiquidDO::getLiquidAfterTranslation,
-                        UserLiquidDO::getLanguageCode
+                        UserLiquidDO::getLanguageCode,
+                        UserLiquidDO::getReplacementMethod
                 )
                 .eq(UserLiquidDO::getShopName, shopName)
                 .eq(UserLiquidDO::getIsDeleted, false);
