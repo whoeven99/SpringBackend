@@ -57,4 +57,10 @@ public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiq
         return baseMapper.update(new LambdaUpdateWrapper<UserLiquidDO>().eq(UserLiquidDO::getShopName, shopName)
                 .in(UserLiquidDO::getId, ids).set(UserLiquidDO::getIsDeleted, true)) > 0;
     }
+
+    @Override
+    public boolean updateReplacementMethodById(Integer id, boolean b) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserLiquidDO>().eq(UserLiquidDO::getId, id)
+                .set(UserLiquidDO::getReplacementMethod, b)) > 0;
+    }
 }

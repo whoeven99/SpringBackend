@@ -116,4 +116,22 @@ public class UserLiquidService {
             return new BaseResponse<>().CreateErrorResponse(null, "Database operation failed");
         }
     }
+
+    public BaseResponse<Object> updateLiquidReplacementMethod(String shopName, Integer id) {
+        if (shopName == null || id == null) {
+            return new BaseResponse<>().CreateErrorResponse("Invalid input parameters");
+        }
+
+        // 获取当前replacementMethod的数据，然后修改
+        UserLiquidDO userLiquidDO = iUserLiquidService.getById(id);
+        if (userLiquidDO == null) {
+            return new BaseResponse<>().CreateErrorResponse("Data not found");
+        }
+
+        boolean flag = iUserLiquidService.updateReplacementMethodById(id, !userLiquidDO.getReplacementMethod());
+        if (flag) {
+            return new BaseResponse<>().CreateSuccessResponse(!userLiquidDO.getReplacementMethod());
+        }
+        return new BaseResponse<>().CreateErrorResponse(null, "Database operation failed");
+    }
 }
