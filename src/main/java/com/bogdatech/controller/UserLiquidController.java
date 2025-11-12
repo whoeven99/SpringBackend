@@ -25,6 +25,12 @@ public class UserLiquidController {
         return userLiquidService.insertShopNameLiquidData(shopName, userLiquidDO);
     }
 
+    // 根据id和shopName修改replacementMethod
+    @PostMapping("/updateLiquidReplacementMethod")
+    public BaseResponse<Object> updateLiquidReplacementMethod(@RequestParam String shopName, @RequestParam Integer id) {
+        return userLiquidService.updateLiquidReplacementMethod(shopName, id);
+    }
+
     // 获取用户语言对应下的所有数据，解析后返回给前端
     @PostMapping("/parseLiquidDataByShopNameAndLanguage")
     public BaseResponse<Object> parseLiquidDataByShopNameAndLanguage(@RequestParam String shopName, @RequestParam String languageCode) {

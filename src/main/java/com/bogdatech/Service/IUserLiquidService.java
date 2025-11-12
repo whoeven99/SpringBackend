@@ -14,4 +14,6 @@ public interface IUserLiquidService extends IService<UserLiquidDO> {
     List<UserLiquidDO> selectLiquidDataByShopNameAndLanguageCode(String shopName, String languageCode);
 
     boolean deleteLiquidDataByIds(String shopName, List<Integer> ids);
+
+    boolean updateReplacementMethodById(Integer id, boolean b);
 }
