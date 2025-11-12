@@ -49,7 +49,8 @@ public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiq
     @Override
     public List<UserLiquidDO> selectLiquidDataByShopNameAndLanguageCode(String shopName, String languageCode) {
         return baseMapper.selectList(new LambdaQueryWrapper<UserLiquidDO>().eq(UserLiquidDO::getShopName, shopName)
-                .eq(UserLiquidDO::getLanguageCode, languageCode));
+                .eq(UserLiquidDO::getLanguageCode, languageCode)
+                .eq(UserLiquidDO::getIsDeleted, false));
     }
 
     @Override
