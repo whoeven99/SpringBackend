@@ -15,16 +15,9 @@ import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 @Service
 public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMapper, AILanguagePacksDO> implements IAILanguagePacksService {
 
-    private final AILanguagePacksMapper aiLanguagePacksMapper;
-
-    @Autowired
-    public AILanguagePacksServiceImpl(AILanguagePacksMapper aiLanguagePacksMapper) {
-        this.aiLanguagePacksMapper = aiLanguagePacksMapper;
-    }
-
     @Override
     public BaseResponse<Object> readAILanguagePacks() {
-        AILanguagePacksDO[] aiLanguagePacksDOS = aiLanguagePacksMapper.readAILanguagePacks();
+        AILanguagePacksDO[] aiLanguagePacksDOS = baseMapper.readAILanguagePacks();
         if (aiLanguagePacksDOS != null) {
             return new BaseResponse<>().CreateSuccessResponse(aiLanguagePacksDOS);
         }

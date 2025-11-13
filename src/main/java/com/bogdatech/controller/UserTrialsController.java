@@ -7,19 +7,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
 
 @RestController
 @RequestMapping("/userTrials")
 public class UserTrialsController {
-    private final UserTrialsService userTrialsService;
-
     @Autowired
-    public UserTrialsController(UserTrialsService userTrialsService) {
-        this.userTrialsService = userTrialsService;
-    }
+    private UserTrialsService userTrialsService;
+
 
     /**
      * 开启免费订阅

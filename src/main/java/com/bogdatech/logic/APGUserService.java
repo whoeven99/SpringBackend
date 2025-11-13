@@ -1,18 +1,15 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.Service.IAPGUserPlanService;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUsersDO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
-@Service
+@Component
 public class APGUserService {
     @Autowired
     private IAPGUsersService iapgUsersService;
@@ -27,12 +24,14 @@ public class APGUserService {
 
     public Boolean insertOrUpdateApgUser(APGUsersDO usersDO) {
         //先从数据库中获取是否存在对应数据，选择插入或更新
-        APGUsersDO apgUsersDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", usersDO.getShopName()));
+        APGUsersDO apgUsersDO = iapgUsersService.getUserByShopName(usersDO.getShopName());
+
         boolean flag;
         if (apgUsersDO == null) {
             usersDO.setId(null);
             flag = iapgUsersService.save(usersDO);
-            APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, usersDO.getShopName()));
+            APGUsersDO userDO = iapgUsersService.getUserByShopName(usersDO.getShopName());
+
             if (userDO == null) {
                 return false;
             }
@@ -50,7 +49,8 @@ public class APGUserService {
 
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
             usersDO.setLoginTime(now);
-            flag = iapgUsersService.update(usersDO, new QueryWrapper<APGUsersDO>().eq("shop_name", usersDO.getShopName()));
+            flag = iapgUsersService.updateUserByShopName(usersDO, usersDO.getShopName());
+
         }
         return flag;
     }

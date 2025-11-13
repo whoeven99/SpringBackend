@@ -4,7 +4,6 @@ import com.bogdatech.logic.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component;
 import static com.bogdatech.logic.TranslateService.executorService;
 
 @Component
-@EnableAsync
 @EnableScheduling
 public class TranslateTask implements ApplicationListener<ApplicationReadyEvent> {
     @Autowired

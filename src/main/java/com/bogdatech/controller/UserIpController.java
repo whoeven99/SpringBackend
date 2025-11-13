@@ -14,19 +14,15 @@ import static com.bogdatech.utils.RetryUtils.retryWithParam;
 @RestController
 @RequestMapping("/userIp")
 public class UserIpController {
-    private final IUserIpService iUserIpService;
-
-    private final UserIpService userIpService;
-
     @Autowired
-    public UserIpController(IUserIpService userIpService, UserIpService userIpService1) {
-        this.iUserIpService = userIpService;
-        this.userIpService = userIpService1;
-    }
+    private IUserIpService iUserIpService;
+    @Autowired
+    private UserIpService userIpService;
+
 
     /**
      * 初始化额度UserIp表
-     * */
+     */
     @PostMapping("/addOrUpdateUserIp")
     public BaseResponse<Object> addOrUpdateUserIp(@RequestParam String shopName) {
         boolean result = retryWithParam(
@@ -36,7 +32,7 @@ public class UserIpController {
                 1000,
                 8000
         );
-        if (result){
+        if (result) {
             return new BaseResponse<>().CreateSuccessResponse(shopName);
         }
         return new BaseResponse<>().CreateErrorResponse(shopName);
@@ -44,7 +40,7 @@ public class UserIpController {
 
     /**
      * 判断额度是否足够，如果足够，额度+1
-     * */
+     */
     @PostMapping("/checkUserIp")
     public BaseResponse<Object> checkUserIp(@RequestParam String shopName) {
         Boolean b = userIpService.checkUserIp(shopName);

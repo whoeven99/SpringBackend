@@ -14,7 +14,17 @@ import java.sql.Timestamp;
 public class APGUsersServiceImpl extends ServiceImpl<APGUsersMapper, APGUsersDO> implements IAPGUsersService {
     @Override
     public APGUsersDO getUserByShopName(String shopName) {
-        return baseMapper.selectOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        return this.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+    }
+
+    @Override
+    public boolean updateUserByShopName(APGUsersDO usersDO, String shopName) {
+        return  baseMapper.update(usersDO, new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, usersDO.getShopName())) > 0;
+    }
+
+    @Override
+    public APGUsersDO getUserByUserId(Long subtaskId) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getId, subtaskId));
     }
 
     @Override

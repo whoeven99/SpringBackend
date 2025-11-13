@@ -1,18 +1,14 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.enums.InitialTaskStatusEnum;
 import com.bogdatech.integration.EmailIntegration;
-import com.bogdatech.logic.redis.TranslationCounterRedisService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -22,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_PURCHASE_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_TASK_INTERRUPT_EMAIL;
@@ -36,9 +31,7 @@ import static com.bogdatech.constants.MailChimpConstants.TRANSLATION_FAILED_SUBJ
 import static com.bogdatech.constants.MailChimpConstants.APG_INIT_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_GENERATE_SUCCESS;
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
-import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.parseShopName;
 
@@ -59,9 +52,7 @@ public class TencentEmailService {
     @Autowired
     private IAPGEmailService iapgEmailService;
     @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
-    @Autowired
-    private TranslationCounterRedisService translationCounterRedisService;
+    private IInitialTranslateTasksService iInitialTranslateTasksService;
 
     // 由腾讯发送邮件
     public void sendEmailByEmail(TencentSendEmailRequest tencentSendEmailRequest) {
@@ -137,11 +128,9 @@ public class TencentEmailService {
             divBuilder.append("</div>");
         }
         templateData.put("html_data", String.valueOf(divBuilder));
-//        appInsights.trackTrace("templateData" + templateData);
         //由腾讯发送邮件
         //判断邮件代码divBuilder里面是否为空，空就不发送邮件
         if (divBuilder.toString().isEmpty()) {
-//            appInsights.trackTrace("divBuilder is empty");
             return true;
         }
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
@@ -237,27 +226,6 @@ public class TencentEmailService {
 
         // 存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, flag ? 1 : 0));
-    }
-
-    /**
-     * 自动翻译发送逻辑
-     */
-    public void autoTranslateSendEmail(TranslateRequest request, int costChars, long costTime, int remaining) {
-        try {
-            String shopName = request.getShopName();
-            //将翻译成功的数据，存到数据库中
-            List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("auto_translate", true));
-            //将list里面的数据，存到TranslationUsage表里面
-            translationUsageService.insertListData(list, shopName);
-            Integer targetId = list.stream()
-                    .filter(item -> request.getTarget().equals(item.getTarget()) && Boolean.TRUE.equals(item.getAutoTranslate()))
-                    .map(TranslatesDO::getId)
-                    .findFirst()
-                    .orElse(null);
-            translationUsageService.insertOrUpdateSingleData(new TranslationUsageDO(targetId, shopName, request.getTarget(), costChars, (int) costTime, remaining, 1));
-        } catch (Exception e) {
-            appInsights.trackTrace("自动翻译存储数据失败 errors ：" + e.getMessage());
-        }
     }
 
     /**
@@ -371,29 +339,21 @@ public class TencentEmailService {
             Duration duration = Duration.between(begin, end);
             long costTime = duration.toMinutes();
             int endChars = limitChars - usedChars;
-            // 判断数据库里面是否存在该语言
-            translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                    .eq(TranslationUsageDO::getShopName, shopName)
-                    .eq(TranslationUsageDO::getLanguageName, target)
-                    .set(TranslationUsageDO::getConsumedTime, costTime)
-                    .set(TranslationUsageDO::getCreditCount, usedChars)
-                    .set(TranslationUsageDO::getRemainingCredits, endChars)
-                    .set(TranslationUsageDO::getStatus, 1));
+
+            // 修改usage数据
+            translationUsageService.updateUsageToCompleteByShopNameAndTarget(shopName, target, costTime, usedChars, endChars, 1);
 
             // 判断TranslationUsage里面的语言是否都翻译了，如果有就发送邮件；没有的话，就跳过
-            List<TranslatesDO> list = translatesService.list(new QueryWrapper<TranslatesDO>().eq("shop_name", shopName).eq("auto_translate", true));
+            // TODO test
+            List<TranslatesDO> list = translatesService.selectTranslatesByShopNameAndAutoTranslate(shopName, 1);
             appInsights.trackTrace("emailAutoTranslate 用户： " + shopName + " 自动翻译列表大小为： " + list.size() + " 自动翻译列表： " + list);
             Boolean b = translationUsageService.judgeSendAutoEmail(list, shopName);
             if (b) {
                 appInsights.trackTrace("emailAutoTranslate 用户 " + shopName + " 条件符合发送邮件 时间为： " + LocalDateTime.now());
                 sendAutoTranslateEmail(shopName);
                 //将所有status, remaining，consumed， credit都改为0
-                translationUsageService.update(new LambdaUpdateWrapper<TranslationUsageDO>()
-                        .eq(TranslationUsageDO::getShopName, shopName)
-                        .set(TranslationUsageDO::getStatus, 0)
-                        .set(TranslationUsageDO::getRemainingCredits, 0)
-                        .set(TranslationUsageDO::getConsumedTime, 0)
-                        .set(TranslationUsageDO::getCreditCount, 0));
+                translationUsageService.updateUsageDataByShopName(shopName, 0,0,0,0);
+
 
                 // 更新状态
                 List<String> targetList = list.stream().map(TranslatesDO::getTarget).toList();
@@ -402,14 +362,9 @@ public class TencentEmailService {
                     return;
                 }
 
-                initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, shopName)
-                        .eq(InitialTranslateTasksDO::getStatus, 1)
-                        .eq(InitialTranslateTasksDO::getTaskType, AUTO)
-                        .in(InitialTranslateTasksDO::getTarget, targetList)
-                        .set(InitialTranslateTasksDO::getStatus, 4)
-                        .set(InitialTranslateTasksDO::isSendEmail, true)
-                        .set(InitialTranslateTasksDO::isDeleted, true));
+                iInitialTranslateTasksService.updateAutoInitialDataByShopNameAndStatus(shopName,
+                        InitialTaskStatusEnum.TASKS_CREATED.getStatus(), targetList
+                        , InitialTaskStatusEnum.TRANSLATED_WRITTEN.getStatus(), true, true);
             }
 
             appInsights.trackTrace("emailAutoTranslate 用户 " + shopName + " 自动翻译结束 时间为： " + LocalDateTime.now());

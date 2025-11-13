@@ -9,6 +9,8 @@ import com.bogdatech.mapper.UserTypeTokenMapper;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.springframework.stereotype.Service;
 
+import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
+
 @Service
 public class UserTypeTokenImpl extends ServiceImpl<UserTypeTokenMapper, UserTypeTokenDO> implements IUserTypeTokenService {
 
@@ -49,6 +51,16 @@ public class UserTypeTokenImpl extends ServiceImpl<UserTypeTokenMapper, UserType
     @Override
     public void insertInitial(String shopName) {
         baseMapper.insertTypeInfoByShopName(shopName);
+    }
+
+    @Override
+    public UserTypeTokenDO getUserTypeByTranslationId(Integer translationId) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<UserTypeTokenDO>().eq(UserTypeTokenDO::getTranslationId, translationId));
+    }
+
+    @Override
+    public UserTypeTokenDO getUserTypeByShopName(String shopName) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<UserTypeTokenDO>().eq(UserTypeTokenDO::getShopName, shopName));
     }
 
 }

@@ -8,5 +8,9 @@ import java.sql.Timestamp;
 public interface IAPGUsersService extends IService<APGUsersDO> {
     APGUsersDO getUserByShopName(String shopName);
 
+    boolean updateUserByShopName(APGUsersDO usersDO, String shopName);
+
+    APGUsersDO getUserByUserId(Long subtaskId);
+
     boolean uninstallUser(String shopName, Timestamp now);
 }

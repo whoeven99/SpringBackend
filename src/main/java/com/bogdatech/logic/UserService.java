@@ -1,7 +1,5 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
@@ -101,8 +99,8 @@ public class UserService {
 
                 // 将用户ip关掉
                 // 将词汇表改为0
-                iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", shopName).set("status", 0));
-                widgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", shopName).set("ip_open", false));
+                iGlossaryService.updateGlossaryStatusByShopName(shopName, 0);
+                widgetConfigurationsService.updateWidgetIpOpenByShopName(shopName, false);
 
                 // 获取用户订单表里计划为Active的订单
                 // 删除对应的额度
@@ -136,28 +134,25 @@ public class UserService {
         return true;
     }
 
-    //检测以上四个接口返回值是否符合预期，符合预期则返回{`${接口名}`:true ...}，后续前端根据返回值调用对应的接口，其中语言数据也会在返回值中存在false值集体调用，正常情况下都是经过webhook通知后调用
+    // 检测以上四个接口返回值是否符合预期，符合预期则返回{`${接口名}`:true ...}，后续前端根据返回值调用对应的接口，其中语言数据也会在返回值中存在false值集体调用，正常情况下都是经过webhook通知后调用
     public Map<String, Boolean> InitializationDetection(String shopName) {
         Map<String, Boolean> map = new HashMap<>();
-        //查询用户是否初始化
-//        map.put("add", false);
-
-
-        //查询是否添加免费额度
+        // 查询用户是否初始化
+        // 查询是否添加免费额度
         if (translationCounterService.getMaxCharsByShopName(shopName) != null) {
             map.put("insertCharsByShopName", true);
         } else {
             map.put("insertCharsByShopName", false);
         }
 
-        //查询是否添加默认语言包
+        // 查询是否添加默认语言包
         if (aiLanguagePacksService.getPackIdByShopName(shopName) != null) {
             map.put("addDefaultLanguagePack", true);
         } else {
             map.put("addDefaultLanguagePack", false);
         }
 
-        //查询是否添加用户付费计划
+        // 查询是否添加用户付费计划
         if (userSubscriptionsService.getUserSubscriptionPlan(shopName) != null) {
             map.put("addUserSubscriptionPlan", true);
         } else {
@@ -175,9 +170,7 @@ public class UserService {
     }
 
     public String getEncryptedEmail(String shopName) {
-        UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>()
-                .eq("shop_name", shopName)
-        );
+        UsersDO usersDO = usersService.getUserByName(shopName);
         if (usersDO.getEncryptionEmail() != null) {
             return usersDO.getEncryptionEmail();
         }
@@ -189,9 +182,8 @@ public class UserService {
         }
 
         //更新加密邮箱
-        usersService.update(new UpdateWrapper<UsersDO>()
-                .eq("shop_name", shopName)
-                .set("encryption_email", encryptionEmail));
+        usersService.updateEncryptionEmailByShopName(shopName, encryptionEmail);
+
         //返回对应的值
         return encryptionEmail;
     }

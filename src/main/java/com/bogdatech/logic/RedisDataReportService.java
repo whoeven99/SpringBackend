@@ -4,18 +4,16 @@ import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.RedisIntegration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
-
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.mysql.cj.util.TimeUtil.DATE_FORMATTER;
 
-@Service
+@Component
 public class RedisDataReportService {
     @Autowired
     private RedisIntegration redisIntegration;

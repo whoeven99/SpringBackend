@@ -18,7 +18,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
-
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
@@ -107,14 +106,12 @@ public class APGUserGeneratedTaskController {
             //发送对应邮件
             //修改状态
             appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
-//            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
             appInsights.trackException(e1);
             return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件
             appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e);
-//            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
             appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
@@ -135,7 +132,7 @@ public class APGUserGeneratedTaskController {
     @GetMapping("/deleteGenerateShop")
     public BaseResponse<Object> deleteGenerateShop(@RequestParam String shopName) {
         //根据shopName，获取userId
-        APGUsersDO usersDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
+        APGUsersDO usersDO = iapgUsersService.getUserByShopName(shopName);
         GENERATE_SHOP.remove(usersDO.getId());
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
@@ -146,7 +143,7 @@ public class APGUserGeneratedTaskController {
     @PutMapping("/stopBatchGenerateDescription")
     public BaseResponse<Object> stopBatchGenerateDescription(@RequestParam String shopName) {
         //根据shopName，获取userId
-        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO usersDO = iapgUsersService.getUserByShopName(shopName);
         Boolean result = GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
         appInsights.trackTrace("stopBatchGenerateDescription " + shopName + " 停止翻译标识 : " + result);
         //将任务和子任务的状态改为1

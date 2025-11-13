@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IAPGUserPlanService;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUsersDO;
@@ -32,7 +31,7 @@ public class APGDescriptionGenerationController {
     @PostMapping("/generateDescription")
     public BaseResponse<Object> generateDescription(@RequestParam String shopName, @RequestBody GenerateDescriptionVO generateDescriptionVO) {
         // 根据shopName获取用户数据
-        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO usersDO = iapgUsersService.getUserByShopName(shopName);
         // 获取用户最大额度限制
         Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
 

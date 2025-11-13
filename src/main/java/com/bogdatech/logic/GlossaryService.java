@@ -2,7 +2,6 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.entity.DO.GlossaryDO;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -11,13 +10,9 @@ import java.util.Map;
 @Component
 public class GlossaryService {
 
-
-    private final IGlossaryService glossaryService;
-
     @Autowired
-    public GlossaryService(IGlossaryService glossaryService) {
-        this.glossaryService = glossaryService;
-    }
+    private IGlossaryService glossaryService;
+
 
     //判断词汇表中要判断的词
     public void getGlossaryByShopName(String shopName, String target, Map<String, Object> glossaryMap) {

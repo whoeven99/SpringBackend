@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
@@ -13,7 +12,6 @@ import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -75,7 +73,7 @@ public class TranslationCounterController {
      * */
     @PostMapping("/addCharsByShopName")
     public BaseResponse<Object> addCharsByShopName(@RequestParam String shopName, @RequestBody AddCharsVO addCharsVO) {
-        UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+        UsersDO usersDO = usersService.getUserByName(shopName);
 
         // 判断是否有订单标识 有的话 就直接返回true
         String orderId = ordersRedisService.getOrderId(shopName, addCharsVO.getGid());
