@@ -45,7 +45,7 @@ public class APGUserService {
 
             // 初始化免费计划（20w token额度）
             iapgUserPlanService.initializeFreePlan(userDO.getId());
-            tencentEmailService.sendApgInitEmail(userDO.getEmail(), usersDO.getId());
+            tencentEmailService.sendApgInitEmail(userDO.getEmail(), userDO.getId());
         } else {
 
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
