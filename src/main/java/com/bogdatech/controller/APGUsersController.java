@@ -42,8 +42,8 @@ public class APGUsersController {
      */
     @DeleteMapping("/uninstallUser")
     public BaseResponse<Object> uninstallUser(@RequestParam String shopName) {
-        apgUserService.uninstallUser(shopName);
-        return null;
+        boolean flag = apgUserService.uninstallUser(shopName);
+        return new BaseResponse<>().CreateSuccessResponse(flag);
     }
 
 }
