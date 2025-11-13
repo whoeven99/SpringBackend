@@ -1,6 +1,8 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.UsersDO;
@@ -54,5 +56,12 @@ public class UserServiceImpl extends ServiceImpl<UsersMapper, UsersDO> implement
     @Override
     public void updateUserTokenByShopName(String shopName, String accessToken) {
         baseMapper.updateUserTokenByShopName(shopName, accessToken);
+    }
+
+    @Override
+    public boolean updateEncryptionEmailByShopName(String shopName, String encryptionEmail) {
+        return baseMapper.update(new LambdaUpdateWrapper<UsersDO>()
+                .eq(UsersDO::getShopName, shopName)
+                .set(UsersDO::getEncryptionEmail, encryptionEmail)) > 0;
     }
 }

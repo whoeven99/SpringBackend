@@ -3,7 +3,9 @@ package com.bogdatech.logic.translate;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.exception.ClientException;
-import com.bogdatech.integration.*;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.ChatGptIntegration;
+import com.bogdatech.integration.DeepLIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -20,7 +22,6 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;

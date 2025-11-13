@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.Service.IAPGUserGeneratedTaskService;
 import com.bogdatech.Service.IAPGUserPlanService;
@@ -12,7 +11,6 @@ import com.bogdatech.logic.APGCharsOrderService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
 
 @RestController
@@ -55,7 +53,7 @@ public class APGUserCounterController {
     public BaseResponse<Object> getUserCounter(@RequestParam String shopName) {
         APGUserCounterDO userCounter = iapgUserCounterService.getUserCounter(shopName);
         //获取总共的额度
-        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO usersDO = iapgUsersService.getUserByShopName(shopName);
         Integer allToken = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
         APGTokenVO apgTokenVO = new APGTokenVO();
         apgTokenVO.setUserToken(userCounter.getUserToken());
@@ -69,7 +67,7 @@ public class APGUserCounterController {
     @PutMapping("/updateUserToken")
     public BaseResponse<Object> updateUserToken(@RequestParam String shopName, @RequestParam Integer token) {
         //获取用户的id
-        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO usersDO = iapgUsersService.getUserByShopName(shopName);
         Boolean result = iapgUserCounterService.updateUserToken(usersDO.getId(), token);
         //将部分翻译状态改为6
         iapgUserGeneratedTaskService.updateStatusByUserId(usersDO.getId(), 6);

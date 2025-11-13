@@ -13,4 +13,6 @@ public interface IGlossaryService extends IService<GlossaryDO> {
     boolean updateGlossaryInfoById(GlossaryDO glossaryDO);
 
     GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText, String rangeCode);
+
+    boolean updateGlossaryStatusByShopName(String shopName, int status);
 }

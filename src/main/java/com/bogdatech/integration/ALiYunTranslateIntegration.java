@@ -32,7 +32,6 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TimeOutUtils.*;
 
 @Component
@@ -124,7 +123,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("singleTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             }else {
@@ -237,7 +236,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             } else {
@@ -303,7 +302,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("callWithMessageMT 用户： " + shopName + " token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             }else {
@@ -420,7 +419,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = result.getUsage().getInputTokens();
             Integer outputTokens = result.getUsage().getOutputTokens();
             int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
-            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             appInsights.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
@@ -472,7 +471,7 @@ public class ALiYunTranslateIntegration {
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
+            printTranslateCost(totalToken, inputTokens, outputTokens);
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);

@@ -1,8 +1,6 @@
 package com.bogdatech.logic;
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.TranslationCharsVO;
@@ -44,66 +42,80 @@ public class TranslationCounterService {
         // 添加订单标识
         ordersRedisService.setOrderId(shopName, gid);
 
-        //根据gid，判断是否符合添加额度的条件
+        // 根据gid，判断是否符合添加额度的条件
         appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars + " accessToken: " + accessToken);
 
-        return iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).setSql("chars = chars + " + chars));
+        return iTranslationCounterService.updateUserCharsByShopName(shopName, chars);
+
     }
 
     public Boolean addCharsByShopNameAfterSubscribe(String shopName, TranslationCharsVO translationCharsVO) {
-        //获取该用户的accessToken
-        UsersDO userByName = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+        // 获取该用户的accessToken
+        UsersDO userByName = iUsersService.getUserByName(shopName);
         translationCharsVO.setAccessToken(userByName.getAccessToken());
-        //根据传来的gid获取，相关订阅信息
+
+        // 根据传来的gid获取，相关订阅信息
         String subscriptionQuery = getSubscriptionQuery(translationCharsVO.getSubGid());
         String shopifyByQuery = shopifyService.getShopifyData(shopName, userByName.getAccessToken(), API_VERSION_LAST, subscriptionQuery);
         appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
-        //判断和解析相关数据
+
+        // 判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
             return null;
         }
 
-        //获取用户订阅计划表的相关数据，与下面数据进行判断
-        CharsOrdersDO charsOrdersDO = iCharsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>().eq(CharsOrdersDO::getId, translationCharsVO.getSubGid()));
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅计划表 ：" + charsOrdersDO.toString());
+        // 获取用户订阅计划表的相关数据，与下面数据进行判断
+        CharsOrdersDO charsOrdersDO = iCharsOrdersService.getCharsBySubGid(translationCharsVO.getSubGid());
+        if (charsOrdersDO == null) {
+            return null;
+        }
+
         String name = queryValid.getString("name");
         String status = queryValid.getString("status");
         Integer trialDays = queryValid.getInteger("trialDays");
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays + " name: " + name + " status: " + status);
+        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays + " name: " + name + " status: " + status + " charsStatus: " + charsOrdersDO.getStatus());
         Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(name);
         if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0) {
             appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
             String currentPeriodEnd = queryValid.getString("currentPeriodEnd");
+
             //修改用户过期时间  和  费用类型
             //订阅结束时间
             if (currentPeriodEnd != null) {
                 Instant end = Instant.parse(currentPeriodEnd);
                 LocalDateTime subEnd = end.atZone(ZoneOffset.UTC).toLocalDateTime();
-                iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName).set(UserSubscriptionsDO::getFeeType, translationCharsVO.getFeeType()).set(UserSubscriptionsDO::getEndDate, subEnd));
+                iUserSubscriptionsService.updateFeeTypeAndEndDateByShopName(shopName, translationCharsVO.getFeeType(), subEnd);
+
             }
 
             // 不添加额度, 但需要修改免费试用订阅表
             String createdAt = queryValid.getString("createdAt");
+
             //用户购买订阅时间
             Instant begin = Instant.parse(createdAt);
             Timestamp beginTimestamp = Timestamp.from(begin);
+
             //试用结束时间
             Instant afterTrialDaysDays = begin.plus(trialDays, ChronoUnit.DAYS);
             Timestamp afterTrialDaysTimestamp = Timestamp.from(afterTrialDaysDays);
+
             // 获取用户是否已经是免费试用，是的话，将false改为true
-            UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
+            UserTrialsDO userTrialsDO = iUserTrialsService.getUserTrialByShopName(shopName);
+
             if (userTrialsDO == null) {
                 iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false, null));
-                //修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
-                //同时修改额度表里面100w字符（暂定），在计划表里
+
+                // 修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
+                // 同时修改额度表里面100w字符（暂定），在计划表里
                 Integer charsByPlan = iSubscriptionPlansService.getCharsByPlanName("Gift Amount");
-                boolean update = iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlan + 200000).set(TranslationCounterDO::getOpenAiChars, 1).setSql("chars = chars + " + charsByPlan));
+                boolean update = iTranslationCounterService.updateFreeTrialDateByShopName(shopName, afterTrialDaysTimestamp, 1, charsByPlan);
+
                 appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用额度添加 ：" + charsByPlan + " 是否成功： " + update);
                 return update;
             }
         } else {
-            iUserTrialsService.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName).set(UserTrialsDO::getIsTrialExpired, true));
+            iUserTrialsService.updateTrialsExpiredByShopName(shopName, true);
         }
 
         //添加额度

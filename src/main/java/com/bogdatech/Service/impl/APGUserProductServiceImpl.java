@@ -7,6 +7,8 @@ import com.bogdatech.entity.DO.APGUserProductDO;
 import com.bogdatech.mapper.APGUserProductMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class APGUserProductServiceImpl extends ServiceImpl<APGUserProductMapper, APGUserProductDO> implements IAPGUserProductService {
     @Override
@@ -25,5 +27,30 @@ public class APGUserProductServiceImpl extends ServiceImpl<APGUserProductMapper,
 
         //查到了，更新这条数据
         return baseMapper.updateProductVersion(userId, productId, des, pageType, contentType);
+    }
+
+    @Override
+    public List<APGUserProductDO> selectProductsByUserIdAndListId(List<String> listId, Long userId) {
+        return baseMapper.selectList(new LambdaQueryWrapper<APGUserProductDO>()
+                .in(APGUserProductDO::getProductId, listId).eq(APGUserProductDO::getUserId, userId)
+                .eq(APGUserProductDO::getIsDelete, false));
+    }
+
+    @Override
+    public Boolean updateProductByUserIdAndListId(APGUserProductDO apgUserProductDO, Long userId, String listId) {
+        return baseMapper.update(apgUserProductDO, new LambdaQueryWrapper<APGUserProductDO>().eq(APGUserProductDO::getUserId
+                , userId).eq(APGUserProductDO::getProductId, listId)) > 0;
+    }
+
+    @Override
+    public APGUserProductDO getProductByUserIdAndProductId(Long userId, String productId) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<APGUserProductDO>().eq(APGUserProductDO::getUserId, userId)
+                .eq(APGUserProductDO::getProductId, productId));
+    }
+
+    @Override
+    public Boolean updateProductByProductId(APGUserProductDO apgUserProductDO, String productId) {
+        return baseMapper.update(apgUserProductDO, new LambdaQueryWrapper<APGUserProductDO>()
+                .eq(APGUserProductDO::getProductId, productId)) > 0;
     }
 }

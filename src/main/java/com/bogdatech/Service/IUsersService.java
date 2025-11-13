@@ -21,4 +21,6 @@ public interface IUsersService extends IService<UsersDO> {
     void deleteTranslatesData(String shopName);
 
     void updateUserTokenByShopName(String shopName, String accessToken);
+
+    boolean updateEncryptionEmailByShopName(String shopName, String encryptionEmail);
 }

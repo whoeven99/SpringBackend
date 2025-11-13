@@ -7,7 +7,6 @@ import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component

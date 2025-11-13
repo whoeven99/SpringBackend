@@ -1,6 +1,8 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserIpService;
 import com.bogdatech.entity.DO.UserIpDO;
@@ -25,6 +27,24 @@ public class UserIpServiceImpl extends ServiceImpl<UserIpMapper, UserIpDO> imple
     @Override
     public UserIpDO selectByShopNameForUpdate(String shopName) {
         return baseMapper.selectByShopNameForUpdate(shopName);
+    }
+
+    @Override
+    public Boolean updateIpByFirstEmailAndShopName(UserIpDO userIpDO, String shopName, boolean flag) {
+        return baseMapper.update(userIpDO, new LambdaUpdateWrapper<UserIpDO>()
+                .eq(UserIpDO::getShopName, shopName).eq(UserIpDO::getFirstEmail, flag)) > 0;
+    }
+
+    @Override
+    public Boolean updateIpBySecondEmailAndShopName(UserIpDO userIpDO, String shopName, boolean b) {
+        return baseMapper.update(userIpDO, new LambdaUpdateWrapper<UserIpDO>().eq(UserIpDO::getShopName, shopName)
+                .eq(UserIpDO::getSecondEmail, false)) > 0;
+    }
+
+    @Override
+    public boolean resetUsersFreeIp(String shopName) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserIpDO>().eq(UserIpDO::getShopName, shopName)
+                .set(UserIpDO::getTimes, 0).set(UserIpDO::getFirstEmail, 0).set(UserIpDO::getSecondEmail, 0)) > 0;
     }
 
 }

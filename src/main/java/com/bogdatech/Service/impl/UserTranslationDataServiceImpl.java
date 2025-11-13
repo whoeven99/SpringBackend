@@ -1,6 +1,7 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserTranslationDataService;
 import com.bogdatech.entity.DO.UserTranslationDataDO;
@@ -33,5 +34,11 @@ public class UserTranslationDataServiceImpl extends ServiceImpl<UserTranslationD
                 .stream()
                 .filter(data -> data.getPayload() != null && data.getPayload().contains(query))
                 .toList();
+    }
+
+    @Override
+    public boolean updateTranslationStatusByTaskId(String taskId, int status) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserTranslationDataDO>().eq(UserTranslationDataDO::getTaskId, taskId)
+                .set(UserTranslationDataDO::getStatus, status)) > 0;
     }
 }

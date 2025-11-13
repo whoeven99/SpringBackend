@@ -11,4 +11,6 @@ public interface IUserPrivateService extends IService<UserPrivateDO> {
     Integer getUserId(String shopName);
 
     Boolean updateAmountAndGoogleKey(String shopName);
+
+    boolean updatePrivateUserByShopName(UserPrivateDO userPrivateDO, String shopName);
 }

@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.entity.DO.APGUserTemplateDO;
 import com.bogdatech.entity.DO.APGUserTemplateMappingDO;
@@ -10,7 +9,6 @@ import com.bogdatech.logic.APGTemplateService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,9 +28,9 @@ public class APGTemplateController {
     public BaseResponse<Object> getAllTemplateData(@RequestParam String shopName, @RequestBody TemplateDTO templateDTO) {
         List<TemplateDTO> allTemplateData = new ArrayList<>();
         //获取用户id
-        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO userDO = iapgUsersService.getUserByShopName(shopName);
         if (userDO == null) {
-            return null;
+            return new BaseResponse<>().CreateErrorResponse("shopName not exist");
         }
         if (templateDTO.getTemplateClass()) {
             //获取用户模板
