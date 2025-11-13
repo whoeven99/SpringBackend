@@ -27,7 +27,11 @@ public class RedisIntegration {
      * 设置缓存
      */
     public void set(String key, String value, long timeout) {
-        redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
+        try {
+            redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException set " + key + " " + value + " " + e.getMessage());
+        }
     }
 
     /**
@@ -61,33 +65,42 @@ public class RedisIntegration {
         } catch (Exception e) {
             appInsights.trackTrace("FatalException incrementHash " + key + " " + field + " " + value + " " + e.getMessage());
         }
-        return null;
+        return 0L;
     }
 
     /**
      * 对指定 key 的值进行自增
      */
     public Long incrementValue(String key, long delta) {
-        return redisTemplate.opsForValue().increment(key, delta);
+        try {
+            return redisTemplate.opsForValue().increment(key, delta);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException incrementValue " + key + " " + delta + " " + e.getMessage());
+        }
+        return 0L;
     }
 
     /**
      * hash get
      */
     public String getHash(String key, String field) {
-        return redisTemplate.opsForHash().get(key, field) + "";
-    }
-
-    /**
-     * hash GETALL
-     */
-    public Map<Object, Object> getHashAll(String key) {
-        return redisTemplate.opsForHash().entries(key);
+        try {
+            return redisTemplate.opsForHash().get(key, field) + "";
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException getHash " + key + " " + field + " " + e.getMessage());
+        }
+        return "null";
     }
 
     // TODO getHashAll 都挪到这里
     public Map<String, String> hGetAll(String key) {
-        Map<Object, Object> map = redisTemplate.opsForHash().entries(key);
+        Map<Object, Object> map = null;
+        try {
+            map = redisTemplate.opsForHash().entries(key);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException hGetAll " + key + " " + e.getMessage());
+        }
+
         if (CollectionUtils.isEmpty(map)) {
             return new HashMap<>();
         }
@@ -102,7 +115,12 @@ public class RedisIntegration {
      * Set存
      */
     public Boolean setSet(String key, String value) {
-        Long add = redisTemplate.opsForSet().add(key, value);
+        Long add = null;
+        try {
+            add = redisTemplate.opsForSet().add(key, value);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException setSet " + key + " " + value + " " + e.getMessage());
+        }
         return add != null && add > 0;
     }
 
@@ -111,7 +129,12 @@ public class RedisIntegration {
     }
 
     public Boolean remove(String key, String value) {
-        Long remove = redisTemplate.opsForSet().remove(key, value);
+        Long remove = null;
+        try {
+            remove = redisTemplate.opsForSet().remove(key, value);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException remove " + key + " " + value + " " + e.getMessage());
+        }
         return remove != null && remove > 0;
     }
 
@@ -119,7 +142,12 @@ public class RedisIntegration {
      * 获取缓存
      */
     public String get(String key) {
-        return redisTemplate.opsForValue().get(key) + "";
+        try {
+            return redisTemplate.opsForValue().get(key) + "";
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException get " + key + " " + e.getMessage());
+        }
+        return "null";
     }
 
 
@@ -127,7 +155,12 @@ public class RedisIntegration {
      * multiGet
      * */
     public List<String> multiGet(Collection<String> keys) {
-        return redisTemplate.opsForValue().multiGet(keys);
+        try {
+            return redisTemplate.opsForValue().multiGet(keys);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException multiGet " + keys + " " + e.getMessage());
+        }
+        return new ArrayList<>();
     }
 
     /**
@@ -155,16 +188,14 @@ public class RedisIntegration {
     }
 
     /**
-     * 判断key是否存在
-     */
-    public Boolean hasKey(String key) {
-        return redisTemplate.hasKey(key);
-    }
-
-    /**
      * 重新设置过期时间
      */
     public Boolean expire(String key, long timeout) {
-        return redisTemplate.expire(key, timeout, TimeUnit.SECONDS);
+        try {
+            return redisTemplate.expire(key, timeout, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException expire " + key + " " + timeout + " " + e.getMessage());
+        }
+        return false;
     }
 }

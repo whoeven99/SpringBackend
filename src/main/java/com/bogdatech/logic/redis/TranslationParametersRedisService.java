@@ -60,11 +60,11 @@ public class TranslationParametersRedisService {
      * 获取写入状态数据
      */
     public Map<String, Integer> getWritingData(String shopName, String target) {
-        Map<Object, Object> hashAll = redisIntegration.getHashAll(generateWriteStatusKey(shopName, target));
+        Map<String, String> hashAll = redisIntegration.hGetAll(generateWriteStatusKey(shopName, target));
         if (!CollectionUtils.isEmpty(hashAll)) {
             return hashAll.entrySet().stream().collect(Collectors.toMap(
                     e -> String.valueOf(e.getKey()),
-                    e -> Integer.parseInt(e.getValue().toString())));
+                    e -> Integer.parseInt(e.getValue())));
         }
         return new HashMap<>();
     }
@@ -110,8 +110,8 @@ public class TranslationParametersRedisService {
     /**
      * 获取shop，进度条相关数据
      */
-    public Map<Object, Object> getProgressTranslationKey(String ptKey) {
-        return redisIntegration.getHashAll(ptKey);
+    public Map<String, String> getProgressTranslationKey(String ptKey) {
+        return redisIntegration.hGetAll(ptKey);
     }
 
     /**

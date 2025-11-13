@@ -12,14 +12,10 @@ import java.util.List;
 
 @Service
 public class APGUserProductService {
-    private final IAPGUsersService iAPGUsersService;
-    private final IAPGUserProductService iAPGUserProductService;
-
     @Autowired
-    public APGUserProductService(IAPGUsersService iAPGUsersService, IAPGUserProductService iAPGUserProductService) {
-        this.iAPGUsersService = iAPGUsersService;
-        this.iAPGUserProductService = iAPGUserProductService;
-    }
+    private IAPGUsersService iAPGUsersService;
+    @Autowired
+    private IAPGUserProductService iAPGUserProductService;
 
     public List<APGUserProductDO> getProductsByListId(String shopName, List<String> listId) {
         APGUsersDO userData = iAPGUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));

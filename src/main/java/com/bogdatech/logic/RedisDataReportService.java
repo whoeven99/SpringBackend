@@ -49,7 +49,7 @@ public class RedisDataReportService {
      */
     public String getUserDataReport(String shopName, Timestamp timestamp, int dayData) {
         // 最终返回的数据结构： { languageCode -> { date -> {hash数据} } }
-        Map<String, Map<String, Map<Object, Object>>> allMap = new HashMap<>();
+        Map<String, Map<String, Map<String, String>>> allMap = new HashMap<>();
         LocalDate baseDate = timestamp.toLocalDateTime().toLocalDate();
         String setKeys = generateDataReportKeyKeys(shopName);
         Set<String> redisIntegrationSet = redisIntegration.getSet(setKeys);
@@ -61,7 +61,7 @@ public class RedisDataReportService {
 
         for (String languageCode : redisIntegrationSet) {
             // 每个语言对应一个独立的 languageMap
-            Map<String, Map<Object, Object>> languageMap = new HashMap<>();
+            Map<String, Map<String, String>> languageMap = new HashMap<>();
 
             // 遍历 dayData 天的数据
             for (int i = 0; i < dayData; i++) {
@@ -69,7 +69,7 @@ public class RedisDataReportService {
                 String format = date.format(DATE_FORMATTER);
 
                 String key = generateDataReportKey(shopName, languageCode, format);
-                Map<Object, Object> hashAll = redisIntegration.getHashAll(key);
+                Map<String, String> hashAll = redisIntegration.hGetAll(key);
 
                 if (hashAll != null && !hashAll.isEmpty()) {
                     languageMap.put(format, hashAll);
