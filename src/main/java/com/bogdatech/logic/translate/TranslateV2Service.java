@@ -322,9 +322,8 @@ public class TranslateV2Service {
                            Map<Integer, String> cachedMap,
                            Map<Integer, String> unCachedMap,
                            String target) {
-        // todo 这里加个日志，看看每一批有多少命中缓存的
         idToSourceValueMap.forEach((id, sourceValue) -> {
-        String targetCache = redisProcessService.getCacheData(target, sourceValue);
+            String targetCache = redisProcessService.getCacheData(target, sourceValue);
             if (targetCache != null) {
                 targetCache = isHtmlEntity(targetCache);
                 cachedMap.put(id, targetCache);
@@ -332,6 +331,10 @@ public class TranslateV2Service {
                 unCachedMap.put(id, sourceValue);
             }
         });
+        // todo 这里加个日志，看看每一批有多少命中缓存的
+        appInsights.trackTrace("Translation getCached: total " + idToSourceValueMap.size() +
+                " cached " + cachedMap.size() +
+                " uncached " + unCachedMap.size());
     }
 
     private void setCache(String target, String targetValue, String sourceValue) {
