@@ -258,7 +258,7 @@ public class StringUtils {
     }
 
     // 新版提示词，返回结果的解析
-    public static Map<String, String> parseOutputTransaction(String input) {
+    public static LinkedHashMap<String, String> parseOutputTransaction(String input) {
         // 预处理 - 提取 JSON 部分
         String jsonPart = extractJsonBlock(input);
 
@@ -267,7 +267,7 @@ public class StringUtils {
         }
 
         // 解析为 Map
-        Map<String, String> map = JsonUtils.jsonToObjectWithNull(jsonPart, new TypeReference<Map<String, String>>() {
+        LinkedHashMap<String, String> map = JsonUtils.jsonToObjectWithNull(jsonPart, new TypeReference<LinkedHashMap<String, String>>() {
         });
 
         if (map == null) {
