@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.Map;
 import static com.bogdatech.constants.MailChimpConstants.*;
-import static com.bogdatech.utils.AESUtils.encrypt;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
