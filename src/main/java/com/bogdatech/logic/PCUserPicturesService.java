@@ -35,7 +35,7 @@ public class PCUserPicturesService {
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
     public static int APP_PIC_FEE = 1000;
-    public static int APP_ALT_FEE = 200;
+    public static int APP_ALT_FEE = 1000;
 
     public BaseResponse<Object> insertPicToDbAndCloud(MultipartFile file, String shopName, String pcUserPicturesDoJson) {
         //解析userPicturesDO
@@ -190,5 +190,13 @@ public class PCUserPicturesService {
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
         return new BaseResponse<>().CreateErrorResponse("null");
+    }
+
+    public BaseResponse<Object> deleteTranslateUrl(String shopName, PCUserPicturesDO pcUserPicturesDO) {
+        boolean flag = ipcUserPicturesService.updatePictureAfterUrl(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getImageBeforeUrl(), pcUserPicturesDO.getLanguageCode());
+        if (flag) {
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
     }
 }

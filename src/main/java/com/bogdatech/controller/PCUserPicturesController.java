@@ -63,4 +63,10 @@ public class PCUserPicturesController {
     public BaseResponse<Object> selectPicturesByShopNameAndLanguageCode(@RequestParam("shopName") String shopName, @RequestParam("languageCode") String languageCode) {
         return pcUserPicturesService.selectPicturesByShopNameAndLanguageCode(shopName, languageCode);
     }
+
+    // 单独删除翻译后的图片url
+    @PostMapping("/deleteTranslateUrl")
+    public BaseResponse<Object> deleteTranslateUrl(@RequestParam("shopName") String shopName, @RequestBody PCUserPicturesDO pcUserPicturesDO) {
+        return pcUserPicturesService.deleteTranslateUrl(shopName, pcUserPicturesDO);
+    }
 }

@@ -65,4 +65,12 @@ public class PCUsersService {
         purchasePoints.setShopName(shopName);
         return new BaseResponse<>().CreateSuccessResponse(purchasePoints);
     }
+
+    public BaseResponse<Object> uninstall(String shopName) {
+        boolean flag = ipcUserService.updateUninstallByShopName(shopName);
+        if (flag){
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse(false);
+    }
 }

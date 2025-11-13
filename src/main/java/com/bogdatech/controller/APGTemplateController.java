@@ -17,14 +17,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/apg/template")
 public class APGTemplateController {
-    private final APGTemplateService apgTemplateService;
-    private final IAPGUsersService iapgUsersService;
-
     @Autowired
-    public APGTemplateController(APGTemplateService apgTemplateService, IAPGUsersService iapgUsersService) {
-        this.apgTemplateService = apgTemplateService;
-        this.iapgUsersService = iapgUsersService;
-    }
+    private APGTemplateService apgTemplateService;
+    @Autowired
+    private IAPGUsersService iapgUsersService;
+
 
     /**
      * 获取默认数据和用户相关数据
