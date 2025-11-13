@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
@@ -69,6 +70,11 @@ public class APGUserGeneratedTaskService {
 
         GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
         APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getTaskByUserId(userDO.getId());
+
+        if (taskDO == null) {
+            return generateProgressBarVO;
+        }
+
         try {
             GenerateDescriptionsVO generateDescriptionsVO = OBJECT_MAPPER.readValue(taskDO.getTaskData(), GenerateDescriptionsVO.class);
             Integer totalCount = generateDescriptionsVO.getProductIds().length;
