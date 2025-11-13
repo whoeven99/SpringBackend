@@ -34,7 +34,12 @@ public class ChatGptIntegration {
 
         // 模拟聊天交互
         ChatMessage userMessage = new ChatMessage(ChatRole.USER);
-        userMessage.setContent(prompt + "\n" + sourceText); // 合并 prompt 和 sourceText
+        if (sourceText != null) {
+            userMessage.setContent(prompt + "\n" + sourceText); // 合并 prompt 和 sourceText
+        } else {
+            userMessage.setContent(prompt);
+        }
+
         List<ChatMessage> prompts = new ArrayList<>();
         prompts.add(userMessage);
 
@@ -70,8 +75,8 @@ public class ChatGptIntegration {
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
             int promptToken = chatCompletions.getUsage().getPromptTokens();
             int completionToken = chatCompletions.getUsage().getCompletionTokens();
-            appInsights.trackTrace("clickTranslation chatWithGpt 用户： " + shopName + " 翻译的文本： " +
-                    sourceText + " token openai : " + target + " all: " + allToken + " input : " + promptToken +
+            appInsights.trackTrace("clickTranslation chatWithGpt 用户： " + shopName + " 翻译语言： " + target + " 翻译的文本： " +
+                    sourceText + " token openai : " + content + " all: " + allToken + " input : " + promptToken +
                     " output : " + completionToken);
             return new Pair<>(content, allToken);
         } catch (Exception e) {

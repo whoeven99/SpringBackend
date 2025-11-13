@@ -21,9 +21,9 @@ import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
-import com.bogdatech.model.service.ProcessDbTaskService;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.utils.AESUtils;
@@ -58,7 +58,7 @@ public class TestController {
     @Autowired
     private UserTypeTokenService userTypeTokenService;
     @Autowired
-    private ProcessDbTaskService processDbTaskService;
+    private TranslateDataService translateDataService;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired

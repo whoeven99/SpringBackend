@@ -1,10 +1,8 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.entity.DTO.SimpleMultipartFileDTO;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.Base64;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -95,5 +93,53 @@ class StringUtilsTest {
         String number = StringUtils.generate8DigitNumber();
         assertEquals(8, number.length());
         assertTrue(number.matches("\\d+"));
+    }
+
+    @Test
+    void testParseValidJsonWrappedInText() {
+        String input = "xxxx { \"1\": \"A\", \"2\": \"B\", \"3\": \"\" } yyyy";
+
+        Map<String, String> result = StringUtils.parseOutputTransaction(input);
+
+        // 验证返回结果不为空
+        assertNotNull(result);
+
+        // 验证 key-value 解析正确
+        assertEquals("A", result.get("1"));
+        assertEquals("B", result.get("2"));
+
+        // 空值应该被过滤掉
+        assertFalse(result.containsKey("3"));
+    }
+
+    @Test
+    void testParseInvalidInputReturnsNull() {
+        String input = "xxxx no json here yyyy";
+
+        Map<String, String> result = StringUtils.parseOutputTransaction(input);
+
+        assertNull(result);
+    }
+
+    @Test
+    void testParseEmptyValuesAreFiltered() {
+        String input = "{ \"a\": \"\", \"b\": \"valid\", \"c\": null }";
+
+        Map<String, String> result = StringUtils.parseOutputTransaction(input);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertTrue(result.containsKey("b"));
+        assertEquals("valid", result.get("b"));
+    }
+
+    @Test
+    void testParseJapaneseText() {
+        String input = "xxxx { \"6\": \"私たちがお客様に関して取得する個人情報の種類は...\" } yyyy";
+
+        Map<String, String> result = StringUtils.parseOutputTransaction(input);
+
+        assertNotNull(result);
+        assertEquals("私たちがお客様に関して取得する個人情報の種類は...", result.get("6"));
     }
 }
