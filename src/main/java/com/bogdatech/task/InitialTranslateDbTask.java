@@ -15,6 +15,7 @@ import com.bogdatech.logic.redis.InitialTranslateRedisService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
@@ -33,6 +34,7 @@ import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
 
 @Component
+@EnableScheduling
 public class InitialTranslateDbTask {
     @Autowired
     private RabbitMqTranslateService rabbitMqTranslateService;
