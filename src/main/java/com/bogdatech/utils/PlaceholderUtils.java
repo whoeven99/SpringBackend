@@ -167,6 +167,11 @@ public class PlaceholderUtils {
     }
 
     /**
+     * 11/07 版提示词
+     * 目前最新的
+     */
+
+    /**
      * list 翻译提示词
      * @param target 目标语言
      * @param languagePackId 语言包
