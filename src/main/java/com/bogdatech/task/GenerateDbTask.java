@@ -15,6 +15,7 @@ import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
+@EnableScheduling
 public class GenerateDbTask {
     @Autowired
     private IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
