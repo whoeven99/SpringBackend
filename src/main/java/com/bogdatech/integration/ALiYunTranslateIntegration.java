@@ -143,10 +143,18 @@ public class ALiYunTranslateIntegration {
     public Pair<String, Integer> userTranslate(String text, String prompt, String target, String shopName) {
         String model = switchModel(target);
         Generation gen = new Generation();
-        Message userMsg = Message.builder()
-                .role(Role.USER.getValue())
-                .content(prompt + text)
-                .build();
+        Message userMsg = null;
+        if (text != null) {
+            userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt + text)
+                    .build();
+        } else {
+            userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt)
+                    .build();
+        }
 
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
@@ -181,7 +189,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content +
-                    " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " +
+                    " token ali: " + " all: " + totalToken + " input: " + inputTokens + " output: " +
                     outputTokens);
             return new Pair<>(content, totalToken);
         } catch (Exception e) {
@@ -195,10 +203,19 @@ public class ALiYunTranslateIntegration {
             , String shopName, Integer limitChars, boolean isSingleFlag, String translateType) {
         String model = switchModel(target);
         Generation gen = new Generation();
-        Message userMsg = Message.builder()
-                .role(Role.USER.getValue())
-                .content(prompt + text)
-                .build();
+
+        Message userMsg;
+        if (text != null) {
+            userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt + text)
+                    .build();
+        } else {
+            userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt)
+                    .build();
+        }
 
         appInsights.trackTrace("userMsg 用户 " + shopName);
         GenerationParam param = GenerationParam.builder()
@@ -235,8 +252,8 @@ public class ALiYunTranslateIntegration {
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            printTranslateCost(totalToken, inputTokens, outputTokens);
+            appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             } else {
@@ -302,7 +319,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("callWithMessageMT 用户： " + shopName + " token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            printTranslateCost(totalToken, inputTokens, outputTokens);
+            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             }else {
@@ -419,7 +436,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = result.getUsage().getInputTokens();
             Integer outputTokens = result.getUsage().getOutputTokens();
             int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
-            printTranslateCost(totalToken, inputTokens, outputTokens);
+            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             appInsights.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
@@ -471,7 +488,7 @@ public class ALiYunTranslateIntegration {
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            printTranslateCost(totalToken, inputTokens, outputTokens);
+            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);

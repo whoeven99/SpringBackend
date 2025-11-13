@@ -167,6 +167,28 @@ public class PlaceholderUtils {
     }
 
     /**
+     * 11/07 版提示词
+     * 目前最新的
+     */
+    public static String getNewestPrompt(String target, String sourceMap) {
+        String prompt = """
+                You are a professional translator who can accurately translate text from various languages. Your task is to translate the given list of texts into the specified target language.
+                First, carefully read the following list of texts to be translated:
+                {{SOURCE_LANGUAGE_LIST}}
+                When translating, please follow these rules:
+                1. Do not translate key - values; only translate the content of the values.
+                2. Do not translate emojis.
+                3. If a text is a variable name, do not translate it.
+                The target language for translation is:
+                {{TARGET_LANGUAGE}}
+                Please return your translation in the following JSON - like format:
+                {"1": "translated text1", "2": "translated text2",...}
+                Start your translation now.
+                """;
+        return prompt.replace("{{TARGET_LANGUAGE}}", target).replace("{{SOURCE_LANGUAGE_LIST}}", sourceMap);
+    }
+
+    /**
      * list 翻译提示词
      * @param target 目标语言
      * @param languagePackId 语言包
