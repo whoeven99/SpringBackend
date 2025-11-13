@@ -11,11 +11,15 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.redis.InitialTranslateRedisService;
+import com.bogdatech.logic.token.UserTokenService;
+import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
 import java.sql.Timestamp;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
@@ -284,15 +288,69 @@ public class TaskService {
         }
     }
 
+    @Autowired
+    private UserTokenService userTokenService;
+    @Autowired
+    private TranslateV2Service translateV2Service;
 
-    /**
-     * 用户的自动翻译功能
-     * 1，先判断该用户是否在翻译，如果在，放在最后
-     * 2，再判断这些用户是否卸载了，卸载了就不管了
-     * 3，再判断该用户剩余token数是否足够，不够就不管了
-     * 4，再判断该用户是否正在翻译，正在翻译就不翻译了
-     * 5，如果一个用户切换了本地语言，前后都设置了定时任务，只翻译最新的那个目标语言
-     */
+    public void autoTranslateV2() {
+        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        appInsights.trackTrace("autoTranslateV2 自动翻译任务: " + translatesDOList.size());
+        if (CollectionUtils.isEmpty(translatesDOList)) {
+            return;
+        }
+
+        for (TranslatesDO translatesDO : translatesDOList) {
+            String shopName = translatesDO.getShopName();
+
+            UsersDO usersDO = usersService.getUserByName(shopName);
+            if (usersDO == null) {
+                appInsights.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
+                continue;
+            }
+
+            if (usersDO.getUninstallTime() != null) {
+                if (usersDO.getLoginTime() == null) {
+                    appInsights.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
+                    continue;
+                } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+                    appInsights.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
+                    continue;
+                }
+            }
+
+            Integer maxToken = userTokenService.getMaxToken(shopName);
+            Integer usedToken = userTokenService.getUsedToken(shopName);
+            appInsights.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
+            // 如果字符超限，则直接返回字符超限
+            if (usedToken >= maxToken) {
+                appInsights.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
+                continue;
+            }
+
+            // 判断这条语言是否在用户本地存在
+            String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
+                    API_VERSION_LAST, getShopLanguageQuery());
+            appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
+            if (shopifyByQuery == null) {
+                appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
+                continue;
+            }
+
+            String userCode = "\"" + translatesDO.getTarget() + "\"";
+            if (!shopifyByQuery.contains(userCode)) {
+                // 将用户的自动翻译标识改为false
+                translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());
+                appInsights.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + translatesDO.getTarget());
+                continue;
+            }
+
+            translateV2Service.createInitialTask(shopName, translatesDO.getSource(), new String[] { translatesDO.getTarget() },
+                    AUTO_TRANSLATE_MAP, false);
+            appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + translatesDO.getTarget());
+        }
+    }
+
     public void autoTranslate() {
         appInsights.trackTrace("autoTranslate 开始");
 

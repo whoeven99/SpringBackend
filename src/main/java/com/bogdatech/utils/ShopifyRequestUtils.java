@@ -36,4 +36,19 @@ public class ShopifyRequestUtils {
             "    }\n" +
             "  }\n" +
             "}";
+
+    public static String registerTransactionQuery() {
+        return "mutation translationsRegister($resourceId: ID!, $translations: [TranslationInput!]!) {\n" +
+                "  translationsRegister(resourceId: $resourceId, translations: $translations) {\n" +
+                "    userErrors {\n" +
+                "      message\n" +
+                "      field\n" +
+                "    }\n" +
+                "    translations {\n" +
+                "      key\n" +
+                "      value\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+    }
 }

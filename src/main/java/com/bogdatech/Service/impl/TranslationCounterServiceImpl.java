@@ -37,6 +37,10 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         return baseMapper.insertCharsByShopName(translationCounterRequest.getShopName(), 0);
     }
 
+    public int updateUsedCharsByShopName(String shopName, Integer usedChars) {
+        return baseMapper.updateUsedCharsByShopName(shopName, usedChars);
+    }
+
     @Override
     public int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest) {
         return baseMapper.updateUsedCharsByShopName(translationCounterRequest.getShopName(), translationCounterRequest.getUsedChars());
