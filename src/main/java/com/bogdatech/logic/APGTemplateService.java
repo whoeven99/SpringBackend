@@ -10,9 +10,11 @@ import com.bogdatech.entity.DO.APGUserTemplateDO;
 import com.bogdatech.entity.DO.APGUserTemplateMappingDO;
 import com.bogdatech.entity.DO.APGUsersDO;
 import com.bogdatech.entity.DTO.TemplateDTO;
+import com.bogdatech.utils.TypeConversionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,9 +38,12 @@ public class APGTemplateService {
      */
     public List<TemplateDTO> getTemplateByShopName(String shopName) {
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+
         if (userDO == null) {
             return null;
         }
+
+        // 对List<APGUserTemplateMappingDO>数据进行分析，转化为List<TemplateVO>方法
         List<APGUserTemplateMappingDO> mappingList = iapgUserTemplateMappingService.selectMappingByIdNotDeleted(userDO.getId(), 0);
 
         // 对List<APGUserTemplateMappingDO>数据进行分析，转化为List<TemplateVO>方法
@@ -49,51 +54,52 @@ public class APGTemplateService {
      * 对List<APGUserTemplateMappingDO>数据进行分析，转化为List<TemplateVO>方法
      */
     public List<TemplateDTO> convertToOfficialTemplateVO(List<APGUserTemplateMappingDO> mappingList) {
-        //获取官方模板的数据并返回
-        List<Long> listOfficeId = new ArrayList<>();
-        List<Long> listUserId = new ArrayList<>();
+        // 空检查：直接返回空集合
         if (mappingList == null || mappingList.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
 
-        for (APGUserTemplateMappingDO apgUserTemplateMappingDO : mappingList
-        ) {
-            //templateType为false时，为官方模板
-            if (!apgUserTemplateMappingDO.getTemplateType()) {
-                listOfficeId.add(apgUserTemplateMappingDO.getTemplateId());
+        // 分离官方模板与用户模板ID
+        List<Long> officialIds = new ArrayList<>();
+        List<Long> userIds = new ArrayList<>();
+
+        for (APGUserTemplateMappingDO mapping : mappingList) {
+            if (Boolean.FALSE.equals(mapping.getTemplateType())) {
+                officialIds.add(mapping.getTemplateId());
             } else {
-                listUserId.add(apgUserTemplateMappingDO.getTemplateId());
+                userIds.add(mapping.getTemplateId());
             }
-        }
-
-        //通过listId获取官方模板
-        List<APGOfficialTemplateDO> apgOfficialTemplates = iapgOfficialTemplateService.selectOfficalTemplatesById(listOfficeId);
-
-        if (apgOfficialTemplates == null || apgOfficialTemplates.isEmpty()) {
-            return null;
         }
 
         List<TemplateDTO> templates = new ArrayList<>();
 
-        //获取用户模板
-        if (listUserId.isEmpty()) {
-            return templates;
-        }
-        List<APGUserTemplateDO> userTemplates = iapgUserTemplateService.selectUserTemplatesById(listUserId);
-        if (userTemplates == null || userTemplates.isEmpty()) {
-            return templates;
+        // 查询并转换用户模板
+        if (!userIds.isEmpty()) {
+            List<APGUserTemplateDO> userTemplates = iapgUserTemplateService.list(
+                    new LambdaQueryWrapper<APGUserTemplateDO>()
+                            .in(APGUserTemplateDO::getId, userIds)
+                            .orderByDesc(APGUserTemplateDO::getUpdateTime));
+
+            if (userTemplates != null) {
+                templates.addAll(
+                        userTemplates.stream()
+                                .map(TypeConversionUtils::userTemplateToTemplateDTO).toList());
+            }
         }
 
-        for (APGUserTemplateDO userTemplateDO : userTemplates) {
-            TemplateDTO templateDTO = userTemplateToTemplateDTO(userTemplateDO);
-            templates.add(templateDTO);
-        }
+        // 查询并转换官方模板
+        if (!officialIds.isEmpty()) {
+            List<APGOfficialTemplateDO> officialTemplates = iapgOfficialTemplateService.list(
+                    new LambdaQueryWrapper<APGOfficialTemplateDO>()
+                            .in(APGOfficialTemplateDO::getId, officialIds)
+                            .orderByDesc(APGOfficialTemplateDO::getUpdateTime));
 
-        //将官方模板转化为 TemplateDTO
-        for (APGOfficialTemplateDO apgOfficialTemplateDO : apgOfficialTemplates
-        ) {
-            TemplateDTO templateDTO = officialTemplateToTemplateDTO(apgOfficialTemplateDO);
-            templates.add(templateDTO);
+            if (officialTemplates != null) {
+                templates.addAll(
+                        officialTemplates.stream()
+                                .map(TypeConversionUtils::officialTemplateToTemplateDTO)
+                                .toList());
+            }
         }
 
         return templates;
@@ -102,14 +108,27 @@ public class APGTemplateService {
     /**
      * 初始化默认模板数据，前4条
      */
-    public boolean initializeDefaultTemplate(Long userId) {
-        //初始化5条官方模板数据
-        boolean save = false;
-        for (long i = 2; i <= 5; i++) {
-            save = iapgUserTemplateMappingService.save(new APGUserTemplateMappingDO(null, userId, i, false, false, null));
+    public void initializeDefaultTemplate(Long userId) {
+        // 获取前5条模板id
+        List<APGOfficialTemplateDO> apgOfficialTemplateDOS = iapgOfficialTemplateService.selectFirstFiveTemplateId();
+
+        List<Long> templateIds = apgOfficialTemplateDOS.stream().map(APGOfficialTemplateDO::getId).toList();
+
+        // 构建批量插入列表
+        for (Long templateId : templateIds
+             ) {
+            APGUserTemplateMappingDO apgUserTemplateMappingDO = new APGUserTemplateMappingDO(
+                    null,        // id 自增
+                    userId,      // 用户ID
+                    templateId,   // 模板ID
+                    false,       // templateType: false 表示官方模板
+                    false,       // 其他标志位
+                    LocalDateTime.now()         // 其他字段
+            );
+            iapgUserTemplateMappingService.save(apgUserTemplateMappingDO);
+
         }
 
-        return save;
     }
 
     public Boolean createUserTemplate(String shopName, APGUserTemplateDO apgUserTemplateDO) {

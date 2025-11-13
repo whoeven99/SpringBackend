@@ -11,4 +11,6 @@ public interface IAPGOfficialTemplateService extends IService<APGOfficialTemplat
     List<APGOfficialTemplateDO> selectOfficalTemplatesById(List<Long> listOfficeId);
 
     APGOfficialTemplateDO getOfficialTemplateById(Long templateId);
+
+    List<APGOfficialTemplateDO> selectFirstFiveTemplateId();
 }
