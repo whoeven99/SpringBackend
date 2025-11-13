@@ -58,7 +58,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     private InitialTaskV2Repo initialTaskV2Repo;
 
     // 执行结束之后，再等30秒执行下一次
-//    @Scheduled(fixedDelay = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTask() {
         List<InitialTaskV2DO> initTaskList = initialTaskV2Repo.selectByStatus(0);
         if (CollectionUtils.isEmpty(initTaskList)) return;
@@ -70,7 +70,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     }
 
     // 定时30秒扫描一次
-//    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedRate = 30 * 1000)
     public void translateEachTask() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(1);
         if (CollectionUtils.isEmpty(translatingTask)) return;
@@ -82,7 +82,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     }
 
     // 定时30秒扫描一次
-//    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedRate = 30 * 1000)
     public void saveToShopify() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
         if (CollectionUtils.isEmpty(translatingTask)) return;
@@ -94,7 +94,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     }
 
     // 定时30秒扫描一次
-//    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedRate = 30 * 1000)
     public void sendEmail() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(3);
         if (CollectionUtils.isEmpty(translatingTask)) return;

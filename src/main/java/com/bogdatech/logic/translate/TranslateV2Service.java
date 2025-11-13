@@ -117,9 +117,10 @@ public class TranslateV2Service {
                     if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
                         translateTaskV2DO.setResourceId(node.getResourceId());
 
-                        // 每个node有几个十几个translatableContent
+                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
+                        // 每个node有几个translatableContent
                         node.getTranslatableContent().forEach(translatableContent -> {
-                            if (needTranslate(translatableContent, node.getTranslations(), node.getResourceId())) {
+                            if (needTranslate(translatableContent, node.getTranslations(), existingTasks)) {
                                 translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                 translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                 translateTaskV2DO.setType(translatableContent.getType());
@@ -274,7 +275,7 @@ public class TranslateV2Service {
 
         // 正常结束，发送邮件
         if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
-            appInsights.trackTrace("TranslationCompleted Email sent to user: " + shopName +
+            appInsights.trackTrace("Translation Completed Email sent to user: " + shopName +
                     " Total time (minutes): " + usingTimeMinutes +
                     " Total tokens used: " + usedToken);
 
@@ -339,11 +340,20 @@ public class TranslateV2Service {
 
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
-                                  String resourceId) {
+                                  List<TranslateTaskV2DO> existingTasks) {
         if (org.apache.commons.lang.StringUtils.isEmpty(translatableContent.getValue())) {
             return false;
         }
-        // TODO check 数据库是否已经写入了，根据resourceId和key 用来防止初始化的时候断电
+
+        // 检查本地数据库是否已有该 resourceId + key 的记录（防止初始化时断电造成重复插入）
+        if (!CollectionUtils.isEmpty(existingTasks)) {
+            for (TranslateTaskV2DO task : existingTasks) {
+                if (translatableContent.getKey().equals(task.getNodeKey())) {
+                    return false;
+                }
+            }
+        }
+
         for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
             if (translatableContent.getKey().equals(translation.getKey())) {
                 return translation.getOutdated();
