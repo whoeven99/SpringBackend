@@ -55,8 +55,10 @@ public class APGUserService {
         return flag;
     }
 
-    public void uninstallUser(String shopName) {
+    public boolean uninstallUser(String shopName) {
         // 修改uninstall_time为当前时间
         // 将该用户任务的status改为0
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        return iapgUsersService.uninstallUser(shopName, now);
     }
 }
