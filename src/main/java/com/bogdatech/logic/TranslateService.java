@@ -253,7 +253,7 @@ public class TranslateService {
             }
         }
 
-        // TODO 把request返回去的意义是什么？
+        request.setAccessToken(null);
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
