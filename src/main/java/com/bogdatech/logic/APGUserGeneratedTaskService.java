@@ -74,6 +74,11 @@ public class APGUserGeneratedTaskService {
 
         GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
         APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
+
+        if (taskDO == null) {
+            return generateProgressBarVO;
+        }
+
         try {
             GenerateDescriptionsVO generateDescriptionsVO = OBJECT_MAPPER.readValue(taskDO.getTaskData(), GenerateDescriptionsVO.class);
             Integer totalCount = generateDescriptionsVO.getProductIds().length;
