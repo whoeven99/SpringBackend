@@ -25,7 +25,8 @@ public class RedisStoppedRepository {
 
     public boolean isTaskStopped(String shopName) {
         String key = RedisKeyUtils.STOPPED_FLAG.replace("{shopName}", shopName);
-        return redisIntegration.hasKey(key);
+        String value = redisIntegration.get(key);
+        return MANUAL.equals(value) || TOKEN_LIMIT.equals(value);
     }
 
     public boolean isStoppedByTokenLimit(String shopName) {
