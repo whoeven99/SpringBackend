@@ -18,9 +18,10 @@ public class UserTokenService {
 
     // Max token以数据库为准
     public Integer getMaxToken(String shopName) {
-        Integer planChars = subscriptionPlansService.getCharsByPlanName(shopName);
-        TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
-        return counterDO.getTotalChars() + planChars;
+        return translationCounterService.getMaxCharsByShopName(shopName);
+//        Integer planChars = subscriptionPlansService.getCharsByPlanName(shopName);
+//        TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
+//        return counterDO.getTotalChars() + planChars;
     }
 
     // Used token以Redis为准
