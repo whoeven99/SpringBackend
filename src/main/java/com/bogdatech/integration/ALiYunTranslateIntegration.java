@@ -22,6 +22,7 @@ import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsonUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -371,7 +372,14 @@ public class ALiYunTranslateIntegration {
             if (translateImageResponse == null) {
                 return null;
             }
+
+            appInsights.trackTrace("callWithPic " + shopName + " 百炼翻译返回信息 message : " + JsonUtils.objectToJson(translateImageResponse));
+
             TranslateImageResponseBody body = translateImageResponse.getBody();
+            if (body == null) {
+                return null;
+            }
+
             // 打印 body
             appInsights.trackTrace("callWithPic " + shopName + " 图片返回message : " + body.getMessage() + " picUrl : " + body.getData().finalImageUrl + " RequestId: " + body.getRequestId() + " Code: " + body.getCode());
             if (TRANSLATE_APP.equals(appModel)){
