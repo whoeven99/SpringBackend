@@ -181,8 +181,8 @@ public class TestController {
     @Autowired
     private TranslateTask translateTask;
 
-    @GetMapping("/testAutoTranslateV2")
-    public void testAutoTranslateV2(@RequestParam String type) {
+    @GetMapping("/autov2")
+    public String testAutoTranslateV2(@RequestParam String type) {
         if (type == "1") {
             appInsights.trackTrace("autoTranslateV2 开始调用");
             executorService.execute(() -> {
@@ -209,6 +209,7 @@ public class TestController {
         if (type == "5") {
             translateTask.sendEmail();
         }
+        return "success";
     }
 
     @GetMapping("/testFreeTrialTask")
