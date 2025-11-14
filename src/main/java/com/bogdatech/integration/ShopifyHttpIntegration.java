@@ -1,6 +1,7 @@
 package com.bogdatech.integration;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogdatech.integration.model.ShopifyGraphResponse;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import org.apache.http.HttpEntity;
@@ -21,12 +22,50 @@ import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 @Component
 public class ShopifyHttpIntegration {
     public String sendShopifyPost(String shopName, String accessToken, String apiVersion,
-                                  String stringQuery, Map<String, Object> variables) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(shopName);
-        request.setAccessToken(accessToken);
-        request.setApiVersion(apiVersion);
-        return sendShopifyPost(request, stringQuery, variables);
+                                  String stringQuery, ShopifyGraphResponse.TranslatableResources.Node node) {
+        String url = "https://" + shopName + "/admin/api/" + apiVersion + "/graphql.json";
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+
+        // 设置头部信息
+        httpPost.addHeader("X-Shopify-Access-Token", accessToken);
+        httpPost.addHeader("Content-Type", "application/json");
+
+        // 创建查询体
+        JSONObject query = new JSONObject();
+        query.put("query", stringQuery);
+        query.put("variables", node);
+        // 将查询体设置到实体中
+        StringEntity input = new StringEntity(query.toString(), "UTF-8");
+        httpPost.setEntity(input);
+
+        String responseContent = null;
+        try {
+            CloseableHttpResponse response = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return httpClient.execute(httpPost);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + shopName);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (response == null) {
+                return null;
+            }
+            HttpEntity entity = response.getEntity();
+            responseContent = EntityUtils.toString(entity, "UTF-8");
+            response.close();
+            httpClient.close();
+        } catch (Exception e) {
+            appInsights.trackTrace("sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + shopName);
+            appInsights.trackException(e);
+            return null;
+        }
+        return responseContent;
     }
 
     // 设置头部信息

@@ -10,9 +10,9 @@
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>spring-backend</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>rest-service</name>
-	<description>RESTful web application</description>
+	<version>0.0.2</version>
+	<name>bogda-backend-java-app</name>
+	<description>BogdaApplication</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
