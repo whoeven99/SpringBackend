@@ -2,16 +2,16 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.entity.DO.TranslateTaskV2DO;
+import com.bogdatech.mapper.TranslateTaskV2Mapper;
 import com.bogdatech.utils.DbUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class TranslateTaskV2Repo extends ServiceImpl<BaseMapper<TranslateTaskV2DO>, TranslateTaskV2DO> {
+public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
     public TranslateTaskV2DO selectOneByInitialTaskIdAndNotSaved(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP 1 *")

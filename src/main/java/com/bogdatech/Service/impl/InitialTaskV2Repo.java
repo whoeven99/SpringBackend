@@ -1,16 +1,16 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.entity.DO.InitialTaskV2DO;
+import com.bogdatech.mapper.InitialTaskV2Mapper;
 import com.bogdatech.utils.DbUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class InitialTaskV2Repo extends ServiceImpl<BaseMapper<InitialTaskV2DO>, InitialTaskV2DO> {
+public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialTaskV2DO> {
     public List<InitialTaskV2DO> selectByShopNameSource(String shopName, String source) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
