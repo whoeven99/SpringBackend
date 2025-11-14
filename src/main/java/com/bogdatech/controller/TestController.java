@@ -183,7 +183,7 @@ public class TestController {
 
     @GetMapping("/autov2")
     public String testAutoTranslateV2(@RequestParam String type) {
-        if (type == "1") {
+        if ("1".equals(type)) {
             appInsights.trackTrace("autoTranslateV2 开始调用");
             executorService.execute(() -> {
                 List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
@@ -197,16 +197,16 @@ public class TestController {
                 taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
             });
         }
-        if (type == "2") {
+        if ("2".equals(type)) {
             translateTask.initialToTranslateTask();
         }
-        if (type == "3") {
+        if ("3".equals(type)) {
             translateTask.translateEachTask();
         }
-        if (type == "4") {
+        if ("4".equals(type)) {
             translateTask.saveToShopify();
         }
-        if (type == "5") {
+        if ("5".equals(type)) {
             translateTask.sendEmail();
         }
         return "success";
