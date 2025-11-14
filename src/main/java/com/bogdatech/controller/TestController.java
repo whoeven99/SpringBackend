@@ -196,20 +196,25 @@ public class TestController {
                 appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
                 taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
             });
+            return "1";
         }
         if ("2".equals(type)) {
             translateTask.initialToTranslateTask();
+            return "2";
         }
         if ("3".equals(type)) {
             translateTask.translateEachTask();
+            return "3";
         }
         if ("4".equals(type)) {
             translateTask.saveToShopify();
+            return "4";
         }
         if ("5".equals(type)) {
             translateTask.sendEmail();
+            return "5";
         }
-        return "success";
+        return "failed";
     }
 
     @GetMapping("/testFreeTrialTask")
