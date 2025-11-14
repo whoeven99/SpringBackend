@@ -24,6 +24,8 @@ public class TranslateTaskV2DO extends BaseDO {
     private String sourceValue; // node -> content -> value
     @TableField("target_value")
     private String targetValue;
+    @TableField("has_target_value")
+    private boolean hasTargetValue; // 因为target value太长，不好做索引
     @TableField("saved_to_shopify")
     private boolean savedToShopify;
 }

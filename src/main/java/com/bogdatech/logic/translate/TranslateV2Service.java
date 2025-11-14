@@ -195,6 +195,7 @@ public class TranslateV2Service {
             for (TranslateTaskV2DO updatedDo : taskList) {
                 String targetValue = translatedValueMap.get(updatedDo.getId());
                 updatedDo.setTargetValue(targetValue);
+                updatedDo.setHasTargetValue(true);
 
                 // 3.3 回写数据库 todo 批量
                 translateTaskV2Repo.update(updatedDo);
