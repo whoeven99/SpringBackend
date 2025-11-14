@@ -81,8 +81,8 @@ public class TranslateV2Service {
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
-    public void createInitialTask(String shopName, String source, String[] targets, List<String> moduleList,
-                                  Boolean isCover) {
+    public void createInitialTask(String shopName, String source, String[] targets,
+                                  List<String> moduleList, Boolean isCover) {
         redisStoppedRepository.removeStoppedFlag(shopName);
         for (String target : targets) {
             InitialTaskV2DO initialTask = new InitialTaskV2DO();
@@ -331,7 +331,6 @@ public class TranslateV2Service {
                 unCachedMap.put(id, sourceValue);
             }
         });
-        // todo 这里加个日志，看看每一批有多少命中缓存的
         appInsights.trackTrace("Translation getCached: total " + idToSourceValueMap.size() +
                 " cached " + cachedMap.size() +
                 " uncached " + unCachedMap.size());

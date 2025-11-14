@@ -17,6 +17,7 @@ import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.logic.translate.TranslateProgressService;
+import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
@@ -24,10 +25,12 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
+import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -175,12 +178,37 @@ public class TestController {
         });
     }
 
+    @Autowired
+    private TranslateTask translateTask;
+
     @GetMapping("/testAutoTranslateV2")
-    public void testAutoTranslateV2() {
-        appInsights.trackTrace("autoTranslateV2 开始调用");
-        executorService.execute(() -> {
-            taskService.autoTranslateV2();
-        });
+    public void testAutoTranslateV2(@RequestParam String type) {
+        if (type == "1") {
+            appInsights.trackTrace("autoTranslateV2 开始调用");
+            executorService.execute(() -> {
+                List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+                appInsights.trackTrace("autoTranslateV2 任务总数: " + translatesDOList.size());
+
+                if (CollectionUtils.isEmpty(translatesDOList)) {
+                    return;
+                }
+                TranslatesDO translatesDO = translatesDOList.get(0);
+                appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
+                taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+            });
+        }
+        if (type == "2") {
+            translateTask.initialToTranslateTask();
+        }
+        if (type == "3") {
+            translateTask.translateEachTask();
+        }
+        if (type == "4") {
+            translateTask.saveToShopify();
+        }
+        if (type == "5") {
+            translateTask.sendEmail();
+        }
     }
 
     @GetMapping("/testFreeTrialTask")

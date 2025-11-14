@@ -305,54 +305,55 @@ public class TaskService {
         }
 
         for (TranslatesDO translatesDO : translatesDOList) {
-            String shopName = translatesDO.getShopName();
-
-            UsersDO usersDO = usersService.getUserByName(shopName);
-            if (usersDO == null) {
-                appInsights.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
-                continue;
-            }
-
-            if (usersDO.getUninstallTime() != null) {
-                if (usersDO.getLoginTime() == null) {
-                    appInsights.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
-                    continue;
-                } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
-                    appInsights.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
-                    continue;
-                }
-            }
-
-            Integer maxToken = userTokenService.getMaxToken(shopName);
-            Integer usedToken = userTokenService.getUsedToken(shopName);
-            appInsights.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
-            // 如果字符超限，则直接返回字符超限
-            if (usedToken >= maxToken) {
-                appInsights.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
-                continue;
-            }
-
-            // 判断这条语言是否在用户本地存在
-            String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
-                    API_VERSION_LAST, getShopLanguageQuery());
-            appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
-            if (shopifyByQuery == null) {
-                appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
-                continue;
-            }
-
-            String userCode = "\"" + translatesDO.getTarget() + "\"";
-            if (!shopifyByQuery.contains(userCode)) {
-                // 将用户的自动翻译标识改为false
-                translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());
-                appInsights.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + translatesDO.getTarget());
-                continue;
-            }
-
-            translateV2Service.createInitialTask(shopName, translatesDO.getSource(), new String[] { translatesDO.getTarget() },
-                    AUTO_TRANSLATE_MAP, false);
-            appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + translatesDO.getTarget());
+            autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
         }
+    }
+
+    public void autoTranslate(String shopName, String source, String target) {
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        if (usersDO == null) {
+            appInsights.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
+            return;
+        }
+
+        if (usersDO.getUninstallTime() != null) {
+            if (usersDO.getLoginTime() == null) {
+                appInsights.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
+                return;
+            } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+                appInsights.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
+                return;
+            }
+        }
+
+        Integer maxToken = userTokenService.getMaxToken(shopName);
+        Integer usedToken = userTokenService.getUsedToken(shopName);
+        appInsights.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
+        // 如果字符超限，则直接返回字符超限
+        if (usedToken >= maxToken) {
+            appInsights.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
+            return;
+        }
+
+        // 判断这条语言是否在用户本地存在
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
+                API_VERSION_LAST, getShopLanguageQuery());
+        appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
+        if (shopifyByQuery == null) {
+            appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
+            return;
+        }
+
+        String userCode = "\"" + target + "\"";
+        if (!shopifyByQuery.contains(userCode)) {
+            // 将用户的自动翻译标识改为false
+            translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
+            appInsights.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
+            return;
+        }
+
+        translateV2Service.createInitialTask(shopName, source, new String[] { target }, AUTO_TRANSLATE_MAP, false);
+        appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
     }
 
     public void autoTranslate() {
