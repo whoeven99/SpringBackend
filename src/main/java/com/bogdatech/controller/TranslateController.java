@@ -33,7 +33,7 @@ import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @RestController
 @RequestMapping("/translate")
-public class TranslateController {
+public class    TranslateController {
     @Autowired
     private TranslateService translateService;
     @Autowired
@@ -94,7 +94,6 @@ public class TranslateController {
     /**
      * 根据传入的数组获取对应的数据
      */
-    // TODO delete
     @PostMapping("/readTranslateDOByArray")
     public BaseResponse<Object> readTranslateDOByArray(@RequestBody TranslatesDO[] translatesDOS) {
         if (translatesDOS != null && translatesDOS.length > 0) {

@@ -8,16 +8,15 @@ import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.entity.VO.AltTranslateVO;
 import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.AidgeIntegration;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.utils.AidgeUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
-
 import static com.bogdatech.controller.UserPicturesController.allowedMimeTypes;
-import static com.bogdatech.integration.ALiYunTranslateIntegration.PICTURE_APP;
 import static com.bogdatech.integration.HunYuanBucketIntegration.uploadFile;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
@@ -31,6 +30,8 @@ public class PCUserPicturesService {
     private IPCUserService ipcUserService;
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private AidgeIntegration aidgeIntegration;
 
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
@@ -87,10 +88,22 @@ public class PCUserPicturesService {
     public BaseResponse<Object> translatePic(String shopName, ImageTranslateVO imageTranslateVO) {
         appInsights.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + imageTranslateVO.getSourceCode() + " targetCode " + imageTranslateVO.getTargetCode() + " imageUrl " + imageTranslateVO.getImageUrl() + " accessToken " + imageTranslateVO.getAccessToken());
 
+        // 校验是否是符合标准版api的语言翻译规则
+        boolean baseImageTranslateInputCode = AidgeUtils.isBaseImageTranslateInputCode(imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode());
+        if (!baseImageTranslateInputCode) {
+            return new BaseResponse<>().CreateErrorResponse("The source language cannot be translated into the target language.");
+        }
+
+        // 校验是否符合标准版api的语言范围
+        boolean baseImageTranslateInputCodeRange = AidgeUtils.isBaseImageTranslateInputCodeRange(imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode());
+        if (!baseImageTranslateInputCodeRange) {
+            return new BaseResponse<>().CreateErrorResponse("The source languages and the target languages are not in translated range.");
+        }
+
         // 获取用户token，判断是否和数据库中一致再选择是否调用
         PCUsersDO pcUsersDO = ipcUserService.getUserByShopName(shopName);
         if (!pcUsersDO.getAccessToken().equals(imageTranslateVO.getAccessToken())) {
-            return null;
+            return new BaseResponse<>().CreateErrorResponse("accessToken error");
         }
 
         // 获取用户最大额度限制
@@ -103,7 +116,8 @@ public class PCUserPicturesService {
         }
 
         // 调用图片翻译方法
-        String targetPic = aLiYunTranslateIntegration.callWithPic(imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), imageTranslateVO.getImageUrl(), shopName, maxCharsByShopName, PICTURE_APP);
+        // 判断sourceCode和targetCode 是否符合ali和aidge的翻译条件，如果符合，随机调用
+        String targetPic = aidgeIntegration.aidgeStandPictureTranslate(shopName, imageTranslateVO.getImageUrl(), imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), maxCharsByShopName);
 
         if (targetPic != null) {
             return new BaseResponse<>().CreateSuccessResponse(targetPic);

@@ -184,43 +184,4 @@ public class TranslateApiIntegration {
 
         return result;
     }
-
-    //火山翻译API
-    public String huoShanTranslate(TranslateRequest request) {
-        ITranslateService translateService = TranslateServiceImpl.getInstance();
-
-        translateService.setAccessKey(System.getenv("HUOSHAN_API_KEY"));
-        translateService.setSecretKey(System.getenv("HUOSHAN_API_SECRET"));
-
-        //对火山翻译API的语言进行处理
-        String huoShanTarget = ApiCodeUtils.huoShanTransformCode(request.getTarget());
-//        appInsights.trackTrace("huoShanTarget: " + huoShanTarget);
-        // translate text
-        TranslateTextResponse translateText = null;
-        String translation = null;
-        try {
-            TranslateTextRequest translateTextRequest = new TranslateTextRequest();
-            translateTextRequest.setSourceLanguage(request.getSource());
-            translateTextRequest.setTargetLanguage(huoShanTarget);
-            translateTextRequest.setTextList(List.of(request.getContent()));
-
-            translateText = translateService.translateText(translateTextRequest);
-            // 将JSON字符串解析为JSONObject对象
-            String jsonString = JSON.toJSONString(translateText);
-//            appInsights.trackTrace("translateText: " + jsonString);
-            JSONObject jsonResponse = JSON.parseObject(jsonString);
-
-            // 直接从jsonResponse中获取TranslationList的第一个元素
-            JSONArray translationList = jsonResponse.getJSONArray("TranslationList");
-            if (translationList != null && !translationList.isEmpty()) {
-                JSONObject firstTranslationItem = translationList.getJSONObject(0);
-                translation = firstTranslationItem.getString("Translation");
-            } else {
-                appInsights.trackTrace("Translation list is empty or not present.");
-            }
-        } catch (Exception e) {
-            appInsights.trackTrace("huoShanTranslate " + e.getMessage());
-        }
-        return translation;
-    }
 }

@@ -9,3 +9,7 @@
 
 .idea/
 target/
+
+# JARs
+*.jar
+!libs/aidge.jar
