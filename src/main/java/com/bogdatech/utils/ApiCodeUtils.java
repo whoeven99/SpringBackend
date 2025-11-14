@@ -1,7 +1,6 @@
 package com.bogdatech.utils;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ApiCodeUtils {
 
@@ -22,7 +21,8 @@ public class ApiCodeUtils {
     //火山代码处理
     public static String huoShanTransformCode(String code) {
         return switch (code) {
-            case "ak", "as", "bm", "eu", "be", "br", "ce", "fy", "yi", "uz", "to", "tg", "si", "sd", "ii", "ug", "su", "rn", "rm", "kw", "fo", "fil", "dz", "ff", "is", "ia", "ga", "jv", "kl", "ks", "kk", "ku", "ky", "lb", "mt", "mg", "gv", "mi", "ne", "se", "nb", "nn", "or", "os", "ps", "pt-BR", "pt-PT", "sa", "sc", "gd" -> "#N/A";
+            case "ak", "as", "bm", "eu", "be", "br", "ce", "fy", "yi", "uz", "to", "tg", "si", "sd", "ii", "ug", "su", "rn", "rm", "kw", "fo", "fil", "dz", "ff", "is", "ia", "ga", "jv", "kl", "ks", "kk", "ku", "ky", "lb", "mt", "mg", "gv", "mi", "ne", "se", "nb", "nn", "or", "os", "ps", "pt-BR", "pt-PT", "sa", "sc", "gd" ->
+                    "#N/A";
             case "zh-CN" -> "zh"; // 简体中文
             case "zh-TW" -> "zh-Hant"; // 繁体中文
             default -> code;
@@ -30,7 +30,7 @@ public class ApiCodeUtils {
     }
 
     //千问mt语言代码处理
-    public static String qwenMtCode(String code){
+    public static String qwenMtCode(String code) {
         return switch (code) {
             case "zh-CN" -> "Chinese"; // 简体中文
             case "en" -> "English"; // 英文
@@ -205,5 +205,24 @@ public class ApiCodeUtils {
 
     public static String getLanguageName(String isoCode) {
         return languageMap.getOrDefault(isoCode, isoCode);
+    }
+
+    // ali图片code
+    public static Map<String, Set<String>> aliImageMap = new HashMap<>();
+    static {
+        aliImageMap.put("zh", new HashSet<>(Arrays.asList("en", "ru", "es", "fr", "de", "it", "nl", "pt", "vi", "tr"
+                , "ms", "zh-tw", "th", "pl", "id", "ja", "ko")));
+        aliImageMap.put("en", new HashSet<>(Arrays.asList("zh", "ru", "es", "fr", "de", "it", "pt", "vi", "tr"
+                , "ms", "th", "pl", "id", "ja", "ko")));
+    }
+
+    public static boolean isAliImageSupport(String sourceCode, String targetCode) {
+        return switch (sourceCode) {
+            case "zh" ->
+                    aliImageMap.get("zh").contains(targetCode);
+            case "en" ->
+                    aliImageMap.get("en").contains(targetCode);
+            default -> false;
+        };
     }
 }

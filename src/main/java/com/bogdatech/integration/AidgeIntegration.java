@@ -3,8 +3,13 @@ package com.bogdatech.integration;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.bogdatech.Service.IPCUserService;
+import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.model.controller.response.SignResponse;
+import com.bogdatech.utils.JsonUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
@@ -20,32 +25,22 @@ import static com.global.iop.util.WebUtils.doPost;
 @Component
 public class AidgeIntegration {
     static class ApiConfig {
-        /**
-         * The name and secret of your api key.
-         * In this sample, we use environment variable to get access key and secret.
-         */
         public static String ACCESS_KEY_NAME = System.getenv("AIDGE_ACCESS_KEY_NAME");
         public static String ACCESS_KEY_SECRET = System.getenv("AIDGE_ACCESS_KEY_SECRET");
 
         /**
-         * The domain of the API.
          * for api purchased on global site. set apiDomain to "api.aidc-ai.com"
          * 中文站购买的API请使用"cn-api.aidc-ai.com"域名 (for api purchased on chinese site) set apiDomain to "cn-api.aidc-ai.com"
          */
         public static String API_DOMAIN = "cn-api.aidc-ai.com";
 
         /**
-         * We offer trial quota to help you familiarize and test how to use the Aidge API in your account
-         * To use trial quota, please set useTrialResource to true
-         * If you set useTrialResource to false before you purchase the API
-         * You will receive "Sorry, your calling resources have been exhausted........"
          * 我们为您的账号提供一定数量的免费试用额度可以试用任何API。请将useTrialResource设置为true用于试用。
          * 如设置为false，且您未购买该API，将会收到"Sorry, your calling resources have been exhausted........."的错误提示
          */
-        public static boolean USE_TRIAL_RESOURCE = true;
+        public static boolean USE_TRIAL_RESOURCE = false;
         /**
          * FAQ for API response
-         * FAQ:https://app.gitbook.com/o/pBUcuyAewroKoYr3CeVm/s/cXGtrD26wbOKouIXD83g/getting-started/faq
          * FAQ(中文/Simple Chinese):https://aidge.yuque.com/org-wiki-aidge-bzb63a/brbggt/ny2tgih89utg1aha
          */
 
@@ -54,34 +49,33 @@ public class AidgeIntegration {
         public static final String SIGN_METHOD_HMAC_SHA256 = "HmacSHA256";
     }
 
+    @Autowired
+    private IPCUserService ipcUserService;
+
     // 测试基础调用，看是否成功
-    // test
-    public void test() {
+    public String aidgeStandPictureTranslate(String shopName, String imageUrl, String sourceCode, String targetCode, Integer limitChars) {
         try {
             // Call api
             String apiName = "/ai/image/translation";
-
-            /*
-             * Create API request using JSONObject
-             * You can use any other json library to build parameters
-             * Note: the array type parameter needs to be converted to a string
-             */
             JSONObject apiRequestJson = new JSONObject();
-            apiRequestJson.put("imageUrl", "https://m.media-amazon.com/images/I/71P77lL5KEL._AC_SL1500_.jpg");
-            apiRequestJson.put("sourceLanguage", "en");
-            apiRequestJson.put("targetLanguage", "zh");
+            apiRequestJson.put("imageUrl", imageUrl);
+            apiRequestJson.put("sourceLanguage", sourceCode);
+            apiRequestJson.put("targetLanguage", targetCode);
             apiRequestJson.put("translatingTextInTheProduct", "false");
             apiRequestJson.put("useImageEditor", "false");
 
             String apiRequest = apiRequestJson.toString();
 
-            // String apiRequest = "{\"imageUrl\":\"https://ae01.alicdn.com/kf/S68468a838ad04cc081a4bd2db32745f1y/M3-Light-emitting-Bluetooth-Headset-Folding-LED-Card-Wireless-Headset-TYPE-C-Charging-Multi-scene-Use.jpg_.webp\",\"sourceLanguage\":\"en\",\"targetLanguage\":\"fr\",\"translatingTextInTheProduct\":\"false\",\"useImageEditor\":\"false\"}";
-            String apiResponse = commonInvokeApi(apiName, apiRequest);
+            String apiResponse = commonInvokeApi(apiName, apiRequest, shopName, limitChars);
 
-            // Final result
-            System.out.println("test: " + apiResponse);
+            // 解析数据
+            JsonNode jsonNode = JsonUtils.stringToJson(apiResponse);
+            JsonNode imageUrlNode = jsonNode.path("data").path("imageUrl");
+            return imageUrlNode.asText(null);
         } catch (Exception e) {
             e.printStackTrace();
+            appInsights.trackTrace("FatalException aidgeStandPictureTranslate " + e.getMessage());
+            return null;
         }
     }
 
@@ -106,8 +100,6 @@ public class AidgeIntegration {
 
             String submitResult = prodInvokeApi(apiName, submitRequest, "", false);
 
-            // You can use any other json library to parse result and handle error result
-//            JSONObject submitResultJson = new JSONObject(Integer.parseInt(submitResult));
             JSONObject submitResultJson = JSON.parseObject(submitResult);
             JSONObject dataObj = submitResultJson.getJSONObject("data");
             String taskId = dataObj.getString("taskId");
@@ -132,6 +124,8 @@ public class AidgeIntegration {
 
             // Final result for the virtual try on
             System.out.println(queryResult);
+
+            // 需要做解析
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -139,32 +133,8 @@ public class AidgeIntegration {
 
     //prod 调用
     private static String prodInvokeApi(String apiName, String data, String queryData, boolean isGet) throws IOException {
-        String timestamp = System.currentTimeMillis() + "";
-
-        // Calculate sign
-        StringBuilder sign = new StringBuilder();
-        try {
-            javax.crypto.SecretKey secretKey = new javax.crypto.spec.SecretKeySpec(ApiConfig.ACCESS_KEY_SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance(secretKey.getAlgorithm());
-            mac.init(secretKey);
-            byte[] bytes = mac.doFinal((ApiConfig.ACCESS_KEY_SECRET + timestamp).getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            for (int i = 0; i < bytes.length; i++) {
-                String hex = Integer.toHexString(bytes[i] & 0xFF);
-                if (hex.length() == 1) {
-                    sign.append("0");
-                }
-                sign.append(hex.toUpperCase());
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-
-        String url = "https://[api domain]/rest[api name]?partner_id=aidge&sign_method=sha256&sign_ver=v2&app_key=[you api key name]&timestamp=[timestamp]&sign=[HmacSHA256 sign]";
-        url = url.replace("[api domain]", ApiConfig.API_DOMAIN)
-                .replace("[api name]", apiName)
-                .replace("[you api key name]", ApiConfig.ACCESS_KEY_SECRET)
-                .replace("[timestamp]", timestamp)
-                .replace("[HmacSHA256 sign]", sign);
+        // 计算 sign
+        String url = getSign(apiName);
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
@@ -180,39 +150,19 @@ public class AidgeIntegration {
         } else {
             result = doPost(url, data, headers, "UTF-8", 10000, 10000);
         }
-        // FAQ:https://app.gitbook.com/o/pBUcuyAewroKoYr3CeVm/s/cXGtrD26wbOKouIXD83g/getting-started/faq
+
         // FAQ(中文/Simple Chinese):https://aidge.yuque.com/org-wiki-aidge-bzb63a/brbggt/ny2tgih89utg1aha
         System.out.println(result);
         return result;
     }
 
-    private static String commonInvokeApi(String apiName, String data) throws IOException {
-        String timestamp = System.currentTimeMillis() + "";
-
+    private String commonInvokeApi(String apiName, String data, String shopName, Integer limitChars) {
         // Calculate sign
-        StringBuilder sign = new StringBuilder();
-        try {
-            javax.crypto.SecretKey secretKey = new javax.crypto.spec.SecretKeySpec(ApiConfig.ACCESS_KEY_SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance(secretKey.getAlgorithm());
-            mac.init(secretKey);
-            byte[] bytes = mac.doFinal((ApiConfig.ACCESS_KEY_SECRET + timestamp).getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            for (int i = 0; i < bytes.length; i++) {
-                String hex = Integer.toHexString(bytes[i] & 0xFF);
-                if (hex.length() == 1) {
-                    sign.append("0");
-                }
-                sign.append(hex.toUpperCase());
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
+        String url = getSign(apiName);
 
-        String url = "https://[api domain]/rest[api name]?partner_id=aidge&sign_method=sha256&sign_ver=v2&app_key=[you api key name]&timestamp=[timestamp]&sign=[HmacSHA256 sign]";
-        url = url.replace("[api domain]", ApiConfig.API_DOMAIN)
-                .replace("[api name]", apiName)
-                .replace("[you api key name]", ApiConfig.ACCESS_KEY_NAME)
-                .replace("[timestamp]", timestamp)
-                .replace("[HmacSHA256 sign]", sign);
+        if (url == null || url.isEmpty()){
+            return null;
+        }
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
@@ -221,11 +171,17 @@ public class AidgeIntegration {
             headers.put("x-iop-trial", "true");
         }
 
-        // Call api
-        String result = doPost(url, data, headers, "UTF-8", 10000, 10000);
-        // FAQ:https://app.gitbook.com/o/pBUcuyAewroKoYr3CeVm/s/cXGtrD26wbOKouIXD83g/getting-started/faq
-        // FAQ(中文/Simple Chinese):https://aidge.yuque.com/org-wiki-aidge-bzb63a/brbggt/ny2tgih89utg1aha
-        System.out.println("invokeApi: " + result);
+        // Call api 需要再做个重试机制
+        String result = null;
+        try {
+            result = doPost(url, data, headers, "UTF-8", 40000, 40000);
+        } catch (IOException e) {
+            e.printStackTrace();
+            appInsights.trackTrace("FatalException commonInvokeApi error: " + e.getMessage());
+        }
+
+        ipcUserService.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
+        appInsights.trackTrace("translatePic : " + result);
         return result;
     }
 
@@ -322,5 +278,39 @@ public class AidgeIntegration {
             sign.append(hex.toUpperCase());
         }
         return sign.toString();
+    }
+
+    // 计算sign
+    public static String getSign(String apiName) {
+        String timestamp = System.currentTimeMillis() + "";
+
+        // Calculate sign
+        StringBuilder sign = new StringBuilder();
+        try {
+            javax.crypto.SecretKey secretKey = new javax.crypto.spec.SecretKeySpec(ApiConfig.ACCESS_KEY_SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance(secretKey.getAlgorithm());
+            mac.init(secretKey);
+            byte[] bytes = mac.doFinal((ApiConfig.ACCESS_KEY_SECRET + timestamp).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            for (int i = 0; i < bytes.length; i++) {
+                String hex = Integer.toHexString(bytes[i] & 0xFF);
+                if (hex.length() == 1) {
+                    sign.append("0");
+                }
+                sign.append(hex.toUpperCase());
+            }
+
+            String url = "https://[api domain]/rest[api name]?partner_id=aidge&sign_method=sha256&sign_ver=v2&app_key=[you api key name]&timestamp=[timestamp]&sign=[HmacSHA256 sign]";
+            url = url.replace("[api domain]", ApiConfig.API_DOMAIN)
+                    .replace("[api name]", apiName)
+                    .replace("[you api key name]", ApiConfig.ACCESS_KEY_NAME)
+                    .replace("[timestamp]", timestamp)
+                    .replace("[HmacSHA256 sign]", sign);
+
+            return url;
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            appInsights.trackTrace("FatalException aidge 计算sign失败：" + exception.getMessage());
+        }
+       return null;
     }
 }
