@@ -124,7 +124,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("singleTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            printTranslateCost(totalToken, inputTokens, outputTokens);
+            AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
             }else {
@@ -349,8 +349,8 @@ public class ALiYunTranslateIntegration {
                 .setSourceLanguage(source)
                 .setField("e-commerce");
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
-        runtime.setReadTimeout(300000); // 300 秒读超时
-        runtime.setConnectTimeout(300000); // 300 秒连接超时
+        runtime.setReadTimeout(40000); // 40 秒读超时
+        runtime.setConnectTimeout(40000); // 40 秒连接超时
         String targetPicUrl = null;
         try {
             if (client == null) {
@@ -369,19 +369,14 @@ public class ALiYunTranslateIntegration {
                     DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
-            if (translateImageResponse == null) {
+
+            appInsights.trackTrace("callWithPic " + shopName + " 百炼翻译报错信息 translateImageResponse : " + JsonUtils.objectToJson(translateImageResponse) + " picUrl : " + picUrl + " target: " + target + " source: " + source);
+            if (translateImageResponse == null || translateImageResponse.getBody() == null) {
                 return null;
             }
-
-            appInsights.trackTrace("callWithPic " + shopName + " 百炼翻译返回信息 message : " + JsonUtils.objectToJson(translateImageResponse));
 
             TranslateImageResponseBody body = translateImageResponse.getBody();
-            if (body == null) {
-                return null;
-            }
 
-            // 打印 body
-            appInsights.trackTrace("callWithPic " + shopName + " 图片返回message : " + body.getMessage() + " picUrl : " + body.getData().finalImageUrl + " RequestId: " + body.getRequestId() + " Code: " + body.getCode());
             if (TRANSLATE_APP.equals(appModel)){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
             }else {
