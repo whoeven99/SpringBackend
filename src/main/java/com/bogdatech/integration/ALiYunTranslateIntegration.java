@@ -24,6 +24,7 @@ import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.Collections;
@@ -139,6 +140,57 @@ public class ALiYunTranslateIntegration {
             return null;
         }
         return content;
+    }
+
+    public Pair<String, Integer> userTranslate(String prompt, String target) {
+        String model = switchModel(target);
+        Generation gen = new Generation();
+        Message userMsg = Message.builder()
+                .role(Role.USER.getValue())
+                .content(prompt)
+                .build();
+
+        GenerationParam param = GenerationParam.builder()
+                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .model(model)
+                .messages(Collections.singletonList(userMsg))
+                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .build();
+
+        String content;
+        int totalToken;
+        try {
+            GenerationResult call = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return gen.call(param);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("FatalException userTranslate call errors ： " + e.getMessage() +
+                                    " translateText : " + prompt);
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (call == null) {
+                return new Pair<>(null, 0);
+            }
+            content = call.getOutput().getChoices().get(0).getMessage().getContent();
+
+            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            Integer inputTokens = call.getUsage().getInputTokens();
+            Integer outputTokens = call.getUsage().getOutputTokens();
+            appInsights.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +
+                    " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " +
+                    outputTokens);
+            return new Pair<>(content, totalToken);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException userTranslate all errors ： " + e.getMessage() + " translateText : " + prompt);
+            appInsights.trackException(e);
+            return new Pair<>(null, 0);
+        }
     }
 
     public Pair<String, Integer> userTranslate(String text, String prompt, String target, String shopName) {
