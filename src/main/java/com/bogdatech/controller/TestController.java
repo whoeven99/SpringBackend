@@ -17,7 +17,6 @@ import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.logic.translate.TranslateProgressService;
-import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
@@ -114,7 +113,6 @@ public class TestController {
         return infoByShopify.toString();
     }
 
-
     //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
     public void sendEmail() {
@@ -192,9 +190,13 @@ public class TestController {
                 if (CollectionUtils.isEmpty(translatesDOList)) {
                     return;
                 }
-                TranslatesDO translatesDO = translatesDOList.get(0);
-                appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
-                taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+                for (TranslatesDO translatesDO : translatesDOList) {
+                    appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
+                    boolean ans = taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+                    if (ans) {
+                        break;
+                    }
+                }
             });
             return "1";
         }
