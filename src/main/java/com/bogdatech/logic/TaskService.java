@@ -297,6 +297,7 @@ public class TaskService {
     @Autowired
     private TranslateV2Service translateV2Service;
 
+    // 这里可以每隔5分钟10分钟一次，如果创建时间是当前的小时，就执行，这样打乱一下分了24组
     public void autoTranslateV2() {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         appInsights.trackTrace("autoTranslateV2 自动翻译任务: " + translatesDOList.size());
