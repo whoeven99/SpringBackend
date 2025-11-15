@@ -135,9 +135,12 @@ public class TranslateV2Service {
                         });
                     }
                 }));
+            appInsights.trackTrace("Translation rotate Shopify done: " + shopName + " module: " + module);
         }
 
         // 更新数据库并记录初始化时间
+        appInsights.trackTrace("Translation initialToTranslateTask done: " + shopName);
+
         long initTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
         initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.status);
         initialTaskV2DO.setInitMinutes((int) initTimeInMinutes);
@@ -214,7 +217,10 @@ public class TranslateV2Service {
             usedToken = userTokenService.addUsedToken(shopName, initialTaskId, usedTokenByTask);
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
+            appInsights.trackTrace("Translation translating: " + shopName + " size: " + taskList.size() +
+                    " usedToken: " + usedToken + " maxToken: " + maxToken);
         }
+        appInsights.trackTrace("Translation translating done: " + shopName);
 
         // 这个计算方式有问题， 暂定这样
         long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -263,6 +269,7 @@ public class TranslateV2Service {
                 }
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
+            appInsights.trackTrace("Translation saving SHOPIFY: " + shopName + " size: " + taskList.size());
         }
 
         long savingShopifyTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -355,6 +362,16 @@ public class TranslateV2Service {
         if (org.apache.commons.lang.StringUtils.isEmpty(value)) {
             return false;
         }
+
+        // 先看outdate = false
+        for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
+            if (translatableContent.getKey().equals(translation.getKey())) {
+                if(!translation.getOutdated()) {
+                    return false;
+                }
+            }
+        }
+
         // From TranslateDataService filterNeedTranslateSet
         // 如果是特定类型，也从集合中移除
         if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
@@ -430,18 +447,13 @@ public class TranslateV2Service {
             }
         }
 
+        // 最终插入时，检查数据库， todo 还是需要再优化一下
         // 检查本地数据库是否已有该 resourceId + key 的记录（防止初始化时断电造成重复插入）
         if (!CollectionUtils.isEmpty(existingTasks)) {
             for (TranslateTaskV2DO task : existingTasks) {
                 if (translatableContent.getKey().equals(task.getNodeKey())) {
                     return false;
                 }
-            }
-        }
-
-        for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
-            if (translatableContent.getKey().equals(translation.getKey())) {
-                return translation.getOutdated();
             }
         }
         return true;
