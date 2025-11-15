@@ -183,21 +183,19 @@ public class TestController {
     public String testAutoTranslateV2(@RequestParam String type) {
         if ("1".equals(type)) {
             appInsights.trackTrace("autoTranslateV2 开始调用");
-            executorService.execute(() -> {
-                List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
-                appInsights.trackTrace("autoTranslateV2 任务总数: " + translatesDOList.size());
+            List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+            appInsights.trackTrace("autoTranslateV2 任务总数: " + translatesDOList.size());
 
-                if (CollectionUtils.isEmpty(translatesDOList)) {
-                    return;
+            if (CollectionUtils.isEmpty(translatesDOList)) {
+                return "no task";
+            }
+            for (TranslatesDO translatesDO : translatesDOList) {
+                appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
+                boolean ans = taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+                if (ans) {
+                    break;
                 }
-                for (TranslatesDO translatesDO : translatesDOList) {
-                    appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
-                    boolean ans = taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
-                    if (ans) {
-                        break;
-                    }
-                }
-            });
+            }
             return "1";
         }
         if ("2".equals(type)) {
