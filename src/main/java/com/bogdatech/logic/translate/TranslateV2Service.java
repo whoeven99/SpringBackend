@@ -15,6 +15,7 @@ import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.JsonUtils;
+import com.bogdatech.utils.JudgeTranslateUtils;
 import com.bogdatech.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -30,7 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.bogdatech.constants.TranslateConstants.APIVERSION;
+import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JsoupUtils.isHtml;
+import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 
 @Component
@@ -120,7 +124,7 @@ public class TranslateV2Service {
                         List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                         // 每个node有几个translatableContent
                         node.getTranslatableContent().forEach(translatableContent -> {
-                            if (needTranslate(translatableContent, node.getTranslations(), existingTasks)) {
+                            if (needTranslate(translatableContent, node.getTranslations(), existingTasks, module)) {
                                 translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                 translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                 translateTaskV2DO.setType(translatableContent.getType());
@@ -341,11 +345,89 @@ public class TranslateV2Service {
         redisProcessService.setCacheData(target, targetValue, sourceValue);
     }
 
+    // 根据翻译规则，不翻译的直接不用存
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
-                                  List<TranslateTaskV2DO> existingTasks) {
-        if (org.apache.commons.lang.StringUtils.isEmpty(translatableContent.getValue())) {
+                                  List<TranslateTaskV2DO> existingTasks, String module) {
+        String value = translatableContent.getValue();
+        String type = translatableContent.getType();
+        String key = translatableContent.getKey();
+        if (org.apache.commons.lang.StringUtils.isEmpty(value)) {
             return false;
+        }
+        // From TranslateDataService filterNeedTranslateSet
+        // 如果是特定类型，也从集合中移除
+        if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
+                || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
+                || "LIST_URL".equals(type)
+                || "JSON".equals(type)
+                || "JSON_STRING".equals(type)) {
+            return false;
+        }
+
+        if (JsonUtils.isJson(value)) {
+            return false;
+        }
+
+        //如果handleFlag为false，则跳过
+        if (type.equals(URI) && "handle".equals(key)) {
+            // TODO 自动翻译的handle默认为false, 手动的记得添加
+//            if (!handleFlag) {
+//                return false;
+//            }
+            return false;
+        }
+
+        //通用的不翻译数据
+        if (!JudgeTranslateUtils.generalTranslate(key, value)) {
+            return false;
+        }
+
+        //如果是theme模块的数据
+        if (TRANSLATABLE_RESOURCE_TYPES.contains(module)) {
+            //如果是html放html文本里面
+            if (isHtml(value)) {
+                return false;
+            }
+
+            //对key中包含slide  slideshow  general.lange 的数据不翻译
+            if (key.contains("general.lange")) {
+                return false;
+            }
+
+            if (key.contains("block") && key.contains("add_button_selector")) {
+                return false;
+            }
+            //对key中含section和general的做key值判断
+            if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+                //进行白名单的确认
+                if (whiteListTranslate(key)) {
+                    return false;
+                }
+
+                //如果包含对应key和value，则跳过
+                if (!shouldTranslate(key, value)) {
+                    return false;
+                }
+            }
+        }
+
+        //对METAFIELD字段翻译
+        if (METAFIELD.equals(module)) {
+            //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
+            if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
+                return false;
+            }
+            if (!metaTranslate(value)) {
+                return false;
+            }
+            //如果是base64编码的数据，不翻译
+            if (BASE64_PATTERN.matcher(value).matches()) {
+                return false;
+            }
+            if (isJson(value)) {
+                return false;
+            }
         }
 
         // 检查本地数据库是否已有该 resourceId + key 的记录（防止初始化时断电造成重复插入）
