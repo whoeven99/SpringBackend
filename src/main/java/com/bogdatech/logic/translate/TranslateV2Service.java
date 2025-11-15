@@ -135,11 +135,11 @@ public class TranslateV2Service {
                         });
                     }
                 }));
-            appInsights.trackTrace("Translation rotate Shopify done: " + shopName + " module: " + module);
+            appInsights.trackTrace("TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
         }
 
         // 更新数据库并记录初始化时间
-        appInsights.trackTrace("Translation initialToTranslateTask done: " + shopName);
+        appInsights.trackTrace("TranslateTaskV2 initialToTranslateTask done: " + shopName);
 
         long initTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
         initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.status);
@@ -217,10 +217,10 @@ public class TranslateV2Service {
             usedToken = userTokenService.addUsedToken(shopName, initialTaskId, usedTokenByTask);
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
-            appInsights.trackTrace("Translation translating: " + shopName + " size: " + taskList.size() +
+            appInsights.trackTrace("TranslateTaskV2 translating: " + shopName + " size: " + taskList.size() +
                     " usedToken: " + usedToken + " maxToken: " + maxToken);
         }
-        appInsights.trackTrace("Translation translating done: " + shopName);
+        appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
         // 这个计算方式有问题， 暂定这样
         long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -269,7 +269,7 @@ public class TranslateV2Service {
                 }
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
-            appInsights.trackTrace("Translation saving SHOPIFY: " + shopName + " size: " + taskList.size());
+            appInsights.trackTrace("TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
         }
 
         long savingShopifyTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -287,7 +287,7 @@ public class TranslateV2Service {
 
         // 正常结束，发送邮件
         if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
-            appInsights.trackTrace("Translation Completed Email sent to user: " + shopName +
+            appInsights.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
                     " Total time (minutes): " + usingTimeMinutes +
                     " Total tokens used: " + usedToken);
 
