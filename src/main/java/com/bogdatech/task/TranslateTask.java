@@ -93,7 +93,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     }
 
     // 定时30秒扫描一次
-//    @Scheduled(fixedRate = 30 * 1000)
+//    @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(1);
         if (CollectionUtils.isEmpty(translatingTask)) return;
@@ -123,7 +123,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     }
 
     // 定时30秒扫描一次
-//    @Scheduled(fixedRate = 30 * 1000)
+//    @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
         if (CollectionUtils.isEmpty(translatingTask)) return;
