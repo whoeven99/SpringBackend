@@ -8,6 +8,7 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.model.ShopifyGraphResponse;
+import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
@@ -57,6 +58,8 @@ public class TranslateV2Service {
     private RedisProcessService redisProcessService;
     @Autowired
     private UserTokenService userTokenService;
+    @Autowired
+    private GlossaryService glossaryService;
     public static TelemetryClient appInsights = new TelemetryClient();
 
     // 翻译 step 1, 用户 -> initial任务创建
@@ -154,6 +157,8 @@ public class TranslateV2Service {
         String target = initialTaskV2DO.getTarget();
         String shopName = initialTaskV2DO.getShopName();
 
+        Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, target);
+
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
@@ -195,7 +200,10 @@ public class TranslateV2Service {
             this.getCached(idToSourceValueMap, cachedMap, uncachedMap, target);
 
             // 3.2 调用翻译接口
-            Pair<Map<Integer, String>, Integer> translatedAns = this.translate(uncachedMap, textType, target);
+            // ************************ //
+            // 多条翻译 //
+            // ************************ //
+            Pair<Map<Integer, String>, Integer> translatedAns = this.translate(uncachedMap, textType, target, glossaryMap);
 
             Map<Integer, String> translatedValueMap = translatedAns.getFirst();
             translatedValueMap.putAll(cachedMap);
@@ -308,19 +316,32 @@ public class TranslateV2Service {
     // Pair <翻译结果map，使用token数>
     // Map <id, translatedText>
     private Pair<Map<Integer, String>, Integer> translate(Map<Integer, String> idToSourceValueMap,
-                                                          String textType, String target) {
+                                                          String textType, String target,
+                                                          Map<String, GlossaryDO> glossaryMap) {
         Integer usedToken = 0;
         Map<Integer, String> translatedValueMap = new HashMap<>();
         for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
             Integer id = entry.getKey();
             String value = entry.getValue();
-            String prompt = "帮我翻译如下内容，到目标语言：" + target + "。只返回翻译后的内容，不要其他多余的说明。内容如下：\n" + value;
+
+            String replacedWithGlossary = replaceWithGlossary(value, glossaryMap);
+
+            // ************************ //
+            // 单条翻译 //
+            // ************************ //
+            String prompt = "帮我翻译如下内容，到目标语言：" + target + "。" +
+                    "其中[[xxx]]形式的字符串跳过，不要翻译，并且返回原样给我" +
+                    "只返回翻译后的内容，不要其他多余的说明。内容如下：\n" +
+                    replacedWithGlossary;
 
             Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
             if (pair != null && pair.getFirst() != null) {
-                String translatedText = pair.getFirst();
-                translatedValueMap.put(id, translatedText);
                 usedToken += pair.getSecond();
+                String translatedText = pair.getFirst();
+
+                // 把[[xxx]]替换回去 xxx
+                String rawTranslatedText = getGlossaryReplacedBack(translatedText);
+                translatedValueMap.put(id, rawTranslatedText);
             } else {
                 // 翻译失败，这里后续继续做兜底
                 translatedValueMap.put(id, value);
@@ -328,6 +349,29 @@ public class TranslateV2Service {
         }
 
         return new Pair<>(translatedValueMap, usedToken);
+    }
+
+    private static String replaceWithGlossary(String value, Map<String, GlossaryDO> glossaryMap) {
+        if (value == null || glossaryMap == null || glossaryMap.isEmpty()) {
+            return value;
+        }
+
+        for (Map.Entry<String, GlossaryDO> entry : glossaryMap.entrySet()) {
+            String key = entry.getKey();
+            GlossaryDO glossaryDO = entry.getValue();
+
+            if (value.contains(key)) {
+                // 使用唯一的方式包裹 targetText，例如 [[targetText]]
+                String replacement = "[[" + glossaryDO.getTargetText() + "]]";
+                value = value.replace(key, replacement);
+            }
+        }
+
+        return value;
+    }
+
+    private static String getGlossaryReplacedBack(String value) {
+        return value.replaceAll("\\[\\[(.*?)]]", "$1");
     }
 
     private void getCached(Map<Integer, String> idToSourceValueMap,
