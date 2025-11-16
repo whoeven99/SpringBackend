@@ -60,7 +60,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     public static TelemetryClient appInsights = new TelemetryClient();
 
     // 执行结束之后，再等30秒执行下一次
-    @Scheduled(fixedDelay = 30 * 1000)
+//    @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTask() {
         appInsights.trackTrace("TranslateTaskV2 start INIT");
         List<InitialTaskV2DO> initTaskList = initialTaskV2Repo.selectByStatus(0);
