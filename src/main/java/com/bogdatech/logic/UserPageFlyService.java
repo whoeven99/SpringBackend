@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.IUserPageFlyService;
 import com.bogdatech.entity.DO.UserPageFlyDO;
+import com.bogdatech.entity.VO.PageFlyVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -74,13 +75,16 @@ public class UserPageFlyService {
     public BaseResponse<Object> readTranslatedText(String shopName, String languageCode) {
         // 获取对应的所有数据，转化为Map格式
         List<UserPageFlyDO> userPageFlyDOS = iUserPageFlyService.selectUserPageFlysData(shopName, languageCode);
-        Map<String, String> result = userPageFlyDOS.stream()
+        List<PageFlyVO> voList = userPageFlyDOS.stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(
-                        UserPageFlyDO::getSourceText,
-                        UserPageFlyDO::getTargetText,
-                        (v1, v2) -> v1   // 避免 key 冲突时报错，保留第一个
-                ));
-        return new BaseResponse<>().CreateSuccessResponse(result);
+                .map(doObj -> {
+                    PageFlyVO vo = new PageFlyVO();
+                    vo.setId(doObj.getId());
+                    vo.setSourceText(doObj.getSourceText());
+                    vo.setTargetText(doObj.getTargetText());
+                    return vo;
+                })
+                .toList();
+        return new BaseResponse<>().CreateSuccessResponse(voList);
     }
 }
