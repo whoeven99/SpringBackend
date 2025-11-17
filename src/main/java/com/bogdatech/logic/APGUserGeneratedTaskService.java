@@ -29,24 +29,21 @@ import static com.bogdatech.utils.TypeConversionUtils.generateDescriptionsVOToGe
 
 @Service
 public class APGUserGeneratedTaskService {
-    private final IAPGUsersService iapgUsersService;
-    private final IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
-    private final IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
+    @Autowired
+    private IAPGUsersService iapgUsersService;
+    @Autowired
+    private IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
+    @Autowired
+    private IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
     public static final ConcurrentHashMap<Long, Integer> GENERATE_STATE_BAR = new ConcurrentHashMap<>();
     public static final Integer INITIALIZATION = 1;
     public static final Integer GENERATING = 2;
     public static final Integer FINISHED = 3;
-    @Autowired
-    public APGUserGeneratedTaskService(IAPGUsersService iapgUsersService, IAPGUserGeneratedTaskService iapgUserGeneratedTaskService, IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService) {
-        this.iapgUsersService = iapgUsersService;
-        this.iapgUserGeneratedTaskService = iapgUserGeneratedTaskService;
-        this.iapgUserGeneratedSubtaskService = iapgUserGeneratedSubtaskService;
-    }
 
     /**
      * 初始化或更新相关数据
-     * */
-    public Boolean initOrUpdateData(String shopName, Integer status, String taskModel, String taskData){
+     */
+    public Boolean initOrUpdateData(String shopName, Integer status, String taskModel, String taskData) {
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
             return false;
@@ -54,8 +51,8 @@ public class APGUserGeneratedTaskService {
 
         //获取用户任务状态
         APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
-        APGUserGeneratedTaskDO apgUserGeneratedTaskDO = new APGUserGeneratedTaskDO(null, userDO.getId(), null ,taskModel, taskData, null);
-        if (taskDO == null){
+        APGUserGeneratedTaskDO apgUserGeneratedTaskDO = new APGUserGeneratedTaskDO(null, userDO.getId(), null, taskModel, taskData, null);
+        if (taskDO == null) {
             //插入对应数据
             return iapgUserGeneratedTaskService.save(apgUserGeneratedTaskDO);
         }
@@ -74,6 +71,11 @@ public class APGUserGeneratedTaskService {
 
         GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
         APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
+
+        if (taskDO == null) {
+            return generateProgressBarVO;
+        }
+
         try {
             GenerateDescriptionsVO generateDescriptionsVO = OBJECT_MAPPER.readValue(taskDO.getTaskData(), GenerateDescriptionsVO.class);
             Integer totalCount = generateDescriptionsVO.getProductIds().length;
@@ -127,7 +129,7 @@ public class APGUserGeneratedTaskService {
 
     /**
      * 判断是否有任务进行
-     * */
+     */
     public boolean isTaskRunning(String shopName) {
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
@@ -141,7 +143,7 @@ public class APGUserGeneratedTaskService {
     /**
      * 用户点击暂停。
      * 以及用户卸载
-     * */
+     */
     public Boolean updateTaskStatusTo1(Long id) {
         //将任务改为状态改为1
         Boolean b = iapgUserGeneratedTaskService.updateStatusByUserId(id, 0);

@@ -11,12 +11,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/apg/product")
 public class APGUserProductController {
-    private final APGUserProductService apgUserProductService;
-
     @Autowired
-    public APGUserProductController(APGUserProductService apgUserProductService) {
-        this.apgUserProductService = apgUserProductService;
-    }
+    private APGUserProductService apgUserProductService;
 
     /**
      * 根据产品id，获取用户产品数据

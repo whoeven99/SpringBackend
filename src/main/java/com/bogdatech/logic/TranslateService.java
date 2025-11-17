@@ -8,6 +8,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -74,6 +75,8 @@ public class TranslateService {
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private ShopifyService shopifyService;
+    @Autowired
+    private RedisStoppedRepository redisStoppedRepository;
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -253,7 +256,7 @@ public class TranslateService {
             }
         }
 
-        // TODO 把request返回去的意义是什么？
+        request.setAccessToken(null);
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
@@ -261,6 +264,9 @@ public class TranslateService {
      * 手动停止用户的翻译任务
      * */
     public String stopTranslationManually(String shopName) {
+//         v2, 后面的以后删掉
+//        redisStoppedRepository.manuallyStopped(shopName);
+
         Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
         if (stopFlag) {
             appInsights.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");

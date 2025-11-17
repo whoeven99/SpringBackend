@@ -33,7 +33,7 @@ public class UserHandleException {
 //        log.error("Exception failed by {}",ex);
         System.out.println("Exception failed by " + ex.getMessage());
         appInsights.trackTrace("Exception failed by " + ex.getMessage());
-        return new BaseResponse().CreateErrorResponse(SERVER_ERROR);
+        return new BaseResponse().CreateErrorResponse(ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

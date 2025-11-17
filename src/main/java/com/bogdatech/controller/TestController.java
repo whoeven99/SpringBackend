@@ -1,6 +1,5 @@
 package com.bogdatech.controller;
 
-
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -25,14 +24,14 @@ import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
-import com.bogdatech.model.service.ProcessDbTaskService;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
+import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
-import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.Path;
@@ -42,7 +41,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -105,33 +103,6 @@ public class TestController {
         return "Ping Successful!";
     }
 
-    @GetMapping("/parseShopifyData")
-    public void parseShopifyData() {
-        // Arrange
-        String shopName = "ciwishop.myshopify.com";
-        String accessToken = "";
-        String source = "fr";
-        String target = "zh-TW";
-        String languagePackId = "testLanguagePack";
-        boolean handleFlag = true;
-        Map<String, Object> glossaryMap = new HashMap<>();
-        String modelType = "testModel";
-        Integer limitChars = 1000;
-        int usedChars = 500;
-        List<String> translateResourceDTOS = List.of("PRODUCT");
-        String translationModel = "2";
-        boolean isCover = false;
-        String customKey = "testKey";
-        String resourceType = "PRODUCT";
-        String first = "1";
-        CharacterCountUtils allTasks = new CharacterCountUtils();
-
-        rabbitMqTranslateService.parseShopifyData(
-                shopName, accessToken, source, target, languagePackId, handleFlag,
-                glossaryMap, modelType, limitChars, usedChars, translateResourceDTOS, translationModel, isCover,
-                customKey, resourceType, first, allTasks);
-    }
-
     @PostMapping("/gpt")
     public String chat(@RequestBody GptVO gptVO) {
 //        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), "ciwishop.myshopify.com", null, new CharacterCountUtils(), 2000000, false);
@@ -152,7 +123,6 @@ public class TestController {
         }
         return infoByShopify.toString();
     }
-
 
     //发送成功翻译的邮件gei
     @GetMapping("/sendEmail")
@@ -217,6 +187,44 @@ public class TestController {
         });
     }
 
+    @Autowired
+    private TranslateTask translateTask;
+
+    @GetMapping("/autov2")
+    public String testAutoTranslateV2(@RequestParam String type) {
+        if ("1".equals(type)) {
+            appInsights.trackTrace("autoTranslateV2 开始调用");
+            List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+            appInsights.trackTrace("autoTranslateV2 任务总数: " + translatesDOList.size());
+
+            if (CollectionUtils.isEmpty(translatesDOList)) {
+                return "no task";
+            }
+            for (TranslatesDO translatesDO : translatesDOList) {
+                appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
+                taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+            }
+            return "1";
+        }
+        if ("2".equals(type)) {
+            translateTask.initialToTranslateTask();
+            return "2";
+        }
+        if ("3".equals(type)) {
+            translateTask.translateEachTask();
+            return "3";
+        }
+        if ("4".equals(type)) {
+            translateTask.saveToShopify();
+            return "4";
+        }
+        if ("5".equals(type)) {
+            translateTask.sendEmail();
+            return "5";
+        }
+        return "failed";
+    }
+
     @GetMapping("/testFreeTrialTask")
     public void testFreeTrialTask() {
         taskService.freeTrialTask();
@@ -244,7 +252,6 @@ public class TestController {
             appInsights.trackTrace("停止成功");
         }
     }
-
 
     /**
      * 输入任务id，实现该任务的翻译

@@ -17,14 +17,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/apg/template")
 public class APGTemplateController {
-    private final APGTemplateService apgTemplateService;
-    private final IAPGUsersService iapgUsersService;
-
     @Autowired
-    public APGTemplateController(APGTemplateService apgTemplateService, IAPGUsersService iapgUsersService) {
-        this.apgTemplateService = apgTemplateService;
-        this.iapgUsersService = iapgUsersService;
-    }
+    private APGTemplateService apgTemplateService;
+    @Autowired
+    private IAPGUsersService iapgUsersService;
+
 
     /**
      * 获取默认数据和用户相关数据
@@ -35,7 +32,7 @@ public class APGTemplateController {
         //获取用户id
         APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         if (userDO == null) {
-            return null;
+            return new BaseResponse<>().CreateErrorResponse("shopName not exist");
         }
         if (templateDTO.getTemplateClass()) {
             //获取用户模板

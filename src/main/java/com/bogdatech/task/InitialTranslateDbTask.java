@@ -1,7 +1,6 @@
 package com.bogdatech.task;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.InitialTaskStatusEnum;
@@ -19,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
@@ -34,7 +32,6 @@ import static com.bogdatech.logic.redis.TranslationParametersRedisService.genera
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
-import static com.bogdatech.utils.RedisKeyUtils.*;
 
 @Component
 @EnableScheduling
@@ -97,18 +94,19 @@ public class InitialTranslateDbTask {
     // 手动翻译初始化
     @Scheduled(fixedDelay = 30 * 1000)
     public void scanAndSubmitClickTranslateDbTask() {
-        Page<InitialTranslateTasksDO> page = new Page<>(1, 10);
-        LambdaQueryWrapper<InitialTranslateTasksDO> wrapper = new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
-                .eq(InitialTranslateTasksDO::getTaskType, MANUAL)
-                .orderByAsc(InitialTranslateTasksDO::getShopName);
-        initialTranslateTasksMapper.selectPage(page, wrapper);
+        List<InitialTranslateTasksDO> clickTranslateTasks = iInitialTranslateTasksService.selectTop10Tasks(InitialTaskStatusEnum.INIT.status, MANUAL);
 
-        List<InitialTranslateTasksDO> clickTranslateTasks = page.getRecords();
-
-        appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
+        appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate "
+                + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
             return;
+        }
+
+        for (InitialTranslateTasksDO initialTranslateTasksDO: clickTranslateTasks
+        ) {
+            initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                    .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
+                    .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
         }
 
         // 遍历clickTranslateTasks，生成initialTasks
@@ -124,23 +122,25 @@ public class InitialTranslateDbTask {
     public void scanAndSubmitAutoInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task
-        Page<InitialTranslateTasksDO> page = new Page<>(1, 10);
+        List<InitialTranslateTasksDO> autoTranslateTasks = iInitialTranslateTasksService.selectTop10Tasks(InitialTaskStatusEnum.INIT.status, AUTO);
 
-        LambdaQueryWrapper<InitialTranslateTasksDO> wrapper = new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                .eq(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.INIT.status)
-                .eq(InitialTranslateTasksDO::getTaskType, AUTO)
-                .orderByAsc(InitialTranslateTasksDO::getShopName);
-        initialTranslateTasksMapper.selectPage(page, wrapper);
-
-        List<InitialTranslateTasksDO> clickTranslateTasks = page.getRecords();
-
-        appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
-        if (clickTranslateTasks.isEmpty()) {
+        appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate "
+                + autoTranslateTasks.size());
+        if (autoTranslateTasks.isEmpty()) {
             return;
         }
 
+        // 修改initial task 状态
+        for (InitialTranslateTasksDO initialTranslateTasksDO: autoTranslateTasks
+             ) {
+            initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                    .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
+                    .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
+        }
+
+
         // 遍历clickTranslateTasks，生成initialTasks
-        for (InitialTranslateTasksDO task : clickTranslateTasks) {
+        for (InitialTranslateTasksDO task : autoTranslateTasks) {
             initialExecutorService.submit(() -> {
                 processInitialTasksOfShop(task);
             });
@@ -153,9 +153,6 @@ public class InitialTranslateDbTask {
         // 获取用户的accessToken
         UsersDO userDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, singleTask.getShopName()));
         appInsights.trackTrace("processInitialTasksOfShop task START: " + singleTask.getTaskId() + " of shop: " + shop);
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                .eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId())
-                .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
 
         // taskType为 click 是手动翻译邮件， auto 是自动翻译邮件 ， key 是私有key邮件（这个暂时未实现）
         rabbitMqTranslateService.initialTasks(
