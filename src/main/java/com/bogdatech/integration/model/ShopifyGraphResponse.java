@@ -25,10 +25,11 @@ public class ShopifyGraphResponse {
 
             @Data
             public static class Translation {
-                private boolean outdated;
+                private Boolean outdated;
                 private String locale;
                 private String value;
                 private String key; // title, body_html, handle
+                private String translatableContentDigest;
             }
 
             @Data

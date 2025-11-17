@@ -275,8 +275,7 @@ public class PrivateKeyService {
         ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
 
         //判断是否有同义词
-        Map<String, Object> glossaryMap = new HashMap<>();
-        glossaryService.getGlossaryByShopName(shopifyRequest.getShopName(), shopifyRequest.getTarget(), glossaryMap);
+        Map<String, Object> glossaryMap = glossaryService.getGlossaryByShopName(shopifyRequest.getShopName(), shopifyRequest.getTarget());
 
         for (TranslateResourceDTO translateResource : ALL_RESOURCES
         ) {

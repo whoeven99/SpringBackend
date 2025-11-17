@@ -85,11 +85,12 @@ public class RedisIntegration {
      */
     public String getHash(String key, String field) {
         try {
-            return redisTemplate.opsForHash().get(key, field) + "";
+            Object res = redisTemplate.opsForHash().get(key, field);
+            return res != null ? res.toString() : null;
         } catch (Exception e) {
             appInsights.trackTrace("FatalException getHash " + key + " " + field + " " + e.getMessage());
         }
-        return "null";
+        return null;
     }
 
     // TODO getHashAll 都挪到这里

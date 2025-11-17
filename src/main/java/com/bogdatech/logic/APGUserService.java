@@ -7,7 +7,7 @@ import com.bogdatech.entity.DO.APGUsersDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Component
 public class APGUserService {
@@ -47,7 +47,7 @@ public class APGUserService {
             tencentEmailService.sendApgInitEmail(userDO.getEmail(), userDO.getId());
         } else {
 
-            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            Timestamp now = Timestamp.from(Instant.now());
             usersDO.setLoginTime(now);
             flag = iapgUsersService.updateUserByShopName(usersDO, usersDO.getShopName());
 
@@ -58,7 +58,7 @@ public class APGUserService {
     public boolean uninstallUser(String shopName) {
         // 修改uninstall_time为当前时间
         // 将该用户任务的status改为0
-        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp now = Timestamp.from(Instant.now());
         return iapgUsersService.uninstallUser(shopName, now);
     }
 }

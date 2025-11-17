@@ -21,7 +21,7 @@ public class RedisKeyUtils {
     public static final String TRANSLATE_LOCK = "tl:{shopName}";
     // redis 存用户查询语言状态（翻译状态）
     public static final String TRANSLATE_USER_STATUS = "us:{shopName}:{sourceCode}:{targetCode}";
-
+    public static final String STOPPED_FLAG = "tsk:stp:{shopName}";
 
     /**
      * 生成语言状态的 key

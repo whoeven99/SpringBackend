@@ -9,14 +9,12 @@ import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
+import com.bogdatech.integration.model.ShopifyGraphResponse;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
-import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsonUtils;
-import com.bogdatech.utils.StringUtils;
-import com.bogdatech.utils.TypeConversionUtils;
+import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -28,6 +26,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
@@ -67,6 +66,37 @@ public class ShopifyService {
     private TestingEnvironmentIntegration testingEnvironmentIntegration;
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
+
+    // TODO 所有需要轮询shopify数据的， 挪到这里
+    public void rotateAllShopifyGraph(String shopName, String resourceType, String accessToken,
+                                      Integer first, String target,
+                                      Consumer<ShopifyGraphResponse.TranslatableResources.Node> consumer) {
+        String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target);
+        String shopifyData = getShopifyData(shopName, accessToken, API_VERSION_LAST, graphQuery);
+        ShopifyGraphResponse shopifyRes = JsonUtils.jsonToObject(shopifyData, ShopifyGraphResponse.class);
+        while (shopifyRes != null) {
+            // 一个shopify data有250个nodes
+            if (shopifyRes.getTranslatableResources() != null && !CollectionUtils.isEmpty(shopifyRes.getTranslatableResources().getNodes())) {
+                for (ShopifyGraphResponse.TranslatableResources.Node node : shopifyRes.getTranslatableResources().getNodes()) {
+                    // 外面自己处理node数据
+                    consumer.accept(node);
+                }
+            }
+
+            // 还有下一页，就轮询
+            if (shopifyRes.getTranslatableResources() != null
+                    && shopifyRes.getTranslatableResources().getPageInfo() != null
+                    && shopifyRes.getTranslatableResources().getPageInfo().isHasNextPage()) {
+                String endCursor = shopifyRes.getTranslatableResources().getPageInfo().getEndCursor();
+
+                graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, endCursor);
+                String nextShopifyData = getShopifyData(shopName, accessToken, APIVERSION, graphQuery);
+                shopifyRes = JsonUtils.jsonToObject(nextShopifyData, ShopifyGraphResponse.class);
+            } else {
+                shopifyRes = null;
+            }
+        }
+    }
 
     //封装调用云服务器实现获取shopify数据的方法
     public static String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
