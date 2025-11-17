@@ -117,7 +117,8 @@ public class PCUserPicturesService {
 
         // 调用图片翻译方法
         // 判断sourceCode和targetCode 是否符合ali和aidge的翻译条件，如果符合，随机调用
-        String targetPic = aidgeIntegration.aidgeStandPictureTranslate(shopName, imageTranslateVO.getImageUrl(), imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), maxCharsByShopName);
+        String targetPic = aidgeIntegration.aidgeStandPictureTranslate(shopName, imageTranslateVO.getImageUrl()
+                , imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), maxCharsByShopName, AidgeIntegration.PICTURE_APP);
 
         if (targetPic != null) {
             return new BaseResponse<>().CreateSuccessResponse(targetPic);

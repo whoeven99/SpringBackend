@@ -532,15 +532,4 @@ public class TestController {
         return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
     }
 
-    // 测试新图片翻译大模型
-    @PostMapping("/testNewImageTranslate")
-    public void testNewImageTranslate() {
-        aidgeIntegration.prodTest();
-    }
-
-    // 火山图片翻译
-    @PostMapping("/testVesalImageTranslate")
-    public void testVesalImageTranslate() throws Exception {
-        huoShanIntegration.huoShanImageTranslate();
-    }
 }
