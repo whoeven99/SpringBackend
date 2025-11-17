@@ -1,11 +1,13 @@
 package com.bogdatech.task;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.InitialTaskStatusEnum;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.logic.RabbitMqTranslateService;
@@ -55,6 +57,8 @@ public class InitialTranslateDbTask {
     private IUserTranslationDataService iUserTranslationDataService;
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
+    @Autowired
+    private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
     private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(5); // 创建initial初始化线程池
     private final ExecutorService manualExecutorService = Executors.newFixedThreadPool(5);
