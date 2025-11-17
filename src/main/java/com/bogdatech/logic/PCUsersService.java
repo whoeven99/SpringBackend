@@ -6,10 +6,8 @@ import com.bogdatech.entity.VO.PCUserPointsVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-
+import java.time.Instant;
 import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -24,13 +22,13 @@ public class PCUsersService {
         if (pcUsers == null) {
             pcUsersDO.setPurchasePoints(0);
             pcUsersDO.setUsedPoints(0);
-            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            Timestamp now = Timestamp.from(Instant.now());
             pcUsersDO.setCreateAt(now);
             pcUsersDO.setLoginTime(now);
             pcUsersDO.setPurchasePoints(5000);
             ipcUserService.saveSingleUser(pcUsersDO);
         } else {
-            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            Timestamp now = Timestamp.from(Instant.now());
             pcUsers.setEmail(pcUsersDO.getEmail());
             pcUsers.setAccessToken(pcUsersDO.getAccessToken());
             pcUsers.setFirstName(pcUsersDO.getFirstName());

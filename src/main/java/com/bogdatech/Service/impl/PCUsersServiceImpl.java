@@ -7,9 +7,9 @@ import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.mapper.PCUsersMapper;
 import org.springframework.stereotype.Service;
-
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
+
 
 @Service
 public class PCUsersServiceImpl extends ServiceImpl<PCUsersMapper, PCUsersDO> implements IPCUserService {
@@ -40,7 +40,7 @@ public class PCUsersServiceImpl extends ServiceImpl<PCUsersMapper, PCUsersDO> im
 
     @Override
     public boolean updateUninstallByShopName(String shopName) {
-        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp now = Timestamp.from(Instant.now());
         return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName)
                 .set(PCUsersDO::getUninstallTime, now)) > 0;
     }

@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -83,7 +83,7 @@ public class UserTrialsService {
      */
     public BaseResponse<Object> isInFreePlanTime(String shopName) {
         // 获取该用户是否在免费试用期间
-        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp now = Timestamp.from(Instant.now());
 
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
         // 判断now是否在trialStart 和 trialEnd 中间.  是，返回true； 否，返回false
