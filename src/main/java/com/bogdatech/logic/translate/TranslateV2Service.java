@@ -23,20 +23,27 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 
 @Component
 public class TranslateV2Service {
@@ -182,46 +189,77 @@ public class TranslateV2Service {
 
             // 随机找一个text type出来
             String textType = randomDo.getType();
-            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
-                    initialTaskId, textType, 10);
+            List<TranslateTaskV2DO> taskList = new ArrayList<>();
+            Integer usedTokenByTask = 0;
+            if (PLAIN_TEXT.equals(textType) || TITLE.equals(textType) || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)) {
+                // 批量翻译
+                taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
+                        initialTaskId, textType, 50);
+                Map<Integer, String> idToSourceValueMap = taskList.stream()
+                        .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
+
+                Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
+                Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
+                usedTokenByTask = translatedValueMapPair.getSecond();
+                for (TranslateTaskV2DO updatedDo : taskList) {
+                    String targetValue = translatedValueMap.get(updatedDo.getId());
+                    updatedDo.setTargetValue(targetValue);
+                    updatedDo.setHasTargetValue(true);
+
+                    // 3.3 回写数据库 todo 批量
+                    translateTaskV2Repo.update(updatedDo);
+
+                    // 3.4 设置缓存
+                    setCache(target, targetValue, updatedDo.getSourceValue());
+                }
+            } else if (HTML.equals(textType)) {
+                // html单独翻译
+                String value = randomDo.getSourceValue();
+
+                value = isHtmlEntity(value);
+                boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(value).find();
+                Document doc = parseHtml(value, target, hasHtmlTag);
+                List<String> originalTexts = new ArrayList<>();
+                for (Element element : doc.getAllElements()) {
+                    for (TextNode textNode : element.textNodes()) {
+                        String text = textNode.text().trim();
+                        if (!text.isEmpty() && !originalTexts.contains(text)) {
+                            originalTexts.add(text);
+                        }
+                    }
+                }
+                Map<Integer, String> idToSourceValueMap = originalTexts.stream()
+                        .collect(Collectors.toMap(originalTexts::indexOf, text -> text));
+                Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
+                Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
+                // html数据填回去
+
+                String replacedBackValue = "";
+                randomDo.setHasTargetValue(true);
+                randomDo.setTargetValue(replacedBackValue);
+                translateTaskV2Repo.update(randomDo);
+
+                for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
+                    Integer index = entry.getKey();
+                    String sourceText = entry.getValue();
+                    String translatedText = translatedValueMap.get(index);
+                    setCache(target, translatedText, sourceText);
+                }
+
+                usedTokenByTask = translatedValueMapPair.getSecond();
+            } else {
+                // 先单独处理，加日志看看还有哪些type
+                Pair<String, Integer> pair = translateSingle(randomDo.getSourceValue(), target, glossaryMap);
+                //
+            }
             // ****** 翻译规则 todo
+            // html 单独处理
             // 除了html，其他都可以批量的翻译
             // 但是数据长度不确定，所以50个可能会被截掉
             // 根据token限制，动态调整每次翻译的数量
             // ****** 翻译规则
 
-            // 用id作key，方便填回
-            Map<Integer, String> idToSourceValueMap = taskList.stream()
-                    .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
-
-            // 3.1 过缓存
-            Map<Integer, String> cachedMap = new HashMap<>();
-            Map<Integer, String> uncachedMap = new HashMap<>();
-            this.getCached(idToSourceValueMap, cachedMap, uncachedMap, target);
-
-            // 3.2 调用翻译接口
-            // ************************ //
-            // 多条翻译 //
-            // ************************ //
-            Pair<Map<Integer, String>, Integer> translatedAns = this.translate(uncachedMap, textType, target, glossaryMap);
-
-            Map<Integer, String> translatedValueMap = translatedAns.getFirst();
-            translatedValueMap.putAll(cachedMap);
-            for (TranslateTaskV2DO updatedDo : taskList) {
-                String targetValue = translatedValueMap.get(updatedDo.getId());
-                updatedDo.setTargetValue(targetValue);
-                updatedDo.setHasTargetValue(true);
-
-                // 3.3 回写数据库 todo 批量
-                translateTaskV2Repo.update(updatedDo);
-
-                // 3.4 设置缓存
-                setCache(target, targetValue, updatedDo.getSourceValue());
-
-                // 3.5 设置翻译进度条 目前可以直接读取数据库
-            }
             // 更新token数据库
-            Integer usedTokenByTask = translatedAns.getSecond();
             usedToken = userTokenService.addUsedToken(shopName, initialTaskId, usedTokenByTask);
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
@@ -236,6 +274,97 @@ public class TranslateV2Service {
         initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
         initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
         initialTaskV2Repo.updateById(initialTaskV2DO);
+    }
+
+    // Pair => translatedMap - usedToken
+    // Map => id - translatedValue
+    private Pair<Map<Integer, String>, Integer> translateBatch(Map<Integer, String> idToSourceValueMap, String target,
+                                                               Map<String, GlossaryDO> glossaryMap) {
+        Boolean hasGlossary = false;
+        // 替换glossary
+        for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
+            Pair<String, Boolean> glossaryPair = replaceWithGlossary(entry.getValue(), glossaryMap);
+            if (glossaryPair.getSecond()) {
+                entry.setValue(glossaryPair.getFirst());
+                hasGlossary = true;
+            }
+        }
+
+        // 3.1 过缓存
+        Map<Integer, String> cachedMap = new HashMap<>();
+        Map<Integer, String> uncachedMap = new HashMap<>();
+        this.getCached(idToSourceValueMap, cachedMap, uncachedMap, target);
+
+        // 3.2 调用翻译接口
+        // ************************ //
+        // 多条翻译 //
+        // ************************ //
+
+        // 对整个uncachedMap调用api开始翻译  批量翻译
+        StringBuilder prompt = new StringBuilder("帮我翻译如下内容，到目标语言：" + target + "。");
+        prompt.append("我会给你一个json格式的数据，你只翻译里面的value值，将翻译后的值填回到value里面，同样的格式返回给我。");
+        if (hasGlossary) {
+            prompt.append("其中{[xxx]}形式的字符串跳过，不要翻译，并且返回原样给我。");
+        }
+        prompt.append("只返回翻译后的内容，不要其他多余的说明。内容如下: ");
+        prompt.append(JsonUtils.objectToJson(uncachedMap));
+
+        // translatedValue - usedToken
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt.toString(), target);
+        if (pair != null && pair.getFirst() != null) {
+            String aiResponse = pair.getFirst();
+            if (hasGlossary) {
+                aiResponse = getGlossaryReplacedBack(aiResponse);
+            }
+            Map<Integer, String> translatedValueMap = JsonUtils.jsonToObjectWithNull(aiResponse, new TypeReference<Map<Integer, String>>() {
+            });
+            if (translatedValueMap != null) {
+                // 翻译后 设置缓存
+                for (Map.Entry<Integer, String> entry : translatedValueMap.entrySet()) {
+                    setCache(target, entry.getValue(), idToSourceValueMap.get(entry.getKey()));
+                }
+
+                translatedValueMap.putAll(cachedMap);
+                return new Pair<>(translatedValueMap, pair.getSecond());
+            }
+        }
+        // FatalException
+        return null;
+    }
+
+    private Pair<String, Integer> translateSingle(String value, String target,
+                                                  Map<String, GlossaryDO> glossaryMap) {
+        StringBuilder prompt = new StringBuilder("帮我翻译如下内容，到目标语言：" + target + "。");
+        Pair<String, Boolean> glossaryPair = replaceWithGlossary(value, glossaryMap);
+        if (glossaryPair.getSecond()) {
+            prompt.append("其中{[xxx]}形式的字符串跳过，不要翻译，并且返回原样给我。");
+            value = glossaryPair.getFirst();
+        }
+
+        // 先替换glossary， 再去做缓存
+        String targetCache = redisProcessService.getCacheData(target, value);
+        if (targetCache != null) {
+            targetCache = isHtmlEntity(targetCache);
+            return new Pair<>(targetCache, 0);
+        }
+
+        prompt.append("只返回翻译后的内容，不要其他多余的说明。内容如下: ");
+        prompt.append(value);
+
+        // translatedValue - usedToken
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt.toString(), target);
+        if (pair != null && pair.getFirst() != null) {
+            String translatedText = pair.getFirst();
+
+            // 把{[xxx]}替换回去 xxx
+            if (glossaryPair.getSecond()) {
+                translatedText = getGlossaryReplacedBack(translatedText);
+            }
+            // 这里的originValue是被glossary替换过的值
+            setCache(target, translatedText, value);
+            return new Pair<>(translatedText, pair.getSecond());
+        }
+        return null;
     }
 
     // 翻译 step 4, 翻译完成 -> 写回shopify
@@ -313,65 +442,40 @@ public class TranslateV2Service {
         }
     }
 
-    // Pair <翻译结果map，使用token数>
-    // Map <id, translatedText>
-    private Pair<Map<Integer, String>, Integer> translate(Map<Integer, String> idToSourceValueMap,
-                                                          String textType, String target,
-                                                          Map<String, GlossaryDO> glossaryMap) {
-        Integer usedToken = 0;
-        Map<Integer, String> translatedValueMap = new HashMap<>();
-        for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
-            Integer id = entry.getKey();
-            String value = entry.getValue();
-
-            String replacedWithGlossary = replaceWithGlossary(value, glossaryMap);
-
-            // ************************ //
-            // 单条翻译 //
-            // ************************ //
-            String prompt = "帮我翻译如下内容，到目标语言：" + target + "。" +
-                    "其中[[xxx]]形式的字符串跳过，不要翻译，并且返回原样给我" +
-                    "只返回翻译后的内容，不要其他多余的说明。内容如下：\n" +
-                    replacedWithGlossary;
-
-            Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-            if (pair != null && pair.getFirst() != null) {
-                usedToken += pair.getSecond();
-                String translatedText = pair.getFirst();
-
-                // 把[[xxx]]替换回去 xxx
-                String rawTranslatedText = getGlossaryReplacedBack(translatedText);
-                translatedValueMap.put(id, rawTranslatedText);
-            } else {
-                // 翻译失败，这里后续继续做兜底
-                translatedValueMap.put(id, value);
-            }
-        }
-
-        return new Pair<>(translatedValueMap, usedToken);
-    }
-
-    private static String replaceWithGlossary(String value, Map<String, GlossaryDO> glossaryMap) {
+    private static Pair<String, Boolean> replaceWithGlossary(String value, Map<String, GlossaryDO> glossaryMap) {
         if (value == null || glossaryMap == null || glossaryMap.isEmpty()) {
-            return value;
+            return new Pair<>(value, false);
         }
 
+        Boolean hasGlossary = false;
         for (Map.Entry<String, GlossaryDO> entry : glossaryMap.entrySet()) {
             String key = entry.getKey();
             GlossaryDO glossaryDO = entry.getValue();
+            Integer isCaseSensitive = glossaryDO.getCaseSensitive();
 
-            if (value.contains(key)) {
-                // 使用唯一的方式包裹 targetText，例如 [[targetText]]
-                String replacement = "[[" + glossaryDO.getTargetText() + "]]";
-                value = value.replace(key, replacement);
+            // 当 isCaseSensitive 为 1 时，要求大小写完全一致才替换；否则不区分大小写替换
+            String replacement = "{[" + glossaryDO.getTargetText() + "]}";
+            if (isCaseSensitive != null && isCaseSensitive == 1) {
+                if (value.contains(key)) {
+                    value = value.replace(key, replacement);
+                    hasGlossary = true;
+                }
+            } else {
+                // 不区分大小写替换：使用正则的 CASE_INSENSITIVE
+                Pattern pattern = Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE);
+                Matcher matcher = pattern.matcher(value);
+                if (matcher.find()) {
+                    value = matcher.replaceAll(Matcher.quoteReplacement(replacement));
+                    hasGlossary = true;
+                }
             }
         }
 
-        return value;
+        return new Pair<>(value, hasGlossary);
     }
 
     private static String getGlossaryReplacedBack(String value) {
-        return value.replaceAll("\\[\\[(.*?)]]", "$1");
+        return value.replaceAll("\\{\\[(.*?)]}", "$1");
     }
 
     private void getCached(Map<Integer, String> idToSourceValueMap,
