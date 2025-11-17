@@ -22,6 +22,7 @@ import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsonUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -384,8 +385,8 @@ public class ALiYunTranslateIntegration {
                 .setSourceLanguage(source)
                 .setField("e-commerce");
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
-        runtime.setReadTimeout(20000); // 20 秒读超时
-        runtime.setConnectTimeout(20000); // 20 秒连接超时
+        runtime.setReadTimeout(40000); // 40 秒读超时
+        runtime.setConnectTimeout(40000); // 40 秒连接超时
         String targetPicUrl = null;
         try {
             if (client == null) {
@@ -404,12 +405,14 @@ public class ALiYunTranslateIntegration {
                     DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
-            if (translateImageResponse == null) {
+
+            appInsights.trackTrace("callWithPic " + shopName + " 百炼翻译报错信息 translateImageResponse : " + JsonUtils.objectToJson(translateImageResponse) + " picUrl : " + picUrl + " target: " + target + " source: " + source);
+            if (translateImageResponse == null || translateImageResponse.getBody() == null) {
                 return null;
             }
+
             TranslateImageResponseBody body = translateImageResponse.getBody();
-            // 打印 body
-            appInsights.trackTrace("callWithPic " + shopName + " 图片返回message : " + body.getMessage() + " picUrl : " + body.getData().finalImageUrl + " RequestId: " + body.getRequestId() + " Code: " + body.getCode());
+
             if (TRANSLATE_APP.equals(appModel)){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
             }else {
