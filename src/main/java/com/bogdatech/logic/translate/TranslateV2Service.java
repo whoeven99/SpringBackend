@@ -260,6 +260,11 @@ public class TranslateV2Service {
                 } else {
                     usedTokenByTask = pair.getSecond();
 
+                    // 翻译后更新db
+                    randomDo.setHasTargetValue(true);
+                    randomDo.setTargetValue(pair.getFirst());
+                    translateTaskV2Repo.update(randomDo);
+
                     // 这里的originValue是被glossary替换过的值
                     setCache(target, pair.getFirst(), randomDo.getSourceValue());
                 }
