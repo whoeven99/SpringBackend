@@ -171,7 +171,7 @@ public class TranslateV2Service {
         Integer usedToken = userTokenService.getUsedToken(shopName);
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
         while (randomDo != null) {
-            appInsights.trackTrace("TranslateTaskV2 translating: " + shopName + " randomDo: " + randomDo.getId());
+            appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + "randomDo: " + randomDo.getId());
             if (usedToken >= maxToken) {
                 // 更新数据库状态为 5，翻译中断
                 long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -202,7 +202,8 @@ public class TranslateV2Service {
 
                 Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
                 if (translatedValueMapPair == null) {
-                    appInsights.trackTrace("FatalException TranslateTaskV2 translating Error: " + shopName + " randomDo: " + randomDo.getId());
+                    appInsights.trackTrace("FatalException TranslateTaskV2 translating error shop: " + shopName +
+                            "randomDo: " + randomDo.getId());
                     usedTokenByTask = 0;
                 } else {
                     Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
@@ -233,7 +234,8 @@ public class TranslateV2Service {
                 // 开始翻译
                 Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
                 if (translatedValueMapPair == null) {
-                    appInsights.trackTrace("FatalException TranslateTaskV2 translating Error: " + shopName + " randomDo: " + randomDo.getId());
+                    appInsights.trackTrace("FatalException TranslateTaskV2 translating error shop: " + shopName +
+                            "randomDo: " + randomDo.getId());
                     usedTokenByTask = 0;
                 } else {
                     Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
@@ -259,7 +261,8 @@ public class TranslateV2Service {
                 // 先单独处理，加日志看看还有哪些type
                 Pair<String, Integer> pair = translateSingle(randomDo.getSourceValue(), target, glossaryMap);
                 if (pair == null) {
-                    appInsights.trackTrace("FatalException TranslateTaskV2 translating Error: " + shopName + " randomDo: " + randomDo.getId());
+                    appInsights.trackTrace("FatalException TranslateTaskV2 translating error shop: " + shopName +
+                            "randomDo: " + randomDo.getId());
                     usedTokenByTask = 0;
                 } else {
                     usedTokenByTask = pair.getSecond();
