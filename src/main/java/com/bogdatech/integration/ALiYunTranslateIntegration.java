@@ -22,6 +22,7 @@ import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.JsonUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -196,10 +197,18 @@ public class ALiYunTranslateIntegration {
     public Pair<String, Integer> userTranslate(String text, String prompt, String target, String shopName) {
         String model = switchModel(target);
         Generation gen = new Generation();
-        Message userMsg = Message.builder()
-                .role(Role.USER.getValue())
-                .content(prompt + text)
-                .build();
+        Message userMsg = null;
+        if (text != null) {
+            userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt + text)
+                    .build();
+        } else {
+            userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt)
+                    .build();
+        }
 
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
@@ -234,7 +243,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content +
-                    " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " +
+                    " token ali: " + " all: " + totalToken + " input: " + inputTokens + " output: " +
                     outputTokens);
             return new Pair<>(content, totalToken);
         } catch (Exception e) {
@@ -248,10 +257,19 @@ public class ALiYunTranslateIntegration {
             , String shopName, Integer limitChars, boolean isSingleFlag, String translateType) {
         String model = switchModel(target);
         Generation gen = new Generation();
-        Message userMsg = Message.builder()
-                .role(Role.USER.getValue())
-                .content(prompt + text)
-                .build();
+
+        Message userMsg;
+        if (text != null) {
+            userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt + text)
+                    .build();
+        } else {
+            userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt)
+                    .build();
+        }
 
         appInsights.trackTrace("userMsg 用户 " + shopName);
         GenerationParam param = GenerationParam.builder()
@@ -288,7 +306,7 @@ public class ALiYunTranslateIntegration {
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag) {
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
@@ -384,8 +402,8 @@ public class ALiYunTranslateIntegration {
                 .setSourceLanguage(source)
                 .setField("e-commerce");
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
-        runtime.setReadTimeout(20000); // 20 秒读超时
-        runtime.setConnectTimeout(20000); // 20 秒连接超时
+        runtime.setReadTimeout(40000); // 40 秒读超时
+        runtime.setConnectTimeout(40000); // 40 秒连接超时
         String targetPicUrl = null;
         try {
             if (client == null) {
@@ -404,12 +422,14 @@ public class ALiYunTranslateIntegration {
                     DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
-            if (translateImageResponse == null) {
+
+            appInsights.trackTrace("callWithPic " + shopName + " 百炼翻译报错信息 translateImageResponse : " + JsonUtils.objectToJson(translateImageResponse) + " picUrl : " + picUrl + " target: " + target + " source: " + source);
+            if (translateImageResponse == null || translateImageResponse.getBody() == null) {
                 return null;
             }
+
             TranslateImageResponseBody body = translateImageResponse.getBody();
-            // 打印 body
-            appInsights.trackTrace("callWithPic " + shopName + " 图片返回message : " + body.getMessage() + " picUrl : " + body.getData().finalImageUrl + " RequestId: " + body.getRequestId() + " Code: " + body.getCode());
+
             if (TRANSLATE_APP.equals(appModel)){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
             }else {

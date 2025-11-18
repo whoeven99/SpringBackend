@@ -9,6 +9,8 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
+import com.bogdatech.integration.AidgeIntegration;
+import com.bogdatech.integration.HuoShanIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.*;
@@ -20,6 +22,7 @@ import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
+import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.task.AutoTranslateTask;
@@ -31,6 +34,9 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -56,6 +62,10 @@ public class TestController {
     private RateHttpIntegration rateHttpIntegration;
     @Autowired
     private UserTypeTokenService userTypeTokenService;
+    @Autowired
+    private AidgeIntegration aidgeIntegration;
+    @Autowired
+    private TranslateDataService translateDataService;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
@@ -84,6 +94,10 @@ public class TestController {
     private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private RabbitMqTranslateService rabbitMqTranslateService;
+    @Autowired
+    private HuoShanIntegration huoShanIntegration;
 
     @GetMapping("/ping")
     public String ping() {
@@ -537,5 +551,17 @@ public class TestController {
     @GetMapping("/testDeleteShopifyData")
     public String testDeleteShopifyData(@RequestParam String resourceId, @RequestParam String locals, @RequestParam String translationKeys, @RequestParam String accessToken) {
         return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
+    }
+
+    // 测试新图片翻译大模型
+    @PostMapping("/testNewImageTranslate")
+    public void testNewImageTranslate() {
+        aidgeIntegration.prodTest();
+    }
+
+    // 火山图片翻译
+    @PostMapping("/testVesalImageTranslate")
+    public void testVesalImageTranslate() throws Exception {
+        huoShanIntegration.huoShanImageTranslate();
     }
 }

@@ -59,8 +59,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 
     public static TelemetryClient appInsights = new TelemetryClient();
 
-    // 执行结束之后，再等30秒执行下一次
-//    @Scheduled(fixedDelay = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTask() {
         appInsights.trackTrace("TranslateTaskV2 start INIT");
         List<InitialTaskV2DO> initTaskList = initialTaskV2Repo.selectByStatus(0);
@@ -92,8 +91,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
         }
     }
 
-    // 定时30秒扫描一次
-//    @Scheduled(fixedDelay = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(1);
         if (CollectionUtils.isEmpty(translatingTask)) return;
@@ -122,8 +120,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
         }
     }
 
-    // 定时30秒扫描一次
-//    @Scheduled(fixedDelay = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
         if (CollectionUtils.isEmpty(translatingTask)) return;

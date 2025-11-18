@@ -261,6 +261,14 @@
 			<version>5.18.0</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- Aidge图片翻译 -->
+		<dependency>
+			<groupId>com.company</groupId>
+			<artifactId>aidge</artifactId>
+			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/aidge.jar</systemPath>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -268,6 +276,9 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
+                </configuration>
 			</plugin>
 		</plugins>
 	</build>

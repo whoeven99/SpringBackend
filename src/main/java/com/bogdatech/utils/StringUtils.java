@@ -1,6 +1,7 @@
 package com.bogdatech.utils;
 
 import com.bogdatech.entity.DTO.SimpleMultipartFileDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.core.dependencies.apachecommons.io.FilenameUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -226,6 +227,7 @@ public class StringUtils {
 
     /**
      * 判断文本中是否是纯数字字母符号且有两个标点符号
+     *
      * @param input 输入的文本
      * @return 如果包含返回 false
      */
@@ -241,17 +243,52 @@ public class StringUtils {
             return false;
         }
 
-        if (NUM_PUNCT_PATTERN.matcher(input).matches()){
+        if (NUM_PUNCT_PATTERN.matcher(input).matches()) {
             return true;
         }
-        if(NUM_PATTERN.matcher(input).matches()) {
+        if (NUM_PATTERN.matcher(input).matches()) {
             return true;
         }
-        if (input.startsWith("#") && input.length() <= 10){
+        if (input.startsWith("#") && input.length() <= 10) {
             return true;
         }
         // 第二步：统计标点符号数量
         long punctCount = PUNCT_PATTERN.matcher(input).results().count();
         return punctCount >= 2;
+    }
+
+    // 新版提示词，返回结果的解析
+    public static LinkedHashMap<String, String> parseOutputTransaction(String input) {
+        // 预处理 - 提取 JSON 部分
+        String jsonPart = extractJsonBlock(input);
+
+        if (jsonPart == null) {
+            return null;
+        }
+
+        // 解析为 Map
+        LinkedHashMap<String, String> map = JsonUtils.jsonToObjectWithNull(jsonPart, new TypeReference<LinkedHashMap<String, String>>() {
+        });
+
+        if (map == null) {
+            return null;
+        }
+
+        // 过滤空值
+        map.entrySet().removeIf(e -> e.getValue() == null || e.getValue().trim().isEmpty());
+        return map;
+    }
+
+    /**
+     * 从混合字符串中提取出 JSON 部分
+     */
+    private static String extractJsonBlock(String input) {
+        // 匹配从第一个 { 到最后一个 } 之间的所有内容
+        Pattern pattern = Pattern.compile("\\{.*\\}", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(input);
+        if (matcher.find()) {
+            return matcher.group(0).trim();
+        }
+        return null;
     }
 }
