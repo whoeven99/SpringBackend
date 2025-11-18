@@ -15,17 +15,17 @@ import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.utils.HtmlUtils;
 import com.bogdatech.utils.JsonUtils;
 import com.bogdatech.utils.JudgeTranslateUtils;
 import com.bogdatech.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
+import kotlin.Triple;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -39,7 +39,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
@@ -190,7 +189,7 @@ public class TranslateV2Service {
             // 随机找一个text type出来
             String textType = randomDo.getType();
             List<TranslateTaskV2DO> taskList = new ArrayList<>();
-            Integer usedTokenByTask = 0;
+            Integer usedTokenByTask;
             if (PLAIN_TEXT.equals(textType) || TITLE.equals(textType) || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)) {
                 // 批量翻译
                 taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
@@ -216,29 +215,26 @@ public class TranslateV2Service {
                 // html单独翻译
                 String value = randomDo.getSourceValue();
 
-                value = isHtmlEntity(value);
-                boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(value).find();
-                Document doc = parseHtml(value, target, hasHtmlTag);
-                List<String> originalTexts = new ArrayList<>();
-                for (Element element : doc.getAllElements()) {
-                    for (TextNode textNode : element.textNodes()) {
-                        String text = textNode.text().trim();
-                        if (!text.isEmpty() && !originalTexts.contains(text)) {
-                            originalTexts.add(text);
-                        }
-                    }
-                }
-                Map<Integer, String> idToSourceValueMap = originalTexts.stream()
-                        .collect(Collectors.toMap(originalTexts::indexOf, text -> text));
-                Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
-                Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
-                // html数据填回去
+                // 解析html里面待翻译的内容
+                List<String> originalTexts = HtmlUtils.parseHtml(value, target);
 
-                String replacedBackValue = "";
+                // index - sourceValue 方便后续处理以及ai
+                Map<Integer, String> idToSourceValueMap = originalTexts.stream().collect(
+                        Collectors.toMap(originalTexts::indexOf, text -> text));
+
+                // 开始翻译
+                Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
+                // if null
+                Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
+                usedToken = translatedValueMapPair.getSecond();
+                String translatedValue = HtmlUtils.replaceBack(value, originalTexts, translatedValueMap);
+
+                // 翻译后更新db
                 randomDo.setHasTargetValue(true);
-                randomDo.setTargetValue(replacedBackValue);
+                randomDo.setTargetValue(translatedValue);
                 translateTaskV2Repo.update(randomDo);
 
+                // 设置缓存
                 for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
                     Integer index = entry.getKey();
                     String sourceText = entry.getValue();
@@ -246,11 +242,14 @@ public class TranslateV2Service {
                     setCache(target, translatedText, sourceText);
                 }
 
-                usedTokenByTask = translatedValueMapPair.getSecond();
+                usedTokenByTask = usedToken;
             } else {
                 // 先单独处理，加日志看看还有哪些type
                 Pair<String, Integer> pair = translateSingle(randomDo.getSourceValue(), target, glossaryMap);
-                //
+                usedTokenByTask = pair.getSecond();
+
+                // 这里的originValue是被glossary替换过的值
+                setCache(target, pair.getFirst(), randomDo.getSourceValue());
             }
             // ****** 翻译规则 todo
             // html 单独处理
@@ -312,6 +311,7 @@ public class TranslateV2Service {
         // translatedValue - usedToken
         Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt.toString(), target);
         if (pair != null && pair.getFirst() != null) {
+            // 翻译后 - 还原glossary
             String aiResponse = pair.getFirst();
             if (hasGlossary) {
                 aiResponse = getGlossaryReplacedBack(aiResponse);
@@ -319,7 +319,7 @@ public class TranslateV2Service {
             Map<Integer, String> translatedValueMap = JsonUtils.jsonToObjectWithNull(aiResponse, new TypeReference<Map<Integer, String>>() {
             });
             if (translatedValueMap != null) {
-                // 翻译后 设置缓存
+                // 翻译后 - 设置缓存
                 for (Map.Entry<Integer, String> entry : translatedValueMap.entrySet()) {
                     setCache(target, entry.getValue(), idToSourceValueMap.get(entry.getKey()));
                 }
@@ -360,8 +360,6 @@ public class TranslateV2Service {
             if (glossaryPair.getSecond()) {
                 translatedText = getGlossaryReplacedBack(translatedText);
             }
-            // 这里的originValue是被glossary替换过的值
-            setCache(target, translatedText, value);
             return new Pair<>(translatedText, pair.getSecond());
         }
         return null;
