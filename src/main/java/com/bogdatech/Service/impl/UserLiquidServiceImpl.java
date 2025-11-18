@@ -7,9 +7,8 @@ import com.bogdatech.Service.IUserLiquidService;
 import com.bogdatech.entity.DO.UserLiquidDO;
 import com.bogdatech.mapper.UserLiquidMapper;
 import org.springframework.stereotype.Service;
-
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -41,7 +40,7 @@ public class UserLiquidServiceImpl extends ServiceImpl<UserLiquidMapper, UserLiq
 
     @Override
     public boolean updateLiquidDataById(UserLiquidDO userLiquidDO) {
-        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp now = Timestamp.from(Instant.now());
         userLiquidDO.setUpdatedAt(now);
         return this.update(userLiquidDO, new LambdaQueryWrapper<UserLiquidDO>().eq(UserLiquidDO::getId, userLiquidDO.getId()));
     }
