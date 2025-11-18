@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.entity.DO.APGUserCounterDO;
 import com.bogdatech.mapper.APGUserCounterMapper;
-import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.task.GenerateDbTask;
 import org.springframework.stereotype.Service;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -35,16 +35,21 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
     }
 
     @Override
-    public Boolean updateUserUsedCount(Long userId, Integer counter, Integer maxLimit) {
+    public Boolean updateUserUsedCount(Long userId, Integer counter, Integer maxLimit, String translateType) {
         final int maxRetries = 3;
         final long retryDelayMillis = 500;
         int retryCount = 0;
 
         while (retryCount < maxRetries) {
             try {
+                boolean flag;
+                if (GenerateDbTask.APG_SINGLE_TRANSLATE.equals(translateType)){
+                    flag = baseMapper.updateUserSingleUsedCount(userId, counter, maxLimit) > 0;
+                }else {
+                    flag = baseMapper.updateUserTaskUsedCount(userId, counter, maxLimit) > 0;
+                }
 
-                Boolean b = baseMapper.updateUserUsedCount(userId, counter, maxLimit) > 0;
-                if (Boolean.TRUE.equals(b)) {
+                if (Boolean.TRUE.equals(flag)) {
                     return true;
                 } else {
                     retryCount++;

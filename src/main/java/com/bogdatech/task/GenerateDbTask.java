@@ -19,16 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-
-import javax.validation.constraints.Email;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.APGUserGeneratedTaskService.GENERATE_STATE_BAR;
 import static com.bogdatech.logic.APGUserGeneratedTaskService.INITIALIZATION;
@@ -55,19 +51,27 @@ public class GenerateDbTask {
     public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
     public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
     public static final ConcurrentHashMap<Long, Boolean> GENERATE_SHOP_STOP_FLAG = new ConcurrentHashMap<>(); //判断用户是否停止生成描述
-
+    public static final String APG_SINGLE_TRANSLATE = "APG_SINGLE_TRANSLATE";
+    public static final String APG_TASK_TRANSLATE = "APG_TASK_TRANSLATE";
 
     // 每3秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 3000)
     public void scanAndGenerateSubtask() {
         // 获取所有status为0的数据
-        List<APGUserGeneratedSubtaskDO> list = iapgUserGeneratedSubtaskService.list(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>().eq(APGUserGeneratedSubtaskDO::getStatus, 0).orderBy(true, true, APGUserGeneratedSubtaskDO::getCreateTime));
+        List<APGUserGeneratedSubtaskDO> list = iapgUserGeneratedSubtaskService.selectTask10ToGenerate();
+
         // 循环异步翻译
         for (APGUserGeneratedSubtaskDO subtaskDO : list
         ) {
             // 一个用户同一时间只能翻译一个
             if (!GENERATE_SHOP.contains(subtaskDO.getUserId())) {
                 GENERATE_SHOP.add(subtaskDO.getUserId());
+                // 修改子任务状态为2
+                Boolean flag = iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
+                if (!flag) {
+                    continue;
+                }
+
                 executorService.submit(() -> {
                     appInsights.trackTrace("用户 " + subtaskDO.getUserId() + " 开始生成 子任务： " + subtaskDO.getSubtaskId());
                     try {
@@ -93,13 +97,13 @@ public class GenerateDbTask {
      * 调用单条生成接口
      */
     public void fixGenerateSubtask(APGUserGeneratedSubtaskDO subtaskDO) {
-        // 修改子任务状态为2
-        iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
         // 获取用户数据
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getId, subtaskDO.getUserId()));
         GENERATE_STATE_BAR.put(usersDO.getId(), INITIALIZATION);
+
         // 获取用户最大额度
         Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
+
         // 将String数据，处理成 GenerateDescriptionVO数据
         GenerateDescriptionVO gvo;
         CharacterCountUtils counter = new CharacterCountUtils();
@@ -109,28 +113,31 @@ public class GenerateDbTask {
             }
             gvo = OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateDescriptionVO.class);
             ProductDTO product = generateDescriptionService.getProductsQueryByProductId(gvo.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
-            generateDescriptionService.generateDescription(usersDO, gvo, counter, userMaxLimit, product);
+            generateDescriptionService.generateDescription(usersDO, gvo, counter, userMaxLimit, product, APG_TASK_TRANSLATE);
         } catch (JsonProcessingException e) {
             appInsights.trackTrace(usersDO.getShopName() + " 用户 fixGenerateSubtask errors ：" + e);
-            //将该任务状态改为4
+
+            // 将该任务状态改为4
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 4);
         } catch (ClientException e1) {
             GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 3);
             iapgUserGeneratedTaskService.updateStatusByUserId(usersDO.getId(), 3);
             appInsights.trackTrace(usersDO.getShopName() + " 用户 fixGenerateSubtask errors ：" + e1);
-            //发送对应翻译中断的邮件
+
+            // 发送对应翻译中断的邮件
             sendAPGTaskInterruptEmail(usersDO);
         } catch (Exception e2) {
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 4);
             appInsights.trackTrace(usersDO.getShopName() + " 用户 fixGenerateSubtask errors ：" + e2);
         } finally {
-            //删除状态为2的子任务
+            // 删除状态为2的子任务
             APGUserGeneratedSubtaskDO gs = iapgUserGeneratedSubtaskService.getById(subtaskDO.getSubtaskId());
             if (gs.getStatus() == 2) {
                 iapgUserGeneratedSubtaskService.removeById(subtaskDO.getSubtaskId());
             }
-            //删除限制
+
+            // 删除限制
             GENERATE_SHOP.remove(subtaskDO.getUserId());
         }
 

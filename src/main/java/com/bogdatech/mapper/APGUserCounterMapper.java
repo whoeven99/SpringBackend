@@ -32,12 +32,15 @@ public interface APGUserCounterMapper extends BaseMapper<APGUserCounterDO> {
             """)
     APGUserCounterDO selectUserCounterByShopName(String shopName);
 
-    @Update("UPDATE APG_User_Counter WITH (UPDLOCK, ROWLOCK) SET user_token = user_token + #{counter}, chars = chars + #{counter} WHERE user_id = #{userId} AND user_token <= #{maxLimit}")
-    int updateUserUsedCount(Long userId, Integer counter, Integer maxLimit);
+    @Update("UPDATE APG_User_Counter SET user_token = user_token + #{counter}, chars = chars + #{counter} WHERE user_id = #{userId} AND user_token <= #{maxLimit}")
+    int updateUserTaskUsedCount(Long userId, Integer counter, Integer maxLimit);
 
-    @Update("UPDATE APG_User_Counter WITH (UPDLOCK, ROWLOCK) SET chars = 0 WHERE user_id = #{userId}")
+    @Update("UPDATE APG_User_Counter SET chars = 0 WHERE user_id = #{userId}")
     int updateCharsByUserId(Long userId);
 
-    @Update("UPDATE APG_User_Counter WITH (UPDLOCK, ROWLOCK) SET extra_counter = extra_counter + #{token} WHERE user_id = #{userId}")
+    @Update("UPDATE APG_User_Counter SET extra_counter = extra_counter + #{token} WHERE user_id = #{userId}")
     int updateUserToken(Long userId, Integer token);
+
+    @Update("UPDATE APG_User_Counter SET user_token = user_token + #{counter} WHERE user_id = #{userId} AND user_token <= #{maxLimit}")
+    int updateUserSingleUsedCount(Long userId, Integer counter, Integer maxLimit);
 }

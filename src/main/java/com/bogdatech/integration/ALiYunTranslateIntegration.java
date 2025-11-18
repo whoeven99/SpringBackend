@@ -441,7 +441,7 @@ public class ALiYunTranslateIntegration {
     /**
      * 调用qwen视觉模型，根据传入的数据，生成对应的描述数据
      */
-    public String callWithPicMess(String prompt, Long userId, CharacterCountUtils counter, String picUrl, Integer userMaxLimit) {
+    public String callWithPicMess(String prompt, Long userId, CharacterCountUtils counter, String picUrl, Integer userMaxLimit, String translateType) {
         MultiModalConversation conv = new MultiModalConversation();
 
         MultiModalMessage userMessage = MultiModalMessage.builder().role(Role.USER.getValue())
@@ -478,7 +478,7 @@ public class ALiYunTranslateIntegration {
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             appInsights.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
-            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
+            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit, translateType);
             //更新用户产品计数
             counter.addChars(totalToken);
             return (String) content.get(0).get("text");
@@ -492,7 +492,7 @@ public class ALiYunTranslateIntegration {
     /**
      * 调用qwen-max用户产品描述图片为空的情况
      */
-    public String callWithQwenMaxToDes(String prompt, CharacterCountUtils countUtils, Long userId, Integer userMaxLimit) {
+    public String callWithQwenMaxToDes(String prompt, CharacterCountUtils countUtils, Long userId, Integer userMaxLimit, String translateType) {
         Generation gen = new Generation();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
@@ -528,7 +528,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
-            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
+            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit, translateType);
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);
         } catch (Exception e) {

@@ -3,7 +3,10 @@ package com.bogdatech.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.bogdatech.entity.DO.APGUserGeneratedSubtaskDO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
 
 @Mapper
 public interface APGUserGeneratedSubtaskMapper extends BaseMapper<APGUserGeneratedSubtaskDO> {
@@ -15,4 +18,12 @@ public interface APGUserGeneratedSubtaskMapper extends BaseMapper<APGUserGenerat
 
     @Update("UPDATE APG_User_Generated_Subtask SET status = 9 WHERE user_id = #{id}  AND status IN (3, 4)")
     Boolean update34StatusTo9(Long id);
+
+    @Select("""
+            SELECT TOP (10) *
+            FROM APG_User_Generated_Subtask
+            WHERE status = 0
+            ORDER BY create_time ASC
+            """)
+    List<APGUserGeneratedSubtaskDO> selectTask10ToGenerate();
 }

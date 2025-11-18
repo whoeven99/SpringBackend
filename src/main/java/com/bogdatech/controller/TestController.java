@@ -26,6 +26,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
+import com.bogdatech.task.GenerateDbTask;
 import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.TimeOutUtils;
@@ -33,9 +34,6 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -46,7 +44,6 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
-import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.StringUtils.*;
@@ -324,7 +321,7 @@ public class TestController {
     @GetMapping("/testAPGStop")
     public boolean userMaxLimit(@RequestParam String shopName) {
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
-        return GENERATE_SHOP.add(usersDO.getId());
+        return GenerateDbTask.GENERATE_SHOP.add(usersDO.getId());
     }
 
     /**

@@ -1,10 +1,13 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IAPGUserGeneratedSubtaskService;
 import com.bogdatech.entity.DO.APGUserGeneratedSubtaskDO;
 import com.bogdatech.mapper.APGUserGeneratedSubtaskMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -50,5 +53,10 @@ public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGener
     @Override
     public Boolean update34StatusTo9(Long id) {
         return baseMapper.update34StatusTo9(id);
+    }
+
+    @Override
+    public List<APGUserGeneratedSubtaskDO> selectTask10ToGenerate() {
+        return baseMapper.selectTask10ToGenerate();
     }
 }

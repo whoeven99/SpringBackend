@@ -13,6 +13,7 @@ import com.bogdatech.entity.VO.APGAnalyzeDataVO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.task.GenerateDbTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,6 @@ import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.logic.APGUserGeneratedTaskService.*;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.requestBody.ShopifyRequestBody.*;
-import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.PlaceholderUtils.buildDescriptionPrompt;
 import static com.bogdatech.utils.StringUtils.countWords;
@@ -53,14 +53,14 @@ public class GenerateDescriptionService {
      * @param generateDescriptionVO 生成描述参数
      * @return 产品描述
      */
-    public String generateDescription(APGUsersDO usersDO, GenerateDescriptionVO generateDescriptionVO, CharacterCountUtils counter, Integer userMaxLimit, ProductDTO product) {
+    public String generateDescription(APGUsersDO usersDO, GenerateDescriptionVO generateDescriptionVO, CharacterCountUtils counter, Integer userMaxLimit, ProductDTO product, String translateType) {
         //判断额度是否足够，然后决定是否继续调用
         APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
         if (counterDO.getUserToken() >= userMaxLimit) {
             throw new ClientException(CHARACTER_LIMIT);
         }
         // 根据产品id获取相关数据，为生成做铺垫
-        GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
+        GenerateDbTask.GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
         // 根据模板id获取模板数据
         TemplateDTO templateById = getTemplateById(generateDescriptionVO.getTemplateId(), usersDO.getId(), generateDescriptionVO.getTemplateType());
         // 根据 ProductDTO 和传入的 GenerateDescriptionVO进行描述生成(暂定qwen模型 图片理解)
@@ -74,9 +74,9 @@ public class GenerateDescriptionService {
         String des;
         GENERATE_STATE_BAR.put(usersDO.getId(), GENERATING);
         if (product.getImageUrl() == null || product.getImageUrl().isEmpty()) {
-             des = aLiYunTranslateIntegration.callWithQwenMaxToDes(prompt, counter, usersDO.getId(), userMaxLimit);
+             des = aLiYunTranslateIntegration.callWithQwenMaxToDes(prompt, counter, usersDO.getId(), userMaxLimit, translateType);
         }else {
-             des = aLiYunTranslateIntegration.callWithPicMess(prompt, usersDO.getId(), counter, product.getImageUrl(), userMaxLimit);
+             des = aLiYunTranslateIntegration.callWithPicMess(prompt, usersDO.getId(), counter, product.getImageUrl(), userMaxLimit, translateType);
         }
         if (des == null) {
             return null;
