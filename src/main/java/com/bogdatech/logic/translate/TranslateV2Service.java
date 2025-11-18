@@ -125,10 +125,12 @@ public class TranslateV2Service {
             translateTaskV2DO.setModule(module);
             translateTaskV2DO.setInitialTaskId(initialTaskV2DO.getId());
 
-            shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 10, target,
+            shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target,
                 (node -> {
                     if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
                         translateTaskV2DO.setResourceId(node.getResourceId());
+                        appInsights.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
+                                " resourceId: " + node.getResourceId());
 
                         List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                         // 每个node有几个translatableContent
