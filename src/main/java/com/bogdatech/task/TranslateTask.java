@@ -61,7 +61,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 
     @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTask() {
-        appInsights.trackTrace("TranslateTaskV2 start INIT");
+//        appInsights.trackTrace("TranslateTaskV2 start INIT");
         List<InitialTaskV2DO> initTaskList = initialTaskV2Repo.selectByStatus(0);
         if (CollectionUtils.isEmpty(initTaskList)) return;
 
@@ -69,7 +69,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
         Map<String, List<InitialTaskV2DO>> tasksByShop = initTaskList.stream()
                 .collect(Collectors.groupingBy(InitialTaskV2DO::getShopName));
 
-        appInsights.trackTrace("TranslateTaskV2 INITIATING shop: " + initializingShops);
+//        appInsights.trackTrace("TranslateTaskV2 INITIATING shop: " + initializingShops);
         // 不同shopName并发处理，相同shopName顺序处理
         for (Map.Entry<String, List<InitialTaskV2DO>> entry : tasksByShop.entrySet()) {
             String shopName = entry.getKey();
