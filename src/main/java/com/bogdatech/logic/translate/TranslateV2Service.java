@@ -429,6 +429,10 @@ public class TranslateV2Service {
                     taskDO.setSavedToShopify(true);
                     translateTaskV2Repo.update(taskDO);
                 }
+            } else {
+                // 写入失败 fatalException
+                appInsights.trackTrace("FatalException TranslateTaskV2 saving failed: " + shopName +
+                        " randomDo: " + randomDo.getId() + " response: " + strResponse);
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
             appInsights.trackTrace("TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
