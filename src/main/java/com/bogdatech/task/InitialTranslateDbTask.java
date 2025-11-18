@@ -96,9 +96,17 @@ public class InitialTranslateDbTask {
     public void scanAndSubmitClickTranslateDbTask() {
         List<InitialTranslateTasksDO> clickTranslateTasks = iInitialTranslateTasksService.selectTop10Tasks(InitialTaskStatusEnum.INIT.status, MANUAL);
 
-        appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
+        appInsights.trackTrace("scanAndSubmitClickTranslateDbTask Number of clickTranslateTasks need to translate "
+                + clickTranslateTasks.size());
         if (clickTranslateTasks.isEmpty()) {
             return;
+        }
+
+        for (InitialTranslateTasksDO initialTranslateTasksDO: clickTranslateTasks
+        ) {
+            initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                    .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
+                    .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
         }
 
         // 遍历clickTranslateTasks，生成initialTasks
@@ -114,15 +122,25 @@ public class InitialTranslateDbTask {
     public void scanAndSubmitAutoInitialTranslateDbTask() {
         // 获取数据库中的翻译参数
         // 统计待翻译的 task
-        List<InitialTranslateTasksDO> clickTranslateTasks = iInitialTranslateTasksService.selectTop10Tasks(InitialTaskStatusEnum.INIT.status, AUTO);
+        List<InitialTranslateTasksDO> autoTranslateTasks = iInitialTranslateTasksService.selectTop10Tasks(InitialTaskStatusEnum.INIT.status, AUTO);
 
-        appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate " + clickTranslateTasks.size());
-        if (clickTranslateTasks.isEmpty()) {
+        appInsights.trackTrace("scanAndSubmitInitialTranslateDbTask Number of clickTranslateTasks need to translate "
+                + autoTranslateTasks.size());
+        if (autoTranslateTasks.isEmpty()) {
             return;
         }
 
+        // 修改initial task 状态
+        for (InitialTranslateTasksDO initialTranslateTasksDO: autoTranslateTasks
+             ) {
+            initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+                    .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
+                    .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
+        }
+
+
         // 遍历clickTranslateTasks，生成initialTasks
-        for (InitialTranslateTasksDO task : clickTranslateTasks) {
+        for (InitialTranslateTasksDO task : autoTranslateTasks) {
             initialExecutorService.submit(() -> {
                 processInitialTasksOfShop(task);
             });
@@ -135,9 +153,6 @@ public class InitialTranslateDbTask {
         // 获取用户的accessToken
         UsersDO userDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, singleTask.getShopName()));
         appInsights.trackTrace("processInitialTasksOfShop task START: " + singleTask.getTaskId() + " of shop: " + shop);
-        initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
-                .eq(InitialTranslateTasksDO::getTaskId, singleTask.getTaskId())
-                .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
 
         // taskType为 click 是手动翻译邮件， auto 是自动翻译邮件 ， key 是私有key邮件（这个暂时未实现）
         rabbitMqTranslateService.initialTasks(
