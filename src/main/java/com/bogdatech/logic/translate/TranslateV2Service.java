@@ -2,8 +2,8 @@ package com.bogdatech.logic.translate;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUsersService;
-import com.bogdatech.Service.impl.InitialTaskV2Repo;
-import com.bogdatech.Service.impl.TranslateTaskV2Repo;
+import com.bogdatech.repository.repo.InitialTaskV2Repo;
+import com.bogdatech.repository.repo.TranslateTaskV2Repo;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -22,8 +22,6 @@ import com.bogdatech.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
-import kotlin.Triple;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,7 +169,7 @@ public class TranslateV2Service {
         Integer usedToken = userTokenService.getUsedToken(shopName);
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
         while (randomDo != null) {
-            appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + "randomDo: " + randomDo.getId());
+            appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
             if (usedToken >= maxToken) {
                 // 更新数据库状态为 5，翻译中断
                 long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
