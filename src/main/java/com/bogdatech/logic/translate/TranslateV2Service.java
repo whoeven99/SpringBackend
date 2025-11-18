@@ -191,10 +191,13 @@ public class TranslateV2Service {
             String textType = randomDo.getType();
             List<TranslateTaskV2DO> taskList = new ArrayList<>();
             Integer usedTokenByTask;
-            if (PLAIN_TEXT.equals(textType) || TITLE.equals(textType) || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)) {
+            if (PLAIN_TEXT.equals(textType) || TITLE.equals(textType)
+                    || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)
+                    || SINGLE_LINE_TEXT_FIELD.equals(textType)) {
                 // 批量翻译
                 taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
                         initialTaskId, textType, 50);
+                // 如果value过长，做个截断，  需要测试一下字符串的长度
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
@@ -398,8 +401,9 @@ public class TranslateV2Service {
 
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
         while (randomDo != null) {
+            appInsights.trackTrace("TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
-            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByResourceId(resourceId);
+            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByResourceIdWithLimit(resourceId);
 
             // 填回shopify
             ShopifyGraphResponse.TranslatableResources.Node node = new ShopifyGraphResponse.TranslatableResources.Node();
