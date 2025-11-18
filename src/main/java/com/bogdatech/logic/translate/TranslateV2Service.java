@@ -133,7 +133,7 @@ public class TranslateV2Service {
                         List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                         // 每个node有几个translatableContent
                         node.getTranslatableContent().forEach(translatableContent -> {
-                            if (needTranslate(translatableContent, node.getTranslations(), existingTasks, module)) {
+                            if (needTranslate(translatableContent, node.getTranslations(), existingTasks, module, initialTaskV2DO.isCover())) {
                                 translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                 translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                 translateTaskV2DO.setType(translatableContent.getType());
@@ -501,7 +501,7 @@ public class TranslateV2Service {
     // 根据翻译规则，不翻译的直接不用存
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
-                                  List<TranslateTaskV2DO> existingTasks, String module) {
+                                  List<TranslateTaskV2DO> existingTasks, String module, boolean isCover) {
         String value = translatableContent.getValue();
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
@@ -510,10 +510,12 @@ public class TranslateV2Service {
         }
 
         // 先看outdate = false
-        for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
-            if (translatableContent.getKey().equals(translation.getKey())) {
-                if(!translation.getOutdated()) {
-                    return false;
+        if (!isCover) {
+            for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
+                if (translatableContent.getKey().equals(translation.getKey())) {
+                    if(!translation.getOutdated()) {
+                        return false;
+                    }
                 }
             }
         }
