@@ -1,5 +1,6 @@
 package com.bogdatech.integration;
 
+import com.bogdatech.utils.StringUtils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
@@ -15,9 +16,9 @@ import com.qcloud.cos.transfer.TransferProgress;
 import com.qcloud.cos.transfer.Upload;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import java.io.ByteArrayInputStream;
 import static com.bogdatech.constants.TencentConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.StringUtils.generate8DigitNumber;
 import static com.bogdatech.utils.TimeOutUtils.*;
 import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
@@ -28,7 +29,7 @@ public class HunYuanBucketIntegration {
     private static final String SECRET_KEY = System.getenv(TENCENT_BUCKET_SECRET_KEY);
     private static final String BUCKET_NAME = "ciwi-us-1327177217";
     private static final String COS_REGION = "na-ashburn";
-    private static final String PATH_NAME = "image-Translation";
+    public static final String PATH_NAME = "image-Translation";
     private static final String HTTP = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com/";
 
     /**
@@ -50,7 +51,6 @@ public class HunYuanBucketIntegration {
         return new TransferManager(cosclient);
     }
 
-
     /**
      * 进度条展示
      * */
@@ -66,7 +66,7 @@ public class HunYuanBucketIntegration {
             long soFar = progress.getBytesTransferred();
             long total = progress.getTotalBytesToTransfer();
             double pct = progress.getPercentTransferred();
-            System.out.printf("[%d / %d] = %.02f%%\n", soFar, total, pct);
+            appInsights.trackTrace("[" + soFar + " / " + total + "] = " + pct);
         } while (transfer.isDone() == false);
         appInsights.trackTrace(String.valueOf(transfer.getState()));
     }
@@ -76,16 +76,17 @@ public class HunYuanBucketIntegration {
      * 上传文件, 根据文件大小自动选择简单上传或者分块上传。
      * */
     public static String uploadFile(MultipartFile file, String shopName, String imageId) {
-
             TransferManager transferManager = createTransferManager();
             String originalFilename = file.getOriginalFilename();
             String extension = "";
+
             // 获取文件后缀名
             if (originalFilename != null && originalFilename.contains(".")) {
                 extension = originalFilename.substring(originalFilename.lastIndexOf("."));
             }
-            //随机生成8位随机数
-            String generate8DigitNumber = generate8DigitNumber();
+
+            // 随机生成8位随机数
+            String generate8DigitNumber = StringUtils.generate8DigitNumber();
             String key = PATH_NAME + "/" + shopName + "/" + imageId + "/" + generate8DigitNumber + extension;
             String afterUrl = HTTP + key;
             ObjectMetadata metadata = new ObjectMetadata();
@@ -125,4 +126,47 @@ public class HunYuanBucketIntegration {
         return null;
     }
 
+    /**
+     * 重新实现一个存bucket桶的方法
+     * 会于上面uploadFile大部分重复，先实现后面再优化
+     */
+    public static String uploadBytes(byte[] bytes, String key, String contentType){
+        TransferManager transferManager = createTransferManager();
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(bytes.length);
+        metadata.setContentType(contentType);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+
+        try {
+            PutObjectRequest putObjectRequest = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return new PutObjectRequest(BUCKET_NAME, key, inputStream, metadata);
+                        } catch (Exception e) {
+                            appInsights.trackTrace("每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " key : " + key );
+                            appInsights.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (putObjectRequest == null) {
+                return null;
+            }
+
+//            long startTime = System.currentTimeMillis();
+            Upload upload = transferManager.upload(putObjectRequest);
+            showTransferProgress(upload);
+            upload.waitForUploadResult();
+//            long endTime = System.currentTimeMillis();
+//            System.out.println("used time: " + (endTime - startTime) / 1000);
+            transferManager.shutdownNow();
+            return HTTP + key; // 上传成功直接返回true
+        } catch (Exception e) {
+            appInsights.trackTrace("每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", key : " + key );
+        } finally {
+            transferManager.shutdownNow();
+        }
+        return null;
+    }
 }

@@ -3,6 +3,7 @@ package com.bogdatech.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IUserPicturesService;
 import com.bogdatech.entity.DO.UserPicturesDO;
+import com.bogdatech.integration.HunYuanBucketIntegration;
 import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -12,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.bogdatech.integration.HunYuanBucketIntegration.uploadFile;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.convertUrlToMultipartFile;
@@ -51,7 +51,7 @@ public class UserPicturesController {
                 return new BaseResponse<>().CreateErrorResponse("Image format error");
             }
             //将图片上传到腾讯云
-            String afterUrl = uploadFile(file, shopName, userPicturesDO.getImageId());
+            String afterUrl = HunYuanBucketIntegration.uploadFile(file, shopName, userPicturesDO.getImageId());
             userPicturesDO.setImageAfterUrl(afterUrl);
             //再将图片相关数据存到数据库中
             userPicturesDO.setShopName(shopName);
@@ -136,15 +136,21 @@ public class UserPicturesController {
         if (userPicturesDO == null) {
             return new BaseResponse<>().CreateSuccessResponse(false);
         }
-        //对返回的图片url做处理
+
+        // 对返回的图片url做处理
         MultipartFile multipartFile = convertUrlToMultipartFile(pic);
-        //存到腾讯云bucket桶里面
-        String afterUrl = uploadFile(multipartFile, shopName, userPicturesDO.getImageId());
+        if (multipartFile == null || multipartFile.isEmpty()){
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
+
+        // 存到腾讯云bucket桶里面
+        String afterUrl = HunYuanBucketIntegration.uploadFile(multipartFile, shopName, userPicturesDO.getImageId());
         if (afterUrl == null ) {
             return new BaseResponse<>().CreateSuccessResponse(false);
         }
         userPicturesDO.setImageAfterUrl(afterUrl);
-        //再将图片相关数据存到数据库中
+
+        // 再将图片相关数据存到数据库中
         userPicturesDO.setShopName(shopName);
         boolean flag = iUserPicturesService.insertPictureData(userPicturesDO);
         if (flag) {

@@ -12,4 +12,5 @@ public class ImageTranslateVO {
     private String sourceCode;
     private String targetCode;
     private String accessToken;
+    private Integer modelType; // 1. aidge_standard   2. huoshan  3. aidge_pro
 }
