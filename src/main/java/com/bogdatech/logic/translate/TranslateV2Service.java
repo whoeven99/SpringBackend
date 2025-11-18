@@ -198,18 +198,22 @@ public class TranslateV2Service {
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
                 Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
-                Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
-                usedTokenByTask = translatedValueMapPair.getSecond();
-                for (TranslateTaskV2DO updatedDo : taskList) {
-                    String targetValue = translatedValueMap.get(updatedDo.getId());
-                    updatedDo.setTargetValue(targetValue);
-                    updatedDo.setHasTargetValue(true);
+                if (translatedValueMapPair == null) {
+                    usedTokenByTask = 0;
+                } else {
+                    Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
+                    usedTokenByTask = translatedValueMapPair.getSecond();
+                    for (TranslateTaskV2DO updatedDo : taskList) {
+                        String targetValue = translatedValueMap.get(updatedDo.getId());
+                        updatedDo.setTargetValue(targetValue);
+                        updatedDo.setHasTargetValue(true);
 
-                    // 3.3 回写数据库 todo 批量
-                    translateTaskV2Repo.update(updatedDo);
+                        // 3.3 回写数据库 todo 批量
+                        translateTaskV2Repo.update(updatedDo);
 
-                    // 3.4 设置缓存
-                    setCache(target, targetValue, updatedDo.getSourceValue());
+                        // 3.4 设置缓存
+                        setCache(target, targetValue, updatedDo.getSourceValue());
+                    }
                 }
             } else if (HTML.equals(textType)) {
                 // html单独翻译
@@ -224,32 +228,39 @@ public class TranslateV2Service {
 
                 // 开始翻译
                 Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
-                // if null
-                Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
-                usedToken = translatedValueMapPair.getSecond();
-                String translatedValue = HtmlUtils.replaceBack(value, originalTexts, translatedValueMap);
+                if (translatedValueMapPair == null) {
+                    usedTokenByTask = 0;
+                } else {
+                    Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
+                    usedToken = translatedValueMapPair.getSecond();
+                    String translatedValue = HtmlUtils.replaceBack(value, originalTexts, translatedValueMap);
 
-                // 翻译后更新db
-                randomDo.setHasTargetValue(true);
-                randomDo.setTargetValue(translatedValue);
-                translateTaskV2Repo.update(randomDo);
+                    // 翻译后更新db
+                    randomDo.setHasTargetValue(true);
+                    randomDo.setTargetValue(translatedValue);
+                    translateTaskV2Repo.update(randomDo);
 
-                // 设置缓存
-                for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
-                    Integer index = entry.getKey();
-                    String sourceText = entry.getValue();
-                    String translatedText = translatedValueMap.get(index);
-                    setCache(target, translatedText, sourceText);
+                    // 设置缓存
+                    for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
+                        Integer index = entry.getKey();
+                        String sourceText = entry.getValue();
+                        String translatedText = translatedValueMap.get(index);
+                        setCache(target, translatedText, sourceText);
+                    }
+
+                    usedTokenByTask = usedToken;
                 }
-
-                usedTokenByTask = usedToken;
             } else {
                 // 先单独处理，加日志看看还有哪些type
                 Pair<String, Integer> pair = translateSingle(randomDo.getSourceValue(), target, glossaryMap);
-                usedTokenByTask = pair.getSecond();
+                if (pair == null) {
+                    usedTokenByTask = 0;
+                } else {
+                    usedTokenByTask = pair.getSecond();
 
-                // 这里的originValue是被glossary替换过的值
-                setCache(target, pair.getFirst(), randomDo.getSourceValue());
+                    // 这里的originValue是被glossary替换过的值
+                    setCache(target, pair.getFirst(), randomDo.getSourceValue());
+                }
             }
             // ****** 翻译规则 todo
             // html 单独处理
