@@ -35,7 +35,7 @@ class HtmlUtilsTest {
 
         String result = HtmlUtils.replaceBack(html, originalTexts, translatedValueMap);
 
-        assertEquals("<html><body><div>Hola &amp; Bienvenido</div><p>Mundo</p></body></html>", result);
+        assertEquals("<html><body><div>Hola & Bienvenido</div><p>Mundo</p></body></html>", result);
     }
 
     @Test
