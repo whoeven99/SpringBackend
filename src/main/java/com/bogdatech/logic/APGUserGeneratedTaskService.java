@@ -10,16 +10,15 @@ import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateDescriptionsVO;
 import com.bogdatech.entity.VO.GenerateEmailVO;
 import com.bogdatech.entity.VO.GenerateProgressBarVO;
+import com.bogdatech.task.GenerateDbTask;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
-
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
 import static com.bogdatech.utils.TypeConversionUtils.generateDescriptionsVOToGenerateDescriptionVO;
@@ -81,7 +80,7 @@ public class APGUserGeneratedTaskService {
             Integer unfinishedCount = iapgUserGeneratedSubtaskService.getUnfinishedByStatusAndUserId(Arrays.asList(0, 3, 4)
                     , userDO.getId()).size();
             generateProgressBarVO = apgUserGeneratedTaskDOToGenerateProgressBarVO(taskDO, totalCount, unfinishedCount);
-            generateProgressBarVO.setProductTitle(GENERATE_SHOP_BAR.get(userDO.getId()));
+            generateProgressBarVO.setProductTitle(GenerateDbTask.GENERATE_SHOP_BAR.get(userDO.getId()));
             generateProgressBarVO.setStatus(GENERATE_STATE_BAR.get(userDO.getId()));
             generateProgressBarVO.setTaskTime(taskDO.getUpdateTime());//获取对应的时间
             //获取产品标题

@@ -23,6 +23,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
+import com.bogdatech.task.GenerateDbTask;
 import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.TimeOutUtils;
@@ -40,7 +41,6 @@ import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
-import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.StringUtils.*;
@@ -321,7 +321,7 @@ public class TestController {
     @GetMapping("/testAPGStop")
     public boolean userMaxLimit(@RequestParam String shopName) {
         APGUsersDO usersDO = iapgUsersService.getUserByShopName(shopName);
-        return GENERATE_SHOP.add(usersDO.getId());
+        return GenerateDbTask.GENERATE_SHOP.add(usersDO.getId());
     }
 
     /**

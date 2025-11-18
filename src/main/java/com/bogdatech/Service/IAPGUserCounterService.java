@@ -8,7 +8,7 @@ public interface IAPGUserCounterService extends IService<APGUserCounterDO> {
     Boolean initUserCounter(String shopName);
     APGUserCounterDO getUserCounter(String shopName);
 
-    Boolean updateUserUsedCount(Long userId, Integer counter, Integer maxLimit);
+    Boolean updateUserUsedCount(Long userId, Integer counter, Integer maxLimit, String translateType);
 
     Boolean updateCharsByUserId(Long id);
 

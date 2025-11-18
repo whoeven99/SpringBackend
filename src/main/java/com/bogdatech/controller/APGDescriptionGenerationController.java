@@ -9,6 +9,7 @@ import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.logic.GenerateDescriptionService;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.task.GenerateDbTask;
 import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +41,7 @@ public class APGDescriptionGenerationController {
         ProductDTO product;
         try {
             product = generateDescriptionService.getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
-            description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit, product);
+            description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit, product, GenerateDbTask.APG_SINGLE_TRANSLATE);
             appInsights.trackTrace("generateDescription" + shopName + " generateDescription: " + description);
             if (description == null) {
                 return new BaseResponse<>().CreateErrorResponse(false);

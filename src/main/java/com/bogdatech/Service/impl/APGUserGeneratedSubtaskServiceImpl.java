@@ -75,4 +75,9 @@ public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGener
         return baseMapper.selectList(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>().eq(APGUserGeneratedSubtaskDO::getUserId, userId)
                 .eq(APGUserGeneratedSubtaskDO::getStatus, status));
     }
+
+    @Override
+    public List<APGUserGeneratedSubtaskDO> selectTask10ToGenerate() {
+        return baseMapper.selectTask10ToGenerate();
+    }
 }

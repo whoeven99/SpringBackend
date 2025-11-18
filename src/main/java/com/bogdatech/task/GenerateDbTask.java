@@ -50,13 +50,14 @@ public class GenerateDbTask {
     public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
     public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
     public static final ConcurrentHashMap<Long, Boolean> GENERATE_SHOP_STOP_FLAG = new ConcurrentHashMap<>(); //判断用户是否停止生成描述
-
+    public static final String APG_SINGLE_TRANSLATE = "APG_SINGLE_TRANSLATE";
+    public static final String APG_TASK_TRANSLATE = "APG_TASK_TRANSLATE";
 
     // 每3秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 3000)
     public void scanAndGenerateSubtask() {
         // 获取所有status为0的数据
-        List<APGUserGeneratedSubtaskDO> list = iapgUserGeneratedSubtaskService.selectTasksByStatusOrderByCreateTime(0);
+        List<APGUserGeneratedSubtaskDO> list = iapgUserGeneratedSubtaskService.selectTask10ToGenerate();
 
         // 循环异步翻译
         for (APGUserGeneratedSubtaskDO subtaskDO : list
@@ -64,6 +65,12 @@ public class GenerateDbTask {
             // 一个用户同一时间只能翻译一个
             if (!GENERATE_SHOP.contains(subtaskDO.getUserId())) {
                 GENERATE_SHOP.add(subtaskDO.getUserId());
+                // 修改子任务状态为2
+                Boolean flag = iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
+                if (!flag) {
+                    continue;
+                }
+
                 executorService.submit(() -> {
                     appInsights.trackTrace("用户 " + subtaskDO.getUserId() + " 开始生成 子任务： " + subtaskDO.getSubtaskId());
                     try {
@@ -108,7 +115,7 @@ public class GenerateDbTask {
             }
             gvo = OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateDescriptionVO.class);
             ProductDTO product = generateDescriptionService.getProductsQueryByProductId(gvo.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
-            generateDescriptionService.generateDescription(usersDO, gvo, counter, userMaxLimit, product);
+            generateDescriptionService.generateDescription(usersDO, gvo, counter, userMaxLimit, product, APG_TASK_TRANSLATE);
         } catch (JsonProcessingException e) {
             appInsights.trackTrace(usersDO.getShopName() + " 用户 fixGenerateSubtask errors ：" + e);
 
@@ -126,14 +133,13 @@ public class GenerateDbTask {
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 4);
             appInsights.trackTrace(usersDO.getShopName() + " 用户 fixGenerateSubtask errors ：" + e2);
         } finally {
-
-            //删除状态为2的子任务
+            // 删除状态为2的子任务
             APGUserGeneratedSubtaskDO gs = iapgUserGeneratedSubtaskService.getById(subtaskDO.getSubtaskId());
             if (gs.getStatus() == 2) {
                 iapgUserGeneratedSubtaskService.removeById(subtaskDO.getSubtaskId());
             }
 
-            //删除限制
+            // 删除限制
             GENERATE_SHOP.remove(subtaskDO.getUserId());
         }
     }
@@ -181,8 +187,7 @@ public class GenerateDbTask {
             }
             tencentEmailService.sendAPGSuccessEmail(usersDO.getEmail(), usersDO.getId(), taskModel, usersDO.getFirstName(), subtaskDO.getCreateTime(), userCounter.getChars(), generateEmailVO.getProductIds().length, userSurplusLimit);
             appInsights.trackTrace("用户 " + usersDO.getShopName() + "  发送邮件， " + generateEmailVO.getEmail() + " 消耗token：" + userCounter.getChars());
-
-            // 将这次任务的token数清零
+            //将这次任务的token数清零
             iapgUserCounterService.updateCharsByUserId(usersDO.getId());
         } catch (Exception e) {
             appInsights.trackTrace(subtaskDO.getUserId() + " 用户 发送邮件接口 errors ：" + e);

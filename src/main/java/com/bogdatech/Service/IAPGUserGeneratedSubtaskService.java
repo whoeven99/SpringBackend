@@ -18,4 +18,6 @@ public interface IAPGUserGeneratedSubtaskService extends IService<APGUserGenerat
     List<APGUserGeneratedSubtaskDO> selectTasksByStatusOrderByCreateTime(int status);
 
     List<APGUserGeneratedSubtaskDO> selectTasksByUserIdAndStatus(Long userId, int status);
+
+    List<APGUserGeneratedSubtaskDO> selectTask10ToGenerate();
 }
