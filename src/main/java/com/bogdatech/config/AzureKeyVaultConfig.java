@@ -18,7 +18,6 @@ public class AzureKeyVaultConfig {
         if ("prod".equals(env) || "dev".equals(env)) {
             String clientId = System.getenv("Client_ID");
             String keyVaultUrl = System.getenv("UserPrivateKeyVaultUrl");
-            // 如果是本地开发环境，则用DefaultAzureCredential自动检验身份
             ManagedIdentityCredential credential = new ManagedIdentityCredentialBuilder()
                     .clientId(clientId)
                     .build();
@@ -36,5 +35,4 @@ public class AzureKeyVaultConfig {
                     .buildClient();
         }
     }
-
 }
