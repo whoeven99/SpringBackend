@@ -19,9 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-
-import javax.validation.constraints.Email;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -174,7 +171,7 @@ public class GenerateDbTask {
                 userSurplusLimit = 0;
             }
             tencentEmailService.sendAPGSuccessEmail(usersDO.getEmail(), usersDO.getId(), taskModel, usersDO.getFirstName(), subtaskDO.getCreateTime(), userCounter.getChars(), generateEmailVO.getProductIds().length, userSurplusLimit);
-            appInsights.trackTrace("用户 " + usersDO.getShopName() + "  发送邮件， " + generateEmailVO.getEmail() + " 消耗token：" + userCounter.getChars());
+            appInsights.trackTrace("用户 " + usersDO.getShopName() + "  发送邮件， " + generateEmailVO.getEmail() + " 消耗token ：" + userCounter.getChars());
             //将这次任务的token数清零
             iapgUserCounterService.updateCharsByUserId(usersDO.getId());
         } catch (Exception e) {

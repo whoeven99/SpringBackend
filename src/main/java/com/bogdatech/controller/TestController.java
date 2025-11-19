@@ -9,7 +9,7 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
-import com.bogdatech.integration.AidgeIntegration;
+import com.bogdatech.integration.HunYuanBucketIntegration;
 import com.bogdatech.integration.HuoShanIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -22,21 +22,18 @@ import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
+import com.bogdatech.utils.StringUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -62,10 +59,6 @@ public class TestController {
     private RateHttpIntegration rateHttpIntegration;
     @Autowired
     private UserTypeTokenService userTypeTokenService;
-    @Autowired
-    private AidgeIntegration aidgeIntegration;
-    @Autowired
-    private TranslateDataService translateDataService;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
@@ -94,8 +87,6 @@ public class TestController {
     private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
-    @Autowired
-    private RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
     private HuoShanIntegration huoShanIntegration;
 
@@ -185,9 +176,7 @@ public class TestController {
     @PutMapping("/testAutoTranslate")
     public void testAutoTranslate() {
         appInsights.trackTrace("testAutoTranslate 开始调用");
-        executorService.execute(() -> {
-            taskService.autoTranslate();
-        });
+        executorService.execute(() -> taskService.autoTranslate());
     }
 
     @Autowired
@@ -254,17 +243,6 @@ public class TestController {
         if (stopFlag) {
             appInsights.trackTrace("停止成功");
         }
-    }
-
-    /**
-     * 输入任务id，实现该任务的翻译
-     */
-    @PutMapping("/testDBTranslate2")
-    public void testDBTranslate2(@RequestParam String taskId) {
-        //根据id获取数据，转化为规定数据类型
-//        RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
-//        processDbTaskService.processTask(dataToProcess, new TranslateTasksDO(), false);
-//        translateTasksService.updateByTaskId(taskId, 1);
     }
 
     /**
@@ -553,15 +531,4 @@ public class TestController {
         return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
     }
 
-    // 测试新图片翻译大模型
-    @PostMapping("/testNewImageTranslate")
-    public void testNewImageTranslate() {
-        aidgeIntegration.prodTest();
-    }
-
-    // 火山图片翻译
-    @PostMapping("/testVesalImageTranslate")
-    public void testVesalImageTranslate() throws Exception {
-        huoShanIntegration.huoShanImageTranslate();
-    }
 }
