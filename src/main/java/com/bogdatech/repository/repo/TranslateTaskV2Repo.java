@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.entity.DO.TranslateTaskV2DO;
-import com.bogdatech.repository.mapper.TranslateTaskV2Mapper;
+import com.bogdatech.mapper.TranslateTaskV2Mapper;
 import com.bogdatech.utils.DbUtils;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +20,15 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
                 .eq("is_deleted", false);
         List<TranslateTaskV2DO> list = baseMapper.selectList(wrapper);
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    public List<TranslateTaskV2DO> selectByResourceIdWithLimit(String resourceId) {
+        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+        wrapper.select("TOP " + 10 + " *")
+                .eq("resource_id", resourceId)
+                .eq("saved_to_shopify", false)
+                .eq("is_deleted", false);
+        return baseMapper.selectList(wrapper);
     }
 
     public List<TranslateTaskV2DO> selectByResourceId(String resourceId) {

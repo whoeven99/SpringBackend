@@ -3,7 +3,7 @@ package com.bogdatech.repository.repo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.entity.DO.InitialTaskV2DO;
-import com.bogdatech.repository.mapper.InitialTaskV2Mapper;
+import com.bogdatech.mapper.InitialTaskV2Mapper;
 import com.bogdatech.utils.DbUtils;
 import org.springframework.stereotype.Service;
 
