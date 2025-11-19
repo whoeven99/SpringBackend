@@ -9,7 +9,6 @@ import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.*;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import kotlin.Pair;
@@ -108,61 +107,6 @@ public class TranslateDataService {
 
         appInsights.trackTrace("存到shopify数据到数据库 用户： " + shopName + "，sourceText: " + sourceText);
         return htmlTranslation;
-    }
-
-    public String translateListSingleData(String value, String target, String languagePack, Integer limitChars,
-                                          CharacterCountUtils counter, String shopName, String accessToken,
-                                          String source, Map<String, Object> translation, String resourceId,
-                                          String translateType) {
-        appInsights.trackTrace("TranslateDataServiceLog ListSingleData 用户： " + shopName + "，sourceText: " + value);
-        // 如果符合要求，则翻译，不符合要求则返回原值
-        List<String> resultList = JsonUtils.jsonToObjectWithNull(value, new TypeReference<>() {
-        });
-        if (resultList == null || resultList.isEmpty()) {
-            return value;
-        }
-        try {
-            for (int i = 0; i < resultList.size(); i++) {
-                String original = resultList.get(i);
-                if (!StringUtils.isValidString(original) && original != null && !original.trim().isEmpty() && !isHtml(value)) {
-                    // 走翻译流程
-                    String targetCache = redisProcessService.getCacheData(target, value);
-                    if (targetCache != null) {
-                        resultList.set(i, targetCache);
-                        continue;
-                    }
-                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName,
-                            source, target), String.valueOf(2));
-                    translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName,
-                            source, target), value);
-
-                    String translated = translateByModel(
-                            new TranslateRequest(0, shopName, accessToken, source, target, value),
-                            counter, languagePack, limitChars, false, translateType);
-
-                    // 对null的处理
-                    if (translated == null) {
-                        appInsights.trackTrace("FatalException 每日须看 translateMetafieldTextData 用户： " + shopName + " 翻译失败，翻译内容为空 value: " + value);
-                        translated = checkTranslationModel(
-                                new TranslateRequest(0, shopName, accessToken, source, target, value),
-                                counter, languagePack, limitChars, false, translateType);
-                        resultList.set(i, translated);
-                        continue;
-                    }
-                    redisProcessService.setCacheData(target, translated, value);
-                    //将数据填回去
-                    resultList.set(i, translated);
-                }
-            }
-            appInsights.trackTrace("TranslateDataServiceLog ListSingleData 成功 用户： " + shopName + "，sourceText: " + value +
-                    " translatedText: " + resultList);
-            return JsonUtils.objectToJson(resultList);
-        } catch (Exception e) {
-            //存原数据到shopify本地
-            shopifyService.saveToShopify(value, translation, resourceId, shopName, accessToken, target, API_VERSION_LAST);
-            appInsights.trackTrace("clickTranslation " + shopName + " LIST errors 错误原因： " + e.getMessage());
-        }
-        return null;
     }
 
     // glossary 的缓存翻译 GLOSSARY_CACHE_KEY {shopName}:{targetCode}:{sourceText}
