@@ -12,12 +12,9 @@ import com.volcengine.model.response.translate.TranslateTextResponse;
 import com.volcengine.service.translate.ITranslateService;
 import com.volcengine.service.translate.impl.TranslateServiceImpl;
 import org.springframework.stereotype.Component;
-
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URLConnection;
 import java.util.Base64;
 import java.util.List;
 
@@ -66,33 +63,35 @@ public class HuoShanIntegration {
     }
 
     // 火山图片翻译
-    public void huoShanImageTranslate() throws Exception {
+    public byte[] huoShanImageTranslate(String imageUrl, String targetLanguage) {
         ITranslateService translateService = TranslateServiceImpl.getInstance();
 
         translateService.setAccessKey(System.getenv("HUOSHAN_API_KEY"));
         translateService.setSecretKey(System.getenv("HUOSHAN_API_SECRET"));
 
-        String imageUrl = "https://cdn.shopify.com/s/files/1/0728/0948/0215/files/20250904-175349.png?v=1756979649";
-        URL url = new URL(imageUrl);
-        InputStream inputStream = url.openStream();
-        byte[] input = inputStream.readAllBytes();
-        inputStream.close();
+        appInsights.trackTrace("huoShanImageTranslate imageUrl : " + imageUrl + " targetLanguage: " + targetLanguage);
+        try {
+            URL url = new URL(imageUrl);
+            URLConnection connection = url.openConnection();
+            connection.setConnectTimeout(5000); // 连接超时（单位：毫秒）
+            connection.setReadTimeout(5000);    // 读取超时
+            InputStream inputStream = url.openStream();
+            byte[] input = inputStream.readAllBytes();
+            inputStream.close();
 
-        // 编码成 Base64
-        String base64Image = Base64.getEncoder().encodeToString(input);
+            // 编码成 Base64
+            String base64Image = Base64.getEncoder().encodeToString(input);
+            TranslateImageRequest translateImageRequest = new TranslateImageRequest();
+            translateImageRequest.setTargetLanguage(targetLanguage);
+            translateImageRequest.setImage(base64Image);
 
-        TranslateImageRequest translateImageRequest = new TranslateImageRequest();
-        translateImageRequest.setTargetLanguage("zh");
-        translateImageRequest.setImage(base64Image);
+            TranslateImageResponse translateImageResponse = translateService.translateImage(translateImageRequest);
+            appInsights.trackTrace("huoShanImageTranslate 返回的数据 ： " + JSON.toJSONString(translateImageResponse.getResponseMetadata()));
+            return Base64.getDecoder().decode(translateImageResponse.getImage());
 
-        TranslateImageResponse translateImageResponse = translateService.translateImage(translateImageRequest);
-        System.out.println(JSON.toJSONString(translateImageResponse.getResponseMetadata()));
-        System.out.println(JSON.toJSONString(translateImageResponse.getResult()));
-        String image = translateImageResponse.getImage();
-        System.out.println("iamge: " + image);
-        byte[] output = Base64.getDecoder().decode(translateImageResponse.getImage());
-        Path filePath = Paths.get(System.getProperty("user.home"), "Desktop", "translated.png");
-        Files.write(filePath, output);
-        System.out.println("图片已保存: translated.png");
+        } catch (Exception e) {
+            appInsights.trackTrace("huoShanImageTranslate " + e.getMessage());
+        }
+        return null;
     }
 }

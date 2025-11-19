@@ -26,6 +26,7 @@ import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
+import com.bogdatech.utils.StringUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,9 +172,7 @@ public class TestController {
     @PutMapping("/testAutoTranslate")
     public void testAutoTranslate() {
         appInsights.trackTrace("testAutoTranslate 开始调用");
-        executorService.execute(() -> {
-            taskService.autoTranslate();
-        });
+        executorService.execute(() -> taskService.autoTranslate());
     }
 
     @Autowired
@@ -240,17 +239,6 @@ public class TestController {
         if (stopFlag) {
             appInsights.trackTrace("停止成功");
         }
-    }
-
-    /**
-     * 输入任务id，实现该任务的翻译
-     */
-    @PutMapping("/testDBTranslate2")
-    public void testDBTranslate2(@RequestParam String taskId) {
-        //根据id获取数据，转化为规定数据类型
-//        RabbitMqTranslateVO dataToProcess = translateTasksService.getDataToProcess(taskId);
-//        processDbTaskService.processTask(dataToProcess, new TranslateTasksDO(), false);
-//        translateTasksService.updateByTaskId(taskId, 1);
     }
 
     /**
@@ -538,4 +526,5 @@ public class TestController {
     public String testDeleteShopifyData(@RequestParam String resourceId, @RequestParam String locals, @RequestParam String translationKeys, @RequestParam String accessToken) {
         return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
     }
+
 }

@@ -104,16 +104,15 @@ public class InitialTranslateDbTask {
 
         for (InitialTranslateTasksDO initialTranslateTasksDO: clickTranslateTasks
         ) {
-            initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+            int update = initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                     .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
                     .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
-        }
 
-        // 遍历clickTranslateTasks，生成initialTasks
-        for (InitialTranslateTasksDO task : clickTranslateTasks) {
-            manualExecutorService.submit(() -> {
-                processInitialTasksOfShop(task);
-            });
+            if (update > 0) {
+                initialExecutorService.submit(() -> {
+                    processInitialTasksOfShop(initialTranslateTasksDO);
+                });
+            }
         }
     }
 
@@ -133,17 +132,15 @@ public class InitialTranslateDbTask {
         // 修改initial task 状态
         for (InitialTranslateTasksDO initialTranslateTasksDO: autoTranslateTasks
              ) {
-            initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
+            int update = initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                     .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
                     .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
-        }
 
-
-        // 遍历clickTranslateTasks，生成initialTasks
-        for (InitialTranslateTasksDO task : autoTranslateTasks) {
-            initialExecutorService.submit(() -> {
-                processInitialTasksOfShop(task);
-            });
+            if (update > 0) {
+                initialExecutorService.submit(() -> {
+                    processInitialTasksOfShop(initialTranslateTasksDO);
+                });
+            }
         }
     }
 

@@ -3,21 +3,25 @@ package com.bogdatech.logic;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IPCUserPicturesService;
 import com.bogdatech.Service.IPCUserService;
+import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.constants.TranslateConstants;
 import com.bogdatech.entity.DO.PCUserPicturesDO;
 import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.entity.VO.AltTranslateVO;
 import com.bogdatech.entity.VO.ImageTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.AidgeIntegration;
+import com.bogdatech.integration.HunYuanBucketIntegration;
+import com.bogdatech.integration.HuoShanIntegration;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.AidgeUtils;
+import com.bogdatech.utils.PictureUtils;
+import com.bogdatech.utils.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import static com.bogdatech.controller.UserPicturesController.allowedMimeTypes;
-import static com.bogdatech.integration.HunYuanBucketIntegration.uploadFile;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -32,6 +36,10 @@ public class PCUserPicturesService {
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
     private AidgeIntegration aidgeIntegration;
+    @Autowired
+    private HuoShanIntegration huoShanIntegration;
+    @Autowired
+    private ITranslationCounterService iTranslationCounterService;
 
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
@@ -49,17 +57,20 @@ public class PCUserPicturesService {
 
         // 先判断是否有图片,有图片做上传和插入更新数据;没有图片,做插入和更新数据
         if (!file.isEmpty() && pcUserPicturesDO != null && pcUserPicturesDO.getImageId() != null) {
-            //做图片的限制
+            // 做图片的限制
             if (!allowedMimeTypes.contains(file.getContentType())) {
                 return new BaseResponse<>().CreateErrorResponse("Image format error");
             }
-            //将图片上传到腾讯云
-            String afterUrl = uploadFile(file, shopName, pcUserPicturesDO.getImageId());
+
+            // 将图片上传到腾讯云
+            String afterUrl = HunYuanBucketIntegration.uploadFile(file, shopName, pcUserPicturesDO.getImageId());
             pcUserPicturesDO.setImageAfterUrl(afterUrl);
-            //再将图片相关数据存到数据库中
+
+            // 再将图片相关数据存到数据库中
             pcUserPicturesDO.setShopName(shopName);
             boolean b = ipcUserPicturesService.insertPictureData(pcUserPicturesDO);
-            //数据库做上传和插入更新数据
+
+            // 数据库做上传和插入更新数据
             if (afterUrl != null && b) {
                 return new BaseResponse<>().CreateSuccessResponse(pcUserPicturesDO);
             } else {
@@ -88,16 +99,37 @@ public class PCUserPicturesService {
     public BaseResponse<Object> translatePic(String shopName, ImageTranslateVO imageTranslateVO) {
         appInsights.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + imageTranslateVO.getSourceCode() + " targetCode " + imageTranslateVO.getTargetCode() + " imageUrl " + imageTranslateVO.getImageUrl() + " accessToken " + imageTranslateVO.getAccessToken());
 
-        // 校验是否是符合标准版api的语言翻译规则
-        boolean baseImageTranslateInputCode = AidgeUtils.isBaseImageTranslateInputCode(imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode());
-        if (!baseImageTranslateInputCode) {
-            return new BaseResponse<>().CreateErrorResponse("The source language cannot be translated into the target language.");
+        // 判断 图片格式，语言范围，然后选择模型翻译
+        String imageUrl = imageTranslateVO.getImageUrl();
+        int modelType = imageTranslateVO.getModelType();
+        String sourceCode = imageTranslateVO.getSourceCode();
+        String targetCode = imageTranslateVO.getTargetCode();
+        String extensionFromUrl = PictureUtils.getExtensionFromUrl(imageUrl);
+
+        // 特殊语言 繁体中文  zh-tw 当modelType为2时要改为 zh-Hant sourceCode 或 targetCode都要改
+        if (modelType == 2 && ("zh-tw".equals(sourceCode) || "zh-tw".equals(targetCode))) {
+            if ("zh-tw".equals(sourceCode)) {
+                sourceCode = "zh-Hant";
+            }
+            if ("zh-tw".equals(targetCode)) {
+                targetCode = "zh-Hant";
+            }
         }
 
-        // 校验是否符合标准版api的语言范围
-        boolean baseImageTranslateInputCodeRange = AidgeUtils.isBaseImageTranslateInputCodeRange(imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode());
-        if (!baseImageTranslateInputCodeRange) {
-            return new BaseResponse<>().CreateErrorResponse("The source languages and the target languages are not in translated range.");
+        if (extensionFromUrl == null) {
+            return new BaseResponse<>().CreateErrorResponse("The image format is incorrect.");
+        }
+
+        // 判断后缀是否符合模型要求  huoShan 只支持 png和jpg， aidge支持png、jpeg、jpg、bmp、webp
+        boolean allowedExtension = PictureUtils.isSupportModelAndImageType(extensionFromUrl, modelType);
+        if (!allowedExtension) {
+            return new BaseResponse<>().CreateErrorResponse("The image format is not supported by the model.");
+        }
+
+        // 判断传入的modelType 和 sourceCode、targetCode 是否符合要求
+        boolean differentImageTranslateInputCode = PictureUtils.isDifferentImageTranslateInputCode(sourceCode, targetCode, modelType);
+        if (!differentImageTranslateInputCode) {
+            return new BaseResponse<>().CreateErrorResponse("The source language and target language are not supporting.");
         }
 
         // 获取用户token，判断是否和数据库中一致再选择是否调用
@@ -115,9 +147,14 @@ public class PCUserPicturesService {
             return new BaseResponse<>().CreateErrorResponse("额度不够");
         }
 
-        // 调用图片翻译方法
-        // 判断sourceCode和targetCode 是否符合ali和aidge的翻译条件，如果符合，随机调用
-        String targetPic = aidgeIntegration.aidgeStandPictureTranslate(shopName, imageTranslateVO.getImageUrl(), imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), maxCharsByShopName);
+        // 根据modelType 选择不同模型翻译
+        String targetPic = null;
+        if (modelType == 1) {
+            targetPic = aidgeIntegration.aidgeStandPictureTranslate(shopName, imageTranslateVO.getImageUrl()
+                    , imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), maxCharsByShopName, AidgeIntegration.PICTURE_APP);
+        }else if (modelType == 2) {
+            targetPic = huoShanImageTranslate(imageUrl, shopName, AidgeIntegration.PICTURE_APP, targetCode, maxCharsByShopName);
+        }
 
         if (targetPic != null) {
             return new BaseResponse<>().CreateSuccessResponse(targetPic);
@@ -166,7 +203,7 @@ public class PCUserPicturesService {
         pcUserPicturesDO.setShopName(shopName);
         // 判断是否存在， 存在则更新，不存在则插入
         List<PCUserPicturesDO> userPicByShopNameAndImageIdAndLanguageCode = ipcUserPicturesService.getUserPicByShopNameAndImageIdAndLanguageCode(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getLanguageCode());
-        boolean flag = false;
+        boolean flag;
         if (userPicByShopNameAndImageIdAndLanguageCode == null || userPicByShopNameAndImageIdAndLanguageCode.isEmpty()) {
             flag = ipcUserPicturesService.insertPictureData(pcUserPicturesDO);
         } else {
@@ -212,5 +249,24 @@ public class PCUserPicturesService {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    // 火山翻译图片 将翻译完的图片存bucket里，然后输出url
+    public String huoShanImageTranslate(String imageUrl, String shopName, String appType, String languageCode, int limitChars) {
+        // 先火山翻译
+        byte[] bytes = huoShanIntegration.huoShanImageTranslate(imageUrl, languageCode);
+
+        // 计算额度
+        if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
+            iTranslationCounterService.updateAddUsedCharsByShopName(shopName, TranslateConstants.PIC_FEE, limitChars);
+        }else {
+            ipcUserService.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
+        }
+
+        // 存bucket 桶里面
+        String key = HunYuanBucketIntegration.PATH_NAME + "/" + shopName + "/" + StringUtils.generate8DigitNumber() + ".jpg";
+
+        // 将这个bytes存到bucket里
+        return HunYuanBucketIntegration.uploadBytes(bytes, key, "image/jpeg");
     }
 }

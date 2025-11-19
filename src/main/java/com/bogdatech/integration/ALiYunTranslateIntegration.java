@@ -390,7 +390,7 @@ public class ALiYunTranslateIntegration {
     }
 
     public static String TRANSLATE_APP = "TRANSLATE_APP";
-    public static String PICTURE_APP = "PICTURE_APP";
+
     /**
      * 调用qwen图片机器翻译
      */

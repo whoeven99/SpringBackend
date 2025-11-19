@@ -11,43 +11,36 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
 
 import javax.sql.DataSource;
-import java.io.IOException;
 import java.util.Properties;
 
 @Configuration
-@MapperScan("com.bogdatech.mapper")  // 替换为你的Mapper接口所在的包路径
+@MapperScan({"com.bogdatech.mapper", "com.bogdatech.repository.mapper"})  // 替换为你的Mapper接口所在的包路径
 public class MybatisPlusConfig {
-        @Bean
-        public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
-            MybatisSqlSessionFactoryBean factory = new MybatisSqlSessionFactoryBean();
-            factory.setDataSource(dataSource);
-            // You can also configure other properties of MyBatis or MyBatis-Plus here
-            return factory.getObject();
-        }
-        // You can add more beans for configuring plugins, interceptors, etc.
+    @Bean
+    public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
+        MybatisSqlSessionFactoryBean factory = new MybatisSqlSessionFactoryBean();
+        factory.setDataSource(dataSource);
+        // You can also configure other properties of MyBatis or MyBatis-Plus here
+        return factory.getObject();
+    }
+    // You can add more beans for configuring plugins, interceptors, etc.
 
     @Bean
-    public DataSource dataSource() {
+    public DataSource dataSource() throws Exception {
         DruidDataSource dataSource = new DruidDataSource();
-        try {
-            String env = System.getenv("ApplicationEnv");
-            Properties properties = new Properties();
-            properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
-            if ("prod".equals(env)) {
-                dataSource.setUrl(properties.getProperty("spring.datasource.master.url"));
-                dataSource.setUsername(properties.getProperty("spring.datasource.master.username"));
-                dataSource.setPassword(properties.getProperty("spring.datasource.master.password"));
-                dataSource.setDriverClassName(properties.getProperty("spring.datasource.master.driver-class-name"));
-//                appInsights.trackTrace("prod: " + properties.getProperty("spring.datasource.master.username"));
-            } else {
-                dataSource.setUrl(properties.getProperty("spring.datasource.test.url"));
-                dataSource.setUsername(properties.getProperty("spring.datasource.test.username"));
-                dataSource.setPassword(properties.getProperty("spring.datasource.test.password"));
-                dataSource.setDriverClassName(properties.getProperty("spring.datasource.test.driver-class-name"));
-//                appInsights.trackTrace("test: " + properties.getProperty("spring.datasource.test.username"));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        String env = System.getenv("ApplicationEnv");
+        Properties properties = new Properties();
+        properties.load(Application.class.getClassLoader().getResourceAsStream("application.properties"));
+        if ("prod".equals(env)) {
+            dataSource.setUrl(properties.getProperty("spring.datasource.master.url"));
+            dataSource.setUsername(properties.getProperty("spring.datasource.master.username"));
+            dataSource.setPassword(properties.getProperty("spring.datasource.master.password"));
+            dataSource.setDriverClassName(properties.getProperty("spring.datasource.master.driver-class-name"));
+        } else {
+            dataSource.setUrl(properties.getProperty("spring.datasource.test.url"));
+            dataSource.setUsername(properties.getProperty("spring.datasource.test.username"));
+            dataSource.setPassword(properties.getProperty("spring.datasource.test.password"));
+            dataSource.setDriverClassName(properties.getProperty("spring.datasource.test.driver-class-name"));
         }
         return dataSource;
     }
@@ -59,5 +52,4 @@ public class MybatisPlusConfig {
     public DataSourceTransactionManager transactionManager(DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }
-
 }
