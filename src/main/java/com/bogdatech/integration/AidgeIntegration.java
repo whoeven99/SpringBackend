@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.bogdatech.Service.IPCUserService;
+import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.model.controller.response.SignResponse;
 import com.bogdatech.utils.JsonUtils;
@@ -11,13 +12,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.util.*;
 
+import static com.bogdatech.constants.TranslateConstants.PIC_FEE;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.global.iop.util.WebUtils.doGet;
 import static com.global.iop.util.WebUtils.doPost;
@@ -38,7 +39,7 @@ public class AidgeIntegration {
          * 我们为您的账号提供一定数量的免费试用额度可以试用任何API。请将useTrialResource设置为true用于试用。
          * 如设置为false，且您未购买该API，将会收到"Sorry, your calling resources have been exhausted........."的错误提示
          */
-        public static boolean USE_TRIAL_RESOURCE = false;
+        public static boolean USE_TRIAL_RESOURCE = true;
         /**
          * FAQ for API response
          * FAQ(中文/Simple Chinese):https://aidge.yuque.com/org-wiki-aidge-bzb63a/brbggt/ny2tgih89utg1aha
@@ -47,13 +48,16 @@ public class AidgeIntegration {
         public static final String CHARSET_UTF8 = "UTF-8";
         public static final String SIGN_METHOD_SHA256 = "sha256";
         public static final String SIGN_METHOD_HMAC_SHA256 = "HmacSHA256";
+
     }
 
     @Autowired
     private IPCUserService ipcUserService;
-
+    @Autowired
+    private ITranslationCounterService iTranslationCounterService;
+    public static String PICTURE_APP = "PICTURE_APP";
     // 测试基础调用，看是否成功
-    public String aidgeStandPictureTranslate(String shopName, String imageUrl, String sourceCode, String targetCode, Integer limitChars) {
+    public String aidgeStandPictureTranslate(String shopName, String imageUrl, String sourceCode, String targetCode, Integer limitChars, String appType) {
         try {
             // Call api
             String apiName = "/ai/image/translation";
@@ -66,7 +70,7 @@ public class AidgeIntegration {
 
             String apiRequest = apiRequestJson.toString();
 
-            String apiResponse = commonInvokeApi(apiName, apiRequest, shopName, limitChars);
+            String apiResponse = commonInvokeApi(apiName, apiRequest, shopName, limitChars, appType);
 
             // 解析数据
             JsonNode jsonNode = JsonUtils.stringToJson(apiResponse);
@@ -84,26 +88,22 @@ public class AidgeIntegration {
             // Call submit api
             String apiName = "/ai/image/translation_mllm/batch";
 
-            /*
-             * Create API request using JSONObject
-             * You can use any other json library to build parameters
-             */
             JSONArray params = new JSONArray();
             params.add(new JSONObject()
                     .fluentPut("imageUrl", "https://m.media-amazon.com/images/I/71P77lL5KEL._AC_SL1500_.jpg")
                     .fluentPut("sourceLanguage", "en")
                     .fluentPut("targetLanguage", "zh"));
 
-            String submitRequest = Objects.requireNonNull(new JSONObject()
-                            .put("paramJson", params.toString()))
-                    .toString();
-
+            JSONObject submitObj = new JSONObject();
+            submitObj.put("paramJson", params.toString());
+            String submitRequest = submitObj.toString();
             String submitResult = prodInvokeApi(apiName, submitRequest, "", false);
 
             JSONObject submitResultJson = JSON.parseObject(submitResult);
             JSONObject dataObj = submitResultJson.getJSONObject("data");
-            String taskId = dataObj.getString("taskId");
 
+            String taskId = dataObj.getJSONObject("result").getString("taskId");
+            System.out.println("taskId: " + taskId);
             // Query task status
             String queryApiName = "/ai/image/translation_mllm/results";
             String queryResult = null;
@@ -119,11 +119,12 @@ public class AidgeIntegration {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                    appInsights.trackTrace("FatalException prodTest " + e.getMessage());
                 }
             }
 
             // Final result for the virtual try on
-            System.out.println(queryResult);
+            System.out.println("queryResult: " + queryResult);
 
             // 需要做解析
         } catch (Exception e) {
@@ -136,6 +137,9 @@ public class AidgeIntegration {
         // 计算 sign
         String url = getSign(apiName);
 
+        if (url == null || url.isEmpty()){
+            return null;
+        }
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
         if (ApiConfig.USE_TRIAL_RESOURCE) {
@@ -152,11 +156,11 @@ public class AidgeIntegration {
         }
 
         // FAQ(中文/Simple Chinese):https://aidge.yuque.com/org-wiki-aidge-bzb63a/brbggt/ny2tgih89utg1aha
-        System.out.println(result);
+        System.out.println("result: " + result);
         return result;
     }
 
-    private String commonInvokeApi(String apiName, String data, String shopName, Integer limitChars) {
+    private String commonInvokeApi(String apiName, String data, String shopName, Integer limitChars, String appType) {
         // Calculate sign
         String url = getSign(apiName);
 
@@ -180,7 +184,12 @@ public class AidgeIntegration {
             appInsights.trackTrace("FatalException commonInvokeApi error: " + e.getMessage());
         }
 
-        ipcUserService.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
+        if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
+            iTranslationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
+        }else {
+            ipcUserService.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
+        }
+
         appInsights.trackTrace("translatePic : " + result);
         return result;
     }
