@@ -40,6 +40,16 @@ public class UserTokenService {
         return redisTokenRepository.getUsedTokenByTaskId(shopName, taskId);
     }
 
+    public Integer addUsedToken(String shopName, Integer token) {
+        redisTokenRepository.addUsedToken(shopName, token);
+
+        Integer usedToken = redisTokenRepository.getUsedToken(shopName);
+
+        // 并发的时候，redis的usedToken是准确的，db只是定时更新而已，不一定准确
+        translationCounterService.updateUsedCharsByShopName(shopName, usedToken);
+        return usedToken;
+    }
+
     public Integer addUsedToken(String shopName, Integer taskId, Integer token) {
         redisTokenRepository.addUsedToken(shopName, taskId, token);
 

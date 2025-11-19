@@ -2,6 +2,7 @@ package com.bogdatech.logic.translate;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUsersService;
+import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.repository.repo.TranslateTaskV2Repo;
 import com.bogdatech.entity.DO.*;
@@ -15,10 +16,7 @@ import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.HtmlUtils;
-import com.bogdatech.utils.JsonUtils;
-import com.bogdatech.utils.JudgeTranslateUtils;
-import com.bogdatech.utils.ShopifyRequestUtils;
+import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
@@ -66,6 +64,66 @@ public class TranslateV2Service {
     private GlossaryService glossaryService;
     public static TelemetryClient appInsights = new TelemetryClient();
 
+    // 单条翻译入口
+    public BaseResponse<String> singleTextTranslate(SingleTranslateVO request) {
+        if (request.getContext() == null) {
+            return new BaseResponse<>().CreateErrorResponse("Missing parameters");
+        }
+
+        String shopName = request.getShopName();
+        Integer maxToken = userTokenService.getMaxToken(shopName);
+        Integer usedToken = userTokenService.getUsedToken(shopName);
+        if (usedToken >= maxToken) {
+            return new BaseResponse<>().CreateErrorResponse("Token limit reached");
+        }
+
+        String value = request.getContext();
+        String target = request.getTarget();
+        if (JsoupUtils.isHtml(value)) {
+            // 解析html里面待翻译的内容
+            List<String> originalTexts = HtmlUtils.parseHtml(value, target);
+
+            // index - sourceValue 方便后续处理以及ai
+            Map<Integer, String> idToSourceValueMap = originalTexts.stream().collect(
+                    Collectors.toMap(originalTexts::indexOf, text -> text));
+
+            // 开始翻译
+            Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, new HashMap<>());
+            if (translatedValueMapPair == null) {
+                appInsights.trackTrace("FatalException TranslateTaskV2 singleTextTranslate error shop: " + shopName);
+                return new BaseResponse<>().CreateErrorResponse("Translation failed, please try again");
+            }
+            Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
+            String translatedValue = HtmlUtils.replaceBack(value, originalTexts, translatedValueMap);
+            Integer usedChars = translatedValueMapPair.getSecond();
+            userTokenService.addUsedToken(shopName, usedChars);
+
+            // 设置缓存
+            for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
+                Integer index = entry.getKey();
+                String sourceText = entry.getValue();
+                String translatedText = translatedValueMap.get(index);
+                setCache(target, translatedText, sourceText);
+            }
+            return new BaseResponse<String>().CreateSuccessResponse(translatedValue);
+        } else {
+            Pair<String, Integer> pair = translateSingle(value, target, new HashMap<>());
+            if (pair == null) {
+                return new BaseResponse<>().CreateErrorResponse("Translation failed, please try again");
+            }
+            String targetValue = pair.getFirst();
+            Integer usedChars = pair.getSecond();
+            userTokenService.addUsedToken(shopName, usedChars);
+
+            setCache(target, targetValue, value);
+
+            appInsights.trackTrace(shopName + " 用户 ，" + value + " 单条翻译 handle模块： " + value +
+                    "消耗token数： " + usedChars + "target为： " + targetValue);
+            return new BaseResponse<String>().CreateSuccessResponse(targetValue);
+        }
+    }
+
+    // 手动开启翻译任务入口
     // 翻译 step 1, 用户 -> initial任务创建
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
         String shopName = request.getShopName();
