@@ -431,8 +431,8 @@ public class RabbitMqTranslateService {
                               String accessToken, String languagePack, String modeType,
                               String translationModel, Map<String, Object> glossaryMap,
                               CharacterCountUtils counter, String translationKeyType, String translateType) {
-        if (PLAIN_TEXT.equals(translationKeyType) || TITLE.equals(translationKeyType)
-                || META_TITLE.equals(translationKeyType) || LOWERCASE_HANDLE.equals(translationKeyType)) {
+        if (PLAIN_TEXT.equals(translationKeyType) || TITLE.equals(translationKeyType) || META_TITLE.equals(translationKeyType)
+                || LOWERCASE_HANDLE.equals(translationKeyType) || LIST_SINGLE.equals(translationKeyType)) {
             // Plain Text采用了50个的list翻译
             translatePlainTextData(translateTextDOS, shopName, source, target, accessToken, limitChars,
                     languagePack, modeType, translationModel, counter, translationKeyType, translateType);
@@ -470,11 +470,7 @@ public class RabbitMqTranslateService {
             //开始翻译
             String translatedValue = isCached(value, target);
             if (translatedValue == null) {
-                if (translationKeyType.equals(LIST_SINGLE)) {
-                    translatedValue = translateDataService.translateListSingleData(
-                            value, target, languagePack, limitChars, counter, shopName, accessToken,
-                            source, translation, translateTextDO.getResourceId(), translateType);
-                } else if (translationKeyType.equals(HTML)) {
+                if (translationKeyType.equals(HTML)) {
                     translatedValue = translateDataService.translateHtmlData(
                             value, shopName, target, accessToken, languagePack, limitChars, modeType,
                             counter, source, translation, resourceId, translationModel, translateType);
