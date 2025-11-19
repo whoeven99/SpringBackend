@@ -928,20 +928,20 @@ public class TranslateDataService {
             if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
                     || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
                     || "LIST_URL".equals(type)
-                    || "JSON".equals(type)
-                    || "JSON_STRING".equals(type)
+//                    || "JSON".equals(type)
+//                    || "JSON_STRING".equals(type)
             ) {
                 iterator.remove(); // 根据业务条件删除
                 redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                 continue;
             }
 
-            //判断数据是不是json数据。是的话删除
-            if (isJson(value)) {
-                iterator.remove(); // 根据业务条件删除
-                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
-                continue;
-            }
+//            //判断数据是不是json数据。是的话删除
+//            if (isJson(value)) {
+//                iterator.remove(); // 根据业务条件删除
+//                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+//                continue;
+//            }
 
             String key = translateTextDO.getTextKey();
             //如果handleFlag为false，则跳过
@@ -1017,11 +1017,11 @@ public class TranslateDataService {
                     redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
                     continue;
                 }
-                if (isJson(value)) {
-                    iterator.remove();
-                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
-                    continue;
-                }
+//                if (isJson(value)) {
+//                    iterator.remove();
+//                    redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_DONE, 1L);
+//                    continue;
+//                }
             }
 
         }
