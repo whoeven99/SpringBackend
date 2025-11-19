@@ -321,6 +321,7 @@ public class RabbitMqTranslateService {
                 case LOWERCASE_HANDLE -> stringSetMap.get(LOWERCASE_HANDLE).add(translateTextDO);
                 default -> {
                     if (textType.equals(LIST_SINGLE)) {
+                        appInsights.trackTrace("filterTranslateMap translateTextDO : " + translateTextDO);
                         stringSetMap.get(LIST_SINGLE).add(translateTextDO);
                     } else {
                         stringSetMap.get(PLAIN_TEXT).add(translateTextDO);
