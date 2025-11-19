@@ -117,8 +117,8 @@ public class TranslateV2Service {
 
             setCache(target, targetValue, value);
 
-            appInsights.trackTrace(shopName + " 用户 ，" + value + " 单条翻译 handle模块： " + value +
-                    "消耗token数： " + usedChars + "target为： " + targetValue);
+            appInsights.trackTrace(shopName + " 用户，" + value + " 单条翻译，" +
+                    "消耗token数：" + usedChars + "，target为：" + targetValue);
             return new BaseResponse<String>().CreateSuccessResponse(targetValue);
         }
     }
