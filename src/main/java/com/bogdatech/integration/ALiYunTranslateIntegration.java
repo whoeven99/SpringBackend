@@ -22,10 +22,10 @@ import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.ConfigUtils;
 import com.bogdatech.utils.JsonUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,7 +34,6 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TimeOutUtils.*;
 
 @Component
@@ -98,7 +97,7 @@ public class ALiYunTranslateIntegration {
                 .build();
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(model)
                 .messages(Arrays.asList(systemMsg, userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
@@ -153,7 +152,7 @@ public class ALiYunTranslateIntegration {
 
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey("sk-8321caeb10b1423494b1522976848979")
                 .model(model)
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
@@ -212,7 +211,7 @@ public class ALiYunTranslateIntegration {
 
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(model)
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
@@ -274,7 +273,7 @@ public class ALiYunTranslateIntegration {
         appInsights.trackTrace("userMsg 用户 " + shopName);
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(model)
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
@@ -344,7 +343,7 @@ public class ALiYunTranslateIntegration {
         //根据目标语言
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(model)
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
@@ -467,7 +466,7 @@ public class ALiYunTranslateIntegration {
                         Collections.singletonMap("text", prompt))).build();
 
         MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(QWEN_VL_LAST)
                 .message(userMessage)
                 .build();
@@ -517,7 +516,7 @@ public class ALiYunTranslateIntegration {
                 .build();
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model("qwen-max-latest")
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
@@ -570,7 +569,7 @@ public class ALiYunTranslateIntegration {
                 .build();
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
-                .apiKey(System.getenv("BAILIAN_API_KEY"))
+                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(model)
                 .messages(Arrays.asList(systemMsg, userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
