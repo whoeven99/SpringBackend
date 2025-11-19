@@ -84,8 +84,9 @@ public class TranslateV2Service {
             List<String> originalTexts = HtmlUtils.parseHtml(value, target);
 
             // index - sourceValue 方便后续处理以及ai
-            Map<Integer, String> idToSourceValueMap = originalTexts.stream().collect(
-                    Collectors.toMap(originalTexts::indexOf, text -> text));
+            Map<Integer, String> idToSourceValueMap = java.util.stream.IntStream.range(0, originalTexts.size())
+                    .boxed()
+                    .collect(Collectors.toMap(i -> i, originalTexts::get));
 
             // 开始翻译
             Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, new HashMap<>());
