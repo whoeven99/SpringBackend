@@ -246,22 +246,34 @@ public class TranslateDataService {
         if (untranslatedTexts.isEmpty()) {
             return new HashMap<>();
         }
-        // 根据不同的key类型，生成对应提示词，后翻译
-        String prompt = PlaceholderUtils.getListPrompt(getLanguageName(target), languagePack, translationKeyType, modelType);
-        appInsights.trackTrace(shopName + " translatePlainTextData 翻译类型 : " + translationKeyType + " 提示词 : " + prompt + " 未翻译文本 : " + untranslatedTexts);
 
-        String untranslatedTextsJson = JsonUtils.objectToJson(untranslatedTexts);
-        String translatedJson = translateByCiwiOrGptModel(target, untranslatedTextsJson,
+        // 1. 建立「原文 → 原索引列表」映射（去重）
+        LinkedHashMap<String, List<String>> duplicateIndexMap = new LinkedHashMap<>();
+        for (int i = 0; i < untranslatedTexts.size(); i++) {
+            String text = untranslatedTexts.get(i);
+            duplicateIndexMap.computeIfAbsent(text, k -> new ArrayList<>()).add(String.valueOf(i));
+        }
+
+        // 2. 建立唯一文本 map（编号 → 唯一原文）
+        LinkedHashMap<String, String> uniqueTextMap = new LinkedHashMap<>();
+        int uniqIndex = 1;
+        for (String uniqueText : duplicateIndexMap.keySet()) {
+            uniqueTextMap.put(String.valueOf(uniqIndex++), uniqueText);
+        }
+
+        // 最终翻译结果（编号 → 译文）
+        LinkedHashMap<String, String> translatedUniqueMap = new LinkedHashMap<>();
+
+        // 4. 按新提示词翻译
+        String prompt = PlaceholderUtils.getNewestPrompt(getLanguageName(target), JsonUtils.objectToJson(uniqueTextMap));
+        String translatedJson = translateByCiwiOrGptModel(target, null,
                 shopName, source, counter, limitChars, prompt,
                 false, translationModel, translateType);
 
         // 如果主翻译服务 translateBatch 返回 null，则使用阿里云翻译服务作为备用
         if (translatedJson == null) {
-            translatedJson = aLiYunTranslateIntegration.userTranslate(untranslatedTextsJson, prompt, counter, target, shopName, limitChars, false, translateType);
+            translatedJson = aLiYunTranslateIntegration.userTranslate(null, prompt, counter, target, shopName, limitChars, false, translateType);
         }
-
-        appInsights.trackTrace("TranslateDataServiceLog PlainText 用户： " + shopName + "，sourceText: " + untranslatedTexts
-                + " translatedJson: " + translatedJson);
 
         if (translatedJson == null) {
             appInsights.trackTrace("FatalException TranslateDataServiceLog translatePlainTextData 用户： " + shopName +
@@ -269,14 +281,37 @@ public class TranslateDataService {
             return new HashMap<>();
         }
 
-        Map<String, String> map = JsonUtils.jsonToObjectWithNull(translatedJson, new TypeReference<Map<String, String>>() {
-        });
-        if (map == null) {
+        // 解析数据
+        LinkedHashMap<String, String> resultMap = StringUtils.parseOutputTransaction(translatedJson);
+
+        if (resultMap == null || resultMap.isEmpty()) {
             appInsights.trackTrace("FatalException TranslateDataServiceLog translatePlainTextData 用户： " + shopName +
                     " 翻译失败，map为空 untranslatedTexts: " + untranslatedTexts + " 返回值: " + translatedJson);
             return new HashMap<>();
         }
-        return map;
+
+        // 还原为完整的 key→译文 map（保持原始 key 数量）
+        for (Map.Entry<String, List<String>> entry : duplicateIndexMap.entrySet()) {
+            String text = entry.getKey();
+
+            // 找到对应翻译
+            String translateds = null;
+            for (Map.Entry<String, String> transEntry : resultMap.entrySet()) {
+                String uniqKey = transEntry.getKey();
+                if (uniqueTextMap.get(uniqKey).equals(text)) {
+                    translateds = transEntry.getValue();
+                    break;
+                }
+            }
+
+            if (translateds == null) {
+                translateds = text;
+            }
+
+            translatedUniqueMap.put(text, translateds);
+        }
+
+        return translatedUniqueMap;
     }
 
     /**
@@ -1288,7 +1323,7 @@ public class TranslateDataService {
                         , limitChars, isSingleFlag, translateType);
             }
 
-            LinkedHashMap<String, String> resultMap = parseOutputTransaction(translated);
+            LinkedHashMap<String, String> resultMap = StringUtils.parseOutputTransaction(translated);
             translatedUniqueMap.putAll(resultMap);
 
         } catch (Exception e) {
