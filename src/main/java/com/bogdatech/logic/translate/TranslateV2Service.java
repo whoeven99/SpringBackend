@@ -191,10 +191,10 @@ public class TranslateV2Service {
                         appInsights.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
                                 " resourceId: " + node.getResourceId());
 
-                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
+//                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                         // 每个node有几个translatableContent
                         node.getTranslatableContent().forEach(translatableContent -> {
-                            if (needTranslate(translatableContent, node.getTranslations(), existingTasks, module, initialTaskV2DO.isCover())) {
+                            if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover())) {
                                 translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                 translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                 translateTaskV2DO.setType(translatableContent.getType());
@@ -595,7 +595,7 @@ public class TranslateV2Service {
     // 根据翻译规则，不翻译的直接不用存
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
-                                  List<TranslateTaskV2DO> existingTasks, String module, boolean isCover) {
+                                  String module, boolean isCover) {
         String value = translatableContent.getValue();
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
@@ -691,13 +691,13 @@ public class TranslateV2Service {
 
         // 最终插入时，检查数据库， todo 还是需要再优化一下
         // 检查本地数据库是否已有该 resourceId + key 的记录（防止初始化时断电造成重复插入）
-        if (!CollectionUtils.isEmpty(existingTasks)) {
-            for (TranslateTaskV2DO task : existingTasks) {
-                if (translatableContent.getKey().equals(task.getNodeKey())) {
-                    return false;
-                }
-            }
-        }
+//        if (!CollectionUtils.isEmpty(existingTasks)) {
+//            for (TranslateTaskV2DO task : existingTasks) {
+//                if (translatableContent.getKey().equals(task.getNodeKey())) {
+//                    return false;
+//                }
+//            }
+//        }
         return true;
     }
 
