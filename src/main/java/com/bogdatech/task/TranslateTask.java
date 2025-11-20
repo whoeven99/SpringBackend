@@ -1,5 +1,6 @@
 package com.bogdatech.task;
 
+import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.TaskService;
