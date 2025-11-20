@@ -3,6 +3,8 @@ package com.bogdatech.logic.translate;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.repository.entity.InitialTaskV2DO;
+import com.bogdatech.repository.entity.TranslateTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.repository.repo.TranslateTaskV2Repo;
 import com.bogdatech.entity.DO.*;
@@ -482,6 +484,8 @@ public class TranslateV2Service {
                     shopName, token, APIVERSION, ShopifyRequestUtils.registerTransactionQuery(), node);
             JSONObject jsonObject = JSONObject.parseObject(strResponse);
             if (jsonObject != null && jsonObject.getJSONObject("data") != null) {
+                appInsights.trackTrace("TranslateTaskV2 saving success: " + shopName +
+                        " randomDo: " + randomDo.getId() + " response: " + strResponse);
                 // 回写数据库，标记已写入 TODO 批量
                 // 需要data.translationsRegister.translations[]不为空，并且有key，才是最严格的
                 for (TranslateTaskV2DO taskDO : taskList) {

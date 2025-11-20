@@ -1,6 +1,6 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.entity.DO.BaseDO;
+import com.bogdatech.repository.entity.BaseDO;
 import java.sql.Timestamp;
 
 public class DbUtils {
