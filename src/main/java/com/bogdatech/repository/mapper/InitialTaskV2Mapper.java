@@ -1,7 +1,7 @@
 package com.bogdatech.repository.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogdatech.entity.DO.InitialTaskV2DO;
+import com.bogdatech.repository.entity.InitialTaskV2DO;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
