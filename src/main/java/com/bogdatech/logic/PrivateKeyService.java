@@ -14,10 +14,7 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
-import com.bogdatech.utils.AppInsightsUtils;
-import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
-import com.bogdatech.utils.StringUtils;
+import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -778,11 +775,10 @@ public class PrivateKeyService {
 
         try {
             String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
-            String env = System.getenv("ApplicationEnv");
-            if ("prod".equals(env) || "dev".equals(env)) {
-                shopifyApiIntegration.registerTransaction(request, body);
+            if (!ConfigUtils.isLocalEnv()) {
+                ShopifyHttpIntegration.registerTransaction(request, body);
             } else {
-                testingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
+                TestingEnvironmentIntegration.sendShopifyPost("translate/insertTranslatedText", requestBody);
             }
 
         } catch (JsonProcessingException | ClientException e) {

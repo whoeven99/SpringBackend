@@ -1,5 +1,6 @@
 package com.bogdatech.integration;
 
+import com.bogdatech.utils.ConfigUtils;
 import com.bogdatech.utils.StringUtils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
@@ -25,8 +26,8 @@ import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 @Component
 public class HunYuanBucketIntegration {
 
-    private static final String SECRET_ID = System.getenv(TENCENT_BUCKET_SECRET_ID);
-    private static final String SECRET_KEY = System.getenv(TENCENT_BUCKET_SECRET_KEY);
+    private static final String SECRET_ID = ConfigUtils.getConfig(TENCENT_BUCKET_SECRET_ID);
+    private static final String SECRET_KEY = ConfigUtils.getConfig(TENCENT_BUCKET_SECRET_KEY);
     private static final String BUCKET_NAME = "ciwi-us-1327177217";
     private static final String COS_REGION = "na-ashburn";
     public static final String PATH_NAME = "image-Translation";

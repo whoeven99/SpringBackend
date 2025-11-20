@@ -1,6 +1,7 @@
 package com.bogdatech.integration;
 
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
+import com.bogdatech.utils.ConfigUtils;
 import com.tencentcloudapi.common.AbstractModel;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -28,7 +29,7 @@ public class EmailIntegration {
 
         String jsonString = null;
         try {
-            Credential cred = new Credential(System.getenv("Tencent_Cloud_KEY_ID"), System.getenv("Tencent_Cloud_KEY"));
+            Credential cred = new Credential(ConfigUtils.getConfig("Tencent_Cloud_KEY_ID"), ConfigUtils.getConfig("Tencent_Cloud_KEY"));
             String templateDataJson = OBJECT_MAPPER.writeValueAsString(templateData);
             // 实例化一个http选项，可选的，没有特殊需求可以跳过
             HttpProfile httpProfile = new HttpProfile();

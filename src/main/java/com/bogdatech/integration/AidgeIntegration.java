@@ -7,6 +7,7 @@ import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.PCUserPicturesService;
 import com.bogdatech.model.controller.response.SignResponse;
+import com.bogdatech.utils.ConfigUtils;
 import com.bogdatech.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
@@ -17,7 +18,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.util.*;
-
 import static com.bogdatech.constants.TranslateConstants.PIC_FEE;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.global.iop.util.WebUtils.doGet;
@@ -26,8 +26,8 @@ import static com.global.iop.util.WebUtils.doPost;
 @Component
 public class AidgeIntegration {
     static class ApiConfig {
-        public static String ACCESS_KEY_NAME = System.getenv("AIDGE_ACCESS_KEY_NAME");
-        public static String ACCESS_KEY_SECRET = System.getenv("AIDGE_ACCESS_KEY_SECRET");
+        public static String ACCESS_KEY_NAME = ConfigUtils.getConfig("AIDGE_ACCESS_KEY_NAME");
+        public static String ACCESS_KEY_SECRET = ConfigUtils.getConfig("AIDGE_ACCESS_KEY_SECRET");
 
         /**
          * for api purchased on global site. set apiDomain to "api.aidc-ai.com"

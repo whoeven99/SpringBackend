@@ -8,6 +8,7 @@ import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.model.service.ProcessDbTaskService;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.ConfigUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -43,7 +44,7 @@ public class DBTask {
 
     @PostConstruct
     public void init() {
-        if (System.getenv("REDISCACHEHOSTNAME") == null) { return; }
+        if (ConfigUtils.getConfig("REDISCACHEHOSTNAME") == null) { return; }
         appInsights.trackTrace("DBTaskLog init");
         redisTranslateLockService.setDelete(); // 删掉翻译中的所有shop
     }

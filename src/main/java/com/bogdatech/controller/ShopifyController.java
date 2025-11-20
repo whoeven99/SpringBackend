@@ -10,6 +10,7 @@ import com.bogdatech.entity.VO.SubscriptionVO;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.utils.ConfigUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
@@ -236,27 +237,23 @@ public class ShopifyController {
                 .eq("shop_name", shopName)
         );
 
-        //通过charsOrdersDO的id，获取信息
+        // 通过charsOrdersDO的id，获取信息
+        // 根据新的集合获取这个订阅计划的信息
         String query = getSubscriptionQuery(charsOrdersDO.getId());
-        String infoByShopify;
-        String env = System.getenv("ApplicationEnv");
-        //根据新的集合获取这个订阅计划的信息
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(usersDO.getShopName(), usersDO.getAccessToken(), API_VERSION_LAST, null), query));
-        } else {
-            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(usersDO.getShopName(), usersDO.getAccessToken(), API_VERSION_LAST, "en", query));
-        }
+        String infoByShopify = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, query);
+
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             subscriptionVO.setFeeType(0);
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
-        //根据订阅计划信息，判断是否是第一个月的开始
+
+        // 根据订阅计划信息，判断是否是第一个月的开始
         JSONObject root = JSON.parseObject(infoByShopify);
         JSONObject node = root.getJSONObject("node");
         if (node == null || node.isEmpty()) {
-            //用户卸载，计划会被取消，但不确定其他情况
+            // 用户卸载，计划会被取消，但不确定其他情况
             subscriptionVO.setFeeType(0);
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);

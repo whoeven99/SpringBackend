@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -34,7 +33,6 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
@@ -103,12 +101,11 @@ public class ShopifyService {
     //封装调用云服务器实现获取shopify数据的方法
     public static String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
         String requestBody = JsonUtils.objectToJson(cloudServiceRequest);
-        return sendShopifyPost("test123", requestBody);
+        return TestingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
     }
 
     public String getShopifyData(String shopName, String accessToken, String apiVersion, String query) {
-        String env = System.getenv("ApplicationEnv");
-        if ("prod".equals(env) || "dev".equals(env)) {
+        if (!ConfigUtils.isLocalEnv()) {
             return shopifyHttpIntegration.getInfoByShopify(shopName, accessToken, apiVersion, query);
         } else {
             // 本地调用shopify
@@ -121,7 +118,7 @@ public class ShopifyService {
         // 获取该用户所有的未翻译和部分翻译的所有token数据
         List<String> all = getUserShopifyLanguage(request.getShopName(), source, request.getAccessToken());
 
-        if (all == null || all.isEmpty()){
+        if (all == null || all.isEmpty()) {
             return 0;
         }
 
@@ -460,7 +457,7 @@ public class ShopifyService {
     }
 
 
-    //修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
+    // 修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
         CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
         cloudServiceRequest.setShopName(request.getShopName());
@@ -472,14 +469,9 @@ public class ShopifyService {
         cloudServiceRequest.setBody(query);
         String infoByShopify = null;
         try {
-            String env = System.getenv("ApplicationEnv");
-            if ("prod".equals(env) || "dev".equals(env)) {
-                infoByShopify = String.valueOf(getInfoByShopify(request, query));
-            } else {
-                infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
-            }
+            infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
         } catch (Exception e) {
-            //如果出现异常，则跳过, 翻译其他的内容
+            // 如果出现异常，则跳过, 翻译其他的内容
             appInsights.trackTrace("fetchNextPage errors : " + e.getMessage());
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
@@ -629,12 +621,7 @@ public class ShopifyService {
                 cloudServiceRequest.setBody(query);
                 String infoByShopify;
                 try {
-                    String env = System.getenv("ApplicationEnv");
-                    if ("prod".equals(env) || "dev".equals(env)) {
-                        infoByShopify = String.valueOf(getInfoByShopify(shopifyRequest, query));
-                    } else {
-                        infoByShopify = getShopifyDataByCloud(cloudServiceRequest);
-                    }
+                    infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
                     appInsights.trackTrace("getTranslationItemsInfo errors : " + e.getMessage());
@@ -927,8 +914,7 @@ public class ShopifyService {
 
         try {
             String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
-            String env = System.getenv("ApplicationEnv");
-            if ("prod".equals(env) || "dev".equals(env)) {
+            if (!ConfigUtils.isLocalEnv()) {
                 String s = registerTransaction(request, body);
                 appInsights.trackTrace("saveToShopify 用户： " + cloudServiceRequest.getShopName() + " target: " + cloudServiceRequest.getTarget() + " saveToShopify : " + s);
             } else {

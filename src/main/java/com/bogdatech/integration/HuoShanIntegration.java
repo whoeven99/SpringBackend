@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
+import com.bogdatech.utils.ConfigUtils;
 import com.volcengine.model.request.translate.TranslateImageRequest;
 import com.volcengine.model.request.translate.TranslateTextRequest;
 import com.volcengine.model.response.translate.TranslateImageResponse;
@@ -27,8 +28,8 @@ public class HuoShanIntegration {
     public String huoShanTranslate(TranslateRequest request) {
         ITranslateService translateService = TranslateServiceImpl.getInstance();
 
-        translateService.setAccessKey(System.getenv("HUOSHAN_API_KEY"));
-        translateService.setSecretKey(System.getenv("HUOSHAN_API_SECRET"));
+        translateService.setAccessKey(ConfigUtils.getConfig("HUOSHAN_API_KEY"));
+        translateService.setSecretKey(ConfigUtils.getConfig("HUOSHAN_API_SECRET"));
 
         //对火山翻译API的语言进行处理
         String huoShanTarget = ApiCodeUtils.huoShanTransformCode(request.getTarget());
@@ -66,8 +67,8 @@ public class HuoShanIntegration {
     public byte[] huoShanImageTranslate(String imageUrl, String targetLanguage) {
         ITranslateService translateService = TranslateServiceImpl.getInstance();
 
-        translateService.setAccessKey(System.getenv("HUOSHAN_API_KEY"));
-        translateService.setSecretKey(System.getenv("HUOSHAN_API_SECRET"));
+        translateService.setAccessKey(ConfigUtils.getConfig("HUOSHAN_API_KEY"));
+        translateService.setSecretKey(ConfigUtils.getConfig("HUOSHAN_API_SECRET"));
 
         appInsights.trackTrace("huoShanImageTranslate imageUrl : " + imageUrl + " targetLanguage: " + targetLanguage);
         try {

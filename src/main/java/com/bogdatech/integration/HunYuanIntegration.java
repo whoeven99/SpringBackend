@@ -4,6 +4,7 @@ import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.ConfigUtils;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -14,9 +15,7 @@ import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import static com.bogdatech.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TimeOutUtils.*;
 import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
@@ -35,7 +34,7 @@ public class HunYuanIntegration {
 
     static {
         // 初始化 Credential（替换为你的 SecretId 和 SecretKey）
-        CREDENTIAL = new Credential(System.getenv(HUNYUAN_APP_ID), System.getenv(HUNYUAN_APP_KEY));
+        CREDENTIAL = new Credential(ConfigUtils.getConfig(HUNYUAN_APP_ID), ConfigUtils.getConfig(HUNYUAN_APP_KEY));
         // 初始化 ClientProfile
         ClientProfile clientProfile = new ClientProfile();
         clientProfile.setSignMethod(ClientProfile.SIGN_TC3_256); // 使用 TC3-HMAC-SHA256 签名方法

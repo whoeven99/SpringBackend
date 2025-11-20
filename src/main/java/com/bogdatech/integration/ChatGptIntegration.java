@@ -7,6 +7,7 @@ import com.azure.ai.openai.models.ChatCompletionsOptions;
 import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
+import com.bogdatech.utils.ConfigUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +30,7 @@ public class ChatGptIntegration {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
-                .credential(new AzureKeyCredential(System.getenv("Gpt_ApiKey")))
+                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
                 .buildClient();
 
         // 模拟聊天交互

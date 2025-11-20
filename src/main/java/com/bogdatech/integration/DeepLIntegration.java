@@ -4,21 +4,20 @@ import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
+import com.bogdatech.utils.ConfigUtils;
 import com.deepl.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.RedisKeyUtils.generateProcessKey;
 import static com.bogdatech.utils.TimeOutUtils.*;
 import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class DeepLIntegration {
-    private static final String API_KEY = System.getenv(DEEPL_API_KEY);
+    private static final String API_KEY = ConfigUtils.getConfig(DEEPL_API_KEY);
     private static final String FREE_API_URL = "https://api-free.deepl.com/v2/translate";
     private static final String API_URL = "https://api.deepl.com/v2/translate";
     @Autowired
