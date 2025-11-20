@@ -2,7 +2,6 @@ package com.bogdatech.task;
 
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
-import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.TaskService;
 import com.bogdatech.logic.translate.TranslateV2Service;
 import com.microsoft.applicationinsights.TelemetryClient;
@@ -109,7 +108,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
             executorService.submit(() -> {
                 translatingInitialIds.add(initialId);
                 List<InitialTaskV2DO> tasks = entry.getValue();
-                appInsights.trackTrace("TranslateTaskV2 start TRANSLATE shop: " + initialId + " with " + tasks.size() + " tasks.");
+                appInsights.trackTrace("TranslateTaskV2 start TRANSLATE initialTask: " + initialId + " with " + tasks.size() + " tasks.");
 
                 for (InitialTaskV2DO initialTaskV2DO : tasks) {
                     // 断电
