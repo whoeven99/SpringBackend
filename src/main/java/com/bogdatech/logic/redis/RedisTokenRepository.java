@@ -32,6 +32,11 @@ public class RedisTokenRepository {
         redisIntegration.incrementHash(key, taskId.toString(), usedToken.longValue());
     }
 
+    public void addUsedToken(String shopName, Integer usedToken) {
+        String key = SHOP_NAME_USED_TOKEN_KEY + shopName;
+        redisIntegration.incrementHash(key, "all", usedToken.longValue());
+    }
+
     public Integer getUsedToken(String shopName) {
         String key = SHOP_NAME_USED_TOKEN_KEY + shopName;
         String value = redisIntegration.getHash(key, "all");
