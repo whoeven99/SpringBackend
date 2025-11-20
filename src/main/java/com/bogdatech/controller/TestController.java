@@ -190,7 +190,9 @@ public class TestController {
             }
             for (TranslatesDO translatesDO : translatesDOList) {
                 appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
-                taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+                if (taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
+                    break;
+                }
             }
             return "1";
         }
