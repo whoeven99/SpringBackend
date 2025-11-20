@@ -13,7 +13,7 @@ public class Configuration {
     // 有别的更好的初始化方法，后续更改
     public Configuration() throws IOException {
         Properties properties = new Properties();
-        String env = System.getenv("env");
+        String env = System.getenv("ApplicationEnv");
         String fileName = (env != null)
                 ? "application.properties"
                 : "application.local.properties";
