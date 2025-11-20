@@ -44,7 +44,7 @@ public class DBTask {
 
     @PostConstruct
     public void init() {
-        if (ConfigUtils.getConfig("REDISCACHEHOSTNAME") == null) { return; }
+        if (ConfigUtils.getConfig("REDISCACHEKEY") == null) { return; }
         appInsights.trackTrace("DBTaskLog init");
         redisTranslateLockService.setDelete(); // 删掉翻译中的所有shop
     }

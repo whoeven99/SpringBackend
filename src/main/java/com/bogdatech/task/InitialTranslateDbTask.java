@@ -70,7 +70,7 @@ public class InitialTranslateDbTask {
      */
     @PostConstruct
     public void init() {
-        if (ConfigUtils.getConfig("REDISCACHEHOSTNAME") == null) {
+        if (ConfigUtils.getConfig("REDISCACHEKEY") == null) {
             return;
         }
         appInsights.trackTrace("processInitialTasksOfShop init");

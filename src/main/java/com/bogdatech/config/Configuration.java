@@ -14,9 +14,7 @@ public class Configuration {
     public Configuration() throws IOException {
         Properties properties = new Properties();
         String env = System.getenv("ApplicationEnv");
-        String fileName = (env != null)
-                ? "application.properties"
-                : "application.local.properties";
+        String fileName = "application" + (ConfigUtils.isLocalEnv() ? ".local" : "") + ".properties";
 
         ClassPathResource resource = new ClassPathResource(fileName);
 
