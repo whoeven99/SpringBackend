@@ -9,8 +9,6 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
-import com.bogdatech.integration.HunYuanBucketIntegration;
-import com.bogdatech.integration.HuoShanIntegration;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.*;
@@ -87,8 +85,6 @@ public class TestController {
     private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
-    @Autowired
-    private HuoShanIntegration huoShanIntegration;
 
     @GetMapping("/ping")
     public String ping() {

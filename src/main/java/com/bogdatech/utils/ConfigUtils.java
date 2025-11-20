@@ -19,6 +19,6 @@ public class ConfigUtils {
 
     public static boolean isLocalEnv() {
         String env = System.getenv("ApplicationEnv");
-        return env == null || env.equals("local");
+        return env == null || "local".equals(env);
     }
 }

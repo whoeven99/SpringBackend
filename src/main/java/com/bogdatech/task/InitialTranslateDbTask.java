@@ -7,6 +7,7 @@ import com.bogdatech.enums.InitialTaskStatusEnum;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.utils.ConfigUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IUsersService;
@@ -69,7 +70,7 @@ public class InitialTranslateDbTask {
      */
     @PostConstruct
     public void init() {
-        if (System.getenv("REDISCACHEHOSTNAME") == null) {
+        if (ConfigUtils.getConfig("REDISCACHEKEY") == null) {
             return;
         }
         appInsights.trackTrace("processInitialTasksOfShop init");

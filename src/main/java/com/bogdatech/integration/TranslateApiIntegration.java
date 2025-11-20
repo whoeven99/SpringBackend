@@ -6,10 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
 import com.bogdatech.utils.AppInsightsUtils;
-import com.volcengine.model.request.translate.TranslateTextRequest;
-import com.volcengine.model.response.translate.TranslateTextResponse;
-import com.volcengine.service.translate.ITranslateService;
-import com.volcengine.service.translate.impl.TranslateServiceImpl;
+import com.bogdatech.utils.ConfigUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -22,7 +19,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -75,7 +71,7 @@ public class TranslateApiIntegration {
     //谷歌翻译API
     public static String googleTranslate(TranslateRequest request) {
         String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
-        String apikey = System.getenv("GOOGLE_API_KEY");
+        String apikey = ConfigUtils.getConfig("GOOGLE_API_KEY");
         String url = "https://translation.googleapis.com/language/translate/v2?key=" + apikey +
                 "&q=" + encodedQuery +
                 "&target=" + request.getTarget() +
@@ -141,7 +137,7 @@ public class TranslateApiIntegration {
         HttpPost httpPost = new HttpPost(microsoftEndpoint + micTarget);
 
         // 随机生成一个 32 位的 Guid设置请求头
-        httpPost.setHeader("Ocp-Apim-Subscription-Key", System.getenv("Microsoft.Translation.Key"));
+        httpPost.setHeader("Ocp-Apim-Subscription-Key", ConfigUtils.getConfig("Microsoft.Translation.Key"));
         httpPost.setHeader("Content-Type", "application/json");
         httpPost.setHeader("Ocp-Apim-Subscription-Region", "eastus");
 

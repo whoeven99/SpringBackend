@@ -1,4 +1,4 @@
-package com.bogdatech.entity.DO;
+package com.bogdatech.repository.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
