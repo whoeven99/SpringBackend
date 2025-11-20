@@ -6,6 +6,7 @@ import com.azure.identity.ManagedIdentityCredential;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
+import com.bogdatech.utils.ConfigUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,10 +15,9 @@ public class AzureKeyVaultConfig {
     @Bean
     public SecretClient secretClient() {
         // 根据环境变量获取clientId和keyVaultUrl来判断选择什么
-        String env = System.getenv("ApplicationEnv");
-        if ("prod".equals(env) || "dev".equals(env)) {
-            String clientId = System.getenv("Client_ID");
-            String keyVaultUrl = System.getenv("UserPrivateKeyVaultUrl");
+        if (!ConfigUtils.isLocalEnv()) {
+            String clientId = ConfigUtils.getConfig("Client_ID");
+            String keyVaultUrl = ConfigUtils.getConfig("UserPrivateKeyVaultUrl");
             ManagedIdentityCredential credential = new ManagedIdentityCredentialBuilder()
                     .clientId(clientId)
                     .build();

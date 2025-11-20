@@ -20,7 +20,6 @@ import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
 import java.sql.Timestamp;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -28,9 +27,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
-import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.logic.TranslateService.userEmailStatus;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
@@ -170,13 +167,8 @@ public class TaskService {
         String infoByShopify;
 
         // TODO shopify service
-        String env = System.getenv("ApplicationEnv");
-        //根据新的集合获取这个订阅计划的信息
-        if ("prod".equals(env) || "dev".equals(env)) {
-            infoByShopify = String.valueOf(getInfoByShopify(new ShopifyRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, null), query));
-        } else {
-            infoByShopify = getShopifyDataByCloud(new CloudServiceRequest(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, "en", query));
-        }
+        // 根据新的集合获取这个订阅计划的信息
+        infoByShopify = shopifyService.getShopifyData(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, query);
 
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
@@ -185,7 +177,7 @@ public class TaskService {
         }
         JSONObject node = root.getJSONObject("node");
         if (node == null || node.isEmpty()) {
-            //用户卸载，计划会被取消，但不确定其他情况
+            // 用户卸载，计划会被取消，但不确定其他情况
             return null;
         }
         return node;

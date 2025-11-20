@@ -1,5 +1,6 @@
 package com.bogdatech.config;
 
+import com.bogdatech.utils.ConfigUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -22,8 +23,8 @@ public class RedisConfig {
 
     @Bean
     public JedisConnectionFactory redisConnectionFactory() {
-        String cacheHostname = System.getenv("REDISCACHEHOSTNAME");
-        String cachekey = System.getenv("REDISCACHEKEY");
+        String cacheHostname = ConfigUtils.getConfig("REDISCACHEHOSTNAME");
+        String cachekey = ConfigUtils.getConfig("REDISCACHEKEY");
         int port = 6380;
 
         // 配置连接池

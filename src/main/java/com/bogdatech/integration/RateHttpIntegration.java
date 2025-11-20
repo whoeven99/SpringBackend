@@ -1,6 +1,7 @@
 package com.bogdatech.integration;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogdatech.utils.ConfigUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ public class RateHttpIntegration {
                 ",CHF,TWD,THB,TJS,TZS,TOP,TTD,TND,TRY,TMT,UGX,UAH,AED,USD,UYU,UZS,VUV,VES,VND,XOF,YER,ZMW,STD";
         String response;
         try {
-            response = baseHttpIntegration.sendHttpGet(url, System.getenv("Fixer_Api_Key"));
+            response = baseHttpIntegration.sendHttpGet(url, ConfigUtils.getConfig("Fixer_Api_Key"));
         } catch (Exception e) {
             appInsights.trackTrace("每日须看 getFixerRate 获取汇率失败 " + e.getMessage());
             appInsights.trackException(e);
