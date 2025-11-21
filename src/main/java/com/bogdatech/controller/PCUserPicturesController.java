@@ -4,7 +4,7 @@ package com.bogdatech.controller;
 import com.bogdatech.entity.DO.PCUserPicturesDO;
 import com.bogdatech.entity.VO.AltTranslateVO;
 import com.bogdatech.entity.VO.ImageTranslateVO;
-import com.bogdatech.logic.PCUserPicturesService;
+import com.bogdatech.logic.PCApp.PCUserPicturesService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

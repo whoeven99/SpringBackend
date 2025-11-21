@@ -15,7 +15,7 @@ public class SubscriptionTask {
     private TaskService taskService;
 
     /**
-     * 每天凌晨0点执行一次 判断是否符合添加额度的条件，如果符合，添加，反之不添加
+     * 每天UTC凌晨0点执行一次 判断翻译App是否符合添加额度的条件，如果符合，添加，反之不添加
      */
     @Scheduled(cron = "0 0 0 * * ?")
     public void subscriptionTask() {
@@ -30,5 +30,23 @@ public class SubscriptionTask {
     @Scheduled(cron = "0 0 0 * * ?")
     public void freeTrialTask() {
         taskService.freeTrialTask();
+    }
+
+    /**
+     * 每天UTC凌晨0点执行一次 判断图片翻译App是否符合添加额度的条件，如果符合，添加，反之不添加
+     */
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void subscriptionTaskForImage() {
+        executorService.execute(() -> {
+            taskService.judgePCAppAddChars();
+        });
+    }
+
+    /**
+     * 每天UTC凌晨0点执行一次 判断免费订阅是否过期， 是的话，修改用户计划表改为1 免费计划
+     */
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void freeTrialTaskForImage() {
+        taskService.freeTrialTaskForImage();
     }
 }

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogdatech.Service.IUserPicturesService;
 import com.bogdatech.entity.DO.UserPicturesDO;
 import com.bogdatech.integration.HunYuanBucketIntegration;
-import com.bogdatech.logic.PCUserPicturesService;
+import com.bogdatech.logic.PCApp.PCUserPicturesService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -19,11 +19,6 @@ public class CharsOrdersServiceImpl extends ServiceImpl<CharsOrdersMapper, Chars
     }
 
     @Override
-    public List<String> getIdByShopName(String shopName) {
-        return baseMapper.getIdByShopName(shopName);
-    }
-
-    @Override
     public List<CharsOrdersDO> getShopNameAndId() {
         return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().select(CharsOrdersDO::getShopName, CharsOrdersDO::getId, CharsOrdersDO::getCreatedAt)
                 .eq(CharsOrdersDO::getStatus, "ACTIVE")).stream()

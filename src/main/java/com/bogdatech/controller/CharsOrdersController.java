@@ -16,14 +16,9 @@ import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 @RestController
 @RequestMapping("/orders")
 public class CharsOrdersController {
-
-    private final OrderService orderService;
-
     @Autowired
-    public CharsOrdersController(OrderService orderService) {
-        this.orderService = orderService;
+    private OrderService orderService;
 
-    }
     //存储和更新订单
     @PostMapping("/insertOrUpdateOrder")
     public BaseResponse<Object> insertOrUpdateOrder(@RequestBody CharsOrdersDO charsOrdersDO) {
@@ -32,16 +27,6 @@ public class CharsOrdersController {
             return new BaseResponse<>().CreateSuccessResponse(200);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
-    }
-
-    //查询status为PENDING的
-    @GetMapping("/getPendingOrders")
-    public BaseResponse<Object> getPendingOrders(@RequestParam String shopName) {
-        List<String> idByShopName = orderService.getIdByShopName(shopName);
-        if (idByShopName != null) {
-            return new BaseResponse<>().CreateSuccessResponse(idByShopName);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
     //购买字符成功后发送相应邮件

@@ -1,4 +1,4 @@
-package com.bogdatech.mapper;
+package com.bogdatech.repository.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.bogdatech.entity.DO.PCUserPicturesDO;

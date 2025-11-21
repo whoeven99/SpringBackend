@@ -7,8 +7,5 @@ import com.bogdatech.model.controller.request.UserSubscriptionsRequest;
 public interface IUserSubscriptionsService extends IService<UserSubscriptionsDO> {
     Integer addUserSubscription(UserSubscriptionsRequest request);
     Integer getUserSubscriptionPlan(String shopName);
-
-    Boolean updateUserSubscription(String shopName, int planId);
-
     Integer checkUserPlan(String shopName, int planId);
 }

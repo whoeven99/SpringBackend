@@ -10,6 +10,7 @@ import com.bogdatech.model.controller.request.PurchaseSuccessRequest;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.ANNUAL_FEE;
 import static com.bogdatech.constants.TranslateConstants.MONTHLY_FEE;
@@ -24,22 +26,19 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class OrderService {
-    private final ICharsOrdersService charsOrdersService;
-    private final IUsersService usersService;
-    private final EmailIntegration emailIntegration;
-    private final ITranslationCounterService translationCounterService;
-    private final IUserTrialsService iUserTrialsService;
-    private final IUserSubscriptionsService iUserSubscriptionsService;
-
     @Autowired
-    public OrderService(ICharsOrdersService charsOrdersService, IUsersService usersService, EmailIntegration emailIntegration, ITranslationCounterService translationCounterService, IUserTrialsService iUserTrialsService, IUserSubscriptionsService iUserSubscriptionsService) {
-        this.charsOrdersService = charsOrdersService;
-        this.usersService = usersService;
-        this.emailIntegration = emailIntegration;
-        this.translationCounterService = translationCounterService;
-        this.iUserTrialsService = iUserTrialsService;
-        this.iUserSubscriptionsService = iUserSubscriptionsService;
-    }
+    private ICharsOrdersService charsOrdersService;
+    @Autowired
+    private IUsersService usersService;
+    @Autowired
+    private EmailIntegration emailIntegration;
+    @Autowired
+    private ITranslationCounterService translationCounterService;
+    @Autowired
+    private IUserTrialsService iUserTrialsService;
+    @Autowired
+    private IUserSubscriptionsService iUserSubscriptionsService;
+
 
     public Boolean insertOrUpdateOrder(CharsOrdersDO charsOrdersDO) {
         CharsOrdersDO charsOrdersServiceById = charsOrdersService.getById(charsOrdersDO.getId());
@@ -48,10 +47,6 @@ public class OrderService {
         } else {
             return charsOrdersService.updateStatusByShopName(charsOrdersDO.getId(), charsOrdersDO.getStatus());
         }
-    }
-
-    public List<String> getIdByShopName(String shopName) {
-        return charsOrdersService.getIdByShopName(shopName);
     }
 
     public Boolean sendPurchaseSuccessEmail(PurchaseSuccessRequest purchaseSuccessRequest) {
@@ -96,19 +91,19 @@ public class OrderService {
             return false;
         }
         if (userTrialsDO != null && !userTrialsDO.getIsTrialExpired()) {
-        //发送免费试用邮件
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("user", usersDO.getFirstName());
-        templateData.put("new_plan_name", userData.getName());
-        //从免费试用表里面获取对应开始和结束时间
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String trialStart = sdf.format(userTrialsDO.getTrialStart());
-        String trialEnd = sdf.format(userTrialsDO.getTrialEnd());
-        templateData.put("Start date", trialStart + " UTC");
-        templateData.put("End date", trialEnd + " UTC");
-        emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146220L, templateData, PLAN_TRIALS_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        appInsights.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
-        return false;
+            //发送免费试用邮件
+            Map<String, String> templateData = new HashMap<>();
+            templateData.put("user", usersDO.getFirstName());
+            templateData.put("new_plan_name", userData.getName());
+            //从免费试用表里面获取对应开始和结束时间
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String trialStart = sdf.format(userTrialsDO.getTrialStart());
+            String trialEnd = sdf.format(userTrialsDO.getTrialEnd());
+            templateData.put("Start date", trialStart + " UTC");
+            templateData.put("End date", trialEnd + " UTC");
+            emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146220L, templateData, PLAN_TRIALS_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+            appInsights.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
+            return false;
         }
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
@@ -138,9 +133,9 @@ public class OrderService {
 
     public String getLatestActiveSubscribeId(String shopName) {
         CharsOrdersDO charsOrdersDO = charsOrdersService.list(new LambdaQueryWrapper<CharsOrdersDO>()
-                .eq(CharsOrdersDO::getShopName, shopName)
-                .eq(CharsOrdersDO::getStatus, "ACTIVE")
-                .orderByDesc(CharsOrdersDO::getCreatedAt)
+                        .eq(CharsOrdersDO::getShopName, shopName)
+                        .eq(CharsOrdersDO::getStatus, "ACTIVE")
+                        .orderByDesc(CharsOrdersDO::getCreatedAt)
                 ).stream().filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
                 .toList().get(0);
         if (charsOrdersDO != null) {
