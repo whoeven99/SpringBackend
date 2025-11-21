@@ -69,7 +69,7 @@ public class PCUsersService {
         // 判断是否有订单标识 有的话 就直接返回true
         String redisOrderId = ordersRedisService.getOrderId(shopName, orderId);
         if (!"null".equals(redisOrderId)) {
-            appInsights.trackTrace("PC addCharsByShopName 用户 " + shopName + " orderId: " + redisOrderId);
+            appInsights.trackTrace("PC addCharsByShopName 用户 " + shopName + " redisOrderId : " + redisOrderId);
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
 
