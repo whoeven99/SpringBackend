@@ -1,19 +1,20 @@
 package com.bogdatech.controller;
 
-import com.bogdatech.logic.UserTrialsService;
+import com.bogdatech.logic.PCApp.PCUserTrialsService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
 
 @RestController
-@RequestMapping("/userTrials")
-public class UserTrialsController {
+@RequestMapping("/pc/userTrials")
+public class PCUserTrialsController {
     @Autowired
-    private UserTrialsService userTrialsService;
+    private PCUserTrialsService pcUserTrialsService;
 
     /**
      * 开启免费订阅
@@ -21,7 +22,7 @@ public class UserTrialsController {
     @PostMapping("/startFreePlan")
     public BaseResponse<Object> startFreePlan(@RequestParam String shopName){
         boolean result = retryWithParam(
-                userTrialsService::insertUserTrial,
+                pcUserTrialsService::insertUserTrial,
                 shopName,
                 3,
                 1000,
@@ -38,7 +39,7 @@ public class UserTrialsController {
      * */
     @PostMapping("/isOpenFreePlan")
     public BaseResponse<Object> isFreePlan(@RequestParam String shopName) {
-        return  userTrialsService.queryUserTrialByShopName(shopName);
+        return  pcUserTrialsService.queryUserTrialByShopName(shopName);
     }
 
     /**
@@ -46,7 +47,7 @@ public class UserTrialsController {
      * */
     @PostMapping("/isShowFreePlan")
     public BaseResponse<Object> isShowFreePlan(@RequestParam String shopName){
-        return userTrialsService.isShowFreePlan(shopName);
+        return pcUserTrialsService.isShowFreePlan(shopName);
     }
 
     /**
@@ -54,6 +55,5 @@ public class UserTrialsController {
      * */
     @PostMapping("/isInFreePlanTime")
     public BaseResponse<Object> isInFreePlanTime(@RequestParam String shopName){
-        return userTrialsService.isInFreePlanTime(shopName);
-    }
-}
+        return pcUserTrialsService.isInFreePlanTime(shopName);
+    }}

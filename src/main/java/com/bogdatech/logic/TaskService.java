@@ -433,7 +433,7 @@ public class TaskService {
             InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
                     translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
                     , "1", resourceToJson, null, shopName, false, AUTO,
-                    Timestamp.valueOf(LocalDateTime.now()), false);
+                    Timestamp.from(Instant.now()), false);
             try {
                 appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);
 

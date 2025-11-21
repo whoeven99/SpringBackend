@@ -6,9 +6,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.repository.entity.PCUserSubscriptionsDO;
 import com.bogdatech.repository.mapper.PCUserSubscriptionsMapper;
 import org.springframework.stereotype.Service;
-
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 public class PCUserSubscriptionsRepo extends ServiceImpl<PCUserSubscriptionsMapper, PCUserSubscriptionsDO> {
@@ -24,7 +23,7 @@ public class PCUserSubscriptionsRepo extends ServiceImpl<PCUserSubscriptionsMapp
 
     public boolean checkUserPlan(String shopName, Integer planId) {
         return baseMapper.update(new LambdaUpdateWrapper<PCUserSubscriptionsDO>().eq(PCUserSubscriptionsDO::getShopName, shopName)
-                .set(PCUserSubscriptionsDO::getPlanId, planId).set(PCUserSubscriptionsDO::getUpdatedAt, Timestamp.valueOf(LocalDateTime.now()))) > 0;
+                .set(PCUserSubscriptionsDO::getPlanId, planId).set(PCUserSubscriptionsDO::getUpdatedAt, Timestamp.from(Instant.now()))) > 0;
     }
 
     public PCUserSubscriptionsDO getPcUserSubscriptionsByShopName(String shopName) {
