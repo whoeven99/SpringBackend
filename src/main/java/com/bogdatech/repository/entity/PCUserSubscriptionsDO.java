@@ -21,6 +21,6 @@ public class PCUserSubscriptionsDO extends BaseDO{
     private Timestamp startData;
     @TableField("end_date")
     private Timestamp endDate;
-    @TableField("feeType")
+    @TableField("fee_type")
     private Integer feeType;
 }

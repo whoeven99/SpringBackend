@@ -16,4 +16,11 @@ public class PCUserSubscriptionController {
     public BaseResponse<Object> checkUserPlan(@RequestParam String shopName, @RequestParam Integer planId) {
         return pcUserSubscriptionService.checkUserPlan(shopName, planId);
     }
+
+    //获取用户订阅计划
+    @GetMapping("/getUserSubscriptionPlan")
+    public BaseResponse<Object> getUserSubscriptionPlan(@RequestParam String shopName) {
+        return pcUserSubscriptionService.getUserSubscriptionPlan(shopName);
+
+    }
 }
