@@ -3,6 +3,7 @@ package com.bogdatech.logic.translate;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.entity.TranslateTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
@@ -27,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -108,6 +110,8 @@ public class TranslateV2Service {
                 String translatedText = translatedValueMap.get(index);
                 setCache(target, translatedText, sourceText);
             }
+            appInsights.trackTrace("TranslateTaskV2 singleTextTranslate " + shopName + " 用户，" + value + " 单条翻译，" +
+                    "消耗token数：" + usedChars + "，target为：" + translatedValue);
             return new BaseResponse<String>().CreateSuccessResponse(translatedValue);
         } else {
             Pair<String, Integer> pair = translateSingle(value, target, new HashMap<>());
@@ -120,7 +124,7 @@ public class TranslateV2Service {
 
             setCache(target, targetValue, value);
 
-            appInsights.trackTrace(shopName + " 用户，" + value + " 单条翻译，" +
+            appInsights.trackTrace("TranslateTaskV2 singleTextTranslate " + shopName + " 用户，" + value + " 单条翻译，" +
                     "消耗token数：" + usedChars + "，target为：" + targetValue);
             return new BaseResponse<String>().CreateSuccessResponse(targetValue);
         }
@@ -151,6 +155,36 @@ public class TranslateV2Service {
 
         // 找前端，把这里的返回改了
         return new BaseResponse<>().CreateSuccessResponse(request);
+    }
+
+    public BaseResponse<ProgressResponse> getProcess(String shopName, String source) {
+        List<InitialTaskV2DO> taskList = initialTaskV2Repo.selectByShopNameSource(shopName, source);
+
+        ProgressResponse response = new ProgressResponse();
+        List<ProgressResponse.Progress> list = new ArrayList<>();
+        response.setList(list);
+        if (taskList.isEmpty()) {
+            return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
+        }
+
+        int totalTasks = taskList.size();
+        int completedTasks = 0;
+        int stoppedTasks = 0;
+
+        for (InitialTaskV2DO task : taskList) {
+            if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
+                completedTasks++;
+            } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
+                stoppedTasks++;
+            }
+        }
+
+        ProgressResponse progressResponse = new ProgressResponse();
+//        progressResponse.setTotalTasks(totalTasks);
+//        progressResponse.setCompletedTasks(completedTasks);
+//        progressResponse.setStoppedTasks(stoppedTasks);
+
+        return new BaseResponse<ProgressResponse>().CreateSuccessResponse(progressResponse);
     }
 
     public void createInitialTask(String shopName, String source, String[] targets,

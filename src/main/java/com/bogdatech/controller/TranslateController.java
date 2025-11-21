@@ -17,6 +17,7 @@ import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
+import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
@@ -50,17 +51,27 @@ public class TranslateController {
     private IUsersService iUsersService;
     @Autowired
     private TranslateProgressService translateProgressService;
+    @Autowired
+    private TranslateV2Service translateV2Service;
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
         return translateService.createInitialTask(request);
+        // return translateV2Service.createInitialTaskV2(request);
     }
 
     @PostMapping("/getAllProgressData")
     public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
         return translateProgressService.getAllProgressData(shopName, source);
+//        return translateV2Service.getProcess(shopName, source);
+    }
+
+    //单条文本翻译
+    @PostMapping("/singleTextTranslate")
+    public BaseResponse<String> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
+        return translateV2Service.singleTextTranslate(singleTranslateVO);
     }
 
     /**
@@ -235,12 +246,6 @@ public class TranslateController {
             translateService.syncShopifyAndDatabase(request.getShopName(), usersDO.getAccessToken(), request.getSource());
         }
         return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(), request.getSource(), request.getTarget());
-    }
-
-    //单条文本翻译
-    @PostMapping("/singleTextTranslate")
-    public BaseResponse<Object> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
-        return translateService.singleTextTranslate(singleTranslateVO);
     }
 
     /**
