@@ -15,7 +15,8 @@ public class PCOrdersController {
 
     // 存储和更新订单
     @PostMapping("/insertOrUpdateOrder")
-    public BaseResponse<Object> insertOrUpdateOrder(@RequestBody PCOrdersDO pcOrdersDO) {
+    public BaseResponse<Object> insertOrUpdateOrder(@RequestParam String shopName, @RequestBody PCOrdersDO pcOrdersDO) {
+        pcOrdersDO.setShopName(shopName);
         return pcOrdersService.insertOrUpdateOrder(pcOrdersDO);
     }
 
