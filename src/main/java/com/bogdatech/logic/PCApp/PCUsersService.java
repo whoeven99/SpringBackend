@@ -95,6 +95,15 @@ public class PCUsersService {
 
     public BaseResponse<Object> uninstall(String shopName) {
         boolean flag = pcUsersRepo.updateUninstallByShopName(shopName);
+
+        // 判断免费试用额度是否扣除，然后扣除
+        PCUserTrialsDO pcUserTrialsDO = pcUserTrialsRepo.getUserTrialByShopName(shopName);
+        Boolean isDeduct = pcUserTrialsDO.getIsDeduct();
+        if (!isDeduct) {
+            boolean deduct = pcUsersRepo.updatePurchasePoints(shopName, -80000);
+            appInsights.trackTrace("PC uninstall 用户 " + shopName + " 扣除额度 ：" + deduct);
+        }
+
         if (flag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }

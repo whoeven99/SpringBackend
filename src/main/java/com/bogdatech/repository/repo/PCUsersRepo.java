@@ -50,10 +50,8 @@ public class PCUsersRepo extends ServiceImpl<PCUsersMapper, PCUsersDO> {
         // 根据传来的gid获取， 判断调用那个方法，查询相关订阅信息
         String query;
         if (orderId.contains("AppPurchaseOneTime")) {
-            appInsights.trackTrace("一次性购买 用户： " + shopName);
             query = getSingleQuery(orderId);
         } else {
-            appInsights.trackTrace("计划购买 用户： " + shopName);
             query = getSubscriptionQuery(orderId);
         }
 
@@ -85,11 +83,16 @@ public class PCUsersRepo extends ServiceImpl<PCUsersMapper, PCUsersDO> {
 
     public boolean updateUninstallByShopName(String shopName) {
         return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName)
-                .set(PCUsersDO::getUninstallTime, Timestamp.from(Instant.now()))) > 0;
+                .set(PCUsersDO::getUninstallTime, Timestamp.from(Instant.now())).set(PCUsersDO::getUpdateAt, Timestamp.from(Instant.now()))) > 0;
     }
 
     public boolean updateTrialPurchase(String shopName) {
         return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName)
                 .set(PCUsersDO::getUpdateAt, Timestamp.from(Instant.now())).setSql("purchase_points = purchase_points + " + 80000)) > 0;
+    }
+
+    public boolean updatePurchasePoints(String shopName, int chars) {
+        return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName)
+                .set(PCUsersDO::getUpdateAt, Timestamp.from(Instant.now())).setSql("purchase_points = purchase_points + " + chars)) > 0;
     }
 }
