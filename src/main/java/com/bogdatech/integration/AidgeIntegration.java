@@ -6,7 +6,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.PCApp.PCUserPicturesService;
 import com.bogdatech.model.controller.response.SignResponse;
-import com.bogdatech.repository.repo.PCUsersServiceRepo;
+import com.bogdatech.repository.repo.PCUsersRepo;
 import com.bogdatech.utils.ConfigUtils;
 import com.bogdatech.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,7 +52,7 @@ public class AidgeIntegration {
     }
 
     @Autowired
-    private PCUsersServiceRepo pcUsersServiceRepo;
+    private PCUsersRepo pcUsersRepo;
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
     public static String PICTURE_APP = "PICTURE_APP";
@@ -187,7 +187,7 @@ public class AidgeIntegration {
         if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
             iTranslationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
         }else {
-            pcUsersServiceRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
+            pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE);
         }
 
         appInsights.trackTrace("translatePic : " + result);

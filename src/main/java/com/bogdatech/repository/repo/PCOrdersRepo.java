@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Service
-public class PCOrdersServiceRepo extends ServiceImpl<PCOrdersMapper, PCOrdersDO> {
+public class PCOrdersRepo extends ServiceImpl<PCOrdersMapper, PCOrdersDO> {
     public PCOrdersDO getOrderByOrderId(String orderId) {
         return baseMapper.selectOne(new LambdaQueryWrapper<PCOrdersDO>().eq(PCOrdersDO::getOrderId, orderId).eq(PCOrdersDO::getIsDeleted, 0));
     }
@@ -37,5 +37,13 @@ public class PCOrdersServiceRepo extends ServiceImpl<PCOrdersMapper, PCOrdersDO>
         return baseMapper.selectList(new LambdaQueryWrapper<PCOrdersDO>().eq(PCOrdersDO::getShopName, shopName)
                         .eq(PCOrdersDO::getStatus, "ACTIVE"))
                 .stream().filter(data -> data.getShopName() != null && data.getOrderId().contains("AppSubscription")).toList();
+    }
+
+    public PCOrdersDO getOrderByShopName(String shopName) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<PCOrdersDO>().eq(PCOrdersDO::getShopName, shopName));
+    }
+
+    public PCOrdersDO getOrderBySubGid(String orderId) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<PCOrdersDO>().eq(PCOrdersDO::getOrderId, orderId));
     }
 }

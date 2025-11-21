@@ -11,4 +11,8 @@ public class PCSubscriptionsRepo extends ServiceImpl<PCSubscriptionsMapper, PCSu
     public PCSubscriptionsDO getPcSubscriptionByShopName(Integer planId) {
         return baseMapper.selectOne(new LambdaQueryWrapper<PCSubscriptionsDO>().eq(PCSubscriptionsDO::getPlanId, planId));
     }
+
+    public Integer getCharsByPlanName(String name) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<PCSubscriptionsDO>().eq(PCSubscriptionsDO::getPlanName, name)).getEveryMonthToken();
+    }
 }

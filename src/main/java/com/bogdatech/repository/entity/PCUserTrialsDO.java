@@ -23,4 +23,6 @@ public class PCUserTrialsDO extends BaseDO {
     private Boolean isTrialExpired;
     @TableField("is_trial_show")
     private Boolean isTrialShow;
+    @TableField("is_deduct")
+    private Boolean isDeduct;
 }

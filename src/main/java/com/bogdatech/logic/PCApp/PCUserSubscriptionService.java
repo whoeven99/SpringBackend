@@ -8,15 +8,13 @@ import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.PCSubscriptionsDO;
 import com.bogdatech.repository.entity.PCUserSubscriptionsDO;
-import com.bogdatech.repository.repo.PCOrdersServiceRepo;
-import com.bogdatech.repository.repo.PCSubscriptionsRepo;
-import com.bogdatech.repository.repo.PCUserSubscriptionsRepo;
-import com.bogdatech.repository.repo.PCUsersServiceRepo;
+import com.bogdatech.repository.entity.PCUserTrialsDO;
+import com.bogdatech.repository.repo.*;
+import com.bogdatech.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.parsePlanName;
 
 @Component
@@ -26,14 +24,16 @@ public class PCUserSubscriptionService {
     @Autowired
     private PCSubscriptionsRepo pcSubscriptionsRepo;
     @Autowired
-    private PCOrdersServiceRepo pcOrdersServiceRepo;
+    private PCOrdersRepo pcOrdersRepo;
     @Autowired
-    private PCUsersServiceRepo pcUsersServiceRepo;
+    private PCUsersRepo pcUsersRepo;
     @Autowired
     private ShopifyService shopifyService;
+    @Autowired
+    private PCUserTrialsRepo pcUserTrialsRepo;
 
     public BaseResponse<Object> getUserSubscriptionPlan(String shopName) {
-        //判断shopName的值是否有
+        // 判断shopName的值是否有
         if (shopName == null || shopName.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse("shopName is null");
         }
@@ -42,7 +42,7 @@ public class PCUserSubscriptionService {
         PCUserSubscriptionsDO pcUserSubscriptionsByShopName = pcUserSubscriptionsRepo.getPcUserSubscriptionsByShopName(shopName);
 
         if (pcUserSubscriptionsByShopName == null) {
-            appInsights.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
+            CaseSensitiveUtils.appInsights.trackTrace("PC getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("pcUserSubscriptionsByShopName is null");
         }
 
@@ -58,16 +58,9 @@ public class PCUserSubscriptionService {
         subscriptionVO.setPlanType(parsePlanType);
         subscriptionVO.setUserSubscriptionPlan(planId);
 
-//        if (userSubscriptionsDO.getFeeType() == null) {
-//            userSubscriptionsDO.setFeeType(0);
-//        }
-//        Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
-
-//
-//        BaseResponse<Object> objectBaseResponse = checkWhiteList(shopName, subscriptionVO, userSubscriptionsDO.getFeeType());
-//        if (objectBaseResponse != null) {
-//            return objectBaseResponse;
-//        }
+        if (pcUserSubscriptionsByShopName.getFeeType() == null) {
+            pcUserSubscriptionsByShopName.setFeeType(0);
+        }
 
         //如果是userSubscriptionPlan是1和2，传null
         if (planId == 1) {
@@ -76,24 +69,24 @@ public class PCUserSubscriptionService {
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 
-//        //判断是否是免费计划
-//        if (planId == 7) {
-//            subscriptionVO.setUserSubscriptionPlan(7);
-//            //根据shopName获取订阅计划过期的时间
-//            UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
-//            subscriptionVO.setCurrentPeriodEnd(String.valueOf(userTrialsDO.getTrialEnd()));
-//            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
-//            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
-//        }
+        //判断是否是免费计划
+        if (planId == 5) {
+            subscriptionVO.setUserSubscriptionPlan(5);
 
-        //根据shopName查询用户订阅计划，最新的那个，再根据最新的resourceId，查询是否过期
-        String latestActiveSubscribeId = pcOrdersServiceRepo.getLatestActiveSubscribeId(shopName);
+            // 根据shopName获取订阅计划过期的时间
+            PCUserTrialsDO userTrialsDO = pcUserTrialsRepo.getUserTrialByShopName(shopName);
+            subscriptionVO.setCurrentPeriodEnd(String.valueOf(userTrialsDO.getTrialEnd()));
+            subscriptionVO.setFeeType(pcUserSubscriptionsByShopName.getFeeType());
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
+        // 根据shopName查询用户订阅计划，最新的那个，再根据最新的resourceId，查询是否过期
+        String latestActiveSubscribeId = pcOrdersRepo.getLatestActiveSubscribeId(shopName);
 
         if (latestActiveSubscribeId == null) {
             return new BaseResponse<>().CreateErrorResponse("latestActiveSubscribeId is null");
         }
-
-        PCUsersDO pcUser = pcUsersServiceRepo.getUserByShopName(shopName);
+        PCUsersDO pcUser = pcUsersRepo.getUserByShopName(shopName);
 
         // 通过charsOrdersDO的id，获取信息
         // 根据新的集合获取这个订阅计划的信息
@@ -116,7 +109,7 @@ public class PCUserSubscriptionService {
             subscriptionVO.setUserSubscriptionPlan(2);
             subscriptionVO.setCurrentPeriodEnd(null);
         } else {
-//            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
+            subscriptionVO.setFeeType(pcUserSubscriptionsByShopName.getFeeType());
             String currentPeriodEnd = node.getString("currentPeriodEnd");
             subscriptionVO.setCurrentPeriodEnd(currentPeriodEnd);
         }

@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Service
-public class PCUserPicturesServiceRepo extends ServiceImpl<PCUserPicturesMapper, PCUserPicturesDO>{
+public class PCUserPicturesRepo extends ServiceImpl<PCUserPicturesMapper, PCUserPicturesDO>{
     public boolean insertPictureData(PCUserPicturesDO pcUserPicturesDO) {
         //判断数据库中是否有该数据
         PCUserPicturesDO userPicture = baseMapper.selectOne(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, pcUserPicturesDO.getShopName()).eq(PCUserPicturesDO::getImageId, pcUserPicturesDO.getImageId()).eq(PCUserPicturesDO::getImageBeforeUrl, pcUserPicturesDO.getImageBeforeUrl()).eq(PCUserPicturesDO::getLanguageCode, pcUserPicturesDO.getLanguageCode()).eq(PCUserPicturesDO::getIsDeleted, 0));

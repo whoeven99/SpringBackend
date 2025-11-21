@@ -29,4 +29,10 @@ public class PCUserSubscriptionsRepo extends ServiceImpl<PCUserSubscriptionsMapp
     public PCUserSubscriptionsDO getPcUserSubscriptionsByShopName(String shopName) {
         return baseMapper.selectOne(new LambdaQueryWrapper<PCUserSubscriptionsDO>().eq(PCUserSubscriptionsDO::getShopName, shopName));
     }
+
+    public boolean updateUserFeeTypeAndEndDate(String shopName, Integer feeType, Timestamp subEnd) {
+        return baseMapper.update(new LambdaUpdateWrapper<PCUserSubscriptionsDO>().eq(PCUserSubscriptionsDO::getShopName, shopName)
+                .set(PCUserSubscriptionsDO::getFeeType, feeType).set(PCUserSubscriptionsDO::getEndDate, subEnd)
+                .set(PCUserSubscriptionsDO::getUpdatedAt, Timestamp.from(Instant.now()))) > 0;
+    }
 }

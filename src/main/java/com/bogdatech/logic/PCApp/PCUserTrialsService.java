@@ -3,7 +3,7 @@ package com.bogdatech.logic.PCApp;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.PCOrdersDO;
 import com.bogdatech.repository.entity.PCUserTrialsDO;
-import com.bogdatech.repository.repo.PCOrdersServiceRepo;
+import com.bogdatech.repository.repo.PCOrdersRepo;
 import com.bogdatech.repository.repo.PCUserTrialsRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ public class PCUserTrialsService {
     @Autowired
     private PCUserTrialsRepo pcUserTrialsRepo;
     @Autowired
-    private PCOrdersServiceRepo pcOrdersServiceRepo;
+    private PCOrdersRepo pcOrdersRepo;
 
     /**
      * 1,向免费订阅表里面插入用户信息
@@ -39,7 +39,7 @@ public class PCUserTrialsService {
      */
     public BaseResponse<Object> queryUserTrialByShopName(String shopName) {
         // 判断是否购买过订阅计划，如果有则返回true
-        List<PCOrdersDO> pcOrdersDOList = pcOrdersServiceRepo.selectOrdersByShopName(shopName);
+        List<PCOrdersDO> pcOrdersDOList = pcOrdersRepo.selectOrdersByShopName(shopName);
 
         if (!pcOrdersDOList.isEmpty()) {
             appInsights.trackTrace("queryUserTrialByShopName " + shopName + " 返回的pcOrdersDOList 值为 ： " + pcOrdersDOList);

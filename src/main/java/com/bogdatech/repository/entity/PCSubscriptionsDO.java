@@ -19,4 +19,5 @@ public class PCSubscriptionsDO extends BaseDO{
     private Double price;
     @TableField("every_month_token")
     private Integer everyMonthToken;
+
 }
