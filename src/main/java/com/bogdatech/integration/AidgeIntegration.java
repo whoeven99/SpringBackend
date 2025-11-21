@@ -3,10 +3,10 @@ package com.bogdatech.integration;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.logic.PCUserPicturesService;
+import com.bogdatech.logic.PCApp.PCUserPicturesService;
 import com.bogdatech.model.controller.response.SignResponse;
+import com.bogdatech.repository.repo.PCUsersServiceRepo;
 import com.bogdatech.utils.ConfigUtils;
 import com.bogdatech.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,7 +52,7 @@ public class AidgeIntegration {
     }
 
     @Autowired
-    private IPCUserService ipcUserService;
+    private PCUsersServiceRepo pcUsersServiceRepo;
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
     public static String PICTURE_APP = "PICTURE_APP";
@@ -187,7 +187,7 @@ public class AidgeIntegration {
         if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
             iTranslationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
         }else {
-            ipcUserService.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
+            pcUsersServiceRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
         }
 
         appInsights.trackTrace("translatePic : " + result);

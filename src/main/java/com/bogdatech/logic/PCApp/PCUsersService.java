@@ -1,9 +1,10 @@
-package com.bogdatech.logic;
+package com.bogdatech.logic.PCApp;
 
-import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.entity.VO.PCUserPointsVO;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.repository.repo.PCUserSubscriptionsRepo;
+import com.bogdatech.repository.repo.PCUsersServiceRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
@@ -14,19 +15,22 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @Component
 public class PCUsersService {
     @Autowired
-    private IPCUserService ipcUserService;
+    private PCUsersServiceRepo pcUsersServiceRepo;
+    @Autowired
+    private PCUserSubscriptionsRepo pcUserSubscriptionsRepo;
 
     public void initUser(String shopName, PCUsersDO pcUsersDO) {
         // 获取用户是否存在 ，存在，做更新操作； 不存在，存储用户
-        PCUsersDO pcUsers = ipcUserService.getUserByShopName(shopName);
+        PCUsersDO pcUsers = pcUsersServiceRepo.getUserByShopName(shopName);
         if (pcUsers == null) {
             pcUsersDO.setPurchasePoints(0);
             pcUsersDO.setUsedPoints(0);
             Timestamp now = Timestamp.from(Instant.now());
             pcUsersDO.setCreateAt(now);
             pcUsersDO.setLoginTime(now);
-            pcUsersDO.setPurchasePoints(5000);
-            ipcUserService.saveSingleUser(pcUsersDO);
+            pcUsersDO.setPurchasePoints(10000);
+            pcUsersServiceRepo.saveSingleUser(pcUsersDO);
+            pcUserSubscriptionsRepo.insertUserSubscriptions(shopName, PCUserSubscriptionsRepo.FREE_PLAN);
         } else {
             Timestamp now = Timestamp.from(Instant.now());
             pcUsers.setEmail(pcUsersDO.getEmail());
@@ -34,17 +38,17 @@ public class PCUsersService {
             pcUsers.setFirstName(pcUsersDO.getFirstName());
             pcUsers.setUpdateAt(now);
             pcUsers.setLoginTime(now);
-            ipcUserService.updateSingleUser(pcUsersDO);
+            pcUsersServiceRepo.updateSingleUser(pcUsersDO);
         }
     }
 
     public BaseResponse<Object> addPurchasePoints(String shopName, Integer chars) {
-        PCUsersDO userByShopName = ipcUserService.getUserByShopName(shopName);
+        PCUsersDO userByShopName = pcUsersServiceRepo.getUserByShopName(shopName);
         // 先简单的添加额度， 订单表后面再做
         if (userByShopName == null){
             return new BaseResponse<>().CreateErrorResponse("用户不存在");
         }
-        boolean flag = ipcUserService.updatePurchasePointsByShopName(shopName, chars);
+        boolean flag = pcUsersServiceRepo.updatePurchasePointsByShopName(shopName, chars);
         if (flag){
             appInsights.trackTrace("addPurchasePoints 添加额度成功 " + shopName + " chars: " + chars);
             return new BaseResponse<>().CreateSuccessResponse("添加成功");
@@ -53,7 +57,7 @@ public class PCUsersService {
     }
 
     public BaseResponse<Object> getPurchasePoints(String shopName) {
-        PCUsersDO userByShopName = ipcUserService.getUserByShopName(shopName);
+        PCUsersDO userByShopName = pcUsersServiceRepo.getUserByShopName(shopName);
         if (userByShopName == null){
             return new BaseResponse<>().CreateErrorResponse("用户不存在");
         }
@@ -65,7 +69,7 @@ public class PCUsersService {
     }
 
     public BaseResponse<Object> uninstall(String shopName) {
-        boolean flag = ipcUserService.updateUninstallByShopName(shopName);
+        boolean flag = pcUsersServiceRepo.updateUninstallByShopName(shopName);
         if (flag){
             return new BaseResponse<>().CreateSuccessResponse(true);
         }

@@ -1,44 +1,37 @@
-package com.bogdatech.Service.impl;
+package com.bogdatech.repository.repo;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.entity.DO.PCUsersDO;
-import com.bogdatech.mapper.PCUsersMapper;
+import com.bogdatech.repository.mapper.PCUsersMapper;
 import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 
 
 @Service
-public class PCUsersServiceImpl extends ServiceImpl<PCUsersMapper, PCUsersDO> implements IPCUserService {
-    @Override
+public class PCUsersServiceRepo extends ServiceImpl<PCUsersMapper, PCUsersDO> {
     public PCUsersDO getUserByShopName(String shopName) {
         return baseMapper.selectOne(new LambdaQueryWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName));
     }
 
-    @Override
     public boolean saveSingleUser(PCUsersDO pcUsersDO) {
         return baseMapper.insert(pcUsersDO) > 0;
     }
 
-    @Override
     public boolean updateSingleUser(PCUsersDO pcUsersDO) {
         return baseMapper.update(pcUsersDO, new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, pcUsersDO.getShopName())) > 0;
     }
 
-    @Override
     public boolean updatePurchasePointsByShopName(String shopName, Integer chars) {
         return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName).setSql("purchase_points = purchase_points + " + chars)) > 0;
     }
 
-    @Override
     public boolean updateUsedPointsByShopName(String shopName, int picFee, Integer limitChars) {
         return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName).setSql("used_points = used_points + " + picFee)) > 0;
     }
 
-    @Override
     public boolean updateUninstallByShopName(String shopName) {
         Timestamp now = Timestamp.from(Instant.now());
         return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName)

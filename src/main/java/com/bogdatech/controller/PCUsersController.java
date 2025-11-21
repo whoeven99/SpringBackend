@@ -2,7 +2,7 @@ package com.bogdatech.controller;
 
 import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.entity.VO.AddCharsVO;
-import com.bogdatech.logic.PCUsersService;
+import com.bogdatech.logic.PCApp.PCUsersService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
