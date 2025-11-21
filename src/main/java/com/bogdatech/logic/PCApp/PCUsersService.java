@@ -70,7 +70,7 @@ public class PCUsersService {
         String redisOrderId = ordersRedisService.getOrderId(shopName, orderId);
         if (!"null".equals(orderId)) {
             appInsights.trackTrace("PC addCharsByShopName 用户 " + shopName + " orderId: " + redisOrderId);
-            return new BaseResponse<>().CreateErrorResponse(false);
+            return new BaseResponse<>().CreateSuccessResponse(true);
         }
 
         boolean flag = pcUsersRepo.updatePurchasePointsByShopName(shopName, userByShopName.getAccessToken(), orderId, chars);
@@ -180,7 +180,7 @@ public class PCUsersService {
                 return new BaseResponse<>().CreateErrorResponse(false);
             }
         } else {
-            pcUserTrialsRepo.updateTrialExpiredByShopName(shopName);
+            pcUserTrialsRepo.updateTrialExpiredByShopName(shopName, true);
         }
 
         // 添加额度

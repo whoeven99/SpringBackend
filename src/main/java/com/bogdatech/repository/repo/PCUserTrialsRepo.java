@@ -8,6 +8,7 @@ import com.bogdatech.repository.mapper.PCUserTrialsMapper;
 import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
@@ -48,8 +49,12 @@ public class PCUserTrialsRepo extends ServiceImpl<PCUserTrialsMapper, PCUserTria
         return baseMapper.insert(pcUserTrialsDO) > 0;
     }
 
-    public boolean updateTrialExpiredByShopName(String shopName) {
+    public boolean updateTrialExpiredByShopName(String shopName, boolean isTrialExpired) {
         return baseMapper.update(new LambdaUpdateWrapper<PCUserTrialsDO>().eq(PCUserTrialsDO::getShopName, shopName)
-                .set(PCUserTrialsDO::getIsTrialExpired, true)) > 0;
+                .set(PCUserTrialsDO::getIsTrialExpired, isTrialExpired)) > 0;
+    }
+
+    public List<PCUserTrialsDO> getNotExpiredTrialByShopName() {
+        return baseMapper.selectList(new LambdaQueryWrapper<PCUserTrialsDO>().eq(PCUserTrialsDO::getIsTrialExpired, false));
     }
 }

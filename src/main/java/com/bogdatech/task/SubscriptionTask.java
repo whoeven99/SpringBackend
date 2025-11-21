@@ -41,4 +41,12 @@ public class SubscriptionTask {
             taskService.judgePCAppAddChars();
         });
     }
+
+    /**
+     * 每天UTC凌晨0点执行一次 判断免费订阅是否过期， 是的话，修改用户计划表改为1 免费计划
+     */
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void freeTrialTaskForImage() {
+        taskService.freeTrialTaskForImage();
+    }
 }
