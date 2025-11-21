@@ -28,7 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +42,7 @@ import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogdatech.utils.PlaceholderUtils.*;
 
 @Component
 public class TranslateV2Service {
@@ -83,6 +83,24 @@ public class TranslateV2Service {
 
         String value = request.getContext();
         String target = request.getTarget();
+        String type = request.getType();
+        String key = request.getKey();
+        if (URI.equals(type) && "handle".equals(key)) {
+            String fixContent = com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces(value);
+            String prompt = PlaceholderUtils.getHandlePrompt(target);
+            prompt += "The text is: " + fixContent;
+
+            Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+            if (pair == null) {
+                appInsights.trackTrace("FatalException TranslateTaskV2 singleTextTranslate error shop: " + shopName);
+                return new BaseResponse<>().CreateErrorResponse("Translation failed, please try again");
+            }
+            String translatedText = pair.getFirst();
+
+            Integer usedChars = pair.getSecond();
+            userTokenService.addUsedToken(shopName, usedChars);
+            return new BaseResponse<String>().CreateSuccessResponse(translatedText);
+        } else
         if (JsoupUtils.isHtml(value)) {
             // 解析html里面待翻译的内容
             List<String> originalTexts = HtmlUtils.parseHtml(value, target);
@@ -98,6 +116,7 @@ public class TranslateV2Service {
                 appInsights.trackTrace("FatalException TranslateTaskV2 singleTextTranslate error shop: " + shopName);
                 return new BaseResponse<>().CreateErrorResponse("Translation failed, please try again");
             }
+
             Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
             String translatedValue = HtmlUtils.replaceBack(value, originalTexts, translatedValueMap);
             Integer usedChars = translatedValueMapPair.getSecond();
@@ -421,16 +440,17 @@ public class TranslateV2Service {
         // ************************ //
 
         // 对整个uncachedMap调用api开始翻译  批量翻译
-        StringBuilder prompt = new StringBuilder("帮我翻译如下内容，到目标语言：" + target + "。");
-        prompt.append("我会给你一个json格式的数据，你只翻译里面的value值，将翻译后的值填回到value里面，同样的格式返回给我。");
-        if (hasGlossary) {
-            prompt.append("其中{[xxx]}形式的字符串跳过，不要翻译，并且返回原样给我。");
-        }
-        prompt.append("只返回翻译后的内容，不要其他多余的说明。内容如下: ");
-        prompt.append(JsonUtils.objectToJson(uncachedMap));
+        String prompt = PlaceholderUtils.getNewestPrompt(target, JsonUtils.objectToJson(uncachedMap));
+//        StringBuilder prompt = new StringBuilder("帮我翻译如下内容，到目标语言：" + target + "。");
+//        prompt.append("我会给你一个json格式的数据，你只翻译里面的value值，将翻译后的值填回到value里面，同样的格式返回给我。");
+//        if (hasGlossary) {
+//            prompt.append("其中{[xxx]}形式的字符串跳过，不要翻译，并且返回原样给我。");
+//        }
+//        prompt.append("只返回翻译后的内容，不要其他多余的说明。内容如下: ");
+//        prompt.append(JsonUtils.objectToJson(uncachedMap));
 
         // translatedValue - usedToken
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt.toString(), target);
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
         if (pair != null && pair.getFirst() != null) {
             // 翻译后 - 还原glossary
             String aiResponse = pair.getFirst();
@@ -455,33 +475,45 @@ public class TranslateV2Service {
 
     private Pair<String, Integer> translateSingle(String value, String target,
                                                   Map<String, GlossaryDO> glossaryMap) {
-        StringBuilder prompt = new StringBuilder("帮我翻译如下内容，到目标语言：" + target + "。");
-        Pair<String, Boolean> glossaryPair = replaceWithGlossary(value, glossaryMap);
-        if (glossaryPair.getSecond()) {
-            prompt.append("其中{[xxx]}形式的字符串跳过，不要翻译，并且返回原样给我。");
-            value = glossaryPair.getFirst();
-        }
+        if (hasPlaceholders(value)) {
+            String variableString = getOuterString(value);
+            String prompt = getVariablePrompt(target, variableString, null);
+            prompt += "The text is: " + value;
 
-        // 先替换glossary， 再去做缓存
-        String targetCache = redisProcessService.getCacheData(target, value);
-        if (targetCache != null) {
-            targetCache = isHtmlEntity(targetCache);
-            return new Pair<>(targetCache, 0);
-        }
-
-        prompt.append("只返回翻译后的内容，不要其他多余的说明。内容如下: ");
-        prompt.append(value);
-
-        // translatedValue - usedToken
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt.toString(), target);
-        if (pair != null && pair.getFirst() != null) {
-            String translatedText = pair.getFirst();
-
-            // 把{[xxx]}替换回去 xxx
-            if (glossaryPair.getSecond()) {
-                translatedText = getGlossaryReplacedBack(translatedText);
+            Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+            if (pair != null && pair.getFirst() != null) {
+                String translatedText = pair.getFirst();
+                return new Pair<>(translatedText, pair.getSecond());
             }
-            return new Pair<>(translatedText, pair.getSecond());
+        } else {
+            StringBuilder promptBuilder = new StringBuilder("帮我翻译如下内容，到目标语言：" + target + "。");
+            Pair<String, Boolean> glossaryPair = replaceWithGlossary(value, glossaryMap);
+            if (glossaryPair.getSecond()) {
+                promptBuilder.append("其中{[xxx]}形式的字符串跳过，不要翻译，并且返回原样给我。");
+                value = glossaryPair.getFirst();
+            }
+
+            // 先替换glossary， 再去做缓存
+            String targetCache = redisProcessService.getCacheData(target, value);
+            if (targetCache != null) {
+                targetCache = isHtmlEntity(targetCache);
+                return new Pair<>(targetCache, 0);
+            }
+
+            promptBuilder.append("只返回翻译后的内容，不要其他多余的说明。内容如下: ");
+            promptBuilder.append(value);
+
+            // translatedValue - usedToken
+            Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(promptBuilder.toString(), target);
+            if (pair != null && pair.getFirst() != null) {
+                String translatedText = pair.getFirst();
+
+                // 把{[xxx]}替换回去 xxx
+                if (glossaryPair.getSecond()) {
+                    translatedText = getGlossaryReplacedBack(translatedText);
+                }
+                return new Pair<>(translatedText, pair.getSecond());
+            }
         }
         return null;
     }
