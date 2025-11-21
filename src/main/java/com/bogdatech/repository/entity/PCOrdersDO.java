@@ -18,6 +18,6 @@ public class PCOrdersDO extends BaseDO{
     private Double amount;
     private String name;
     private String status;
-    @TableField("confirmationUrl")
+    @TableField("confirmation_url")
     private String confirmationUrl;
 }
