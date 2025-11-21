@@ -29,10 +29,10 @@ public class PCUserTrialsRepo extends ServiceImpl<PCUserTrialsMapper, PCUserTria
     public Boolean queryUserTrialByShopName(String shopName) {
         PCUserTrialsDO userTrialsDO = baseMapper.selectOne(new LambdaQueryWrapper<PCUserTrialsDO>().eq(PCUserTrialsDO::getShopName, shopName));
         if (userTrialsDO != null && userTrialsDO.getIsTrialExpired() != null) {
-            appInsights.trackTrace("queryUserTrialByShopName " + shopName + " userTrialsDO: " + userTrialsDO);
+            appInsights.trackTrace("PC queryUserTrialByShopName " + shopName + " userTrialsDO : " + userTrialsDO);
             return userTrialsDO.getIsTrialExpired();
         }
-        return null;
+        return false;
     }
 
     public boolean updateTrialShowByShopName(String shopName) {

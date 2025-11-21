@@ -46,4 +46,9 @@ public class PCOrdersRepo extends ServiceImpl<PCOrdersMapper, PCOrdersDO> {
     public PCOrdersDO getOrderBySubGid(String orderId) {
         return baseMapper.selectOne(new LambdaQueryWrapper<PCOrdersDO>().eq(PCOrdersDO::getOrderId, orderId));
     }
+
+    public List<PCOrdersDO> selectActiveOrders() {
+        return baseMapper.selectList(new LambdaQueryWrapper<PCOrdersDO>().eq(PCOrdersDO::getStatus, "ACTIVE")).stream()
+                .filter(data -> data.getShopName() != null && data.getOrderId().contains("AppSubscription")).toList();
+    }
 }

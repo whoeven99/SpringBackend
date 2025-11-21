@@ -16,6 +16,9 @@ import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.repository.entity.PCOrdersDO;
+import com.bogdatech.repository.repo.PCOrdersRepo;
+import com.bogdatech.repository.repo.PCUsersRepo;
 import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -80,11 +83,17 @@ public class TaskService {
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
+    @Autowired
+    private PCOrdersRepo pcOrdersRepo;
+    @Autowired
+    private PCUsersRepo pcUsersRepo;
 
 
-    //异步调用根据订阅信息，判断是否添加额度的方法
+    /**
+     * 异步调用根据订阅信息，判断是否添加额度的方法
+     */
     public void judgeAddChars() {
-        //获取数据库中所有order为ACTIVE的id集合
+        // 获取数据库中所有order为ACTIVE的id集合
         List<CharsOrdersDO> list = charsOrdersService.getShopNameAndId();
         List<UserPriceRequest> usedList = new ArrayList<>();
         for (CharsOrdersDO charsOrdersDO : list
@@ -92,7 +101,8 @@ public class TaskService {
             if ("Starter".equals(charsOrdersDO.getName())) {
                 continue;
             }
-            //根据shopName获取User表对应的accessToken，重新生成一个数据类型  判断是否是卸载，如果卸载， 不计算
+
+            // 根据shopName获取User表对应的accessToken，重新生成一个数据类型  判断是否是卸载，如果卸载， 不计算
             UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>().eq("shop_name", charsOrdersDO.getShopName()));
             if (usersDO == null) {
                 continue;
@@ -100,7 +110,8 @@ public class TaskService {
             if (usersDO.getUninstallTime() != null && usersDO.getLoginTime() != null && usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
                 continue;
             }
-            //根据shopName获取User表对应的accessToken，重新生成一个数据类型
+
+            // 根据shopName获取User表对应的accessToken，重新生成一个数据类型
             UserPriceRequest userPriceRequest = new UserPriceRequest();
             userPriceRequest.setShopName(charsOrdersDO.getShopName());
             userPriceRequest.setSubscriptionId(charsOrdersDO.getId());
@@ -119,7 +130,7 @@ public class TaskService {
             }
         }
 
-        //判断计划是否过期，如果过期，将状态改为2
+        // 判断计划是否过期，如果过期，将状态改为2
         judgeSubscriptionStatus(usedList);
 
     }
@@ -553,5 +564,48 @@ public class TaskService {
             //打印等待翻译的用户数量
             appInsights.trackMetric("Ciwi-Translator wait translating shopName", waitTranslatingShopName.size());
         }
+    }
+
+    public void judgePCAppAddChars() {
+//        // 获取数据库中所有order为ACTIVE的id集合
+//        List<PCOrdersDO> orderList = pcOrdersRepo.selectActiveOrders();
+//        List<UserPriceRequest> usedList = new ArrayList<>();
+//        for (PCOrdersDO pcOrdersDO : orderList){
+//            // 根据shopName获取User表对应的accessToken
+//            PCUsersDO usersDO = pcUsersRepo.getUserByShopName(pcOrdersDO.getShopName());
+//            if (usersDO == null) {
+//                continue;
+//            }
+//            if (usersDO.getUninstallTime() != null && usersDO.getLoginTime() != null && usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+//                continue;
+//            }
+//
+//            // 根据shopName获取User表对应的accessToken，重新生成一个数据类型
+//            UserPriceRequest userPriceRequest = new UserPriceRequest();
+//            userPriceRequest.setShopName(pcOrdersDO.getShopName());
+//            userPriceRequest.setSubscriptionId(pcOrdersDO.getOrderId());
+//            userPriceRequest.setCreateAt(pcOrdersDO.getCreatedAt());
+//            userPriceRequest.setAccessToken(usersDO.getAccessToken());
+//            usedList.add(userPriceRequest);
+//        }
+//
+//        for (CharsOrdersDO charsOrdersDO : list
+//        ) {
+//
+//
+//        }
+//
+//        for (UserPriceRequest userPriceRequest : usedList
+//        ) {
+//            try {
+//                addCharsByUserData(userPriceRequest);
+//            } catch (Exception e) {
+//                appInsights.trackException(e);
+//                appInsights.trackTrace("judgeAddChars 用户： " + userPriceRequest.getShopName() + " 获取数据 errors : " + e);
+//            }
+//        }
+//
+//        // 判断计划是否过期，如果过期，将状态改为2
+//        judgeSubscriptionStatus(usedList);
     }
 }
