@@ -179,7 +179,7 @@ public class TestController {
     private TranslateTask translateTask;
 
     @GetMapping("/autov2")
-    public String testAutoTranslateV2(@RequestParam String type) {
+    public String testAutoTranslateV2(@RequestParam String type, @RequestParam(required = false, defaultValue = "1") Integer count) {
         if ("1".equals(type)) {
             appInsights.trackTrace("autoTranslateV2 开始调用");
             List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
@@ -188,9 +188,15 @@ public class TestController {
             if (CollectionUtils.isEmpty(translatesDOList)) {
                 return "no task";
             }
+            int i = 0;
             for (TranslatesDO translatesDO : translatesDOList) {
                 appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
-                taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+                if (taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
+                    i++;
+                    if (i > count) {
+                        break;
+                    }
+                }
             }
             return "1";
         }
