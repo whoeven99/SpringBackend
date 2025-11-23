@@ -9,11 +9,9 @@ import com.bogdatech.repository.entity.TranslateTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.repository.repo.TranslateTaskV2Repo;
 import com.bogdatech.entity.DO.*;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.model.ShopifyGraphResponse;
 import com.bogdatech.logic.GlossaryService;
-import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.token.UserTokenService;
@@ -30,19 +28,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
-import static com.bogdatech.utils.PlaceholderUtils.*;
 
 @Component
 public class TranslateV2Service {
@@ -57,96 +50,43 @@ public class TranslateV2Service {
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
-    @Autowired
     private RedisStoppedRepository redisStoppedRepository;
-    @Autowired
-    private RedisProcessService redisProcessService;
     @Autowired
     private UserTokenService userTokenService;
     @Autowired
     private GlossaryService glossaryService;
+    @Autowired
+    private TranslateRulesService translateRulesService;
     public static TelemetryClient appInsights = new TelemetryClient();
 
     // 单条翻译入口
     public BaseResponse<String> singleTextTranslate(SingleTranslateVO request) {
-        if (request.getContext() == null) {
-            return new BaseResponse<>().CreateErrorResponse("Missing parameters");
+        if (request.getContext() == null || request.getTarget() == null
+                || request.getType() == null || request.getKey() == null
+                || StringUtils.isEmpty(request.getShopName())) {
+            return BaseResponse.FailedResponse("Missing parameters");
         }
 
         String shopName = request.getShopName();
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
         if (usedToken >= maxToken) {
-            return new BaseResponse<>().CreateErrorResponse("Token limit reached");
+            return BaseResponse.FailedResponse("Token limit reached");
         }
 
+        Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, request.getTarget());
         String value = request.getContext();
-        String target = request.getTarget();
-        String type = request.getType();
-        String key = request.getKey();
-        if (URI.equals(type) && "handle".equals(key)) {
-            String fixContent = com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces(value);
-            String prompt = PlaceholderUtils.getHandlePrompt(target);
-            prompt += "The text is: " + fixContent;
-
-            Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-            if (pair == null) {
-                appInsights.trackTrace("FatalException TranslateTaskV2 singleTextTranslate error shop: " + shopName);
-                return new BaseResponse<>().CreateErrorResponse("Translation failed, please try again");
-            }
-            String translatedText = pair.getFirst();
-
-            Integer usedChars = pair.getSecond();
-            userTokenService.addUsedToken(shopName, usedChars);
-            return new BaseResponse<String>().CreateSuccessResponse(translatedText);
-        } else
-        if (JsoupUtils.isHtml(value)) {
-            // 解析html里面待翻译的内容
-            List<String> originalTexts = HtmlUtils.parseHtml(value, target);
-
-            // index - sourceValue 方便后续处理以及ai
-            Map<Integer, String> idToSourceValueMap = java.util.stream.IntStream.range(0, originalTexts.size())
-                    .boxed()
-                    .collect(Collectors.toMap(i -> i, originalTexts::get));
-
-            // 开始翻译
-            Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, new HashMap<>());
-            if (translatedValueMapPair == null) {
-                appInsights.trackTrace("FatalException TranslateTaskV2 singleTextTranslate error shop: " + shopName);
-                return new BaseResponse<>().CreateErrorResponse("Translation failed, please try again");
-            }
-
-            Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
-            String translatedValue = HtmlUtils.replaceBack(value, originalTexts, translatedValueMap);
-            Integer usedChars = translatedValueMapPair.getSecond();
-            userTokenService.addUsedToken(shopName, usedChars);
-
-            // 设置缓存
-            for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
-                Integer index = entry.getKey();
-                String sourceText = entry.getValue();
-                String translatedText = translatedValueMap.get(index);
-                setCache(target, translatedText, sourceText);
-            }
-            appInsights.trackTrace("TranslateTaskV2 singleTextTranslate " + shopName + " 用户，" + value + " 单条翻译，" +
-                    "消耗token数：" + usedChars + "，target为：" + translatedValue);
-            return new BaseResponse<String>().CreateSuccessResponse(translatedValue);
-        } else {
-            Pair<String, Integer> pair = translateSingle(value, target, new HashMap<>());
-            if (pair == null) {
-                return new BaseResponse<>().CreateErrorResponse("Translation failed, please try again");
-            }
-            String targetValue = pair.getFirst();
-            Integer usedChars = pair.getSecond();
-            userTokenService.addUsedToken(shopName, usedChars);
-
-            setCache(target, targetValue, value);
-
-            appInsights.trackTrace("TranslateTaskV2 singleTextTranslate " + shopName + " 用户，" + value + " 单条翻译，" +
-                    "消耗token数：" + usedChars + "，target为：" + targetValue);
-            return new BaseResponse<String>().CreateSuccessResponse(targetValue);
+        // 具体翻译方法
+        Pair<String, Integer> pair = translateRulesService.translate(value, request.getTarget(),
+                request.getType(), request.getKey(), glossaryMap);
+        if (pair == null) {
+            appInsights.trackTrace("FatalException TranslateTaskV2 singleTextTranslate error shop: " + shopName);
+            return BaseResponse.FailedResponse("Translation failed, please try again");
         }
+        userTokenService.addUsedToken(shopName, pair.getSecond());
+        appInsights.trackTrace("TranslateTaskV2 singleTextTranslate " + shopName + " 用户，" + value + " 单条翻译，" +
+                "消耗token数：" + pair.getSecond() + "，target为：" + pair.getFirst());
+        return BaseResponse.SuccessResponse(pair.getFirst());
     }
 
     // 手动开启翻译任务入口
@@ -285,44 +225,42 @@ public class TranslateV2Service {
         while (randomDo != null) {
             appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
             if (usedToken >= maxToken) {
+                // 记录是因为token limit中断的
+                redisStoppedRepository.tokenLimitStopped(shopName);
+            }
+            // 还可能是手动中断
+            if (redisStoppedRepository.isTaskStopped(shopName)) {
                 // 更新数据库状态为 5，翻译中断
                 long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
                 initialTaskV2DO.setStatus(InitialTaskStatus.STOPPED.status);
                 initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
                 initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
                 initialTaskV2Repo.updateById(initialTaskV2DO);
-
-                // 记录是因为token limit中断的
-                redisStoppedRepository.tokenLimitStopped(shopName);
-                break;
-            }
-            // 还可能是手动中断
-            if (redisStoppedRepository.isTaskStopped(shopName)) {
                 break;
             }
 
             // 随机找一个text type出来
             String textType = randomDo.getType();
-            List<TranslateTaskV2DO> taskList = new ArrayList<>();
-            Integer usedTokenByTask;
             if (PLAIN_TEXT.equals(textType) || TITLE.equals(textType)
                     || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)
                     || SINGLE_LINE_TEXT_FIELD.equals(textType)) {
                 // 批量翻译
-                taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
+                List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
                         initialTaskId, textType, 50);
+//                int tokens = calculateBaiLianToken(text);
+
                 // 如果value过长，做个截断，  需要测试一下字符串的长度
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
-                Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
+                Pair<Map<Integer, String>, Integer> translatedValueMapPair =
+                        translateRulesService.translateBatch(idToSourceValueMap, target, glossaryMap);
                 if (translatedValueMapPair == null) {
                     appInsights.trackTrace("FatalException TranslateTaskV2 translating error shop: " + shopName +
                             "randomDo: " + randomDo.getId());
-                    usedTokenByTask = 0;
                 } else {
                     Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
-                    usedTokenByTask = translatedValueMapPair.getSecond();
+                    usedToken = userTokenService.addUsedToken(shopName, initialTaskId, translatedValueMapPair.getSecond());
                     for (TranslateTaskV2DO updatedDo : taskList) {
                         String targetValue = translatedValueMap.get(updatedDo.getId());
                         updatedDo.setTargetValue(targetValue);
@@ -330,81 +268,33 @@ public class TranslateV2Service {
 
                         // 3.3 回写数据库 todo 批量
                         translateTaskV2Repo.update(updatedDo);
-
-                        // 3.4 设置缓存
-                        setCache(target, targetValue, updatedDo.getSourceValue());
                     }
-                }
-            } else if (HTML.equals(textType)) {
-                // html单独翻译
-                String value = randomDo.getSourceValue();
-
-                // 解析html里面待翻译的内容
-                List<String> originalTexts = HtmlUtils.parseHtml(value, target);
-
-                // index - sourceValue 方便后续处理以及ai
-                Map<Integer, String> idToSourceValueMap = originalTexts.stream().collect(
-                        Collectors.toMap(originalTexts::indexOf, text -> text));
-
-                // 开始翻译
-                Pair<Map<Integer, String>, Integer> translatedValueMapPair = translateBatch(idToSourceValueMap, target, glossaryMap);
-                if (translatedValueMapPair == null) {
-                    appInsights.trackTrace("FatalException TranslateTaskV2 translating error shop: " + shopName +
-                            "randomDo: " + randomDo.getId());
-                    usedTokenByTask = 0;
-                } else {
-                    Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
-                    usedToken = translatedValueMapPair.getSecond();
-                    String translatedValue = HtmlUtils.replaceBack(value, originalTexts, translatedValueMap);
-
-                    // 翻译后更新db
-                    randomDo.setHasTargetValue(true);
-                    randomDo.setTargetValue(translatedValue);
-                    translateTaskV2Repo.update(randomDo);
-
-                    // 设置缓存
-                    for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
-                        Integer index = entry.getKey();
-                        String sourceText = entry.getValue();
-                        String translatedText = translatedValueMap.get(index);
-                        setCache(target, translatedText, sourceText);
-                    }
-
-                    usedTokenByTask = usedToken;
+                    appInsights.trackTrace("TranslateTaskV2 translate success: " + shopName + " size: " + taskList.size() +
+                            " usedToken: " + usedToken + " maxToken: " + maxToken);
                 }
             } else {
-                // 先单独处理，加日志看看还有哪些type
-                Pair<String, Integer> pair = translateSingle(randomDo.getSourceValue(), target, glossaryMap);
+                // 其他单条翻译
+                Pair<String, Integer> pair = translateRulesService.translate(randomDo.getSourceValue(),
+                        target, textType, randomDo.getNodeKey(), glossaryMap);
                 if (pair == null) {
                     appInsights.trackTrace("FatalException TranslateTaskV2 translating error shop: " + shopName +
                             "randomDo: " + randomDo.getId());
-                    usedTokenByTask = 0;
                 } else {
-                    usedTokenByTask = pair.getSecond();
+                    usedToken = userTokenService.addUsedToken(shopName, initialTaskId, pair.getSecond());
 
                     // 翻译后更新db
-                    randomDo.setHasTargetValue(true);
                     randomDo.setTargetValue(pair.getFirst());
+                    randomDo.setHasTargetValue(true);
                     translateTaskV2Repo.update(randomDo);
-
-                    // 这里的originValue是被glossary替换过的值
-                    setCache(target, pair.getFirst(), randomDo.getSourceValue());
+                    appInsights.trackTrace("TranslateTaskV2 translate success: " + shopName + " id: " + randomDo.getId() +
+                            " usedToken: " + usedToken + " maxToken: " + maxToken);
                 }
             }
-            // ****** 翻译规则 todo
-            // html 单独处理
-            // 除了html，其他都可以批量的翻译
-            // 但是数据长度不确定，所以50个可能会被截掉
-            // 根据token限制，动态调整每次翻译的数量
-            // ****** 翻译规则
 
-            // 更新token数据库
-            usedToken = userTokenService.addUsedToken(shopName, initialTaskId, usedTokenByTask);
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
-            appInsights.trackTrace("TranslateTaskV2 translating: " + shopName + " size: " + taskList.size() +
-                    " usedToken: " + usedToken + " maxToken: " + maxToken);
         }
+
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
         // 这个计算方式有问题， 暂定这样
@@ -413,109 +303,6 @@ public class TranslateV2Service {
         initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
         initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
         initialTaskV2Repo.updateById(initialTaskV2DO);
-    }
-
-    // Pair => translatedMap - usedToken
-    // Map => id - translatedValue
-    private Pair<Map<Integer, String>, Integer> translateBatch(Map<Integer, String> idToSourceValueMap, String target,
-                                                               Map<String, GlossaryDO> glossaryMap) {
-        Boolean hasGlossary = false;
-        // 替换glossary
-        for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
-            Pair<String, Boolean> glossaryPair = replaceWithGlossary(entry.getValue(), glossaryMap);
-            if (glossaryPair.getSecond()) {
-                entry.setValue(glossaryPair.getFirst());
-                hasGlossary = true;
-            }
-        }
-
-        // 3.1 过缓存
-        Map<Integer, String> cachedMap = new HashMap<>();
-        Map<Integer, String> uncachedMap = new HashMap<>();
-        this.getCached(idToSourceValueMap, cachedMap, uncachedMap, target);
-
-        // 3.2 调用翻译接口
-        // ************************ //
-        // 多条翻译 //
-        // ************************ //
-
-        // 对整个uncachedMap调用api开始翻译  批量翻译
-        String prompt = PlaceholderUtils.getNewestPrompt(target, JsonUtils.objectToJson(uncachedMap));
-//        StringBuilder prompt = new StringBuilder("帮我翻译如下内容，到目标语言：" + target + "。");
-//        prompt.append("我会给你一个json格式的数据，你只翻译里面的value值，将翻译后的值填回到value里面，同样的格式返回给我。");
-//        if (hasGlossary) {
-//            prompt.append("其中{[xxx]}形式的字符串跳过，不要翻译，并且返回原样给我。");
-//        }
-//        prompt.append("只返回翻译后的内容，不要其他多余的说明。内容如下: ");
-//        prompt.append(JsonUtils.objectToJson(uncachedMap));
-
-        // translatedValue - usedToken
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-        if (pair != null && pair.getFirst() != null) {
-            // 翻译后 - 还原glossary
-            String aiResponse = pair.getFirst();
-            if (hasGlossary) {
-                aiResponse = getGlossaryReplacedBack(aiResponse);
-            }
-            Map<Integer, String> translatedValueMap = JsonUtils.jsonToObjectWithNull(aiResponse, new TypeReference<Map<Integer, String>>() {
-            });
-            if (translatedValueMap != null) {
-                // 翻译后 - 设置缓存
-                for (Map.Entry<Integer, String> entry : translatedValueMap.entrySet()) {
-                    setCache(target, entry.getValue(), idToSourceValueMap.get(entry.getKey()));
-                }
-
-                translatedValueMap.putAll(cachedMap);
-                return new Pair<>(translatedValueMap, pair.getSecond());
-            }
-        }
-        // FatalException
-        return null;
-    }
-
-    private Pair<String, Integer> translateSingle(String value, String target,
-                                                  Map<String, GlossaryDO> glossaryMap) {
-        if (hasPlaceholders(value)) {
-            String variableString = getOuterString(value);
-            String prompt = getVariablePrompt(target, variableString, null);
-            prompt += "The text is: " + value;
-
-            Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-            if (pair != null && pair.getFirst() != null) {
-                String translatedText = pair.getFirst();
-                return new Pair<>(translatedText, pair.getSecond());
-            }
-        } else {
-            StringBuilder promptBuilder = new StringBuilder("帮我翻译如下内容，到目标语言：" + target + "。");
-            Pair<String, Boolean> glossaryPair = replaceWithGlossary(value, glossaryMap);
-            if (glossaryPair.getSecond()) {
-                promptBuilder.append("其中{[xxx]}形式的字符串跳过，不要翻译，并且返回原样给我。");
-                value = glossaryPair.getFirst();
-            }
-
-            // 先替换glossary， 再去做缓存
-            String targetCache = redisProcessService.getCacheData(target, value);
-            if (targetCache != null) {
-                targetCache = isHtmlEntity(targetCache);
-                return new Pair<>(targetCache, 0);
-            }
-
-            promptBuilder.append("只返回翻译后的内容，不要其他多余的说明。内容如下: ");
-            promptBuilder.append(value);
-
-            // translatedValue - usedToken
-            Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(promptBuilder.toString(), target);
-            if (pair != null && pair.getFirst() != null) {
-                String translatedText = pair.getFirst();
-
-                // 把{[xxx]}替换回去 xxx
-                if (glossaryPair.getSecond()) {
-                    translatedText = getGlossaryReplacedBack(translatedText);
-                }
-                return new Pair<>(translatedText, pair.getSecond());
-            }
-        }
-        return null;
     }
 
     // 翻译 step 4, 翻译完成 -> 写回shopify
@@ -598,64 +385,6 @@ public class TranslateV2Service {
 //                initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.ALL_DONE.status);
             }
         }
-    }
-
-    private static Pair<String, Boolean> replaceWithGlossary(String value, Map<String, GlossaryDO> glossaryMap) {
-        if (value == null || glossaryMap == null || glossaryMap.isEmpty()) {
-            return new Pair<>(value, false);
-        }
-
-        Boolean hasGlossary = false;
-        for (Map.Entry<String, GlossaryDO> entry : glossaryMap.entrySet()) {
-            String key = entry.getKey();
-            GlossaryDO glossaryDO = entry.getValue();
-            Integer isCaseSensitive = glossaryDO.getCaseSensitive();
-
-            // 当 isCaseSensitive 为 1 时，要求大小写完全一致才替换；否则不区分大小写替换
-            String replacement = "{[" + glossaryDO.getTargetText() + "]}";
-            if (isCaseSensitive != null && isCaseSensitive == 1) {
-                if (value.contains(key)) {
-                    value = value.replace(key, replacement);
-                    hasGlossary = true;
-                }
-            } else {
-                // 不区分大小写替换：使用正则的 CASE_INSENSITIVE
-                Pattern pattern = Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE);
-                Matcher matcher = pattern.matcher(value);
-                if (matcher.find()) {
-                    value = matcher.replaceAll(Matcher.quoteReplacement(replacement));
-                    hasGlossary = true;
-                }
-            }
-        }
-
-        return new Pair<>(value, hasGlossary);
-    }
-
-    private static String getGlossaryReplacedBack(String value) {
-        return value.replaceAll("\\{\\[(.*?)]}", "$1");
-    }
-
-    private void getCached(Map<Integer, String> idToSourceValueMap,
-                           Map<Integer, String> cachedMap,
-                           Map<Integer, String> unCachedMap,
-                           String target) {
-        idToSourceValueMap.forEach((id, sourceValue) -> {
-            String targetCache = redisProcessService.getCacheData(target, sourceValue);
-            if (targetCache != null) {
-                targetCache = isHtmlEntity(targetCache);
-                cachedMap.put(id, targetCache);
-            } else {
-                unCachedMap.put(id, sourceValue);
-            }
-        });
-        appInsights.trackTrace("Translation getCached: total " + idToSourceValueMap.size() +
-                " cached " + cachedMap.size() +
-                " uncached " + unCachedMap.size());
-    }
-
-    private void setCache(String target, String targetValue, String sourceValue) {
-        redisProcessService.setCacheData(target, targetValue, sourceValue);
     }
 
     // 根据翻译规则，不翻译的直接不用存

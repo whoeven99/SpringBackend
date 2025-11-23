@@ -43,4 +43,19 @@ public class BaseResponse<T> {
         this.response = response;
         return this;
     }
+
+    public static <T> BaseResponse<T> FailedResponse(String errorMsg) {
+        BaseResponse<T> response = new BaseResponse<>();
+        response.setSuccess(false);
+        response.setErrorCode(10001);
+        response.setErrorMsg(errorMsg);
+        return response;
+    }
+
+    public static <T> BaseResponse<T> SuccessResponse(T res) {
+        BaseResponse<T> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setResponse(res);
+        return response;
+    }
 }

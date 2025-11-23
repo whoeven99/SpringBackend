@@ -120,7 +120,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
         }
     }
 
-    @Scheduled(fixedDelay = 30 * 1000)
+//    @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
         if (CollectionUtils.isEmpty(translatingTask)) return;
