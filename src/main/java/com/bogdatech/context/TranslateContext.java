@@ -1,30 +1,87 @@
 package com.bogdatech.context;
 
-import com.bogdatech.entity.DO.AILanguagePacksDO;
-import com.bogdatech.entity.DO.TranslateResourceDTO;
-import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.utils.CharacterCountUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.bogdatech.entity.DO.GlossaryDO;
+import com.bogdatech.utils.JsonUtils;
 
+import java.util.HashMap;
 import java.util.Map;
-@AllArgsConstructor
-@NoArgsConstructor
+
 @Data
 public class TranslateContext {
-    private String shopifyData; //shopify要翻译数据
-    private ShopifyRequest shopifyRequest; // shopify请求参数
-    private TranslateResourceDTO translateResource; // 翻译模块类型数据
-    private CharacterCountUtils characterCountUtils; // 计数器
-    private Integer remainingChars; //最大限制
-    private Map<String, Object> glossaryMap; //词汇表相关数据
-    private String source; // 源语言
-    private String languagePackId; //语言包
-    private String apiKey; // 用户私有key
-    private Boolean handleFlag; // 是否翻译handle标志
-    private Boolean isCover; // 是否覆盖翻译标志
-    private Integer model; // 选的的主模型，googel， openai
-    private String apiModel; // 主模型下的细分支 gpt4.1  等等。
-    private String userPrompt; // 用户自定义提示词
+    // Start
+    private String content;
+    private String targetLanguage;
+    private Long startTime;
+
+    // Calculate
+    private Map<String, GlossaryDO> glossaryMap;
+    private boolean hasGlossary;
+    private boolean isCached;
+    private ContentTypeEnum contentType; // 系统内判断的翻译类型
+    private HtmlContext htmlContext = null;
+    private String prompt;
+
+    // Finish
+    private Long endTime;
+    private Integer usedToken;
+    private String translatedContent;
+
+    private Long translatedTime;
+
+    public class HtmlContext {
+        private Map<Integer, String> originalTextMap;
+        private Document doc;
+        private Map<Integer, TextNode> nodeMap = new HashMap<>();
+        private Map<Integer, String> translatedTextMap;
+//        private String replaceBackContent;
+    }
+
+    // 批量翻译的数据
+    private Map<Integer, String> batchOriginalTextMap;
+    private Map<Integer, String> batchUncachedTextMap;
+    private Map<Integer, String> batchTranslatedTextMap;
+
+    public TranslateContext startNewTranslate(String content, String targetLanguage) {
+        TranslateContext context = new TranslateContext();
+        context.content = content;
+        context.targetLanguage = targetLanguage;
+        context.startTime = System.currentTimeMillis();
+        return context;
+    }
+
+    public TranslateContext startBatchTranslate(Map<Integer, String> batchOriginalTextMap, String targetLanguage) {
+        TranslateContext context = new TranslateContext();
+        context.batchOriginalTextMap = batchOriginalTextMap;
+        context.batchUncachedTextMap = new HashMap<>();
+        context.batchTranslatedTextMap = new HashMap<>();
+        context.targetLanguage = targetLanguage;
+        context.startTime = System.currentTimeMillis();
+        return context;
+    }
+
+    public String getJsonRecord() {
+        TranslateContext context = new TranslateContext();
+        context.isCached = this.isCached;
+        context.usedToken = this.usedToken;
+        context.translatedTime = this.getTranslateTime();
+        context.hasGlossary = this.hasGlossary;
+        return JsonUtils.objectToJson(context);
+    }
+
+    public long getTranslateTime() {
+        if (startTime == null) return 0;
+        long end = endTime != null ? endTime : System.currentTimeMillis();
+        return (end - startTime) / 1000;
+    }
+
+    public enum ContentTypeEnum {
+        STARTED("20字符以内"),
+        RUNNING("handle字段"),
+        COMPLETED("html"),
+        FAILED(""),
+        CANCELLED,
+        SUSPENDED
+    }
 }
+
+
