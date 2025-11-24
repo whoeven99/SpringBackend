@@ -70,8 +70,8 @@ public class    TranslateController {
 
     //单条文本翻译
     @PostMapping("/singleTextTranslate")
-    public BaseResponse<String> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
-        return translateV2Service.singleTextTranslate(singleTranslateVO);
+    public BaseResponse<Object> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
+        return translateService.singleTextTranslate(singleTranslateVO);
     }
 
     /**
