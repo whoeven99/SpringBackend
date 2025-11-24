@@ -178,7 +178,7 @@ public class PlaceholderUtils {
                 When translating, please follow these rules:
                 1. Do not translate key - values; only translate the content of the values.
                 2. Do not translate emojis.
-                3. If a text is a variable name, do not translate it.
+                3. If a text is a variable name(e.g., {{aaa}}, {{aa.bbb}}, {% ccc %}, {% capture email_title %} etc.)., do not translate it.
                 The target language for translation is:
                 {{TARGET_LANGUAGE}}
                 Please return your translation in the following JSON - like format:
