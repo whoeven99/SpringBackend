@@ -2,6 +2,7 @@ package com.bogdatech.logic.translate;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUsersService;
+import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
