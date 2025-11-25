@@ -533,4 +533,8 @@ public class TestController {
         return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
     }
 
+    @GetMapping("/testFee")
+    public void testFee() {
+        taskService.freeTrialTaskForImage();
+    }
 }
