@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.AidgeIntegration;
@@ -311,16 +312,6 @@ public class TranslateService {
         return translation;
     }
 
-    //翻译单个文本数据
-    public String translateSingleText(RegisterTransactionRequest request) {
-        TranslateRequest translateRequest = TypeConversionUtils.registerTransactionRequestToTranslateRequest(request);
-        request.setValue(getGoogleTranslationWithRetry(translateRequest));
-        //保存翻译后的数据到shopify本地
-        Map<String, Object> variables = getVariables(request);
-        ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(translateRequest);
-        return registerTransaction(shopifyRequest, variables);
-    }
-
     /**
      * 根据店铺名称和target获取对应的 ID。
      *
@@ -523,6 +514,85 @@ public class TranslateService {
 
         // 调用图片翻译方法
         return aidgeIntegration.aidgeStandPictureTranslate(shopName, imageUrl, sourceCode, targetCode, maxCharsByShopName, ALiYunTranslateIntegration.TRANSLATE_APP);
+    }
+
+    public BaseResponse<Object> singleTextTranslateV2(String shopName, SingleTranslateVO singleTranslateVO) {
+        SingleReturnVO singleReturnVO = new SingleReturnVO();
+        // 判断是否为空
+        String value = singleTranslateVO.getContext();
+        if (value == null) {
+            return new BaseResponse<>().CreateErrorResponse(NOT_TRANSLATE);
+        }
+
+        // 判断额度是否足够
+        TranslationCounterDO request1 = translationCounterService.readCharsByShopName(shopName);
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+        int usedChars = request1.getUsedChars();
+
+        // 如果字符超限，则直接返回字符超限
+        if (usedChars >= remainingChars) {
+            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+        }
+
+        // 根据模块判断是否翻译
+        String key = singleTranslateVO.getKey();
+        String source = singleTranslateVO.getSource();
+        String target = singleTranslateVO.getTarget();
+        String resourceType = singleTranslateVO.getResourceType();
+        String type = singleTranslateVO.getType();
+
+        // 获取当前翻译token数
+        CharacterCountUtils counter = new CharacterCountUtils();
+        counter.addChars(usedChars);
+        if (type.equals(URI) && "handle".equals(key)) {
+            // 如果 key 为 "handle"，这里是要处理的代码
+            String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName
+                            , null, source, target, value), counter, null, HANDLE
+                    , remainingChars, true, MANUAL);
+            if (targetString == null) {
+                singleReturnVO.setTargetText(value);
+                return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+            }
+
+            appInsights.trackTrace(shopName + " 用户 ，" + value + " 单条翻译 handle模块： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
+            singleReturnVO.setTargetText(targetString);
+            return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+        }
+
+        // 开始翻译,判断是普通文本还是html文本
+        try {
+            if (isHtml(value)) {
+                TranslateRequest translateRequest = new TranslateRequest(0, shopName, null, source, target, value);
+
+                // 单条翻译html，修改格式
+                if (resourceType.equals(METAFIELD)) {
+                    String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter
+                            , null, remainingChars, true, "1", MANUAL);
+                    htmlTranslation = normalizeHtml(htmlTranslation);
+                    appInsights.trackTrace(shopName + " 用户 ，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
+                    singleReturnVO.setTargetText(htmlTranslation);
+                    return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+                }
+
+                String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter
+                        , null, remainingChars, true, "1", MANUAL);
+                appInsights.trackTrace(shopName + " 用户 ，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
+                singleReturnVO.setTargetText(htmlTranslation);
+                return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+            } else {
+                String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName
+                                , null, source, target, value), counter, null, GENERAL
+                        , remainingChars, true, MANUAL);
+                appInsights.trackTrace(shopName + " 用户 ，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
+                singleReturnVO.setTargetText(targetString);
+                return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+            }
+        } catch (Exception e) {
+            appInsights.trackTrace("singleTranslate errors : " + e.getMessage());
+            appInsights.trackException(e);
+        }
+
+        return new BaseResponse<>().CreateErrorResponse(value);
     }
 }
 

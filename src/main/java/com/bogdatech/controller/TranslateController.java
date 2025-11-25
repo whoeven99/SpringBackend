@@ -74,6 +74,12 @@ public class TranslateController {
         return translateService.singleTextTranslate(singleTranslateVO);
     }
 
+    // 单条文本翻译 修改返回值类型
+    @PostMapping("/singleTextTranslateV2")
+    public BaseResponse<Object> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
+        return translateService.singleTextTranslateV2(shopName, singleTranslateVO);
+    }
+
     /**
      * 插入shop翻译项信息
      */
@@ -157,13 +163,6 @@ public class TranslateController {
     @DeleteMapping("/stop")
     public void stop(@RequestParam String shopName) {
         translateService.stopTranslationManually(shopName);
-    }
-
-
-    //翻译单个文本数据
-    @PostMapping("/translateSingleText")
-    public BaseResponse<Object> translateSingleText(@RequestBody RegisterTransactionRequest request) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
     }
 
     //手动停止用户的翻译任务
