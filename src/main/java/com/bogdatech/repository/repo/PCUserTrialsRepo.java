@@ -46,7 +46,6 @@ public class PCUserTrialsRepo extends ServiceImpl<PCUserTrialsMapper, PCUserTria
         pcUserTrialsDO.setShopName(shopName);
         pcUserTrialsDO.setTrialStart(beginTimestamp);
         pcUserTrialsDO.setTrialEnd(afterTrialDaysTimestamp);
-        pcUserTrialsDO.setIsTrialExpired(true);
         return baseMapper.insert(pcUserTrialsDO) > 0;
     }
 
