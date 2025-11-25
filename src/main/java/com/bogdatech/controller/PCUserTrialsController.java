@@ -58,4 +58,10 @@ public class PCUserTrialsController {
         return pcUserTrialsService.isInFreePlanTime(shopName);
     }
 
+    // 当用户取消订单，需要个api， 存储或修改试用表的数据
+    @PostMapping("/insertOrUpdateFreePlan")
+    public BaseResponse<Object> insertOrUpdateFreePlan(@RequestParam String shopName) {
+        return pcUserTrialsService.insertOrUpdateFreePlan(shopName);
+    }
+
 }
