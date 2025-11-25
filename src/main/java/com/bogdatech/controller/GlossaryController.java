@@ -27,9 +27,7 @@ public class GlossaryController {
     public BaseResponse<Object> insertGlossaryInfo(@RequestBody GlossaryDO glossaryDO) {
         //判断 如果数据库中有5个就不再插入了
         GlossaryDO[] singleGlossaryByShopNameAndSource = glossaryService.getGlossaryByShopName(glossaryDO.getShopName());
-        // if (singleGlossaryByShopNameAndSource.length > 10) {
-        //     return new BaseResponse<>().CreateErrorResponse("If there is 10, no more insertions will be made.");
-        // }
+
         //判断是否冲突（sourceText， rangeCode， caseSensitive）
         for (GlossaryDO glossary : singleGlossaryByShopNameAndSource) {
             if (glossary.getSourceText().equals(glossaryDO.getSourceText())) {

@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.entity.DO.GlossaryDO;
@@ -30,6 +31,8 @@ public class GlossaryServiceImpl extends ServiceImpl<GlossaryMapper, GlossaryDO>
 
     @Override
     public GlossaryDO getSingleGlossaryByShopNameAndSource(String shopName, String sourceText, String rangeCode) {
-        return baseMapper.getSingleGlossaryByShopNameAndSource(shopName, sourceText, rangeCode);
+        return baseMapper.selectOne(new LambdaQueryWrapper<GlossaryDO>().eq(GlossaryDO::getShopName, shopName)
+                .eq(GlossaryDO::getRangeCode, rangeCode)
+                .apply("HASHBYTES('SHA2_256', CONVERT(VARBINARY(256), source_text)) = HASHBYTES('SHA2_256', CONVERT(VARBINARY(256), {0}))", sourceText));
     }
 }
