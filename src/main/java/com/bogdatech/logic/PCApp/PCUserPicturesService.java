@@ -43,8 +43,8 @@ public class PCUserPicturesService {
 
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
-    public static int APP_PIC_FEE = 1000;
-    public static int APP_ALT_FEE = 1000;
+    public static int APP_PIC_FEE = 2000;
+    public static int APP_ALT_FEE = 2000; // alt和pic翻译一块扣除
 
     public BaseResponse<Object> insertPicToDbAndCloud(MultipartFile file, String shopName, String pcUserPicturesDoJson) {
         //解析userPicturesDO
@@ -181,12 +181,6 @@ public class PCUserPicturesService {
 
         // 获取用户最大额度限制
         Integer maxCharsByShopName = pcUsersDO.getPurchasePoints();
-
-        // 剩余额度
-        int remainingPoints = pcUsersDO.getPurchasePoints() - pcUsersDO.getUsedPoints();
-        if (pcUsersDO.getUsedPoints() >= maxCharsByShopName || remainingPoints < APP_ALT_FEE) {
-            return new BaseResponse<>().CreateErrorResponse("额度不够");
-        }
 
         // 生成提示词
         String prompt = "请将以下文本翻译为如下语言：" + getLanguageName(altTranslateVO.getTargetCode());
