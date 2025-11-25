@@ -8,8 +8,6 @@ import java.util.List;
 public interface ICharsOrdersService extends IService<CharsOrdersDO> {
     Boolean updateStatusByShopName(String id, String status);
 
-    List<String> getIdByShopName(String shopName);
-
     List<CharsOrdersDO> getShopNameAndId();
 
     List<CharsOrdersDO> getCharsOrdersDoByShopName(String shopName);
