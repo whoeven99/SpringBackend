@@ -116,9 +116,11 @@ public class PCUserSubscriptionService {
         return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
     }
 
-    public BaseResponse<Object> checkUserPlan(String shopName, Integer planId) {
-        boolean update = pcUserSubscriptionsRepo.checkUserPlan(shopName, planId);
-        if (update) {
+    public BaseResponse<Object> checkUserPlan(String shopName, Integer planId, Integer feeType) {
+        // 修改月付类型
+        boolean updateFeeType = pcUserSubscriptionsRepo.updateFeeType(shopName, feeType);
+        boolean updatePlan = pcUserSubscriptionsRepo.checkUserPlan(shopName, planId);
+        if (updateFeeType && updatePlan) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse("check error");

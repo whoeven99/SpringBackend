@@ -13,8 +13,8 @@ public class PCUserSubscriptionController {
 
     // 切换用户计划
     @PostMapping("/checkUserPlan")
-    public BaseResponse<Object> checkUserPlan(@RequestParam String shopName, @RequestParam Integer planId) {
-        return pcUserSubscriptionService.checkUserPlan(shopName, planId);
+    public BaseResponse<Object> checkUserPlan(@RequestParam String shopName, @RequestParam Integer planId, @RequestParam Integer feeType) {
+        return pcUserSubscriptionService.checkUserPlan(shopName, planId, feeType);
     }
 
     //获取用户订阅计划

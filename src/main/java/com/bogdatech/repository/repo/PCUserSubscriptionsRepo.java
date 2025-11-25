@@ -47,4 +47,9 @@ public class PCUserSubscriptionsRepo extends ServiceImpl<PCUserSubscriptionsMapp
         return baseMapper.update(new LambdaUpdateWrapper<PCUserSubscriptionsDO>().eq(PCUserSubscriptionsDO::getShopName
                 , shopName).set(PCUserSubscriptionsDO::getPlanId, i)) > 0;
     }
+
+    public boolean updateFeeType(String shopName, Integer feeType) {
+        return baseMapper.update(new LambdaUpdateWrapper<PCUserSubscriptionsDO>().eq(PCUserSubscriptionsDO::getShopName
+                , shopName).set(PCUserSubscriptionsDO::getFeeType, feeType)) > 0;
+    }
 }
