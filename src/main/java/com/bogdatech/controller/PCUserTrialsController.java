@@ -63,5 +63,4 @@ public class PCUserTrialsController {
     public BaseResponse<Object> insertOrUpdateFreePlan(@RequestParam String shopName) {
         return pcUserTrialsService.insertOrUpdateFreePlan(shopName);
     }
-
 }

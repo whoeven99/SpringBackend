@@ -715,7 +715,7 @@ public class TaskService {
                 pcUserTrialsRepo.updateTrialExpiredByShopName(shopName, true);
 
                 // 如果订单存在，并且支付成功，添加相关计划额度
-                Boolean flag = translationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), latestActiveSubscribeId, charsByPlanName);
+                boolean flag = pcUsersRepo.updatePurchasePoints(shopName, charsByPlanName);
                 System.out.println(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
                 appInsights.trackTrace(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
             }
