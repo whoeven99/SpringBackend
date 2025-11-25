@@ -63,7 +63,9 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     public void initialToTranslateTask() {
 //        appInsights.trackTrace("TranslateTaskV2 start INIT");
         List<InitialTaskV2DO> initTaskList = initialTaskV2Repo.selectByStatus(0);
-        if (CollectionUtils.isEmpty(initTaskList)) return;
+        if (CollectionUtils.isEmpty(initTaskList)) {
+            return;
+        }
 
         // 按 shopName 分组
         Map<String, List<InitialTaskV2DO>> tasksByShop = initTaskList.stream()
@@ -94,7 +96,9 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(1);
-        if (CollectionUtils.isEmpty(translatingTask)) return;
+        if (CollectionUtils.isEmpty(translatingTask)) {
+            return;
+        }
 
         // 按 initialId 分组
         Map<Integer, List<InitialTaskV2DO>> tasksByInitialId = translatingTask.stream()
@@ -123,7 +127,9 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 //    @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
-        if (CollectionUtils.isEmpty(translatingTask)) return;
+        if (CollectionUtils.isEmpty(translatingTask)) {
+            return;
+        }
 
         // 按 shopName 分组，严格控制shopify的shopName维度的api qps
         Map<String, List<InitialTaskV2DO>> tasksByShop = translatingTask.stream()
@@ -153,7 +159,9 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 //    @Scheduled(fixedRate = 30 * 1000)
     public void sendEmail() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(3);
-        if (CollectionUtils.isEmpty(translatingTask)) return;
+        if (CollectionUtils.isEmpty(translatingTask)) {
+            return;
+        }
 
         for (InitialTaskV2DO initialTaskV2DO : translatingTask) {
             // 断电
