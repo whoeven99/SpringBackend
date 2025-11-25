@@ -21,7 +21,7 @@ public class PCUserTrialsRepo extends ServiceImpl<PCUserTrialsMapper, PCUserTria
     public Boolean insertUserTrial(String shopName) {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Timestamp end = new Timestamp(now.getTime() + 5 * 24 * 60 * 60 * 1000); //暂定5天后过期
-        boolean isTrialExpired = false;
+        boolean isTrialExpired = true;
         PCUserTrialsDO pcUserTrialsDO = new PCUserTrialsDO(shopName, now, end, isTrialExpired, null, null);
         int insert = baseMapper.insert(pcUserTrialsDO);
         return insert > 0;
@@ -46,6 +46,7 @@ public class PCUserTrialsRepo extends ServiceImpl<PCUserTrialsMapper, PCUserTria
         pcUserTrialsDO.setShopName(shopName);
         pcUserTrialsDO.setTrialStart(beginTimestamp);
         pcUserTrialsDO.setTrialEnd(afterTrialDaysTimestamp);
+        pcUserTrialsDO.setIsTrialExpired(true);
         return baseMapper.insert(pcUserTrialsDO) > 0;
     }
 
