@@ -56,9 +56,10 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         // 添加订单标识
         ordersRedisService.setOrderId(shopName, gid);
 
-        //根据gid，判断是否符合添加额度的条件
+        // 根据gid，判断是否符合添加额度的条件
+        System.out.println("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars + " accessToken: " + accessToken);
         appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars + " accessToken: " + accessToken);
-        //根据传来的gid获取， 判断调用那个方法，查询相关订阅信息
+        // 根据传来的gid获取， 判断调用那个方法，查询相关订阅信息
         String query;
         if (gid.contains("AppPurchaseOneTime")){
             appInsights.trackTrace("一次性购买 用户： " + shopName);
@@ -68,9 +69,12 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
             query = getSubscriptionQuery(gid);
         }
         appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " query: " + query);
+        System.out.println("updateCharsByShopName 用户： " + shopName + " query: " + query);
         String shopifyByQuery = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
         appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
-        //判断和解析相关数据
+        System.out.println("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
+
+        // 判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
             appInsights.trackTrace("updateCharsByShopName " + shopName + " 用户  errors queryValid : " + queryValid);

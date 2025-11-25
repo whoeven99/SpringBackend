@@ -110,7 +110,7 @@ public class InitialTranslateDbTask {
                     .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
 
             if (update > 0) {
-                initialExecutorService.submit(() -> {
+                manualExecutorService.submit(() -> {
                     processInitialTasksOfShop(initialTranslateTasksDO);
                 });
             }

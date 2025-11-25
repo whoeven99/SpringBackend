@@ -57,4 +57,5 @@ public class PCUserTrialsController {
     public BaseResponse<Object> isInFreePlanTime(@RequestParam String shopName) {
         return pcUserTrialsService.isInFreePlanTime(shopName);
     }
+
 }

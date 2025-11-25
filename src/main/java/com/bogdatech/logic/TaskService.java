@@ -655,12 +655,14 @@ public class TaskService {
     public void freeTrialTaskForImage() {
         // 获取所有免费计划不过期的用户
         List<PCUserTrialsDO> notTrialExpired = pcUserTrialsRepo.getNotExpiredTrialByShopName();
+        System.out.println("notTrialExpired = " + notTrialExpired);
         if (notTrialExpired == null || notTrialExpired.isEmpty()) {
             return;
         }
 
         // 循环检测是否过期
         for (PCUserTrialsDO pcUserTrialsDO : notTrialExpired) {
+            System.out.println("pcUserTrialsDO = " + pcUserTrialsDO);
             // 判断是否过期
             Timestamp now = new Timestamp(System.currentTimeMillis());
             Timestamp trialEnd = pcUserTrialsDO.getTrialEnd();
@@ -673,6 +675,7 @@ public class TaskService {
 
             // 如果 trialStart + 5天 小于 trialEnd，不做任何操作
             if (now.after(trialEnd)) {
+                System.out.println("走免费试用");
                 // 获取最新一条gid订单，判断是否支付成功
                 String latestActiveSubscribeId = pcOrdersRepo.getLatestActiveSubscribeId(shopName);
                 if (latestActiveSubscribeId == null) {
@@ -690,6 +693,7 @@ public class TaskService {
                 if (queryValid == null) {
                     continue;
                 }
+                System.out.println("queryValid  " + queryValid);
                 String name = queryValid.getString("name");
                 Integer charsByPlanName = pcSubscriptionsRepo.getCharsByPlanName(name);
 
@@ -712,6 +716,7 @@ public class TaskService {
 
                 // 如果订单存在，并且支付成功，添加相关计划额度
                 Boolean flag = translationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), latestActiveSubscribeId, charsByPlanName);
+                System.out.println(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
                 appInsights.trackTrace(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
             }
         }
