@@ -1,5 +1,6 @@
 package com.bogdatech.logic.PCApp;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.PCOrdersDO;
 import com.bogdatech.repository.entity.PCUserTrialsDO;
@@ -91,4 +92,17 @@ public class PCUserTrialsService {
     }
 
 
+    public BaseResponse<Object> insertOrUpdateFreePlan(String shopName) {
+        // 获取免费试用表数据， 有，改； 没有，存
+        PCUserTrialsDO pcUserTrialsDO = pcUserTrialsRepo.getUserTrialByShopName(shopName);
+        if (pcUserTrialsDO != null) {
+            pcUserTrialsDO.setIsTrialExpired(true);
+            pcUserTrialsRepo.update(pcUserTrialsDO, new LambdaQueryWrapper<PCUserTrialsDO>()
+                    .eq(PCUserTrialsDO::getShopName, shopName));
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+
+        pcUserTrialsRepo.insertUserTrial(shopName);
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
 }
