@@ -62,8 +62,8 @@ public class InitialTranslateDbTask {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
 
-    private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(5); // 创建initial初始化线程池
-    private final ExecutorService manualExecutorService = Executors.newFixedThreadPool(5);
+    private final ExecutorService initialExecutorService = Executors.newFixedThreadPool(10); // 创建initial初始化线程池
+    private final ExecutorService manualExecutorService = Executors.newFixedThreadPool(10);
 
     /**
      * 恢复因重启或其他原因中断的手动翻译大任务的task
@@ -108,9 +108,10 @@ public class InitialTranslateDbTask {
             int update = initialTranslateTasksMapper.update(new LambdaUpdateWrapper<InitialTranslateTasksDO>()
                     .eq(InitialTranslateTasksDO::getTaskId, initialTranslateTasksDO.getTaskId())
                     .set(InitialTranslateTasksDO::getStatus, InitialTaskStatusEnum.TASKS_CREATING.status));
+            appInsights.trackTrace("scanAndSubmitClickTranslateDbTask 修改状态 ：" + update + " initialTranslateTasksDO : " + initialTranslateTasksDO);
 
             if (update > 0) {
-                initialExecutorService.submit(() -> {
+                manualExecutorService.submit(() -> {
                     processInitialTasksOfShop(initialTranslateTasksDO);
                 });
             }
