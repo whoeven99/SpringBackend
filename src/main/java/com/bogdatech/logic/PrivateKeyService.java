@@ -4,7 +4,7 @@ import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.*;
-import com.bogdatech.context.TranslateContext;
+import com.bogdatech.context.TranslateContextV1;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
@@ -295,7 +295,7 @@ public class PrivateKeyService {
             translateResource.setTarget(request.getTarget());
             String query = new ShopifyRequestBody().getFirstQuery(translateResource);
             String shopifyData = shopifyService.getShopifyData(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), API_VERSION_LAST, query);
-            TranslateContext translateContext = new TranslateContext(shopifyData, shopifyRequest, translateResource, counter, Math.toIntExact(remainingChars), glossaryMap, request.getSource(), null, apiKey, handleFlag, isCover, modelFlag, apiModel, userPrompt);
+            TranslateContextV1 translateContext = new TranslateContextV1(shopifyData, shopifyRequest, translateResource, counter, Math.toIntExact(remainingChars), glossaryMap, request.getSource(), null, apiKey, handleFlag, isCover, modelFlag, apiModel, userPrompt);
             translateJson(translateContext);
 
         }
@@ -345,7 +345,7 @@ public class PrivateKeyService {
     }
 
     //根据返回的json片段，将符合条件的value翻译,并返回json片段
-    public Future<Void> translateJson(TranslateContext translateContext) {
+    public Future<Void> translateJson(TranslateContextV1 translateContext) {
         String resourceType = translateContext.getTranslateResource().getResourceType();
         ShopifyRequest request = translateContext.getShopifyRequest();
         appInsights.trackTrace("translate " + request.getShopName() + " 现在翻译到： " + resourceType);
@@ -370,7 +370,7 @@ public class PrivateKeyService {
     }
 
     // 递归处理下一页数据
-    private void handlePagination(JsonNode translatedRootNode, TranslateContext translateContext) {
+    private void handlePagination(JsonNode translatedRootNode, TranslateContextV1 translateContext) {
         // 获取translatableResources节点
         JsonNode translatableResourcesNode = translatedRootNode.path("translatableResources");
         // 获取pageInfo节点
@@ -387,7 +387,7 @@ public class PrivateKeyService {
 
     //递归遍历JSON树：使用 translateSingleLineTe
     //方法递归地遍历整个 JSON 树，并对 translatableContent 字段进行特别处理。
-    private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContext translateContext) {
+    private void translateSingleLineTextFieldsRecursively(JsonNode node, TranslateContextV1 translateContext) {
         //将node转换为json字符串
         Set<TranslateTextDO> needTranslatedData = translatedDataService.translatedDataParse(node, translateContext.getShopifyRequest().getShopName(), translateContext.getIsCover(), null);
         if (needTranslatedData == null) {
@@ -408,7 +408,7 @@ public class PrivateKeyService {
         }
     }
 
-    private void translateAndSaveData(Map<String, Set<TranslateTextDO>> stringSetMap, TranslateContext translateContext) {
+    private void translateAndSaveData(Map<String, Set<TranslateTextDO>> stringSetMap, TranslateContextV1 translateContext) {
         if (stringSetMap == null || stringSetMap.isEmpty()) {
             return;
         }
@@ -434,7 +434,7 @@ public class PrivateKeyService {
     }
 
     //翻译元字段的数据
-    private void translateMetafield(TranslateContext translateContext, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey, String resourceType) {
+    private void translateMetafield(TranslateContextV1 translateContext, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey, String resourceType) {
         String handleType = "null";
         if (translateContext.getHandleFlag()) {
             handleType = HANDLE;
@@ -488,7 +488,7 @@ public class PrivateKeyService {
 
     //对词汇表数据进行处理
     public void translateDataByGlossary(Set<TranslateTextDO> glossaryData,
-                                        TranslateContext translateContext) {
+                                        TranslateContextV1 translateContext) {
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();
         String shopName = shopifyRequest.getShopName();
         String target = shopifyRequest.getTarget();
@@ -601,7 +601,7 @@ public class PrivateKeyService {
     }
 
     //对html数据处理
-    private void translateHtml(Set<TranslateTextDO> htmlData, TranslateContext translateContext) {
+    private void translateHtml(Set<TranslateTextDO> htmlData, TranslateContextV1 translateContext) {
         ShopifyRequest shopifyRequest = translateContext.getShopifyRequest();
         String shopName = shopifyRequest.getShopName();
         String target = shopifyRequest.getTarget();
@@ -663,7 +663,7 @@ public class PrivateKeyService {
 
     //对不同的数据使用不同的翻译api
     private void translateDataByAPI(Set<TranslateTextDO> plainTextData,
-                                    TranslateContext translateContext) {
+                                    TranslateContextV1 translateContext) {
         ShopifyRequest request = translateContext.getShopifyRequest();
         CharacterCountUtils counter = translateContext.getCharacterCountUtils();
 
@@ -712,7 +712,7 @@ public class PrivateKeyService {
     /**
      * 根据用户的翻译模型选择翻译
      * */
-    private void translateByUser(TranslateContext translateContext, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey, String resourceType) {
+    private void translateByUser(TranslateContextV1 translateContext, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey, String resourceType) {
         // 根据模型类型选择对应的翻译方法
         // 对元字段数据类型翻译
         if (translateContext.getTranslateResource().getResourceType().equals(METAFIELD)) {
@@ -732,7 +732,7 @@ public class PrivateKeyService {
     /**
      * 根据model类型选择对应模型翻译
      */
-    public String translateByModel(TranslateContext translateContext, String value, ShopifyRequest request, String apiKey) {
+    public String translateByModel(TranslateContextV1 translateContext, String value, ShopifyRequest request, String apiKey) {
         if (translateContext.getModel().equals(GOOGLE_MODEL)) {
             return privateIntegration.getGoogleTranslationWithRetry(value, apiKey, request.getTarget(), request.getShopName(), Long.valueOf(translateContext.getRemainingChars()));
         } else if (translateContext.getModel().equals(OPENAI_MODEL)) {
@@ -787,7 +787,7 @@ public class PrivateKeyService {
     }
 
     //递归处理下一页数据
-    private void translateNextPage(TranslateContext translateContext) {
+    private void translateNextPage(TranslateContextV1 translateContext) {
         JsonNode nextPageData;
         try {
             nextPageData = fetchNextPage(translateContext.getTranslateResource(), translateContext.getShopifyRequest());

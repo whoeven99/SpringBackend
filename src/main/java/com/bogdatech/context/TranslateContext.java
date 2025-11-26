@@ -2,61 +2,53 @@ package com.bogdatech.context;
 
 import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.utils.JsonUtils;
+import lombok.Data;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Data
 public class TranslateContext {
     // Start
     private String content;
+    private Map<Integer, String> batchOriginalTextMap;
+
+    private String shopifyTextType;
+    private String shopifyTextKey;
     private String targetLanguage;
     private Long startTime;
 
     // Calculate
     private Map<String, GlossaryDO> glossaryMap;
     private boolean hasGlossary;
+    private String glossaryReplaceContent;
+    private String glossaryReplaceBackContent;
     private boolean isCached;
-    private ContentTypeEnum contentType; // 系统内判断的翻译类型
-    private HtmlContext htmlContext = null;
+    private String strategy; // 系统内判断的翻译类型
+//    private HtmlContext htmlContext;
     private String prompt;
 
     // Finish
     private Long endTime;
     private Integer usedToken;
+    private Integer translatedChars;
     private String translatedContent;
 
     private Long translatedTime;
 
-    public class HtmlContext {
-        private Map<Integer, String> originalTextMap;
-        private Document doc;
-        private Map<Integer, TextNode> nodeMap = new HashMap<>();
-        private Map<Integer, String> translatedTextMap;
-//        private String replaceBackContent;
-    }
-
-    // 批量翻译的数据
-    private Map<Integer, String> batchOriginalTextMap;
-    private Map<Integer, String> batchUncachedTextMap;
-    private Map<Integer, String> batchTranslatedTextMap;
-
-    public TranslateContext startNewTranslate(String content, String targetLanguage) {
+    public static TranslateContext startNewTranslate(String content, String targetLanguage, String type, String key) {
         TranslateContext context = new TranslateContext();
         context.content = content;
         context.targetLanguage = targetLanguage;
+        context.shopifyTextType = type;
+        context.shopifyTextKey = key;
         context.startTime = System.currentTimeMillis();
+        context.translatedChars = content.length();
         return context;
     }
 
-    public TranslateContext startBatchTranslate(Map<Integer, String> batchOriginalTextMap, String targetLanguage) {
-        TranslateContext context = new TranslateContext();
-        context.batchOriginalTextMap = batchOriginalTextMap;
-        context.batchUncachedTextMap = new HashMap<>();
-        context.batchTranslatedTextMap = new HashMap<>();
-        context.targetLanguage = targetLanguage;
-        context.startTime = System.currentTimeMillis();
-        return context;
+    public void finish() {
+        this.endTime = System.currentTimeMillis();
+        this.translatedTime = this.getTranslateTime();
     }
 
     public String getJsonRecord() {
@@ -74,14 +66,20 @@ public class TranslateContext {
         return (end - startTime) / 1000;
     }
 
-    public enum ContentTypeEnum {
-        STARTED("20字符以内"),
-        RUNNING("handle字段"),
-        COMPLETED("html"),
-        FAILED(""),
-        CANCELLED,
-        SUSPENDED
-    }
+//    public enum TranslateStrategyEnum {
+//        PLAIN_TEXT("小于20个字符"),
+//        TITLE("大于20个字符，纯文本"),
+//        META_TITLE("html"),
+//        LOWERCASE_HANDLE("json"),
+//        LIST_SINGLE("handle"),
+//        ;
+//
+//        private final String desc;
+//
+//        TranslateStrategyEnum(String desc) {
+//            this.desc = desc;
+//        }
+//    }
 }
 
 

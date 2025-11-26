@@ -2,8 +2,11 @@ package com.bogdatech.logic.translate;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUsersService;
+import com.bogdatech.context.BatchContext;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
+import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.entity.TranslateTaskV2DO;
@@ -20,8 +23,6 @@ import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.microsoft.applicationinsights.TelemetryClient;
-import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
@@ -57,8 +59,7 @@ public class TranslateV2Service {
     @Autowired
     private GlossaryService glossaryService;
     @Autowired
-    private TranslateRulesService translateRulesService;
-    public static TelemetryClient appInsights = new TelemetryClient();
+    private TranslateStrategyFactory translateStrategyFactory;
 
     // 单条翻译入口
     public BaseResponse<String> singleTextTranslate(SingleTranslateVO request) {
@@ -75,19 +76,25 @@ public class TranslateV2Service {
             return BaseResponse.FailedResponse("Token limit reached");
         }
 
-        Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, request.getTarget());
-        String value = request.getContext();
-        // 具体翻译方法
-        Pair<String, Integer> pair = translateRulesService.translate(value, request.getTarget(),
-                request.getType(), request.getKey(), glossaryMap);
-        if (pair == null) {
-            appInsights.trackTrace("FatalException TranslateTaskV2 singleTextTranslate error shop: " + shopName);
-            return BaseResponse.FailedResponse("Translation failed, please try again");
-        }
-        userTokenService.addUsedToken(shopName, pair.getSecond());
-        appInsights.trackTrace("TranslateTaskV2 singleTextTranslate " + shopName + " 用户，" + value + " 单条翻译，" +
-                "消耗token数：" + pair.getSecond() + "，target为：" + pair.getFirst());
-        return BaseResponse.SuccessResponse(pair.getFirst());
+        TranslateContext context = singleTranslate(shopName, request.getContext(), request.getTarget(),
+                request.getType(), request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()));
+        // get json record 返回给前端
+        return BaseResponse.SuccessResponse(context.getTranslatedContent());
+    }
+
+    private TranslateContext singleTranslate(String shopName, String content, String target,
+                                             String type, String key,
+                                             Map<String, GlossaryDO> glossaryMap) {
+        TranslateContext context = TranslateContext.startNewTranslate(content, target, type, key);
+        ITranslateStrategyService<TranslateContext> service = translateStrategyFactory.getServiceByContext(context);
+
+        service.initAndSetPrompt(context);
+        service.replaceGlossary(context, glossaryMap);
+        service.executeTranslate(context);
+
+        context.finish();
+        userTokenService.addUsedToken(shopName, context.getUsedToken());
+        return context;
     }
 
     // 手动开启翻译任务入口
@@ -250,46 +257,41 @@ public class TranslateV2Service {
                         initialTaskId, textType, 50);
 //                int tokens = calculateBaiLianToken(text);
 
-                // 如果value过长，做个截断，  需要测试一下字符串的长度
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
-                Pair<Map<Integer, String>, Integer> translatedValueMapPair =
-                        translateRulesService.translateBatch(idToSourceValueMap, target, glossaryMap);
-                if (translatedValueMapPair == null) {
-                    appInsights.trackTrace("FatalException TranslateTaskV2 translating error shop: " + shopName +
-                            "randomDo: " + randomDo.getId());
-                } else {
-                    Map<Integer, String> translatedValueMap = translatedValueMapPair.getFirst();
-                    usedToken = userTokenService.addUsedToken(shopName, initialTaskId, translatedValueMapPair.getSecond());
-                    for (TranslateTaskV2DO updatedDo : taskList) {
-                        String targetValue = translatedValueMap.get(updatedDo.getId());
-                        updatedDo.setTargetValue(targetValue);
-                        updatedDo.setHasTargetValue(true);
+                BatchContext context = BatchContext.startBatchTranslate(idToSourceValueMap, target);
+                ITranslateStrategyService<TranslateContext> service =
+                        translateStrategyFactory.getServiceByContext(context);
 
-                        // 3.3 回写数据库 todo 批量
-                        translateTaskV2Repo.update(updatedDo);
-                    }
-                    appInsights.trackTrace("TranslateTaskV2 translate success: " + shopName + " size: " + taskList.size() +
-                            " usedToken: " + usedToken + " maxToken: " + maxToken);
+                service.initAndSetPrompt(context);
+                service.replaceGlossary(context, glossaryMap);
+                service.executeTranslate(context);
+
+                context.finish();
+                userTokenService.addUsedToken(shopName, context.getUsedToken());
+
+                Map<Integer, String> translatedValueMap = context.getBatchTranslatedTextMap();
+                for (TranslateTaskV2DO updatedDo : taskList) {
+                    String targetValue = translatedValueMap.get(updatedDo.getId());
+                    updatedDo.setTargetValue(targetValue);
+                    updatedDo.setHasTargetValue(true);
+
+                    // 3.3 回写数据库 todo 批量
+                    translateTaskV2Repo.update(updatedDo);
                 }
             } else {
                 // 其他单条翻译
-                Pair<String, Integer> pair = translateRulesService.translate(randomDo.getSourceValue(),
-                        target, textType, randomDo.getNodeKey(), glossaryMap);
-                if (pair == null) {
-                    appInsights.trackTrace("FatalException TranslateTaskV2 translating error shop: " + shopName +
-                            "randomDo: " + randomDo.getId());
-                } else {
-                    usedToken = userTokenService.addUsedToken(shopName, initialTaskId, pair.getSecond());
+                TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
+                        textType, randomDo.getNodeKey(), glossaryMap);
 
-                    // 翻译后更新db
-                    randomDo.setTargetValue(pair.getFirst());
-                    randomDo.setHasTargetValue(true);
-                    translateTaskV2Repo.update(randomDo);
-                    appInsights.trackTrace("TranslateTaskV2 translate success: " + shopName + " id: " + randomDo.getId() +
-                            " usedToken: " + usedToken + " maxToken: " + maxToken);
-                }
+                // 更新redis和sql的used token
+                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
+
+                // 翻译后更新db
+                randomDo.setTargetValue(context.getTranslatedContent());
+                randomDo.setHasTargetValue(true);
+                translateTaskV2Repo.update(randomDo);
             }
 
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
