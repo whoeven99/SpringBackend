@@ -239,15 +239,15 @@ public class InitialTranslateDbTask {
                 List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
 
                 if (translateTasks.isEmpty()) {
-                    boolean updated = iTranslatesService.updateTranslateStatus(task.getShopName(), 1, task.getTarget(), task.getSource()) > 0;
-                    if (!updated) {
-                        appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
-                        continue;
-                    }
-
                     // 更新 Redis 状态（翻译完成）
                     translationParametersRedisService.hsetTranslationStatus(TranslationParametersRedisService.generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "3");
                     translationParametersRedisService.hsetTranslatingString(TranslationParametersRedisService.generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
+                    boolean updated = iTranslatesService.updateTranslateStatus(task.getShopName(), 1, task.getTarget(), task.getSource()) > 0;
+                    if (!updated) {
+                        appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName = " + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
+                        continue;
+                    }
+
                     boolean updateFlag3 = iInitialTranslateTasksService.updateStatusByTaskId(task.getTaskId(), 3);
                     if (!updateFlag3) {
                         appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
