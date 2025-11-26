@@ -40,7 +40,6 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.UserTypeTokenService.getUserTranslatedToken;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
@@ -533,8 +532,8 @@ public class PrivateKeyService {
             // 判断是否达到额度限制
             updateCharsWhenExceedLimit(shopName, translateContext.getModel(), new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
+            translationParametersRedisService.hsetTranslationStatus(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), value);
 
             // 开始翻译
             // 缓存翻译和数据库翻译
@@ -624,8 +623,8 @@ public class PrivateKeyService {
             // 判断是否达到额度限制
             updateCharsWhenExceedLimit(shopName, translateContext.getModel(), new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
+            translationParametersRedisService.hsetTranslationStatus(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), value);
 
             // 开始翻译
             // 缓存翻译和数据库翻译
@@ -688,8 +687,8 @@ public class PrivateKeyService {
             // 判断是否达到额度限制
             updateCharsWhenExceedLimit(shopName, translateContext.getModel(), new TranslateRequest(0, shopName, accessToken, source, target, null));
 
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
+            translationParametersRedisService.hsetTranslationStatus(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), value);
 
             // 开始翻译
             // 缓存翻译和数据库翻译

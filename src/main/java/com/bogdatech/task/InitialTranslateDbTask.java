@@ -29,7 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.ListUtils.convertALL;
@@ -247,8 +246,8 @@ public class InitialTranslateDbTask {
                     }
 
                     // 更新 Redis 状态（翻译完成）
-                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "3");
-                    translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
+                    translationParametersRedisService.hsetTranslationStatus(TranslationParametersRedisService.generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "3");
+                    translationParametersRedisService.hsetTranslatingString(TranslationParametersRedisService.generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
                     boolean updateFlag3 = iInitialTranslateTasksService.updateStatusByTaskId(task.getTaskId(), 3);
                     if (!updateFlag3) {
                         appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
@@ -284,11 +283,12 @@ public class InitialTranslateDbTask {
                         .set(InitialTranslateTasksDO::getStatus, 4));
 
                 translationParametersRedisService.hsetTranslationStatus(
-                        generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "4");
+                        TranslationParametersRedisService.generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "4");
                 translationParametersRedisService.hsetTranslatingString(
-                        generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
+                        TranslationParametersRedisService.generateProgressTranslationKey(task.getShopName(), task.getSource(), task.getTarget()), "");
 
                 appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 翻译成功邮件已发送。");
+                continue;
             }
 
             // 自动翻译邮件是不会改Translates表状态的，所以要单独处理

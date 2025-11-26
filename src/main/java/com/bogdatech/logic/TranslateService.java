@@ -242,7 +242,6 @@ public class TranslateService {
                     request.getTranslateSettings1(), request.getTranslateSettings2(), resourceToJson, cleanedText,
                     shopName, handleFlag, MANUAL, Timestamp.from(Instant.now()), false);
             try {
-                appInsights.trackTrace("将手动翻译参数存到数据库中");
                 int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
                 appInsights.trackTrace("将手动翻译参数存到数据库后： " + insert);
 

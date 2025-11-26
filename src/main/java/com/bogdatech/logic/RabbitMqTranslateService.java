@@ -21,7 +21,6 @@ import java.util.*;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.logic.TranslateService.*;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
@@ -266,9 +265,6 @@ public class RabbitMqTranslateService {
                             " missing translation for: " + sourceText);
                     continue;
                 }
-
-                translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
-                translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), sourceText);
 
                 // 存储翻译后的数据
                 Map<String, Object> translation = createTranslationMap(target, item.getTextKey(), item.getDigest());
