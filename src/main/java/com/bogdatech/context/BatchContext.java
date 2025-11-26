@@ -16,10 +16,18 @@ public class BatchContext extends TranslateContext {
     public static BatchContext startBatchTranslate(Map<Integer, String> batchOriginalTextMap,
                                                    String targetLanguage) {
         BatchContext context = new BatchContext();
-        context.batchOriginalTextMap = batchOriginalTextMap;
+        context.setBatchOriginalTextMap(batchOriginalTextMap);
         context.batchUncachedTextMap = new HashMap<>();
         context.batchTranslatedTextMap = new HashMap<>();
         context.cachedCount = 0;
+
+        int totalChars = 0;
+        for (String value : batchOriginalTextMap.values()) {
+            if (value != null) {
+                totalChars += value.length();
+            }
+        }
+        context.setTranslatedChars(totalChars);
 
         context.setTargetLanguage(targetLanguage);
         context.setStartTime(System.currentTimeMillis());

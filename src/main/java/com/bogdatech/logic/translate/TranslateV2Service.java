@@ -5,6 +5,7 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.BatchContext;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
 import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
 import com.bogdatech.model.controller.response.ProgressResponse;
@@ -60,6 +61,8 @@ public class TranslateV2Service {
     private GlossaryService glossaryService;
     @Autowired
     private TranslateStrategyFactory translateStrategyFactory;
+    @Autowired
+    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
 
     // 单条翻译入口
     public BaseResponse<String> singleTextTranslate(SingleTranslateVO request) {
@@ -79,6 +82,7 @@ public class TranslateV2Service {
         TranslateContext context = singleTranslate(shopName, request.getContext(), request.getTarget(),
                 request.getType(), request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()));
         // get json record 返回给前端
+        context.getJsonRecord();
         return BaseResponse.SuccessResponse(context.getTranslatedContent());
     }
 
@@ -166,6 +170,8 @@ public class TranslateV2Service {
             initialTask.setModuleList(JsonUtils.objectToJson(moduleList));
             initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
             initialTaskV2Repo.insert(initialTask);
+
+            translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
         }
     }
 
@@ -202,6 +208,7 @@ public class TranslateV2Service {
                                 translateTaskV2DO.setDigest(translatableContent.getDigest());
                                 translateTaskV2DO.setId(null);
                                 translateTaskV2Repo.insert(translateTaskV2DO);
+                                translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
                             }
                         });
                     }
@@ -215,6 +222,7 @@ public class TranslateV2Service {
         long initTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
         initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.status);
         initialTaskV2DO.setInitMinutes((int) initTimeInMinutes);
+        translateTaskMonitorV2RedisService.setInitEndTime(initialTaskV2DO.getId());
         initialTaskV2Repo.updateById(initialTaskV2DO);
     }
 
@@ -280,6 +288,8 @@ public class TranslateV2Service {
                     // 3.3 回写数据库 todo 批量
                     translateTaskV2Repo.update(updatedDo);
                 }
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
+                        context.getUsedToken(), context.getTranslatedChars());
             } else {
                 // 其他单条翻译
                 TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
@@ -292,6 +302,8 @@ public class TranslateV2Service {
                 randomDo.setTargetValue(context.getTranslatedContent());
                 randomDo.setHasTargetValue(true);
                 translateTaskV2Repo.update(randomDo);
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
+                        context.getUsedToken(), context.getTranslatedChars());
             }
 
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
@@ -305,6 +317,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setStatus(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.status);
         initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
         initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
+        translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
     }
 
@@ -348,6 +361,7 @@ public class TranslateV2Service {
                     taskDO.setSavedToShopify(true);
                     translateTaskV2Repo.update(taskDO);
                 }
+                translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             } else {
                 // 写入失败 fatalException
                 appInsights.trackTrace("FatalException TranslateTaskV2 saving failed: " + shopName +
@@ -360,6 +374,7 @@ public class TranslateV2Service {
         long savingShopifyTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
         initialTaskV2DO.setStatus(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status);
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
+        translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
     }
 

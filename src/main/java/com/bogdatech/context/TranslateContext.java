@@ -24,7 +24,6 @@ public class TranslateContext {
     private String glossaryReplaceBackContent;
     private boolean isCached;
     private String strategy; // 系统内判断的翻译类型
-//    private HtmlContext htmlContext;
     private String prompt;
 
     // Finish
