@@ -239,8 +239,11 @@ public class UserIpService {
     }
 
 
+    /**
+     * 根据shopName和region获取 对应ip跳转数据
+     */
     public BaseResponse<Object> selectUserIpListByShopNameAndRegion(String shopName, String region) {
         List<UserIPRedirectionDO> userIPRedirectionDOS = userIPRedirectionRepo.selectIpRedirectionByShopNameAndRegion(shopName, region);
-        return new BaseResponse<>().CreateSuccessResponse(ipReturn(userIPRedirectionDOS));
+        return new BaseResponse<>().CreateSuccessResponse(ipReturn(userIPRedirectionDOS).get(0));
     }
 }
