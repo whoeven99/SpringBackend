@@ -50,7 +50,8 @@ public class UserIPRedirectionRepo extends ServiceImpl<UserIPRedirectionMapper, 
 
     public List<UserIPRedirectionDO> selectIpRedirectionByShopNameAndRegion(String shopName, String region) {
         return baseMapper.selectList(new LambdaQueryWrapper<UserIPRedirectionDO>().eq(UserIPRedirectionDO::getShopName, shopName)
-                .eq(UserIPRedirectionDO::getRegion, region));
+                .eq(UserIPRedirectionDO::getRegion, region).eq(UserIPRedirectionDO::getIsDeleted, false)
+                .eq(UserIPRedirectionDO::getStatus, true));
     }
 
     public UserIPRedirectionDO getIpRedirectionByShopNameAndRegion(String shopName, String region, String languageCode, String currency) {
