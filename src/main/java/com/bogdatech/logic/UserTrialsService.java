@@ -33,7 +33,6 @@ public class UserTrialsService {
      * @return Boolean 是否成功
      */
     public Boolean insertUserTrial(String shopName) {
-        //        Boolean userSubscription = iUserSubscriptionsService.updateUserSubscription(shopName, 7);
         return iUserTrialsService.insertUserTrial(shopName);
     }
 
