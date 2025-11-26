@@ -173,7 +173,7 @@ public class UserIpService {
         // 搜集integerBooleanMap里面为true的数据返回
         List<Integer> successIds = integerBooleanMap.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList();
 
-        if (CollectionUtils.isEmpty(successIds)){
+        if (CollectionUtils.isEmpty(successIds)) {
             return new BaseResponse<>().CreateErrorResponse("No data delete success");
         }
 
@@ -183,20 +183,18 @@ public class UserIpService {
     /**
      * 批量更新ip跳转数据
      */
-    public BaseResponse<Object> batchUpdateUserIp(String shopName, UserIPRedirectionDO userIPRedirectionDO) {
+    public BaseResponse<Object> updateUserIp(String shopName, UserIPRedirectionDO userIPRedirectionDO) {
         // 给每条记录设置 shopName（确保一致）
         userIPRedirectionDO.setShopName(shopName);
 
         // 两种数据， 一种有id ， 一种没有id，没有id的插入，有id的更新
-        if (userIPRedirectionDO.getId() == null) {
-            userIPRedirectionRepo.saveOrUpdate(userIPRedirectionDO);
-        }
+        userIPRedirectionRepo.saveOrUpdate(userIPRedirectionDO);
 
         // 获取对应数据
         UserIPRedirectionDO ipRedirectionByShopNameAndRegion = userIPRedirectionRepo.getIpRedirectionByShopNameAndRegion(shopName, userIPRedirectionDO.getRegion(),
                 userIPRedirectionDO.getLanguageCode(), userIPRedirectionDO.getCurrency());
 
-        if (ipRedirectionByShopNameAndRegion == null){
+        if (ipRedirectionByShopNameAndRegion == null) {
             return new BaseResponse<>().CreateErrorResponse("No data found");
         }
         return new BaseResponse<>().CreateSuccessResponse(ipRedirectionByShopNameAndRegion);

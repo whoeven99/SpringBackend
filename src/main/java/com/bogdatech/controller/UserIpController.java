@@ -62,9 +62,9 @@ public class UserIpController {
     }
 
     // 数据更新接口
-    @PostMapping("/batchUpdateUserIp")
-    public BaseResponse<Object> batchUpdateUserIp(@RequestParam String shopName, @RequestBody UserIPRedirectionDO userIPRedirectionDO) {
-        return userIpService.batchUpdateUserIp(shopName, userIPRedirectionDO);
+    @PostMapping("/updateUserIp")
+    public BaseResponse<Object> updateUserIp(@RequestParam String shopName, @RequestBody UserIPRedirectionDO userIPRedirectionDO) {
+        return userIpService.updateUserIp(shopName, userIPRedirectionDO);
     }
 
     // 单条状态更新接口
