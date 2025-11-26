@@ -19,7 +19,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -63,7 +62,7 @@ public class TranslateProgressService {
             progress.setStatus(translatesDO.getStatus());
             progress.setTarget(translatesDO.getTarget());
 
-            Map<String, String> map = translationParametersRedisService.hgetAll(generateProgressTranslationKey(shopName, source, translatesDO.getTarget()));
+            Map<String, String> map = translationParametersRedisService.hgetAll(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, translatesDO.getTarget()));
             progress.setResourceType(map.get(TranslationParametersRedisService.TRANSLATING_MODULE));
             progress.setValue(map.get(TranslationParametersRedisService.TRANSLATING_STRING));
             progress.setTranslateStatus("4".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_saved" : "3".equals(map.get(TranslationParametersRedisService.TRANSLATION_STATUS)) ? "translation_process_saving_shopify"

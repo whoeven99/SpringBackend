@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsonUtils.jsonToObject;
 import static com.bogdatech.utils.JsonUtils.stringToJson;
@@ -66,9 +65,11 @@ public class ProcessDbTaskService {
         }
 
         try {
-            // 将redis状态中改为2
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), "Searching for content to translate…");
+            // 将redis状态中改为2 判断translateType是否是手动翻译，才更新状态
+            if (!AUTO.equals(rabbitMqTranslateVO.getCustomKey())){
+                translationParametersRedisService.hsetTranslationStatus(TranslationParametersRedisService.generateProgressTranslationKey(shopName, rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), String.valueOf(2));
+                translationParametersRedisService.hsetTranslatingString(TranslationParametersRedisService.generateProgressTranslationKey(shopName, rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget()), "Searching for content to translate…");
+            }
 
             // 普通翻译任务
             processTask(shopName, rabbitMqTranslateVO.getModeType(), rabbitMqTranslateVO.getSource(), rabbitMqTranslateVO.getTarget(),
@@ -129,7 +130,7 @@ public class ProcessDbTaskService {
                     + " source : " + source);
 
             // TODO 2.1 翻译准备开始，设置状态
-            translationParametersRedisService.hsetTranslatingModule(generateProgressTranslationKey(
+            translationParametersRedisService.hsetTranslatingModule(TranslationParametersRedisService.generateProgressTranslationKey(
                     shopName, source, target), modelType);
             translatesService.updateTranslatesResourceType(shopName, target, source, modelType);
             translateTasksService.updateByTaskId(task.getTaskId(), 2);
