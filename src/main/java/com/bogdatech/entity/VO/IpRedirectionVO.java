@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class IpRedirectionVO {
+    private Integer id;
     private String region;
     private String languageCode;
     private String currency;
