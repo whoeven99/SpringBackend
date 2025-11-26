@@ -250,7 +250,7 @@ public class InitialTranslateDbTask {
 
                     boolean updateFlag3 = iInitialTranslateTasksService.updateStatusByTaskId(task.getTaskId(), 3);
                     if (!updateFlag3) {
-                        appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
+                        appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName = " + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
                         continue;
                     }
                     appInsights.trackTrace("scanAndSendEmail 用户: " + task.getShopName() + " 翻译完成，写入状态3。");
