@@ -159,6 +159,7 @@ public class UserIpService {
                     vo.setLanguageCode(record.getLanguageCode());
                     vo.setCurrency(record.getCurrency());
                     vo.setStatus(record.getStatus());
+                    vo.setId(record.getId());
                     return vo;
                 })
                 .toList();
