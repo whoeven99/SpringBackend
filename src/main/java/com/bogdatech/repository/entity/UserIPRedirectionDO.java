@@ -16,6 +16,7 @@ public class UserIPRedirectionDO extends BaseDO{
     private String region;
     @TableField("language_code")
     private String languageCode;
-    private String currency;
+    @TableField("currency_code")
+    private String currencyCode;
     private Boolean status;
 }

@@ -11,6 +11,6 @@ public class IpRedirectionVO {
     private Integer id;
     private String region;
     private String languageCode;
-    private String currency;
+    private String currencyCode;
     private Boolean status;
 }

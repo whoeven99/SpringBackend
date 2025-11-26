@@ -57,7 +57,7 @@ public class UserIPRedirectionRepo extends ServiceImpl<UserIPRedirectionMapper, 
         return baseMapper.selectOne(new LambdaQueryWrapper<UserIPRedirectionDO>().eq(UserIPRedirectionDO::getShopName, shopName)
                 .eq(UserIPRedirectionDO::getRegion, region)
                 .eq(UserIPRedirectionDO::getLanguageCode, languageCode)
-                .eq(UserIPRedirectionDO::getCurrency, currency)
+                .eq(UserIPRedirectionDO::getCurrencyCode, currency)
                 .eq(UserIPRedirectionDO::getIsDeleted, false));
     }
 }
