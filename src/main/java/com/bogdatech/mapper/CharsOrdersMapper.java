@@ -12,7 +12,4 @@ import java.util.List;
 public interface CharsOrdersMapper extends BaseMapper<CharsOrdersDO> {
     @Update("UPDATE CharsOrders SET status = #{status} WHERE id = #{id}")
     Boolean updateStatusByShopName(String id, String status);
-
-    @Select("SELECT id FROM CharsOrders WHERE shop_name = #{shopName}")
-    List<String> getIdByShopName(String shopName);
 }

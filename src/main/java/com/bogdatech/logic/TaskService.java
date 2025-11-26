@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.logic.PCApp.PCUsersService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -16,16 +17,22 @@ import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.*;
+import com.bogdatech.repository.entity.PCOrdersDO;
+import com.bogdatech.repository.entity.PCSubscriptionQuotaRecordDO;
+import com.bogdatech.repository.entity.PCUserTrialsDO;
+import com.bogdatech.repository.repo.*;
 import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+
 import java.sql.Timestamp;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.TranslateService.userEmailStatus;
@@ -80,11 +87,24 @@ public class TaskService {
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
+    @Autowired
+    private PCOrdersRepo pcOrdersRepo;
+    @Autowired
+    private PCUsersRepo pcUsersRepo;
+    @Autowired
+    private PCSubscriptionQuotaRecordRepo pcSubscriptionQuotaRecordRepo;
+    @Autowired
+    private PCSubscriptionsRepo pcSubscriptionsRepo;
+    @Autowired
+    private PCUserSubscriptionsRepo pcUserSubscriptionsRepo;
+    @Autowired
+    private PCUserTrialsRepo pcUserTrialsRepo;
 
-
-    //异步调用根据订阅信息，判断是否添加额度的方法
+    /**
+     * 异步调用根据订阅信息，判断是否添加额度的方法
+     */
     public void judgeAddChars() {
-        //获取数据库中所有order为ACTIVE的id集合
+        // 获取数据库中所有order为ACTIVE的id集合
         List<CharsOrdersDO> list = charsOrdersService.getShopNameAndId();
         List<UserPriceRequest> usedList = new ArrayList<>();
         for (CharsOrdersDO charsOrdersDO : list
@@ -92,7 +112,8 @@ public class TaskService {
             if ("Starter".equals(charsOrdersDO.getName())) {
                 continue;
             }
-            //根据shopName获取User表对应的accessToken，重新生成一个数据类型  判断是否是卸载，如果卸载， 不计算
+
+            // 根据shopName获取User表对应的accessToken，重新生成一个数据类型  判断是否是卸载，如果卸载， 不计算
             UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>().eq("shop_name", charsOrdersDO.getShopName()));
             if (usersDO == null) {
                 continue;
@@ -100,7 +121,8 @@ public class TaskService {
             if (usersDO.getUninstallTime() != null && usersDO.getLoginTime() != null && usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
                 continue;
             }
-            //根据shopName获取User表对应的accessToken，重新生成一个数据类型
+
+            // 根据shopName获取User表对应的accessToken，重新生成一个数据类型
             UserPriceRequest userPriceRequest = new UserPriceRequest();
             userPriceRequest.setShopName(charsOrdersDO.getShopName());
             userPriceRequest.setSubscriptionId(charsOrdersDO.getId());
@@ -119,12 +141,12 @@ public class TaskService {
             }
         }
 
-        //判断计划是否过期，如果过期，将状态改为2
+        // 判断计划是否过期，如果过期，将状态改为2
         judgeSubscriptionStatus(usedList);
 
     }
 
-    //判断计划是否过期，如果过期，将状态改为2
+    // 判断计划是否过期，如果过期，将状态改为2
     public void judgeSubscriptionStatus(List<UserPriceRequest> usedList) {
         //获取数据库中所有order为ACTIVE的id集合
         //对list里面的数据做处理，只留一个shopName对应最近的status为ACTIVE
@@ -143,7 +165,7 @@ public class TaskService {
         for (UserPriceRequest order : latestOrderMap.values()) {
             try {
                 //根据订阅计划信息，判断是否过期，如果过期，将用户计划改为2
-                JSONObject node = analyzeOrderData(order);
+                JSONObject node = analyzeOrderData(order.getSubscriptionId(), order.getAccessToken(), order.getShopName());
                 if (node == null) {
                     appInsights.trackTrace("judgeAddChars " + order.getShopName() + " 获取不到计划的相关数据，获取为null");
                     continue;
@@ -161,18 +183,17 @@ public class TaskService {
         }
     }
 
-    //根据用户accessToken和订单id分析数据，获取数据
-    public JSONObject analyzeOrderData(UserPriceRequest userPriceRequest) {
-        String query = getSubscriptionQuery(userPriceRequest.getSubscriptionId());
+    // 根据用户accessToken和订单id分析数据，获取数据
+    public JSONObject analyzeOrderData(String subscriptionId, String accessToken, String shopName) {
+        String query = getSubscriptionQuery(subscriptionId);
         String infoByShopify;
 
-        // TODO shopify service
         // 根据新的集合获取这个订阅计划的信息
-        infoByShopify = shopifyService.getShopifyData(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), API_VERSION_LAST, query);
+        infoByShopify = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
 
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
-            appInsights.trackTrace(userPriceRequest.getShopName() + " 定时任务根据订单id: " + userPriceRequest.getSubscriptionId() + "获取数据失败" + " token: " + userPriceRequest.getAccessToken());
+            appInsights.trackTrace(shopName + " 定时任务根据订单id: " + subscriptionId + "获取数据失败" + " token: " + accessToken);
             return null;
         }
         JSONObject node = root.getJSONObject("node");
@@ -184,11 +205,10 @@ public class TaskService {
     }
 
 
-    //获取用户订阅选项并判断是否添加额度
+    // 获取用户订阅选项并判断是否添加额度
     public void addCharsByUserData(UserPriceRequest userPriceRequest) {
-
-        //根据新的集合获取这个订阅计划的信息
-        JSONObject node = analyzeOrderData(userPriceRequest);
+        // 根据新的集合获取这个订阅计划的信息
+        JSONObject node = analyzeOrderData(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), userPriceRequest.getSubscriptionId());
         if (node == null) {
             appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 获取不到计划的相关数据，获取为null " + userPriceRequest);
             return;
@@ -346,7 +366,7 @@ public class TaskService {
         }
 
         appInsights.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
-        translateV2Service.createInitialTask(shopName, source, new String[] { target }, AUTO_TRANSLATE_MAP, false);
+        translateV2Service.createInitialTask(shopName, source, new String[]{target}, AUTO_TRANSLATE_MAP, false);
         appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
         return true;
     }
@@ -433,7 +453,7 @@ public class TaskService {
             InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
                     translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
                     , "1", resourceToJson, null, shopName, false, AUTO,
-                    Timestamp.valueOf(LocalDateTime.now()), false);
+                    Timestamp.from(Instant.now()), false);
             try {
                 appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);
 
@@ -552,6 +572,153 @@ public class TaskService {
         if (waitTranslatingShopName != null) {
             //打印等待翻译的用户数量
             appInsights.trackMetric("Ciwi-Translator wait translating shopName", waitTranslatingShopName.size());
+        }
+    }
+
+    public void judgePCAppAddChars() {
+        // 获取数据库中所有order为ACTIVE的id集合
+        List<PCOrdersDO> orderList = pcOrdersRepo.selectActiveOrders();
+        List<UserPriceRequest> usedList = new ArrayList<>();
+        for (PCOrdersDO pcOrdersDO : orderList) {
+            // 根据shopName获取User表对应的accessToken
+            PCUsersDO usersDO = pcUsersRepo.getUserByShopName(pcOrdersDO.getShopName());
+            if (usersDO == null) {
+                continue;
+            }
+            if (usersDO.getUninstallTime() != null && usersDO.getLoginTime() != null && usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+                continue;
+            }
+
+            // 判断是否可以添加额度
+            try {
+                addPCCharsByUserData(usersDO.getShopName(), usersDO.getAccessToken(), pcOrdersDO.getOrderId(), pcOrdersDO.getCreatedAt());
+            } catch (Exception e) {
+                appInsights.trackException(e);
+                appInsights.trackTrace("judgeAddChars 用户： " + pcOrdersDO.getShopName() + " 获取数据 errors : " + e);
+            }
+        }
+
+        // 判断计划是否过期，如果过期，将状态改为2
+        judgeSubscriptionStatus(usedList);
+    }
+
+    private void addPCCharsByUserData(String shopName, String accessToken, String subscriptionId, Timestamp userCreatedAt) {
+        // 根据新的集合获取这个订阅计划的信息
+        JSONObject node = analyzeOrderData(subscriptionId, accessToken, shopName);
+        if (node == null) {
+            appInsights.trackTrace("addCharsByUserData 用户： " + shopName + " 获取不到计划的相关数据，获取为null " + accessToken + " " + subscriptionId);
+            return;
+        }
+        String name = node.getString("name");
+        String status = node.getString("status");
+        String currentPeriodEnd = node.getString("currentPeriodEnd");
+
+        // 用户购买订阅时间
+        Instant buyCreateInstant = userCreatedAt.toInstant();
+
+        // 订阅结束时间
+        Instant end = Instant.parse(currentPeriodEnd);
+        Timestamp subEnd = Timestamp.from(end);
+
+        // 当前时间
+        Instant now = Instant.now();
+
+        // 只处理活跃、非试用、且还在本期内的订阅
+        if (!"ACTIVE".equals(status) || now.isAfter(end)) {
+//            appInsights.trackTrace("不满足条件");
+            return;
+        }
+
+        // 计算当前是第几个月
+        int billingCycle = (int) ChronoUnit.DAYS.between(buyCreateInstant, now) / 30 + 1;
+        appInsights.trackTrace("PC billingCycle = " + billingCycle);
+
+        // 如果这一周期还没发放过额度，则发放并记录
+        PCSubscriptionQuotaRecordDO quotaRecordDO = pcSubscriptionQuotaRecordRepo.getQuotaRecordDO(subscriptionId, billingCycle);
+
+        if (quotaRecordDO == null) {
+            // 满足条件，执行添加字符的逻辑
+            // 根据计划获取对应的字符
+            Integer chars = pcSubscriptionsRepo.getCharsByPlanName(name);
+            pcSubscriptionQuotaRecordRepo.insertQuotaRecord(subscriptionId, billingCycle);
+            boolean flag = pcUsersRepo.updatePurchasePointsByShopName(shopName, accessToken, subscriptionId, chars);
+            appInsights.trackTrace("PC addCharsByUserData 用户： " + shopName + " 添加字符额度： " + chars + " 是否成功： " + flag);
+
+            // 修改该用户过期时间
+            pcUserSubscriptionsRepo.updateUserEndDate(shopName, subEnd);
+
+            // 发送邮件通知 还没给邮件
+//            tencentEmailService.sendSubscribeEmail(userPriceRequest.getShopName(), chars);
+        }
+    }
+
+    public void freeTrialTaskForImage() {
+        // 获取所有免费计划不过期的用户
+        List<PCUserTrialsDO> notTrialExpired = pcUserTrialsRepo.getNotExpiredTrialByShopName();
+        System.out.println("notTrialExpired = " + notTrialExpired);
+        if (notTrialExpired == null || notTrialExpired.isEmpty()) {
+            return;
+        }
+
+        // 循环检测是否过期
+        for (PCUserTrialsDO pcUserTrialsDO : notTrialExpired) {
+            System.out.println("pcUserTrialsDO = " + pcUserTrialsDO);
+            // 判断是否过期
+            Timestamp now = new Timestamp(System.currentTimeMillis());
+            Timestamp trialEnd = pcUserTrialsDO.getTrialEnd();
+
+            // 如果这个用户没有过期，跳过
+            if (now.before(trialEnd)) {
+                continue;
+            }
+            String shopName = pcUserTrialsDO.getShopName();
+
+            // 如果 trialStart + 5天 小于 trialEnd，不做任何操作
+            if (now.after(trialEnd)) {
+                System.out.println("走免费试用");
+                // 获取最新一条gid订单，判断是否支付成功
+                String latestActiveSubscribeId = pcOrdersRepo.getLatestActiveSubscribeId(shopName);
+                if (latestActiveSubscribeId == null) {
+                    appInsights.trackTrace("PC freeTrialTask latestActiveSubscribeId的数据为null，用户是：" + shopName);
+                    continue;
+                }
+                PCUsersDO usersDO = pcUsersRepo.getUserByShopName(shopName);
+
+                // 如果订单存在，并且支付成功，添加相关计划额度；如果订单不存在，说明他未支付，修改免费试用计划表
+                String subscriptionQuery = getSubscriptionQuery(latestActiveSubscribeId);
+                String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, subscriptionQuery);
+
+                // 判断和解析相关数据
+                JSONObject queryValid = isQueryValid(shopifyByQuery);
+                if (queryValid == null) {
+                    continue;
+                }
+                System.out.println("queryValid  " + queryValid);
+                String name = queryValid.getString("name");
+                Integer charsByPlanName = pcSubscriptionsRepo.getCharsByPlanName(name);
+
+                String status = queryValid.getString("status");
+                if (!"ACTIVE".equals(status)) {
+                    try {
+                        // 将免费试用计划表里的状态改为true
+                        pcUserTrialsRepo.updateTrialExpiredByShopName(shopName, true);
+
+                        // 将用户计划改为1 免费计划
+                        pcUserSubscriptionsRepo.updateUserPlanIdByShopName(shopName, 1);
+                    } catch (Exception e) {
+                        appInsights.trackTrace(shopName + " 用户  errors PC 修改用户计划失败: " + e.getMessage());
+                    }
+                    continue;
+                }
+
+                // 将免费试用计划表里的状态改为true
+                pcUserTrialsRepo.updateTrialExpiredByShopName(shopName, true);
+
+                // 如果订单存在，并且支付成功，添加相关计划额度
+                boolean flag = pcUsersRepo.updatePurchasePoints(shopName, charsByPlanName);
+                System.out.println(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
+                appInsights.trackTrace(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
+            }
         }
     }
 }
