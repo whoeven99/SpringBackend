@@ -6,6 +6,7 @@ import com.bogdatech.Service.IUserIpService;
 import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.DO.UserIpDO;
+import com.bogdatech.entity.VO.IpRedirectionVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
 import com.bogdatech.repository.repo.UserIPRedirectionRepo;
@@ -144,7 +145,23 @@ public class UserIpService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        return new BaseResponse<>().CreateSuccessResponse(savedRecords);
+        return new BaseResponse<>().CreateSuccessResponse(ipReturn(savedRecords));
+    }
+
+    /**
+     * 将 List<UserIPRedirectionDO> 转化为  List<List<IpRedirectionVO>> 类型数据
+     */
+    public static List<IpRedirectionVO> ipReturn(List<UserIPRedirectionDO> userIPRedirectionDOList) {
+        return userIPRedirectionDOList.stream()
+                .map(record -> {
+                    IpRedirectionVO vo = new IpRedirectionVO();
+                    vo.setRegion(record.getRegion());
+                    vo.setLanguageCode(record.getLanguageCode());
+                    vo.setCurrency(record.getCurrency());
+                    vo.setStatus(record.getStatus());
+                    return vo;
+                })
+                .toList();
     }
 
     /**
@@ -220,12 +237,12 @@ public class UserIpService {
      */
     public BaseResponse<Object> selectUserIpList(String shopName) {
         List<UserIPRedirectionDO> userIPRedirectionDOS = userIPRedirectionRepo.selectIpRedirectionByShopName(shopName);
-        return new BaseResponse<>().CreateSuccessResponse(userIPRedirectionDOS);
+        return new BaseResponse<>().CreateSuccessResponse(ipReturn(userIPRedirectionDOS));
     }
 
 
     public BaseResponse<Object> selectUserIpListByShopNameAndRegion(String shopName, String region) {
         List<UserIPRedirectionDO> userIPRedirectionDOS = userIPRedirectionRepo.selectIpRedirectionByShopNameAndRegion(shopName, region);
-        return new BaseResponse<>().CreateSuccessResponse(userIPRedirectionDOS);
+        return new BaseResponse<>().CreateSuccessResponse(ipReturn(userIPRedirectionDOS));
     }
 }
