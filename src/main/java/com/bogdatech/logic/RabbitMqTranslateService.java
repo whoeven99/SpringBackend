@@ -16,11 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
 import java.time.LocalDateTime;
 import java.util.*;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 import static com.bogdatech.logic.TranslateService.*;
+import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.*;
 import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
@@ -89,7 +92,7 @@ public class RabbitMqTranslateService {
                 continue;
             }
 
-            if (checkNeedStopped(shopName, counter)) {
+            if (checkNeedStopped(shopName, counter, source, target)) {
                 return;
             }
 
@@ -149,11 +152,11 @@ public class RabbitMqTranslateService {
             if (shopifyRes.getTranslatableResources() != null
                     && shopifyRes.getTranslatableResources().getNodes() != null) {
                 shopifyRes.getTranslatableResources().getNodes().forEach(node -> {
-                        if (node.getTranslatableContent() != null) {
-                            redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL,
-                                    (long) node.getTranslatableContent().size());
+                            if (node.getTranslatableContent() != null) {
+                                redisProcessService.addProcessData(generateProcessKey(shopName, target), PROGRESS_TOTAL,
+                                        (long) node.getTranslatableContent().size());
+                            }
                         }
-                    }
                 );
             }
 
@@ -202,7 +205,7 @@ public class RabbitMqTranslateService {
     /**
      * 判断停止标识
      */
-    public boolean checkNeedStopped(String shopName, CharacterCountUtils counter) {
+    public boolean checkNeedStopped(String shopName, CharacterCountUtils counter, String source, String target) {
         if (translationParametersRedisService.isStopped(shopName)) {
             // 更新数据库中的已使用字符数
             appInsights.trackTrace("checkNeedStopped " + shopName + " 用户 消耗的token ： " + counter.getTotalChars());
@@ -212,6 +215,13 @@ public class RabbitMqTranslateService {
 
             // 将task表数据都改为 5
             translateTasksService.updateByShopName(shopName, 5);
+
+            // 修改进度条的状态为 4
+            if (source != null && target != null) {
+                translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(4));
+                translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, target, source), "");
+            }
+
             return true;
         }
 
@@ -228,7 +238,7 @@ public class RabbitMqTranslateService {
         // 先转成List，方便切片
         List<TranslateTextDO> list = new ArrayList<>(plainTextData);
         for (int i = 0; i < list.size(); i += BATCH_SIZE) {
-            if (checkNeedStopped(shopName, counter)) {
+            if (checkNeedStopped(shopName, counter, source, target)) {
                 return;
             }
 
@@ -448,7 +458,7 @@ public class RabbitMqTranslateService {
             //根据模块选择翻译方法，先做普通翻译
             //判断是否停止翻译
             // TODO: 2.2 翻译中的token校验
-            if (checkNeedStopped(shopName, counter)) {
+            if (checkNeedStopped(shopName, counter, source, target)) {
                 return;
             }
 

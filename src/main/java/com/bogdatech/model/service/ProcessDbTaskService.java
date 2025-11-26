@@ -15,7 +15,6 @@ import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.utils.CharacterCountUtils;
-import com.bogdatech.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.Duration;
