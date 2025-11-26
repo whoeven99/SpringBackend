@@ -10,12 +10,9 @@ import com.bogdatech.entity.VO.IpRedirectionVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
 import com.bogdatech.repository.repo.UserIPRedirectionRepo;
-import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -157,7 +154,7 @@ public class UserIpService {
                     IpRedirectionVO vo = new IpRedirectionVO();
                     vo.setRegion(record.getRegion());
                     vo.setLanguageCode(record.getLanguageCode());
-                    vo.setCurrency(record.getCurrency());
+                    vo.setCurrencyCode(record.getCurrencyCode());
                     vo.setStatus(record.getStatus());
                     vo.setId(record.getId());
                     return vo;
@@ -173,7 +170,7 @@ public class UserIpService {
         return item.getShopName() + "|" +
                 item.getRegion() + "|" +
                 item.getLanguageCode() + "|" +
-                item.getCurrency();
+                item.getCurrencyCode();
     }
 
     /**
@@ -210,7 +207,7 @@ public class UserIpService {
 
         // 获取对应数据
         UserIPRedirectionDO ipRedirectionByShopNameAndRegion = userIPRedirectionRepo.getIpRedirectionByShopNameAndRegion(shopName, userIPRedirectionDO.getRegion(),
-                userIPRedirectionDO.getLanguageCode(), userIPRedirectionDO.getCurrency());
+                userIPRedirectionDO.getLanguageCode(), userIPRedirectionDO.getCurrencyCode());
 
         if (ipRedirectionByShopNameAndRegion == null) {
             return new BaseResponse<>().CreateErrorResponse("No data found");

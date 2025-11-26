@@ -16,14 +16,9 @@ import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 @RestController
 @RequestMapping("/orders")
 public class CharsOrdersController {
-
-    private final OrderService orderService;
-
     @Autowired
-    public CharsOrdersController(OrderService orderService) {
-        this.orderService = orderService;
+    private OrderService orderService;
 
-    }
     //存储和更新订单
     @PostMapping("/insertOrUpdateOrder")
     public BaseResponse<Object> insertOrUpdateOrder(@RequestBody CharsOrdersDO charsOrdersDO) {
@@ -51,7 +46,7 @@ public class CharsOrdersController {
         Boolean flag = orderService.sendPurchaseSuccessEmail(purchaseSuccessRequest);
         if (flag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse("false");
         }
     }
@@ -64,20 +59,20 @@ public class CharsOrdersController {
         Boolean flag = orderService.sendSubscribeSuccessEmail(shopName, translationCharsVO.getSubGid(), translationCharsVO.getFeeType());
         if (flag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse("false");
         }
     }
 
     /**
      * 查询用户最新一次订阅状态为Active的订阅id
-     * */
+     */
     @PostMapping("/getLatestActiveSubscribeId")
     public BaseResponse<Object> getLatestActiveSubscribeId(@RequestParam String shopName) {
         String latestActiveSubscribeId = orderService.getLatestActiveSubscribeId(shopName);
         if (latestActiveSubscribeId != null) {
             return new BaseResponse<>().CreateSuccessResponse(latestActiveSubscribeId);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
     }
