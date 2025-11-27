@@ -97,7 +97,7 @@ public class TranslationParametersRedisService {
     }
 
     /**
-     * 翻译状态：1-初始化 2-翻译中 3-写入中
+     * 翻译状态：1-初始化 2-翻译中 3-写入中 4-已完成
      */
     public void hsetTranslationStatus(String ptKey, String status) {
         redisIntegration.setHash(ptKey, TRANSLATION_STATUS, status);

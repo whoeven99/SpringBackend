@@ -135,7 +135,7 @@ public class DBTask {
         for (TranslateTasksDO task : taskList) {
             appInsights.trackTrace("DBTaskLog task START: " + task.getTaskId() + " of shop: " + shop);
 
-            if (rabbitMqTranslateService.checkNeedStopped(task.getShopName(), new CharacterCountUtils())) {
+            if (rabbitMqTranslateService.checkNeedStopped(task.getShopName(), new CharacterCountUtils(), null, null)) {
                 appInsights.trackTrace("DBTaskLog task stopped: " + task.getTaskId() + " of shop: " + shop);
                 return;
             }

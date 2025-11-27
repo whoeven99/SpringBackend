@@ -28,8 +28,8 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.DeepLIntegration.DEEPL_LANGUAGE_MAP;
+import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
 import static com.bogdatech.logic.RabbitMqTranslateService.BATCH_SIZE;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
@@ -75,11 +75,13 @@ public class TranslateDataService {
                                     String translationModel, String translateType) {
         appInsights.trackTrace("TranslateDataServiceLog translateHtmlData 用户： " + shopName + "，sourceText: " + sourceText);
 
-        // 进度条
-        translationParametersRedisService.hsetTranslationStatus(
-                generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
-        translationParametersRedisService.hsetTranslatingString(
-                generateProgressTranslationKey(shopName, source, target), sourceText);
+        // 进度条 判断translateType是手动还是自动， 手动才修改进度条数据
+        if (!AUTO.equals(translateType)) {
+            translationParametersRedisService.hsetTranslationStatus(
+                    TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+            translationParametersRedisService.hsetTranslatingString(
+                    TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), sourceText);
+        }
 
         String htmlTranslation;
         try {
@@ -131,10 +133,6 @@ public class TranslateDataService {
                         resultList.set(i, targetCache);
                         continue;
                     }
-                    translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName,
-                            source, target), String.valueOf(2));
-                    translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName,
-                            source, target), value);
 
                     String translated = translateByModel(
                             new TranslateRequest(0, shopName, accessToken, source, target, value),
@@ -214,8 +212,10 @@ public class TranslateDataService {
 
             // 用大模型翻译
             String glossaryString = glossaryText(keyMap1, keyMap0, value);
-            translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
-            translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(shopName, source, target), value);
+            if (!AUTO.equals(translateType)) {
+                translationParametersRedisService.hsetTranslationStatus(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), String.valueOf(2));
+                translationParametersRedisService.hsetTranslatingString(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target), value);
+            }
 
             // 根据关键词生成对应的提示词
             finalText = glossaryTranslationModel(translateRequest, counter, glossaryString, languagePack, limitChars, false, translateType);
@@ -352,8 +352,6 @@ public class TranslateDataService {
 
         });
 
-        translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), String.valueOf(2));
-        translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), text);
         return translatedText;
     }
 
@@ -615,8 +613,6 @@ public class TranslateDataService {
             redisProcessService.setCacheData(request.getTarget(), targetString, text);
         }
 
-        translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), String.valueOf(2));
-        translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), "Searching for content to translate…");
         return targetString;
     }
 
@@ -627,9 +623,6 @@ public class TranslateDataService {
         if (html == null || html.trim().isEmpty()) {
             return html;
         }
-
-        translationParametersRedisService.hsetTranslationStatus(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), String.valueOf(2));
-        translationParametersRedisService.hsetTranslatingString(generateProgressTranslationKey(request.getShopName(), request.getSource(), request.getTarget()), html);
 
         try {
             // 判断输入是否包含 <html> 标签
