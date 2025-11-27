@@ -124,7 +124,7 @@ public class ALiYunTranslateIntegration {
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("singleTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace("singleTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag){
                 translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
@@ -183,7 +183,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +
-                    " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " +
+                    " token ali: " + " all: " + totalToken + " input: " + inputTokens + " output: " +
                     outputTokens);
             return new Pair<>(content, totalToken);
         } catch (Exception e) {
@@ -270,7 +270,6 @@ public class ALiYunTranslateIntegration {
                     .build();
         }
 
-        appInsights.trackTrace("userMsg 用户 " + shopName);
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
@@ -278,7 +277,7 @@ public class ALiYunTranslateIntegration {
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .build();
-        appInsights.trackTrace("param 用户 " + shopName);
+
         String content;
         int totalToken;
         try {
@@ -297,11 +296,8 @@ public class ALiYunTranslateIntegration {
             if (call == null) {
                 return null;
             }
-            appInsights.trackTrace("GenerationResult 用户 " + shopName);
-            content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            appInsights.trackTrace("content 用户 " + shopName);
 
-            appInsights.trackTrace("userTranslate 用户 " + shopName);
+            content = call.getOutput().getChoices().get(0).getMessage().getContent();
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
@@ -596,7 +592,7 @@ public class ALiYunTranslateIntegration {
             totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("textTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace("textTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
 //            pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_ALT_FEE);
 

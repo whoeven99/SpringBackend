@@ -46,7 +46,6 @@ import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 import static com.bogdatech.utils.ListUtils.convertALL;
 import static com.bogdatech.utils.ListUtils.sort;
-import static com.bogdatech.utils.PlaceholderUtils.getGlossaryPrompt;
 import static com.bogdatech.utils.PlaceholderUtils.getSimplePrompt;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
@@ -57,35 +56,31 @@ import static com.bogdatech.utils.UserPrivateUtils.getApiKey;
 @Component
 public class PrivateKeyService {
     @Autowired
-    private  UserPrivateService userPrivateService;
+    private UserPrivateService userPrivateService;
     @Autowired
-    private  ITranslatesService iTranslatesService;
+    private ITranslatesService iTranslatesService;
     @Autowired
-    private  IUsersService usersService;
+    private IUsersService usersService;
     @Autowired
-    private  EmailIntegration emailIntegration;
+    private EmailIntegration emailIntegration;
     @Autowired
-    private  IEmailService emailService;
+    private IEmailService emailService;
     @Autowired
-    private  ShopifyService shopifyService;
+    private ShopifyService shopifyService;
     @Autowired
-    private  ITranslatesService translatesService;
+    private ITranslatesService translatesService;
     @Autowired
-    private  TestingEnvironmentIntegration testingEnvironmentIntegration;
+    private SecretClient secretClient;
     @Autowired
-    private  ShopifyHttpIntegration shopifyApiIntegration;
+    private IUserTypeTokenService userTypeTokenService;
     @Autowired
-    private  SecretClient secretClient;
+    private IUserPrivateTranslateService iUserPrivateTranslateService;
     @Autowired
-    private  IUserTypeTokenService userTypeTokenService;
+    private GlossaryService glossaryService;
     @Autowired
-    private  IUserPrivateTranslateService iUserPrivateTranslateService;
+    private RabbitMqTranslateService rabbitMqTranslateService;
     @Autowired
-    private  GlossaryService glossaryService;
-    @Autowired
-    private  RabbitMqTranslateService rabbitMqTranslateService;
-    @Autowired
-    private  PrivateIntegration privateIntegration;
+    private PrivateIntegration privateIntegration;
     @Autowired
     private TranslateDataService translatedDataService;
     @Autowired
@@ -560,16 +555,16 @@ public class PrivateKeyService {
                     // 根据关键词生成对应的提示词
                     String targetName = getLanguageName(target);
                     String prompt;
+                    String finalText;
                     if (glossaryString != null) {
-                        prompt = getGlossaryPrompt(targetName, glossaryString, null);
+                        prompt = PlaceholderUtils.getNewestGlossaryPrompt(targetName, glossaryString, value);
                         appInsights.trackTrace("translate 私有 普通文本： " + value + " Glossary提示词: " + prompt);
+                        finalText = privateIntegration.translateByGpt(null, translateContext.getApiModel(), translateContext.getApiKey(), prompt, shopName, Long.valueOf(translateContext.getRemainingChars()));
                     } else {
-                        prompt = getSimplePrompt(targetName, null);
+                        prompt = PlaceholderUtils.getSimplePrompt(targetName, null);
                         appInsights.trackTrace("translate 私有 普通文本：" + value + " Simple提示词: " + prompt);
+                        finalText = privateIntegration.translateByGpt(value, translateContext.getApiModel(), translateContext.getApiKey(), prompt, shopName, Long.valueOf(translateContext.getRemainingChars()));
                     }
-
-                    // 目前改为openai翻译
-                    String finalText = privateIntegration.translateByGpt(value, translateContext.getApiModel(), translateContext.getApiKey(), prompt, shopName, Long.valueOf(translateContext.getRemainingChars()));
 
                     // 对null处理, 不翻译
                     if (finalText == null) {
@@ -710,7 +705,7 @@ public class PrivateKeyService {
 
     /**
      * 根据用户的翻译模型选择翻译
-     * */
+     */
     private void translateByUser(TranslateContext translateContext, String value, String source, ShopifyRequest request, String resourceId, Map<String, Object> translation, String apiKey, String resourceType) {
         // 根据模型类型选择对应的翻译方法
         // 对元字段数据类型翻译
@@ -895,10 +890,11 @@ public class PrivateKeyService {
     /**
      * 私有keyGoogle翻译方法
      * 暂时先简单的改下，具体的后面再做
-     * @param html 输入的HTML文本
-     * @param target 目标语言
-     * @param shopName 店铺名称
-     * @param apiKey Google翻译API密钥
+     *
+     * @param html       输入的HTML文本
+     * @param target     目标语言
+     * @param shopName   店铺名称
+     * @param apiKey     Google翻译API密钥
      * @param limitChars 限制字符数
      * @return 翻译后的HTML文本
      */
@@ -1001,10 +997,10 @@ public class PrivateKeyService {
     /**
      * 使用缓存处理文本内容，保护变量和URL
      *
-     * @param text 输入文本
-     * @param target 目标语言
-     * @param shopName 店铺名称
-     * @param apiKey 翻译API密钥
+     * @param text       输入文本
+     * @param target     目标语言
+     * @param shopName   店铺名称
+     * @param apiKey     翻译API密钥
      * @param limitChars 限制字符数
      * @return 翻译后的文本
      */

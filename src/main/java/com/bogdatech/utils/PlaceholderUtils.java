@@ -4,10 +4,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.bogdatech.constants.TranslateConstants.ARTICLE;
-import static com.bogdatech.constants.TranslateConstants.PRODUCT;
-
-
 public class PlaceholderUtils {
     // 定义占位符的正则表达式
     private static final Pattern PLACEHOLDER_PATTERN =
@@ -89,8 +85,8 @@ public class PlaceholderUtils {
      * @param languagePackId 语言包
      * @return 极简提示词
      */
-    public static String getSimplePrompt(String target, String languagePackId){
-        if (languagePackId != null && !languagePackId.isEmpty()){
+    public static String getSimplePrompt(String target, String languagePackId) {
+        if (languagePackId != null && !languagePackId.isEmpty()) {
             return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
         }
         return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
@@ -112,18 +108,40 @@ public class PlaceholderUtils {
     }
 
     /**
-     * 词汇表的提示词
+     * 11/27 版词汇表提示词
      *
-     * @param target         目标语言
-     * @param glossary       词汇表
-     * @param languagePackId 语言包
-     * @return 词汇表的提示词
+     * @param target   目标语言
+     * @param glossary 词汇表
      */
-    public static String getGlossaryPrompt(String target, String glossary, String languagePackId) {
-        if (languagePackId != null && !languagePackId.isEmpty()) {
-            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        }
-        return "Translate the following text into " + target + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
+    public static String getNewestGlossaryPrompt(String target, String glossary, String sourceText) {
+        String prompt = """
+                You are a professional e-commerce website translation expert. Your task is to translate the provided texts according to the specified requirements and return the complete translation result.
+                                
+                The target language for translation is:
+                <TargetLanguage>
+                {{TARGET_LANGUAGE}}
+                </TargetLanguage>
+                                
+                First, carefully read the following list of texts to be translated:
+                <SourceLanguageList>
+                {{SOURCE_LANGUAGE_LIST}}
+                </SourceLanguageList>
+                                
+                When translating, please strictly apply the following term rules to the translation results:
+                <TermRules>
+                {{TERM_RULES}}
+                </TermRules>
+                                
+                Additionally, adhere to these key translation rules:
+                1. Do not translate key-values; only translate the content of the values.
+                2. Do not translate emojis (keep them as they are in the source text).
+                3. Do not translate variable names (e.g., {{aaa}}, {{aa.bbb}}, {% ccc %}, {% capture email_title %} etc.).
+                4. Ensure the translation is natural and contextually appropriate for an e-commerce website.
+                                
+                Please return the complete translation result.
+                """;
+
+        return prompt.replace("{{TARGET_LANGUAGE}}", target).replace("{{TERM_RULES}}", glossary).replace("{{SOURCE_LANGUAGE_LIST}}", sourceText);
     }
 
     /**
@@ -156,12 +174,13 @@ public class PlaceholderUtils {
 
     /**
      * 完整翻译html的提示词
-     * @param target 目标语言
+     *
+     * @param target         目标语言
      * @param languagePackId 语言包
-     * */
+     */
     public static String getFullHtmlPrompt(String target, String languagePackId) {
         if (languagePackId == null) {
-            return "Translate the following HTML content to " + target  + ". Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
+            return "Translate the following HTML content to " + target + ". Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
         }
         return "Translate the following HTML content to " + target + "  with " + languagePackId + " appropriate terminology and tone. Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
     }
@@ -189,93 +208,16 @@ public class PlaceholderUtils {
     }
 
     /**
-     * list 翻译提示词
-     * @param target 目标语言
-     * @param languagePackId 语言包
-     * @param translationKeyType 翻译key
-     * @param modelType 模型类型
-     * */
-    public static String getListPrompt(String target, String languagePackId, String translationKeyType, String modelType) {
-        StringBuilder prompt = new StringBuilder();
-
-        prompt.append("你是一个精通翻译的小助手，你会帮我把每个语言都翻译的准确。\n")
-                .append("你会自动识别源语言，并将其翻译成我指定的目标语言。\n")
-                .append("你不会翻译key值，只翻译值的内容。\n")
-                .append("你不会翻译emoji。\n")
-                .append("翻译之前你会判断他是不是一个变量名，如果是变量名你就不会翻译。\n")
-                .append("我会给你一个待翻译的列表，你翻译之后给我返回一个固定的返回格式。\n");
-
-        // 1,如果有行业，才加上这一行
-        if (languagePackId != null && !languagePackId.isBlank()) {
-            prompt.append(String.format("翻译时你会使用适合 %s 行业的专业术语和友好语气。\n", languagePackId));
-        }
-
-        // 2,如果有 keyByModel，才加上这一行
-        String keyByModel = getKeyByModel(modelType, translationKeyType);
-        if (keyByModel != null && !keyByModel.isBlank()) {
-            prompt.append(String.format("待翻译的数据类型是 %s，不要输出解释性文本。\n", keyByModel));
-        }
-
-        prompt.append("你给我的返回值里面的key保持我给的内容不变，后面的value是你翻译后的内容。\n")
-                .append("举例说明：\n")
-                .append("我给你一个列表：[\"按钮\",\"[%-S] sec%!S\", \"{{ select }}\"]\n")
-                .append("再给你一个待翻译语言：Chinese (Traditional) \n")
-                .append("你给我按照如下格式返回: {\n")
-                .append("\"按钮\": \"按鈕\",\"[%-S] sec%!S\": \"[%-S] sec%!S\", \"{{ select }}\": \"{{ select }}\"}\n")
-                .append("好，现在帮我翻译一下如下内容\n")
-                .append(String.format("待翻译语言为：%s\n", target))
-                .append("待翻译列表为：");
-
-        return prompt.toString();
-    }
-
-    /**
-     * 根据key和modelType生成不同的字段
-     * */
-    public static String getKeyByModel(String modelType, String key) {
-        if (key == null || modelType == null){
-            return null;
-        }
-
-        String prefix;
-        switch (modelType) {
-            case ARTICLE -> prefix = "article";
-            case PRODUCT -> prefix = "product";
-            default -> {
-                return null; // modelType 不匹配
-            }
-        }
-
-        return switch (key) {
-            case "title" ->  prefix + " title";
-            case "meta_title" -> prefix + " meta title";
-            default -> null;
-        };
-    }
-
-
-    /**
      * 构建描述生成提示词的动态方法
-     * */
+     */
     public static String buildDescriptionPrompt(
-            String productName,
-            String productCategory,
-            String productDescription,
-            String seoKeywords,
-            String image,
-            String imageDescription,
-            String tone,
-            String templateType,
-            String brand,
-            String templateStructure,
-            String language,
-            String contentType,
-            String brandWord,
-            String brandSlogan
+            String productName, String productCategory, String productDescription, String seoKeywords, String image,
+            String imageDescription, String tone, String templateType, String brand, String templateStructure,
+            String language, String contentType, String brandWord, String brandSlogan
     ) {
 //        appInsights.trackTrace("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
         StringBuilder prompt = new StringBuilder();
-        prompt.append("You are a professional e-commerce ") ;
+        prompt.append("You are a professional e-commerce ");
         prompt.append(templateType);
         prompt.append(" content creator specialized in writing ");
         prompt.append(contentType);
@@ -291,10 +233,10 @@ public class PlaceholderUtils {
         }));
         prompt.append("\n## Writing Instructions\n");
         buildSection(prompt, buildNonNullMap(new Object[][]{
-                        {"Tone", tone},
-                        {"Reference Brand", brand},
-                        {"Structure Template", templateStructure != null ? templateStructure.trim() : ""},
-                }));
+                {"Tone", tone},
+                {"Reference Brand", brand},
+                {"Structure Template", templateStructure != null ? templateStructure.trim() : ""},
+        }));
 //        prompt.append("Format: HTML");
         prompt.append("\n## Must-Follow Rules\n");
         prompt.append("- The entire output must be written in fluent **").append(language).append("**.\n");
@@ -309,7 +251,7 @@ public class PlaceholderUtils {
 
     /**
      * 判断动态构成提示词
-     * */
+     */
     private static void buildSection(StringBuilder builder, Map<String, String> fields) {
 //        appInsights.trackTrace("fields: " + fields);
         fields.forEach((label, value) -> {
@@ -328,7 +270,9 @@ public class PlaceholderUtils {
         for (Object[] pair : pairs) {
             String key = (String) pair[0];
             String value = (String) pair[1];
-            if (value != null) map.put(key, value);
+            if (value != null) {
+                map.put(key, value);
+            }
         }
         return map;
     }
