@@ -13,9 +13,8 @@ import com.bogdatech.repository.repo.UserIPRedirectionRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -109,40 +108,86 @@ public class UserIpService {
     /**
      * 批量存储ip跳转数据
      */
-    public BaseResponse<Object> batchAddUserIp(String shopName, List<UserIPRedirectionDO> userIPRedirectionDOList) {
+    public BaseResponse<Object> syncUserIp(String shopName, List<UserIPRedirectionDO> userIPList) {
         // 参数校验
-        if (CollectionUtils.isEmpty(userIPRedirectionDOList)) {
+        if (CollectionUtils.isEmpty(userIPList)) {
             return new BaseResponse<>().CreateErrorResponse("userIP list cannot be empty");
         }
 
-        // 给每条记录设置 shopName（确保一致）
-        userIPRedirectionDOList.forEach(item -> item.setShopName(shopName));
-        List<UserIPRedirectionDO> ipRedirectionList;
+        // 强制覆盖 shopName
+        userIPList.forEach(item -> item.setShopName(shopName));
 
-        // 批量存储
-        userIPRedirectionRepo.saveIpRedirectList(userIPRedirectionDOList);
+        // 获取已有的所有记录
+        List<UserIPRedirectionDO> dbAll = userIPRedirectionRepo.selectIpRedirectionByShopNameAll(shopName);
 
-        // 获取所有的值，过滤存储的值，返回给前端
-        ipRedirectionList = userIPRedirectionRepo.selectIpRedirectionByShopName(shopName);
-        if (CollectionUtils.isEmpty(ipRedirectionList)) {
-            return new BaseResponse<>().CreateErrorResponse("No data found");
+        // 构建匹配 Map
+        Map<String, UserIPRedirectionDO> dbMap = CollectionUtils.isEmpty(dbAll)
+                ? new HashMap<>()
+                : dbAll.stream().collect(Collectors.toMap(
+                this::buildKey,
+                item -> item,
+                (a, b) -> a
+        ));
+
+        List<UserIPRedirectionDO> toInsert = new ArrayList<>();
+        List<UserIPRedirectionDO> toDelete = new ArrayList<>();
+
+        // 匹配逻辑
+        for (UserIPRedirectionDO input : userIPList) {
+            String key = buildKey(input);
+            UserIPRedirectionDO exist = dbMap.get(key);
+
+            if (exist == null) {
+                // 插入新纪录
+                input.setIsDeleted(false);
+                toInsert.add(input);
+            }
         }
 
-        // 将数据库中的记录按唯一键组合为 Map 方便比对
-        Map<String, UserIPRedirectionDO> dbRecordMap = ipRedirectionList.stream()
+        // 构建请求的 Map，用于快速判断哪些需要删除
+        Map<String, UserIPRedirectionDO> requestMap = userIPList.stream()
                 .collect(Collectors.toMap(
                         this::buildKey,
                         item -> item,
                         (a, b) -> a
                 ));
 
-        // 比对提交的数据，筛选本次成功插入的记录（依据唯一键）
-        List<UserIPRedirectionDO> savedRecords = userIPRedirectionDOList.stream()
-                .map(item -> dbRecordMap.get(buildKey(item)))
-                .filter(Objects::nonNull)
-                .toList();
+        // 找出 toDelete = dbAll - userIPList
+        for (UserIPRedirectionDO dbItem : dbAll) {
+            String key = buildKey(dbItem);
+            if (!requestMap.containsKey(key)) {
+                toDelete.add(dbItem);
+            }
+        }
 
-        return new BaseResponse<>().CreateSuccessResponse(ipReturn(savedRecords));
+        // 执行批量插入
+        if (!toInsert.isEmpty()) {
+            userIPRedirectionRepo.saveIpRedirectList(toInsert);
+        }
+
+        // 批量删除
+        if (!toDelete.isEmpty()) {
+            // 你需要提供 delete 接口（软删或真删任选）
+            userIPRedirectionRepo.batchDeleteIpRedirect(toDelete);
+        }
+
+        // 获取更新后的 DB 数据
+        List<UserIPRedirectionDO> dbFinal = userIPRedirectionRepo.selectIpRedirectionByShopName(shopName);
+        if (CollectionUtils.isEmpty(dbFinal)) {
+            return new BaseResponse<>().CreateErrorResponse("No data found");
+        }
+
+        // 转成 map 快速匹配
+        Map<String, UserIPRedirectionDO> dbFinalMap = dbFinal.stream().collect(
+                Collectors.toMap(this::buildKey, item -> item, (a, b) -> a)
+        );
+
+        // 返回本次操作成功的数据（关键点：按提交顺序返回最新状态）
+        List<UserIPRedirectionDO> finalResult = userIPList.stream()
+                .map(item -> dbFinalMap.get(buildKey(item)))
+                .filter(Objects::nonNull) // 安全过滤
+                .toList();
+        return new BaseResponse<>().CreateSuccessResponse(ipReturn(finalResult));
     }
 
     /**
@@ -155,7 +200,6 @@ public class UserIpService {
                     vo.setRegion(record.getRegion());
                     vo.setLanguageCode(record.getLanguageCode());
                     vo.setCurrencyCode(record.getCurrencyCode());
-                    vo.setStatus(record.getStatus());
                     vo.setId(record.getId());
                     return vo;
                 })
@@ -174,28 +218,6 @@ public class UserIpService {
     }
 
     /**
-     * 批量删除ip跳转数据
-     */
-    public BaseResponse<Object> batchDeleteUserIp(String shopName, List<Integer> ids) {
-        // 参数校验
-        if (CollectionUtils.isEmpty(ids)) {
-            return new BaseResponse<>().CreateErrorResponse("userIP list cannot be empty");
-        }
-
-        // 批量删除ids数据
-        Map<Integer, Boolean> integerBooleanMap = userIPRedirectionRepo.deleteIpRedirectList(ids);
-
-        // 搜集integerBooleanMap里面为true的数据返回
-        List<Integer> successIds = integerBooleanMap.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList();
-
-        if (CollectionUtils.isEmpty(successIds)) {
-            return new BaseResponse<>().CreateErrorResponse("No data delete success");
-        }
-
-        return new BaseResponse<>().CreateSuccessResponse(successIds);
-    }
-
-    /**
      * 批量更新ip跳转数据
      */
     public BaseResponse<Object> updateUserIp(String shopName, UserIPRedirectionDO userIPRedirectionDO) {
@@ -203,31 +225,12 @@ public class UserIpService {
         userIPRedirectionDO.setShopName(shopName);
 
         // 两种数据， 一种有id ， 一种没有id，没有id的插入，有id的更新
-        userIPRedirectionRepo.saveOrUpdate(userIPRedirectionDO);
+        boolean updateFlag = userIPRedirectionRepo.updateById(userIPRedirectionDO);
 
-        // 获取对应数据
-        UserIPRedirectionDO ipRedirectionByShopNameAndRegion = userIPRedirectionRepo.getIpRedirectionByShopNameAndRegion(shopName, userIPRedirectionDO.getRegion(),
-                userIPRedirectionDO.getLanguageCode(), userIPRedirectionDO.getCurrencyCode());
-
-        if (ipRedirectionByShopNameAndRegion == null) {
-            return new BaseResponse<>().CreateErrorResponse("No data found");
+        if (updateFlag) {
+            return new BaseResponse<>().CreateSuccessResponse(userIPRedirectionDO);
         }
-        return new BaseResponse<>().CreateSuccessResponse(ipRedirectionByShopNameAndRegion);
-    }
-
-
-    public BaseResponse<Object> updateUserIpStatus(Integer id, Boolean status) {
-        // 校验参数
-        if (id == null || status == null) {
-            return new BaseResponse<>().CreateErrorResponse("shopName or id or status cannot be empty");
-        }
-
-        // 更新状态
-        boolean statusFlag = userIPRedirectionRepo.updateIpRedirectStatus(id, status);
-        if (statusFlag) {
-            return new BaseResponse<>().CreateSuccessResponse(id);
-        }
-        return new BaseResponse<>().CreateErrorResponse("status update error");
+        return new BaseResponse<>().CreateErrorResponse("update failed");
     }
 
     /**
@@ -245,5 +248,25 @@ public class UserIpService {
     public BaseResponse<Object> selectUserIpListByShopNameAndRegion(String shopName, String region) {
         List<UserIPRedirectionDO> userIPRedirectionDOS = userIPRedirectionRepo.selectIpRedirectionByShopNameAndRegion(shopName, region);
         return new BaseResponse<>().CreateSuccessResponse(ipReturn(userIPRedirectionDOS).get(0));
+    }
+
+    /**
+     * 根据shopName获取剩余ip额度
+     */
+    public BaseResponse<Object> queryUserIpCount(String shopName) {
+        // 获取用户计划
+        Integer userSubscriptionPlan = iUserSubscriptionsService.getUserSubscriptionPlan(shopName);
+        int freeIp = switch (userSubscriptionPlan) {
+            case 4 -> 10000;
+            case 5 -> 25000;
+            case 6 -> 50000;
+            default -> 500;
+        };
+
+        // 查询已试用额度，
+        Long ipCountByShopName = iUserIpService.getIpCountByShopName(shopName);
+
+        // 返回剩余的额度 如果为负数，将额度改为0
+        return new BaseResponse<>().CreateSuccessResponse(ipCountByShopName.intValue() > freeIp ? 0 : freeIp - ipCountByShopName.intValue());
     }
 }
