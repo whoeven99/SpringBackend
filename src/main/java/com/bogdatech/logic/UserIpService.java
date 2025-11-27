@@ -208,13 +208,9 @@ public class UserIpService {
 
     /**
      * 构建唯一键：用于识别是否同一条记录
-     * 必要时你可以加入更多字段
      */
     private String buildKey(UserIPRedirectionDO item) {
-        return item.getShopName() + "|" +
-                item.getRegion() + "|" +
-                item.getLanguageCode() + "|" +
-                item.getCurrencyCode();
+        return item.getShopName() + "|" + item.getRegion();
     }
 
     /**
