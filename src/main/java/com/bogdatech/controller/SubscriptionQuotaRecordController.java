@@ -14,13 +14,8 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/subscriptionQuotaRecord")
 public class SubscriptionQuotaRecordController {
-
-    private final ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
-
     @Autowired
-    public SubscriptionQuotaRecordController(ISubscriptionQuotaRecordService subscriptionQuotaRecordService) {
-        this.subscriptionQuotaRecordService = subscriptionQuotaRecordService;
-    }
+    private ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
 
     //在购买订阅之后，给用户添加对应的订阅信息
     @PutMapping("/addSubscriptionQuotaRecord")

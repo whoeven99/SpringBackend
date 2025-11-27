@@ -34,7 +34,7 @@ import static com.bogdatech.utils.TypeConversionUtils.*;
 
 @RestController
 @RequestMapping("/translate")
-public class    TranslateController {
+public class TranslateController {
     @Autowired
     private TranslateService translateService;
     @Autowired

@@ -1,8 +1,6 @@
-package com.bogdatech.logic;
+package com.bogdatech.logic.PCApp;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogdatech.Service.IPCUserPicturesService;
-import com.bogdatech.Service.IPCUserService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.constants.TranslateConstants;
 import com.bogdatech.entity.DO.PCUserPicturesDO;
@@ -14,6 +12,8 @@ import com.bogdatech.integration.AidgeIntegration;
 import com.bogdatech.integration.HunYuanBucketIntegration;
 import com.bogdatech.integration.HuoShanIntegration;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.repository.repo.PCUserPicturesRepo;
+import com.bogdatech.repository.repo.PCUsersRepo;
 import com.bogdatech.utils.PictureUtils;
 import com.bogdatech.utils.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,9 +29,9 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @Component
 public class PCUserPicturesService {
     @Autowired
-    private IPCUserPicturesService ipcUserPicturesService;
+    private PCUserPicturesRepo pcUserPicturesRepo;
     @Autowired
-    private IPCUserService ipcUserService;
+    private PCUsersRepo pcUsersRepo;
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
@@ -43,8 +43,8 @@ public class PCUserPicturesService {
 
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
-    public static int APP_PIC_FEE = 1000;
-    public static int APP_ALT_FEE = 1000;
+    public static int APP_PIC_FEE = 2000;
+    public static int APP_ALT_FEE = 2000; // alt和pic翻译一块扣除
 
     public BaseResponse<Object> insertPicToDbAndCloud(MultipartFile file, String shopName, String pcUserPicturesDoJson) {
         //解析userPicturesDO
@@ -68,7 +68,7 @@ public class PCUserPicturesService {
 
             // 再将图片相关数据存到数据库中
             pcUserPicturesDO.setShopName(shopName);
-            boolean b = ipcUserPicturesService.insertPictureData(pcUserPicturesDO);
+            boolean b = pcUserPicturesRepo.insertPictureData(pcUserPicturesDO);
 
             // 数据库做上传和插入更新数据
             if (afterUrl != null && b) {
@@ -77,7 +77,7 @@ public class PCUserPicturesService {
                 return new BaseResponse<>().CreateErrorResponse(false);
             }
         } else if (file.isEmpty() && pcUserPicturesDO != null && pcUserPicturesDO.getImageId() != null) {
-            boolean b = ipcUserPicturesService.insertPictureData(pcUserPicturesDO);
+            boolean b = pcUserPicturesRepo.insertPictureData(pcUserPicturesDO);
             if (b) {
                 return new BaseResponse<>().CreateSuccessResponse(pcUserPicturesDO);
             } else {
@@ -88,7 +88,7 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> deletePicByShopNameAndPCUserPictures(String shopName, PCUserPicturesDO pcUserPicturesDO) {
-        boolean flag = ipcUserPicturesService.deletePictureData(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getImageBeforeUrl(), pcUserPicturesDO.getLanguageCode());
+        boolean flag = pcUserPicturesRepo.deletePictureData(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getImageBeforeUrl(), pcUserPicturesDO.getLanguageCode());
         if (flag) {
             pcUserPicturesDO.setIsDeleted(1);
             return new BaseResponse<>().CreateSuccessResponse(pcUserPicturesDO);
@@ -133,7 +133,7 @@ public class PCUserPicturesService {
         }
 
         // 获取用户token，判断是否和数据库中一致再选择是否调用
-        PCUsersDO pcUsersDO = ipcUserService.getUserByShopName(shopName);
+        PCUsersDO pcUsersDO = pcUsersRepo.getUserByShopName(shopName);
         if (!pcUsersDO.getAccessToken().equals(imageTranslateVO.getAccessToken())) {
             return new BaseResponse<>().CreateErrorResponse("accessToken error");
         }
@@ -163,7 +163,7 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> getPicsByImageIdAndShopName(String shopName, PCUserPicturesDO pcUserPicturesDO) {
-        List<PCUserPicturesDO> pcUserPicturesDOS = ipcUserPicturesService.listPcUserPics(shopName, pcUserPicturesDO.getImageId());
+        List<PCUserPicturesDO> pcUserPicturesDOS = pcUserPicturesRepo.listPcUserPics(shopName, pcUserPicturesDO.getImageId());
 
         if (pcUserPicturesDOS != null) {
             return new BaseResponse<>().CreateSuccessResponse(pcUserPicturesDOS);
@@ -174,19 +174,13 @@ public class PCUserPicturesService {
     public BaseResponse<Object> altTranslate(String shopName, AltTranslateVO altTranslateVO) {
         appInsights.trackTrace("altTranslate 用户 " + shopName + " sourceCode " + altTranslateVO.getTargetCode() + " targetCode " + altTranslateVO.getTargetCode() + " alt " + altTranslateVO.getAlt() + " accessToken " + altTranslateVO.getAccessToken());
         // 获取用户token，判断是否和数据库中一致再选择是否调用
-        PCUsersDO pcUsersDO = ipcUserService.getUserByShopName(shopName);
+        PCUsersDO pcUsersDO = pcUsersRepo.getUserByShopName(shopName);
         if (!pcUsersDO.getAccessToken().equals(altTranslateVO.getAccessToken())) {
             return null;
         }
 
         // 获取用户最大额度限制
         Integer maxCharsByShopName = pcUsersDO.getPurchasePoints();
-
-        // 剩余额度
-        int remainingPoints = pcUsersDO.getPurchasePoints() - pcUsersDO.getUsedPoints();
-        if (pcUsersDO.getUsedPoints() >= maxCharsByShopName || remainingPoints < APP_ALT_FEE) {
-            return new BaseResponse<>().CreateErrorResponse("额度不够");
-        }
 
         // 生成提示词
         String prompt = "请将以下文本翻译为如下语言：" + getLanguageName(altTranslateVO.getTargetCode());
@@ -202,12 +196,12 @@ public class PCUserPicturesService {
     public BaseResponse<Object> updateUserPic(String shopName, PCUserPicturesDO pcUserPicturesDO) {
         pcUserPicturesDO.setShopName(shopName);
         // 判断是否存在， 存在则更新，不存在则插入
-        List<PCUserPicturesDO> userPicByShopNameAndImageIdAndLanguageCode = ipcUserPicturesService.getUserPicByShopNameAndImageIdAndLanguageCode(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getLanguageCode());
+        List<PCUserPicturesDO> userPicByShopNameAndImageIdAndLanguageCode = pcUserPicturesRepo.getUserPicByShopNameAndImageIdAndLanguageCode(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getLanguageCode());
         boolean flag;
         if (userPicByShopNameAndImageIdAndLanguageCode == null || userPicByShopNameAndImageIdAndLanguageCode.isEmpty()) {
-            flag = ipcUserPicturesService.insertPictureData(pcUserPicturesDO);
+            flag = pcUserPicturesRepo.insertPictureData(pcUserPicturesDO);
         } else {
-            flag = ipcUserPicturesService.updatePictureData(shopName, pcUserPicturesDO);
+            flag = pcUserPicturesRepo.updatePictureData(shopName, pcUserPicturesDO);
         }
 
         if (flag) {
@@ -217,7 +211,7 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> selectPictureDataByShopNameAndProductIdAndLanguageCode(String shopName, String productId, String languageCode) {
-        List<PCUserPicturesDO> list = ipcUserPicturesService.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getProductId, productId).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
+        List<PCUserPicturesDO> list = pcUserPicturesRepo.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getProductId, productId).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
         if (list != null) {
             // 替换图片url
             list.forEach(pic -> {
@@ -231,7 +225,7 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> selectPicturesByShopNameAndLanguageCode(String shopName, String languageCode) {
-        List<PCUserPicturesDO> list = ipcUserPicturesService.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
+        List<PCUserPicturesDO> list = pcUserPicturesRepo.list(new LambdaQueryWrapper<PCUserPicturesDO>().eq(PCUserPicturesDO::getShopName, shopName).eq(PCUserPicturesDO::getLanguageCode, languageCode).eq(PCUserPicturesDO::getIsDeleted, 0));
         if (list != null) {
             list.forEach(pic -> {
                 if (pic.getImageAfterUrl() != null) {
@@ -244,7 +238,7 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> deleteTranslateUrl(String shopName, PCUserPicturesDO pcUserPicturesDO) {
-        boolean flag = ipcUserPicturesService.updatePictureAfterUrl(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getImageBeforeUrl(), pcUserPicturesDO.getLanguageCode());
+        boolean flag = pcUserPicturesRepo.updatePictureAfterUrl(shopName, pcUserPicturesDO.getImageId(), pcUserPicturesDO.getImageBeforeUrl(), pcUserPicturesDO.getLanguageCode());
         if (flag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
@@ -260,7 +254,7 @@ public class PCUserPicturesService {
         if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
             iTranslationCounterService.updateAddUsedCharsByShopName(shopName, TranslateConstants.PIC_FEE, limitChars);
         }else {
-            ipcUserService.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE, limitChars);
+            pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE);
         }
 
         // 存bucket 桶里面
