@@ -50,27 +50,20 @@ public class UserIpController {
     }
 
     // 批量初始化数据
-    @PostMapping("/batchAddUserIp")
-    public BaseResponse<Object> batchAddUserIp(@RequestParam String shopName, @RequestBody List<UserIPRedirectionDO> userIPRedirectionDOList) {
-        return userIpService.batchAddUserIp(shopName, userIPRedirectionDOList);
-    }
-
-    // 批量删除ip数据
-    @PostMapping("/batchDeleteUserIp")
-    public BaseResponse<Object> batchDeleteUserIp(@RequestParam String shopName, @RequestBody List<Integer> ids) {
-        return userIpService.batchDeleteUserIp(shopName, ids);
+    @PostMapping("/syncUserIp")
+    public BaseResponse<Object> syncUserIp(@RequestParam String shopName, @RequestBody List<UserIPRedirectionDO> userIPRedirectionDOList) {
+        try {
+            return userIpService.syncUserIp(shopName, userIPRedirectionDOList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new BaseResponse<>().CreateErrorResponse("syncUserIp error");
     }
 
     // 数据更新接口
     @PostMapping("/updateUserIp")
     public BaseResponse<Object> updateUserIp(@RequestParam String shopName, @RequestBody UserIPRedirectionDO userIPRedirectionDO) {
         return userIpService.updateUserIp(shopName, userIPRedirectionDO);
-    }
-
-    // 单条状态更新接口
-    @PostMapping("/updateUserIpStatus")
-    public BaseResponse<Object> updateUserIpStatus(@RequestParam String shopName, @RequestParam Integer id, @RequestParam Boolean status) {
-        return userIpService.updateUserIpStatus(id, status);
     }
 
     // 数据获取接口（应用内）
@@ -85,4 +78,9 @@ public class UserIpController {
         return userIpService.selectUserIpListByShopNameAndRegion(shopName, region);
     }
 
+    // 查询剩余IP额度
+    @PostMapping("/queryUserIpCount")
+    public BaseResponse<Object> queryUserIpCount(@RequestParam String shopName) {
+        return userIpService.queryUserIpCount(shopName);
+    }
 }
