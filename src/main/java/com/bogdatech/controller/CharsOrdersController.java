@@ -29,16 +29,6 @@ public class CharsOrdersController {
         return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
     }
 
-    //查询status为PENDING的
-    @GetMapping("/getPendingOrders")
-    public BaseResponse<Object> getPendingOrders(@RequestParam String shopName) {
-        List<String> idByShopName = orderService.getIdByShopName(shopName);
-        if (idByShopName != null) {
-            return new BaseResponse<>().CreateSuccessResponse(idByShopName);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
-    }
-
     //购买字符成功后发送相应邮件
     @PostMapping("/sendPurchaseSuccessEmail")
     public BaseResponse<Object> sendPurchaseSuccessEmail(@RequestBody PurchaseSuccessRequest purchaseSuccessRequest) {

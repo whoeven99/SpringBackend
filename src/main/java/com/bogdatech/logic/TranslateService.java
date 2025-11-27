@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -239,9 +239,8 @@ public class TranslateService {
             InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(
                     null, 0, source, target, isCover, false,
                     request.getTranslateSettings1(), request.getTranslateSettings2(), resourceToJson, cleanedText,
-                    shopName, handleFlag, MANUAL, Timestamp.valueOf(LocalDateTime.now()), false);
+                    shopName, handleFlag, MANUAL, Timestamp.from(Instant.now()), false);
             try {
-                appInsights.trackTrace("将手动翻译参数存到数据库中");
                 int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
                 appInsights.trackTrace("将手动翻译参数存到数据库后： " + insert);
 
