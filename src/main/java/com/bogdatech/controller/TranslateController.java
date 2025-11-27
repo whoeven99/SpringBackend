@@ -20,12 +20,9 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.*;
-
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TypeConversionUtils.*;
 
@@ -121,7 +118,7 @@ public class TranslateController {
                 translatesDOResult[i] = translatesService.readTranslateDOByArray(translatesDO);
 
                 // 获取模块类型数据， 然后存到translatesDOResult[i]里面
-                Map<String, String> progressTranslationKey = translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(translatesDOResult[i].getShopName(), translatesDOResult[i].getSource(), translatesDOResult[i].getTarget()));
+                Map<String, String> progressTranslationKey = translationParametersRedisService.getProgressTranslationKey(TranslationParametersRedisService.generateProgressTranslationKey(translatesDOResult[i].getShopName(), translatesDOResult[i].getSource(), translatesDOResult[i].getTarget()));
                 String translatingModule = progressTranslationKey.get("translating_module");
                 if (translatingModule != null) {
                     translatesDOResult[i].setResourceType(translatingModule);

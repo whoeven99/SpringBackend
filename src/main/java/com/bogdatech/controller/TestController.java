@@ -41,7 +41,6 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.TranslateService.*;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateProgressTranslationKey;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
@@ -488,7 +487,7 @@ public class TestController {
      */
     @GetMapping("/getRedisTranslationData")
     public Map<String, String> getRedisTranslationData(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
-        return translationParametersRedisService.getProgressTranslationKey(generateProgressTranslationKey(shopName, source, target));
+        return translationParametersRedisService.getProgressTranslationKey(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target));
     }
 
     /**
