@@ -49,7 +49,7 @@ public class TranslateStrategyFactory {
      */
     public String determineStrategy(TranslateContext ctx) {
         String strategy;
-        if (ctx.getOriginalTextMap() != null) {
+        if (ctx.getOriginalTextMap() != null && !ctx.getOriginalTextMap().isEmpty()) {
             // 批量翻译场景
             strategy = "BATCH";
         } else if (HTML.equals(ctx.getShopifyTextType()) || JsoupUtils.isHtml(ctx.getContent())) {

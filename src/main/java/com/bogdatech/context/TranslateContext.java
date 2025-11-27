@@ -1,5 +1,6 @@
 package com.bogdatech.context;
 
+import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.utils.JsonUtils;
 import lombok.Data;
 import org.jsoup.nodes.Document;
@@ -12,6 +13,7 @@ import java.util.Map;
 public class TranslateContext {
     // Start
     private String content;
+    private String glossaryReplaceContent;
 
     private String shopifyTextType;
     private String shopifyTextKey;
@@ -20,20 +22,24 @@ public class TranslateContext {
 
     // Calculate
     private boolean hasGlossary;
-    private String glossaryReplaceContent;
+    private Map<String, GlossaryDO> glossaryMap;
     private boolean isCached;
     private String strategy; // 系统内判断的翻译类型
     private String prompt;
 
     // Batch
     private Map<Integer, String> originalTextMap = new HashMap<>();
-    private Map<Integer, String> translatedTextMap;
-    private Integer cachedCount;
+    private Map<Integer, String> glossaryTextMap = new HashMap<>();
+    private Map<String, GlossaryDO> usedGlossaryMap = new HashMap<>();
+    private Map<Integer, String> uncachedTextMap = new HashMap<>();
+    private Map<Integer, String> translatedTextMap = new HashMap<>();
+    private int cachedCount;
+    private int glossaryCount;
 
     // Finish
     private Long endTime;
-    private Integer usedToken;
-    private Integer translatedChars;
+    private int usedToken;
+    private int translatedChars;
     private String translatedContent;
 
     private Long translatedTime;
@@ -48,8 +54,6 @@ public class TranslateContext {
         context.translatedChars = content.length();
         return context;
     }
-
-
 
     public static TranslateContext startBatchTranslate(Map<Integer, String> batchOriginalTextMap,
                                                    String targetLanguage) {
@@ -94,6 +98,18 @@ public class TranslateContext {
         return (end - startTime) / 1000;
     }
 
+    public void incrementCachedCount() {
+        this.cachedCount++;
+    }
+
+    public void incrementGlossaryCount() {
+        this.glossaryCount++;
+    }
+
+    public void incrementUsedTokenCount(int count) {
+        this.usedToken += count;
+    }
+
 //    public enum TranslateStrategyEnum {
 //        PLAIN_TEXT("小于20个字符"),
 //        TITLE("大于20个字符，纯文本"),
@@ -109,5 +125,3 @@ public class TranslateContext {
 //        }
 //    }
 }
-
-

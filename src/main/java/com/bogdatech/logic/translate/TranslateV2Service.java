@@ -3,6 +3,7 @@ package com.bogdatech.logic.translate;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
+import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
@@ -64,7 +65,7 @@ public class TranslateV2Service {
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
 
     // 单条翻译入口
-    public BaseResponse<String> singleTextTranslate(SingleTranslateVO request) {
+    public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
         if (request.getContext() == null || request.getTarget() == null
                 || request.getType() == null || request.getKey() == null
                 || StringUtils.isEmpty(request.getShopName())) {
@@ -81,19 +82,20 @@ public class TranslateV2Service {
         TranslateContext context = singleTranslate(shopName, request.getContext(), request.getTarget(),
                 request.getType(), request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()));
         // get json record 返回给前端
-        context.getJsonRecord();
-        return BaseResponse.SuccessResponse(context.getTranslatedContent());
+//        context.getJsonRecord();
+
+        SingleReturnVO returnVO = new SingleReturnVO();
+        returnVO.setTargetText(context.getTranslatedContent());
+        return BaseResponse.SuccessResponse(returnVO);
     }
 
-    private TranslateContext singleTranslate(String shopName, String content, String target,
-                                             String type, String key,
-                                             Map<String, GlossaryDO> glossaryMap) {
+    public TranslateContext singleTranslate(String shopName, String content, String target,
+                                            String type, String key,
+                                            Map<String, GlossaryDO> glossaryMap) {
         TranslateContext context = TranslateContext.startNewTranslate(content, target, type, key);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
 
-        service.initAndSetPrompt(context);
-        service.replaceGlossary(context, glossaryMap);
-        service.executeTranslate(context);
+        service.translate(context);
 
         context.finish();
         userTokenService.addUsedToken(shopName, context.getUsedToken());
@@ -271,14 +273,14 @@ public class TranslateV2Service {
                 ITranslateStrategyService service =
                         translateStrategyFactory.getServiceByContext(context);
 
-                service.initAndSetPrompt(context);
-                service.replaceGlossary(context, glossaryMap);
-                service.executeTranslate(context);
+                service.translate(context);
+//                service.replaceGlossary(context, glossaryMap);
+//                service.executeTranslate(context);
 
                 context.finish();
                 userTokenService.addUsedToken(shopName, context.getUsedToken());
 
-                Map<Integer, String> translatedValueMap = context.getBatchTranslatedTextMap();
+                Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
                 for (TranslateTaskV2DO updatedDo : taskList) {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
                     updatedDo.setTargetValue(targetValue);

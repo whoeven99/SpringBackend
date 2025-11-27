@@ -1,12 +1,6 @@
 package com.bogdatech.logic.translate.stragety;
 
 import com.bogdatech.context.TranslateContext;
-import com.bogdatech.entity.DO.GlossaryDO;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
-import com.bogdatech.logic.GlossaryService;
-import com.bogdatech.utils.JsonUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
-import kotlin.Pair;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -25,8 +19,6 @@ import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 @Component
 public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
-    @Autowired
     private BatchTranslateStrategyService batchTranslateStrategyService;
 
     @Override
@@ -35,7 +27,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     }
 
     @Override
-    public void initAndSetPrompt(TranslateContext ctx) {
+    public void translate(TranslateContext ctx) {
         String value = ctx.getContent();
         String target = ctx.getTargetLanguage();
 
@@ -63,51 +55,11 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         }
 
         // 翻译 originalTextMap
-        batchTranslateStrategyService.executeTranslate(ctx);
+        batchTranslateStrategyService.translate(ctx);
 
-//        ctx.setPrompt(PlaceholderUtils.getNewestPrompt(
-//                ctx.getTargetLanguage(), JsonUtils.objectToJson(uncachedMap)));
-    }
+        Map<Integer, String> translatedTextMap = ctx.getTranslatedTextMap();
 
-    @Override
-    public void replaceGlossary(TranslateContext ctx, Map<String, GlossaryDO> glossaryMap) {
-        Map<Integer, String> idToSourceValueMap = ctx.getOriginalTextMap();
-        // 替换glossary
-        for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
-            Pair<String, Boolean> glossaryPair = GlossaryService.replaceWithGlossary(entry.getValue(), glossaryMap);
-            if (glossaryPair.getSecond()) {
-                entry.setValue(glossaryPair.getFirst());
-                ctx.setHasGlossary(true);
-            }
-        }
-    }
-
-    @Override
-    public void executeTranslate(TranslateContext ctx) {
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(ctx.getPrompt(), ctx.getTargetLanguage());
-        if (pair == null) {
-            // fatalException
-            return;
-        }
-        String aiResponse = pair.getFirst();
-        if (ctx.isHasGlossary()) {
-            aiResponse = getGlossaryReplacedBack(aiResponse);
-        }
-        Map<Integer, String> translatedValueMap = JsonUtils.jsonToObjectWithNull(aiResponse, new TypeReference<Map<Integer, String>>() {
-        });
-        if (translatedValueMap == null || translatedValueMap.isEmpty()) {
-            // fatalException
-            return;
-        }
-        // 翻译后 - 设置缓存
-//        for (Map.Entry<Integer, String> entry : translatedValueMap.entrySet()) {
-//            setCache(target, entry.getValue(), idToSourceValueMap.get(entry.getKey()));
-//        }
-
-//        translatedValueMap.putAll(cachedMap);
-
-        ctx.setUsedToken(pair.getSecond());
-        fillBackTranslatedDataMap(ctx.getNodeMap(), translatedValueMap, ctx.getTargetLanguage(), ctx.getOriginalTextMap());
+        fillBackTranslatedDataMap(ctx.getNodeMap(), translatedTextMap, ctx.getTargetLanguage(), ctx.getOriginalTextMap());
         String replacedBackString;
         // 输出翻译后的 HTML
         if (ctx.isHasHtmlTag()) {
@@ -127,11 +79,6 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
             replacedBackString = isHtmlEntity(output2);
         }
         ctx.setTranslatedContent(replacedBackString);
-    }
-
-    @Override
-    public String getTranslateValue(TranslateContext context) {
-        return context.getTranslatedContent();
     }
 
     private void fillBackTranslatedDataMap(Map<Integer, TextNode> nodeMap,
@@ -180,9 +127,5 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
                 node.text(text);
             }
         }
-    }
-
-    private static String getGlossaryReplacedBack(String value) {
-        return value.replaceAll("\\{\\[(.*?)]}", "$1");
     }
 }
