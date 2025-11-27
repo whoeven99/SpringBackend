@@ -55,13 +55,20 @@ public class PrivateIntegration {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + apiKey);
         headers.set("Content-Type", "application/json");
-//        appInsights.trackTrace(shopName + " 用户的 apiKey: " + apiKey);
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
-        body.put("messages", new Object[]{
-                Map.of("role", "system", "content", systemPrompt),
-                Map.of("role", "user", "content", prompt)
-        });
+
+        // 判断 如果是词汇表提示词，改为只传user的数据
+        if (prompt == null){
+            body.put("messages", new Object[]{
+                    Map.of("role", "user", "content", systemPrompt)
+            });
+        }else {
+            body.put("messages", new Object[]{
+                    Map.of("role", "system", "content", systemPrompt),
+                    Map.of("role", "user", "content", prompt)
+            });
+        }
 
         String content;
         try {
@@ -211,7 +218,7 @@ public class PrivateIntegration {
 
         String cleanedHtml = originalDoc.body().html();
 
-        //暂时先用openai翻译
+        // 暂时先用openai翻译
         try {
             String chatGptString = translateByGpt(cleanedHtml, model, apiKey, fullHtmlPrompt, shopName, limit);
             if (chatGptString == null){

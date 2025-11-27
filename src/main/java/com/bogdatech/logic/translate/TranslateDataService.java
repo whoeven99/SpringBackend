@@ -241,8 +241,6 @@ public class TranslateDataService {
                                                   String languagePack, String modelType, String translationModel,
                                                   CharacterCountUtils counter, String shopName, Integer limitChars,
                                                   String translationKeyType, String translateType) {
-        appInsights.trackTrace("TranslateDataServiceLog PlainText 用户： " + shopName + "，sourceText: " + untranslatedTexts);
-
         if (untranslatedTexts.isEmpty()) {
             return new HashMap<>();
         }
@@ -485,7 +483,7 @@ public class TranslateDataService {
         String shopName = request.getShopName();
         String prompt;
         if (glossaryString != null) {
-            prompt = getGlossaryPrompt(targetName, glossaryString, languagePackId);
+            prompt = PlaceholderUtils.getNewestGlossaryPrompt(targetName, glossaryString, content);
             appInsights.trackTrace("clickTranslation " + shopName + " 普通文本： " + content + " Glossary提示词: " + prompt);
         } else {
             prompt = getSimplePrompt(targetName, languagePackId);
@@ -493,10 +491,22 @@ public class TranslateDataService {
         }
 
         try {
-            return translateByCiwiModel(request, counter, limitChars, prompt, isSingleFlag, translateType);
+            // 判断是否存在词汇表数据 选择不同的模型翻译
+            if (glossaryString != null) {
+                return translateByCiwiOrGptModel(target, null, shopName, null, counter, limitChars, prompt
+                        , isSingleFlag, "1", translateType);
+            } else {
+                return translateByCiwiModel(request, counter, limitChars, prompt, isSingleFlag, translateType);
+            }
+
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage() + " sourceText: " + content);
-            return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag, translateType);
+            appInsights.trackTrace("FatalException clickTranslation " + shopName + " glossaryTranslationModel errors ： " + e.getMessage() + " sourceText: " + content + " prompt : " + prompt);
+            if (glossaryString != null) {
+                return translateByCiwiOrGptModel(target, null, shopName, null, counter, limitChars, prompt
+                        , isSingleFlag, "1", translateType);
+            } else {
+                return aLiYunTranslateIntegration.singleTranslate(content, prompt, counter, target, shopName, limitChars, isSingleFlag, translateType);
+            }
         }
     }
 
@@ -711,7 +721,7 @@ public class TranslateDataService {
                 textNode.text(translatedText);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("递归处理节点报错 errors ： " + e.getMessage());
+            appInsights.trackTrace("FatalException 递归处理节点报错 errors ： " + e.getMessage());
         }
     }
 
@@ -761,8 +771,6 @@ public class TranslateDataService {
                     String targetString;
                     try {
                         request.setContent(cleanedText);
-//                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                        appInsights.trackTrace("要翻译的文本： " + cleanedText);
                         targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0
                                 , resourceType, languagePackId, limitChars, isSingleFlag, translateType);
                         targetString = isHtmlEntity(targetString);
@@ -793,8 +801,6 @@ public class TranslateDataService {
                 String targetString;
                 try {
                     request.setContent(cleanedText);
-//                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                    appInsights.trackTrace("要翻译的文本： " + cleanedText);
                     targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0
                             , resourceType, languagePackId, limitChars, isSingleFlag, translateType);
                     targetString = isHtmlEntity(targetString);
@@ -877,7 +883,6 @@ public class TranslateDataService {
     public String translateByCiwiOrGptModel(String target, String content, String shopName, String source,
                                             CharacterCountUtils counter, Integer limitChars, String prompt,
                                             boolean isSingleFlag, String translationModel, String translateType) {
-        appInsights.trackTrace("千问或gpt翻译 用户： " + shopName + " 模型类型： " + translationModel);
         Pair<String, Integer> pair;
         if ("2".equals(translationModel)) {
             pair = chatGptIntegration.chatWithGpt(prompt, content, shopName, target);
