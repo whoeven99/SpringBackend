@@ -18,7 +18,7 @@ import static com.bogdatech.constants.TranslateConstants.URI;
 import static com.bogdatech.utils.PlaceholderUtils.*;
 
 @Component
-public class SingleTranslateStrategyService implements ITranslateStrategyService<TranslateContext> {
+public class SingleTranslateStrategyService implements ITranslateStrategyService {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
 
@@ -32,7 +32,8 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         String value = ctx.getContent();
         String target = ctx.getTargetLanguage();
 
-        if (URI.equals(ctx.getShopifyTextType()) && "handle".equals(ctx.getShopifyTextKey())) {
+        if (URI.equals(ctx.getShopifyTextType())
+                && "handle".equals(ctx.getShopifyTextKey())) {
             String prompt;
             if (value.length() <= 20) {
                 if (PlaceholderUtils.hasPlaceholders(value)) {

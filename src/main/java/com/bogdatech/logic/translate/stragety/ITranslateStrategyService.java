@@ -5,14 +5,14 @@ import com.bogdatech.entity.DO.GlossaryDO;
 
 import java.util.Map;
 
-public interface ITranslateStrategyService<T extends TranslateContext> {
+public interface ITranslateStrategyService {
     String getType();
 
-    void initAndSetPrompt(T ctx);
+    void initAndSetPrompt(TranslateContext ctx);
 
-    void replaceGlossary(T ctx, Map<String, GlossaryDO> glossaryMap);
+    void replaceGlossary(TranslateContext ctx, Map<String, GlossaryDO> glossaryMap);
 
-    void executeTranslate(T context);
+    void executeTranslate(TranslateContext context);
 
-    String getTranslateValue(T context);
+    String getTranslateValue(TranslateContext context);
 }

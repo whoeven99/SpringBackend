@@ -1,16 +1,17 @@
 package com.bogdatech.context;
 
-import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.utils.JsonUtils;
 import lombok.Data;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.TextNode;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Data
 public class TranslateContext {
     // Start
     private String content;
-    private Map<Integer, String> batchOriginalTextMap;
 
     private String shopifyTextType;
     private String shopifyTextKey;
@@ -18,13 +19,16 @@ public class TranslateContext {
     private Long startTime;
 
     // Calculate
-    private Map<String, GlossaryDO> glossaryMap;
     private boolean hasGlossary;
     private String glossaryReplaceContent;
-    private String glossaryReplaceBackContent;
     private boolean isCached;
     private String strategy; // 系统内判断的翻译类型
     private String prompt;
+
+    // Batch
+    private Map<Integer, String> originalTextMap = new HashMap<>();
+    private Map<Integer, String> translatedTextMap;
+    private Integer cachedCount;
 
     // Finish
     private Long endTime;
@@ -44,6 +48,31 @@ public class TranslateContext {
         context.translatedChars = content.length();
         return context;
     }
+
+
+
+    public static TranslateContext startBatchTranslate(Map<Integer, String> batchOriginalTextMap,
+                                                   String targetLanguage) {
+        TranslateContext context = new TranslateContext();
+        context.originalTextMap = batchOriginalTextMap;
+        context.cachedCount = 0;
+
+        int totalChars = 0;
+        for (String value : batchOriginalTextMap.values()) {
+            if (value != null) {
+                totalChars += value.length();
+            }
+        }
+        context.setTranslatedChars(totalChars);
+
+        context.setTargetLanguage(targetLanguage);
+        context.setStartTime(System.currentTimeMillis());
+        return context;
+    }
+
+    private Document doc;
+    boolean hasHtmlTag;
+    private Map<Integer, TextNode> nodeMap = new HashMap<>();
 
     public void finish() {
         this.endTime = System.currentTimeMillis();

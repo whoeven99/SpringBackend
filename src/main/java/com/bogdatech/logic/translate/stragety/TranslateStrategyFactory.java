@@ -21,10 +21,10 @@ public class TranslateStrategyFactory {
     private static final String STRATEGY_HTML = "HTML";
     private static final String STRATEGY_SINGLE = "SINGLE";
 
-    private final Map<String, ITranslateStrategyService<TranslateContext>> serviceMap;
+    private final Map<String, ITranslateStrategyService> serviceMap;
 
     @Autowired
-    public TranslateStrategyFactory(List<ITranslateStrategyService<TranslateContext>> strategyServices) {
+    public TranslateStrategyFactory(List<ITranslateStrategyService> strategyServices) {
         this.serviceMap = strategyServices.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableMap(ITranslateStrategyService::getType, Function.identity()));
@@ -33,11 +33,11 @@ public class TranslateStrategyFactory {
     /**
      * 根据策略类型获取对应的服务实现。
      */
-    public ITranslateStrategyService<TranslateContext> getService(String type) {
+    public ITranslateStrategyService getService(String type) {
         if (type == null || type.isBlank()) {
             throw new FatalException("Strategy type must not be null or empty");
         }
-        ITranslateStrategyService<TranslateContext> service = serviceMap.get(type);
+        ITranslateStrategyService service = serviceMap.get(type);
         if (service == null) {
             throw new FatalException("Invalid strategy type: " + type);
         }
@@ -49,7 +49,7 @@ public class TranslateStrategyFactory {
      */
     public String determineStrategy(TranslateContext ctx) {
         String strategy;
-        if (ctx.getBatchOriginalTextMap() != null) {
+        if (ctx.getOriginalTextMap() != null) {
             // 批量翻译场景
             strategy = "BATCH";
         } else if (HTML.equals(ctx.getShopifyTextType()) || JsoupUtils.isHtml(ctx.getContent())) {
@@ -69,7 +69,7 @@ public class TranslateStrategyFactory {
     /**
      * 根据上下文自动选择并返回对应的策略服务实现。
      */
-    public ITranslateStrategyService<TranslateContext> getServiceByContext(TranslateContext ctx) {
+    public ITranslateStrategyService getServiceByContext(TranslateContext ctx) {
         String strategy = determineStrategy(ctx);
         return getService(strategy);
     }

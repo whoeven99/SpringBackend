@@ -1,11 +1,10 @@
 package com.bogdatech.logic.translate.stragety;
 
-import com.bogdatech.context.HtmlContext;
+import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.utils.JsonUtils;
-import com.bogdatech.utils.PlaceholderUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
 import org.jsoup.nodes.Document;
@@ -24,9 +23,11 @@ import java.util.regex.Pattern;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 
 @Component
-public class HtmlTranslateStrategyService implements ITranslateStrategyService<HtmlContext> {
+public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private BatchTranslateStrategyService batchTranslateStrategyService;
 
     @Override
     public String getType() {
@@ -34,25 +35,23 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService<H
     }
 
     @Override
-    public void initAndSetPrompt(HtmlContext ctx) {
+    public void initAndSetPrompt(TranslateContext ctx) {
         String value = ctx.getContent();
         String target = ctx.getTargetLanguage();
 
         value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
 
-        // 1, 解析html，根据html标签，选择不同的解析方式， 将prettyPrint设置为false
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(value).find();
         Document doc = parseHtml(value, target, hasHtmlTag);
         ctx.setDoc(doc);
         ctx.setHasHtmlTag(hasHtmlTag);
 
-        // 2. 收集所有 TextNode
         List<TextNode> nodes = new ArrayList<>();
         for (Element element : doc.getAllElements()) {
             nodes.addAll(element.textNodes());
         }
 
-        // 3. 提取要翻译文本并生成映射
+        // 生成json
         int index = 0;
         for (TextNode node : nodes) {
             String text = node.text().trim();
@@ -63,12 +62,15 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService<H
             }
         }
 
-        ctx.setPrompt(PlaceholderUtils.getNewestPrompt(
-                ctx.getTargetLanguage(), JsonUtils.objectToJson(uncachedMap)));
+        // 翻译 originalTextMap
+        batchTranslateStrategyService.executeTranslate(ctx);
+
+//        ctx.setPrompt(PlaceholderUtils.getNewestPrompt(
+//                ctx.getTargetLanguage(), JsonUtils.objectToJson(uncachedMap)));
     }
 
     @Override
-    public void replaceGlossary(HtmlContext ctx, Map<String, GlossaryDO> glossaryMap) {
+    public void replaceGlossary(TranslateContext ctx, Map<String, GlossaryDO> glossaryMap) {
         Map<Integer, String> idToSourceValueMap = ctx.getOriginalTextMap();
         // 替换glossary
         for (Map.Entry<Integer, String> entry : idToSourceValueMap.entrySet()) {
@@ -81,7 +83,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService<H
     }
 
     @Override
-    public void executeTranslate(HtmlContext ctx) {
+    public void executeTranslate(TranslateContext ctx) {
         Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(ctx.getPrompt(), ctx.getTargetLanguage());
         if (pair == null) {
             // fatalException
@@ -124,12 +126,12 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService<H
             String output2 = results.toString();
             replacedBackString = isHtmlEntity(output2);
         }
-        ctx.setReplaceBackContent(replacedBackString);
+        ctx.setTranslatedContent(replacedBackString);
     }
 
     @Override
-    public String getTranslateValue(HtmlContext context) {
-        return context.getReplaceBackContent();
+    public String getTranslateValue(TranslateContext context) {
+        return context.getTranslatedContent();
     }
 
     private void fillBackTranslatedDataMap(Map<Integer, TextNode> nodeMap,

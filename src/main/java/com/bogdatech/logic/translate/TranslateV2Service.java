@@ -2,7 +2,6 @@ package com.bogdatech.logic.translate;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.Service.IUsersService;
-import com.bogdatech.context.BatchContext;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
@@ -90,7 +89,7 @@ public class TranslateV2Service {
                                              String type, String key,
                                              Map<String, GlossaryDO> glossaryMap) {
         TranslateContext context = TranslateContext.startNewTranslate(content, target, type, key);
-        ITranslateStrategyService<TranslateContext> service = translateStrategyFactory.getServiceByContext(context);
+        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
 
         service.initAndSetPrompt(context);
         service.replaceGlossary(context, glossaryMap);
@@ -268,8 +267,8 @@ public class TranslateV2Service {
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
-                BatchContext context = BatchContext.startBatchTranslate(idToSourceValueMap, target);
-                ITranslateStrategyService<TranslateContext> service =
+                TranslateContext context = TranslateContext.startBatchTranslate(idToSourceValueMap, target);
+                ITranslateStrategyService service =
                         translateStrategyFactory.getServiceByContext(context);
 
                 service.initAndSetPrompt(context);

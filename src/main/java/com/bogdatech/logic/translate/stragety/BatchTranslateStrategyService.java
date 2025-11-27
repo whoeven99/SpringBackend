@@ -1,37 +1,39 @@
 package com.bogdatech.logic.translate.stragety;
 
-import com.bogdatech.context.BatchContext;
+import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.GlossaryDO;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-
 @Component
-public class BatchTranslateStrategyService implements ITranslateStrategyService<BatchContext> {
+public class BatchTranslateStrategyService implements ITranslateStrategyService {
     @Override
     public String getType() {
         return "BATCH";
     }
 
     @Override
-    public void initAndSetPrompt(BatchContext ctx) {
+    public void initAndSetPrompt(TranslateContext ctx) {
 
     }
 
     @Override
-    public void replaceGlossary(BatchContext ctx, Map<String, GlossaryDO> glossaryMap) {
+    public void replaceGlossary(TranslateContext ctx, Map<String, GlossaryDO> glossaryMap) {
 
     }
 
     @Override
-    public void executeTranslate(BatchContext context) {
+    public void executeTranslate(TranslateContext context) {
+        // 1. 过glossary
 
+        // 2. 过缓存
+
+        // 3. 调用翻译接口
     }
 
     @Override
-    public String getTranslateValue(BatchContext context) {
+    public String getTranslateValue(TranslateContext context) {
         return null;
     }
 
