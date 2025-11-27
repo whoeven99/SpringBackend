@@ -12,5 +12,4 @@ public class IpRedirectionVO {
     private String region;
     private String languageCode;
     private String currencyCode;
-    private Boolean status;
 }
