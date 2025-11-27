@@ -33,10 +33,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
-import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.logic.RabbitMqTranslateService.MANUAL;
-import static com.bogdatech.logic.ShopifyService.getVariables;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.*;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
@@ -45,7 +43,6 @@ import static com.bogdatech.utils.JsoupUtils.*;
 import static com.bogdatech.utils.ProgressBarUtils.getProgressBar;
 import static com.bogdatech.utils.RedisKeyUtils.*;
 import static com.bogdatech.utils.StringUtils.normalizeHtml;
-import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
 @EnableAsync
@@ -516,8 +513,9 @@ public class TranslateService {
         return aidgeIntegration.aidgeStandPictureTranslate(shopName, imageUrl, sourceCode, targetCode, maxCharsByShopName, ALiYunTranslateIntegration.TRANSLATE_APP);
     }
 
-    public BaseResponse<Object> singleTextTranslateV2(String shopName, SingleTranslateVO singleTranslateVO) {
+    public BaseResponse<SingleReturnVO> singleTextTranslateV2(String shopName, SingleTranslateVO singleTranslateVO) {
         SingleReturnVO singleReturnVO = new SingleReturnVO();
+
         // 判断是否为空
         String value = singleTranslateVO.getContext();
         if (value == null) {
@@ -551,12 +549,12 @@ public class TranslateService {
                     , remainingChars, true, MANUAL);
             if (targetString == null) {
                 singleReturnVO.setTargetText(value);
-                return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+                return new BaseResponse<SingleReturnVO>().CreateSuccessResponse(singleReturnVO);
             }
 
             appInsights.trackTrace(shopName + " 用户 ，" + value + " 单条翻译 handle模块： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
             singleReturnVO.setTargetText(targetString);
-            return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+            return new BaseResponse<SingleReturnVO>().CreateSuccessResponse(singleReturnVO);
         }
 
         // 开始翻译,判断是普通文本还是html文本
@@ -571,21 +569,21 @@ public class TranslateService {
                     htmlTranslation = normalizeHtml(htmlTranslation);
                     appInsights.trackTrace(shopName + " 用户 ，" + value + "HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                     singleReturnVO.setTargetText(htmlTranslation);
-                    return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+                    return new BaseResponse<SingleReturnVO>().CreateSuccessResponse(singleReturnVO);
                 }
 
                 String htmlTranslation = translateDataService.newJsonTranslateHtml(value, translateRequest, counter
                         , null, remainingChars, true, "1", MANUAL);
                 appInsights.trackTrace(shopName + " 用户 ，" + value + " HTML 单条翻译 消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + htmlTranslation);
                 singleReturnVO.setTargetText(htmlTranslation);
-                return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+                return new BaseResponse<SingleReturnVO>().CreateSuccessResponse(singleReturnVO);
             } else {
                 String targetString = translateDataService.translateAndCount(new TranslateRequest(0, shopName
                                 , null, source, target, value), counter, null, GENERAL
                         , remainingChars, true, MANUAL);
                 appInsights.trackTrace(shopName + " 用户 ，" + " 单条翻译： " + value + "消耗token数： " + (counter.getTotalChars() - usedChars) + "target为： " + targetString);
                 singleReturnVO.setTargetText(targetString);
-                return new BaseResponse<>().CreateSuccessResponse(singleReturnVO);
+                return new BaseResponse<SingleReturnVO>().CreateSuccessResponse(singleReturnVO);
             }
         } catch (Exception e) {
             appInsights.trackTrace("singleTranslate errors : " + e.getMessage());

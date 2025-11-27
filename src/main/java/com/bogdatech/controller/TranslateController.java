@@ -9,10 +9,7 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UsersDO;
-import com.bogdatech.entity.VO.ImageTranslateVO;
-import com.bogdatech.entity.VO.SingleTranslateVO;
-import com.bogdatech.entity.VO.TranslateArrayVO;
-import com.bogdatech.entity.VO.TranslatingStopVO;
+import com.bogdatech.entity.VO.*;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -76,7 +73,7 @@ public class TranslateController {
 
     // 单条文本翻译 修改返回值类型
     @PostMapping("/singleTextTranslateV2")
-    public BaseResponse<Object> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
+    public BaseResponse<SingleReturnVO> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
         return translateService.singleTextTranslateV2(shopName, singleTranslateVO);
     }
 
