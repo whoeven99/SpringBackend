@@ -7,4 +7,6 @@ public interface IUserIpService extends IService<UserIpDO> {
     Boolean addOrUpdateUserIp(String shopName);
 
     UserIpDO selectByShopNameForUpdate(String shopName);
+
+    Long getIpCountByShopName(String shopName);
 }
