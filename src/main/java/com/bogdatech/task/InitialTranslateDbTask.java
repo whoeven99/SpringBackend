@@ -8,6 +8,7 @@ import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.utils.ConfigUtils;
+import com.bogdatech.utils.ListUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IUsersService;
@@ -211,7 +212,8 @@ public class InitialTranslateDbTask {
                     continue;
                 }
 
-                List<TranslateResourceDTO> resourceList = convertALL(translationList);
+                List<String> beforeList = ListUtils.sort(translationList);
+                List<TranslateResourceDTO> resourceList = convertALL(beforeList);
                 tencentEmailService.translateFailEmail(task.getShopName(), createdAt, resourceList,
                         task.getTarget(), task.getSource(), costToken);
 
