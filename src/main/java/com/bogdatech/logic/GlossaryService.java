@@ -2,14 +2,11 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.entity.DO.GlossaryDO;
-import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
 public class GlossaryService {
@@ -54,38 +51,6 @@ public class GlossaryService {
             }
         }
         return glossaryMap;
-    }
-
-    public static Pair<String, Boolean> replaceWithGlossary(String value, Map<String, GlossaryDO> glossaryMap) {
-        if (value == null || glossaryMap == null || glossaryMap.isEmpty()) {
-            return new Pair<>(value, false);
-        }
-
-        Boolean hasGlossary = false;
-        for (Map.Entry<String, GlossaryDO> entry : glossaryMap.entrySet()) {
-            String key = entry.getKey();
-            GlossaryDO glossaryDO = entry.getValue();
-            Integer isCaseSensitive = glossaryDO.getCaseSensitive();
-
-            // 当 isCaseSensitive 为 1 时，要求大小写完全一致才替换；否则不区分大小写替换
-            String replacement = "{[" + glossaryDO.getTargetText() + "]}";
-            if (isCaseSensitive != null && isCaseSensitive == 1) {
-                if (value.contains(key)) {
-                    value = value.replace(key, replacement);
-                    hasGlossary = true;
-                }
-            } else {
-                // 不区分大小写替换：使用正则的 CASE_INSENSITIVE
-                Pattern pattern = Pattern.compile(Pattern.quote(key), Pattern.CASE_INSENSITIVE);
-                Matcher matcher = pattern.matcher(value);
-                if (matcher.find()) {
-                    value = matcher.replaceAll(Matcher.quoteReplacement(replacement));
-                    hasGlossary = true;
-                }
-            }
-        }
-
-        return new Pair<>(value, hasGlossary);
     }
 
     public Map<String, Object> getGlossaryByShopName(String shopName, String target) {

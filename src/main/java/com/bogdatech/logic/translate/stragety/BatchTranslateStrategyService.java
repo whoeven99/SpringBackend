@@ -70,6 +70,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             // fatalException
             return;
         }
+        ctx.setStrategy("Batch json 翻译");
         ctx.incrementUsedTokenCount(pair.getSecond());
         ctx.getTranslatedTextMap().putAll(pair.getFirst());
     }
