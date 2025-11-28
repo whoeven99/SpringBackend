@@ -41,4 +41,8 @@ public class UserIPRedirectionRepo extends ServiceImpl<UserIPRedirectionMapper, 
                 ));
 
     }
+
+    public List<UserIPRedirectionDO> selectAllIpRedirectionByShopName(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<UserIPRedirectionDO>().eq(UserIPRedirectionDO::getShopName, shopName));
+    }
 }

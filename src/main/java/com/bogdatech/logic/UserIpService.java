@@ -265,4 +265,8 @@ public class UserIpService {
         // 返回剩余的额度 如果为负数，将额度改为0
         return new BaseResponse<>().CreateSuccessResponse(ipCountByShopName.intValue() > freeIp ? 0 : freeIp - ipCountByShopName.intValue());
     }
+
+    public List<UserIPRedirectionDO> selectAllIpRedirectionByShopName(String shopName) {
+        return userIPRedirectionRepo.selectAllIpRedirectionByShopName(shopName);
+    }
 }
