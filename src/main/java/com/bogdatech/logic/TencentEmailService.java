@@ -161,13 +161,17 @@ public class TencentEmailService {
         String targetShop;
         targetShop = shopName.substring(0, shopName.length() - suffix.length());
         templateData.put("shop_name", targetShop);
-        //获取用户已翻译的和未翻译的文本
-        //通过shopName获取翻译到那个文本
+
+        // 获取用户已翻译的和未翻译的文本
+        // 通过shopName获取翻译到那个文本
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
         TypeSplitResponse typeSplitResponse = splitByType(resourceType, resourceList);
+
+        appInsights.trackTrace("translateFailEmail typeSplitResponse : " + typeSplitResponse + " resourceList : " + resourceList + " resourceType : " + resourceType);
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
-        //获取更新前后的时间
+
+        // 获取更新前后的时间
         LocalDateTime end = LocalDateTime.now();
 
         Duration duration = Duration.between(begin, end);
