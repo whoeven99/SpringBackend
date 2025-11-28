@@ -87,10 +87,4 @@ public class UserIpController {
     public BaseResponse<Object> queryUserIpCount(@RequestParam String shopName) {
         return userIpService.queryUserIpCount(shopName);
     }
-
-    // 查询剩余IP额度
-    @PostMapping("/queryUserIpCount")
-    public BaseResponse<Object> queryUserIpCount(@RequestParam String shopName) {
-        return userIpService.queryUserIpCount(shopName);
-    }
 }
