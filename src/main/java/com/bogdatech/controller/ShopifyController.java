@@ -8,9 +8,11 @@ import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import static com.bogdatech.constants.TranslateConstants.MAX_LENGTH;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -153,12 +155,7 @@ public class ShopifyController {
     //获取用户订阅计划
     @GetMapping("/getUserSubscriptionPlan")
     public BaseResponse<Object> getUserSubscriptionPlan(@RequestParam String shopName) {
-        try {
-            return shopifyService.getUserSubscriptionPlan(shopName);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new BaseResponse<>().CreateErrorResponse(e.getMessage());
-        }
+        return shopifyService.getUserSubscriptionPlan(shopName);
     }
 
     //根据前端传来的值，返回对应的图片信息
