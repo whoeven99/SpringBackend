@@ -1,30 +1,102 @@
 package com.bogdatech.context;
 
-import com.bogdatech.entity.DO.AILanguagePacksDO;
-import com.bogdatech.entity.DO.TranslateResourceDTO;
-import com.bogdatech.model.controller.request.ShopifyRequest;
-import com.bogdatech.utils.CharacterCountUtils;
-import lombok.AllArgsConstructor;
+import com.bogdatech.entity.DO.GlossaryDO;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.TextNode;
 
+import java.util.HashMap;
 import java.util.Map;
-@AllArgsConstructor
-@NoArgsConstructor
+
 @Data
 public class TranslateContext {
-    private String shopifyData; //shopify要翻译数据
-    private ShopifyRequest shopifyRequest; // shopify请求参数
-    private TranslateResourceDTO translateResource; // 翻译模块类型数据
-    private CharacterCountUtils characterCountUtils; // 计数器
-    private Integer remainingChars; //最大限制
-    private Map<String, Object> glossaryMap; //词汇表相关数据
-    private String source; // 源语言
-    private String languagePackId; //语言包
-    private String apiKey; // 用户私有key
-    private Boolean handleFlag; // 是否翻译handle标志
-    private Boolean isCover; // 是否覆盖翻译标志
-    private Integer model; // 选的的主模型，googel， openai
-    private String apiModel; // 主模型下的细分支 gpt4.1  等等。
-    private String userPrompt; // 用户自定义提示词
+    // Start
+    private String content;
+
+    private String shopifyTextType;
+    private String shopifyTextKey;
+    private String targetLanguage;
+    private Long startTime;
+
+    // Calculate
+    private Map<String, GlossaryDO> glossaryMap;
+    private boolean isCached;
+    private String strategy; // 系统内判断的翻译类型
+    private String prompt;
+
+    // Batch
+    private Map<Integer, String> originalTextMap = new HashMap<>();
+    private Map<Integer, String> glossaryTextMap = new HashMap<>();
+    private Map<String, GlossaryDO> usedGlossaryMap = new HashMap<>();
+    private Map<Integer, String> uncachedTextMap = new HashMap<>();
+    private Map<Integer, String> translatedTextMap = new HashMap<>();
+    private int cachedCount;
+    private int glossaryCount;
+
+    // Finish
+    private Long endTime;
+    private int usedToken;
+    private int translatedChars;
+    private String translatedContent;
+
+    private Long translatedTime;
+
+    private Map<String, String> translateVariables;
+
+    public static TranslateContext startNewTranslate(String content, String targetLanguage, String type, String key) {
+        TranslateContext context = new TranslateContext();
+        context.content = content;
+        context.targetLanguage = targetLanguage;
+        context.shopifyTextType = type;
+        context.shopifyTextKey = key;
+        context.startTime = System.currentTimeMillis();
+        context.translatedChars = content.length();
+        return context;
+    }
+
+    public static TranslateContext startBatchTranslate(Map<Integer, String> batchOriginalTextMap,
+                                                   String targetLanguage) {
+        TranslateContext context = new TranslateContext();
+        context.originalTextMap = batchOriginalTextMap;
+        context.cachedCount = 0;
+
+        int totalChars = 0;
+        for (String value : batchOriginalTextMap.values()) {
+            if (value != null) {
+                totalChars += value.length();
+            }
+        }
+        context.setTranslatedChars(totalChars);
+
+        context.setTargetLanguage(targetLanguage);
+        context.setStartTime(System.currentTimeMillis());
+        return context;
+    }
+
+    private Document doc;
+    boolean hasHtmlTag;
+    private Map<Integer, TextNode> nodeMap = new HashMap<>();
+
+    public void finish() {
+        this.endTime = System.currentTimeMillis();
+        this.translatedTime = this.getTranslateTime();
+    }
+
+    public long getTranslateTime() {
+        if (startTime == null) return 0;
+        long end = endTime != null ? endTime : System.currentTimeMillis();
+        return (end - startTime) / 1000;
+    }
+
+    public void incrementCachedCount() {
+        this.cachedCount++;
+    }
+
+    public void incrementGlossaryCount() {
+        this.glossaryCount++;
+    }
+
+    public void incrementUsedTokenCount(int count) {
+        this.usedToken += count;
+    }
 }
