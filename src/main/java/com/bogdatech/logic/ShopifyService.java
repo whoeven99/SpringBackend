@@ -52,7 +52,6 @@ import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
 import static com.bogdatech.utils.StringUtils.parsePlanName;
-import static com.bogdatech.utils.WhiteListUtils.checkWhiteList;
 
 @Service
 public class ShopifyService {
@@ -1040,14 +1039,19 @@ public class ShopifyService {
         subscriptionVO.setPlanType(parsedPlanType);
 
         // 白名单检查
-        BaseResponse<Object> whiteListResult = checkWhiteList(shopName, subscriptionVO, subscriptionVO.getFeeType());
-        if (whiteListResult != null) {
-            return whiteListResult;
+        Boolean whiteListResult = WhiteListUtils.checkWhiteList(shopName);
+        if (whiteListResult) {
+            subscriptionVO.setUserSubscriptionPlan(6);
+            subscriptionVO.setCurrentPeriodEnd(null);
+            subscriptionVO.setFeeType(subscriptionVO.getFeeType());
+            subscriptionVO.setPlanType("Premium");
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 
         // 特殊计划直接返回（1、2、8）
         Integer userSubscriptionPlan = subscriptions.getPlanId();
         if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2 || userSubscriptionPlan == 8) {
+            subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
             subscriptionVO.setCurrentPeriodEnd(null);
             subscriptionVO.setFeeType(0);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
@@ -1102,7 +1106,7 @@ public class ShopifyService {
         Instant start = Instant.parse(node.getString("createdAt"));
         String calcEnd;
         if (newestRecord == null) {
-            calcEnd =  Timestamp.from(start.plus(31, ChronoUnit.DAYS)).toString();
+            calcEnd = Timestamp.from(start.plus(31, ChronoUnit.DAYS)).toString();
             subscriptionVO.setCurrentPeriodEnd(calcEnd);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
@@ -1111,7 +1115,7 @@ public class ShopifyService {
         Timestamp cycleStart = newestRecord.getCreatedAt();
 
         if (now.before(cycleStart)) {
-            calcEnd =  cycleStart.toString();
+            calcEnd = cycleStart.toString();
             subscriptionVO.setCurrentPeriodEnd(calcEnd);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
