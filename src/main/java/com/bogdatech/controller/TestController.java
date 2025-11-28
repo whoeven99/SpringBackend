@@ -83,6 +83,8 @@ public class TestController {
     private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private ISubscriptionQuotaRecordService iSubscriptionQuotaRecordService;
 
     @GetMapping("/ping")
     public String ping() {
@@ -189,7 +191,7 @@ public class TestController {
             int i = 0;
             for (TranslatesDO translatesDO : translatesDOList) {
                 appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
-                if (taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
+                if (taskService.autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
                     i++;
                     if (i > count) {
                         break;
@@ -529,6 +531,11 @@ public class TestController {
     @GetMapping("/testDeleteShopifyData")
     public String testDeleteShopifyData(@RequestParam String resourceId, @RequestParam String locals, @RequestParam String translationKeys, @RequestParam String accessToken) {
         return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
+    }
+
+    @GetMapping("/testFee")
+    public void testFee() {
+        taskService.freeTrialTaskForImage();
     }
 
 }

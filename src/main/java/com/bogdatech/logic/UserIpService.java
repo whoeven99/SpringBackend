@@ -10,6 +10,8 @@ import com.bogdatech.entity.VO.IpRedirectionVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
 import com.bogdatech.repository.repo.UserIPRedirectionRepo;
+import com.bogdatech.mapper.UserIpMapper;
+import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -268,5 +270,24 @@ public class UserIpService {
 
     public List<UserIPRedirectionDO> selectAllIpRedirectionByShopName(String shopName) {
         return userIPRedirectionRepo.selectAllIpRedirectionByShopName(shopName);
+    }
+    /**
+     * 根据shopName获取剩余ip额度
+     */
+    public BaseResponse<Object> queryUserIpCount(String shopName) {
+        // 获取用户计划
+        Integer userSubscriptionPlan = iUserSubscriptionsService.getUserSubscriptionPlan(shopName);
+        int freeIp = switch (userSubscriptionPlan) {
+            case 4 -> 10000;
+            case 5 -> 25000;
+            case 6 -> 50000;
+            default -> 500;
+        };
+
+        // 查询已试用额度，
+        Long ipCountByShopName = iUserIpService.getIpCountByShopName(shopName);
+
+        // 返回剩余的额度 如果为负数，将额度改为0
+        return new BaseResponse<>().CreateSuccessResponse(ipCountByShopName.intValue() > freeIp ? 0 : freeIp - ipCountByShopName.intValue());
     }
 }

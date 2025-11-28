@@ -1,6 +1,7 @@
 package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.entity.DO.CharsOrdersDO;
@@ -21,15 +22,23 @@ public class CharsOrdersServiceImpl extends ServiceImpl<CharsOrdersMapper, Chars
     @Override
     public List<CharsOrdersDO> getShopNameAndId() {
         return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().select(CharsOrdersDO::getShopName, CharsOrdersDO::getId, CharsOrdersDO::getCreatedAt)
-                .eq(CharsOrdersDO::getStatus, "ACTIVE")).stream()
+                        .eq(CharsOrdersDO::getStatus, "ACTIVE")).stream()
                 .filter(data -> data.getShopName() != null && data.getId().contains("AppSubscription")).toList();
     }
 
     @Override
     public List<CharsOrdersDO> getCharsOrdersDoByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().select(CharsOrdersDO::getShopName, CharsOrdersDO::getId, CharsOrdersDO::getCreatedAt)
-                .eq(CharsOrdersDO::getStatus, "ACTIVE")
-                .eq(CharsOrdersDO::getShopName, shopName))
+                        .eq(CharsOrdersDO::getStatus, "ACTIVE")
+                        .eq(CharsOrdersDO::getShopName, shopName))
                 .stream().filter(data -> data.getShopName() != null && data.getId().contains("AppSubscription")).toList();
+    }
+
+    @Override
+    public CharsOrdersDO getLatestActiveOrder(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().eq(CharsOrdersDO::getShopName, shopName)
+                        .eq(CharsOrdersDO::getStatus, "ACTIVE").orderByDesc(CharsOrdersDO::getCreatedAt))
+                .stream().filter(o -> o.getId() != null && o.getId().contains("AppSubscription"))
+                .findFirst().orElse(null);
     }
 }

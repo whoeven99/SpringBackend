@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserSubscriptionsService;
@@ -29,6 +30,11 @@ public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsM
         userSubscriptionsDO.setShopName(shopName);
         userSubscriptionsDO.setPlanId(planId);
         return baseMapper.update(userSubscriptionsDO, new UpdateWrapper<UserSubscriptionsDO>().eq("shop_name", shopName));
+    }
+
+    @Override
+    public UserSubscriptionsDO getUserSubscriptionByShopName(String shopName) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName));
     }
 
 
