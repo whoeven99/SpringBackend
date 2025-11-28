@@ -65,7 +65,7 @@ public class ResourceTypeUtils {
         before = index > 0 ? resourceList.subList(0, index) : new ArrayList<>();
         after = index < resourceList.size() ? resourceList.subList(index, resourceList.size()) : new ArrayList<>();
         //根据TranslateResourceDTO来获取展示的类型名，且不重名
-        if (before.size() > 0) {
+        if (!before.isEmpty()) {
             for (TranslateResourceDTO resource : before) {
                 if (EMAIL_MAP.containsKey(resource.getResourceType())) {
                     beforeSet.add(EMAIL_MAP.get(resource.getResourceType()));
@@ -73,7 +73,7 @@ public class ResourceTypeUtils {
             }
         }
 
-        if (after.size() > 0) {
+        if (!after.isEmpty()) {
             for (TranslateResourceDTO resource : after) {
                 if (EMAIL_MAP.containsKey(resource.getResourceType())) {
                     afterSet.add(EMAIL_MAP.get(resource.getResourceType()));
