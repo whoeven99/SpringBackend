@@ -1,32 +1,27 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.IUserIpService;
+import com.bogdatech.entity.VO.IncludeCrawlerVO;
+import com.bogdatech.entity.VO.NoCrawlerVO;
 import com.bogdatech.logic.UserIpService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
 
 @RestController
 @RequestMapping("/userIp")
 public class UserIpController {
-    private final IUserIpService iUserIpService;
-
-    private final UserIpService userIpService;
-
     @Autowired
-    public UserIpController(IUserIpService userIpService, UserIpService userIpService1) {
-        this.iUserIpService = userIpService;
-        this.userIpService = userIpService1;
-    }
+    private IUserIpService iUserIpService;
+    @Autowired
+    private UserIpService userIpService;
+
 
     /**
      * 初始化额度UserIp表
-     * */
+     */
     @PostMapping("/addOrUpdateUserIp")
     public BaseResponse<Object> addOrUpdateUserIp(@RequestParam String shopName) {
         boolean result = retryWithParam(
@@ -36,7 +31,7 @@ public class UserIpController {
                 1000,
                 8000
         );
-        if (result){
+        if (result) {
             return new BaseResponse<>().CreateSuccessResponse(shopName);
         }
         return new BaseResponse<>().CreateErrorResponse(shopName);
@@ -44,7 +39,7 @@ public class UserIpController {
 
     /**
      * 判断额度是否足够，如果足够，额度+1
-     * */
+     */
     @PostMapping("/checkUserIp")
     public BaseResponse<Object> checkUserIp(@RequestParam String shopName) {
         Boolean b = userIpService.checkUserIp(shopName);
@@ -52,5 +47,17 @@ public class UserIpController {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    // 含爬虫打印日志
+    @PostMapping("/includeCrawlerPrintLog")
+    public BaseResponse<Object> includeCrawlerPrintLog(@RequestParam String shopName, @RequestBody IncludeCrawlerVO includeCrawlerVO) {
+       return userIpService.includeCrawlerPrintLog(shopName, includeCrawlerVO);
+    }
+
+    // 不含爬虫打印日志
+    @PostMapping("/noCrawlerPrintLog")
+    public BaseResponse<Object> noCrawlerPrintLog(@RequestParam String shopName, @RequestBody NoCrawlerVO noCrawlerVO) {
+        return userIpService.noCrawlerPrintLog(shopName, noCrawlerVO);
     }
 }
