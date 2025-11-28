@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserTrialsService;
@@ -32,5 +33,10 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
             return userTrialsDO.getIsTrialExpired();
         }
         return null;
+    }
+
+    @Override
+    public UserTrialsDO getUserTrialsByShopName(String shopName) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
     }
 }

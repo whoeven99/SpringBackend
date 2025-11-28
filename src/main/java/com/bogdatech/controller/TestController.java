@@ -26,7 +26,6 @@ import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
-import com.bogdatech.utils.StringUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +83,8 @@ public class TestController {
     private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private ISubscriptionQuotaRecordService iSubscriptionQuotaRecordService;
 
     @GetMapping("/ping")
     public String ping() {
@@ -536,4 +537,5 @@ public class TestController {
     public void testFee() {
         taskService.freeTrialTaskForImage();
     }
+
 }
