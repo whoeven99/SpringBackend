@@ -24,6 +24,7 @@ import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
+import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -81,11 +83,10 @@ public class TranslateV2Service {
 
         TranslateContext context = singleTranslate(shopName, request.getContext(), request.getTarget(),
                 request.getType(), request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()));
-        // get json record 返回给前端
-//        context.getJsonRecord();
 
         SingleReturnVO returnVO = new SingleReturnVO();
         returnVO.setTargetText(context.getTranslatedContent());
+        returnVO.setTranslateVariables(context.getTranslateVariables());
         return BaseResponse.SuccessResponse(returnVO);
     }
 
@@ -94,10 +95,11 @@ public class TranslateV2Service {
                                             Map<String, GlossaryDO> glossaryMap) {
         TranslateContext context = TranslateContext.startNewTranslate(content, target, type, key);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+        context.setGlossaryMap(glossaryMap);
 
         service.translate(context);
+        service.finishAndGetJsonRecord(context);
 
-        context.finish();
         userTokenService.addUsedToken(shopName, context.getUsedToken());
         return context;
     }
@@ -129,6 +131,7 @@ public class TranslateV2Service {
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
+    // 获取进度条
     public BaseResponse<ProgressResponse> getProcess(String shopName, String source) {
         List<InitialTaskV2DO> taskList = initialTaskV2Repo.selectByShopNameSource(shopName, source);
 
@@ -139,24 +142,37 @@ public class TranslateV2Service {
             return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
         }
 
-        int totalTasks = taskList.size();
-        int completedTasks = 0;
-        int stoppedTasks = 0;
-
         for (InitialTaskV2DO task : taskList) {
-            if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
-                completedTasks++;
+            if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
+                ProgressResponse.Progress progress = new ProgressResponse.Progress();
+                progress.setTarget(task.getTarget());
+                progress.setStatus(2);
+                progress.setTranslateStatus("translation_process_translating");
+                Pair<Long, Long> pair = translateTaskV2Repo.selectCountByInitialTaskId(task.getId());
+
+                Map<String, Integer> progressData = new HashMap<>();
+                progressData.put("totalCount", pair.getFirst().intValue());
+                progressData.put("translatedCount", pair.getSecond().intValue());
+
+                progress.setProgressData(progressData);
+            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
+                ProgressResponse.Progress progress = new ProgressResponse.Progress();
+                progress.setTarget(task.getTarget());
+                progress.setStatus(1);
+                progress.setTranslateStatus("translation_process_saving_shopify");
+                Pair<Long, Long> pair = translateTaskV2Repo.selectSavedCountByInitialTaskId(task.getId());
+                Map<String, Integer> progressData = new HashMap<>();
+                progressData.put("totalCount", pair.getFirst().intValue());
+                progressData.put("savedCount", pair.getSecond().intValue());
+                progress.setProgressData(progressData);
             } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
-                stoppedTasks++;
+                ProgressResponse.Progress progress = new ProgressResponse.Progress();
+                progress.setTarget(task.getTarget());
+                progress.setStatus(7);// todo 中断的状态
             }
         }
 
-        ProgressResponse progressResponse = new ProgressResponse();
-//        progressResponse.setTotalTasks(totalTasks);
-//        progressResponse.setCompletedTasks(completedTasks);
-//        progressResponse.setStoppedTasks(stoppedTasks);
-
-        return new BaseResponse<ProgressResponse>().CreateSuccessResponse(progressResponse);
+        return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
     }
 
     public void createInitialTask(String shopName, String source, String[] targets,
@@ -272,12 +288,10 @@ public class TranslateV2Service {
                 TranslateContext context = TranslateContext.startBatchTranslate(idToSourceValueMap, target);
                 ITranslateStrategyService service =
                         translateStrategyFactory.getServiceByContext(context);
+                context.setGlossaryMap(glossaryMap);
 
                 service.translate(context);
-//                service.replaceGlossary(context, glossaryMap);
-//                service.executeTranslate(context);
 
-                context.finish();
                 userTokenService.addUsedToken(shopName, context.getUsedToken());
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
@@ -513,24 +527,6 @@ public class TranslateV2Service {
 //            }
 //        }
         return true;
-    }
-
-    @Getter
-    public enum TranslationTypeEnum {
-        PLAIN_TEXT("PLAIN_TEXT"),
-        TITLE("title"),
-        META_TITLE("meta_title"),
-        LOWERCASE_HANDLE("handle"),
-        LIST_SINGLE("LIST_SINGLE_LINE_TEXT_FIELD"),
-        HTML("HTML"),
-        GLOSSARY("GLOSSARY"),
-        ;
-
-        private final String textType;
-
-        TranslationTypeEnum(String textType) {
-            this.textType = textType;
-        }
     }
 
     @Getter

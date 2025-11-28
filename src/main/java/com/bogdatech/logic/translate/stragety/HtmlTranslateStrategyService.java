@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -78,7 +79,20 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
             String output2 = results.toString();
             replacedBackString = isHtmlEntity(output2);
         }
+        ctx.setStrategy("HTML的json翻译");
         ctx.setTranslatedContent(replacedBackString);
+    }
+
+    public void finishAndGetJsonRecord(TranslateContext ctx) {
+        ctx.finish();
+        Map<String, String> variable = new HashMap<>();
+        variable.put("strategy", ctx.getStrategy());
+        variable.put("usedToken", String.valueOf(ctx.getUsedToken()));
+        variable.put("translatedTime", String.valueOf(ctx.getTranslatedTime()));
+        variable.put("cachedCount", String.valueOf(ctx.getCachedCount()));
+        variable.put("glossaryCount", String.valueOf(ctx.getGlossaryCount()));
+        variable.put("translatedChars", String.valueOf(ctx.getTranslatedChars()));
+        ctx.setTranslateVariables(variable);
     }
 
     private void fillBackTranslatedDataMap(Map<Integer, TextNode> nodeMap,

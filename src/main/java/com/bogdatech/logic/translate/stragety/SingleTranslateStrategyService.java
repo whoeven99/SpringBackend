@@ -4,12 +4,14 @@ import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.GlossaryService;
+import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.utils.PlaceholderUtils;
 import com.bogdatech.utils.PromptUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.bogdatech.constants.TranslateConstants.URI;
@@ -18,6 +20,8 @@ import static com.bogdatech.constants.TranslateConstants.URI;
 public class SingleTranslateStrategyService implements ITranslateStrategyService {
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private RedisProcessService redisProcessService;
 
     @Override
     public String getType() {
@@ -47,6 +51,14 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             ctx.setStrategy("语法表单条翻译");
             ctx.setPrompt(prompt);
         } else {
+            String cachedValue = redisProcessService.getCacheData(target, value);
+            if (cachedValue != null) {
+                ctx.setCached(true);
+                ctx.setStrategy("普通单条文本翻译-缓存命中");
+                ctx.setTranslatedContent(cachedValue);
+                return;
+            }
+
             String prompt = PromptUtils.SinglePrompt(target, value);
             ctx.setStrategy("普通单条文本翻译");
             ctx.setPrompt(prompt);
@@ -59,5 +71,20 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         }
         ctx.setUsedToken(pair.getSecond());
         ctx.setTranslatedContent(pair.getFirst());
+    }
+
+    public void finishAndGetJsonRecord(TranslateContext ctx) {
+        ctx.finish();
+        Map<String, String> variable = new HashMap<>();
+        variable.put("strategy", ctx.getStrategy());
+        variable.put("usedToken", String.valueOf(ctx.getUsedToken()));
+        variable.put("translatedTime", String.valueOf(ctx.getTranslatedTime()));
+        variable.put("isCached", String.valueOf(ctx.isCached()));
+        variable.put("translatedChars", String.valueOf(ctx.getTranslatedChars()));
+
+        if (!ctx.getUsedGlossaryMap().isEmpty()) {
+            variable.put("usedGlossary", String.join(",", ctx.getUsedGlossaryMap().keySet()));
+        }
+        ctx.setTranslateVariables(variable);
     }
 }

@@ -6,4 +6,6 @@ public interface ITranslateStrategyService {
     String getType();
 
     void translate(TranslateContext ctx);
+
+    void finishAndGetJsonRecord(TranslateContext ctx);
 }

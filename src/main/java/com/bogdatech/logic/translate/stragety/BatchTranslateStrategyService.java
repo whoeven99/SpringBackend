@@ -74,15 +74,16 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         ctx.getTranslatedTextMap().putAll(pair.getFirst());
     }
 
-    public Map<String, String> finishAndGetJsonRecord(TranslateContext ctx) {
+    public void finishAndGetJsonRecord(TranslateContext ctx) {
         ctx.finish();
-        Map<String, String> result = new HashMap<>();
-        result.put("usedToken", String.valueOf(ctx.getUsedToken()));
-        result.put("translatedTime", String.valueOf(ctx.getTranslatedTime()));
-        result.put("cachedCount", String.valueOf(ctx.getCachedCount()));
-        result.put("glossaryCount", String.valueOf(ctx.getGlossaryCount()));
-        result.put("translatedChars", String.valueOf(ctx.getTranslatedChars()));
-        return result;
+        Map<String, String> variable = new HashMap<>();
+        variable.put("strategy", ctx.getStrategy());
+        variable.put("usedToken", String.valueOf(ctx.getUsedToken()));
+        variable.put("translatedTime", String.valueOf(ctx.getTranslatedTime()));
+        variable.put("cachedCount", String.valueOf(ctx.getCachedCount()));
+        variable.put("glossaryCount", String.valueOf(ctx.getGlossaryCount()));
+        variable.put("translatedChars", String.valueOf(ctx.getTranslatedChars()));
+        ctx.setTranslateVariables(variable);
     }
 
     private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target) {

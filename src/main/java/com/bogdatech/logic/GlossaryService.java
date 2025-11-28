@@ -22,13 +22,15 @@ public class GlossaryService {
             return false;
         }
 
+        boolean flag = false;
         for (String key : glossaryMap.keySet()) {
             if (content.contains(key)) {
                 usedGlossaryMap.put(key, glossaryMap.get(key));
-                return true;
+                // 可能一句话命中多个语法
+                flag = true;
             }
         }
-        return false;
+        return flag;
     }
 
     public Map<String, GlossaryDO> getGlossaryDoByShopName(String shopName, String target) {
