@@ -1,10 +1,13 @@
 package com.bogdatech.logic;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.VO.SubscriptionVO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
@@ -24,8 +27,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import java.lang.reflect.Field;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -39,11 +45,14 @@ import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateWriteStatusKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.*;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
+import static com.bogdatech.utils.StringUtils.parsePlanName;
+import static com.bogdatech.utils.WhiteListUtils.checkWhiteList;
 
 @Service
 public class ShopifyService {
@@ -64,6 +73,17 @@ public class ShopifyService {
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
     private TestingEnvironmentIntegration testingEnvironmentIntegration;
+    @Autowired
+    private ICharsOrdersService charsOrdersService;
+    @Autowired
+    private IUsersService usersService;
+    @Autowired
+    private IUserTrialsService iUserTrialsService;
+    @Autowired
+    private ISubscriptionPlansService iSubscriptionPlansService;
+    @Autowired
+    private ISubscriptionQuotaRecordService iSubscriptionQuotaRecordService;
+
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
@@ -992,6 +1012,114 @@ public class ShopifyService {
         } catch (Exception e2) {
             appInsights.trackTrace("saveToShopify 每日须看 " + shopName + " save to Shopify errors : " + e2.getMessage());
         }
+    }
+
+    public BaseResponse<Object> getUserSubscriptionPlan(String shopName) {
+        if (shopName == null || shopName.isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse("shopName is null");
+        }
+
+        // 获取用户订阅信息
+        UserSubscriptionsDO subscriptions = userSubscriptionsService.getUserSubscriptionByShopName(shopName);
+
+        if (subscriptions == null) {
+            return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
+        }
+
+        SubscriptionVO subscriptionVO = new SubscriptionVO();
+        subscriptionVO.setUserSubscriptionPlan(subscriptions.getPlanId());
+        subscriptionVO.setFeeType(Optional.ofNullable(subscriptions.getFeeType()).orElse(0));
+
+        // 根据计划id 去查id名称
+        String planType = iSubscriptionPlansService.getOne(new LambdaQueryWrapper<SubscriptionPlansDO>().eq(SubscriptionPlansDO::getPlanId, subscriptions.getPlanId())).getPlanName();
+
+        String parsedPlanType = parsePlanName(planType);
+        if (parsedPlanType == null) {
+            return new BaseResponse<>().CreateErrorResponse("parsePlanType is null");
+        }
+        subscriptionVO.setPlanType(parsedPlanType);
+
+        // 白名单检查
+        BaseResponse<Object> whiteListResult = checkWhiteList(shopName, subscriptionVO, subscriptionVO.getFeeType());
+        if (whiteListResult != null) {
+            return whiteListResult;
+        }
+
+        // 特殊计划直接返回（1、2、8）
+        Integer userSubscriptionPlan = subscriptions.getPlanId();
+        if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2 || userSubscriptionPlan == 8) {
+            subscriptionVO.setCurrentPeriodEnd(null);
+            subscriptionVO.setFeeType(0);
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
+        // 免费计划（planId = 7）
+        if (userSubscriptionPlan == 7) {
+            subscriptionVO.setUserSubscriptionPlan(7);
+
+            UserTrialsDO trial = iUserTrialsService.getUserTrialsByShopName(shopName);
+
+            subscriptionVO.setCurrentPeriodEnd(trial != null ? String.valueOf(trial.getTrialEnd()) : null);
+            subscriptionVO.setFeeType(subscriptions.getFeeType());
+
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
+        // 订阅计划
+        CharsOrdersDO activeOrder = charsOrdersService.getLatestActiveOrder(shopName);
+        if (activeOrder == null) {
+            return new BaseResponse<>().CreateErrorResponse("charsOrdersDO is null");
+        }
+
+        UsersDO user = usersService.getUserByName(shopName);
+
+        String query = getSubscriptionQuery(activeOrder.getId());
+        String shopifyData = getShopifyData(shopName, user.getAccessToken(), API_VERSION_LAST, query);
+
+        // 未获取到 Shopify 信息，降级为默认免费状态
+        if (shopifyData == null || shopifyData.isEmpty()) {
+            subscriptionVO.setFeeType(0);
+            subscriptionVO.setUserSubscriptionPlan(2);
+            subscriptionVO.setCurrentPeriodEnd(null);
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
+        JSONObject root = JSON.parseObject(shopifyData);
+        JSONObject node = root.getJSONObject("node");
+
+        if (node == null || node.isEmpty()) {
+            subscriptionVO.setFeeType(0);
+            subscriptionVO.setUserSubscriptionPlan(2);
+            subscriptionVO.setCurrentPeriodEnd(null);
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
+        Integer feeType = subscriptions.getFeeType();
+        subscriptionVO.setFeeType(feeType);
+
+        // 获取最新周期记录
+        SubscriptionQuotaRecordDO newestRecord = iSubscriptionQuotaRecordService.getNewestSubscriptionData(activeOrder.getId());
+        Instant start = Instant.parse(node.getString("createdAt"));
+        String calcEnd;
+        if (newestRecord == null) {
+            calcEnd =  Timestamp.from(start.plus(31, ChronoUnit.DAYS)).toString();
+            subscriptionVO.setCurrentPeriodEnd(calcEnd);
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp cycleStart = newestRecord.getCreatedAt();
+
+        if (now.before(cycleStart)) {
+            calcEnd =  cycleStart.toString();
+            subscriptionVO.setCurrentPeriodEnd(calcEnd);
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
+        long days = (feeType != null && feeType == 2) ? 366 : 31;
+        calcEnd = Timestamp.from(cycleStart.toInstant().plus(days, ChronoUnit.DAYS)).toString();
+        subscriptionVO.setCurrentPeriodEnd(calcEnd);
+        return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
     }
 }
 
