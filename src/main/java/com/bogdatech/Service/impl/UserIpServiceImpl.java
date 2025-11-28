@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserIpService;
@@ -25,6 +26,11 @@ public class UserIpServiceImpl extends ServiceImpl<UserIpMapper, UserIpDO> imple
     @Override
     public UserIpDO selectByShopNameForUpdate(String shopName) {
         return baseMapper.selectByShopNameForUpdate(shopName);
+    }
+
+    @Override
+    public Long getIpCountByShopName(String shopName) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<UserIpDO>().eq(UserIpDO::getShopName, shopName)).getTimes();
     }
 
 }
