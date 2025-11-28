@@ -43,8 +43,12 @@ public class UserIpController {
     @PostMapping("/checkUserIp")
     public BaseResponse<Object> checkUserIp(@RequestParam String shopName) {
         Boolean b = userIpService.checkUserIp(shopName);
+
+        // 获取ip跳转表数据
+        List<UserIPRedirectionDO> userIPRedirectionDOS = userIpService.selectAllIpRedirectionByShopName(shopName);
+
         if (b) {
-            return new BaseResponse<>().CreateSuccessResponse(true);
+            return new BaseResponse<>().CreateSuccessResponse(UserIpService.ipReturn(userIPRedirectionDOS));
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
