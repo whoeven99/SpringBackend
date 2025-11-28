@@ -1060,9 +1060,7 @@ public class ShopifyService {
         // 免费计划（planId = 7）
         if (userSubscriptionPlan == 7) {
             subscriptionVO.setUserSubscriptionPlan(7);
-
             UserTrialsDO trial = iUserTrialsService.getUserTrialsByShopName(shopName);
-
             subscriptionVO.setCurrentPeriodEnd(trial != null ? String.valueOf(trial.getTrialEnd()) : null);
             subscriptionVO.setFeeType(subscriptions.getFeeType());
 
@@ -1101,6 +1099,14 @@ public class ShopifyService {
         Integer feeType = subscriptions.getFeeType();
         subscriptionVO.setFeeType(feeType);
 
+        // 免费试用
+        UserTrialsDO trial = iUserTrialsService.getUserTrialsByShopName(shopName);
+        if (!trial.getIsTrialShow()) {
+            // 获取免费试用的时间
+            subscriptionVO.setCurrentPeriodEnd(String.valueOf(trial.getTrialEnd()));
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+
         // 获取最新周期记录
         SubscriptionQuotaRecordDO newestRecord = iSubscriptionQuotaRecordService.getNewestSubscriptionData(activeOrder.getId());
         Instant start = Instant.parse(node.getString("createdAt"));
@@ -1113,7 +1119,6 @@ public class ShopifyService {
 
         Timestamp now = Timestamp.valueOf(LocalDateTime.now());
         Timestamp cycleStart = newestRecord.getCreatedAt();
-
         if (now.before(cycleStart)) {
             calcEnd = cycleStart.toString();
             subscriptionVO.setCurrentPeriodEnd(calcEnd);
