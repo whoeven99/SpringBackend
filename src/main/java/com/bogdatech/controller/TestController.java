@@ -190,7 +190,7 @@ public class TestController {
             int i = 0;
             for (TranslatesDO translatesDO : translatesDOList) {
                 appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
-                if (taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
+                if (taskService.autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
                     i++;
                     if (i > count) {
                         break;

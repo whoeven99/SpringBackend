@@ -34,7 +34,6 @@ public class TranslateContext {
     private int glossaryCount;
 
     // Finish
-    private Long endTime;
     private int usedToken;
     private int translatedChars;
     private String translatedContent;
@@ -78,14 +77,7 @@ public class TranslateContext {
     private Map<Integer, TextNode> nodeMap = new HashMap<>();
 
     public void finish() {
-        this.endTime = System.currentTimeMillis();
-        this.translatedTime = this.getTranslateTime();
-    }
-
-    public long getTranslateTime() {
-        if (startTime == null) return 0;
-        long end = endTime != null ? endTime : System.currentTimeMillis();
-        return (end - startTime) / 1000;
+        this.setTranslatedTime((System.currentTimeMillis() - startTime)/ 1000);
     }
 
     public void incrementCachedCount() {
