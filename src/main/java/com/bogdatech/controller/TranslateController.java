@@ -18,6 +18,7 @@ import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
+import com.bogdatech.utils.WhiteListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
@@ -52,14 +53,18 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
+        if (WhiteListUtils.clickTranslateWhiteList(shopName)) {
+            return translateV2Service.createInitialTask(request);
+        }
         return translateService.createInitialTask(request);
-        // return translateV2Service.createInitialTaskV2(request);
     }
 
     @PostMapping("/getAllProgressData")
     public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
+        if (WhiteListUtils.clickTranslateWhiteList(shopName)) {
+            return translateV2Service.getProcess(shopName, source);
+        }
         return translateProgressService.getAllProgressData(shopName, source);
-//        return translateV2Service.getProcess(shopName, source);
     }
 
     //单条文本翻译
@@ -71,6 +76,10 @@ public class TranslateController {
     // 单条文本翻译 修改返回值类型
     @PostMapping("/singleTextTranslateV2")
     public BaseResponse<SingleReturnVO> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
+        singleTranslateVO.setShopName(shopName);
+        if (WhiteListUtils.singleTranslateWhiteList(shopName)) {
+            return translateV2Service.singleTextTranslate(singleTranslateVO);
+        }
         return translateService.singleTextTranslateV2(shopName, singleTranslateVO);
     }
 

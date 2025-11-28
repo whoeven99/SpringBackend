@@ -53,4 +53,10 @@ public class UserIpController {
         }
         return new BaseResponse<>().CreateErrorResponse(false);
     }
+
+    // 查询剩余IP额度
+    @PostMapping("/queryUserIpCount")
+    public BaseResponse<Object> queryUserIpCount(@RequestParam String shopName) {
+        return userIpService.queryUserIpCount(shopName);
+    }
 }
