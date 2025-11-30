@@ -496,6 +496,9 @@ public class TaskService {
                 String latestActiveSubscribeId = orderService.getLatestActiveSubscribeId(shopName);
                 if (latestActiveSubscribeId == null) {
                     appInsights.trackTrace("freeTrialTask  latestActiveSubscribeId的数据为null，用户是：" + shopName);
+
+                    // 将is_trial_expired改为true
+                    iUserTrialsService.updateExpiredByShopName(shopName);
                     continue;
                 }
                 UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
@@ -647,14 +650,12 @@ public class TaskService {
     public void freeTrialTaskForImage() {
         // 获取所有免费计划不过期的用户
         List<PCUserTrialsDO> notTrialExpired = pcUserTrialsRepo.getNotExpiredTrialByShopName();
-        System.out.println("notTrialExpired = " + notTrialExpired);
         if (notTrialExpired == null || notTrialExpired.isEmpty()) {
             return;
         }
 
         // 循环检测是否过期
         for (PCUserTrialsDO pcUserTrialsDO : notTrialExpired) {
-            System.out.println("pcUserTrialsDO = " + pcUserTrialsDO);
             // 判断是否过期
             Timestamp now = new Timestamp(System.currentTimeMillis());
             Timestamp trialEnd = pcUserTrialsDO.getTrialEnd();
@@ -667,11 +668,13 @@ public class TaskService {
 
             // 如果 trialStart + 5天 小于 trialEnd，不做任何操作
             if (now.after(trialEnd)) {
-                System.out.println("走免费试用");
                 // 获取最新一条gid订单，判断是否支付成功
                 String latestActiveSubscribeId = pcOrdersRepo.getLatestActiveSubscribeId(shopName);
                 if (latestActiveSubscribeId == null) {
                     appInsights.trackTrace("PC freeTrialTask latestActiveSubscribeId的数据为null，用户是：" + shopName);
+
+                    // 将数据改为true
+                    pcUserTrialsRepo.updateTrialExpiredByShopName(shopName, true);
                     continue;
                 }
                 PCUsersDO usersDO = pcUsersRepo.getUserByShopName(shopName);
