@@ -8,6 +8,8 @@ public interface IUserTrialsService extends IService<UserTrialsDO> {
 
     Boolean queryUserTrialByShopName(String shopName);
 
+    boolean updateExpiredByShopName(String shopName);
+
     UserTrialsDO getUserTrialsByShopName(String shopName);
 
 }

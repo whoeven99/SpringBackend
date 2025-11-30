@@ -2,6 +2,7 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserTrialsService;
 import com.bogdatech.entity.DO.UserTrialsDO;
@@ -33,6 +34,12 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
             return userTrialsDO.getIsTrialExpired();
         }
         return null;
+    }
+
+    @Override
+    public boolean updateExpiredByShopName(String shopName) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName)
+                .set(UserTrialsDO::getIsTrialExpired, true)) > 0;
     }
 
     @Override

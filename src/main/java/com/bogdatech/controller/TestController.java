@@ -12,6 +12,7 @@ import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.*;
+import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -424,6 +425,25 @@ public class TestController {
 
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
+
+    @GetMapping("/bogdaconfig")
+    public Map<String, String> config() {
+        return configRedisRepo.getAllConfigs();
+    }
+
+    @PutMapping("/bogdaconfig")
+    public Map<String, String> config(@RequestParam String key, @RequestParam String value) {
+        configRedisRepo.setConfig(key, value);
+        return configRedisRepo.getAllConfigs();
+    }
+
+    @DeleteMapping("/bogdaconfig")
+    public Map<String, String> config(@RequestParam String key) {
+        configRedisRepo.delConfig(key);
+        return configRedisRepo.getAllConfigs();
+    }
 
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
