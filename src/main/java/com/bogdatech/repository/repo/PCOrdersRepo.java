@@ -22,11 +22,15 @@ public class PCOrdersRepo extends ServiceImpl<PCOrdersMapper, PCOrdersDO> {
     }
 
     public String getLatestActiveSubscribeId(String shopName) {
-        PCOrdersDO pcOrdersDO = baseMapper.selectList(new LambdaQueryWrapper<PCOrdersDO>().eq(PCOrdersDO::getShopName, shopName)
+        List<PCOrdersDO> pcOrdersDOs = baseMapper.selectList(new LambdaQueryWrapper<PCOrdersDO>().eq(PCOrdersDO::getShopName, shopName)
                 .eq(PCOrdersDO::getStatus, "ACTIVE").orderByDesc(PCOrdersDO::getCreatedAt)).stream().filter(
                 order -> order.getOrderId() != null && order.getOrderId().contains("AppSubscription")
-        ).toList().get(0);
+        ).toList();
+        if (pcOrdersDOs.isEmpty()) {
+            return null;
+        }
 
+        PCOrdersDO pcOrdersDO = pcOrdersDOs.get(0);
         if (pcOrdersDO != null) {
             return pcOrdersDO.getOrderId();
         }
