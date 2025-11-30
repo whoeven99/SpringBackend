@@ -148,11 +148,12 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
                 progress.setTranslateStatus("translation_process_translating");
-                Pair<Long, Long> pair = translateTaskV2Repo.selectCountByInitialTaskId(task.getId());
+                Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
+                Long translatedCount = translateTaskV2Repo.selectTranslatedCountByInitialId(task.getId());
 
                 Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("totalCount", pair.getFirst().intValue());
-                progressData.put("translatedCount", pair.getSecond().intValue());
+                progressData.put("totalCount", count.intValue());
+                progressData.put("translatedCount", translatedCount.intValue());
 
                 progress.setProgressData(progressData);
             } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
@@ -160,10 +161,12 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
                 progress.setTranslateStatus("translation_process_saving_shopify");
-                Pair<Long, Long> pair = translateTaskV2Repo.selectSavedCountByInitialTaskId(task.getId());
+                Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
+                Long savedCount = translateTaskV2Repo.selectSavedCountByInitialId(task.getId());
+
                 Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("totalCount", pair.getFirst().intValue());
-                progressData.put("savedCount", pair.getSecond().intValue());
+                progressData.put("totalCount", count.intValue());
+                progressData.put("savedCount", savedCount.intValue());
                 progress.setProgressData(progressData);
             } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();

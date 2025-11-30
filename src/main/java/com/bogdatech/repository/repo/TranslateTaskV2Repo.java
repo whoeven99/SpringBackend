@@ -6,35 +6,33 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.repository.entity.TranslateTaskV2DO;
 import com.bogdatech.repository.mapper.TranslateTaskV2Mapper;
 import com.bogdatech.utils.DbUtils;
-import kotlin.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
-    public Pair<Long, Long> selectCountByInitialTaskId(Integer initialTaskId) {
+    public Long selectCountByInitialId(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.eq("initial_task_id", initialTaskId)
                 .eq("is_deleted", false);
-        long total = baseMapper.selectCount(wrapper);
-
-        wrapper.eq("has_target_value", true);
-        long translated = baseMapper.selectCount(wrapper);
-
-        return new Pair<>(total, translated);
+        return baseMapper.selectCount(wrapper);
     }
 
-    public Pair<Long, Long> selectSavedCountByInitialTaskId(Integer initialTaskId) {
+    public Long selectTranslatedCountByInitialId(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.eq("initial_task_id", initialTaskId)
+                .eq("has_target_value", true)
                 .eq("is_deleted", false);
-        long total = baseMapper.selectCount(wrapper);
+        return baseMapper.selectCount(wrapper);
+    }
 
-        wrapper.eq("saved_to_shopify", true);
-        long saved = baseMapper.selectCount(wrapper);
-
-        return new Pair<>(total, saved);
+    public Long selectSavedCountByInitialId(Integer initialTaskId) {
+        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+        wrapper.eq("initial_task_id", initialTaskId)
+                .eq("saved_to_shopify", true)
+                .eq("is_deleted", false);
+        return baseMapper.selectCount(wrapper);
     }
 
     public TranslateTaskV2DO selectOneByInitialTaskIdAndNotSaved(Integer initialTaskId) {
