@@ -12,6 +12,7 @@ import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.*;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
+import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.logic.translate.TranslateV2Service;
@@ -48,6 +49,8 @@ public class TranslateController {
     private TranslateProgressService translateProgressService;
     @Autowired
     private TranslateV2Service translateV2Service;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
@@ -77,7 +80,7 @@ public class TranslateController {
     @PostMapping("/singleTextTranslateV2")
     public BaseResponse<SingleReturnVO> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
         singleTranslateVO.setShopName(shopName);
-        if (WhiteListUtils.singleTranslateWhiteList(shopName)) {
+        if (configRedisRepo.singleTranslateWhiteList(shopName)) {
             return translateV2Service.singleTextTranslate(singleTranslateVO);
         }
         return translateService.singleTextTranslateV2(shopName, singleTranslateVO);
