@@ -306,12 +306,6 @@ public class TranslateV2Service {
             }
             // 还可能是手动中断
             if (redisStoppedRepository.isTaskStopped(shopName)) {
-                // 更新数据库状态为 5，翻译中断
-                long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
-                initialTaskV2DO.setStatus(InitialTaskStatus.STOPPED.status);
-                initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
-                initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
-                initialTaskV2Repo.updateById(initialTaskV2DO);
                 break;
             }
 
@@ -373,6 +367,14 @@ public class TranslateV2Service {
         if (redisStoppedRepository.isTaskStopped(shopName)) {
             int status = redisStoppedRepository.isStoppedByTokenLimit(shopName) ? 3 : 7;
             iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
+
+            // 更新数据库状态为 5，翻译中断
+            long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
+            initialTaskV2DO.setStatus(InitialTaskStatus.STOPPED.status);
+            initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
+            initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
+            initialTaskV2Repo.updateById(initialTaskV2DO);
+
             return;
         }
 
