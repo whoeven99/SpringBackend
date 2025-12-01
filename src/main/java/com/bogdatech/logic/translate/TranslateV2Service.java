@@ -315,14 +315,6 @@ public class TranslateV2Service {
                 initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
                 initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
                 initialTaskV2Repo.updateById(initialTaskV2DO);
-
-                // 判断是手中中断 还是limit中断，切换不同的状态
-                if (redisStoppedRepository.isStoppedByTokenLimit(shopName)){
-                    iTranslatesService.updateTranslateStatus(shopName, 3, target, initialTaskV2DO.getSource());
-                }else {
-                    iTranslatesService.updateTranslateStatus(shopName, 7, target, initialTaskV2DO.getSource());
-                }
-
                 break;
             }
 
@@ -389,8 +381,15 @@ public class TranslateV2Service {
         translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
 
-        // 将用户状态改为1
-        iTranslatesService.updateTranslateStatus(shopName, 1, target, initialTaskV2DO.getSource());
+        // 判断是手动中断 还是limit中断，切换不同的状态
+        int status;
+        if (redisStoppedRepository.isTaskStopped(shopName)) {
+            status = redisStoppedRepository.isStoppedByTokenLimit(shopName) ? 3 : 7;
+        } else {
+            status = 1;
+        }
+
+        iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
     }
 
     // 翻译 step 4, 翻译完成 -> 写回shopify
