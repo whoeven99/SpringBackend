@@ -143,8 +143,14 @@ public class TranslateV2Service {
         }
 
         for (InitialTaskV2DO task : taskList) {
-//            if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
-            if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
+            if (task.getStatus().equals(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus())){
+                ProgressResponse.Progress progress = new ProgressResponse.Progress();
+                progress.setTarget(task.getTarget());
+                progress.setStatus(0);
+                progress.setTranslateStatus("translation_process_init");
+                list.add(progress);
+
+            } else if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
@@ -153,13 +159,12 @@ public class TranslateV2Service {
                 Long translatedCount = translateTaskV2Repo.selectTranslatedCountByInitialId(task.getId());
 
                 Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("totalCount", count.intValue());
-                progressData.put("translatedCount", count.intValue() - translatedCount.intValue());
+                progressData.put("TotalQuantity", count.intValue());
+                progressData.put("RemainingQuantity", count.intValue() - translatedCount.intValue());
 
                 progress.setProgressData(progressData);
                 list.add(progress);
-//            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
-            } else if (task.getStatus().equals(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
@@ -168,11 +173,18 @@ public class TranslateV2Service {
                 Long savedCount = translateTaskV2Repo.selectSavedCountByInitialId(task.getId());
 
                 Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("totalCount", count.intValue());
-                progressData.put("savedCount", savedCount.intValue());
+                progressData.put("write_total", count.intValue());
+                progressData.put("write_done", savedCount.intValue());
                 progress.setProgressData(progressData);
                 list.add(progress);
-            } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.ALL_DONE.getStatus())) {
+                ProgressResponse.Progress progress = new ProgressResponse.Progress();
+                progress.setTarget(task.getTarget());
+                progress.setStatus(1);
+                progress.setTranslateStatus("translation_process_saved");
+                list.add(progress);
+            }
+            else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
 
