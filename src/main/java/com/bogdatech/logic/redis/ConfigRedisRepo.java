@@ -34,8 +34,8 @@ public class ConfigRedisRepo {
         redisIntegration.hashDelete(ConfigKey, key);
     }
 
-    public boolean singleTranslateWhiteList(String shopName) {
-        String value = getConfig("singleTranslateWhiteList");
+    public boolean shopNameWhiteList(String shopName, String key) {
+        String value = getConfig(key);
         if (StringUtils.isEmpty(value)) {
             return false;
         }

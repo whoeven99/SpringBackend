@@ -9,10 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.PCApp.PCUsersService;
-import com.bogdatech.logic.redis.TranslationCounterRedisService;
-import com.bogdatech.logic.redis.TranslationMonitorRedisService;
-import com.bogdatech.logic.redis.TranslationParametersRedisService;
-import com.bogdatech.logic.redis.InitialTranslateRedisService;
+import com.bogdatech.logic.redis.*;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
@@ -309,6 +306,8 @@ public class TaskService {
     private UserTokenService userTokenService;
     @Autowired
     private TranslateV2Service translateV2Service;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
 
     public void autoTranslate() {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
@@ -318,7 +317,7 @@ public class TaskService {
         }
 
         for (TranslatesDO translatesDO : translatesDOList) {
-            if (WhiteListUtils.autoTranslateWhiteList(translatesDO.getShopName())) {
+            if (configRedisRepo.shopNameWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
                 autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
             } else {
                 autoTranslate(translatesDO);
