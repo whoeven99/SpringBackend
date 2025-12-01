@@ -276,10 +276,6 @@ public class UserIpService {
         return new BaseResponse<>().CreateSuccessResponse(ipReturn(userIPRedirectionDOS).get(0));
     }
 
-    public List<UserIPRedirectionDO> selectAllIpRedirectionByShopName(String shopName) {
-        return userIPRedirectionRepo.selectAllIpRedirectionByShopName(shopName);
-    }
-
     /**
      * 根据shopName获取剩余ip额度
      */
