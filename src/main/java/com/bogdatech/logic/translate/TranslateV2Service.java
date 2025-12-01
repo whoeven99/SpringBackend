@@ -380,7 +380,6 @@ public class TranslateV2Service {
         if (redisStoppedRepository.isTaskStopped(shopName)) {
             int status = redisStoppedRepository.isStoppedByTokenLimit(shopName) ? 3 : 7;
             iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
-            initialTaskV2Repo.updateById(initialTaskV2DO);
             return;
         }
 
