@@ -128,8 +128,6 @@ public class TranslateV2Service {
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        // todo 手动翻译里， 把以前的initial task 设为 isDeleted
-
         this.createInitialTask(shopName, request.getSource(), targets,
                 resourceTypeList, request.getIsCover());
 
@@ -210,6 +208,8 @@ public class TranslateV2Service {
 
     public void createInitialTask(String shopName, String source, String[] targets,
                                   List<String> moduleList, Boolean isCover) {
+        initialTaskV2Repo.deleteByShopNameAndSource(shopName, source);
+
         redisStoppedRepository.removeStoppedFlag(shopName);
         for (String target : targets) {
             InitialTaskV2DO initialTask = new InitialTaskV2DO();
