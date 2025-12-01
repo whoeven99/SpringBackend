@@ -19,7 +19,6 @@ import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
-import com.bogdatech.utils.WhiteListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
@@ -56,7 +55,7 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
-        if (WhiteListUtils.clickTranslateWhiteList(shopName)) {
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
             return translateV2Service.createInitialTask(request);
         }
         return translateService.createInitialTask(request);
@@ -64,7 +63,7 @@ public class TranslateController {
 
     @PostMapping("/getAllProgressData")
     public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
-        if (WhiteListUtils.clickTranslateWhiteList(shopName)) {
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
             return translateV2Service.getProcess(shopName, source);
         }
         return translateProgressService.getAllProgressData(shopName, source);
@@ -80,7 +79,7 @@ public class TranslateController {
     @PostMapping("/singleTextTranslateV2")
     public BaseResponse<SingleReturnVO> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
         singleTranslateVO.setShopName(shopName);
-        if (configRedisRepo.singleTranslateWhiteList(shopName)) {
+        if (configRedisRepo.shopNameWhiteList(shopName, "singleTranslateWhiteList")) {
             return translateV2Service.singleTextTranslate(singleTranslateVO);
         }
         return translateService.singleTextTranslateV2(shopName, singleTranslateVO);
