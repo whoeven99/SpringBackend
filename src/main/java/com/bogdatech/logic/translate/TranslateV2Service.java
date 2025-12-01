@@ -9,7 +9,6 @@ import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
 import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
-import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
@@ -27,7 +26,6 @@ import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
-import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.bogdatech.constants.MailChimpConstants.SUCCESSFUL_TRANSLATION_SUBJECT;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
@@ -209,8 +206,8 @@ public class TranslateV2Service {
     public void createInitialTask(String shopName, String source, String[] targets,
                                   List<String> moduleList, Boolean isCover) {
         initialTaskV2Repo.deleteByShopNameAndSource(shopName, source);
-
         redisStoppedRepository.removeStoppedFlag(shopName);
+
         for (String target : targets) {
             InitialTaskV2DO initialTask = new InitialTaskV2DO();
             initialTask.setShopName(shopName);
@@ -360,6 +357,9 @@ public class TranslateV2Service {
         }
 
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
+        if (redisStoppedRepository.isTaskStopped(shopName)) {
+            return;
+        }
 
         // 这个计算方式有问题， 暂定这样
         long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
