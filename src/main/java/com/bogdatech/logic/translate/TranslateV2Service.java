@@ -370,18 +370,13 @@ public class TranslateV2Service {
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
         // 判断是手动中断 还是limit中断，切换不同的状态
-        int status;
         if (redisStoppedRepository.isTaskStopped(shopName)) {
-            status = redisStoppedRepository.isStoppedByTokenLimit(shopName) ? 3 : 7;
-        } else {
-            status = 1;
-        }
-
-        iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
-
-        if (redisStoppedRepository.isTaskStopped(shopName)) {
+            int status = redisStoppedRepository.isStoppedByTokenLimit(shopName) ? 3 : 7;
+            iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
             return;
         }
+
+        iTranslatesService.updateTranslateStatus(shopName, 1, target, initialTaskV2DO.getSource());
 
         // 这个计算方式有问题， 暂定这样
         long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
