@@ -175,7 +175,7 @@ public class TranslateV2Service {
                 Map<String, Integer> progressData = new HashMap<>();
                 progressData.put("write_total", count.intValue());
                 progressData.put("write_done", savedCount.intValue());
-                progress.setProgressData(progressData);
+                progress.setWritingData(progressData);
                 list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.ALL_DONE.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
