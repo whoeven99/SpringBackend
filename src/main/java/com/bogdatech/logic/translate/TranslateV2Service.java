@@ -172,10 +172,16 @@ public class TranslateV2Service {
                 Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
                 Long savedCount = translateTaskV2Repo.selectSavedCountByInitialId(task.getId());
 
-                Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("write_total", count.intValue());
-                progressData.put("write_done", savedCount.intValue());
-                progress.setWritingData(progressData);
+                Map<String, Integer> progressTranslateData = new HashMap<>();
+                progressTranslateData.put("TotalQuantity", 1);
+                progressTranslateData.put("RemainingQuantity", 0);
+
+                Map<String, Integer> progressWriteData = new HashMap<>();
+                progressWriteData.put("write_total", count.intValue());
+                progressWriteData.put("write_done", savedCount.intValue());
+
+                progress.setWritingData(progressWriteData);
+                progress.setProgressData(progressTranslateData);
                 list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.ALL_DONE.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
