@@ -10,7 +10,6 @@ import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
 import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
-import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
@@ -28,7 +27,6 @@ import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
-import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.bogdatech.constants.MailChimpConstants.SUCCESSFUL_TRANSLATION_SUBJECT;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
@@ -226,8 +223,8 @@ public class TranslateV2Service {
     public void createInitialTask(String shopName, String source, String[] targets,
                                   List<String> moduleList, Boolean isCover) {
         initialTaskV2Repo.deleteByShopNameAndSource(shopName, source);
-
         redisStoppedRepository.removeStoppedFlag(shopName);
+
         for (String target : targets) {
             InitialTaskV2DO initialTask = new InitialTaskV2DO();
             initialTask.setShopName(shopName);
@@ -377,7 +374,6 @@ public class TranslateV2Service {
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
         }
-
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
         // 判断是手动中断 还是limit中断，切换不同的状态
