@@ -156,6 +156,7 @@ public class TranslateV2Service {
                 progressData.put("translatedCount", translatedCount.intValue());
 
                 progress.setProgressData(progressData);
+                list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
@@ -168,10 +169,17 @@ public class TranslateV2Service {
                 progressData.put("totalCount", count.intValue());
                 progressData.put("savedCount", savedCount.intValue());
                 progress.setProgressData(progressData);
+                list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
-                progress.setStatus(7);// todo 中断的状态
+
+                // 判断是手动中断，还是limit中断
+                if (redisStoppedRepository.isStoppedByTokenLimit(shopName)){
+                    progress.setStatus(3); // limit中断
+                }
+                progress.setStatus(7);// 中断的状态
+                list.add(progress);
             }
         }
 
@@ -258,6 +266,7 @@ public class TranslateV2Service {
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
+
         while (randomDo != null) {
             appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
             if (usedToken >= maxToken) {
@@ -531,6 +540,9 @@ public class TranslateV2Service {
 //        }
         return true;
     }
+
+    // 获取一条最新的没翻译数据，为空，改为searching； 有值则返回值
+
 
     @Getter
     public enum InitialTaskStatus {
