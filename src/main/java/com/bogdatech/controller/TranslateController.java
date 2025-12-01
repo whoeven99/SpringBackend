@@ -190,6 +190,13 @@ public class TranslateController {
         }
     }
 
+    // 恢复翻译任务
+    @PostMapping("/revertStop")
+    public void continueTranslation(@RequestBody TranslateRequest request) {
+        String shopName = request.getShopName();
+        redisStoppedRepository.removeStoppedFlag(shopName);
+    }
+
     /**
      * 将一条数据存shopify本地
      */
