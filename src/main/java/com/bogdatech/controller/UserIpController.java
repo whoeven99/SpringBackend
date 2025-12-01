@@ -1,6 +1,8 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.IUserIpService;
+import com.bogdatech.entity.VO.IncludeCrawlerVO;
+import com.bogdatech.entity.VO.NoCrawlerVO;
 import com.bogdatech.logic.UserIpService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
@@ -8,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.utils.RetryUtils.retryWithParam;
 
@@ -18,6 +21,7 @@ public class UserIpController {
     private IUserIpService iUserIpService;
     @Autowired
     private UserIpService userIpService;
+
 
     /**
      * 初始化额度UserIp表
@@ -51,6 +55,18 @@ public class UserIpController {
             return new BaseResponse<>().CreateSuccessResponse(UserIpService.ipReturn(userIPRedirectionDOS));
         }
         return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    // 含爬虫打印日志
+    @PostMapping("/includeCrawlerPrintLog")
+    public BaseResponse<Object> includeCrawlerPrintLog(@RequestParam String shopName, @RequestBody IncludeCrawlerVO includeCrawlerVO) {
+       return userIpService.includeCrawlerPrintLog(shopName, includeCrawlerVO);
+    }
+
+    // 不含爬虫打印日志
+    @PostMapping("/noCrawlerPrintLog")
+    public BaseResponse<Object> noCrawlerPrintLog(@RequestParam String shopName, @RequestBody NoCrawlerVO noCrawlerVO) {
+        return userIpService.noCrawlerPrintLog(shopName, noCrawlerVO);
     }
 
     // 批量初始化数据

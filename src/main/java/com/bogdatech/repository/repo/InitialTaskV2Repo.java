@@ -7,10 +7,17 @@ import com.bogdatech.repository.mapper.InitialTaskV2Mapper;
 import com.bogdatech.utils.DbUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialTaskV2DO> {
+    public List<InitialTaskV2DO> selectByLast24Hours() {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24))
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
     public List<InitialTaskV2DO> selectByShopNameSource(String shopName, String source) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)

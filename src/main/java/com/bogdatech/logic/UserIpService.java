@@ -4,10 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserIpService;
 import com.bogdatech.Service.IUserSubscriptionsService;
+import com.bogdatech.Service.IWidgetConfigurationsService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.DO.UserIpDO;
+import com.bogdatech.entity.DO.WidgetConfigurationsDO;
+import com.bogdatech.entity.VO.IncludeCrawlerVO;
+import com.bogdatech.entity.VO.NoCrawlerVO;
+import com.bogdatech.entity.VO.WidgetReturnVO;
 import com.bogdatech.entity.VO.IpRedirectionVO;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.entity.VO.IpRedirectionVO;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
 import com.bogdatech.repository.repo.UserIPRedirectionRepo;
 import com.bogdatech.mapper.UserIpMapper;
@@ -33,6 +39,8 @@ public class UserIpService {
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
     private UserIPRedirectionRepo userIPRedirectionRepo;
+    @Autowired
+    private IWidgetConfigurationsService iWidgetConfigurationsService;
 
     /**
      * 检查额度是否足够，足够+1. 到达相关百分比，发邮件
@@ -107,6 +115,26 @@ public class UserIpService {
         return iUserIpService.updateById(userIpDO);
     }
 
+    public BaseResponse<Object> includeCrawlerPrintLog(String shopName, IncludeCrawlerVO includeCrawlerVO) {
+        appInsights.trackTrace(shopName + " " + includeCrawlerVO.getUaInformation() + " 原因 " + includeCrawlerVO.getUaReason());
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    public BaseResponse<Object> noCrawlerPrintLog(String shopName, NoCrawlerVO noCrawlerVO) {
+        appInsights.trackTrace("状态码：" + noCrawlerVO.getStatus() + " , " + shopName + " 客户ip定位： " + noCrawlerVO.getUserIp()
+                + " , 语言代码： " + noCrawlerVO.getLanguageCode() + " , 是否包含该语言： " + noCrawlerVO.getLanguageCodeStatus()
+                + " , 货币代码： " + noCrawlerVO.getCurrencyCode() + " , 国家代码： " + noCrawlerVO.getCountryCode() + " , 是否包含该市场： "
+                + noCrawlerVO.getCurrencyCodeStatus() + " , checkUserIp接口花费时间： " + noCrawlerVO.getCostTime() + " , ipApi接口花费时间： " + noCrawlerVO.getIpApiCostTime()
+                + " , 错误信息： " + noCrawlerVO.getErrorMessage());
+
+        // redis存储对应数据 计数
+        // 存储不包含该语言的数据
+
+        // 存储不包含该货币的数据
+
+
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
     /**
      * 批量存储ip跳转数据
      */
@@ -270,5 +298,29 @@ public class UserIpService {
 
         // 返回剩余的额度 如果为负数，将额度改为0
         return new BaseResponse<>().CreateSuccessResponse(ipCountByShopName.intValue() > freeIp ? 0 : freeIp - ipCountByShopName.intValue());
+    }
+
+    public List<UserIPRedirectionDO> selectAllIpRedirectionByShopName(String shopName) {
+        return userIPRedirectionRepo.selectAllIpRedirectionByShopName(shopName);
+    }
+
+    public BaseResponse<Object> getWidgetConfigurations(String shopName) {
+        WidgetConfigurationsDO data = iWidgetConfigurationsService.getData(shopName);
+        if (data == null){
+            return new BaseResponse<>().CreateErrorResponse("query error");
+        }
+
+        // 获取ip的跳转数据一块返回
+        List<UserIPRedirectionDO> userIPRedirectionDOS = userIPRedirectionRepo.selectIpRedirectionByShopName(shopName);
+        WidgetReturnVO widgetReturnVO = new WidgetReturnVO(shopName, data.getLanguageSelector(), data.getCurrencySelector()
+                , data.getIpOpen(), data.getIncludedFlag(), data.getFontColor(), data.getBackgroundColor(), data.getButtonColor(), data.getButtonBackgroundColor()
+        , data.getOptionBorderColor(), data.getSelectorPosition(), data.getPositionData(), data.getIsTransparent(), userIPRedirectionDOS);
+
+        if (userIPRedirectionDOS != null) {
+            return new BaseResponse<>().CreateSuccessResponse(widgetReturnVO);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("query error");
+        }
+
     }
 }
