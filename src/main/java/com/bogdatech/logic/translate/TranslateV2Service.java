@@ -1,6 +1,7 @@
 package com.bogdatech.logic.translate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleReturnVO;
@@ -71,6 +72,8 @@ public class TranslateV2Service {
     private TranslateStrategyFactory translateStrategyFactory;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
+    @Autowired
+    private ITranslatesService iTranslatesService;
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -229,6 +232,7 @@ public class TranslateV2Service {
             initialTaskV2Repo.insert(initialTask);
 
             translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+            iTranslatesService.updateTranslateStatus(shopName, 2, target, source);
         }
     }
 
@@ -311,6 +315,14 @@ public class TranslateV2Service {
                 initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
                 initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
                 initialTaskV2Repo.updateById(initialTaskV2DO);
+
+                // 判断是手中中断 还是limit中断，切换不同的状态
+                if (redisStoppedRepository.isStoppedByTokenLimit(shopName)){
+                    iTranslatesService.updateTranslateStatus(shopName, 3, target, initialTaskV2DO.getSource());
+                }else {
+                    iTranslatesService.updateTranslateStatus(shopName, 7, target, initialTaskV2DO.getSource());
+                }
+
                 break;
             }
 
@@ -376,6 +388,9 @@ public class TranslateV2Service {
         initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
         translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
+
+        // 将用户状态改为1
+        iTranslatesService.updateTranslateStatus(shopName, 1, target, initialTaskV2DO.getSource());
     }
 
     // 翻译 step 4, 翻译完成 -> 写回shopify
