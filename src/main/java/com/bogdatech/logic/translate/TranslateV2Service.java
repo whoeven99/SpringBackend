@@ -154,7 +154,7 @@ public class TranslateV2Service {
             if (task.getStatus().equals(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
-                progress.setStatus(0);
+                progress.setStatus(2);
                 progress.setTranslateStatus("translation_process_init");
                 progress.setProgressData(defaultProgressTranslateData);
                 list.add(progress);
