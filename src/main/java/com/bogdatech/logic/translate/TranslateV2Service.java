@@ -198,7 +198,14 @@ public class TranslateV2Service {
             } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
-                progress.setProgressData(defaultProgressTranslateData);
+
+                Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
+                Long translatedCount = translateTaskV2Repo.selectTranslatedCountByInitialId(task.getId());
+                Map<String, Integer> progressData = new HashMap<>();
+                progressData.put("TotalQuantity", count.intValue());
+                progressData.put("RemainingQuantity", count.intValue() - translatedCount.intValue());
+                progress.setProgressData(progressData);
+
                 // 判断是手动中断，还是limit中断
                 if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
                     progress.setStatus(3); // limit中断
