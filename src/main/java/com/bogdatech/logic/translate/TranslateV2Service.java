@@ -367,19 +367,7 @@ public class TranslateV2Service {
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
         }
-
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
-        if (redisStoppedRepository.isTaskStopped(shopName)) {
-            return;
-        }
-
-        // 这个计算方式有问题， 暂定这样
-        long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
-        initialTaskV2DO.setStatus(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.status);
-        initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
-        initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
-        translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
-        initialTaskV2Repo.updateById(initialTaskV2DO);
 
         // 判断是手动中断 还是limit中断，切换不同的状态
         int status;
@@ -390,6 +378,18 @@ public class TranslateV2Service {
         }
 
         iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
+
+        if (redisStoppedRepository.isTaskStopped(shopName)) {
+            return;
+        }
+
+        // 这个计算方式有问题， 暂定这样
+        long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
+        initialTaskV2DO.setStatus(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.status);
+        initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
+        initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
+        initialTaskV2Repo.updateById(initialTaskV2DO);
+        translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
     }
 
     // 翻译 step 4, 翻译完成 -> 写回shopify
