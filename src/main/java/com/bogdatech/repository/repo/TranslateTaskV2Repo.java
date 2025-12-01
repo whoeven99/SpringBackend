@@ -12,6 +12,17 @@ import java.util.List;
 
 @Service
 public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
+    public TranslateTaskV2DO selectLastTranslateOne(Integer initialTaskId) {
+        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+        wrapper.eq("initial_task_id", initialTaskId)
+                .eq("has_target_value", true)
+                .eq("is_deleted", false)
+                .orderByDesc("created_at")
+                .last("LIMIT 1");
+        List<TranslateTaskV2DO> list = baseMapper.selectList(wrapper);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
     public Long selectCountByInitialId(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.eq("initial_task_id", initialTaskId)
@@ -45,9 +56,10 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public List<TranslateTaskV2DO> selectByResourceIdWithLimit(String resourceId) {
+    public List<TranslateTaskV2DO> selectByInitialTaskIdAndResourceIdWithLimit(Integer initialTaskId, String resourceId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP " + 10 + " *")
+                .eq("initial_task_id", initialTaskId)
                 .eq("resource_id", resourceId)
                 .eq("saved_to_shopify", false)
                 .eq("is_deleted", false);

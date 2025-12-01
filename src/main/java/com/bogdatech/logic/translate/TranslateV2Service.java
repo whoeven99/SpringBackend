@@ -5,10 +5,13 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
 import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
+import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.response.ProgressResponse;
+import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.entity.TranslateTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
@@ -37,11 +40,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.bogdatech.constants.MailChimpConstants.SUCCESSFUL_TRANSLATION_SUBJECT;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
+import static com.bogdatech.utils.ListUtils.convertALL;
+import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 
 @Component
 public class TranslateV2Service {
@@ -376,7 +382,7 @@ public class TranslateV2Service {
         while (randomDo != null) {
             appInsights.trackTrace("TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
-            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByResourceIdWithLimit(resourceId);
+            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
 
             // 填回shopify
             ShopifyGraphResponse.TranslatableResources.Node node = new ShopifyGraphResponse.TranslatableResources.Node();
@@ -421,19 +427,26 @@ public class TranslateV2Service {
         initialTaskV2Repo.updateById(initialTaskV2DO);
     }
 
+    @Autowired
+    private TencentEmailService tencentEmailService;
+
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
     public void sendEmail(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
 
         Integer usingTimeMinutes = (int) ((System.currentTimeMillis() - initialTaskV2DO.getCreatedAt().getTime()) / (1000 * 60));
-        Integer usedToken = userTokenService.getUsedTokenByTaskId(shopName, initialTaskV2DO.getId());
+        Integer usedTokenByTask = userTokenService.getUsedTokenByTaskId(shopName, initialTaskV2DO.getId());
 
         // 正常结束，发送邮件
         if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
             appInsights.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
                     " Total time (minutes): " + usingTimeMinutes +
-                    " Total tokens used: " + usedToken);
+                    " Total tokens used: " + usedTokenByTask);
 
+            Integer usedToken = userTokenService.getUsedToken(shopName);
+            Integer totalToken = userTokenService.getMaxToken(shopName);
+            tencentEmailService.sendSuccessEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
+                    usedToken, totalToken);
             initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.ALL_DONE.status);
             return;
         }
@@ -442,8 +455,16 @@ public class TranslateV2Service {
         if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
             // 中断翻译的话 token limit才发邮件
             if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
+                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {});
+                assert moduleList != null;
+                List<TranslateResourceDTO> resourceList = convertALL(moduleList);
+                TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
+                TypeSplitResponse typeSplitResponse = splitByType(translateTaskV2DO != null ? translateTaskV2DO.getModule() : null, resourceList);
 
-//                initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.ALL_DONE.status);
+                tencentEmailService.sendFailedEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
+                        typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString());
+
+                initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.STOPPED.status);
             }
         }
     }
