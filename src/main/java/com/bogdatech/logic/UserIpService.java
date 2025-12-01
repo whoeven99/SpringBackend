@@ -15,6 +15,8 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.entity.VO.IpRedirectionVO;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
 import com.bogdatech.repository.repo.UserIPRedirectionRepo;
+import com.bogdatech.mapper.UserIpMapper;
+import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;

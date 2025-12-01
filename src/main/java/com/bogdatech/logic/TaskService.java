@@ -9,10 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.PCApp.PCUsersService;
-import com.bogdatech.logic.redis.TranslationCounterRedisService;
-import com.bogdatech.logic.redis.TranslationMonitorRedisService;
-import com.bogdatech.logic.redis.TranslationParametersRedisService;
-import com.bogdatech.logic.redis.InitialTranslateRedisService;
+import com.bogdatech.logic.redis.*;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
@@ -22,6 +19,7 @@ import com.bogdatech.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogdatech.repository.entity.PCUserTrialsDO;
 import com.bogdatech.repository.repo.*;
 import com.bogdatech.utils.JsonUtils;
+import com.bogdatech.utils.WhiteListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -308,9 +306,10 @@ public class TaskService {
     private UserTokenService userTokenService;
     @Autowired
     private TranslateV2Service translateV2Service;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
 
-    // 这里可以每隔5分钟10分钟一次，如果创建时间是当前的小时，就执行，这样打乱一下分了24组
-    public void autoTranslateV2() {
+    public void autoTranslate() {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         appInsights.trackTrace("autoTranslateV2 自动翻译任务: " + translatesDOList.size());
         if (CollectionUtils.isEmpty(translatesDOList)) {
@@ -318,11 +317,15 @@ public class TaskService {
         }
 
         for (TranslatesDO translatesDO : translatesDOList) {
-            autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+            if (configRedisRepo.shopNameWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
+                autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+            } else {
+                autoTranslate(translatesDO);
+            }
         }
     }
 
-    public boolean autoTranslate(String shopName, String source, String target) {
+    public boolean autoTranslatev2(String shopName, String source, String target) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         if (usersDO == null) {
             appInsights.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
@@ -371,102 +374,90 @@ public class TaskService {
         return true;
     }
 
-    public void autoTranslate() {
-        appInsights.trackTrace("autoTranslate 开始");
+    public void autoTranslate(TranslatesDO translatesDO) {
+        String shopName = translatesDO.getShopName();
+        appInsights.trackTrace("autoTranslate 用户: " + shopName);
 
-        // 获取所有使用自动翻译的用户
-        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
-        appInsights.trackTrace("autoTranslate 获取完所有 使用自动翻译的语言数： " + translatesDOList.size());
-        if (translatesDOList.isEmpty()) {
+        // 判断这些用户是否卸载了，卸载了就不管了
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        if (usersDO == null) {
+            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了");
             return;
         }
 
-        for (TranslatesDO translatesDO : translatesDOList) {
-            String shopName = translatesDO.getShopName();
-            appInsights.trackTrace("autoTranslate 用户: " + shopName);
-
-            // 判断这些用户是否卸载了，卸载了就不管了
-            UsersDO usersDO = usersService.getUserByName(shopName);
-            if (usersDO == null) {
-                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了");
-                continue;
+        if (usersDO.getUninstallTime() != null) {
+            // 如果用户卸载了，但有登陆时间，需要判断两者的前后
+            if (usersDO.getLoginTime() == null) {
+                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了未登陆");
+                return;
+            } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了时间在登陆时间后");
+                return;
             }
+        }
 
-            if (usersDO.getUninstallTime() != null) {
-                // 如果用户卸载了，但有登陆时间，需要判断两者的前后
-                if (usersDO.getLoginTime() == null) {
-                    appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了未登陆");
-                    continue;
-                } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
-                    appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了时间在登陆时间后");
-                    continue;
-                }
-            }
+        // 判断字符是否超限
+        TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
+        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
+        appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName + " remainingChars: " + remainingChars + " usedChars: " + counterDO.getUsedChars());
 
-            // 判断字符是否超限
-            TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
-            Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-            appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName + " remainingChars: " + remainingChars + " usedChars: " + counterDO.getUsedChars());
+        // 如果字符超限，则直接返回字符超限
+        if (counterDO.getUsedChars() >= remainingChars) {
+            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 字符超限");
+            return;
+        }
 
-            // 如果字符超限，则直接返回字符超限
-            if (counterDO.getUsedChars() >= remainingChars) {
-                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 字符超限");
-                continue;
-            }
+        // 判断这条语言是否在用户本地存在
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, getShopLanguageQuery());
+        appInsights.trackTrace("autoTranslate 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
+        if (shopifyByQuery == null) {
+            appInsights.trackTrace("FatalException autoTranslate 用户: " + shopName + " 获取用户本地语言数据失败");
+            return;
+        }
 
-            // 判断这条语言是否在用户本地存在
-            String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, getShopLanguageQuery());
-            appInsights.trackTrace("autoTranslate 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
-            if (shopifyByQuery == null) {
-                appInsights.trackTrace("FatalException autoTranslate 用户: " + shopName + " 获取用户本地语言数据失败");
-                continue;
-            }
+        String userCode = "\"" + translatesDO.getTarget() + "\"";
+        if (!shopifyByQuery.contains(userCode)) {
+            // 将用户的自动翻译标识改为false
+            translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());
+            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 用户本地语言数据不存在 target: " + translatesDO.getTarget());
+            return;
+        }
 
-            String userCode = "\"" + translatesDO.getTarget() + "\"";
-            if (!shopifyByQuery.contains(userCode)) {
-                // 将用户的自动翻译标识改为false
-                translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());
-                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 用户本地语言数据不存在 target: " + translatesDO.getTarget());
-                continue;
-            }
+        // 判断这条翻译项在Usage表中是否存在，在的话跳过，不在的话插入
+        TranslationUsageDO usageServiceOne = iTranslationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>().eq(TranslationUsageDO::getShopName, shopName).eq(TranslationUsageDO::getLanguageName, translatesDO.getTarget()));
+        if (usageServiceOne == null) {
+            iTranslationUsageService.save(new TranslationUsageDO(translatesDO.getId(), translatesDO.getShopName(), translatesDO.getTarget(), 0, 0, 0, 0));
+            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 存一个消耗记录");
+        }
 
-            // 判断这条翻译项在Usage表中是否存在，在的话跳过，不在的话插入
-            TranslationUsageDO usageServiceOne = iTranslationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>().eq(TranslationUsageDO::getShopName, shopName).eq(TranslationUsageDO::getLanguageName, translatesDO.getTarget()));
-            if (usageServiceOne == null) {
-                iTranslationUsageService.save(new TranslationUsageDO(translatesDO.getId(), translatesDO.getShopName(), translatesDO.getTarget(), 0, 0, 0, 0));
-                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 存一个消耗记录");
-            }
+        // 将任务存到数据库等待翻译
+        // 初始化用户状态
+        Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(translatesDO.getShopName());
+        if (stopFlag) {
+            appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
+        }
+        appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
 
-            // 将任务存到数据库等待翻译
-            // 初始化用户状态
-            Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(translatesDO.getShopName());
-            if (stopFlag) {
-                appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
-            }
-            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
+        // 在自动翻译初始化时，按target，将对应的计数删除
+        translationCounterRedisService.deleteLanguage(shopName, translatesDO.getTarget(), AUTO);
 
-            // 在自动翻译初始化时，按target，将对应的计数删除
-            translationCounterRedisService.deleteLanguage(shopName, translatesDO.getTarget(), AUTO);
+        // 将自动翻译的任务初始化，存到initial表中
+        String resourceToJson = JsonUtils.objectToJson(AUTO_TRANSLATE_MAP);
+        InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
+                translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
+                , "1", resourceToJson, null, shopName, false, AUTO,
+                Timestamp.from(Instant.now()), false);
+        try {
+            appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);
 
-            // 将自动翻译的任务初始化，存到initial表中
-            String resourceToJson = JsonUtils.objectToJson(AUTO_TRANSLATE_MAP);
-            InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
-                    translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
-                    , "1", resourceToJson, null, shopName, false, AUTO,
-                    Timestamp.from(Instant.now()), false);
-            try {
-                appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);
-
-                // Monitor 记录shop开始的时间（中国区时间）
-                String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                translationMonitorRedisService.hsetStartTranslationAt(shopName, chinaTime);
-                int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
-                appInsights.trackTrace("将自动翻译参数存到数据库后： " + insert);
-            } catch (Exception e) {
-                appInsights.trackTrace("autoTranslate 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
-                appInsights.trackException(e);
-            }
-
+            // Monitor 记录shop开始的时间（中国区时间）
+            String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            translationMonitorRedisService.hsetStartTranslationAt(shopName, chinaTime);
+            int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
+            appInsights.trackTrace("将自动翻译参数存到数据库后： " + insert);
+        } catch (Exception e) {
+            appInsights.trackTrace("autoTranslate 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
+            appInsights.trackException(e);
         }
     }
 
@@ -504,6 +495,9 @@ public class TaskService {
                 String latestActiveSubscribeId = orderService.getLatestActiveSubscribeId(shopName);
                 if (latestActiveSubscribeId == null) {
                     appInsights.trackTrace("freeTrialTask  latestActiveSubscribeId的数据为null，用户是：" + shopName);
+
+                    // 将is_trial_expired改为true
+                    iUserTrialsService.updateExpiredByShopName(shopName);
                     continue;
                 }
                 UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
@@ -655,14 +649,12 @@ public class TaskService {
     public void freeTrialTaskForImage() {
         // 获取所有免费计划不过期的用户
         List<PCUserTrialsDO> notTrialExpired = pcUserTrialsRepo.getNotExpiredTrialByShopName();
-        System.out.println("notTrialExpired = " + notTrialExpired);
         if (notTrialExpired == null || notTrialExpired.isEmpty()) {
             return;
         }
 
         // 循环检测是否过期
         for (PCUserTrialsDO pcUserTrialsDO : notTrialExpired) {
-            System.out.println("pcUserTrialsDO = " + pcUserTrialsDO);
             // 判断是否过期
             Timestamp now = new Timestamp(System.currentTimeMillis());
             Timestamp trialEnd = pcUserTrialsDO.getTrialEnd();
@@ -675,11 +667,13 @@ public class TaskService {
 
             // 如果 trialStart + 5天 小于 trialEnd，不做任何操作
             if (now.after(trialEnd)) {
-                System.out.println("走免费试用");
                 // 获取最新一条gid订单，判断是否支付成功
                 String latestActiveSubscribeId = pcOrdersRepo.getLatestActiveSubscribeId(shopName);
                 if (latestActiveSubscribeId == null) {
                     appInsights.trackTrace("PC freeTrialTask latestActiveSubscribeId的数据为null，用户是：" + shopName);
+
+                    // 将数据改为true
+                    pcUserTrialsRepo.updateTrialExpiredByShopName(shopName, true);
                     continue;
                 }
                 PCUsersDO usersDO = pcUsersRepo.getUserByShopName(shopName);

@@ -12,6 +12,7 @@ import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.*;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
+import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.logic.translate.TranslateV2Service;
@@ -47,19 +48,25 @@ public class TranslateController {
     private TranslateProgressService translateProgressService;
     @Autowired
     private TranslateV2Service translateV2Service;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+            return translateV2Service.createInitialTask(request);
+        }
         return translateService.createInitialTask(request);
-        // return translateV2Service.createInitialTaskV2(request);
     }
 
     @PostMapping("/getAllProgressData")
     public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+            return translateV2Service.getProcess(shopName, source);
+        }
         return translateProgressService.getAllProgressData(shopName, source);
-//        return translateV2Service.getProcess(shopName, source);
     }
 
     //单条文本翻译
@@ -71,6 +78,10 @@ public class TranslateController {
     // 单条文本翻译 修改返回值类型
     @PostMapping("/singleTextTranslateV2")
     public BaseResponse<SingleReturnVO> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
+        singleTranslateVO.setShopName(shopName);
+        if (configRedisRepo.shopNameWhiteList(shopName, "singleTranslateWhiteList")) {
+            return translateV2Service.singleTextTranslate(singleTranslateVO);
+        }
         return translateService.singleTextTranslateV2(shopName, singleTranslateVO);
     }
 

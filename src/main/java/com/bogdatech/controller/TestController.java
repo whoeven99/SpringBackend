@@ -16,17 +16,14 @@ import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
-import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
-import com.bogdatech.utils.StringUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,11 +70,7 @@ public class TestController {
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
     @Autowired
-    private ITranslationCounterService translationCounterService;
-    @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
-    @Autowired
-    private ITranslatesService iTranslatesService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
@@ -190,7 +183,7 @@ public class TestController {
             int i = 0;
             for (TranslatesDO translatesDO : translatesDOList) {
                 appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
-                if (taskService.autoTranslate(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
+                if (taskService.autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
                     i++;
                     if (i > count) {
                         break;
@@ -369,58 +362,6 @@ public class TestController {
 
     @Autowired
     private TranslationMonitorRedisService translationMonitorRedisService;
-
-    @Autowired
-    private ICharsOrdersService charsOrdersService;
-
-    @GetMapping("/getTable")
-    public Map<String, Object> getTable(@RequestParam String shopName) {
-        List<CharsOrdersDO> list = charsOrdersService.getCharsOrdersDoByShopName(shopName);
-        Map<String, Object> map = new HashMap<>();
-        map.put("CharsOrder", list);
-
-        // 获取Translates表数据
-        List<TranslatesDO> translatesDOS = iTranslatesService.listTranslatesDOByShopName(shopName);
-        map.put("Translates", translatesDOS);
-
-        // 获取task表准备翻译和正在翻译的数据
-        List<TranslateTasksDO> translateTasksDOS = translateTasksService.listTranslateStatus2And0TasksByShopName(shopName);
-        map.put("TranslateTasks", translateTasksDOS);
-
-        // 获取用户额度表数据
-        TranslationCounterDO translationCounterDO = translationCounterService.getTranslationCounterByShopName(shopName);
-        map.put("TranslationCounter", new ArrayList<TranslationCounterDO>() {{
-            add(translationCounterDO);
-        }});
-
-        // 获取initial表的数据
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, shopName)
-                        .eq(InitialTranslateTasksDO::isDeleted, false));
-        map.put("InitialTranslateTasks", initialTranslateTasksDOS);
-
-        return map;
-    }
-
-    @Autowired
-    private TranslateProgressService translateProgressService;
-
-    // For Monitor
-    @GetMapping("/getProgressByShopName")
-    public List<ProgressResponse.Progress> getProgressByShopName(@RequestParam String shopName) {
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, shopName)
-                        .eq(InitialTranslateTasksDO::isDeleted, false)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
-        if (initialTranslateTasksDOS.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return translateProgressService.getAllProgressData(shopName, initialTranslateTasksDOS.get(0).getSource()).getResponse().getList();
-    }
-
     @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
