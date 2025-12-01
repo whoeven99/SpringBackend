@@ -270,7 +270,7 @@ public class TencentEmailService {
         templateData.put("translated_content", translatedModules);
         templateData.put("remaining_content", unTranslatedModules);
 
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData,
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData,
                 TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 
