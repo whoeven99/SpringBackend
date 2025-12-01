@@ -201,7 +201,14 @@ public class TranslateV2Service {
             } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
-                progress.setProgressData(defaultProgressTranslateData);
+
+                Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
+                Long translatedCount = translateTaskV2Repo.selectTranslatedCountByInitialId(task.getId());
+                Map<String, Integer> progressData = new HashMap<>();
+                progressData.put("TotalQuantity", count.intValue());
+                progressData.put("RemainingQuantity", count.intValue() - translatedCount.intValue());
+                progress.setProgressData(progressData);
+
                 // 判断是手动中断，还是limit中断
                 if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
                     progress.setStatus(3); // limit中断
@@ -373,23 +380,23 @@ public class TranslateV2Service {
 
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
+        // 判断是手动中断 还是limit中断，切换不同的状态
+        if (redisStoppedRepository.isTaskStopped(shopName)) {
+            int status = redisStoppedRepository.isStoppedByTokenLimit(shopName) ? 3 : 7;
+            iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
+            initialTaskV2Repo.updateById(initialTaskV2DO);
+            return;
+        }
+
+        iTranslatesService.updateTranslateStatus(shopName, 1, target, initialTaskV2DO.getSource());
+
         // 这个计算方式有问题， 暂定这样
         long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
         initialTaskV2DO.setStatus(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.status);
         initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
         initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
-        translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
-
-        // 判断是手动中断 还是limit中断，切换不同的状态
-        int status;
-        if (redisStoppedRepository.isTaskStopped(shopName)) {
-            status = redisStoppedRepository.isStoppedByTokenLimit(shopName) ? 3 : 7;
-        } else {
-            status = 1;
-        }
-
-        iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
+        translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
     }
 
     // 翻译 step 4, 翻译完成 -> 写回shopify
