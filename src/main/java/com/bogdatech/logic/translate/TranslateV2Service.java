@@ -143,11 +143,16 @@ public class TranslateV2Service {
         }
 
         for (InitialTaskV2DO task : taskList) {
-            if (task.getStatus().equals(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus())){
+            Map<String, Integer> defaultProgressTranslateData = new HashMap<>();
+            defaultProgressTranslateData.put("TotalQuantity", 1);
+            defaultProgressTranslateData.put("RemainingQuantity", 0);
+
+            if (task.getStatus().equals(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(0);
                 progress.setTranslateStatus("translation_process_init");
+                progress.setProgressData(defaultProgressTranslateData);
                 list.add(progress);
 
             } else if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
@@ -172,32 +177,28 @@ public class TranslateV2Service {
                 Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
                 Long savedCount = translateTaskV2Repo.selectSavedCountByInitialId(task.getId());
 
-                Map<String, Integer> progressTranslateData = new HashMap<>();
-                progressTranslateData.put("TotalQuantity", 1);
-                progressTranslateData.put("RemainingQuantity", 0);
-
                 Map<String, Integer> progressWriteData = new HashMap<>();
                 progressWriteData.put("write_total", count.intValue());
                 progressWriteData.put("write_done", savedCount.intValue());
 
                 progress.setWritingData(progressWriteData);
-                progress.setProgressData(progressTranslateData);
+                progress.setProgressData(defaultProgressTranslateData);
                 list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.ALL_DONE.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
                 progress.setTranslateStatus("translation_process_saved");
+                progress.setProgressData(defaultProgressTranslateData);
                 list.add(progress);
-            }
-            else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
-
+                progress.setProgressData(defaultProgressTranslateData);
                 // 判断是手动中断，还是limit中断
-                if (redisStoppedRepository.isStoppedByTokenLimit(shopName)){
+                if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
                     progress.setStatus(3); // limit中断
-                }else {
+                } else {
                     progress.setStatus(7);// 中断的状态
                 }
 
@@ -231,7 +232,8 @@ public class TranslateV2Service {
         String source = initialTaskV2DO.getSource();
         String target = initialTaskV2DO.getTarget();
 
-        List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {});
+        List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
+        });
         assert moduleList != null;
 
         UsersDO userDO = iUsersService.getUserByName(initialTaskV2DO.getShopName());
@@ -242,27 +244,27 @@ public class TranslateV2Service {
             translateTaskV2DO.setInitialTaskId(initialTaskV2DO.getId());
 
             shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target,
-                (node -> {
-                    if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
-                        translateTaskV2DO.setResourceId(node.getResourceId());
-                        appInsights.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
-                                " resourceId: " + node.getResourceId());
+                    (node -> {
+                        if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
+                            translateTaskV2DO.setResourceId(node.getResourceId());
+                            appInsights.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
+                                    " resourceId: " + node.getResourceId());
 
 //                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
-                        // 每个node有几个translatableContent
-                        node.getTranslatableContent().forEach(translatableContent -> {
-                            if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover())) {
-                                translateTaskV2DO.setSourceValue(translatableContent.getValue());
-                                translateTaskV2DO.setNodeKey(translatableContent.getKey());
-                                translateTaskV2DO.setType(translatableContent.getType());
-                                translateTaskV2DO.setDigest(translatableContent.getDigest());
-                                translateTaskV2DO.setId(null);
-                                translateTaskV2Repo.insert(translateTaskV2DO);
-                                translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
-                            }
-                        });
-                    }
-                }));
+                            // 每个node有几个translatableContent
+                            node.getTranslatableContent().forEach(translatableContent -> {
+                                if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover())) {
+                                    translateTaskV2DO.setSourceValue(translatableContent.getValue());
+                                    translateTaskV2DO.setNodeKey(translatableContent.getKey());
+                                    translateTaskV2DO.setType(translatableContent.getType());
+                                    translateTaskV2DO.setDigest(translatableContent.getDigest());
+                                    translateTaskV2DO.setId(null);
+                                    translateTaskV2Repo.insert(translateTaskV2DO);
+                                    translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
+                                }
+                            });
+                        }
+                    }));
             appInsights.trackTrace("TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
         }
 
@@ -469,7 +471,7 @@ public class TranslateV2Service {
         if (!isCover) {
             for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
                 if (translatableContent.getKey().equals(translation.getKey())) {
-                    if(!translation.getOutdated()) {
+                    if (!translation.getOutdated()) {
                         return false;
                     }
                 }
