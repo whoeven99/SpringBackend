@@ -13,6 +13,7 @@ import com.bogdatech.entity.VO.*;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
+import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.logic.translate.TranslateV2Service;
@@ -164,16 +165,29 @@ public class TranslateController {
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
+    @Autowired
+    private RedisStoppedRepository redisStoppedRepository;
+
     //暂停翻译
     @DeleteMapping("/stop")
     public void stop(@RequestParam String shopName) {
-        translateService.stopTranslationManually(shopName);
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+            redisStoppedRepository.manuallyStopped(shopName);
+        } else {
+           translateService.stopTranslationManually(shopName);
+        }
     }
 
     //手动停止用户的翻译任务
     @PutMapping("/stopTranslation")
     public String stopTranslation(@RequestBody TranslateRequest request) {
-        return translateService.stopTranslationManually(request.getShopName());
+        String shopName = request.getShopName();
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+            redisStoppedRepository.manuallyStopped(shopName);
+            return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
+        } else {
+            return translateService.stopTranslationManually(shopName);
+        }
     }
 
     /**
