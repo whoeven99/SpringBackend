@@ -143,7 +143,8 @@ public class TranslateV2Service {
         }
 
         for (InitialTaskV2DO task : taskList) {
-            if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
+//            if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
+            if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
@@ -153,11 +154,12 @@ public class TranslateV2Service {
 
                 Map<String, Integer> progressData = new HashMap<>();
                 progressData.put("totalCount", count.intValue());
-                progressData.put("translatedCount", translatedCount.intValue());
+                progressData.put("translatedCount", count.intValue() - translatedCount.intValue());
 
                 progress.setProgressData(progressData);
                 list.add(progress);
-            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
+//            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
@@ -177,8 +179,10 @@ public class TranslateV2Service {
                 // 判断是手动中断，还是limit中断
                 if (redisStoppedRepository.isStoppedByTokenLimit(shopName)){
                     progress.setStatus(3); // limit中断
+                }else {
+                    progress.setStatus(7);// 中断的状态
                 }
-                progress.setStatus(7);// 中断的状态
+
                 list.add(progress);
             }
         }
