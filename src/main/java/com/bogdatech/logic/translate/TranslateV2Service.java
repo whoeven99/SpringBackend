@@ -149,7 +149,14 @@ public class TranslateV2Service {
         }
 
         for (InitialTaskV2DO task : taskList) {
-            if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
+            if (task.getStatus().equals(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus())){
+                ProgressResponse.Progress progress = new ProgressResponse.Progress();
+                progress.setTarget(task.getTarget());
+                progress.setStatus(0);
+                progress.setTranslateStatus("translation_process_init");
+                list.add(progress);
+
+            } else if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
@@ -158,10 +165,11 @@ public class TranslateV2Service {
                 Long translatedCount = translateTaskV2Repo.selectTranslatedCountByInitialId(task.getId());
 
                 Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("totalCount", count.intValue());
-                progressData.put("translatedCount", translatedCount.intValue());
+                progressData.put("TotalQuantity", count.intValue());
+                progressData.put("RemainingQuantity", count.intValue() - translatedCount.intValue());
 
                 progress.setProgressData(progressData);
+                list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
@@ -171,13 +179,29 @@ public class TranslateV2Service {
                 Long savedCount = translateTaskV2Repo.selectSavedCountByInitialId(task.getId());
 
                 Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("totalCount", count.intValue());
-                progressData.put("savedCount", savedCount.intValue());
+                progressData.put("write_total", count.intValue());
+                progressData.put("write_done", savedCount.intValue());
                 progress.setProgressData(progressData);
-            } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
+                list.add(progress);
+            } else if (task.getStatus().equals(InitialTaskStatus.ALL_DONE.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
-                progress.setStatus(7);// todo 中断的状态
+                progress.setStatus(1);
+                progress.setTranslateStatus("translation_process_saved");
+                list.add(progress);
+            }
+            else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
+                ProgressResponse.Progress progress = new ProgressResponse.Progress();
+                progress.setTarget(task.getTarget());
+
+                // 判断是手动中断，还是limit中断
+                if (redisStoppedRepository.isStoppedByTokenLimit(shopName)){
+                    progress.setStatus(3); // limit中断
+                }else {
+                    progress.setStatus(7);// 中断的状态
+                }
+
+                list.add(progress);
             }
         }
 
@@ -264,6 +288,7 @@ public class TranslateV2Service {
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
+
         while (randomDo != null) {
             appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
             if (usedToken >= maxToken) {
@@ -552,6 +577,9 @@ public class TranslateV2Service {
 //        }
         return true;
     }
+
+    // 获取一条最新的没翻译数据，为空，改为searching； 有值则返回值
+
 
     @Getter
     public enum InitialTaskStatus {
