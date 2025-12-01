@@ -243,6 +243,46 @@ public class TencentEmailService {
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, flag ? 1 : 0));
     }
 
+    public boolean sendSuccessEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, Integer usedToken, Integer totalToken) {
+        // 发送的具体内容
+        Map<String, String> templateData = new HashMap<>();
+        setCommonTemplate(templateData, shopName, target, translateTime, usedTokenByTask);
+
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        templateData.put("user", usersDO.getFirstName());
+
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        templateData.put("remaining_credits", totalToken < usedToken ? "0" : formatter.format(totalToken - usedToken));
+
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData,
+                SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+    }
+
+    public boolean sendFailedEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, String translatedModules, String unTranslatedModules) {
+        // 发送的具体内容
+        Map<String, String> templateData = new HashMap<>();
+        setCommonTemplate(templateData, shopName, target, translateTime, usedTokenByTask);
+
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        templateData.put("user", usersDO.getFirstName());
+
+        // 获取用户已翻译的和未翻译的文本
+        templateData.put("translated_content", translatedModules);
+        templateData.put("remaining_content", unTranslatedModules);
+
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData,
+                TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+    }
+
+    public void setCommonTemplate(Map<String, String> templateData, String shopName, String target, Integer translateTime, Integer usedTokenByTask) {
+        templateData.put("language", target);
+        templateData.put("shop_name", shopName.substring(0, shopName.length() - ".myshopify.com".length()));
+        templateData.put("time", translateTime + " minutes");
+
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        templateData.put("credit_count", formatter.format(usedTokenByTask));
+    }
+
     /**
      * 自动翻译发送逻辑
      */
