@@ -2,25 +2,20 @@ package com.bogdatech.controller;
 
 import com.bogdatech.Service.IWidgetConfigurationsService;
 import com.bogdatech.entity.DO.WidgetConfigurationsDO;
+import com.bogdatech.logic.UserIpService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/widgetConfigurations")
 public class WidgetConfigurationsController {
-
-    private final IWidgetConfigurationsService widgetConfigurationsService;
-
     @Autowired
-    public WidgetConfigurationsController(IWidgetConfigurationsService widgetConfigurationsService) {
-        this.widgetConfigurationsService = widgetConfigurationsService;
-    }
+    private IWidgetConfigurationsService widgetConfigurationsService;
+    @Autowired
+    private UserIpService userIpService;
 
     //供前端插入和更新数据API
     @PostMapping("/saveAndUpdateData")
@@ -51,13 +46,7 @@ public class WidgetConfigurationsController {
 
     //供前端查询数据API
     @PostMapping("/getData")
-    public BaseResponse<Object> getData(@RequestBody WidgetConfigurationsDO widgetConfigurationsDO) {
-        WidgetConfigurationsDO data = widgetConfigurationsService.getData(widgetConfigurationsDO.getShopName());
-        if (data != null) {
-            return new BaseResponse<>().CreateSuccessResponse(data);
-        }else {
-            return new BaseResponse<>().CreateErrorResponse("查询失败");
-        }
-
+    public BaseResponse<Object> getData(@RequestParam String shopName) {
+        return userIpService.getWidgetConfigurations(shopName);
     }
 }

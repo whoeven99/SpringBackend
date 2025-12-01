@@ -4,18 +4,19 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserIpService;
 import com.bogdatech.Service.IUserSubscriptionsService;
+import com.bogdatech.Service.IWidgetConfigurationsService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.DO.UserIpDO;
+import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import com.bogdatech.entity.VO.IncludeCrawlerVO;
 import com.bogdatech.entity.VO.NoCrawlerVO;
+import com.bogdatech.entity.VO.WidgetReturnVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.entity.VO.IpRedirectionVO;
-import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
 import com.bogdatech.repository.repo.UserIPRedirectionRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
@@ -35,6 +36,8 @@ public class UserIpService {
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
     private UserIPRedirectionRepo userIPRedirectionRepo;
+    @Autowired
+    private IWidgetConfigurationsService iWidgetConfigurationsService;
 
     /**
      * 检查额度是否足够，足够+1. 到达相关百分比，发邮件
@@ -292,5 +295,25 @@ public class UserIpService {
 
     public List<UserIPRedirectionDO> selectAllIpRedirectionByShopName(String shopName) {
         return userIPRedirectionRepo.selectAllIpRedirectionByShopName(shopName);
+    }
+
+    public BaseResponse<Object> getWidgetConfigurations(String shopName) {
+        WidgetConfigurationsDO data = iWidgetConfigurationsService.getData(shopName);
+        if (data == null){
+            return new BaseResponse<>().CreateErrorResponse("query error");
+        }
+
+        // 获取ip的跳转数据一块返回
+        List<UserIPRedirectionDO> userIPRedirectionDOS = userIPRedirectionRepo.selectIpRedirectionByShopName(shopName);
+        WidgetReturnVO widgetReturnVO = new WidgetReturnVO(shopName, data.getLanguageSelector(), data.getCurrencySelector()
+                , data.getIpOpen(), data.getIncludedFlag(), data.getFontColor(), data.getBackgroundColor(), data.getButtonColor(), data.getButtonBackgroundColor()
+        , data.getOptionBorderColor(), data.getSelectorPosition(), data.getPositionData(), data.getIsTransparent(), userIPRedirectionDOS);
+
+        if (userIPRedirectionDOS != null) {
+            return new BaseResponse<>().CreateSuccessResponse(widgetReturnVO);
+        }else {
+            return new BaseResponse<>().CreateErrorResponse("query error");
+        }
+
     }
 }
