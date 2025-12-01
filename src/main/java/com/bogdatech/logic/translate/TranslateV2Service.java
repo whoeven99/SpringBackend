@@ -162,7 +162,7 @@ public class TranslateV2Service {
             } else if (task.getStatus().equals(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
-                progress.setStatus(1);
+                progress.setStatus(3);
                 progress.setTranslateStatus("translation_process_saving_shopify");
                 Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
                 Long savedCount = translateTaskV2Repo.selectSavedCountByInitialId(task.getId());
