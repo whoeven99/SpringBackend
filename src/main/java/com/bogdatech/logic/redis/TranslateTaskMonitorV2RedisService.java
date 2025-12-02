@@ -4,12 +4,19 @@ import com.bogdatech.integration.RedisIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 public class TranslateTaskMonitorV2RedisService {
     @Autowired
     private RedisIntegration redisIntegration;
 
     private static final String MONITOR_KEY_PREFIX = "translate_monitor_v2:";
+
+    public Map<String, String> getAllByTaskId(Integer initialTaskId) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        return redisIntegration.hGetAll(key);
+    }
 
     /**
      * 创建监控记录
