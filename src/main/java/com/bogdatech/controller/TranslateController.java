@@ -13,6 +13,7 @@ import com.bogdatech.entity.VO.*;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
+import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.logic.translate.TranslateV2Service;
@@ -164,16 +165,36 @@ public class TranslateController {
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
+    @Autowired
+    private RedisStoppedRepository redisStoppedRepository;
+
     //暂停翻译
     @DeleteMapping("/stop")
     public void stop(@RequestParam String shopName) {
-        translateService.stopTranslationManually(shopName);
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+            redisStoppedRepository.manuallyStopped(shopName);
+        } else {
+           translateService.stopTranslationManually(shopName);
+        }
     }
 
     //手动停止用户的翻译任务
     @PutMapping("/stopTranslation")
     public String stopTranslation(@RequestBody TranslateRequest request) {
-        return translateService.stopTranslationManually(request.getShopName());
+        String shopName = request.getShopName();
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+            redisStoppedRepository.manuallyStopped(shopName);
+            return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
+        } else {
+            return translateService.stopTranslationManually(shopName);
+        }
+    }
+
+    // 恢复翻译任务
+    @PostMapping("/revertStop")
+    public void continueTranslation(@RequestBody TranslateRequest request) {
+        String shopName = request.getShopName();
+        redisStoppedRepository.removeStoppedFlag(shopName);
     }
 
     /**
@@ -258,34 +279,25 @@ public class TranslateController {
      */
     @PutMapping("/stopTranslatingTask")
     public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
-        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
-        if (!stopFlag) {
-            return new BaseResponse<>().CreateErrorResponse("already stopped");
-        }
-
-        // 将所有状态2的任务改成7
-        translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
-
-        // 将所有状态为0和2的task任务，改为7
-        Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
-        if (flag) {
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+            redisStoppedRepository.manuallyStopped(shopName);
             return new BaseResponse<>().CreateSuccessResponse(true);
-        }
-        return new BaseResponse<>().CreateErrorResponse(false);
-    }
+        } else {
+            Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
+            if (!stopFlag) {
+                return new BaseResponse<>().CreateErrorResponse("already stopped");
+            }
 
-    /**
-     * 用于获取进度条的相关数据
-     */
-    @PostMapping("/getProgressData")
-    public BaseResponse<Object> getProgressData(@RequestParam String shopName, @RequestParam String target, @RequestParam String source) {
-        Map<String, Integer> progressData = translateService.getProgressData(shopName, target, source);
-        appInsights.trackTrace("getProgressData " + shopName + " target : " + target + " " + source + " " + progressData);
-        if (progressData != null) {
-            return new BaseResponse<>().CreateSuccessResponse(progressData);
-        }
+            // 将所有状态2的任务改成7
+            translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
 
-        return new BaseResponse<>().CreateErrorResponse(false);
+            // 将所有状态为0和2的task任务，改为7
+            Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
+            if (flag) {
+                return new BaseResponse<>().CreateSuccessResponse(true);
+            }
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
     }
 
     /**
