@@ -14,11 +14,11 @@ import java.util.List;
 public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
     public TranslateTaskV2DO selectLastTranslateOne(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.eq("initial_task_id", initialTaskId)
+        wrapper.select("TOP 1 *")
+                .eq("initial_task_id", initialTaskId)
                 .eq("has_target_value", true)
                 .eq("is_deleted", false)
-                .orderByDesc("created_at")
-                .last("LIMIT 1");
+                .orderByDesc("created_at");
         List<TranslateTaskV2DO> list = baseMapper.selectList(wrapper);
         return list.isEmpty() ? null : list.get(0);
     }
