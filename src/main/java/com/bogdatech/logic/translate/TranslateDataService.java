@@ -1309,7 +1309,7 @@ public class TranslateDataService {
             , String source, CharacterCountUtils counter, Integer limitChars, LinkedHashMap<String, String> translatedUniqueMap
             , boolean isSingleFlag, String translationModel, String translateType) {
         try {
-            String translated = translateByCiwiOrGptModel(target, null, shopName, source, counter,
+            String translated = translateByCiwiOrGptModel(getLanguageName(target), null, shopName, source, counter,
                     limitChars, prompt, isSingleFlag, translationModel, translateType);
             if (translated == null) {
                 translated = aLiYunTranslateIntegration.userTranslate(null, prompt, counter, target, shopName
