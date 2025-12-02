@@ -1285,7 +1285,7 @@ public class TranslateDataService {
                                  boolean isSingleFlag,
                                  String translationModel,
                                  String translateType) {
-        String prompt = PlaceholderUtils.getNewestPrompt(target, JsonUtils.objectToJson(batch));
+        String prompt = PlaceholderUtils.getNewestPrompt(getLanguageName(target), JsonUtils.objectToJson(batch));
         appInsights.trackTrace("translateAllMap 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 待翻译文本 : " + batch.size() + "条");
 
         LinkedHashMap<String, String> tempResult = processBatch(batch, requestShopName, shopName,
