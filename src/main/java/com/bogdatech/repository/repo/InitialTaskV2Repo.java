@@ -15,7 +15,7 @@ import java.util.List;
 public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialTaskV2DO> {
     public List<InitialTaskV2DO> selectByLast24Hours() {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
-                .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24))
+                .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24 * 7))
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 

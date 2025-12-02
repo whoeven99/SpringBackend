@@ -56,6 +56,15 @@ public class RedisIntegration {
         }
     }
 
+    public Long incrementHash(String key, String field, Integer value) {
+        try {
+            return redisTemplate.opsForHash().increment(key, field, value.longValue());
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException incrementHash " + key + " " + field + " " + value + " " + e.getMessage());
+        }
+        return 0L;
+    }
+
     /**
      * hash 增加指定数据
      */
