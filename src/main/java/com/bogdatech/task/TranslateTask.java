@@ -1,5 +1,6 @@
 package com.bogdatech.task;
 
+import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.logic.TaskService;
@@ -39,18 +40,19 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 
     /**
      * 每分钟做次打印--正在翻译中和等待翻译的用户数据
-     * */
+     */
     @Scheduled(cron = "0 * * * * ?")
     public void printTranslatingAndWaitTranslatingData() {
         taskService.printTranslatingAndWaitTranslatingData();
     }
 
 
-
     @Autowired
     private TranslateV2Service translateV2Service;
     @Autowired
     private InitialTaskV2Repo initialTaskV2Repo;
+    @Autowired
+    private RedisStoppedRepository redisStoppedRepository;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(40);
     private final Set<String> initializingShops = new HashSet<>();
@@ -96,6 +98,14 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(1);
+
+        List<InitialTaskV2DO> initialTaskV2DOS = initialTaskV2Repo.selectByStatus(5);
+        for (InitialTaskV2DO initialTaskV2DO : initialTaskV2DOS) {
+            if (!redisStoppedRepository.isTaskStopped(initialTaskV2DO.getShopName())) {
+                translatingTask.add(initialTaskV2DO);
+            }
+        }
+
         if (CollectionUtils.isEmpty(translatingTask)) {
             return;
         }

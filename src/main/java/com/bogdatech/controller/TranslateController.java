@@ -20,6 +20,7 @@ import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
+import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
@@ -252,6 +253,7 @@ public class TranslateController {
     @PostMapping("/updateStatus")
     public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
         if (translatesService.updateStatus3To6(request.getShopName())){
+            redisStoppedRepository.removeStoppedFlag(request.getShopName());
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {
             return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
