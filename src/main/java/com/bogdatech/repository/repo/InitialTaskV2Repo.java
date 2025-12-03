@@ -32,6 +32,13 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
+    public List<InitialTaskV2DO> selectByStoppedAndNotEmail() {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getStatus, 5)
+                .eq(InitialTaskV2DO::isSendEmail, false)
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
     public boolean insert(InitialTaskV2DO initialTaskV2DO) {
         DbUtils.setAllTime(initialTaskV2DO);
         return baseMapper.insert(initialTaskV2DO) > 0;
