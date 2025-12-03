@@ -150,23 +150,10 @@ public class TranslateController {
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
-    //暂停翻译
-    @DeleteMapping("/stop")
-    public void stop(@RequestParam String shopName) {
-        translateService.stopTranslationManually(shopName);
-    }
-
-
     //翻译单个文本数据
     @PostMapping("/translateSingleText")
     public BaseResponse<Object> translateSingleText(@RequestBody RegisterTransactionRequest request) {
         return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
-    }
-
-    //手动停止用户的翻译任务
-    @PutMapping("/stopTranslation")
-    public String stopTranslation(@RequestBody TranslateRequest request) {
-        return translateService.stopTranslationManually(request.getShopName());
     }
 
     /**
