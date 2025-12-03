@@ -341,7 +341,6 @@ public class TranslateV2Service {
 
                 service.translate(context);
 
-                userTokenService.addUsedToken(shopName, context.getUsedToken());
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
                 for (TranslateTaskV2DO updatedDo : taskList) {
@@ -352,6 +351,7 @@ public class TranslateV2Service {
                     // 3.3 回写数据库 todo 批量
                     translateTaskV2Repo.update(updatedDo);
                 }
+                userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
                         context.getUsedToken(), context.getTranslatedChars());
             } else {
@@ -359,13 +359,13 @@ public class TranslateV2Service {
                 TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
                         textType, randomDo.getNodeKey(), glossaryMap);
 
-                // 更新redis和sql的used token
-                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
-
                 // 翻译后更新db
                 randomDo.setTargetValue(context.getTranslatedContent());
                 randomDo.setHasTargetValue(true);
                 translateTaskV2Repo.update(randomDo);
+
+                // 更新redis和sql的used token
+                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
                         context.getUsedToken(), context.getTranslatedChars());
             }
