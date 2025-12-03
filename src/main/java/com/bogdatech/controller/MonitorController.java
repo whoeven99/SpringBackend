@@ -113,6 +113,9 @@ public class MonitorController {
         Map<String, Object> responseMap = new HashMap<>();
         for (InitialTaskV2DO initialTaskV2DO : initialList) {
             Map<String, String> taskMap =  translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
+            taskMap.put("task_type", initialTaskV2DO.getTaskType());
+            taskMap.put("status", initialTaskV2DO.getStatus().toString());
+            taskMap.put("send_email", initialTaskV2DO.isSendEmail() ? "1" : "0");
             responseMap.put("" + initialTaskV2DO.getId(), taskMap);
         }
 

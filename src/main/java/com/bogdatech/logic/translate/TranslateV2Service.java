@@ -129,7 +129,7 @@ public class TranslateV2Service {
                 .toList();
 
         this.createInitialTask(shopName, request.getSource(), targets,
-                resourceTypeList, request.getIsCover());
+                resourceTypeList, request.getIsCover(), "manual");
 
         // 找前端，把这里的返回改了
         return new BaseResponse<>().CreateSuccessResponse(request);
@@ -221,7 +221,7 @@ public class TranslateV2Service {
     }
 
     public void createInitialTask(String shopName, String source, String[] targets,
-                                  List<String> moduleList, Boolean isCover) {
+                                  List<String> moduleList, Boolean isCover, String taskType) {
         initialTaskV2Repo.deleteByShopNameAndSource(shopName, source);
         redisStoppedRepository.removeStoppedFlag(shopName);
 
@@ -233,6 +233,7 @@ public class TranslateV2Service {
             initialTask.setCover(isCover);
             initialTask.setModuleList(JsonUtils.objectToJson(moduleList));
             initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
+            initialTask.setTaskType(taskType);
             initialTaskV2Repo.insert(initialTask);
 
             translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
@@ -473,6 +474,8 @@ public class TranslateV2Service {
             Integer totalToken = userTokenService.getMaxToken(shopName);
             tencentEmailService.sendSuccessEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
                     usedToken, totalToken);
+
+            initialTaskV2DO.setSendEmail(true);
             initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.ALL_DONE.status);
             return;
         }
@@ -490,6 +493,7 @@ public class TranslateV2Service {
                 tencentEmailService.sendFailedEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
                         typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString());
 
+                initialTaskV2DO.setSendEmail(true);
                 initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.STOPPED.status);
             }
         }
