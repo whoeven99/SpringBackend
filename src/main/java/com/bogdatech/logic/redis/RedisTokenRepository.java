@@ -22,7 +22,7 @@ public class RedisTokenRepository {
     // 从数据库初始化到redis里
     public void initUsedToken(String shopName, Integer usedToken) {
         String key = SHOP_NAME_USED_TOKEN_KEY + shopName;
-        redisIntegration.setHash(key, "all", usedToken.toString());
+        redisIntegration.setHash(key, "all", usedToken);
     }
 
     // 每次使用，调用这里
