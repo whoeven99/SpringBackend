@@ -84,7 +84,7 @@ public class ChatGptIntegration {
             appInsights.trackTrace("clickTranslation " + shopName + " chatWithGpt gpt翻译报错信息 Error occurred while calling GPT: " + e.getMessage() + " sourceText: " + sourceText + " prompt: " + prompt);
             appInsights.trackException(e);
             // 如果重试次数超过2次，则修改翻译状态为4 ：翻译异常，终止翻译流程。
-            return null;
+            return new Pair<>(null, 0);
         }
     }
 }
