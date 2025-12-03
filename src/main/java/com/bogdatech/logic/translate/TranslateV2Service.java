@@ -237,6 +237,10 @@ public class TranslateV2Service {
             initialTaskV2Repo.insert(initialTask);
 
             translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+
+            if ("auto".equals(taskType)) {
+                return;
+            }
             iTranslatesService.updateTranslateStatus(shopName, 2, target, source);
         }
     }

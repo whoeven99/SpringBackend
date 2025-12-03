@@ -1,12 +1,12 @@
 package com.bogdatech.logic.translate;
 
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -61,7 +61,7 @@ public class TranslateDataService {
     @Autowired
     private ChatGptIntegration chatGptIntegration;
     @Autowired
-    private ITranslationCounterService translationCounterService;
+    private UserTokenService userTokenService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
 
@@ -891,9 +891,9 @@ public class TranslateDataService {
         }
 
         if (isSingleFlag) {
-            translationCounterService.updateAddUsedCharsByShopName(shopName, pair.getSecond(), limitChars);
+            userTokenService.addUsedToken(shopName, pair.getSecond());
         } else {
-            translationCounterService.updateAddUsedCharsByShopName(shopName, pair.getSecond(), limitChars);
+            userTokenService.addUsedToken(shopName, pair.getSecond());
             translationCounterRedisService.increaseLanguage(shopName, target, pair.getSecond(), translateType);
         }
         counter.addChars(pair.getSecond());
