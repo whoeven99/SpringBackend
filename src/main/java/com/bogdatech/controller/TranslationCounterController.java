@@ -59,18 +59,6 @@ public class TranslationCounterController {
     }
 
     /**
-     * 更新用户的额度
-     * */
-    @PutMapping("/updateCharsByShopName")
-    public BaseResponse<Object> updateCharsByShopName(@RequestBody TranslationCounterRequest request) {
-        int result = iTranslationCounterService.updateUsedCharsByShopName(request);
-        if (result > 0) {
-            return new BaseResponse().CreateSuccessResponse(result);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
-    }
-
-    /**
      * 添加字符额度
      * */
     @PostMapping("/addCharsByShopName")

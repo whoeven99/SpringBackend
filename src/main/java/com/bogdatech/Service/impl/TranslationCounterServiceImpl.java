@@ -42,11 +42,6 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     }
 
     @Override
-    public int updateUsedCharsByShopName(TranslationCounterRequest translationCounterRequest) {
-        return baseMapper.updateUsedCharsByShopName(translationCounterRequest.getShopName(), translationCounterRequest.getUsedChars());
-    }
-
-    @Override
     public Integer getMaxCharsByShopName(String shopName) {
         return baseMapper.getMaxCharsByShopName(shopName);
     }
