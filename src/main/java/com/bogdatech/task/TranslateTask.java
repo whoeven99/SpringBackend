@@ -137,6 +137,8 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
+        translatingTask.addAll(initialTaskV2Repo.selectByStatus(5));
+
         if (CollectionUtils.isEmpty(translatingTask)) {
             return;
         }
@@ -169,7 +171,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     @Scheduled(fixedRate = 30 * 1000)
     public void sendEmail() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(3);
-        translatingTask.addAll(initialTaskV2Repo.selectByStatus(5));
+        translatingTask.addAll(initialTaskV2Repo.selectByStoppedAndNotEmail());
         if (CollectionUtils.isEmpty(translatingTask)) {
             return;
         }
