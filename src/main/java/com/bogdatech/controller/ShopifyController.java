@@ -11,6 +11,7 @@ import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.ConfigUtils;
+import com.bogdatech.utils.WhiteListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
@@ -24,7 +25,6 @@ import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.parsePlanName;
-import static com.bogdatech.utils.WhiteListUtils.checkWhiteList;
 
 @RestController
 @RequestMapping("/shopify")
@@ -200,7 +200,7 @@ public class ShopifyController {
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
-        BaseResponse<Object> objectBaseResponse = checkWhiteList(shopName, subscriptionVO, userSubscriptionsDO.getFeeType());
+        BaseResponse<Object> objectBaseResponse = WhiteListUtils.checkWhiteList(shopName, subscriptionVO, userSubscriptionsDO.getFeeType());
         if (objectBaseResponse != null) {
             return objectBaseResponse;
         }

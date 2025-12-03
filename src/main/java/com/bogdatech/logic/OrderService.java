@@ -132,14 +132,20 @@ public class OrderService {
     }
 
     public String getLatestActiveSubscribeId(String shopName) {
-        CharsOrdersDO charsOrdersDO = charsOrdersService.list(new LambdaQueryWrapper<CharsOrdersDO>()
+        List<CharsOrdersDO> charsOrders = charsOrdersService.list(new LambdaQueryWrapper<CharsOrdersDO>()
                         .eq(CharsOrdersDO::getShopName, shopName)
                         .eq(CharsOrdersDO::getStatus, "ACTIVE")
                         .orderByDesc(CharsOrdersDO::getCreatedAt)
                 ).stream().filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
-                .toList().get(0);
-        if (charsOrdersDO != null) {
-            return charsOrdersDO.getId();
+                .toList();
+        if (charsOrders.isEmpty()){
+            // 返回null
+            return null;
+        }
+
+        CharsOrdersDO charsOrder = charsOrders.get(0);
+        if (charsOrder != null) {
+            return charsOrder.getId();
         }
         return null;
 

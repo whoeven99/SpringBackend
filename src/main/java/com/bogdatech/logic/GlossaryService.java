@@ -13,6 +13,23 @@ public class GlossaryService {
     @Autowired
     private IGlossaryService glossaryService;
 
+    public static boolean hasGlossary(String content, Map<String, GlossaryDO> glossaryMap,
+                                      Map<String, GlossaryDO> usedGlossaryMap) {
+        if (content == null || glossaryMap == null || glossaryMap.isEmpty()) {
+            return false;
+        }
+
+        boolean flag = false;
+        for (String key : glossaryMap.keySet()) {
+            if (content.contains(key)) {
+                usedGlossaryMap.put(key, glossaryMap.get(key));
+                // 可能一句话命中多个语法
+                flag = true;
+            }
+        }
+        return flag;
+    }
+
     public Map<String, GlossaryDO> getGlossaryDoByShopName(String shopName, String target) {
         GlossaryDO[] glossaryDOS = glossaryService.getGlossaryByShopName(shopName);
         if (glossaryDOS == null) {

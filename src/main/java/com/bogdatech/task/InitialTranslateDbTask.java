@@ -8,6 +8,7 @@ import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.utils.ConfigUtils;
+import com.bogdatech.utils.ListUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.IUsersService;
@@ -211,7 +212,8 @@ public class InitialTranslateDbTask {
                     continue;
                 }
 
-                List<TranslateResourceDTO> resourceList = convertALL(translationList);
+                List<String> beforeList = ListUtils.sort(translationList);
+                List<TranslateResourceDTO> resourceList = convertALL(beforeList);
                 tencentEmailService.translateFailEmail(task.getShopName(), createdAt, resourceList,
                         task.getTarget(), task.getSource(), costToken);
 
@@ -224,18 +226,8 @@ public class InitialTranslateDbTask {
                 continue;
             }
 
-            // 4. 进度条状态1 改为 状态为2：翻译中
-            if (translateStatus == 2 && task.getStatus() == 1) {
-                // 将initial status改为2
-                boolean updateFlag = iInitialTranslateTasksService.updateStatusByTaskId(task.getTaskId(), 2);
-                if (!updateFlag) {
-                    appInsights.trackTrace("FatalException: 修改翻译进度失败 shopName=" + task.getShopName() + " target: " + task.getTarget() + " source: " + task.getSource());
-                    continue;
-                }
-            }
-
             // 5. 状态为2：翻译中 判断是否完成
-            if (translateStatus == 2 && task.getStatus() == 2 && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
+            if (translateStatus == 2 && task.getStatus() == InitialTaskStatusEnum.TASKS_CREATED.getStatus() && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
                 List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
 
                 if (translateTasks.isEmpty()) {
@@ -259,7 +251,7 @@ public class InitialTranslateDbTask {
             }
 
             // 6. 状态为1：全部完成，可以发成功邮件
-            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == 3 && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
+            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == InitialTaskStatusEnum.TRANSLATED_WRITING_SHOPIFY.getStatus() && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
                 // 判断user_Translation_Data表 里面改用户语言是否完成写入
                 List<UserTranslationDataDO> userTranslationDataDOS = iUserTranslationDataService.selectWritingDataByShopNameAndTarget(task.getShopName(), task.getTarget());
                 if (!userTranslationDataDOS.isEmpty()) {

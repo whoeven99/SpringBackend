@@ -124,7 +124,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
         }
     }
 
-//    @Scheduled(fixedDelay = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
         if (CollectionUtils.isEmpty(translatingTask)) {
@@ -156,9 +156,10 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     }
 
     // 定时30秒扫描一次
-//    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedRate = 30 * 1000)
     public void sendEmail() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(3);
+        translatingTask.addAll(initialTaskV2Repo.selectByStatus(5));
         if (CollectionUtils.isEmpty(translatingTask)) {
             return;
         }

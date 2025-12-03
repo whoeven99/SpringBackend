@@ -60,4 +60,10 @@ public class UserIpController {
     public BaseResponse<Object> noCrawlerPrintLog(@RequestParam String shopName, @RequestBody NoCrawlerVO noCrawlerVO) {
         return userIpService.noCrawlerPrintLog(shopName, noCrawlerVO);
     }
+
+    // 查询剩余IP额度
+    @PostMapping("/queryUserIpCount")
+    public BaseResponse<Object> queryUserIpCount(@RequestParam String shopName) {
+        return userIpService.queryUserIpCount(shopName);
+    }
 }
