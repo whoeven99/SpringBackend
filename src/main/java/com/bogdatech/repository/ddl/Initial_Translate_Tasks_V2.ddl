@@ -25,3 +25,6 @@ ON dbo.Initial_Translate_Tasks_V2 (shop_name, source, is_deleted);
 
 CREATE NONCLUSTERED INDEX IX_Status_IsDeleted
 ON dbo.Initial_Translate_Tasks_V2 (status, is_deleted);
+
+ALTER TABLE dbo.Initial_Translate_Tasks_V2
+    ADD task_type NVARCHAR(10) NOT NULL DEFAULT 'manual';
