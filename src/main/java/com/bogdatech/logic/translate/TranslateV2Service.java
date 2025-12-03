@@ -28,6 +28,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
+import net.sf.jsqlparser.expression.LongValue;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -150,6 +151,7 @@ public class TranslateV2Service {
             Map<String, Integer> defaultProgressTranslateData = new HashMap<>();
             defaultProgressTranslateData.put("TotalQuantity", 1);
             defaultProgressTranslateData.put("RemainingQuantity", 0);
+            Map<String, String> taskContext = translateTaskMonitorV2RedisService.getAllByTaskId(task.getId());
 
             if (task.getStatus().equals(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
@@ -164,8 +166,9 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
                 progress.setTranslateStatus("translation_process_translating");
-                Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
-                Long translatedCount = translateTaskV2Repo.selectTranslatedCountByInitialId(task.getId());
+
+                Long count = Long.valueOf(taskContext.get("totalCount"));
+                Long translatedCount = Long.valueOf(taskContext.get("translatedCount"));
 
                 Map<String, Integer> progressData = new HashMap<>();
                 progressData.put("TotalQuantity", count.intValue());
@@ -178,8 +181,9 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
                 progress.setTranslateStatus("translation_process_saving_shopify");
-                Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
-                Long savedCount = translateTaskV2Repo.selectSavedCountByInitialId(task.getId());
+
+                Long count = Long.valueOf(taskContext.get("totalCount"));
+                Long savedCount = Long.valueOf(taskContext.get("savedCount"));
 
                 Map<String, Integer> progressWriteData = new HashMap<>();
                 progressWriteData.put("write_total", count.intValue());
@@ -199,8 +203,8 @@ public class TranslateV2Service {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
 
-                Long count = translateTaskV2Repo.selectCountByInitialId(task.getId());
-                Long translatedCount = translateTaskV2Repo.selectTranslatedCountByInitialId(task.getId());
+                Long count = Long.valueOf(taskContext.get("totalCount"));
+                Long translatedCount = Long.valueOf(taskContext.get("translatedCount"));
                 Map<String, Integer> progressData = new HashMap<>();
                 progressData.put("TotalQuantity", count.intValue());
                 progressData.put("RemainingQuantity", count.intValue() - translatedCount.intValue());
