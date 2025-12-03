@@ -1,7 +1,7 @@
 package com.bogdatech.integration;
 
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.ConfigUtils;
@@ -22,7 +22,7 @@ import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 @Component
 public class HunYuanIntegration {
     @Autowired
-    private ITranslationCounterService translationCounterService;
+    private UserTokenService userTokenService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
 
@@ -99,11 +99,10 @@ public class HunYuanIntegration {
                 long promptTokens = resp.getUsage().getPromptTokens();
                 AppInsightsUtils.printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
                 appInsights.trackTrace("hunYuanTranslate 混元信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
-                if (isSingleFlag){
-                    translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
-                }else {
-//                    translationCounterRedisService.increaseTask(generateProcessKey(shopName,target), totalToken);
-                    translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+                if (isSingleFlag) {
+                    userTokenService.addUsedToken(shopName, totalToken);
+                } else {
+                    userTokenService.addUsedToken(shopName, totalToken);
                     translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
                 }
 

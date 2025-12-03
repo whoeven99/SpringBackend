@@ -1,19 +1,16 @@
 package com.bogdatech.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUserIpService;
 import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.entity.DO.UserIpDO;
-import com.bogdatech.mapper.UserIpMapper;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
@@ -26,6 +23,8 @@ public class UserIpService {
     private TencentEmailService tencentEmailService;
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
+    @Autowired
+    private UserTokenService userTokenService;
 
 
     /**
@@ -77,7 +76,6 @@ public class UserIpService {
         if (currentTimes > freeIp) {
             //加锁查询检查用户额度是否足够
             TranslationCounterDO translationCounterDO = iTranslationCounterService.getOneForUpdate(shopName);
-//            appInsights.trackTrace("translationCounterDO = " + translationCounterDO);
             if (translationCounterDO == null) {
                 return false;
             }
@@ -89,7 +87,7 @@ public class UserIpService {
 //                userIpDO.setTimes(currentTimes + 1);
                 userIpDO.setAllTimes(userIpDO.getAllTimes() + 1);
                 iUserIpService.updateById(userIpDO);
-                iTranslationCounterService.updateById(translationCounterDO);
+                userTokenService.addUsedToken(shopName, 100);
                 return true;
             } else {
                 return false;

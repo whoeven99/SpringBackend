@@ -94,39 +94,6 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     }
 
     @Override
-    public Boolean updateAddUsedCharsByShopName(String shopName, Integer usedChars, Integer maxChars) {
-        final int maxRetries = 3;
-        final long retryDelayMillis = 1000;
-        int retryCount = 0;
-
-        while (retryCount < maxRetries) {
-            try {
-                Boolean b = baseMapper.updateAddUsedCharsByShopName(shopName, usedChars, maxChars);
-                if (Boolean.TRUE.equals(b)) {
-                    return true;
-                } else {
-                    retryCount++;
-                    appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + shopName + " usedChars=" + usedChars + ", maxChars=" + maxChars);
-                }
-            } catch (Exception e) {
-                retryCount++;
-                appInsights.trackException(e);
-                appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + shopName + " usedChars=" + usedChars + ", maxChars=" + maxChars + ", 错误=" + e);
-            }
-
-            try {
-                Thread.sleep(retryDelayMillis * maxRetries);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                return false;
-            }
-        }
-
-        appInsights.trackTrace("updateAddUsedCharsByShopName 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + shopName+ " usedChars=" + usedChars + ", maxChars=" + maxChars);
-        return false;
-    }
-
-    @Override
     public Boolean deleteTrialCounter(String shopName) {
         TranslationCounterDO translationCounterDO = baseMapper.selectOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
         if (translationCounterDO != null && translationCounterDO.getOpenAiChars() == 1){

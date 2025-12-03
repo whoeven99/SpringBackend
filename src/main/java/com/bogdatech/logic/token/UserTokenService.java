@@ -41,6 +41,13 @@ public class UserTokenService {
     }
 
     public Integer addUsedToken(String shopName, Integer token) {
+        Integer redisUsedToken = redisTokenRepository.getUsedToken(shopName);
+        if (redisUsedToken == 0) {
+            // 初始化使用
+            TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
+            redisTokenRepository.initUsedToken(shopName, counterDO.getUsedChars());
+        }
+
         redisTokenRepository.addUsedToken(shopName, token);
 
         Integer usedToken = redisTokenRepository.getUsedToken(shopName);
