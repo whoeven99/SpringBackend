@@ -168,20 +168,6 @@ public class TranslateController {
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
 
-    //暂停翻译
-    @DeleteMapping("/stop")
-    public void stop(@RequestParam String shopName) {
-        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
-            redisStoppedRepository.manuallyStopped(shopName);
-        } else {
-           translateService.stopTranslationManually(shopName);
-        }
-    //翻译单个文本数据
-    @PostMapping("/translateSingleText")
-    public BaseResponse<Object> translateSingleText(@RequestBody RegisterTransactionRequest request) {
-        return new BaseResponse<>().CreateSuccessResponse(translateService.translateSingleText(request));
-    }
-
     //手动停止用户的翻译任务
     @PutMapping("/stopTranslation")
     public String stopTranslation(@RequestBody TranslateRequest request) {
