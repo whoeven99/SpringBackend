@@ -20,6 +20,7 @@ import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
+import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -249,11 +250,21 @@ public class TranslateController {
         }
     }
 
+    @Autowired
+    private InitialTaskV2Repo initialTaskV2Repo;
+
     //当支付成功后，调用该方法，将该用户的状态3，改为状态6
     @PostMapping("/updateStatus")
     public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
         if (translatesService.updateStatus3To6(request.getShopName())){
-            redisStoppedRepository.removeStoppedFlag(request.getShopName());
+            List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(request.getShopName());
+            if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(request.getShopName())) {
+                for (InitialTaskV2DO initialTaskV2DO : list) {
+                    initialTaskV2DO.setStatus(TranslateV2Service.InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+                    initialTaskV2Repo.updateById(initialTaskV2DO);
+                }
+                redisStoppedRepository.removeStoppedFlag(request.getShopName());
+            }
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {
             return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
