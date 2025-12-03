@@ -39,6 +39,7 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         wrapper.select("TOP " + 10 + " *")
                 .eq("initial_task_id", initialTaskId)
                 .eq("resource_id", resourceId)
+                .eq("has_target_value", true)
                 .eq("saved_to_shopify", false)
                 .eq("is_deleted", false);
         return baseMapper.selectList(wrapper);
