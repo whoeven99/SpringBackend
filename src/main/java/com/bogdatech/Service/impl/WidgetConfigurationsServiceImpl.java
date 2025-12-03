@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -7,6 +8,8 @@ import com.bogdatech.Service.IWidgetConfigurationsService;
 import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import com.bogdatech.mapper.WidgetConfigurationsMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class WidgetConfigurationsServiceImpl extends ServiceImpl<WidgetConfigurationsMapper, WidgetConfigurationsDO> implements IWidgetConfigurationsService {
@@ -24,6 +27,12 @@ public class WidgetConfigurationsServiceImpl extends ServiceImpl<WidgetConfigura
 
     @Override
     public WidgetConfigurationsDO getData(String shopName) {
-        return baseMapper.selectOne(new QueryWrapper<WidgetConfigurationsDO>().eq("shop_name", shopName));
+        return baseMapper.selectOne(new LambdaQueryWrapper<WidgetConfigurationsDO>().eq(WidgetConfigurationsDO::getShopName, shopName));
+    }
+
+    @Override
+    public List<WidgetConfigurationsDO> getAllIpOpenByTrue() {
+        return baseMapper.selectList(new LambdaQueryWrapper<WidgetConfigurationsDO>().eq(WidgetConfigurationsDO::getIpOpen
+                , true));
     }
 }

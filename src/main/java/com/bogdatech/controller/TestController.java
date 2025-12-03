@@ -22,6 +22,7 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
+import com.bogdatech.task.IpEmailTask;
 import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.TimeOutUtils;
@@ -77,6 +78,8 @@ public class TestController {
     private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private IpEmailTask ipEmailTask;
     @Autowired
     private ISubscriptionQuotaRecordService iSubscriptionQuotaRecordService;
 
@@ -480,4 +483,8 @@ public class TestController {
         taskService.freeTrialTaskForImage();
     }
 
+    @GetMapping("/testEmail")
+    public void testEmail() {
+        ipEmailTask.sendEmailTask();
+    }
 }

@@ -3,6 +3,8 @@ package com.bogdatech.logic;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.*;
+import com.bogdatech.config.CurrencyConfig;
+import com.bogdatech.constants.MailChimpConstants;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
@@ -10,6 +12,8 @@ import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
+import com.bogdatech.utils.ApiCodeUtils;
+import com.bogdatech.utils.ResourceTypeUtils;
 import com.bogdatech.utils.ResourceTypeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.MailChimpConstants.TENCENT_FROM_EMAIL;
 import static com.bogdatech.constants.MailChimpConstants.APG_PURCHASE_EMAIL;
@@ -155,6 +161,7 @@ public class TencentEmailService {
         Map<String, String> templateData = new HashMap<>();
         templateData.put("language", target);
         templateData.put("user", usersDO.getFirstName());
+
         // 定义要移除的后缀
         String suffix = ".myshopify.com";
         String targetShop;
@@ -177,7 +184,7 @@ public class TencentEmailService {
         long costTime = duration.toMinutes();
         templateData.put("time", costTime + " minutes");
 
-        //共消耗的字符数
+        // 共消耗的字符数
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
 
         int costCharsInt = costChars.intValue();
@@ -186,9 +193,11 @@ public class TencentEmailService {
         }
         String formattedNumber = formatter.format(costCharsInt);
         templateData.put("credit_count", formattedNumber);
-        //由腾讯发送邮件
+
+        // 由腾讯发送邮件
         Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData, TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        //存入数据库中
+
+        // 存入数据库中
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), TRANSLATION_FAILED_SUBJECT, b ? 1 : 0));
     }
 
@@ -440,7 +449,7 @@ public class TencentEmailService {
 
                 // 更新状态
                 List<String> targetList = list.stream().map(TranslatesDO::getTarget).toList();
-                if (targetList.isEmpty()){
+                if (targetList.isEmpty()) {
                     appInsights.trackTrace("emailAutoTranslate 用户 " + shopName + " targetList为空 " + list);
                     return;
                 }
@@ -460,5 +469,60 @@ public class TencentEmailService {
             appInsights.trackTrace("emailAutoTranslate " + shopName + " 邮件发送 errors : " + e);
             appInsights.trackException(e);
         }
+    }
+
+    /**
+     * 发送ip上报邮件 156623L
+     */
+    public void sendIpReportEmail(String shopName, int noCurrencyCount, int noLanguageCount,
+                                  List<Map<String, Integer>> languageEmailData, List<Map<String, Integer>> currencyEmailData) {
+        UsersDO user = usersService.getUserByName(shopName);
+        if (user == null) {
+            appInsights.trackTrace("sendIpReportEmail user is null " + shopName);
+            return;
+        }
+
+        String targetShop = shopName.replace(".myshopify.com", "");
+
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("name", user.getFirstName());
+        templateData.put("admin", targetShop);
+        templateData.put("missing_currency_count", String.valueOf(noCurrencyCount));
+        templateData.put("missing_language_count", String.valueOf(noLanguageCount));
+        templateData.put("estimated_revenue_loss", String.valueOf((noLanguageCount + noCurrencyCount) * 0.5));
+
+        // HTML 列表生成
+        templateData.put("Language_top",
+                buildHtmlList(languageEmailData, ApiCodeUtils::getLanguageName));
+
+        templateData.put("Currency_top",
+                buildHtmlList(currencyEmailData, CurrencyConfig::getCurrentName));
+
+        // 发送邮件（如果需要）
+        boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
+                        templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, user.getEmail()));
+    }
+
+    /**
+     * 根据传入的数据构建 HTML 列表。
+     *
+     * @param data         数据列表，每条数据是 Map<code, count>
+     * @param nameResolver 将 code 转成可读名称
+     */
+    private String buildHtmlList(List<Map<String, Integer>> data,
+                                 Function<String, String> nameResolver) {
+
+        if (data == null || data.isEmpty()) {
+            return "";
+        }
+
+        return data.stream()
+                .flatMap(map -> map.entrySet().stream())
+                .map(entry -> {
+                    String displayName = nameResolver.apply(entry.getKey());
+                    int value = entry.getValue();
+                    return String.format("<li>%s - %d visitors</li>\n", displayName, value);
+                })
+                .collect(Collectors.joining());
     }
 }

@@ -7,6 +7,7 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
+import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.response.ProgressResponse;
@@ -39,6 +40,8 @@ public class MonitorController {
     private TranslateTaskV2Repo translateTaskV2Repo;
     @Autowired
     private TranslateProgressService translateProgressService;
+    @Autowired
+    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
 
     @GetMapping("/getTable")
     public Map<String, Object> getTable(@RequestParam String shopName) {
@@ -109,22 +112,11 @@ public class MonitorController {
 
         Map<String, Object> responseMap = new HashMap<>();
         for (InitialTaskV2DO initialTaskV2DO : initialList) {
-            Map<String, String> taskMap = new HashMap<>();
+            Map<String, String> taskMap =  translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
+            taskMap.put("task_type", initialTaskV2DO.getTaskType());
+            taskMap.put("status", initialTaskV2DO.getStatus().toString());
+            taskMap.put("send_email", initialTaskV2DO.isSendEmail() ? "1" : "0");
             responseMap.put("" + initialTaskV2DO.getId(), taskMap);
-
-            Long count = translateTaskV2Repo.selectCountByInitialId(initialTaskV2DO.getId());
-            taskMap.put("allCount", "" + count);
-            if (initialTaskV2DO.getStatus() == 0) {
-                // 读取中 获取task 数量 即可
-            } else if (initialTaskV2DO.getStatus() == 1) {
-                // 翻译中 获取task 数量
-                Long translatedCount = translateTaskV2Repo.selectTranslatedCountByInitialId(initialTaskV2DO.getId());
-                taskMap.put("translatedCount", "" + translatedCount);
-            } else if (initialTaskV2DO.getStatus() == 2) {
-                // 写入中 获取写入数量
-                Long savedCount = translateTaskV2Repo.selectSavedCountByInitialId(initialTaskV2DO.getId());
-                taskMap.put("savedCount", "" + savedCount);
-            }
         }
 
         return responseMap;

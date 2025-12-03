@@ -32,4 +32,6 @@ public class InitialTaskV2DO extends BaseDO {
     private Integer savingShopifyMinutes;
     @TableField("used_token")
     private Integer usedToken;
+    @TableField("task_type")
+    private String taskType; // manual, auto, private
 }
