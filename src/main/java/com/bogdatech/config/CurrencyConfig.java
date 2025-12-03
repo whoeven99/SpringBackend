@@ -1257,7 +1257,7 @@ public class CurrencyConfig {
     public static String getCurrentName(String currentCode) {
         Map<String, Object> currenciesOrDefault = CURRENCIES.getOrDefault(currentCode, null);
         if (currenciesOrDefault != null) {
-            return currenciesOrDefault.get("symbol") + currentCode;
+            return currenciesOrDefault.get("symbol") + " " + currentCode;
         }
         return currentCode;
     }
