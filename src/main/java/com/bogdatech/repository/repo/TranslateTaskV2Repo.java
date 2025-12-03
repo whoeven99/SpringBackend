@@ -23,29 +23,6 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public Long selectCountByInitialId(Integer initialTaskId) {
-        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.eq("initial_task_id", initialTaskId)
-                .eq("is_deleted", false);
-        return baseMapper.selectCount(wrapper);
-    }
-
-    public Long selectTranslatedCountByInitialId(Integer initialTaskId) {
-        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.eq("initial_task_id", initialTaskId)
-                .eq("has_target_value", true)
-                .eq("is_deleted", false);
-        return baseMapper.selectCount(wrapper);
-    }
-
-    public Long selectSavedCountByInitialId(Integer initialTaskId) {
-        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.eq("initial_task_id", initialTaskId)
-                .eq("saved_to_shopify", true)
-                .eq("is_deleted", false);
-        return baseMapper.selectCount(wrapper);
-    }
-
     public TranslateTaskV2DO selectOneByInitialTaskIdAndNotSaved(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP 1 *")
