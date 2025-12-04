@@ -24,5 +24,6 @@ public class ProgressResponse {
         private String value;
         private Map<String, Integer> progressData;
         private Map<String, Integer> writingData;
+        private Integer taskId; // initial_task_v2 id
     }
 }

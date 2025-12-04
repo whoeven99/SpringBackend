@@ -28,7 +28,6 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
-import net.sf.jsqlparser.expression.LongValue;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -72,6 +71,15 @@ public class TranslateV2Service {
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
     private ITranslatesService iTranslatesService;
+
+    public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
+        // 修改用户对应task的状态为1
+        initialTaskV2Repo.updateStatusByTask(taskId, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+
+        // 删除用户停止标识
+        redisStoppedRepository.removeStoppedFlag(shopName);
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -159,6 +167,7 @@ public class TranslateV2Service {
                 progress.setStatus(2);
                 progress.setTranslateStatus("translation_process_init");
                 progress.setProgressData(defaultProgressTranslateData);
+                progress.setTaskId(task.getId());
                 list.add(progress);
 
             } else if (task.getStatus().equals(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus())) {
@@ -166,6 +175,7 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
                 progress.setTranslateStatus("translation_process_translating");
+                progress.setTaskId(task.getId());
 
                 Long count = Long.valueOf(taskContext.get("totalCount"));
                 Long translatedCount = Long.valueOf(taskContext.get("translatedCount"));
@@ -181,6 +191,7 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
                 progress.setTranslateStatus("translation_process_saving_shopify");
+                progress.setTaskId(task.getId());
 
                 Long count = Long.valueOf(taskContext.get("totalCount"));
                 Long savedCount = Long.valueOf(taskContext.get("savedCount"));
@@ -198,10 +209,12 @@ public class TranslateV2Service {
                 progress.setStatus(1);
                 progress.setTranslateStatus("translation_process_saved");
                 progress.setProgressData(defaultProgressTranslateData);
+                progress.setTaskId(task.getId());
                 list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
+                progress.setTaskId(task.getId());
 
                 Long count = Long.valueOf(taskContext.get("totalCount"));
                 Long translatedCount = Long.valueOf(taskContext.get("translatedCount"));
@@ -226,7 +239,7 @@ public class TranslateV2Service {
 
     public void createInitialTask(String shopName, String source, String[] targets,
                                   List<String> moduleList, Boolean isCover, String taskType) {
-        initialTaskV2Repo.deleteByShopNameAndSource(shopName, source);
+        initialTaskV2Repo.deleteByShopNameAndSourceAndStatus4And5(shopName, source);
         redisStoppedRepository.removeStoppedFlag(shopName);
 
         for (String target : targets) {
@@ -483,7 +496,7 @@ public class TranslateV2Service {
             Integer usedToken = userTokenService.getUsedToken(shopName);
             Integer totalToken = userTokenService.getMaxToken(shopName);
             tencentEmailService.sendSuccessEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
-                    usedToken, totalToken);
+                    usedToken, totalToken, initialTaskV2DO.getTaskType());
 
             initialTaskV2DO.setSendEmail(true);
             initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.ALL_DONE.status);
