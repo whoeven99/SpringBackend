@@ -165,20 +165,36 @@ public class UserIpService {
 
         // 3. 按 languageCode 匹配
         UserIPCountDO langSpec = countMap.get(NO_LANGUAGE_CODE + langCode);
-        if (langSpec != null && !noCrawlerVO.getLanguageCodeStatus()) {
-            langSpec.setCountValue(langSpec.getCountValue() + 1);
+        boolean status1 = noCrawlerVO.getLanguageCodeStatus();
+
+        if (langSpec != null) {
+            // 已存在记录
+            if (status1) {
+                langSpec.setCountValue(langSpec.getCountValue() + 1);
+            }
             toUpdate.add(langSpec);
-        } else if (langSpec == null){
-            toInsert.add(new UserIPCountDO(shopName, NO_LANGUAGE_CODE + langCode, 1));
+        } else {
+            // 不存在记录 → 初始化
+            int initValue = status1 ? 1 : 0;
+            langSpec = new UserIPCountDO(shopName, NO_LANGUAGE_CODE + langCode, initValue);
+            toInsert.add(langSpec);
         }
 
         // 4. 按 currencyCode 匹配
         UserIPCountDO currencySpec = countMap.get(NO_CURRENCY_CODE + currencyCode);
-        if (currencySpec != null && !noCrawlerVO.getCurrencyCodeStatus()) {
-            currencySpec.setCountValue(currencySpec.getCountValue() + 1);
+        boolean status2 = noCrawlerVO.getCurrencyCodeStatus();
+
+        if (currencySpec != null) {
+            // 已存在记录
+            if (status2) {
+                currencySpec.setCountValue(currencySpec.getCountValue() + 1);
+            }
             toUpdate.add(currencySpec);
-        } else if (currencySpec == null){
-            toInsert.add(new UserIPCountDO(shopName, NO_CURRENCY_CODE + currencyCode, 1));
+        } else {
+            // 不存在记录 → 初始化
+            int initValue = status2 ? 1 : 0;
+            currencySpec = new UserIPCountDO(shopName, NO_CURRENCY_CODE + currencyCode, initValue);
+            toInsert.add(currencySpec);
         }
 
         // 执行批量 SQL
@@ -191,6 +207,7 @@ public class UserIpService {
 
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
+
     /**
      * 根据shopName获取剩余ip额度
      */
