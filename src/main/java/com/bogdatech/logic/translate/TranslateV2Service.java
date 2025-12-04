@@ -345,7 +345,6 @@ public class TranslateV2Service {
 
                 service.translate(context);
 
-
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
                 for (TranslateTaskV2DO updatedDo : taskList) {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
@@ -355,7 +354,7 @@ public class TranslateV2Service {
                     // 3.3 回写数据库 todo 批量
                     translateTaskV2Repo.update(updatedDo);
                 }
-                userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
+                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
                         context.getUsedToken(), context.getTranslatedChars());
             } else {

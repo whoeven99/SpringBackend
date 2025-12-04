@@ -98,14 +98,6 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(1);
-
-        List<InitialTaskV2DO> initialTaskV2DOS = initialTaskV2Repo.selectByStatus(5);
-        for (InitialTaskV2DO initialTaskV2DO : initialTaskV2DOS) {
-            if (!redisStoppedRepository.isTaskStopped(initialTaskV2DO.getShopName())) {
-                translatingTask.add(initialTaskV2DO);
-            }
-        }
-
         if (CollectionUtils.isEmpty(translatingTask)) {
             return;
         }
@@ -137,8 +129,6 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
         List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
-        translatingTask.addAll(initialTaskV2Repo.selectByStatus(5));
-
         if (CollectionUtils.isEmpty(translatingTask)) {
             return;
         }
