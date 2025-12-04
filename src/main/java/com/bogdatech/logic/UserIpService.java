@@ -327,14 +327,13 @@ public class UserIpService {
         boolean status1 = noCrawlerVO.getLanguageCodeStatus();
 
         if (langSpec != null) {
-            // 已存在记录
-            if (status1) {
+            if (!status1) {
                 langSpec.setCountValue(langSpec.getCountValue() + 1);
             }
             toUpdate.add(langSpec);
         } else {
             // 不存在记录 → 初始化
-            int initValue = status1 ? 1 : 0;
+            int initValue = status1 ? 0 : 1;
             langSpec = new UserIPCountDO(shopName, NO_LANGUAGE_CODE + langCode, initValue);
             toInsert.add(langSpec);
         }
@@ -345,13 +344,13 @@ public class UserIpService {
 
         if (currencySpec != null) {
             // 已存在记录
-            if (status2) {
+            if (!status2) {
                 currencySpec.setCountValue(currencySpec.getCountValue() + 1);
             }
             toUpdate.add(currencySpec);
         } else {
             // 不存在记录 → 初始化
-            int initValue = status2 ? 1 : 0;
+            int initValue = status2 ? 0 : 1;
             currencySpec = new UserIPCountDO(shopName, NO_CURRENCY_CODE + currencyCode, initValue);
             toInsert.add(currencySpec);
         }
