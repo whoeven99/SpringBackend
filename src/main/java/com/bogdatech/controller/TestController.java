@@ -22,6 +22,7 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
+import com.bogdatech.task.IpEmailTask;
 import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.TimeOutUtils;
@@ -77,6 +78,8 @@ public class TestController {
     private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private IpEmailTask ipEmailTask;
 
     @GetMapping("/ping")
     public String ping() {
@@ -443,8 +446,8 @@ public class TestController {
      * 手动启动自动翻译
      */
     @PutMapping("/startAuto")
-    public void startAuto(@RequestParam String source, @RequestParam String target) {
-        taskService.autoTranslatev2("ciwishop.myshopify.com", source, target);
+    public void startAuto(@RequestParam String source, @RequestParam String target, @RequestParam String shopName) {
+        taskService.autoTranslatev2(shopName, source, target);
     }
 
     // 测试glossary缓存
@@ -476,5 +479,10 @@ public class TestController {
     @GetMapping("/testFee")
     public void testFee() {
         taskService.freeTrialTaskForImage();
+    }
+
+    @GetMapping("/testEmail")
+    public void testEmail() {
+        ipEmailTask.sendEmailTask();
     }
 }

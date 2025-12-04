@@ -82,10 +82,7 @@ public class TranslateController {
     @PostMapping("/singleTextTranslateV2")
     public BaseResponse<SingleReturnVO> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
         singleTranslateVO.setShopName(shopName);
-        if (configRedisRepo.shopNameWhiteList(shopName, "singleTranslateWhiteList")) {
-            return translateV2Service.singleTextTranslate(singleTranslateVO);
-        }
-        return translateService.singleTextTranslateV2(shopName, singleTranslateVO);
+        return translateV2Service.singleTextTranslate(singleTranslateVO);
     }
 
     /**
@@ -170,28 +167,6 @@ public class TranslateController {
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
 
-    //暂停翻译
-    @DeleteMapping("/stop")
-    public void stop(@RequestParam String shopName) {
-        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
-            redisStoppedRepository.manuallyStopped(shopName);
-        } else {
-           translateService.stopTranslationManually(shopName);
-        }
-    }
-
-    //手动停止用户的翻译任务
-    @PutMapping("/stopTranslation")
-    public String stopTranslation(@RequestBody TranslateRequest request) {
-        String shopName = request.getShopName();
-        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
-            redisStoppedRepository.manuallyStopped(shopName);
-            return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
-        } else {
-            return translateService.stopTranslationManually(shopName);
-        }
-    }
-
     // 恢复翻译任务
     @PostMapping("/revertStop")
     public void continueTranslation(@RequestBody TranslateRequest request) {
@@ -256,7 +231,7 @@ public class TranslateController {
     //当支付成功后，调用该方法，将该用户的状态3，改为状态6
     @PostMapping("/updateStatus")
     public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
-        if (translatesService.updateStatus3To6(request.getShopName())){
+        if (translatesService.updateStatus3To6(request.getShopName())) {
             List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(request.getShopName());
             if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(request.getShopName())) {
                 for (InitialTaskV2DO initialTaskV2DO : list) {
@@ -266,7 +241,7 @@ public class TranslateController {
                 redisStoppedRepository.removeStoppedFlag(request.getShopName());
             }
             return new BaseResponse<>().CreateSuccessResponse(true);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
         }
     }
@@ -324,5 +299,11 @@ public class TranslateController {
             return new BaseResponse<>().CreateSuccessResponse(targetPic);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    // V2翻译的继续翻译
+    @PostMapping("/continueTranslating")
+    public BaseResponse<Object> continueTranslating(@RequestParam String shopName, @RequestParam Integer taskId) {
+        return translateV2Service.continueTranslating(shopName, taskId);
     }
 }
