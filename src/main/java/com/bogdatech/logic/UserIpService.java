@@ -160,7 +160,7 @@ public class UserIpService {
             currencyAll.setCountValue(currencyAll.getCountValue() + 1);
             toUpdate.add(currencyAll);
         } else {
-            toInsert.add(new UserIPCountDO(shopName, ALL_CURRENCY_IP_COUNT, 0));
+            toInsert.add(new UserIPCountDO(shopName, ALL_CURRENCY_IP_COUNT, 1));
         }
 
         // 3. 按 languageCode 匹配
@@ -187,7 +187,7 @@ public class UserIpService {
         if (currencySpec != null) {
             // 已存在记录
             if (!status2) {
-                currencySpec.setCountValue(currencySpec.getCountValue() + 0);
+                currencySpec.setCountValue(currencySpec.getCountValue() + 1);
             }
             toUpdate.add(currencySpec);
         } else {
