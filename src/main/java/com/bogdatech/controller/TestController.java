@@ -446,8 +446,8 @@ public class TestController {
      * 手动启动自动翻译
      */
     @PutMapping("/startAuto")
-    public void startAuto(@RequestParam String source, @RequestParam String target) {
-        taskService.autoTranslatev2("ciwishop.myshopify.com", source, target);
+    public void startAuto(@RequestParam String source, @RequestParam String target, @RequestParam String shopName) {
+        taskService.autoTranslatev2(shopName, source, target);
     }
 
     // 测试glossary缓存
