@@ -514,7 +514,7 @@ public class TranslateV2Service {
                 TypeSplitResponse typeSplitResponse = splitByType(translateTaskV2DO != null ? translateTaskV2DO.getModule() : null, resourceList);
 
                 tencentEmailService.sendFailedEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
-                        typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString());
+                        typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString(), initialTaskV2DO.getTaskType());
 
                 initialTaskV2DO.setSendEmail(true);
                 initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.STOPPED.status);
