@@ -500,7 +500,8 @@ public class TencentEmailService {
 
         // 发送邮件（如果需要）
         boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
-                        templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, user.getEmail()));
+                        templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, "bogda.official@gmail.com"));
+        appInsights.trackTrace("sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
     }
 
     /**

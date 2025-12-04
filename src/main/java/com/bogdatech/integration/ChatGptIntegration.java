@@ -69,7 +69,7 @@ public class ChatGptIntegration {
             if (chatCompletions == null) {
                 appInsights.trackTrace("FatalException chatWithGpt chatCompletions is null prompt : " +
                         prompt + "\n " + sourceText + " 用户：" + shopName);
-                return null;
+                return new Pair<>(null, 0);
             }
 
             content = chatCompletions.getChoices().get(0).getMessage().getContent();

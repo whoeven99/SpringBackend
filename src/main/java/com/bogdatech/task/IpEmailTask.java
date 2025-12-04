@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,8 @@ public class IpEmailTask {
     @Autowired
     private TencentEmailService tencentEmailService;
 
-    @Scheduled(cron = "0 0 4 ? * 6")
+    //    @Scheduled(cron = "0 0 4 ? * 6")
+    @Scheduled(cron = "0 0 4 */2 * ?")
     public void sendEmailTask() {
         List<WidgetConfigurationsDO> allIpOpenByTrue = iWidgetConfigurationsService.getAllIpOpenByTrue();
         if (allIpOpenByTrue == null || allIpOpenByTrue.isEmpty()) {
