@@ -73,6 +73,7 @@ public class TranslateController {
     }
 
     //单条文本翻译
+    // TODO 删除
     @PostMapping("/singleTextTranslate")
     public BaseResponse<Object> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
         return translateService.singleTextTranslate(singleTranslateVO);
@@ -83,6 +84,48 @@ public class TranslateController {
     public BaseResponse<SingleReturnVO> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
         singleTranslateVO.setShopName(shopName);
         return translateV2Service.singleTextTranslate(singleTranslateVO);
+    }
+
+    // 用户手动点击停止翻译
+    @PutMapping("/stopTranslatingTask")
+    public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
+        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+            redisStoppedRepository.manuallyStopped(shopName);
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        } else {
+            Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
+            if (!stopFlag) {
+                return new BaseResponse<>().CreateErrorResponse("already stopped");
+            }
+
+            // 将所有状态2的任务改成7
+            translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
+
+            // 将所有状态为0和2的task任务，改为7
+            Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
+            if (flag) {
+                return new BaseResponse<>().CreateSuccessResponse(true);
+            }
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
+    }
+
+    // 用户手动点击继续翻译
+    @PostMapping("/continueTranslating")
+    public BaseResponse<Object> continueTranslating(@RequestParam String shopName, @RequestParam Integer taskId) {
+        return translateV2Service.continueTranslating(shopName, taskId);
+    }
+
+    //当支付成功后，调用该方法，将该用户的状态3，改为状态6
+    // 支付之后，前端调用api，停止状态改为继续翻译
+    @PostMapping("/updateStatus")
+    public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
+        if (translatesService.updateStatus3To6(request.getShopName())) {
+            translateV2Service.continueTranslating(request.getShopName());
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        } else {
+            return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
+        }
     }
 
     /**
@@ -225,27 +268,6 @@ public class TranslateController {
         }
     }
 
-    @Autowired
-    private InitialTaskV2Repo initialTaskV2Repo;
-
-    //当支付成功后，调用该方法，将该用户的状态3，改为状态6
-    @PostMapping("/updateStatus")
-    public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
-        if (translatesService.updateStatus3To6(request.getShopName())) {
-            List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(request.getShopName());
-            if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(request.getShopName())) {
-                for (InitialTaskV2DO initialTaskV2DO : list) {
-                    initialTaskV2DO.setStatus(TranslateV2Service.InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                    initialTaskV2Repo.updateById(initialTaskV2DO);
-                }
-                redisStoppedRepository.removeStoppedFlag(request.getShopName());
-            }
-            return new BaseResponse<>().CreateSuccessResponse(true);
-        } else {
-            return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
-        }
-    }
-
     //用户是否选择定时任务的方法
     @PostMapping("/updateAutoTranslateByData")
     public BaseResponse<Object> updateStatusByShopName(@RequestBody AutoTranslateRequest request) {
@@ -262,33 +284,6 @@ public class TranslateController {
     }
 
     /**
-     * 停止翻译按钮
-     * 将所有状态0和状态2的任务改成7
-     */
-    @PutMapping("/stopTranslatingTask")
-    public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
-        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
-            redisStoppedRepository.manuallyStopped(shopName);
-            return new BaseResponse<>().CreateSuccessResponse(true);
-        } else {
-            Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
-            if (!stopFlag) {
-                return new BaseResponse<>().CreateErrorResponse("already stopped");
-            }
-
-            // 将所有状态2的任务改成7
-            translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
-
-            // 将所有状态为0和2的task任务，改为7
-            Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
-            if (flag) {
-                return new BaseResponse<>().CreateSuccessResponse(true);
-            }
-            return new BaseResponse<>().CreateErrorResponse(false);
-        }
-    }
-
-    /**
      * 图片翻译
      */
     @PutMapping("/imageTranslate")
@@ -299,11 +294,5 @@ public class TranslateController {
             return new BaseResponse<>().CreateSuccessResponse(targetPic);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
-    }
-
-    // V2翻译的继续翻译
-    @PostMapping("/continueTranslating")
-    public BaseResponse<Object> continueTranslating(@RequestParam String shopName, @RequestParam Integer taskId) {
-        return translateV2Service.continueTranslating(shopName, taskId);
     }
 }
