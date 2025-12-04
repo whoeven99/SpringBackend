@@ -9,11 +9,13 @@ import com.bogdatech.entity.VO.TranslationCharsVO;
 import com.bogdatech.logic.redis.OrdersRedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -37,6 +39,8 @@ public class TranslationCounterService {
     private OrdersRedisService ordersRedisService;
     @Autowired
     private ShopifyService shopifyService;
+    @Autowired
+    private IUserIpService iUserIpService;
 
     public final String ACTIVE = "ACTIVE";
 
@@ -85,20 +89,30 @@ public class TranslationCounterService {
 
             // 不添加额度, 但需要修改免费试用订阅表
             String createdAt = queryValid.getString("createdAt");
-            //用户购买订阅时间
+
+            // 用户购买订阅时间
             Instant begin = Instant.parse(createdAt);
             Timestamp beginTimestamp = Timestamp.from(begin);
-            //试用结束时间
+
+            // 试用结束时间
             Instant afterTrialDaysDays = begin.plus(trialDays, ChronoUnit.DAYS);
             Timestamp afterTrialDaysTimestamp = Timestamp.from(afterTrialDaysDays);
+
             // 获取用户是否已经是免费试用，是的话，将false改为true
             UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
             if (userTrialsDO == null) {
                 iUserTrialsService.save(new UserTrialsDO(null, shopName, beginTimestamp, afterTrialDaysTimestamp, false, null));
-                //修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
-                //同时修改额度表里面100w字符（暂定），在计划表里
+
+                // 修改额度表里面数据，用于该用户卸载，和扣额度. 暂定openaiChar为1是免费试用
+                // 同时修改额度表里面100w字符（暂定），在计划表里
                 Integer charsByPlan = iSubscriptionPlansService.getCharsByPlanName("Gift Amount");
                 boolean update = iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlan + 200000).set(TranslationCounterDO::getOpenAiChars, 1).setSql("chars = chars + " + charsByPlan));
+
+                // 初始化ip，或将ip数清零
+                iUserIpService.addOrUpdateUserIp(shopName);
+
+                // 将ip额度清零
+                iUserIpService.clearIP(shopName);
                 appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用额度添加 ：" + charsByPlan + " 是否成功： " + update);
                 return update;
             }

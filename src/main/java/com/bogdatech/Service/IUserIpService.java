@@ -9,4 +9,6 @@ public interface IUserIpService extends IService<UserIpDO> {
     UserIpDO selectByShopNameForUpdate(String shopName);
 
     Long getIpCountByShopName(String shopName);
+
+    boolean clearIP(String shopName);
 }
