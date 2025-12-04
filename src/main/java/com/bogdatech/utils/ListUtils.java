@@ -31,7 +31,7 @@ public class ListUtils {
         // 1. 提取 ALL_RESOURCES 中的顺序
         List<String> orderList = ALL_RESOURCES.stream()
                 .map(TranslateResourceDTO::getResourceType)
-                .collect(Collectors.toList());
+                .toList();
 
         // 2. 构造 name -> index 的 Map
         Map<String, Integer> orderMap = new HashMap<>();
