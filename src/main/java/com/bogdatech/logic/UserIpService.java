@@ -327,6 +327,7 @@ public class UserIpService {
         boolean status1 = noCrawlerVO.getLanguageCodeStatus();
 
         if (langSpec != null) {
+            // 已存在记录
             if (!status1) {
                 langSpec.setCountValue(langSpec.getCountValue() + 1);
             }

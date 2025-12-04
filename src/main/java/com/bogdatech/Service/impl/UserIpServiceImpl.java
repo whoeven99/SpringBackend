@@ -2,6 +2,8 @@ package com.bogdatech.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IUserIpService;
 import com.bogdatech.entity.DO.UserIpDO;
@@ -13,7 +15,7 @@ public class UserIpServiceImpl extends ServiceImpl<UserIpMapper, UserIpDO> imple
     @Override
     public Boolean addOrUpdateUserIp(String shopName) {
         //查是数据库中是否存在，存在返回true，不存在插入
-        UserIpDO userIpDO = baseMapper.selectOne(new QueryWrapper<UserIpDO>().eq("shop_name", shopName));
+        UserIpDO userIpDO = baseMapper.selectOne(new LambdaQueryWrapper<UserIpDO>().eq(UserIpDO::getShopName, shopName));
         if (userIpDO == null) {
             UserIpDO newUserIpDO = new UserIpDO();
             newUserIpDO.setShopName(shopName);
@@ -31,6 +33,12 @@ public class UserIpServiceImpl extends ServiceImpl<UserIpMapper, UserIpDO> imple
     @Override
     public Long getIpCountByShopName(String shopName) {
         return baseMapper.selectOne(new LambdaQueryWrapper<UserIpDO>().eq(UserIpDO::getShopName, shopName)).getTimes();
+    }
+
+    @Override
+    public boolean clearIP(String shopName) {
+        return baseMapper.update(new LambdaUpdateWrapper<UserIpDO>().eq(UserIpDO::getShopName, shopName)
+                .set(UserIpDO::getTimes, 0).set(UserIpDO::getFirstEmail, 0).set(UserIpDO::getSecondEmail, 0)) > 0;
     }
 
 }
