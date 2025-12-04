@@ -14,6 +14,7 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.utils.ApiCodeUtils;
 import com.bogdatech.utils.ResourceTypeUtils;
+import com.bogdatech.utils.ResourceTypeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -171,6 +172,7 @@ public class TencentEmailService {
         // 通过shopName获取翻译到那个文本
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
         TypeSplitResponse typeSplitResponse = ResourceTypeUtils.splitByType(resourceType, resourceList);
+
         appInsights.trackTrace("translateFailEmail typeSplitResponse : " + typeSplitResponse + " resourceList : " + resourceList + " resourceType : " + resourceType);
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());

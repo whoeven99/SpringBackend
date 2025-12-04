@@ -338,7 +338,7 @@ public class TestController {
      * 加密后输出数据
      */
     @GetMapping("/testEncryptMD5")
-    public String testEncryptMD5(@RequestParam String source) {
+    public String testEncryptMD5(@RequestBody String source) {
         return AESUtils.encryptMD5(source);
     }
 
