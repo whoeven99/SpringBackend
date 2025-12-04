@@ -1,6 +1,5 @@
 package com.bogdatech.task;
 
-import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.logic.TaskService;
@@ -21,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -51,8 +52,6 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     private TranslateV2Service translateV2Service;
     @Autowired
     private InitialTaskV2Repo initialTaskV2Repo;
-    @Autowired
-    private RedisStoppedRepository redisStoppedRepository;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(40);
     private final Set<String> initializingShops = new HashSet<>();
@@ -61,100 +60,62 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 
     public static TelemetryClient appInsights = new TelemetryClient();
 
-    @Scheduled(fixedDelay = 30 * 1000)
-    public void initialToTranslateTask() {
-//        appInsights.trackTrace("TranslateTaskV2 start INIT");
-        List<InitialTaskV2DO> initTaskList = initialTaskV2Repo.selectByStatus(0);
-        if (CollectionUtils.isEmpty(initTaskList)) {
+    private <T> void process(int status,
+                             Function<InitialTaskV2DO, T> groupByFunc,
+                             Set<T> shopsSet,
+                             String statusName,
+                             Consumer<InitialTaskV2DO> taskConsumer) {
+        List<InitialTaskV2DO> tasks = initialTaskV2Repo.selectByStatus(status);
+        if (CollectionUtils.isEmpty(tasks)) {
             return;
         }
 
-        // 按 shopName 分组
-        Map<String, List<InitialTaskV2DO>> tasksByShop = initTaskList.stream()
-                .collect(Collectors.groupingBy(InitialTaskV2DO::getShopName));
+        // 按 groupByFunc 分组
+        Map<T, List<InitialTaskV2DO>> tasksByGroup = tasks.stream()
+                .collect(Collectors.groupingBy(groupByFunc));
 
-//        appInsights.trackTrace("TranslateTaskV2 INITIATING shop: " + initializingShops);
-        // 不同shopName并发处理，相同shopName顺序处理
-        for (Map.Entry<String, List<InitialTaskV2DO>> entry : tasksByShop.entrySet()) {
-            String shopName = entry.getKey();
-            if (initializingShops.contains(shopName)) { // 本地内存简单做个加锁，这样后续的task  1.不会重复 2.不会卡住
+        // 不同组并发处理，相同组顺序处理
+        for (Map.Entry<T, List<InitialTaskV2DO>> entry : tasksByGroup.entrySet()) {
+            T groupKey = entry.getKey();
+            if (shopsSet.contains(groupKey)) { // 本地内存简单做个加锁，这样后续的task  1.不会重复 2.不会卡住
                 continue;
             }
             executorService.submit(() -> {
-                initializingShops.add(shopName);
-                List<InitialTaskV2DO> tasks = entry.getValue();
-                appInsights.trackTrace("TranslateTaskV2 start INIT shop: " + shopName + " with " + tasks.size() + " tasks.");
+                shopsSet.add(groupKey);
+                List<InitialTaskV2DO> groupTasks = entry.getValue();
+                appInsights.trackTrace("TranslateTaskV2 start " + statusName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
 
-                for (InitialTaskV2DO initialTaskV2DO : tasks) {
-                    // 断电问题，在里面的needTranslate处理
-                    translateV2Service.initialToTranslateTask(initialTaskV2DO);
-                    appInsights.trackTrace("TranslateTaskV2 INIT success for shop: " + shopName + ", initialTaskId: " + initialTaskV2DO.getId());
+                for (InitialTaskV2DO initialTaskV2DO : groupTasks) {
+                    taskConsumer.accept(initialTaskV2DO);
+                    appInsights.trackTrace("TranslateTaskV2 " + statusName + " success for group: " + groupKey + ", initialTaskId: " + initialTaskV2DO.getId());
                 }
-                initializingShops.remove(shopName);
+                shopsSet.remove(groupKey);
             });
         }
+    }
+
+    @Scheduled(fixedDelay = 30 * 1000)
+    public void initialToTranslateTask() {
+        process(0,
+                InitialTaskV2DO::getShopName,
+                initializingShops, "INIT",
+                translateV2Service::initialToTranslateTask);
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
-        List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(1);
-        if (CollectionUtils.isEmpty(translatingTask)) {
-            return;
-        }
-
-        // 按 initialId 分组
-        Map<Integer, List<InitialTaskV2DO>> tasksByInitialId = translatingTask.stream()
-                .collect(Collectors.groupingBy(InitialTaskV2DO::getId));
-
-        for (Map.Entry<Integer, List<InitialTaskV2DO>> entry : tasksByInitialId.entrySet()) {
-            Integer initialId = entry.getKey();
-            if (translatingInitialIds.contains(initialId)) { // 本地内存简单做个加锁，这样后续的task  1.不会重复 2.不会卡住
-                continue;
-            }
-            executorService.submit(() -> {
-                translatingInitialIds.add(initialId);
-                List<InitialTaskV2DO> tasks = entry.getValue();
-                appInsights.trackTrace("TranslateTaskV2 start TRANSLATE initialTask: " + initialId + " with " + tasks.size() + " tasks.");
-
-                for (InitialTaskV2DO initialTaskV2DO : tasks) {
-                    // 断电
-                    translateV2Service.translateEachTask(initialTaskV2DO);
-                    appInsights.trackTrace("TranslateTaskV2 TRANSLATE success for shop: " + initialTaskV2DO.getShopName() + ", initialTaskId: " + initialId);
-                }
-                translatingInitialIds.remove(initialId);
-            });
-        }
+        process(1,
+                InitialTaskV2DO::getId,
+                translatingInitialIds, "TRANSLATE",
+                translateV2Service::translateEachTask);
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
-        List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(2);
-        if (CollectionUtils.isEmpty(translatingTask)) {
-            return;
-        }
-
-        // 按 shopName 分组，严格控制shopify的shopName维度的api qps
-        Map<String, List<InitialTaskV2DO>> tasksByShop = translatingTask.stream()
-                .collect(Collectors.groupingBy(InitialTaskV2DO::getShopName));
-
-        for (Map.Entry<String, List<InitialTaskV2DO>> entry : tasksByShop.entrySet()) {
-            String shopName = entry.getKey();
-            if (savingShops.contains(shopName)) { // 本地内存简单做个加锁，这样后续的task  1.不会重复 2.不会卡住
-                continue;
-            }
-            executorService.submit(() -> {
-                savingShops.add(shopName);
-                List<InitialTaskV2DO> tasks = entry.getValue();
-                appInsights.trackTrace("TranslateTaskV2 start SAVING SHOPIFY shop: " + shopName + " with " + tasks.size() + " tasks.");
-
-                for (InitialTaskV2DO initialTaskV2DO : tasks) {
-                    // 断电
-                    translateV2Service.saveToShopify(initialTaskV2DO);
-                    appInsights.trackTrace("TranslateTaskV2 SAVED SHOPIFY success for shop: " + shopName + ", initialTaskId: " + initialTaskV2DO.getId());
-                }
-                savingShops.remove(shopName);
-            });
-        }
+        process(2,
+                InitialTaskV2DO::getShopName,
+                savingShops, "SAVE SHOPIFY",
+                translateV2Service::saveToShopify);
     }
 
     // 定时30秒扫描一次

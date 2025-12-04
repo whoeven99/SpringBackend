@@ -326,6 +326,7 @@ public class TranslateService {
 
     /**
      * 单条文本翻译，判断是否在翻译逻辑里面，是否额度充足，扣额度，返回翻译后的文本
+     * TODO 删除
      */
     public BaseResponse<Object> singleTextTranslate(SingleTranslateVO singleTranslateVO) {
         //判断是否为空

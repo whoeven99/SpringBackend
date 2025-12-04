@@ -73,12 +73,27 @@ public class TranslateV2Service {
     private ITranslatesService iTranslatesService;
 
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
-        // 修改用户对应task的状态为1
-        initialTaskV2Repo.updateStatusByTask(taskId, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
+        if (initialTaskV2DO != null) {
+            initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+            redisStoppedRepository.removeStoppedFlag(shopName);
+            // return true;
+        }
+        // 否则 操作失败，前端展示错误码
 
         // 删除用户停止标识
-        redisStoppedRepository.removeStoppedFlag(shopName);
         return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    public void continueTranslating(String shopName) {
+        List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(shopName);
+        if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(shopName)) {
+            redisStoppedRepository.removeStoppedFlag(shopName);
+            for (InitialTaskV2DO initialTaskV2DO : list) {
+                initialTaskV2DO.setStatus(TranslateV2Service.InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+                initialTaskV2Repo.updateById(initialTaskV2DO);
+            }
+        }
     }
 
     // 单条翻译入口
@@ -239,7 +254,13 @@ public class TranslateV2Service {
 
     public void createInitialTask(String shopName, String source, String[] targets,
                                   List<String> moduleList, Boolean isCover, String taskType) {
-        initialTaskV2Repo.deleteByShopNameAndSourceAndStatus4And5(shopName, source);
+        if ("auto".equals(taskType)) {
+            // 自动翻译的新建任务逻辑
+            initialTaskV2Repo.deleteByShopNameSourceTarget(shopName, source, targets[0]);
+        } else if ("manual".equals(taskType)) {
+            // 手动翻译，目前把同一个source的任务都删掉
+            initialTaskV2Repo.deleteByShopNameSource(shopName, source);
+        }
         redisStoppedRepository.removeStoppedFlag(shopName);
 
         for (String target : targets) {

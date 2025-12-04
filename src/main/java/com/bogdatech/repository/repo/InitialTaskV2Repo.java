@@ -26,6 +26,11 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
+    public InitialTaskV2DO selectById(Integer taskId) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getId, taskId));
+    }
+
     public List<InitialTaskV2DO> selectByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
@@ -61,21 +66,22 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
         return baseMapper.updateById(initialTaskV2DO) > 0;
     }
 
-    public boolean updateStatusByTask(Integer taskId, Integer status) {
-        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().eq(InitialTaskV2DO::getId, taskId)
-                .set(InitialTaskV2DO::getStatus, status)) > 0;
+    public boolean deleteByShopNameSourceTarget(String shopName, String source, String target) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getSource, source)
+                .eq(InitialTaskV2DO::getTarget, target)
+                .eq(InitialTaskV2DO::getIsDeleted, false)
+                .set(InitialTaskV2DO::getIsDeleted, true)
+        ) > 0;
     }
 
-    public boolean deleteByShopNameAndSourceAndStatus4And5(String shopName, String source) {
-        return baseMapper.update(
-                new LambdaUpdateWrapper<InitialTaskV2DO>()
-                        .eq(InitialTaskV2DO::getShopName, shopName)
-                        .eq(InitialTaskV2DO::getSource, source)
-                        .and(w -> w.eq(InitialTaskV2DO::getStatus, 4)
-                                .or()
-                                .eq(InitialTaskV2DO::getStatus, 5))
-                        .eq(InitialTaskV2DO::getIsDeleted, false)
-                        .set(InitialTaskV2DO::getIsDeleted, true)
+    public boolean deleteByShopNameSource(String shopName, String source) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getSource, source)
+                .eq(InitialTaskV2DO::getIsDeleted, false)
+                .set(InitialTaskV2DO::getIsDeleted, true)
         ) > 0;
     }
 }
