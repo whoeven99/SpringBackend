@@ -46,7 +46,7 @@ public class WidgetConfigurationsController {
 
     //供前端查询数据API
     @PostMapping("/getData")
-    public BaseResponse<Object> getData(@RequestParam String shopName) {
-        return userIpService.getWidgetConfigurations(shopName);
+    public BaseResponse<Object> getData(@RequestBody WidgetConfigurationsDO widgetConfigurationsDO) {
+        return userIpService.getWidgetConfigurations(widgetConfigurationsDO.getShopName());
     }
 }
