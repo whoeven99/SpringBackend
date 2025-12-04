@@ -338,7 +338,7 @@ public class TestController {
      * 加密后输出数据
      */
     @GetMapping("/testEncryptMD5")
-    public String testEncryptMD5(@RequestParam String source) {
+    public String testEncryptMD5(@RequestBody String source) {
         return AESUtils.encryptMD5(source);
     }
 
@@ -446,8 +446,8 @@ public class TestController {
      * 手动启动自动翻译
      */
     @PutMapping("/startAuto")
-    public void startAuto(@RequestParam String source, @RequestParam String target) {
-        taskService.autoTranslatev2("ciwishop.myshopify.com", source, target);
+    public void startAuto(@RequestParam String source, @RequestParam String target, @RequestParam String shopName) {
+        taskService.autoTranslatev2(shopName, source, target);
     }
 
     // 测试glossary缓存

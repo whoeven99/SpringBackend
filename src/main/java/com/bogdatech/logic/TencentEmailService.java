@@ -14,6 +14,7 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.utils.ApiCodeUtils;
 import com.bogdatech.utils.ResourceTypeUtils;
+import com.bogdatech.utils.ResourceTypeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -171,6 +172,7 @@ public class TencentEmailService {
         // 通过shopName获取翻译到那个文本
         String resourceType = translatesService.getResourceTypeByshopNameAndTargetAndSource(shopName, target, source);
         TypeSplitResponse typeSplitResponse = ResourceTypeUtils.splitByType(resourceType, resourceList);
+
         appInsights.trackTrace("translateFailEmail typeSplitResponse : " + typeSplitResponse + " resourceList : " + resourceList + " resourceType : " + resourceType);
         templateData.put("translated_content", typeSplitResponse.getBefore().toString());
         templateData.put("remaining_content", typeSplitResponse.getAfter().toString());
@@ -249,7 +251,7 @@ public class TencentEmailService {
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, flag ? 1 : 0));
     }
 
-    public boolean sendSuccessEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, Integer usedToken, Integer totalToken) {
+    public boolean sendSuccessEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, Integer usedToken, Integer totalToken, String taskType) {
         // 发送的具体内容
         Map<String, String> templateData = new HashMap<>();
         setCommonTemplate(templateData, shopName, target, translateTime, usedTokenByTask);
@@ -260,11 +262,16 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         templateData.put("remaining_credits", totalToken < usedToken ? "0" : formatter.format(totalToken - usedToken));
 
+        if ("auto".equals(taskType)) {
+            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData,
+                    SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, "bogda.official@gmail.com"));
+        }
+
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData,
                 SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 
-    public boolean sendFailedEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, String translatedModules, String unTranslatedModules) {
+    public boolean sendFailedEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, String translatedModules, String unTranslatedModules, String taskType) {
         // 发送的具体内容
         Map<String, String> templateData = new HashMap<>();
         setCommonTemplate(templateData, shopName, target, translateTime, usedTokenByTask);
@@ -275,6 +282,11 @@ public class TencentEmailService {
         // 获取用户已翻译的和未翻译的文本
         templateData.put("translated_content", translatedModules);
         templateData.put("remaining_content", unTranslatedModules);
+
+        if ("auto".equals(taskType)) {
+            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData,
+                    SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, "bogda.official@gmail.com"));
+        }
 
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData,
                 TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));

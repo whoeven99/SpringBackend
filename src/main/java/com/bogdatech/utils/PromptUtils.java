@@ -37,7 +37,7 @@ public class PromptUtils {
                                 {"1": "translated text1", "2": "translated text2",...}
                                 Start your translation now.
                 """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", target)
+        return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(target))
                 .replace("{{SOURCE_LANGUAGE_LIST}}", JsonUtils.objectToJson(glossaryTextMap))
                 .replace("{{glossary}}", JsonUtils.objectToJson(usedGlossaryMap));
     }
@@ -64,7 +64,7 @@ public class PromptUtils {
                 {"1": "translated text1", "2": "translated text2",...}
                 Start your translation now.
                 """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", target)
+        return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(target))
                 .replace("{{SOURCE_LANGUAGE_LIST}}", JsonUtils.objectToJson(originalTextMap));
     }
 
@@ -96,7 +96,7 @@ public class PromptUtils {
                 
                 Start your translation now.
                 """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", targetLanguage)
+        return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(targetLanguage))
                 .replace("{{SOURCE_TEXT}}", text)
                 .replace("{{TERM_RULES}}", JsonUtils.objectToJson(usedGlossaryMap));
     }
@@ -123,7 +123,7 @@ public class PromptUtils {
                 
                 Start your translation now.
                 """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", targetLanguage)
+        return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(targetLanguage))
                 .replace("{{SOURCE_TEXT}}", text);
     }
 }

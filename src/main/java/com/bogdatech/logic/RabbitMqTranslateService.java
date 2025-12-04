@@ -74,11 +74,9 @@ public class RabbitMqTranslateService {
         counter.addChars(usedChars);
 
         Map<String, Object> glossaryMap = glossaryService.getGlossaryByShopName(shopName, target);
-        appInsights.trackTrace("判断是否有同义词 " + shopName);
 
         String languagePackId = aiLanguagePackService.getCategoryByDescription(shopName, accessToken, counter
                 , limitChars, target, MANUAL);
-        appInsights.trackTrace("获取目前所使用的AI语言包 " + shopName);
 
         CharacterCountUtils allTasks = new CharacterCountUtils();
         // 处理每个翻译资源
