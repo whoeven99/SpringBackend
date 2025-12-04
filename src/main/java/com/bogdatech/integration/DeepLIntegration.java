@@ -1,7 +1,7 @@
 package com.bogdatech.integration;
 
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.ConfigUtils;
@@ -21,7 +21,7 @@ public class DeepLIntegration {
     private static final String FREE_API_URL = "https://api-free.deepl.com/v2/translate";
     private static final String API_URL = "https://api.deepl.com/v2/translate";
     @Autowired
-    private ITranslationCounterService translationCounterService;
+    private UserTokenService userTokenService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
 
@@ -59,10 +59,9 @@ public class DeepLIntegration {
             AppInsightsUtils.printTranslateCost(totalToken, totalToken, totalToken);
             appInsights.trackTrace("clickTranslation translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
             if (isSingleFlag) {
-                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+                userTokenService.addUsedToken(shopName, totalToken);
             } else {
-//                translationCounterRedisService.increaseTask(generateProcessKey(shopName, target), totalToken);
-                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+                userTokenService.addUsedToken(shopName, totalToken);
                 translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
 
@@ -86,7 +85,7 @@ public class DeepLIntegration {
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
             appInsights.trackTrace("translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
-            translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            userTokenService.addUsedToken(shopName, totalToken);
             counter.addChars(totalToken);
             return targetText;
         } catch (Exception e) {

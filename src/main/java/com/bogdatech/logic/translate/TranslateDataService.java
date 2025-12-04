@@ -1,12 +1,12 @@
 package com.bogdatech.logic.translate;
 
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -61,7 +61,7 @@ public class TranslateDataService {
     @Autowired
     private ChatGptIntegration chatGptIntegration;
     @Autowired
-    private ITranslationCounterService translationCounterService;
+    private UserTokenService userTokenService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
 
@@ -886,9 +886,9 @@ public class TranslateDataService {
         }
 
         if (isSingleFlag) {
-            translationCounterService.updateAddUsedCharsByShopName(shopName, pair.getSecond(), limitChars);
+            userTokenService.addUsedToken(shopName, pair.getSecond());
         } else {
-            translationCounterService.updateAddUsedCharsByShopName(shopName, pair.getSecond(), limitChars);
+            userTokenService.addUsedToken(shopName, pair.getSecond());
             translationCounterRedisService.increaseLanguage(shopName, target, pair.getSecond(), translateType);
         }
         counter.addChars(pair.getSecond());
@@ -1285,7 +1285,7 @@ public class TranslateDataService {
                                  boolean isSingleFlag,
                                  String translationModel,
                                  String translateType) {
-        String prompt = PlaceholderUtils.getNewestPrompt(target, JsonUtils.objectToJson(batch));
+        String prompt = PlaceholderUtils.getNewestPrompt(getLanguageName(target), JsonUtils.objectToJson(batch));
         appInsights.trackTrace("translateAllMap 用户： " + shopName + " 翻译类型 : HTML 提示词 : " + prompt + " 待翻译文本 : " + batch.size() + "条");
 
         LinkedHashMap<String, String> tempResult = processBatch(batch, requestShopName, shopName,

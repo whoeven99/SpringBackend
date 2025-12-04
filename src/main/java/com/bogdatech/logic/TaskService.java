@@ -206,7 +206,7 @@ public class TaskService {
     // 获取用户订阅选项并判断是否添加额度
     public void addCharsByUserData(UserPriceRequest userPriceRequest) {
         // 根据新的集合获取这个订阅计划的信息
-        JSONObject node = analyzeOrderData(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), userPriceRequest.getSubscriptionId());
+        JSONObject node = analyzeOrderData(userPriceRequest.getSubscriptionId(), userPriceRequest.getAccessToken(), userPriceRequest.getShopName());
         if (node == null) {
             appInsights.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 获取不到计划的相关数据，获取为null " + userPriceRequest);
             return;
@@ -369,7 +369,7 @@ public class TaskService {
         }
 
         appInsights.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
-        translateV2Service.createInitialTask(shopName, source, new String[]{target}, AUTO_TRANSLATE_MAP, false);
+        translateV2Service.createInitialTask(shopName, source, new String[]{target}, AUTO_TRANSLATE_MAP, false, "auto");
         appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
         return true;
     }

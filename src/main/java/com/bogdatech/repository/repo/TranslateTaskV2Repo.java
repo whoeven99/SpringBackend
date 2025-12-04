@@ -1,6 +1,5 @@
 package com.bogdatech.repository.repo;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.repository.entity.TranslateTaskV2DO;
@@ -12,59 +11,44 @@ import java.util.List;
 
 @Service
 public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
-    public Long selectCountByInitialId(Integer initialTaskId) {
+    public TranslateTaskV2DO selectLastTranslateOne(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.eq("initial_task_id", initialTaskId)
-                .eq("is_deleted", false);
-        return baseMapper.selectCount(wrapper);
-    }
-
-    public Long selectTranslatedCountByInitialId(Integer initialTaskId) {
-        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.eq("initial_task_id", initialTaskId)
+        wrapper.select("TOP 1 *")
+                .eq("initial_task_id", initialTaskId)
                 .eq("has_target_value", true)
-                .eq("is_deleted", false);
-        return baseMapper.selectCount(wrapper);
-    }
-
-    public Long selectSavedCountByInitialId(Integer initialTaskId) {
-        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.eq("initial_task_id", initialTaskId)
-                .eq("saved_to_shopify", true)
-                .eq("is_deleted", false);
-        return baseMapper.selectCount(wrapper);
+                .eq("is_deleted", false)
+                .orderByDesc("created_at");
+        List<TranslateTaskV2DO> list = baseMapper.selectList(wrapper);
+        return list.isEmpty() ? null : list.get(0);
     }
 
     public TranslateTaskV2DO selectOneByInitialTaskIdAndNotSaved(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP 1 *")
                 .eq("initial_task_id", initialTaskId)
+                .eq("has_target_value", true)
                 .eq("saved_to_shopify", false)
                 .eq("is_deleted", false);
         List<TranslateTaskV2DO> list = baseMapper.selectList(wrapper);
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public List<TranslateTaskV2DO> selectByResourceIdWithLimit(String resourceId) {
+    public List<TranslateTaskV2DO> selectByInitialTaskIdAndResourceIdWithLimit(Integer initialTaskId, String resourceId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP " + 10 + " *")
+                .eq("initial_task_id", initialTaskId)
                 .eq("resource_id", resourceId)
+                .eq("has_target_value", true)
                 .eq("saved_to_shopify", false)
                 .eq("is_deleted", false);
         return baseMapper.selectList(wrapper);
-    }
-
-    public List<TranslateTaskV2DO> selectByResourceId(String resourceId) {
-        return baseMapper.selectList(new LambdaQueryWrapper<TranslateTaskV2DO>()
-                .eq(TranslateTaskV2DO::getResourceId, resourceId)
-                .eq(TranslateTaskV2DO::getIsDeleted, false));
     }
 
     public TranslateTaskV2DO selectOneByInitialTaskIdAndEmptyValue(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP 1 *")
                 .eq("initial_task_id", initialTaskId)
-                .eq("target_value", "")
+                .eq("has_target_value", false)
                 .eq("is_deleted", false);
         List<TranslateTaskV2DO> list = baseMapper.selectList(wrapper);
         return list.isEmpty() ? null : list.get(0);
@@ -76,9 +60,8 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         wrapper.select("TOP " + limit + " *")
                 .eq("initial_task_id", initialTaskId)
                 .eq("type", type)
-                .eq("target_value", "")
+                .eq("has_target_value", false)
                 .eq("is_deleted", false);
-
         return baseMapper.selectList(wrapper);
     }
 

@@ -15,15 +15,12 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.entity.VO.IpRedirectionVO;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
 import com.bogdatech.repository.repo.UserIPRedirectionRepo;
-import com.bogdatech.mapper.UserIpMapper;
-import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.logic.token.UserTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
@@ -40,6 +37,9 @@ public class UserIpService {
     private UserIPRedirectionRepo userIPRedirectionRepo;
     @Autowired
     private IWidgetConfigurationsService iWidgetConfigurationsService;
+    @Autowired
+    private UserTokenService userTokenService;
+
 
     /**
      * 检查额度是否足够，足够+1. 到达相关百分比，发邮件
@@ -89,7 +89,6 @@ public class UserIpService {
         if (currentTimes > freeIp) {
             //加锁查询检查用户额度是否足够
             TranslationCounterDO translationCounterDO = iTranslationCounterService.getOneForUpdate(shopName);
-//            appInsights.trackTrace("translationCounterDO = " + translationCounterDO);
             if (translationCounterDO == null) {
                 return false;
             }
@@ -101,7 +100,7 @@ public class UserIpService {
 //                userIpDO.setTimes(currentTimes + 1);
                 userIpDO.setAllTimes(userIpDO.getAllTimes() + 1);
                 iUserIpService.updateById(userIpDO);
-                iTranslationCounterService.updateById(translationCounterDO);
+                userTokenService.addUsedToken(shopName, 100);
                 return true;
             } else {
                 return false;

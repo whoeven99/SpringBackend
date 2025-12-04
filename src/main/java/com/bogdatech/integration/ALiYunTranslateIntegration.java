@@ -16,9 +16,9 @@ import com.alibaba.dashscope.tokenizers.TokenizerFactory;
 import com.aliyun.alimt20181012.Client;
 import com.aliyun.alimt20181012.models.*;
 import com.bogdatech.Service.IAPGUserCounterService;
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.PCApp.PCUserPicturesService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.repository.repo.PCUsersRepo;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -39,13 +39,13 @@ import static com.bogdatech.utils.TimeOutUtils.*;
 @Component
 public class ALiYunTranslateIntegration {
     @Autowired
-    private ITranslationCounterService translationCounterService;
-    @Autowired
     private IAPGUserCounterService iapgUserCounterService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private PCUsersRepo pcUsersRepo;
+    @Autowired
+    private UserTokenService userTokenService;
 
     // 根据语言代码切换模型
     public static String switchModel(String languageCode) {
@@ -126,10 +126,10 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("singleTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
-            if (isSingleFlag){
-                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
-            }else {
-                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            if (isSingleFlag) {
+                userTokenService.addUsedToken(shopName, totalToken);
+            } else {
+                userTokenService.addUsedToken(shopName, totalToken);
                 translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
 
@@ -234,7 +234,7 @@ public class ALiYunTranslateIntegration {
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
             if (call == null) {
-                return null;
+                return new Pair<>(null, 0);
             }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
 
@@ -308,9 +308,9 @@ public class ALiYunTranslateIntegration {
             appInsights.trackTrace("userTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             if (isSingleFlag) {
-                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+                userTokenService.addUsedToken(shopName, totalToken);
             } else {
-                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+                userTokenService.addUsedToken(shopName, totalToken);
                 translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
 
@@ -373,10 +373,10 @@ public class ALiYunTranslateIntegration {
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("callWithMessageMT 用户： " + shopName + " token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
-            if (isSingleFlag){
-                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
-            }else {
-                translationCounterService.updateAddUsedCharsByShopName(shopName, totalToken, limitChars);
+            if (isSingleFlag) {
+                userTokenService.addUsedToken(shopName, totalToken);
+            } else {
+                userTokenService.addUsedToken(shopName, totalToken);
                 translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
             countUtils.addChars(totalToken);
@@ -429,9 +429,9 @@ public class ALiYunTranslateIntegration {
 
             TranslateImageResponseBody body = translateImageResponse.getBody();
 
-            if (TRANSLATE_APP.equals(appModel)){
-                translationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
-            }else {
+            if (TRANSLATE_APP.equals(appModel)) {
+                userTokenService.addUsedToken(shopName, PIC_FEE);
+            } else {
                 pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE);
             }
             targetPicUrl = body.getData().finalImageUrl;
