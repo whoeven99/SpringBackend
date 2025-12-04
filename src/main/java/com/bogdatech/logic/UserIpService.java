@@ -11,30 +11,21 @@ import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import com.bogdatech.entity.VO.IncludeCrawlerVO;
 import com.bogdatech.entity.VO.NoCrawlerVO;
 import com.bogdatech.entity.VO.WidgetReturnVO;
-import com.bogdatech.entity.VO.IncludeCrawlerVO;
-import com.bogdatech.entity.VO.NoCrawlerVO;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.UserIPCountDO;
 import com.bogdatech.repository.repo.UserIPCountRepo;
-import com.bogdatech.mapper.UserIpMapper;
 import com.bogdatech.logic.token.UserTokenService;
-import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.entity.VO.IpRedirectionVO;
 import com.bogdatech.repository.entity.UserIPRedirectionDO;
 import com.bogdatech.repository.repo.UserIPRedirectionRepo;
-import com.bogdatech.logic.token.UserTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
@@ -133,11 +124,6 @@ public class UserIpService {
         return iUserIpService.updateById(userIpDO);
     }
 
-    public BaseResponse<Object> includeCrawlerPrintLog(String shopName, IncludeCrawlerVO includeCrawlerVO) {
-        appInsights.trackTrace(shopName + " " + includeCrawlerVO.getUaInformation() + " 原因 " + includeCrawlerVO.getUaReason());
-        return new BaseResponse<>().CreateSuccessResponse(true);
-    }
-
     public BaseResponse<Object> noCrawlerPrintLog(String shopName, NoCrawlerVO noCrawlerVO) {
         appInsights.trackTrace("状态码：" + noCrawlerVO.getStatus() + " , " + shopName + " 客户ip定位： " + noCrawlerVO.getUserIp()
                 + " , 语言代码： " + noCrawlerVO.getLanguageCode() + " , 是否包含该语言： " + noCrawlerVO.getLanguageCodeStatus()
@@ -228,21 +214,6 @@ public class UserIpService {
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
-    public BaseResponse<Object> noCrawlerPrintLog(String shopName, NoCrawlerVO noCrawlerVO) {
-        appInsights.trackTrace("状态码：" + noCrawlerVO.getStatus() + " , " + shopName + " 客户ip定位： " + noCrawlerVO.getUserIp()
-                + " , 语言代码： " + noCrawlerVO.getLanguageCode() + " , 是否包含该语言： " + noCrawlerVO.getLanguageCodeStatus()
-                + " , 货币代码： " + noCrawlerVO.getCurrencyCode() + " , 国家代码： " + noCrawlerVO.getCountryCode() + " , 是否包含该市场： "
-                + noCrawlerVO.getCurrencyCodeStatus() + " , checkUserIp接口花费时间： " + noCrawlerVO.getCostTime() + " , ipApi接口花费时间： " + noCrawlerVO.getIpApiCostTime()
-                + " , 错误信息： " + noCrawlerVO.getErrorMessage());
-
-        // redis存储对应数据 计数
-        // 存储不包含该语言的数据
-
-        // 存储不包含该货币的数据
-
-
-        return new BaseResponse<>().CreateSuccessResponse(true);
-    }
     /**
      * 批量存储ip跳转数据
      */
