@@ -11,6 +11,7 @@ import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.AidgeIntegration;
 import com.bogdatech.integration.HunYuanBucketIntegration;
 import com.bogdatech.integration.HuoShanIntegration;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.repo.PCUserPicturesRepo;
 import com.bogdatech.repository.repo.PCUsersRepo;
@@ -39,7 +40,7 @@ public class PCUserPicturesService {
     @Autowired
     private HuoShanIntegration huoShanIntegration;
     @Autowired
-    private ITranslationCounterService iTranslationCounterService;
+    private UserTokenService userTokenService;
 
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
@@ -152,7 +153,7 @@ public class PCUserPicturesService {
         if (modelType == 1) {
             targetPic = aidgeIntegration.aidgeStandPictureTranslate(shopName, imageTranslateVO.getImageUrl()
                     , imageTranslateVO.getSourceCode(), imageTranslateVO.getTargetCode(), maxCharsByShopName, AidgeIntegration.PICTURE_APP);
-        }else if (modelType == 2) {
+        } else if (modelType == 2) {
             targetPic = huoShanImageTranslate(imageUrl, shopName, AidgeIntegration.PICTURE_APP, targetCode, maxCharsByShopName);
         }
 
@@ -251,9 +252,9 @@ public class PCUserPicturesService {
         byte[] bytes = huoShanIntegration.huoShanImageTranslate(imageUrl, languageCode);
 
         // 计算额度
-        if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
-            iTranslationCounterService.updateAddUsedCharsByShopName(shopName, TranslateConstants.PIC_FEE, limitChars);
-        }else {
+        if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)) {
+            userTokenService.addUsedToken(shopName, TranslateConstants.PIC_FEE);
+        } else {
             pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE);
         }
 

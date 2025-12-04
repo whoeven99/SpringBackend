@@ -32,6 +32,4 @@ public interface TranslationCounterMapper extends BaseMapper<TranslationCounterD
     @Select("SELECT * FROM TranslationCounter WHERE shop_name = #{shopName}")
     TranslationCounterDO getOneForUpdate(String shopName);
 
-    @Update("UPDATE TranslationCounter SET used_chars = used_chars + #{usedChars} WHERE shop_name = #{shopName} AND used_chars <= #{maxChars}")
-    Boolean updateAddUsedCharsByShopName(String shopName, Integer usedChars, Integer maxChars);
 }

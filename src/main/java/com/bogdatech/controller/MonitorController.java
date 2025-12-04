@@ -7,6 +7,7 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
+import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
@@ -42,6 +43,8 @@ public class MonitorController {
     private TranslateProgressService translateProgressService;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
+    @Autowired
+    private RedisStoppedRepository redisStoppedRepository;
 
     @GetMapping("/getTable")
     public Map<String, Object> getTable(@RequestParam String shopName) {
@@ -115,6 +118,12 @@ public class MonitorController {
             Map<String, String> taskMap =  translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
             taskMap.put("task_type", initialTaskV2DO.getTaskType());
             taskMap.put("status", initialTaskV2DO.getStatus().toString());
+            if (initialTaskV2DO.getStatus().equals(5)) {
+                boolean isTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName());
+                if (isTokenLimit) {
+                    taskMap.put("status", "6");
+                }
+            }
             taskMap.put("send_email", initialTaskV2DO.isSendEmail() ? "1" : "0");
             responseMap.put("" + initialTaskV2DO.getId(), taskMap);
         }

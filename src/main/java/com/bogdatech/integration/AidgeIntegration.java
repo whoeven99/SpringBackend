@@ -3,8 +3,8 @@ package com.bogdatech.integration;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.logic.PCApp.PCUserPicturesService;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.response.SignResponse;
 import com.bogdatech.repository.repo.PCUsersRepo;
 import com.bogdatech.utils.ConfigUtils;
@@ -54,7 +54,7 @@ public class AidgeIntegration {
     @Autowired
     private PCUsersRepo pcUsersRepo;
     @Autowired
-    private ITranslationCounterService iTranslationCounterService;
+    private UserTokenService userTokenService;
     public static String PICTURE_APP = "PICTURE_APP";
     // 测试基础调用，看是否成功
     public String aidgeStandPictureTranslate(String shopName, String imageUrl, String sourceCode, String targetCode, Integer limitChars, String appType) {
@@ -185,7 +185,7 @@ public class AidgeIntegration {
         }
 
         if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
-            iTranslationCounterService.updateAddUsedCharsByShopName(shopName, PIC_FEE, limitChars);
+            userTokenService.addUsedToken(shopName, PIC_FEE);
         }else {
             pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE);
         }
