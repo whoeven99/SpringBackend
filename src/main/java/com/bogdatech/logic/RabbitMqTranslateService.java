@@ -452,6 +452,8 @@ public class RabbitMqTranslateService {
             }
             prepareForGlossary(shopName, glossaryMap, translationKeyType, keyMap1, keyMap0);
         }
+        Map<String, GlossaryDO> newGlossaryMap = glossaryService.getGlossaryDoByShopName(shopName, target);
+
         for (TranslateTextDO translateTextDO : translateTextDOS) {
             //根据模块选择翻译方法，先做普通翻译
             //判断是否停止翻译
@@ -485,7 +487,7 @@ public class RabbitMqTranslateService {
                 } else if (translationKeyType.equals(GLOSSARY)) {
                     translatedValue = translateDataService.translateGlossaryData(
                             value, shopName, languagePack, accessToken, counter, source, target,
-                            translation, resourceId, limitChars, keyMap0, keyMap1, translateType);
+                            translation, resourceId, limitChars, keyMap0, keyMap1, translateType, key, type, newGlossaryMap);
                 }
             }
 

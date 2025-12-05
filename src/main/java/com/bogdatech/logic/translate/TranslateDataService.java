@@ -1,19 +1,21 @@
 package com.bogdatech.logic.translate;
 
+import com.bogdatech.context.TranslateContext;
+import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.entity.DO.TranslateTextDO;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.*;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.token.UserTokenService;
+import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
+import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import kotlin.Pair;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -22,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.*;
@@ -38,7 +39,6 @@ import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.JudgeTranslateUtils.printTranslateReason;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
-import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.SYMBOL_PATTERN;
 import static com.bogdatech.utils.PlaceholderUtils.*;
 import static com.bogdatech.utils.PlaceholderUtils.getShortPrompt;
 import static com.bogdatech.utils.RedisKeyUtils.PROGRESS_DONE;
@@ -64,6 +64,8 @@ public class TranslateDataService {
     private UserTokenService userTokenService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
+    @Autowired
+    private TranslateStrategyFactory translateStrategyFactory;
 
     // glossary 内存翻译  key
     public static String GLOSSARY_CACHE_KEY = "{shopName}:{targetCode}:{sourceText}";
@@ -93,8 +95,6 @@ public class TranslateDataService {
             appInsights.trackTrace("TranslateDataServiceLog translateHtmlData 完成 用户： " + shopName + "，sourceText: " + sourceText +
                     " translatedText: " + htmlTranslation);
             if (modeType.equals(METAFIELD)) {
-                // TODO 这里是不是不会走到了？
-                // TODO 这里会走到的
                 // 对翻译后的html做格式处理
                 appInsights.trackTrace("html所在模块是METAFIELD 用户： " + shopName + "，sourceText: " + sourceText);
                 htmlTranslation = normalizeHtml(htmlTranslation);
@@ -102,8 +102,6 @@ public class TranslateDataService {
         } catch (Exception e) {
             appInsights.trackTrace("clickTranslation " + shopName + " html translation errors : " +
                     e.getMessage() + " sourceText: " + sourceText);
-            // TODO 这里存这个干什么 又没翻译
-            // TODO 很早之前Allen说 翻译失败了，需要回填原文
             shopifyService.saveToShopify(sourceText, translation, resourceId, shopName, accessToken, target, API_VERSION_LAST);
             return null;
         }
@@ -174,9 +172,9 @@ public class TranslateDataService {
     }
 
     public String translateGlossaryData(String value, String shopName, String languagePack, String accessToken,
-                                        CharacterCountUtils counter, String source, String target,
-                                        Map<String, Object> translation, String resourceId, Integer limitChars,
-                                        Map<String, String> keyMap0, Map<String, String> keyMap1, String translateType) {
+                                        CharacterCountUtils counter, String source, String target, Map<String, Object> translation
+            , String resourceId, Integer limitChars, Map<String, String> keyMap0, Map<String, String> keyMap1, String translateType
+            , String key, String type, Map<String, GlossaryDO> newGlossaryMap) {
         appInsights.trackTrace("TranslateDataServiceLog translateGlossaryData 用户： " + shopName + "，sourceText: " + value);
 
         TranslateRequest translateRequest = new TranslateRequest(0, shopName, accessToken, source, target, value);
@@ -185,8 +183,7 @@ public class TranslateDataService {
         // 判断是否为HTML
         if (isHtml(value)) {
             try {
-                targetText = translateGlossaryHtml(value, translateRequest, counter, null, keyMap0
-                        , keyMap1, languagePack, limitChars, false, translateType);
+                targetText = translateGlossaryHtml(value, target, type, key, newGlossaryMap, shopName);
                 targetText = isHtmlEntity(targetText);
             } catch (Exception e) {
                 appInsights.trackTrace("FatalException translateGlossaryData is html failed " + shopName + " glossaryTranslationModel finalText is null " + " sourceText: " + value);
@@ -314,100 +311,6 @@ public class TranslateDataService {
         return translatedUniqueMap;
     }
 
-    /**
-     * 翻译词汇表单行文本，保护变量、URL和符号
-     */
-    private String translateSingleLineWithProtection(String text, TranslateRequest request, CharacterCountUtils counter,
-                                                     Map<String, String> keyMap1, Map<String, String> keyMap0
-            , String resourceType, String languagePackId, Integer limitChars, boolean isSingleFlag, String translateType) {
-        // 检查缓存
-        String translatedCache = redisProcessService.getCacheData(request.getTarget(), text);
-        if (translatedCache != null) {
-            return translatedCache;
-        }
-
-        // 处理文本，保护不翻译的部分
-        String translatedText = processTextWithProtection(text, (cleanedText) -> {
-            String translated = redisProcessService.getCacheData(request.getTarget(), cleanedText);
-            if (translated != null) {
-                return translated;
-            }
-
-            //根据文本条件翻译
-            //如果字符数低于5字符，用mt和qwen翻译
-            if (cleanedText.length() <= 5) {
-                counter.addChars(CalculateTokenUtils.googleCalculateToken(cleanedText));
-                String targetString = translateAndCount(request, counter, languagePackId, GENERAL
-                        , limitChars, isSingleFlag, translateType);
-                redisProcessService.setCacheData(request.getTarget(), targetString, cleanedText);
-                return targetString;
-            } else {
-                //如果字符数大于100字符，用大模型翻译
-                String glossaryString = glossaryText(keyMap1, keyMap0, cleanedText);
-                //根据关键词生成对应的提示词
-                String finalText = glossaryTranslationModel(request, counter, glossaryString, languagePackId, limitChars, isSingleFlag, translateType);
-                redisProcessService.setCacheData(request.getTarget(), finalText, cleanedText);
-                return finalText;
-            }
-
-        });
-
-        return translatedText;
-    }
-
-    /**
-     * 处理文本，保护不翻译的变量、URL和符号
-     */
-    private static String processTextWithProtection(String text, Function<String, String> translator) {
-        StringBuilder result = new StringBuilder();
-        int lastEnd = 0;
-
-        List<Pattern> patterns = Arrays.asList(
-                URL_PATTERN,
-                CUSTOM_VAR_PATTERN,
-                SYMBOL_PATTERN
-        );
-
-        List<MatchRange> matches = new ArrayList<>();
-        for (Pattern pattern : patterns) {
-            Matcher matcher = pattern.matcher(text);
-            while (matcher.find()) {
-                matches.add(new MatchRange(matcher.start(), matcher.end(), matcher.group()));
-            }
-        }
-
-        matches.sort(Comparator.comparingInt(m -> m.start));
-
-        for (MatchRange match : matches) {
-            if (match.start > lastEnd) {
-                String toTranslate = text.substring(lastEnd, match.start);
-                String cleanedText = cleanTextFormat(toTranslate);
-                if (!cleanedText.isEmpty()) {
-                    if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
-                        result.append(cleanedText); // 纯符号不翻译
-                    } else {
-                        result.append(translator.apply(cleanedText)); // 普通文本翻译
-                    }
-                }
-            }
-            result.append(match.content); // 保留变量或URL
-            lastEnd = match.end;
-        }
-
-        if (lastEnd < text.length()) {
-            String remaining = text.substring(lastEnd);
-            String cleanedText = cleanTextFormat(remaining);
-            if (!cleanedText.isEmpty()) {
-                if (SYMBOL_PATTERN.matcher(cleanedText).matches()) {
-                    result.append(cleanedText);
-                } else {
-                    result.append(translator.apply(cleanedText));
-                }
-            }
-        }
-
-        return result.toString();
-    }
 
     /**
      * 调用多模型翻译：1，5字符以内用model翻译和qwen翻译。2，ar用HUN_YUAN_MODEL翻译 3，hi用doubao-1.5-pro-256k翻译
@@ -616,197 +519,15 @@ public class TranslateDataService {
         return targetString;
     }
 
-    public String translateGlossaryHtml(String html, TranslateRequest request, CharacterCountUtils counter
-            , String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId
-            , Integer limitChars, boolean isSingleFlag, String translateType) {
-        // 检查输入是否有效
-        if (html == null || html.trim().isEmpty()) {
-            return html;
-        }
-
-        try {
-            // 判断输入是否包含 <html> 标签
-            boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(html).find();
-
-            if (hasHtmlTag) {
-                // 如果有 <html> 标签，按完整文档处理
-                Document doc = Jsoup.parse(html);
-                if (doc == null) {
-                    return html;
-                }
-
-                // 获取 <html> 元素并修改 lang 属性
-                Element htmlTag = doc.selectFirst("html");
-                if (htmlTag != null) {
-                    htmlTag.attr("lang", request.getTarget());
-                }
-
-                processNode(doc.body(), request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars
-                        , isSingleFlag, translateType);
-                return doc.outerHtml();
-            } else {
-                // 如果没有 <html> 标签，作为片段处理
-                Document doc = Jsoup.parseBodyFragment(html);
-                Element body = doc.body();
-
-                processNode(body, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars
-                        , isSingleFlag, translateType);
-
-                // 只返回子节点内容，不包含 <body>
-                StringBuilder result = new StringBuilder();
-                for (Node child : body.childNodes()) {
-                    result.append(child.toString());
-                }
-
-                return result.toString();
-            }
-
-        } catch (Exception e) {
-            return html;
-        }
-    }
-
-    /**
-     * 递归处理节点
-     *
-     * @param node 当前节点
-     */
-    private void processNode(Node node, TranslateRequest request, CharacterCountUtils counter, String resourceType
-            , Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId, Integer limitChars
-            , boolean isSingleFlag, String translateType) {
-        try {
-            // 如果是元素节点
-            if (node instanceof Element) {
-                Element element = (Element) node;
-                String tagName = element.tagName().toLowerCase();
-
-                // 检查是否为不翻译的标签
-                if (NO_TRANSLATE_TAGS.contains(tagName)) {
-                    return;
-                }
-
-                // 属性不翻译，保持原样
-                element.attributes().forEach(attr -> {
-                });
-
-                // 递归处理子节点
-                for (Node child : element.childNodes()) {
-                    processNode(child, request, counter, resourceType, keyMap0, keyMap1, languagePackId, limitChars
-                            , isSingleFlag, translateType);
-                }
-            }
-            // 如果是文本节点
-            else if (node instanceof TextNode) {
-                TextNode textNode = (TextNode) node;
-                String text = textNode.getWholeText();
-
-                // 如果文本为空或只有空白字符，跳过
-                if (text.trim().isEmpty()) {
-                    return;
-                }
-
-                // 使用缓存处理文本
-                String translatedText = translateTextWithProtection(text, request, counter, resourceType, keyMap0
-                        , keyMap1, languagePackId, limitChars, isSingleFlag, translateType);
-                textNode.text(translatedText);
-            }
-        } catch (Exception e) {
-            appInsights.trackTrace("递归处理节点报错 errors ： " + e.getMessage());
-        }
-    }
-
-
-    /**
-     * 处理文本内容，保护变量和URL
-     *
-     * @param text 输入文本
-     * @return 翻译后的文本
-     */
-    private String translateTextWithProtection(String text, TranslateRequest request, CharacterCountUtils counter
-            , String resourceType, Map<String, String> keyMap0, Map<String, String> keyMap1, String languagePackId
-            , Integer limitChars, boolean isSingleFlag, String translateType) {
-        StringBuilder result = new StringBuilder();
-        int lastEnd = 0;
-
-        // 合并所有需要保护的模式
-        List<Pattern> patterns = Arrays.asList(
-                URL_PATTERN,
-                CUSTOM_VAR_PATTERN,
-                SYMBOL_PATTERN
-        );
-
-        List<MatchRange> matches = new ArrayList<>();
-        for (Pattern pattern : patterns) {
-            Matcher matcher = pattern.matcher(text);
-            while (matcher.find()) {
-                matches.add(new MatchRange(matcher.start(), matcher.end(), matcher.group()));
-            }
-        }
-
-        // 按位置排序
-        matches.sort(Comparator.comparingInt(m -> m.start));
-
-        // 处理所有匹配项之间的文本
-        for (MatchRange match : matches) {
-            // 翻译匹配项之前的文本
-            if (match.start > lastEnd) {
-                String toTranslate = text.substring(lastEnd, match.start);
-                String cleanedText = cleanTextFormat(toTranslate); // 清理格式
-                //对特殊符号进行处理
-                if (cleanedText.matches("\\p{Zs}+")) {
-                    result.append(cleanedText);
-                    continue;
-                }
-                if (!cleanedText.trim().isEmpty()) { // 避免翻译空字符串
-                    String targetString;
-                    try {
-                        request.setContent(cleanedText);
-//                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                        appInsights.trackTrace("要翻译的文本： " + cleanedText);
-                        targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0
-                                , resourceType, languagePackId, limitChars, isSingleFlag, translateType);
-                        targetString = isHtmlEntity(targetString);
-                        result.append(targetString);
-                    } catch (ClientException e) {
-                        // 如果AI翻译失败，则使用谷歌翻译
-                        result.append(cleanedText);
-                        continue;
-                    }
-                } else {
-                    result.append(toTranslate); // 保留原始空白
-                }
-            }
-            // 保留匹配到的变量或URL，不翻译
-            result.append(match.content);
-            lastEnd = match.end;
-        }
-
-        // 处理剩余文本
-        if (lastEnd < text.length()) {
-            String remaining = text.substring(lastEnd);
-            String cleanedText = cleanTextFormat(remaining); // 清理格式
-            if (cleanedText.matches("\\p{Zs}+")) {
-                result.append(cleanedText);
-                return result.toString();
-            }
-            if (!cleanedText.trim().isEmpty() && !cleanedText.matches("\\s*")) {
-                String targetString;
-                try {
-                    request.setContent(cleanedText);
-//                        appInsights.trackTrace("处理剩余文本： " + cleanedText);
-//                    appInsights.trackTrace("要翻译的文本： " + cleanedText);
-                    targetString = translateSingleLineWithProtection(text, request, counter, keyMap1, keyMap0
-                            , resourceType, languagePackId, limitChars, isSingleFlag, translateType);
-                    targetString = isHtmlEntity(targetString);
-                    result.append(targetString);
-                } catch (ClientException e) {
-                    result.append(cleanedText);
-                }
-            } else {
-                result.append(remaining);
-            }
-        }
-        return result.toString();
+    public String translateGlossaryHtml(String html, String target, String type, String key, Map<String, GlossaryDO> glossaryMap
+    , String shopName) {
+        TranslateContext context = TranslateContext.startNewTranslate(html, target, type, key);
+        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+        context.setGlossaryMap(glossaryMap);
+        service.translate(context);
+        service.finishAndGetJsonRecord(context);
+        userTokenService.addUsedToken(shopName, context.getUsedToken());
+        return context.getTranslatedContent();
     }
 
     /**

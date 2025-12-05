@@ -20,8 +20,6 @@ import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
-import com.bogdatech.repository.entity.InitialTaskV2DO;
-import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
@@ -70,13 +68,6 @@ public class TranslateController {
             return translateV2Service.getProcess(shopName, source);
         }
         return translateProgressService.getAllProgressData(shopName, source);
-    }
-
-    //单条文本翻译
-    // TODO 删除
-    @PostMapping("/singleTextTranslate")
-    public BaseResponse<Object> singleTextTranslate(@RequestBody SingleTranslateVO singleTranslateVO) {
-        return translateService.singleTextTranslate(singleTranslateVO);
     }
 
     // 单条文本翻译 修改返回值类型

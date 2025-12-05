@@ -1,5 +1,6 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.entity.DO.TranslateResourceDTO;
 import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.KeywordVO;
@@ -16,7 +17,9 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 
 @Component
 public class JsoupUtils {
-
+    /**
+     * 根据keyMap1和keyMap0提取关键词
+     */
     public static String glossaryText(Map<String, String> keyMap1, Map<String, String> keyMap0, String cleanedText) {
         //根据keyMap1和keyMap0提取关键词
         List<KeywordVO> KeywordVOs = CaseSensitiveUtils.mergeKeywordMap(keyMap0, keyMap1);
@@ -31,6 +34,44 @@ public class JsoupUtils {
             }
         }
         return glossaryString;
+    }
+
+    /**
+     * 新词汇表的映射关系
+     */
+    public static String glossaryTextV2(Map<String, GlossaryDO> newGlossaryMap, Map<Integer, String> glossaryTextMap) {
+        // 参数校验
+        if (newGlossaryMap == null || newGlossaryMap.isEmpty()
+                || glossaryTextMap == null || glossaryTextMap.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        // 将 glossaryTextMap 的值合并为一个字符串
+        String mergedText = String.join(" ", glossaryTextMap.values());
+
+        for (Map.Entry<String, GlossaryDO> entry : newGlossaryMap.entrySet()) {
+            String key = entry.getKey();
+
+            // null 和空值跳过
+            if (key == null || key.isEmpty()) {
+                continue;
+            }
+
+            // contains 判断
+            if (mergedText.contains(key)) {
+                GlossaryDO glossaryDO = entry.getValue();
+                if (glossaryDO != null && glossaryDO.getTargetText() != null) {
+                    stringBuilder.append(key)
+                            .append(" -> ")
+                            .append(glossaryDO.getTargetText())
+                            .append(", ");
+                }
+            }
+        }
+
+        return stringBuilder.toString().trim();
     }
 
     //判断String类型是否是html数据
