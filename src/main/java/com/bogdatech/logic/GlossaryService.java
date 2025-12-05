@@ -2,6 +2,7 @@ package com.bogdatech.logic;
 
 import com.bogdatech.Service.IGlossaryService;
 import com.bogdatech.entity.DO.GlossaryDO;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,28 @@ import java.util.Map;
 public class GlossaryService {
     @Autowired
     private IGlossaryService glossaryService;
+
+    public static String convertMapToText(Map<String, GlossaryDO> usedGlossary, String mergedText) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Map.Entry<String, GlossaryDO> entry : usedGlossary.entrySet()) {
+            String key = entry.getKey();
+
+            // TODO 有空值的情况出现吗 这里的值都是自己控制的，尽量保证不需要这种判断
+            if (StringUtils.isEmpty(key)) {
+                continue;
+            }
+
+            // TODO @庄泽 前面做过校验了，这里应该都contains?
+            if (mergedText.contains(key)) {
+                stringBuilder.append(key)
+                        .append(" -> ")
+                        .append(entry.getValue().getTargetText())
+                        .append(", ");
+            }
+        }
+
+        return stringBuilder.toString().trim();
+    }
 
     public static boolean hasGlossary(String content, Map<String, GlossaryDO> glossaryMap,
                                       Map<String, GlossaryDO> usedGlossaryMap) {

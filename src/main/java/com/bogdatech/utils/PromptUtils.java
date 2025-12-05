@@ -1,7 +1,5 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.entity.DO.GlossaryDO;
-
 import java.util.Map;
 
 public class PromptUtils {

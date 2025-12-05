@@ -279,9 +279,7 @@ public class StringUtils {
         return map;
     }
 
-    /**
-     * 适用于V2的解析数据方法
-     */
+    // TODO 这个逻辑不该放在StringUtils里
     public static LinkedHashMap<Integer, String> parseOutputTransactionV2(String input) {
         // 预处理 - 提取 JSON 部分
         String jsonPart = extractJsonBlock(input);
