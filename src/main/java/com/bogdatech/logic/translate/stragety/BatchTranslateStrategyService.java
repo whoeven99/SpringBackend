@@ -5,7 +5,6 @@ import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.logic.RedisProcessService;
-import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.PromptUtils;
 import com.bogdatech.utils.StringUtils;
 import kotlin.Pair;
@@ -53,7 +52,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         // 翻译 glossary
         if (!ctx.getGlossaryTextMap().isEmpty()) {
             // 处理下词汇表的映射关系
-            String glossaryMapping = JsoupUtils.glossaryTextV2(ctx.getUsedGlossaryMap(), ctx.getGlossaryTextMap());
+            String glossaryMapping = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(),
+                    String.join(" ", ctx.getGlossaryTextMap().values()));
             String prompt = PromptUtils.GlossaryJsonPrompt(target, glossaryMapping, ctx.getGlossaryTextMap());
             Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target);
             if (pair == null) {
