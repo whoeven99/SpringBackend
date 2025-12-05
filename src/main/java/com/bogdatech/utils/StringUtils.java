@@ -280,6 +280,30 @@ public class StringUtils {
     }
 
     /**
+     * 适用于V2的解析数据方法
+     */
+    public static LinkedHashMap<Integer, String> parseOutputTransactionV2(String input) {
+        // 预处理 - 提取 JSON 部分
+        String jsonPart = extractJsonBlock(input);
+
+        if (jsonPart == null) {
+            return null;
+        }
+
+        // 解析为 Map
+        LinkedHashMap<Integer, String> map = JsonUtils.jsonToObjectWithNull(jsonPart, new TypeReference<LinkedHashMap<Integer, String>>() {
+        });
+
+        if (map == null) {
+            return null;
+        }
+
+        // 过滤空值
+        map.entrySet().removeIf(e -> e.getValue() == null || e.getValue().trim().isEmpty());
+        return map;
+    }
+
+    /**
      * 从混合字符串中提取出 JSON 部分
      */
     private static String extractJsonBlock(String input) {

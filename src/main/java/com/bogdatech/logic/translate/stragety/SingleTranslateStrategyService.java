@@ -5,12 +5,14 @@ import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.logic.RedisProcessService;
+import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.PlaceholderUtils;
 import com.bogdatech.utils.PromptUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +49,9 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         // check glossary
         Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
         if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
-            String prompt = PromptUtils.GlossarySinglePrompt(target, value, ctx.getUsedGlossaryMap());
+            Map<Integer, String> map = Collections.singletonMap(0, value);
+            String glossaryMapping = JsoupUtils.glossaryTextV2(ctx.getUsedGlossaryMap(), map);
+            String prompt = PromptUtils.GlossarySinglePrompt(target, value, glossaryMapping);
             ctx.setStrategy("语法表单条翻译");
             ctx.setPrompt(prompt);
         } else {

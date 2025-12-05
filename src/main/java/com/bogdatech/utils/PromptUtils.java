@@ -5,7 +5,7 @@ import com.bogdatech.entity.DO.GlossaryDO;
 import java.util.Map;
 
 public class PromptUtils {
-    public static String GlossaryJsonPrompt(String target, Map<String, GlossaryDO> usedGlossaryMap,
+    public static String GlossaryJsonPrompt(String target, String glossaryMapping,
                                             Map<Integer, String> glossaryTextMap) {
         String prompt = """
                 You are a professional e-commerce website translation expert.
@@ -39,7 +39,7 @@ public class PromptUtils {
                 """;
         return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(target))
                 .replace("{{SOURCE_LANGUAGE_LIST}}", JsonUtils.objectToJson(glossaryTextMap))
-                .replace("{{glossary}}", JsonUtils.objectToJson(usedGlossaryMap));
+                .replace("{{TERM_RULES}}", glossaryMapping);
     }
 
     public static String JsonPrompt(String target, Map<Integer, String> originalTextMap) {
@@ -69,7 +69,7 @@ public class PromptUtils {
     }
 
     public static String GlossarySinglePrompt(String targetLanguage, String text,
-                                              Map<String, GlossaryDO> usedGlossaryMap) {
+                                              String glossaryMapping) {
         String prompt = """
                 You are a professional translator who can accurately translate text from various languages.
                 Your task is to translate the given text into the specified target language.
@@ -98,7 +98,7 @@ public class PromptUtils {
                 """;
         return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(targetLanguage))
                 .replace("{{SOURCE_TEXT}}", text)
-                .replace("{{TERM_RULES}}", JsonUtils.objectToJson(usedGlossaryMap));
+                .replace("{{TERM_RULES}}", glossaryMapping);
     }
 
     public static String SinglePrompt(String targetLanguage, String text) {
@@ -112,14 +112,10 @@ public class PromptUtils {
                 do not translate it.
                 
                 The target language for translation is:
-                <TargetLanguage>
                 {{TARGET_LANGUAGE}}
-                </TargetLanguage>
                 
                 Please translate the following text:
-                <SourceText>
                 {{SOURCE_TEXT}}
-                </SourceText>
                 
                 Start your translation now.
                 """;
