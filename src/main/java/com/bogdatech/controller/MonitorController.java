@@ -5,7 +5,9 @@ import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
+import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
@@ -106,6 +108,29 @@ public class MonitorController {
     public Map<String, String> config(@RequestParam String key) {
         configRedisRepo.delConfig(key);
         return configRedisRepo.getAllConfigs();
+    }
+
+    @Autowired
+    private TranslationCounterServiceImpl translationCounterServiceRepo;
+
+    @PostMapping("/todoBConfig")
+    public Map<String, String> todoBConfig(@RequestBody Map<String, String> map) {
+        String shopName = map.get("shopName");
+        Integer addChars = map.get("addChars") != null ? Integer.parseInt(map.get("addChars")) : 0;
+
+        TranslationCounterDO counterDO = translationCounterServiceRepo.readCharsByShopName(shopName);
+        Integer chars = counterDO.getChars();
+
+        translationCounterServiceRepo.updateCharsByShopNameWithoutCheck(shopName, addChars);
+
+        counterDO = translationCounterServiceRepo.readCharsByShopName(shopName);
+        Integer newChars = counterDO.getChars();
+
+        Map<String, String> map2 = new HashMap<>();
+        map2.put("oldChars", chars.toString());
+        map2.put("addChars", addChars.toString());
+        map2.put("newChars", newChars.toString());
+        return map2;
     }
 
     @GetMapping("/monitorv2")
