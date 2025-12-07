@@ -94,6 +94,10 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         return baseMapper.updateCharsByShopName(shopName, chars);
     }
 
+    public boolean updateCharsByShopNameWithoutCheck(String shopName, Integer chars) {
+        return baseMapper.updateCharsByShopName(shopName, chars);
+    }
+
     @Override
     public TranslationCounterDO getOneForUpdate(String shopName) {
         return baseMapper.getOneForUpdate(shopName);
