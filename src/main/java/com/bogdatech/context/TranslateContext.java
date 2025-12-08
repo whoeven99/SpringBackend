@@ -2,6 +2,7 @@ package com.bogdatech.context;
 
 import com.bogdatech.entity.DO.GlossaryDO;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.TextNode;
 
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
+@NoArgsConstructor
 public class TranslateContext {
     // Start
     private String content;
@@ -19,7 +21,7 @@ public class TranslateContext {
     private Long startTime;
 
     // Calculate
-    private Map<String, GlossaryDO> glossaryMap;
+    private Map<String, GlossaryDO> glossaryMap = new HashMap<>();
     private boolean isCached;
     private String strategy; // 系统内判断的翻译类型
     private String prompt;
@@ -40,24 +42,23 @@ public class TranslateContext {
 
     private Long translatedTime;
 
-    private Map<String, String> translateVariables;
+    private Map<String, String> translateVariables = new HashMap<>();
 
-    public static TranslateContext startNewTranslate(String content, String targetLanguage, String type, String key) {
-        TranslateContext context = new TranslateContext();
-        context.content = content;
-        context.targetLanguage = targetLanguage;
-        context.shopifyTextType = type;
-        context.shopifyTextKey = key;
-        context.startTime = System.currentTimeMillis();
-        context.translatedChars = content.length();
-        return context;
+    // For single
+    public TranslateContext(String content, String targetLanguage, String type, String key) {
+        this.content = content;
+        this.targetLanguage = targetLanguage;
+        this.shopifyTextType = type;
+        this.shopifyTextKey = key;
+        this.startTime = System.currentTimeMillis();
+        this.translatedChars = content.length();
     }
 
-    public static TranslateContext startBatchTranslate(Map<Integer, String> batchOriginalTextMap,
-                                                   String targetLanguage) {
-        TranslateContext context = new TranslateContext();
-        context.originalTextMap = batchOriginalTextMap;
-        context.cachedCount = 0;
+    // For batch
+    public TranslateContext(Map<Integer, String> batchOriginalTextMap,
+                            String targetLanguage) {
+        this.originalTextMap = batchOriginalTextMap;
+        this.targetLanguage = targetLanguage;
 
         int totalChars = 0;
         for (String value : batchOriginalTextMap.values()) {
@@ -65,11 +66,8 @@ public class TranslateContext {
                 totalChars += value.length();
             }
         }
-        context.setTranslatedChars(totalChars);
-
-        context.setTargetLanguage(targetLanguage);
-        context.setStartTime(System.currentTimeMillis());
-        return context;
+        this.translatedChars = totalChars;
+        this.startTime = System.currentTimeMillis();
     }
 
     private Document doc;
@@ -77,7 +75,7 @@ public class TranslateContext {
     private Map<Integer, TextNode> nodeMap = new HashMap<>();
 
     public void finish() {
-        this.setTranslatedTime((System.currentTimeMillis() - startTime)/ 1000);
+        this.translatedTime = (System.currentTimeMillis() - startTime) / 1000;
     }
 
     public void incrementCachedCount() {

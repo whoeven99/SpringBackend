@@ -322,9 +322,6 @@ public class TaskService {
         }
     }
 
-    @Autowired
-    private ShopNameRedisRepo shopNameRedisRepo;
-
     public boolean autoTranslatev2(String shopName, String source, String target) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         if (usersDO == null) {
@@ -369,8 +366,7 @@ public class TaskService {
         }
 
         appInsights.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
-        translateV2Service.createInitialTask(shopName, source, new String[]{target}, AUTO_TRANSLATE_MAP, false, "auto");
-        shopNameRedisRepo.hincrAutoTaskCount(shopName);
+        translateV2Service.createAutoTask(shopName, source, target);
         appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
         return true;
     }
