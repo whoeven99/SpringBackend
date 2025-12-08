@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
@@ -74,6 +75,8 @@ public class TranslateV2Service {
     private ITranslatesService iTranslatesService;
     @Autowired
     private ShopNameRedisRepo shopNameRedisRepo;
+    @Autowired
+    private TencentEmailService tencentEmailService;
 
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
@@ -126,7 +129,7 @@ public class TranslateV2Service {
     public TranslateContext singleTranslate(String shopName, String content, String target,
                                             String type, String key,
                                             Map<String, GlossaryDO> glossaryMap) {
-        TranslateContext context = TranslateContext.startNewTranslate(content, target, type, key);
+        TranslateContext context = new TranslateContext(content, target, type, key);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         context.setGlossaryMap(glossaryMap);
 
@@ -155,11 +158,49 @@ public class TranslateV2Service {
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        this.createInitialTask(shopName, request.getSource(), targets,
-                resourceTypeList, request.getIsCover(), "manual");
+        this.createManualTask(shopName, request.getSource(), targets, resourceTypeList, request.getIsCover());
 
         // 找前端，把这里的返回改了
         return new BaseResponse<>().CreateSuccessResponse(request);
+    }
+
+    public void createManualTask(String shopName, String source, String[] targets,
+                                 List<String> moduleList, Boolean isCover) {
+        initialTaskV2Repo.deleteByShopNameSource(shopName, source);
+        redisStoppedRepository.removeStoppedFlag(shopName);
+
+        for (String target : targets) {
+            InitialTaskV2DO initialTask = new InitialTaskV2DO();
+            initialTask.setShopName(shopName);
+            initialTask.setSource(source);
+            initialTask.setTarget(target);
+            initialTask.setCover(isCover);
+            initialTask.setModuleList(JsonUtils.objectToJson(moduleList));
+            initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
+            initialTask.setTaskType("manual");
+            initialTaskV2Repo.insert(initialTask);
+
+            translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+            iTranslatesService.updateTranslateStatus(shopName, 2, target, source);
+        }
+    }
+
+    public void createAutoTask(String shopName, String source, String target) {
+        initialTaskV2Repo.deleteByShopNameSourceTarget(shopName, source, target);
+        redisStoppedRepository.removeStoppedFlag(shopName);
+
+        InitialTaskV2DO initialTask = new InitialTaskV2DO();
+        initialTask.setShopName(shopName);
+        initialTask.setSource(source);
+        initialTask.setTarget(target);
+        initialTask.setCover(false);
+        initialTask.setModuleList(JsonUtils.objectToJson(AUTO_TRANSLATE_MAP));
+        initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
+        initialTask.setTaskType("auto");
+        initialTaskV2Repo.insert(initialTask);
+
+        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+        shopNameRedisRepo.hincrAutoTaskCount(shopName);
     }
 
     // 获取进度条
@@ -255,37 +296,6 @@ public class TranslateV2Service {
         return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
     }
 
-    public void createInitialTask(String shopName, String source, String[] targets,
-                                  List<String> moduleList, Boolean isCover, String taskType) {
-        if ("auto".equals(taskType)) {
-            // 自动翻译的新建任务逻辑
-            initialTaskV2Repo.deleteByShopNameSourceTarget(shopName, source, targets[0]);
-        } else if ("manual".equals(taskType)) {
-            // 手动翻译，目前把同一个source的任务都删掉
-            initialTaskV2Repo.deleteByShopNameSource(shopName, source);
-        }
-        redisStoppedRepository.removeStoppedFlag(shopName);
-
-        for (String target : targets) {
-            InitialTaskV2DO initialTask = new InitialTaskV2DO();
-            initialTask.setShopName(shopName);
-            initialTask.setSource(source);
-            initialTask.setTarget(target);
-            initialTask.setCover(isCover);
-            initialTask.setModuleList(JsonUtils.objectToJson(moduleList));
-            initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
-            initialTask.setTaskType(taskType);
-            initialTaskV2Repo.insert(initialTask);
-
-            translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
-
-            if ("auto".equals(taskType)) {
-                return;
-            }
-            iTranslatesService.updateTranslateStatus(shopName, 2, target, source);
-        }
-    }
-
     // 翻译 step 2, initial -> 查询shopify，翻译任务创建
     public void initialToTranslateTask(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
@@ -375,7 +385,7 @@ public class TranslateV2Service {
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
-                TranslateContext context = TranslateContext.startBatchTranslate(idToSourceValueMap, target);
+                TranslateContext context = new TranslateContext(idToSourceValueMap, target);
                 ITranslateStrategyService service =
                         translateStrategyFactory.getServiceByContext(context);
                 context.setGlossaryMap(glossaryMap);
@@ -506,9 +516,6 @@ public class TranslateV2Service {
             shopNameRedisRepo.hdecAutoTaskCount(shopName);
         }
     }
-
-    @Autowired
-    private TencentEmailService tencentEmailService;
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
     public void sendManualEmail(InitialTaskV2DO initialTaskV2DO) {
