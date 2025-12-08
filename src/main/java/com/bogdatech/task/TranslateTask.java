@@ -1,5 +1,7 @@
 package com.bogdatech.task;
 
+import com.bogdatech.logic.TencentEmailService;
+import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.logic.TaskService;
@@ -30,6 +32,10 @@ import java.util.stream.Collectors;
 public class TranslateTask implements ApplicationListener<ApplicationReadyEvent> {
     @Autowired
     private TaskService taskService;
+    @Autowired
+    private ShopNameRedisRepo shopNameRedisRepo;
+    @Autowired
+    private TencentEmailService tencentEmailService;
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
@@ -119,17 +125,38 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     }
 
     // 定时30秒扫描一次
-    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void sendEmail() {
-        List<InitialTaskV2DO> translatingTask = initialTaskV2Repo.selectByStatus(3);
-        translatingTask.addAll(initialTaskV2Repo.selectByStoppedAndNotEmail());
-        if (CollectionUtils.isEmpty(translatingTask)) {
+        List<InitialTaskV2DO> autoTask = initialTaskV2Repo.selectByTaskTypeAndNotEmail("auto");
+        if (!CollectionUtils.isEmpty(autoTask)) {
+            Map<String, List<InitialTaskV2DO>> tasksByGroup = autoTask.stream()
+                    .collect(Collectors.groupingBy(InitialTaskV2DO::getShopName));
+            for (Map.Entry<String, List<InitialTaskV2DO>> entry : tasksByGroup.entrySet()) {
+                String shopName = entry.getKey();
+                if (shopNameRedisRepo.getAutoTaskCount(shopName).equals(0L)) {
+                    // send email
+                    List<InitialTaskV2DO> shopTasks = entry.getValue();
+
+                    // 1.过滤token=0的，2.计算所有task的内容，一起发送
+                    tencentEmailService.sendAutoTranslateEmail(shopName, shopTasks);
+
+                    for (InitialTaskV2DO shopTask : shopTasks) {
+                        shopTask.setSendEmail(true);
+                        initialTaskV2Repo.updateById(shopTask);
+                    }
+                    shopNameRedisRepo.deleteShopName(shopName);
+                }
+            }
+        }
+
+        List<InitialTaskV2DO> manualTask = initialTaskV2Repo.selectByStatusAndTaskType(3, "manual");
+        manualTask.addAll(initialTaskV2Repo.selectByStoppedAndNotEmail("manual"));
+        if (CollectionUtils.isEmpty(manualTask)) {
             return;
         }
 
-        for (InitialTaskV2DO initialTaskV2DO : translatingTask) {
-            // 断电
-            translateV2Service.sendEmail(initialTaskV2DO);
+        for (InitialTaskV2DO initialTaskV2DO : manualTask) {
+            translateV2Service.sendManualEmail(initialTaskV2DO);
         }
     }
 }

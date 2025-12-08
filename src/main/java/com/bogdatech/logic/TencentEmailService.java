@@ -12,6 +12,7 @@ import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
+import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.utils.ApiCodeUtils;
 import com.bogdatech.utils.ResourceTypeUtils;
 import com.bogdatech.utils.ResourceTypeUtils;
@@ -251,7 +252,40 @@ public class TencentEmailService {
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, flag ? 1 : 0));
     }
 
-    public boolean sendSuccessEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, Integer usedToken, Integer totalToken, String taskType) {
+    public boolean sendAutoTranslateEmail(String shopName, List<InitialTaskV2DO> shopTasks) {
+        String name = parseShopName(shopName);
+
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("user", usersDO.getFirstName());
+        templateData.put("shop_name", name);
+
+        StringBuilder divBuilder = new StringBuilder();
+        for (InitialTaskV2DO shopTask : shopTasks) {
+            if (shopTask.getUsedToken().equals(0)) {
+                continue;
+            }
+            divBuilder.append("<div class=\"language-block\">");
+            divBuilder.append("<h4>").append(shopTask.getTarget()).append("</h4>");
+            divBuilder.append("<ul>");
+            divBuilder.append("<li><span>Credits Used:</span> ").append(shopTask.getUsedToken()).append(" credits used").append("</li>");
+            divBuilder.append("<li><span>Translation Time:</span> ").append(shopTask.getTranslationMinutes()).append(" minutes").append("</li>");
+            divBuilder.append("</ul>");
+            divBuilder.append("</div>");
+        }
+
+        // 都continue了
+        if (divBuilder.toString().isEmpty()) {
+            return true;
+        }
+        templateData.put("html_data", String.valueOf(divBuilder));
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL,
+                "bogda.official@gmail.com"));
+
+//        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+    }
+
+    public boolean sendSuccessEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, Integer usedToken, Integer totalToken) {
         // 发送的具体内容
         Map<String, String> templateData = new HashMap<>();
         setCommonTemplate(templateData, shopName, target, translateTime, usedTokenByTask);
@@ -262,16 +296,11 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         templateData.put("remaining_credits", totalToken < usedToken ? "0" : formatter.format(totalToken - usedToken));
 
-        if ("auto".equals(taskType)) {
-            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData,
-                    SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, "bogda.official@gmail.com"));
-        }
-
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData,
                 SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 
-    public boolean sendFailedEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, String translatedModules, String unTranslatedModules, String taskType) {
+    public boolean sendFailedEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, String translatedModules, String unTranslatedModules) {
         // 发送的具体内容
         Map<String, String> templateData = new HashMap<>();
         setCommonTemplate(templateData, shopName, target, translateTime, usedTokenByTask);
@@ -282,11 +311,6 @@ public class TencentEmailService {
         // 获取用户已翻译的和未翻译的文本
         templateData.put("translated_content", translatedModules);
         templateData.put("remaining_content", unTranslatedModules);
-
-        if ("auto".equals(taskType)) {
-            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData,
-                    SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, "bogda.official@gmail.com"));
-        }
 
         return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData,
                 TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));

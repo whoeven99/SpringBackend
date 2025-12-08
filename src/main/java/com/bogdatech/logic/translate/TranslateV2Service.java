@@ -7,6 +7,7 @@ import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.logic.TencentEmailService;
+import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
 import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
@@ -71,6 +72,8 @@ public class TranslateV2Service {
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
     private ITranslatesService iTranslatesService;
+    @Autowired
+    private ShopNameRedisRepo shopNameRedisRepo;
 
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
@@ -423,6 +426,9 @@ public class TranslateV2Service {
             initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
             initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
             initialTaskV2Repo.updateById(initialTaskV2DO);
+            if (initialTaskV2DO.getTaskType().equals("auto")) {
+                shopNameRedisRepo.hdecAutoTaskCount(shopName);
+            }
 
             return;
         }
@@ -496,19 +502,22 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
+        if (initialTaskV2DO.getTaskType().equals("auto")) {
+            shopNameRedisRepo.hdecAutoTaskCount(shopName);
+        }
     }
 
     @Autowired
     private TencentEmailService tencentEmailService;
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
-    public void sendEmail(InitialTaskV2DO initialTaskV2DO) {
+    public void sendManualEmail(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
 
         Integer usingTimeMinutes = (int) ((System.currentTimeMillis() - initialTaskV2DO.getCreatedAt().getTime()) / (1000 * 60));
         Integer usedTokenByTask = userTokenService.getUsedTokenByTaskId(shopName, initialTaskV2DO.getId());
 
-        // 正常结束，发送邮件
+        // 手动翻译 正常结束，发送邮件
         if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
             appInsights.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
                     " Total time (minutes): " + usingTimeMinutes +
@@ -517,7 +526,7 @@ public class TranslateV2Service {
             Integer usedToken = userTokenService.getUsedToken(shopName);
             Integer totalToken = userTokenService.getMaxToken(shopName);
             tencentEmailService.sendSuccessEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
-                    usedToken, totalToken, initialTaskV2DO.getTaskType());
+                    usedToken, totalToken);
 
             initialTaskV2DO.setSendEmail(true);
             initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.ALL_DONE.status);
@@ -535,7 +544,7 @@ public class TranslateV2Service {
                 TypeSplitResponse typeSplitResponse = splitByType(translateTaskV2DO != null ? translateTaskV2DO.getModule() : null, resourceList);
 
                 tencentEmailService.sendFailedEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
-                        typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString(), initialTaskV2DO.getTaskType());
+                        typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString());
 
                 initialTaskV2DO.setSendEmail(true);
                 initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.STOPPED.status);
