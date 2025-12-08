@@ -33,10 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
@@ -146,13 +143,36 @@ public class TranslateV2Service {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
 
+        // 判断用户语言是否正在翻译，翻译的不管；没翻译的翻译。
+        List<InitialTaskV2DO> initialTaskV2DOS =
+                initialTaskV2Repo.selectByShopNameSourceManual(shopName, request.getSource());
+        Set<String> targetSet = new HashSet<>(Arrays.asList(targets));
+
+        // 找出已经 ALL_DONE 或 STOPPED 的 target
+        Set<String> filteredTargets = initialTaskV2DOS.stream()
+                .filter(it -> it.getStatus() == InitialTaskStatus.INIT_READING_SHOPIFY.getStatus()
+                        || it.getStatus() == InitialTaskStatus.READ_DONE_TRANSLATING.getStatus()
+                        || it.getStatus() == InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus()
+                        || it.getStatus() == InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())
+                .map(InitialTaskV2DO::getTarget)
+                .collect(Collectors.toSet());
+
+        // 将filteredTargets和targets对比，去除targets里和filteredTargets相同的值
+        Set<String> finalTargets = targetSet.stream()
+                .filter(t -> !filteredTargets.contains(t))
+                .collect(Collectors.toSet());
+
+        if (finalTargets.isEmpty()) {
+            return new BaseResponse<>().CreateSuccessResponse(request);
+        }
+
         // 收集所有的resourceType到一个列表中
         List<String> resourceTypeList = moduleList.stream()
                 .flatMap(module -> TranslateResourceDTO.TOKEN_MAP.get(module).stream())
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        this.createInitialTask(shopName, request.getSource(), targets,
+        this.createInitialTask(shopName, request.getSource(), finalTargets.toArray(new String[0]),
                 resourceTypeList, request.getIsCover(), "manual");
 
         // 找前端，把这里的返回改了
