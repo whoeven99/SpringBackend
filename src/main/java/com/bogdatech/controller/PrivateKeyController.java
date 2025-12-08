@@ -9,7 +9,6 @@ import com.bogdatech.model.controller.request.UserPrivateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.integration.PrivateIntegration.googleTranslate;
 import static com.bogdatech.utils.StringUtils.replaceDot;
 
@@ -52,9 +51,9 @@ public class PrivateKeyController {
         //存用户的shopName到数据库中
         //根据模型切换存储方法
         Integer i = null;
-        String googleKey = shopName + "-" + GOOGLE;
+        String googleKey = shopName + "-" + "google";
 //        appInsights.trackTrace("shopName: " + shopName);
-        if (userPrivateRequest.getModel().equals(GOOGLE) && userPrivateRequest.getAmount()!=null && userPrivateRequest.getSecret() != null) {
+        if (userPrivateRequest.getModel().equals("google") && userPrivateRequest.getAmount()!=null && userPrivateRequest.getSecret() != null) {
             //新增或修改google相关方法
             i = userPrivateService.addOrUpdateGoogleUserData(userPrivateRequest.getShopName(), googleKey, userPrivateRequest.getAmount());
         }

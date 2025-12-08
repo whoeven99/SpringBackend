@@ -1,18 +1,10 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.entity.DO.TranslateResourceDTO;
-import com.bogdatech.entity.DO.TranslateTextDO;
 import com.bogdatech.entity.VO.KeywordVO;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 
 @Component
 public class JsoupUtils {
@@ -56,54 +48,4 @@ public class JsoupUtils {
             "zh-CN", "en", "ja", "ko", "th", "fr", "de", "es", "ar",
             "id", "vi", "pt-BR", "it", "nl", "ru", "km", "cs", "pl", "fa", "he", "tr", "hi", "bn", "ur"
     ));
-
-    public static Map<String, TranslateTextDO> extractTranslationsByResourceId(JsonNode shopDataJson, String resourceId, String shopName) {
-        Map<String, TranslateTextDO> translations = new HashMap<>();
-        JsonNode translationsNode = shopDataJson.path("translatableContent");
-        if (translationsNode.isArray() && !translationsNode.isEmpty()) {
-            translationsNode.forEach(translation -> {
-                if (translation == null) {
-                    return;
-                }
-                if (translation.path("value").asText(null) == null || translation.path("key").asText(null) == null) {
-                    return;
-                }
-                //当用户修改数据后，outdated的状态为true，将该数据放入要翻译的集合中
-                TranslateTextDO translateTextDO = new TranslateTextDO();
-                String key = translation.path("key").asText(null);
-                translateTextDO.setTextKey(key);
-                translateTextDO.setSourceText(translation.path("value").asText(null));
-                translateTextDO.setSourceCode(translation.path("locale").asText(null));
-                translateTextDO.setDigest(translation.path("digest").asText(null));
-                translateTextDO.setTextType(translation.path("type").asText(null));
-                translateTextDO.setResourceId(resourceId);
-                translateTextDO.setShopName(shopName);
-                translations.put(key, translateTextDO);
-            });
-        }
-        return translations;
-    }
-
-
-    // 将前端传的宽泛的模块解析成具体的翻译模块，并输出
-    public static List<String> translateModel(List<String> list){
-        return list.stream()
-                .map(TOKEN_MAP::get)
-                .filter(Objects::nonNull)
-                .flatMap(List::stream)
-                .map(TranslateResourceDTO::getResourceType)
-                .toList();
-    }
-
-    // 解析html的数据
-    public static List<String> extractTextFromHtml(String html) {
-        Document doc = Jsoup.parse(html);
-        Elements allElements = doc.body().getAllElements();
-
-        return allElements.stream()
-                .map(Element::ownText)
-                .map(String::trim)
-                .filter(text -> !text.isEmpty())
-                .collect(Collectors.toList());
-    }
 }

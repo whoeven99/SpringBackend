@@ -17,16 +17,6 @@ public class TypeConversionUtils {
         return shopifyRequest;
     }
 
-    public static TranslateRequest registerTransactionRequestToTranslateRequest(RegisterTransactionRequest request) {
-        TranslateRequest translateRequest = new TranslateRequest();
-        translateRequest.setAccessToken(request.getAccessToken());
-        translateRequest.setShopName(request.getShopName());
-        translateRequest.setTarget(request.getTarget());
-        translateRequest.setContent(request.getValue());
-        translateRequest.setSource(request.getLocale());
-        return translateRequest;
-    }
-
     public static CloudServiceRequest shopifyToCloudServiceRequest(ShopifyRequest request) {
         CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
         cloudServiceRequest.setShopName(request.getShopName());

@@ -17,8 +17,7 @@ public class ListUtils {
     public static List<TranslateResourceDTO> convertALL(List<String> list){
         //修改模块的排序
         List<TranslateResourceDTO> translateResourceDTOList = new ArrayList<>();
-        for (String s : list
-        ) {
+        for (String s : list) {
             translateResourceDTOList.add(new TranslateResourceDTO(s, MAX_LENGTH, "", ""));
         }
         return translateResourceDTOList;

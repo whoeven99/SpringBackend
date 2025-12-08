@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
-import static com.bogdatech.constants.UserPrivateConstants.GOOGLE;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.replaceDot;
 
@@ -134,7 +133,7 @@ public class UserPrivateService {
         //删除用户在keyVault里面的数据
         try {
             shopName = replaceDot(shopName);
-            secretClient.getDeletedSecret(shopName + "-" + GOOGLE);
+            secretClient.getDeletedSecret(shopName + "-" + "google");
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("deleteUserData " + shopName + " 删除用户在keyVault里面的数据失败：" + e.getMessage());
