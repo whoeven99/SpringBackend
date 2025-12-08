@@ -1,6 +1,5 @@
 package com.bogdatech.utils;
 
-
 import com.bogdatech.exception.ClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -77,31 +76,6 @@ public class JsonUtils {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    //解析JSON数据，获取message消息
-    public static String getMessage(String json) {
-        String message = null;
-        try {
-            JsonNode root = OBJECT_MAPPER.readTree(json);
-
-            JsonNode messageNode = root
-                    .path("translationsRegister")
-                    .path("userErrors")
-                    .path(0)
-                    .path("message");
-
-            if (!messageNode.isMissingNode()) {
-                appInsights.trackTrace("updateShopifyDataByTranslateTextRequest Message: " + messageNode.asText());
-                message = messageNode.asText();
-            } else {
-                message = json;
-                appInsights.trackTrace("updateShopifyDataByTranslateTextRequest   Message not found");
-            }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        return message;
     }
 
     /**

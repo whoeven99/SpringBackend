@@ -586,6 +586,31 @@ public class ShopifyService {
         }
     }
 
+    //解析JSON数据，获取message消息
+    private static String getMessage(String json) {
+        String message = null;
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(json);
+
+            JsonNode messageNode = root
+                    .path("translationsRegister")
+                    .path("userErrors")
+                    .path(0)
+                    .path("message");
+
+            if (!messageNode.isMissingNode()) {
+                appInsights.trackTrace("updateShopifyDataByTranslateTextRequest Message: " + messageNode.asText());
+                message = messageNode.asText();
+            } else {
+                message = json;
+                appInsights.trackTrace("updateShopifyDataByTranslateTextRequest   Message not found");
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return message;
+    }
+
     //根据前端传来的值，返回对应的图片信息
     public Map<String, Object> getImageInfo(String[] strings) {
         Map<String, Object> imageInfo = new HashMap<>();

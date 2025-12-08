@@ -791,13 +791,40 @@ public class TranslateDataService {
                 }
                 resourceId = fieldValue.asText(null);
                 // 提取翻译内容映射
-                Map<String, TranslateTextDO> partTranslateTextDOMap = JsoupUtils.extractTranslationsByResourceId(shopDataJson, resourceId, shopName);
+                Map<String, TranslateTextDO> partTranslateTextDOMap = extractTranslationsByResourceId(shopDataJson, resourceId, shopName);
                 Map<String, TranslateTextDO> partTranslatedTextDOMap = extractTranslatedDataByResourceId(shopDataJson, partTranslateTextDOMap, isCover, target, shopName);
                 Set<TranslateTextDO> needTranslatedSet = new HashSet<>(partTranslatedTextDOMap.values());
                 return new HashSet<>(needTranslatedSet);
             }
         }
         return new HashSet<>();
+    }
+
+    private static Map<String, TranslateTextDO> extractTranslationsByResourceId(JsonNode shopDataJson, String resourceId, String shopName) {
+        Map<String, TranslateTextDO> translations = new HashMap<>();
+        JsonNode translationsNode = shopDataJson.path("translatableContent");
+        if (translationsNode.isArray() && !translationsNode.isEmpty()) {
+            translationsNode.forEach(translation -> {
+                if (translation == null) {
+                    return;
+                }
+                if (translation.path("value").asText(null) == null || translation.path("key").asText(null) == null) {
+                    return;
+                }
+                //当用户修改数据后，outdated的状态为true，将该数据放入要翻译的集合中
+                TranslateTextDO translateTextDO = new TranslateTextDO();
+                String key = translation.path("key").asText(null);
+                translateTextDO.setTextKey(key);
+                translateTextDO.setSourceText(translation.path("value").asText(null));
+                translateTextDO.setSourceCode(translation.path("locale").asText(null));
+                translateTextDO.setDigest(translation.path("digest").asText(null));
+                translateTextDO.setTextType(translation.path("type").asText(null));
+                translateTextDO.setResourceId(resourceId);
+                translateTextDO.setShopName(shopName);
+                translations.put(key, translateTextDO);
+            });
+        }
+        return translations;
     }
 
     /**
