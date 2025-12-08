@@ -278,7 +278,7 @@ public class TranslateV2Service {
             // 自动翻译的新建任务逻辑
             initialTaskV2Repo.deleteByShopNameSourceTarget(shopName, source, targets[0]);
         } else if ("manual".equals(taskType)) {
-            // 手动翻译，目前把同一个source的任务都删掉
+            // 手动翻译，目前把同一个source的已翻译完和已停止任务都删掉
             initialTaskV2Repo.deleteByShopNameSource(shopName, source);
         }
         redisStoppedRepository.removeStoppedFlag(shopName);
