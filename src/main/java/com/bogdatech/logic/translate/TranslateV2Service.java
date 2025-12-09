@@ -158,7 +158,7 @@ public class TranslateV2Service {
                 initialTaskV2Repo.selectByShopNameSourceManual(shopName, request.getSource());
         Set<String> targetSet = new HashSet<>(Arrays.asList(targets));
 
-        // 找出已经 ALL_DONE 或 STOPPED 的 target
+        // 找出已经 INIT，READ_DONE，TRANSLATE_DONE，SAVE_DONE 的 target
         Set<String> filteredTargets = initialTaskV2DOS.stream()
                 .filter(it -> it.getStatus() == InitialTaskStatus.INIT_READING_SHOPIFY.getStatus()
                         || it.getStatus() == InitialTaskStatus.READ_DONE_TRANSLATING.getStatus()
