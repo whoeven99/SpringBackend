@@ -6,8 +6,6 @@ import com.bogdatech.entity.DO.KlaviyoDataDO;
 import com.bogdatech.mapper.KlaviyoDataMapper;
 import org.springframework.stereotype.Service;
 
-import static com.bogdatech.constants.KlaviyoConstants.LIST;
-
 @Service
 public class KlaviyoDataServiceImpl extends ServiceImpl<KlaviyoDataMapper, KlaviyoDataDO> implements IKlaviyoDataService {
 
@@ -18,7 +16,7 @@ public class KlaviyoDataServiceImpl extends ServiceImpl<KlaviyoDataMapper, Klavi
 
     @Override
     public String getListId(String listName) {
-        return baseMapper.getListId(listName, LIST);
+        return baseMapper.getListId(listName, "list");
     }
 
     @Override

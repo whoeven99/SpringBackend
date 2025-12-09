@@ -8,8 +8,6 @@ import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.token.UserTokenService;
-import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
-import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -65,7 +63,7 @@ public class TranslateDataService {
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
-    private TranslateStrategyFactory translateStrategyFactory;
+    private TranslateV2Service translateV2Service;
 
     // glossary 内存翻译  key
     public static String GLOSSARY_CACHE_KEY = "{shopName}:{targetCode}:{sourceText}";
@@ -311,7 +309,6 @@ public class TranslateDataService {
         return translatedUniqueMap;
     }
 
-
     /**
      * 调用多模型翻译：1，5字符以内用model翻译和qwen翻译。2，ar用HUN_YUAN_MODEL翻译 3，hi用doubao-1.5-pro-256k翻译
      * 根据语言代码切换API翻译
@@ -403,7 +400,6 @@ public class TranslateDataService {
         }
     }
 
-
     /**
      * 如果source和target都是QwenMT支持的语言，则调用QwenMT的API。
      * 在翻译的同时计数字符数
@@ -477,7 +473,6 @@ public class TranslateDataService {
 
     }
 
-
     /**
      * 在调用大模型的基础上添加计数功能,并添加到翻译后的文本
      *
@@ -519,14 +514,8 @@ public class TranslateDataService {
         return targetString;
     }
 
-    public String translateGlossaryHtml(String html, String target, String type, String key, Map<String, GlossaryDO> glossaryMap
-    , String shopName) {
-        TranslateContext context = TranslateContext.startNewTranslate(html, target, type, key);
-        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-        context.setGlossaryMap(glossaryMap);
-        service.translate(context);
-        service.finishAndGetJsonRecord(context);
-        userTokenService.addUsedToken(shopName, context.getUsedToken());
+    public String translateGlossaryHtml(String html, String target, String type, String key, Map<String, GlossaryDO> glossaryMap, String shopName) {
+        TranslateContext context = translateV2Service.singleTranslate(shopName, html, target, type, key, glossaryMap);
         return context.getTranslatedContent();
     }
 
@@ -791,13 +780,40 @@ public class TranslateDataService {
                 }
                 resourceId = fieldValue.asText(null);
                 // 提取翻译内容映射
-                Map<String, TranslateTextDO> partTranslateTextDOMap = JsoupUtils.extractTranslationsByResourceId(shopDataJson, resourceId, shopName);
+                Map<String, TranslateTextDO> partTranslateTextDOMap = extractTranslationsByResourceId(shopDataJson, resourceId, shopName);
                 Map<String, TranslateTextDO> partTranslatedTextDOMap = extractTranslatedDataByResourceId(shopDataJson, partTranslateTextDOMap, isCover, target, shopName);
                 Set<TranslateTextDO> needTranslatedSet = new HashSet<>(partTranslatedTextDOMap.values());
                 return new HashSet<>(needTranslatedSet);
             }
         }
         return new HashSet<>();
+    }
+
+    private static Map<String, TranslateTextDO> extractTranslationsByResourceId(JsonNode shopDataJson, String resourceId, String shopName) {
+        Map<String, TranslateTextDO> translations = new HashMap<>();
+        JsonNode translationsNode = shopDataJson.path("translatableContent");
+        if (translationsNode.isArray() && !translationsNode.isEmpty()) {
+            translationsNode.forEach(translation -> {
+                if (translation == null) {
+                    return;
+                }
+                if (translation.path("value").asText(null) == null || translation.path("key").asText(null) == null) {
+                    return;
+                }
+                //当用户修改数据后，outdated的状态为true，将该数据放入要翻译的集合中
+                TranslateTextDO translateTextDO = new TranslateTextDO();
+                String key = translation.path("key").asText(null);
+                translateTextDO.setTextKey(key);
+                translateTextDO.setSourceText(translation.path("value").asText(null));
+                translateTextDO.setSourceCode(translation.path("locale").asText(null));
+                translateTextDO.setDigest(translation.path("digest").asText(null));
+                translateTextDO.setTextType(translation.path("type").asText(null));
+                translateTextDO.setResourceId(resourceId);
+                translateTextDO.setShopName(shopName);
+                translations.put(key, translateTextDO);
+            });
+        }
+        return translations;
     }
 
     /**

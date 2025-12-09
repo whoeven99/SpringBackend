@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.logic.UserTypeTokenService.getUserTranslatedToken;
@@ -70,10 +71,6 @@ public class PrivateKeyService {
     private  ShopifyService shopifyService;
     @Autowired
     private  ITranslatesService translatesService;
-    @Autowired
-    private  TestingEnvironmentIntegration testingEnvironmentIntegration;
-    @Autowired
-    private  ShopifyHttpIntegration shopifyApiIntegration;
     @Autowired
     private  SecretClient secretClient;
     @Autowired
@@ -186,6 +183,15 @@ public class PrivateKeyService {
         translatesService.updateTranslateStatus(request.getShopName(), 2, clickTranslateRequest.getTarget()[0], request.getSource());
         startPrivateTranslation(request, remainingChars, counter, usedChars, apiKey, translateResourceDTOS, clickTranslateRequest.getIsCover(), modelFlag, privateData.getApiModel(), privateData.getPromptWord(), handleFlag, userKey);
         return new BaseResponse<>().CreateSuccessResponse(clickTranslateRequest);
+    }
+
+    private static List<String> translateModel(List<String> list){
+        return list.stream()
+                .map(TOKEN_MAP::get)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .map(TranslateResourceDTO::getResourceType)
+                .toList();
     }
 
     /**

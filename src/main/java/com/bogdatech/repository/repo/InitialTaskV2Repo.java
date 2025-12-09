@@ -44,10 +44,25 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
-    public List<InitialTaskV2DO> selectByStoppedAndNotEmail() {
+    public List<InitialTaskV2DO> selectByStatusAndTaskType(int status, String taskType) {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getStatus, status)
+                .eq(InitialTaskV2DO::getTaskType, taskType)
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
+    public List<InitialTaskV2DO> selectByTaskTypeAndNotEmail(String taskType) {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getTaskType, taskType)
+                .eq(InitialTaskV2DO::isSendEmail, false)
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
+    public List<InitialTaskV2DO> selectByStoppedAndNotEmail(String taskType) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getStatus, 5)
                 .eq(InitialTaskV2DO::isSendEmail, false)
+                .eq(InitialTaskV2DO::getTaskType, taskType)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 

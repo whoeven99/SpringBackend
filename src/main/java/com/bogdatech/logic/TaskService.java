@@ -366,7 +366,7 @@ public class TaskService {
         }
 
         appInsights.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
-        translateV2Service.createInitialTask(shopName, source, new String[]{target}, AUTO_TRANSLATE_MAP, false, "auto");
+        translateV2Service.createAutoTask(shopName, source, target);
         appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
         return true;
     }
