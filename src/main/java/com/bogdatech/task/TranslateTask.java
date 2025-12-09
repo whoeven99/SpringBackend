@@ -140,7 +140,11 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 
                     for (InitialTaskV2DO shopTask : shopTasks) {
                         shopTask.setSendEmail(true);
-                        initialTaskV2Repo.updateToStatus(shopTask, TranslateV2Service.InitialTaskStatus.ALL_DONE.getStatus());
+                        if (shopTask.getStatus().equals(TranslateV2Service.InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
+                            initialTaskV2Repo.updateToStatus(shopTask, TranslateV2Service.InitialTaskStatus.ALL_DONE.getStatus());
+                        } else {
+                            initialTaskV2Repo.updateById(shopTask);
+                        }
                     }
                     shopNameRedisRepo.deleteShopName(shopName);
                 }
