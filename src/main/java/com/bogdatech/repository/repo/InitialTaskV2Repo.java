@@ -37,6 +37,13 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
+    public List<InitialTaskV2DO> selectByShopNameAndType(String shopName, String taskType) {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getTaskType, taskType)
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
     public List<InitialTaskV2DO> selectByStatus(int status) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getStatus, status)

@@ -127,28 +127,27 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     // 定时30秒扫描一次
     @Scheduled(fixedDelay = 30 * 1000)
     public void sendEmail() {
+        // 自动翻译的邮件
         List<InitialTaskV2DO> autoTask = initialTaskV2Repo.selectByTaskTypeAndNotEmail("auto");
         if (!CollectionUtils.isEmpty(autoTask)) {
-            Map<String, List<InitialTaskV2DO>> tasksByGroup = autoTask.stream()
-                    .collect(Collectors.groupingBy(InitialTaskV2DO::getShopName));
-            for (Map.Entry<String, List<InitialTaskV2DO>> entry : tasksByGroup.entrySet()) {
-                String shopName = entry.getKey();
+            Set<String> shopNames = autoTask.stream()
+                    .map(InitialTaskV2DO::getShopName)
+                    .collect(Collectors.toSet());
+            for (String shopName : shopNames) {
                 if (shopNameRedisRepo.getAutoTaskCount(shopName).equals(0L)) {
-                    // send email
-                    List<InitialTaskV2DO> shopTasks = entry.getValue();
-
-                    // 1.过滤token=0的，2.计算所有task的内容，一起发送
+                    List<InitialTaskV2DO> shopTasks = initialTaskV2Repo.selectByShopNameAndType(shopName, "auto");
                     tencentEmailService.sendAutoTranslateEmail(shopName, shopTasks);
 
                     for (InitialTaskV2DO shopTask : shopTasks) {
                         shopTask.setSendEmail(true);
-                        initialTaskV2Repo.updateById(shopTask);
+                        initialTaskV2Repo.updateToStatus(shopTask, TranslateV2Service.InitialTaskStatus.ALL_DONE.getStatus());
                     }
                     shopNameRedisRepo.deleteShopName(shopName);
                 }
             }
         }
 
+        // 手动翻译邮件
         List<InitialTaskV2DO> manualTask = initialTaskV2Repo.selectByStatusAndTaskType(3, "manual");
         manualTask.addAll(initialTaskV2Repo.selectByStoppedAndNotEmail("manual"));
         if (CollectionUtils.isEmpty(manualTask)) {
