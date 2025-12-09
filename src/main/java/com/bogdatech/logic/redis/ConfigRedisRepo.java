@@ -34,16 +34,16 @@ public class ConfigRedisRepo {
         redisIntegration.hashDelete(ConfigKey, key);
     }
 
-    public boolean shopNameWhiteList(String shopName, String key) {
-        String value = getConfig(key);
-        if (StringUtils.isEmpty(value)) {
+    public boolean isWhiteList(String value, String key) {
+        String configValue = getConfig(key);
+        if (StringUtils.isEmpty(configValue)) {
             return false;
         }
-        List<String> shopList = JsonUtils.jsonToObject(value, new TypeReference<List<String>>() {
+        List<String> whiteList = JsonUtils.jsonToObject(configValue, new TypeReference<List<String>>() {
         });
-        if (shopList == null || shopList.isEmpty()) {
+        if (whiteList == null || whiteList.isEmpty()) {
             return false;
         }
-        return shopList.contains(shopName);
+        return whiteList.contains(value);
     }
 }

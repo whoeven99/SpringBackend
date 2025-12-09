@@ -8,6 +8,7 @@ import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.TencentEmailService;
+import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
@@ -75,6 +76,8 @@ public class TranslateV2Service {
     private ShopNameRedisRepo shopNameRedisRepo;
     @Autowired
     private TencentEmailService tencentEmailService;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
 
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
@@ -179,13 +182,19 @@ public class TranslateV2Service {
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        this.createManualTask(shopName, request.getSource(), targets, resourceTypeList, request.getIsCover());
+        Set<String> filteredTargets = new HashSet<>();
+        Arrays.stream(targets).forEach(target -> {
+            if (!configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
+                filteredTargets.add(target);
+            }
+        });
+        this.createManualTask(shopName, request.getSource(), filteredTargets, resourceTypeList, request.getIsCover());
 
         // 找前端，把这里的返回改了
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
-    public void createManualTask(String shopName, String source, String[] targets,
+    public void createManualTask(String shopName, String source, Set<String> targets,
                                  List<String> moduleList, Boolean isCover) {
         initialTaskV2Repo.deleteByShopNameSource(shopName, source);
         redisStoppedRepository.removeStoppedFlag(shopName);
@@ -207,6 +216,9 @@ public class TranslateV2Service {
     }
 
     public void createAutoTask(String shopName, String source, String target) {
+        if (configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
+            return;
+        }
         initialTaskV2Repo.deleteByShopNameSourceTarget(shopName, source, target);
         redisStoppedRepository.removeStoppedFlag(shopName);
 
