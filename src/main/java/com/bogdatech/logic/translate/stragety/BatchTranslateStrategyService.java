@@ -5,12 +5,15 @@ import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.logic.RedisProcessService;
+import com.bogdatech.utils.JsonUtils;
 import com.bogdatech.utils.PromptUtils;
 import com.bogdatech.utils.StringUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
@@ -105,11 +108,32 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         String aiResponse = pair.getFirst();
 
         // 修改解析的逻辑
-        Map<Integer, String> translatedValueMap = StringUtils.parseOutputTransactionV2(aiResponse);
+        Map<Integer, String> translatedValueMap = parseOutput(aiResponse);
         if (translatedValueMap == null || translatedValueMap.isEmpty()) {
             // fatalException
             return null;
         }
         return new Pair<>(translatedValueMap, pair.getSecond());
+    }
+
+    public static LinkedHashMap<Integer, String> parseOutput(String input) {
+        // 预处理 - 提取 JSON 部分
+        String jsonPart = StringUtils.extractJsonBlock(input);
+
+        if (jsonPart == null) {
+            return null;
+        }
+
+        // 解析为 Map
+        LinkedHashMap<Integer, String> map = JsonUtils.jsonToObjectWithNull(jsonPart, new TypeReference<LinkedHashMap<Integer, String>>() {
+        });
+
+        if (map == null) {
+            return null;
+        }
+
+        // 过滤空值
+        map.entrySet().removeIf(e -> e.getValue() == null || e.getValue().trim().isEmpty());
+        return map;
     }
 }

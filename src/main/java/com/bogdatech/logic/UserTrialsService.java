@@ -24,13 +24,9 @@ public class UserTrialsService {
     @Autowired
     private ICharsOrdersService iCharsOrdersService;
 
-
     /**
      * 1,向免费订阅表里面插入用户信息
      * 2，修改用户订阅表，改为7 (这个暂时去除，目前没有用)
-     *
-     * @param shopName 商店名称
-     * @return Boolean 是否成功
      */
     public Boolean insertUserTrial(String shopName) {
         return iUserTrialsService.insertUserTrial(shopName);
@@ -38,9 +34,6 @@ public class UserTrialsService {
 
     /**
      * 1,给前端一个查询接口
-     *
-     * @param shopName 商店名称
-     * @return Boolean 是否免费 true 是已经免费使用，false，没有
      */
     public BaseResponse<Object> queryUserTrialByShopName(String shopName) {
         //判断是否购买过订阅计划，如果有则返回true
@@ -58,9 +51,6 @@ public class UserTrialsService {
         return new BaseResponse<>().CreateErrorResponse(false);
     }
 
-    /**
-     * 获取免费试用是否弹窗数据
-     */
     public BaseResponse<Object> isShowFreePlan(String shopName) {
         //从数据库中获取是否弹出免费试用的弹窗
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
@@ -77,9 +67,6 @@ public class UserTrialsService {
 
     }
 
-    /**
-     * 判断是否在免费试用时间
-     */
     public BaseResponse<Object> isInFreePlanTime(String shopName) {
         // 获取该用户是否在免费试用期间
         Timestamp now = Timestamp.from(Instant.now());
@@ -91,6 +78,4 @@ public class UserTrialsService {
         }
         return new BaseResponse<>().CreateSuccessResponse(false);
     }
-
-
 }

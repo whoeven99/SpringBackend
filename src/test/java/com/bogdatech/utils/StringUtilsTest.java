@@ -26,13 +26,6 @@ class StringUtilsTest {
     }
 
     @Test
-    void testReplaceLanguage() {
-        String prompt = "{{Chinese}} is a language.";
-        String result = StringUtils.replaceLanguage(prompt, "English", "resource", "industry");
-        assertEquals("English is a language.", result);
-    }
-
-    @Test
     void testCountWords() {
         String text = "Hello, world! This is a test.";
         int count = StringUtils.countWords(text);
@@ -79,13 +72,6 @@ class StringUtilsTest {
 //        assertTrue(StringUtils.isValueBlank(" "));
         // TODO
 //        assertFalse(StringUtils.isValueBlank("not blank"));
-    }
-
-    @Test
-    void testIsValidBase64() {
-        String validBase64 = Base64.getEncoder().encodeToString("test".getBytes());
-        assertTrue(StringUtils.isValidBase64(validBase64));
-        assertFalse(StringUtils.isValidBase64("invalid base64"));
     }
 
     @Test

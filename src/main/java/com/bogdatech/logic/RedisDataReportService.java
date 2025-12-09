@@ -28,10 +28,16 @@ public class RedisDataReportService {
         //对时间进行处理，最小单位为天
         LocalDate date = userDataReportVO.getTimestamp().toLocalDateTime().toLocalDate(); // 只取日期部分
         String format = date.format(DATE_FORMATTER);
-        String dataReportKey = generateDataReportKey(shopName, userDataReportVO.getStoreLanguage()[0], format);
+        String dataReportKey = DATA_REPORT_KEY_TEMPLATE.replace("{shopName}", shopName)
+                .replace("{language}", userDataReportVO.getStoreLanguage()[0])
+                .replace("{yyyyMMdd}", format);
+
         //对传入的client_id做去重，然后再加一
-        String clientIdSetKey = generateClientIdSetKey(shopName, userDataReportVO.getStoreLanguage()[0], format, userDataReportVO.getEventName());
-        String setKeys = generateDataReportKeyKeys(shopName);
+        String clientIdSetKey = CLIENT_ID_SET.replace("{shopName}", shopName)
+                .replace("{language}", userDataReportVO.getStoreLanguage()[0])
+                .replace("{yyyyMMdd}", format)
+                .replace("{eventName}", userDataReportVO.getEventName());
+        String setKeys = DATA_REPORT_KEY_TEMPLATE_KEYS.replace("{shopName}", shopName);
         redisIntegration.setSet(setKeys, userDataReportVO.getStoreLanguage()[0]);
         Boolean flag = redisIntegration.setSet(clientIdSetKey, userDataReportVO.getClientId());
         if (flag) {
@@ -43,7 +49,6 @@ public class RedisDataReportService {
         }
     }
 
-
     /**
      * 读取用户上报的数据
      */
@@ -51,7 +56,8 @@ public class RedisDataReportService {
         // 最终返回的数据结构： { languageCode -> { date -> {hash数据} } }
         Map<String, Map<String, Map<String, String>>> allMap = new HashMap<>();
         LocalDate baseDate = timestamp.toLocalDateTime().toLocalDate();
-        String setKeys = generateDataReportKeyKeys(shopName);
+
+        String setKeys = DATA_REPORT_KEY_TEMPLATE_KEYS.replace("{shopName}", shopName);
         Set<String> redisIntegrationSet = redisIntegration.getSet(setKeys);
 
         if (redisIntegrationSet == null || redisIntegrationSet.isEmpty()) {
@@ -68,7 +74,9 @@ public class RedisDataReportService {
                 LocalDate date = baseDate.minusDays(i);
                 String format = date.format(DATE_FORMATTER);
 
-                String key = generateDataReportKey(shopName, languageCode, format);
+                String key = DATA_REPORT_KEY_TEMPLATE.replace("{shopName}", shopName)
+                        .replace("{language}", languageCode)
+                        .replace("{yyyyMMdd}", format);
                 Map<String, String> hashAll = redisIntegration.hGetAll(key);
 
                 if (hashAll != null && !hashAll.isEmpty()) {
