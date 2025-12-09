@@ -279,9 +279,7 @@ public class TencentEmailService {
             return true;
         }
         templateData.put("html_data", String.valueOf(divBuilder));
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL,
-                "bogda.official@gmail.com"));
-
+        return emailIntegration.sendEmailByTencent(140352L, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, templateData, TENCENT_FROM_EMAIL, "bogda.official@gmail.com");
 //        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 
@@ -296,8 +294,7 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         templateData.put("remaining_credits", totalToken < usedToken ? "0" : formatter.format(totalToken - usedToken));
 
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137353L, templateData,
-                SUCCESSFUL_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        return emailIntegration.sendEmailByTencent(137353L, SUCCESSFUL_TRANSLATION_SUBJECT, templateData, TENCENT_FROM_EMAIL, usersDO.getEmail());
     }
 
     public boolean sendFailedEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, String translatedModules, String unTranslatedModules) {
@@ -312,8 +309,7 @@ public class TencentEmailService {
         templateData.put("translated_content", translatedModules);
         templateData.put("remaining_content", unTranslatedModules);
 
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(137317L, templateData,
-                TRANSLATION_FAILED_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        return emailIntegration.sendEmailByTencent(137317L, TRANSLATION_FAILED_SUBJECT, templateData, TENCENT_FROM_EMAIL, usersDO.getEmail());
     }
 
     public void setCommonTemplate(Map<String, String> templateData, String shopName, String target, Integer translateTime, Integer usedTokenByTask) {

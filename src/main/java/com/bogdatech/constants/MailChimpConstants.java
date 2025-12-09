@@ -29,6 +29,7 @@ public class MailChimpConstants {
     //from_email
     public static final String FROM_EMAIL = "support@ciwi.ai";
     public static final String CC_EMAIL = "feynman@ciwi.ai";
+    public static final String[] CC_EMAIL_ARRAY = {"feynman@ciwi.ai", "yewen@ciwi.ai"};
     public static final String TENCENT_FROM_EMAIL = "support@msg.ciwi.ai";
     public static final String ALL_FROM_EMAIL = "your-tencent-api-key";
     //腾讯发送邮件失败

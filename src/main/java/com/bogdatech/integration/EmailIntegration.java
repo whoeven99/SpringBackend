@@ -1,7 +1,9 @@
 package com.bogdatech.integration;
 
+import com.bogdatech.constants.MailChimpConstants;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
 import com.bogdatech.utils.ConfigUtils;
+import com.bogdatech.utils.JsonUtils;
 import com.tencentcloudapi.common.AbstractModel;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -20,6 +22,44 @@ import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class EmailIntegration {
+    private final SesClient sesClient;
+
+    public EmailIntegration() {
+        Credential cred = new Credential(ConfigUtils.getConfig("Tencent_Cloud_KEY_ID"), ConfigUtils.getConfig("Tencent_Cloud_KEY"));
+        HttpProfile httpProfile = new HttpProfile();
+        ClientProfile clientProfile = new ClientProfile();
+        clientProfile.setHttpProfile(httpProfile);
+        sesClient = new SesClient(cred, "ap-hongkong", clientProfile);
+    }
+
+    public boolean sendEmailByTencent(Long templateId, String subject, Map<String, String> templateData, String from, String to) {
+        SendEmailRequest tencentRequest = new SendEmailRequest();
+        tencentRequest.setSubject(subject);
+        tencentRequest.setFromEmailAddress(from);
+        tencentRequest.setCc(MailChimpConstants.CC_EMAIL_ARRAY);
+
+        String[] destination = {to};
+        tencentRequest.setDestination(destination);
+
+        Template template = new Template();
+        template.setTemplateID(templateId);
+        template.setTemplateData(JsonUtils.objectToJson(templateData));
+        tencentRequest.setTemplate(template);
+
+        try {
+            SendEmailResponse resp = sesClient.SendEmail(tencentRequest);
+            if (resp == null || resp.getRequestId() == null) {
+                appInsights.trackTrace("FatalException 腾讯邮件报错信息 errors ： response is null or RequestId is null, res: " + JsonUtils.objectToJson(resp)
+                        + " templateId : " + templateId + " from: " + from + " to: " + to);
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            appInsights.trackException(e);
+            appInsights.trackTrace("FatalException 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + template + " from: " + from + " to: " + to);
+            return false;
+        }
+    }
 
     /**
      * 腾讯邮件发送

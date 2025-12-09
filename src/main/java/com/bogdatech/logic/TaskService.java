@@ -314,14 +314,13 @@ public class TaskService {
         }
 
         for (TranslatesDO translatesDO : translatesDOList) {
-            if (configRedisRepo.shopNameWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
-                autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
-            } else {
+            if (!configRedisRepo.shopNameWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
                 autoTranslate(translatesDO);
             }
         }
     }
 
+    // 在TranslateTask里定时调用这里
     public boolean autoTranslatev2(String shopName, String source, String target) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         if (usersDO == null) {
@@ -337,6 +336,23 @@ public class TaskService {
                 appInsights.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
                 return false;
             }
+        }
+
+        // 判断注册时间
+        if (usersDO.getLoginTime() == null) {
+            appInsights.trackTrace("autoTranslateV2 用户未登录 或 登录时间为空: " + shopName);
+            return false;
+        }
+
+        // 将登录时间与当前时间都按 UTC 时区比较小时
+        int loginHour = usersDO.getLoginTime().toInstant().atZone(ZoneOffset.UTC).getHour();
+        int currentHour = Instant.now().atZone(ZoneOffset.UTC).getHour();
+        appInsights.trackTrace("autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
+
+        // 只有当登录小时与当前小时一致时才继续执行，其他情况按分片逻辑跳过
+        if (loginHour != currentHour) {
+            appInsights.trackTrace("autoTranslateV2 非当前小时，不执行自动翻译 shop: " + shopName);
+            return false;
         }
 
         Integer maxToken = userTokenService.getMaxToken(shopName);
