@@ -36,11 +36,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
@@ -78,6 +81,10 @@ public class TranslateV2Service {
     private TencentEmailService tencentEmailService;
     @Autowired
     private ConfigRedisRepo configRedisRepo;
+    @Autowired
+    private IUsersService usersService;
+    @Autowired
+    private ITranslatesService translatesService;
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -152,10 +159,8 @@ public class TranslateV2Service {
 
     public TranslateContext singleTranslate(String shopName, String content, String target, String type, String key,
                                             Map<String, GlossaryDO> glossaryMap) {
-        TranslateContext context = new TranslateContext(content, target, type, key);
+        TranslateContext context = new TranslateContext(content, target, type, key, glossaryMap);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-        context.setGlossaryMap(glossaryMap);
-
         service.translate(context);
         service.finishAndGetJsonRecord(context);
 
@@ -399,11 +404,8 @@ public class TranslateV2Service {
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
-                TranslateContext context = new TranslateContext(idToSourceValueMap, target);
-                ITranslateStrategyService service =
-                        translateStrategyFactory.getServiceByContext(context);
-                context.setGlossaryMap(glossaryMap);
-
+                TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap);
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
                 service.translate(context);
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
@@ -598,6 +600,73 @@ public class TranslateV2Service {
         }
     }
 
+    // 在TranslateTask里定时调用这里
+    public boolean autoTranslateV2(String shopName, String source, String target) {
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        if (usersDO == null) {
+            appInsights.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
+            return false;
+        }
+
+        if (usersDO.getUninstallTime() != null) {
+            if (usersDO.getLoginTime() == null) {
+                appInsights.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
+                return false;
+            } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+                appInsights.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
+                return false;
+            }
+        }
+
+        // 判断注册时间
+        if (usersDO.getLoginTime() == null) {
+            appInsights.trackTrace("autoTranslateV2 用户未登录 或 登录时间为空: " + shopName);
+            return false;
+        }
+
+        // 将登录时间与当前时间都按 UTC 时区比较小时
+        int loginHour = usersDO.getLoginTime().toInstant().atZone(ZoneOffset.UTC).getHour();
+        int currentHour = Instant.now().atZone(ZoneOffset.UTC).getHour();
+        appInsights.trackTrace("autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
+
+        // 只有当登录小时与当前小时一致时才继续执行，其他情况按分片逻辑跳过
+        if (loginHour != currentHour) {
+            appInsights.trackTrace("autoTranslateV2 非当前小时，不执行自动翻译 shop: " + shopName);
+            return false;
+        }
+
+        Integer maxToken = userTokenService.getMaxToken(shopName);
+        Integer usedToken = userTokenService.getUsedToken(shopName);
+        appInsights.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
+        // 如果字符超限，则直接返回字符超限
+        if (usedToken >= maxToken) {
+            appInsights.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
+            return false;
+        }
+
+        // 判断这条语言是否在用户本地存在
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
+                API_VERSION_LAST, getShopLanguageQuery());
+        appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
+        if (shopifyByQuery == null) {
+            appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
+            return false;
+        }
+
+        String userCode = "\"" + target + "\"";
+        if (!shopifyByQuery.contains(userCode)) {
+            // 将用户的自动翻译标识改为false
+            translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
+            appInsights.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
+            return false;
+        }
+
+        appInsights.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
+        createAutoTask(shopName, source, target);
+        appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
+        return true;
+    }
+
     // 根据翻译规则，不翻译的直接不用存
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
@@ -706,9 +775,6 @@ public class TranslateV2Service {
 //        }
         return true;
     }
-
-    // 获取一条最新的没翻译数据，为空，改为searching； 有值则返回值
-
 
     @Getter
     public enum InitialTaskStatus {

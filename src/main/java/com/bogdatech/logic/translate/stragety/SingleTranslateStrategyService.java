@@ -70,6 +70,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             // fatalException
             return;
         }
+        redisProcessService.setCacheData(target, pair.getFirst(), value);
         ctx.setUsedToken(pair.getSecond());
         ctx.setTranslatedContent(pair.getFirst());
     }

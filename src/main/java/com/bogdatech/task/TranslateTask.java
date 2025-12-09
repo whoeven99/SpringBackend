@@ -179,7 +179,7 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
         }
         for (TranslatesDO translatesDO : translatesDOList) {
             if (configRedisRepo.isWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
-                taskService.autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+                translateV2Service.autoTranslateV2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
             }
         }
     }
