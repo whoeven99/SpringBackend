@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 import static com.bogdatech.task.TranslateTask.appInsights;
 
 @Service
