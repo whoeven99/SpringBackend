@@ -8,6 +8,7 @@ import com.bogdatech.repository.mapper.InitialTaskV2Mapper;
 import com.bogdatech.utils.DbUtils;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -95,6 +96,7 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getTarget, target)
                 .eq(InitialTaskV2DO::getIsDeleted, false)
                 .set(InitialTaskV2DO::getIsDeleted, true)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
         ) > 0;
     }
 
@@ -103,7 +105,20 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getShopName, shopName)
                 .eq(InitialTaskV2DO::getSource, source)
                 .eq(InitialTaskV2DO::getIsDeleted, false)
+                .eq(InitialTaskV2DO::getTaskType, "manual")
+                .and(w -> w.eq(InitialTaskV2DO::getStatus, 4)
+                        .or()
+                        .eq(InitialTaskV2DO::getStatus, 5))
                 .set(InitialTaskV2DO::getIsDeleted, true)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
         ) > 0;
+    }
+
+    public List<InitialTaskV2DO> selectByShopNameSourceManual(String shopName, String source) {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getSource, source)
+                .eq(InitialTaskV2DO::getIsDeleted, false)
+                .eq(InitialTaskV2DO::getTaskType, "manual"));
     }
 }
