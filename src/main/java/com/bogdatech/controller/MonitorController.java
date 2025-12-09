@@ -7,7 +7,6 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
 import com.bogdatech.entity.DO.*;
-import com.bogdatech.integration.RedisIntegration;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
@@ -16,7 +15,6 @@ import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
-import com.bogdatech.repository.repo.TranslateTaskV2Repo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,13 +38,13 @@ public class MonitorController {
     @Autowired
     private InitialTaskV2Repo initialTaskV2Repo;
     @Autowired
-    private TranslateTaskV2Repo translateTaskV2Repo;
-    @Autowired
     private TranslateProgressService translateProgressService;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
+    @Autowired
+    private TranslationCounterServiceImpl translationCounterServiceRepo;
 
     @GetMapping("/getTable")
     public Map<String, Object> getTable(@RequestParam String shopName) {
@@ -109,9 +107,6 @@ public class MonitorController {
         configRedisRepo.delConfig(key);
         return configRedisRepo.getAllConfigs();
     }
-
-    @Autowired
-    private TranslationCounterServiceImpl translationCounterServiceRepo;
 
     @PostMapping("/todoBConfig")
     public Map<String, String> todoBConfig(@RequestBody Map<String, String> map) {
