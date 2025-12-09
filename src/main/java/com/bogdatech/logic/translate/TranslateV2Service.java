@@ -6,6 +6,7 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.ShopNameRedisRepo;
@@ -152,19 +153,36 @@ public class TranslateV2Service {
             return new BaseResponse<>().CreateErrorResponse("Missing parameters");
         }
 
+        // 判断用户语言是否正在翻译，翻译的不管；没翻译的翻译。
+        List<InitialTaskV2DO> initialTaskV2DOS =
+                initialTaskV2Repo.selectByShopNameSourceManual(shopName, request.getSource());
+        Set<String> targetSet = new HashSet<>(Arrays.asList(targets));
+
+        // 找出已经 INIT，READ_DONE，TRANSLATE_DONE，SAVE_DONE 的 target
+        Set<String> filteredTargets = initialTaskV2DOS.stream()
+                .filter(it -> it.getStatus() == InitialTaskStatus.INIT_READING_SHOPIFY.getStatus()
+                        || it.getStatus() == InitialTaskStatus.READ_DONE_TRANSLATING.getStatus()
+                        || it.getStatus() == InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus()
+                        || it.getStatus() == InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())
+                .map(InitialTaskV2DO::getTarget)
+                .collect(Collectors.toSet());
+
+        // 将filteredTargets和targets对比，去除targets里和filteredTargets相同的值
+        Set<String> finalTargets = targetSet.stream()
+                .filter(t -> !filteredTargets.contains(t) && !configRedisRepo.isWhiteList(t, "forbiddenTarget"))
+                .collect(Collectors.toSet());
+
+        if (finalTargets.isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse("No Target Language Can Create");
+        }
+
         // 收集所有的resourceType到一个列表中
         List<String> resourceTypeList = moduleList.stream()
                 .flatMap(module -> TranslateResourceDTO.TOKEN_MAP.get(module).stream())
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        Set<String> filteredTargets = new HashSet<>();
-        Arrays.stream(targets).forEach(target -> {
-            if (!configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
-                filteredTargets.add(target);
-            }
-        });
-        this.createManualTask(shopName, request.getSource(), filteredTargets, resourceTypeList, request.getIsCover());
+        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
 
         // 找前端，把这里的返回改了
         return new BaseResponse<>().CreateSuccessResponse(request);
@@ -234,6 +252,8 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
                 progress.setTranslateStatus("translation_process_init");
+                defaultProgressTranslateData.put("TotalQuantity", 1);
+                defaultProgressTranslateData.put("RemainingQuantity", 1);
                 progress.setProgressData(defaultProgressTranslateData);
                 progress.setTaskId(task.getId());
                 list.add(progress);
@@ -254,7 +274,8 @@ public class TranslateV2Service {
 
                 progress.setProgressData(progressData);
                 list.add(progress);
-            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus()) ||
+                    task.getStatus().equals(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
@@ -387,9 +408,18 @@ public class TranslateV2Service {
                     || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)
                     || SINGLE_LINE_TEXT_FIELD.equals(textType)) {
                 // 批量翻译
-                List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
+                List<TranslateTaskV2DO> originTaskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
                         initialTaskId, textType, 50);
-//                int tokens = calculateBaiLianToken(text);
+
+                List<TranslateTaskV2DO> taskList = new ArrayList<>();
+                int totalChars = 0;
+                for (TranslateTaskV2DO task : originTaskList) {
+                    totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(task.getSourceValue());
+                    if (totalChars > 1000) {
+                        break;
+                    }
+                    taskList.add(task);
+                }
 
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
@@ -445,7 +475,7 @@ public class TranslateV2Service {
             initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
             initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
             initialTaskV2Repo.updateById(initialTaskV2DO);
-            if (initialTaskV2DO.getTaskType().equals("auto")) {
+            if ("auto".equals(initialTaskV2DO.getTaskType())) {
                 shopNameRedisRepo.hdecAutoTaskCount(shopName);
             }
 
@@ -521,7 +551,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
-        if (initialTaskV2DO.getTaskType().equals("auto")) {
+        if ("auto".equals(initialTaskV2DO.getTaskType())) {
             shopNameRedisRepo.hdecAutoTaskCount(shopName);
         }
     }
@@ -553,7 +583,8 @@ public class TranslateV2Service {
         if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
             // 中断翻译的话 token limit才发邮件
             if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
-                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {});
+                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
+                });
                 assert moduleList != null;
                 List<TranslateResourceDTO> resourceList = convertALL(moduleList);
                 TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
