@@ -169,7 +169,7 @@ public class TranslateV2Service {
 
         // 将filteredTargets和targets对比，去除targets里和filteredTargets相同的值
         Set<String> finalTargets = targetSet.stream()
-                .filter(t -> !filteredTargets.contains(t))
+                .filter(t -> !filteredTargets.contains(t) && !configRedisRepo.isWhiteList(t, "forbiddenTarget"))
                 .collect(Collectors.toSet());
 
         if (finalTargets.isEmpty()) {
@@ -182,13 +182,7 @@ public class TranslateV2Service {
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        Set<String> filteredTargets = new HashSet<>();
-        Arrays.stream(targets).forEach(target -> {
-            if (!configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
-                filteredTargets.add(target);
-            }
-        });
-        this.createManualTask(shopName, request.getSource(), filteredTargets, resourceTypeList, request.getIsCover());
+        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
 
         // 找前端，把这里的返回改了
         return new BaseResponse<>().CreateSuccessResponse(request);
