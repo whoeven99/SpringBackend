@@ -408,28 +408,20 @@ public class TranslateV2Service {
                     || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)
                     || SINGLE_LINE_TEXT_FIELD.equals(textType)) {
                 // 批量翻译
-                List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
+                List<TranslateTaskV2DO> originTaskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
                         initialTaskId, textType, 50);
-                if (taskList.isEmpty()) {
-                    continue;
-                }
 
-                int sumTokens = 0;
-                int endIndex = taskList.size(); // 默认全取
-                for (int i = 0; i < taskList.size(); i++) {
-                    TranslateTaskV2DO task = taskList.get(i);
-                    int tokens = ALiYunTranslateIntegration.calculateBaiLianToken(task.getSourceValue());
-
-                    sumTokens += tokens;
-
-                    if (sumTokens >= 1000) {
-                        endIndex = i + 1;
+                List<TranslateTaskV2DO> taskList = new ArrayList<>();
+                int totalChars = 0;
+                for (TranslateTaskV2DO task : originTaskList) {
+                    totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(task.getSourceValue());
+                    if (totalChars > 1000) {
                         break;
                     }
+                    taskList.add(task);
                 }
-                List<TranslateTaskV2DO> processedTaskList = taskList.subList(0, endIndex);
 
-                Map<Integer, String> idToSourceValueMap = processedTaskList.stream()
+                Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target);
@@ -440,7 +432,7 @@ public class TranslateV2Service {
                 service.translate(context);
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
-                for (TranslateTaskV2DO updatedDo : processedTaskList) {
+                for (TranslateTaskV2DO updatedDo : taskList) {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
                     updatedDo.setTargetValue(targetValue);
                     updatedDo.setHasTargetValue(true);
@@ -449,7 +441,7 @@ public class TranslateV2Service {
                     translateTaskV2Repo.update(updatedDo);
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
-                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, processedTaskList.size(),
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
                         context.getUsedToken(), context.getTranslatedChars());
             } else {
                 // 其他单条翻译
