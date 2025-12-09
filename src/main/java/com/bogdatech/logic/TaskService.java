@@ -314,7 +314,7 @@ public class TaskService {
         }
 
         for (TranslatesDO translatesDO : translatesDOList) {
-            if (!configRedisRepo.isWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
+            if (!configRedisRepo.isWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList") && !configRedisRepo.isWhiteList(translatesDO.getTarget(), "forbiddenTarget")) {
                 autoTranslate(translatesDO);
             }
         }

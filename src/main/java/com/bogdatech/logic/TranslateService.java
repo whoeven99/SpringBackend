@@ -10,6 +10,7 @@ import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.AidgeIntegration;
+import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
@@ -73,6 +74,8 @@ public class TranslateService {
     private ShopifyService shopifyService;
     @Autowired
     private AidgeIntegration aidgeIntegration;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -213,7 +216,11 @@ public class TranslateService {
         }
 
         for (String target : targets) {
+            if (configRedisRepo.isWhiteList(target, "forbiddenTarget")){
+                continue;
+            }
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopName);
+
             // 将language级别的token数据删除掉
             boolean deletedLanguage = translationCounterRedisService.deleteLanguage(shopName, target, MANUAL);
             appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除这个语言的language的token统计 是否删除 languageToken： " + deletedLanguage + " 语言是： " + target);
