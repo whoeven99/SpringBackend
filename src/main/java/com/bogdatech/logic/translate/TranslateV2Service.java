@@ -79,30 +79,6 @@ public class TranslateV2Service {
     @Autowired
     private ConfigRedisRepo configRedisRepo;
 
-    public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
-        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
-        if (initialTaskV2DO != null) {
-            initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-            redisStoppedRepository.removeStoppedFlag(shopName);
-            // return true;
-        }
-        // 否则 操作失败，前端展示错误码
-
-        // 删除用户停止标识
-        return new BaseResponse<>().CreateSuccessResponse(true);
-    }
-
-    public void continueTranslating(String shopName) {
-        List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(shopName);
-        if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(shopName)) {
-            redisStoppedRepository.removeStoppedFlag(shopName);
-            for (InitialTaskV2DO initialTaskV2DO : list) {
-                initialTaskV2DO.setStatus(TranslateV2Service.InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                initialTaskV2Repo.updateById(initialTaskV2DO);
-            }
-        }
-    }
-
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
         if (request.getContext() == null || request.getTarget() == null
@@ -127,20 +103,6 @@ public class TranslateV2Service {
         return BaseResponse.SuccessResponse(returnVO);
     }
 
-    public TranslateContext singleTranslate(String shopName, String content, String target,
-                                            String type, String key,
-                                            Map<String, GlossaryDO> glossaryMap) {
-        TranslateContext context = new TranslateContext(content, target, type, key);
-        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-        context.setGlossaryMap(glossaryMap);
-
-        service.translate(context);
-        service.finishAndGetJsonRecord(context);
-
-        userTokenService.addUsedToken(shopName, context.getUsedToken());
-        return context;
-    }
-
     // 手动开启翻译任务入口
     // 翻译 step 1, 用户 -> initial任务创建
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
@@ -150,7 +112,7 @@ public class TranslateV2Service {
 
         if (StringUtils.isEmpty(shopName) ||
                 targets == null || targets.length == 0 || CollectionUtils.isEmpty(moduleList)) {
-            return new BaseResponse<>().CreateErrorResponse("Missing parameters");
+            return BaseResponse.FailedResponse("Missing parameters");
         }
 
         // 判断用户语言是否正在翻译，翻译的不管；没翻译的翻译。
@@ -185,11 +147,24 @@ public class TranslateV2Service {
         this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
 
         // 找前端，把这里的返回改了
-        return new BaseResponse<>().CreateSuccessResponse(request);
+        return BaseResponse.SuccessResponse(request);
     }
 
-    public void createManualTask(String shopName, String source, Set<String> targets,
-                                 List<String> moduleList, Boolean isCover) {
+    public TranslateContext singleTranslate(String shopName, String content, String target, String type, String key,
+                                            Map<String, GlossaryDO> glossaryMap) {
+        TranslateContext context = new TranslateContext(content, target, type, key);
+        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+        context.setGlossaryMap(glossaryMap);
+
+        service.translate(context);
+        service.finishAndGetJsonRecord(context);
+
+        userTokenService.addUsedToken(shopName, context.getUsedToken());
+        return context;
+    }
+
+    private void createManualTask(String shopName, String source, Set<String> targets,
+                                  List<String> moduleList, Boolean isCover) {
         initialTaskV2Repo.deleteByShopNameSource(shopName, source);
         redisStoppedRepository.removeStoppedFlag(shopName);
 
@@ -595,6 +570,30 @@ public class TranslateV2Service {
 
                 initialTaskV2DO.setSendEmail(true);
                 initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.STOPPED.status);
+            }
+        }
+    }
+
+    public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
+        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
+        if (initialTaskV2DO != null) {
+            initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+            redisStoppedRepository.removeStoppedFlag(shopName);
+            // return true;
+        }
+        // 否则 操作失败，前端展示错误码
+
+        // 删除用户停止标识
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    public void continueTranslating(String shopName) {
+        List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(shopName);
+        if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(shopName)) {
+            redisStoppedRepository.removeStoppedFlag(shopName);
+            for (InitialTaskV2DO initialTaskV2DO : list) {
+                initialTaskV2DO.setStatus(TranslateV2Service.InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+                initialTaskV2Repo.updateById(initialTaskV2DO);
             }
         }
     }
