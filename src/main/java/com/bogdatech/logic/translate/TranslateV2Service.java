@@ -160,7 +160,7 @@ public class TranslateV2Service {
 
         Set<String> filteredTargets = new HashSet<>();
         Arrays.stream(targets).forEach(target -> {
-            if (!configRedisRepo.languageWhiteList(target, "forbiddenTarget")) {
+            if (!configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
                 filteredTargets.add(target);
             }
         });
@@ -192,7 +192,7 @@ public class TranslateV2Service {
     }
 
     public void createAutoTask(String shopName, String source, String target) {
-        if (configRedisRepo.languageWhiteList(target, "forbiddenTarget")) {
+        if (configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
             return;
         }
         initialTaskV2Repo.deleteByShopNameSourceTarget(shopName, source, target);

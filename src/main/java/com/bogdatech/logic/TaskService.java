@@ -314,7 +314,7 @@ public class TaskService {
         }
 
         for (TranslatesDO translatesDO : translatesDOList) {
-            if (!configRedisRepo.shopNameWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
+            if (!configRedisRepo.isWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
                 autoTranslate(translatesDO);
             }
         }

@@ -56,7 +56,7 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
-        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+        if (configRedisRepo.isWhiteList(shopName, "clickTranslateWhiteList")) {
             return translateV2Service.createInitialTask(request);
         }
         return translateService.createInitialTask(request);
@@ -64,7 +64,7 @@ public class TranslateController {
 
     @PostMapping("/getAllProgressData")
     public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
-        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+        if (configRedisRepo.isWhiteList(shopName, "clickTranslateWhiteList")) {
             return translateV2Service.getProcess(shopName, source);
         }
         return translateProgressService.getAllProgressData(shopName, source);
@@ -80,7 +80,7 @@ public class TranslateController {
     // 用户手动点击停止翻译
     @PutMapping("/stopTranslatingTask")
     public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
-        if (configRedisRepo.shopNameWhiteList(shopName, "clickTranslateWhiteList")) {
+        if (configRedisRepo.isWhiteList(shopName, "clickTranslateWhiteList")) {
             redisStoppedRepository.manuallyStopped(shopName);
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
