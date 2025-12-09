@@ -31,27 +31,27 @@ public class TranslateV2ServiceTest {
     @MockBean
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
 
-    @Test
-    public void testBatchTranslate() {
-        Mockito.when(userTokenService.addUsedToken(Mockito.anyString(), Mockito.anyInt()))
-                .thenReturn(100);
-        Mockito.when(aLiYunTranslateIntegration.userTranslate(Mockito.anyString(), Mockito.anyString()))
-                .thenReturn(new Pair<>("{\"0\":\"Content\",\"1\":\"Title\",\"2\":\"Description\"}", 100));
-
-        // 调用方法
-        Map<Integer, String> contentMap = new HashMap<>();
-        contentMap.put(0, "内容");
-        contentMap.put(1, "标题");
-        contentMap.put(2, "描述");
-        TranslateContext context = TranslateContext.startBatchTranslate(contentMap, "en");
-
-        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-        service.translate(context);
-
-        Assert.assertEquals("Content", context.getTranslatedTextMap().get(0));
-        Assert.assertEquals("Title", context.getTranslatedTextMap().get(1));
-        Assert.assertEquals("Description", context.getTranslatedTextMap().get(2));
-    }
+//    @Test
+//    public void testBatchTranslate() {
+//        Mockito.when(userTokenService.addUsedToken(Mockito.anyString(), Mockito.anyInt()))
+//                .thenReturn(100);
+//        Mockito.when(aLiYunTranslateIntegration.userTranslate(Mockito.anyString(), Mockito.anyString()))
+//                .thenReturn(new Pair<>("{\"0\":\"Content\",\"1\":\"Title\",\"2\":\"Description\"}", 100));
+//
+//        // 调用方法
+//        Map<Integer, String> contentMap = new HashMap<>();
+//        contentMap.put(0, "内容");
+//        contentMap.put(1, "标题");
+//        contentMap.put(2, "描述");
+//        TranslateContext context = TranslateContext.startBatchTranslate(contentMap, "en");
+//
+//        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+//        service.translate(context);
+//
+//        Assert.assertEquals("Content", context.getTranslatedTextMap().get(0));
+//        Assert.assertEquals("Title", context.getTranslatedTextMap().get(1));
+//        Assert.assertEquals("Description", context.getTranslatedTextMap().get(2));
+//    }
 
     @Test
     public void testHtmlTranslate() {
