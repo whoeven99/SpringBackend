@@ -74,6 +74,11 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             // fatalException
             return;
         }
+
+        pair.getFirst().forEach((key, value) -> {
+            redisProcessService.setCacheData(target, value, ctx.getUncachedTextMap().get(key));
+        });
+
         ctx.setStrategy("Batch json 翻译");
         ctx.incrementUsedTokenCount(pair.getSecond());
         ctx.getTranslatedTextMap().putAll(pair.getFirst());

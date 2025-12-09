@@ -20,15 +20,12 @@ import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.task.AutoTranslateTask;
 import com.bogdatech.task.DBTask;
 import com.bogdatech.task.IpEmailTask;
-import com.bogdatech.task.TranslateTask;
 import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -74,8 +71,6 @@ public class TestController {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
-    @Autowired
-    private AutoTranslateTask autoTranslate;
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
@@ -168,50 +163,6 @@ public class TestController {
     public void testAutoTranslate() {
         appInsights.trackTrace("testAutoTranslate 开始调用");
         executorService.execute(() -> taskService.autoTranslate());
-    }
-
-    @Autowired
-    private TranslateTask translateTask;
-
-    @GetMapping("/autov2")
-    public String testAutoTranslateV2(@RequestParam String type, @RequestParam(required = false, defaultValue = "1") Integer count) {
-        if ("1".equals(type)) {
-            appInsights.trackTrace("autoTranslateV2 开始调用");
-            List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
-            appInsights.trackTrace("autoTranslateV2 任务总数: " + translatesDOList.size());
-
-            if (CollectionUtils.isEmpty(translatesDOList)) {
-                return "no task";
-            }
-            int i = 0;
-            for (TranslatesDO translatesDO : translatesDOList) {
-                appInsights.trackTrace("autoTranslateV2 测试开始一个： " + translatesDO.getShopName());
-                if (taskService.autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget())) {
-                    i++;
-                    if (i > count) {
-                        break;
-                    }
-                }
-            }
-            return "1";
-        }
-        if ("2".equals(type)) {
-            translateTask.initialToTranslateTask();
-            return "2";
-        }
-        if ("3".equals(type)) {
-            translateTask.translateEachTask();
-            return "3";
-        }
-        if ("4".equals(type)) {
-            translateTask.saveToShopify();
-            return "4";
-        }
-        if ("5".equals(type)) {
-            translateTask.sendEmail();
-            return "5";
-        }
-        return "failed";
     }
 
     @GetMapping("/testFreeTrialTask")
@@ -447,7 +398,7 @@ public class TestController {
      */
     @PutMapping("/startAuto")
     public void startAuto(@RequestParam String source, @RequestParam String target, @RequestParam String shopName) {
-        taskService.autoTranslatev2(shopName, source, target);
+        //
     }
 
     // 测试glossary缓存
