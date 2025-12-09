@@ -18,7 +18,6 @@ import com.qcloud.cos.transfer.Upload;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
-import static com.bogdatech.constants.TencentConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TimeOutUtils.*;
 import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;

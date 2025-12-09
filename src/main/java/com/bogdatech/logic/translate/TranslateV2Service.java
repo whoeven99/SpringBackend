@@ -6,6 +6,7 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
@@ -34,10 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
@@ -172,7 +170,7 @@ public class TranslateV2Service {
                 .collect(Collectors.toSet());
 
         if (finalTargets.isEmpty()) {
-            return new BaseResponse<>().CreateSuccessResponse(request);
+            return new BaseResponse<>().CreateErrorResponse("No Target Language Can Create");
         }
 
         // 收集所有的resourceType到一个列表中
@@ -248,6 +246,8 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
                 progress.setTranslateStatus("translation_process_init");
+                defaultProgressTranslateData.put("TotalQuantity", 1);
+                defaultProgressTranslateData.put("RemainingQuantity", 1);
                 progress.setProgressData(defaultProgressTranslateData);
                 progress.setTaskId(task.getId());
                 list.add(progress);
@@ -268,7 +268,8 @@ public class TranslateV2Service {
 
                 progress.setProgressData(progressData);
                 list.add(progress);
-            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus()) ||
+                    task.getStatus().equals(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
@@ -403,9 +404,26 @@ public class TranslateV2Service {
                 // 批量翻译
                 List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
                         initialTaskId, textType, 50);
-//                int tokens = calculateBaiLianToken(text);
+                if (taskList.isEmpty()) {
+                    continue;
+                }
 
-                Map<Integer, String> idToSourceValueMap = taskList.stream()
+                int sumTokens = 0;
+                int endIndex = taskList.size(); // 默认全取
+                for (int i = 0; i < taskList.size(); i++) {
+                    TranslateTaskV2DO task = taskList.get(i);
+                    int tokens = ALiYunTranslateIntegration.calculateBaiLianToken(task.getSourceValue());
+
+                    sumTokens += tokens;
+
+                    if (sumTokens >= 1000) {
+                        endIndex = i + 1;
+                        break;
+                    }
+                }
+                List<TranslateTaskV2DO> processedTaskList = taskList.subList(0, endIndex);
+
+                Map<Integer, String> idToSourceValueMap = processedTaskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target);
@@ -416,7 +434,7 @@ public class TranslateV2Service {
                 service.translate(context);
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
-                for (TranslateTaskV2DO updatedDo : taskList) {
+                for (TranslateTaskV2DO updatedDo : processedTaskList) {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
                     updatedDo.setTargetValue(targetValue);
                     updatedDo.setHasTargetValue(true);
@@ -425,7 +443,7 @@ public class TranslateV2Service {
                     translateTaskV2Repo.update(updatedDo);
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
-                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, processedTaskList.size(),
                         context.getUsedToken(), context.getTranslatedChars());
             } else {
                 // 其他单条翻译
@@ -459,7 +477,7 @@ public class TranslateV2Service {
             initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
             initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
             initialTaskV2Repo.updateById(initialTaskV2DO);
-            if (initialTaskV2DO.getTaskType().equals("auto")) {
+            if ("auto".equals(initialTaskV2DO.getTaskType())) {
                 shopNameRedisRepo.hdecAutoTaskCount(shopName);
             }
 
@@ -535,7 +553,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
-        if (initialTaskV2DO.getTaskType().equals("auto")) {
+        if ("auto".equals(initialTaskV2DO.getTaskType())) {
             shopNameRedisRepo.hdecAutoTaskCount(shopName);
         }
     }
@@ -567,7 +585,8 @@ public class TranslateV2Service {
         if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
             // 中断翻译的话 token limit才发邮件
             if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
-                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {});
+                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
+                });
                 assert moduleList != null;
                 List<TranslateResourceDTO> resourceList = convertALL(moduleList);
                 TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());

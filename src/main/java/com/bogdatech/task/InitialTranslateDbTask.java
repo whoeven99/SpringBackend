@@ -204,7 +204,7 @@ public class InitialTranslateDbTask {
             }
 
             // 3. 状态为3：部分翻译，发失败邮件
-            if (translateStatus == 3 && !task.isSendEmail() && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
+            if (translateStatus == 3 && !task.isSendEmail() && "click".equals(task.getTaskType())) {
                 List<String> translationList = jsonToObject(task.getTranslateSettings3(), new TypeReference<>() {
                 });
                 if (translationList == null || translationList.isEmpty()) {
@@ -227,7 +227,7 @@ public class InitialTranslateDbTask {
             }
 
             // 5. 状态为2：翻译中 判断是否完成
-            if (translateStatus == 2 && task.getStatus() == InitialTaskStatusEnum.TASKS_CREATED.getStatus() && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
+            if (translateStatus == 2 && task.getStatus() == InitialTaskStatusEnum.TASKS_CREATED.getStatus() && "click".equals(task.getTaskType())) {
                 List<TranslateTasksDO> translateTasks = iTranslateTasksService.getTranslateTasksByShopNameAndSourceAndTarget(task.getShopName(), task.getSource(), task.getTarget());
 
                 if (translateTasks.isEmpty()) {
@@ -251,7 +251,7 @@ public class InitialTranslateDbTask {
             }
 
             // 6. 状态为1：全部完成，可以发成功邮件
-            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == InitialTaskStatusEnum.TRANSLATED_WRITING_SHOPIFY.getStatus() && RabbitMqTranslateService.MANUAL.equals(task.getTaskType())) {
+            if (translateStatus == 1 && !task.isSendEmail() && task.getStatus() == InitialTaskStatusEnum.TRANSLATED_WRITING_SHOPIFY.getStatus() && "click".equals(task.getTaskType())) {
                 // 判断user_Translation_Data表 里面改用户语言是否完成写入
                 List<UserTranslationDataDO> userTranslationDataDOS = iUserTranslationDataService.selectWritingDataByShopNameAndTarget(task.getShopName(), task.getTarget());
                 if (!userTranslationDataDOS.isEmpty()) {
