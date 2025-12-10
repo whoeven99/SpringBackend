@@ -10,7 +10,6 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
-import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
@@ -22,7 +21,6 @@ import java.util.*;
 
 @RestController
 public class MonitorController {
-
     @Autowired
     private ICharsOrdersService charsOrdersService;
     @Autowired
@@ -37,8 +35,6 @@ public class MonitorController {
     private ConfigRedisRepo configRedisRepo;
     @Autowired
     private InitialTaskV2Repo initialTaskV2Repo;
-    @Autowired
-    private TranslateProgressService translateProgressService;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
@@ -79,16 +75,7 @@ public class MonitorController {
     // For Monitor
     @GetMapping("/getProgressByShopName")
     public List<ProgressResponse.Progress> getProgressByShopName(@RequestParam String shopName) {
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, shopName)
-                        .eq(InitialTranslateTasksDO::isDeleted, false)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
-        if (initialTranslateTasksDOS.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return translateProgressService.getAllProgressData(shopName, initialTranslateTasksDOS.get(0).getSource()).getResponse().getList();
+        return new ArrayList<>();
     }
 
     @GetMapping("/bogdaconfig")
