@@ -5,9 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.IAPGUsersService;
 import com.bogdatech.Service.ITranslateTasksService;
-import com.bogdatech.Service.ITranslatesService;
-import com.bogdatech.Service.impl.TranslatesServiceImpl;
-import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.DO.APGUsersDO;
+import com.bogdatech.entity.DO.InitialTranslateTasksDO;
+import com.bogdatech.entity.DO.TranslateTasksDO;
+import com.bogdatech.entity.DO.UserTranslationDataDO;
 import com.bogdatech.entity.DTO.KeyValueDTO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
@@ -47,8 +48,6 @@ import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 @RestController
 public class TestController {
     @Autowired
-    private TranslatesServiceImpl translatesServiceImpl;
-    @Autowired
     private TaskService taskService;
     @Autowired
     private RateHttpIntegration rateHttpIntegration;
@@ -72,8 +71,6 @@ public class TestController {
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private TranslationCounterRedisService translationCounterRedisService;
-    @Autowired
-    private ITranslatesService translatesService;
     @Autowired
     private IpEmailTask ipEmailTask;
 
