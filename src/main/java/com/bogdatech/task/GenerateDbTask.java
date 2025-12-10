@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -29,7 +30,8 @@ import java.util.stream.Collectors;
 import static com.bogdatech.constants.TranslateConstants.EMAIL;
 import static com.bogdatech.logic.APGUserGeneratedTaskService.GENERATE_STATE_BAR;
 import static com.bogdatech.logic.APGUserGeneratedTaskService.INITIALIZATION;
-import static com.bogdatech.logic.TranslateService.*;
+import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
+import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component

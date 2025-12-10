@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service

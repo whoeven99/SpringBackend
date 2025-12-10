@@ -14,6 +14,7 @@ import com.bogdatech.model.controller.request.TranslationCounterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSingleQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;

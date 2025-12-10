@@ -8,10 +8,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 import static com.bogdatech.enums.ErrorEnum.SQL_INSERT_ERROR;
-import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
 
 @RestController
 @RequestMapping("/orders")

@@ -1,7 +1,7 @@
 package com.bogdatech.model.controller.response;
 
 import com.bogdatech.enums.ErrorEnum;
-import lombok.*;
+import lombok.Data;
 
 @Data
 public class BaseResponse<T> {

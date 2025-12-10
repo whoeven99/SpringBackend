@@ -1,15 +1,11 @@
 package com.bogdatech.controller;
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogdatech.entity.DO.InitialTranslateTasksDO;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.logic.RedisDataReportService;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.RedisTranslateLockService;
-import com.bogdatech.logic.TaskService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -19,18 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.TranslateService.executorService;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 public class TestController {
-    @Autowired
-    private TaskService taskService;
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
@@ -113,25 +104,9 @@ public class TestController {
         return new BaseResponse<>().CreateErrorResponse(false);
     }
 
-    @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
-
     @GetMapping("/monitor")
     public Map<String, Object> monitor() {
-        // Initial Task 未开始，进行中的任务
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS0 = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getStatus, 0)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
-
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS2 = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getStatus, 2)
-                        .orderByAsc(InitialTranslateTasksDO::getCreatedAt));
-
         Map<String, Object> responseMap = new HashMap<>();
-        responseMap.put("Step0-创建总翻译任务的用户-未开始（则说明有问题）", initialTranslateTasksDOS0.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
-        responseMap.put("Step0-创建总翻译任务的用户-进行中", initialTranslateTasksDOS2.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
         return responseMap;
     }
 

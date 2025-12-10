@@ -5,15 +5,19 @@ import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.ConfigUtils;
-import com.deepl.api.*;
+import com.deepl.api.DeepLClient;
+import com.deepl.api.TextResult;
+import com.deepl.api.Usage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.HashMap;
 import java.util.Map;
-import static com.bogdatech.constants.TranslateConstants.*;
+
+import static com.bogdatech.constants.TranslateConstants.DEEPL_API_KEY;
+import static com.bogdatech.constants.TranslateConstants.DEEPL_MAGNIFICATION;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TimeOutUtils.*;
-import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class DeepLIntegration {

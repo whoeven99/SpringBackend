@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.utils.ConfigUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.HashMap;
 import java.util.Map;
 

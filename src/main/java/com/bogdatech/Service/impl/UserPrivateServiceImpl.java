@@ -18,22 +18,6 @@ public class UserPrivateServiceImpl extends ServiceImpl<UserPrivateMapper, UserP
     }
 
     @Override
-    public Integer addOrUpdateGoogleUserData(String shopName, String googleKey, Integer amount) {
-        //先检测是否有数据，没有-存储，有-修改
-        UserPrivateDO userPrivateDO = baseMapper.selectOne(new QueryWrapper<UserPrivateDO>()
-                .eq(SHOP_NAME, shopName));
-        if (userPrivateDO == null) {
-            return baseMapper.saveGoogleUserData(shopName, googleKey, amount);
-        }else {
-            UserPrivateDO userPrivate = new UserPrivateDO();
-            userPrivate.setAmount(amount);
-            userPrivate.setGoogleKey(googleKey);
-            return baseMapper.update(userPrivate, new QueryWrapper<UserPrivateDO>()
-                    .eq(SHOP_NAME,shopName));
-        }
-    }
-
-    @Override
     public Boolean updateAmountAndGoogleKey(String shopName) {
         return baseMapper.updateAmountAndGoogleKey(0, null, 0, shopName);
     }

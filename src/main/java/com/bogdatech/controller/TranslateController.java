@@ -20,12 +20,16 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.util.*;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
+
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.TypeConversionUtils.*;
+import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
 @RestController
 @RequestMapping("/translate")

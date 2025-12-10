@@ -10,9 +10,11 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.ShopifyUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
