@@ -105,6 +105,8 @@ public class PrivateKeyService {
 
     /**
      * 私有key翻译前的判断
+     *
+     * @param clickTranslateRequest 请求对象，包含shopName、target、source，accessToken等信息
      */
     public BaseResponse<Object> judgePrivateKey(String shopName, ClickTranslateRequest clickTranslateRequest) {
         //做数据检验
