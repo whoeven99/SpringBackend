@@ -27,11 +27,6 @@ public class UserServiceImpl extends ServiceImpl<UsersMapper, UsersDO> implement
     }
 
     @Override
-    public void deleteUserGlossaryData(String shopName) {
-        baseMapper.deleteUserGlossaryData(shopName);
-    }
-
-    @Override
     public void updateUserLoginTime(String shopName) {
         baseMapper.updateUserLoginTime(shopName);
     }
@@ -39,16 +34,6 @@ public class UserServiceImpl extends ServiceImpl<UsersMapper, UsersDO> implement
     @Override
     public LoginAndUninstallRequest getUserLoginTime(String shopName) {
         return baseMapper.getUserLoginTime(shopName);
-    }
-
-    @Override
-    public void deleteCurrenciesData(String shopName) {
-        baseMapper.deleteCurrenciesData(shopName);
-    }
-
-    @Override
-    public void deleteTranslatesData(String shopName) {
-        baseMapper.deleteTranslatesData(shopName);
     }
 
     @Override

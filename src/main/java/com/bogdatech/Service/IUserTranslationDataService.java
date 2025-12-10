@@ -7,8 +7,4 @@ import java.util.List;
 
 public interface IUserTranslationDataService extends IService<UserTranslationDataDO> {
     Boolean insertTranslationData(String translationData, String shopName);
-
-    List<UserTranslationDataDO> selectTranslationDataList();
-
-    List<UserTranslationDataDO> selectWritingDataByShopNameAndTarget(String shopName, String target);
 }

@@ -217,7 +217,7 @@ public class TranslateV2Service {
 
     private void createManualTask(String shopName, String source, Set<String> targets,
                                   List<String> moduleList, Boolean isCover) {
-        initialTaskV2Repo.deleteByShopNameSource(shopName, source);
+        initialTaskV2Repo.deleteByShopNameSourceAndType(shopName, source, "manual");
         redisStoppedRepository.removeStoppedFlag(shopName);
 
         for (String target : targets) {

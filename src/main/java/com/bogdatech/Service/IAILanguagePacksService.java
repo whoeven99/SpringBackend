@@ -14,8 +14,4 @@ public interface IAILanguagePacksService extends IService<AILanguagePacksDO> {
     BaseResponse<Object> changeLanguagePack(UserLanguageRequest userLanguageRequest);
 
     Integer getPackIdByShopName(String shopName);
-
-    String getLanguagePackByShopName(String shopName);
-
-    Boolean insertOrUpdateCategory(String shopName, String categoryText);
 }

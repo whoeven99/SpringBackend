@@ -8,11 +8,4 @@ import java.util.List;
 
 public interface ITranslationUsageService extends IService<TranslationUsageDO> {
     List<TranslationUsageDO> readTranslationUsageData(String shopName);
-
-    void insertOrUpdateSingleData(TranslationUsageDO translationUsageDO);
-
-    Boolean judgeSendAutoEmail(List<TranslatesDO> translatesDOList, String shopName);
-
-    void insertListData(List<TranslatesDO> list, String shopName);
-
 }
