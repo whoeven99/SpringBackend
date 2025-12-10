@@ -6,7 +6,6 @@ import com.bogdatech.Service.*;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.model.ShopifyGraphResponse;
@@ -926,11 +925,6 @@ public class ShopifyService {
         } else {
             throw new IllegalArgumentException("Invalid column name");
         }
-    }
-
-    public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId,
-                              String shopName, String accessToken, String target, String apiVersion) {
-        saveToShopify(translatedValue, translation, resourceId, new ShopifyRequest(shopName, accessToken, apiVersion, target));
     }
 
     //将翻译后的数据存shopify本地中
