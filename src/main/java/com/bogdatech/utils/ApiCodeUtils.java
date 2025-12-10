@@ -215,14 +215,4 @@ public class ApiCodeUtils {
         aliImageMap.put("en", new HashSet<>(Arrays.asList("zh", "ru", "es", "fr", "de", "it", "pt", "vi", "tr"
                 , "ms", "th", "pl", "id", "ja", "ko")));
     }
-
-    public static boolean isAliImageSupport(String sourceCode, String targetCode) {
-        return switch (sourceCode) {
-            case "zh" ->
-                    aliImageMap.get("zh").contains(targetCode);
-            case "en" ->
-                    aliImageMap.get("en").contains(targetCode);
-            default -> false;
-        };
-    }
 }

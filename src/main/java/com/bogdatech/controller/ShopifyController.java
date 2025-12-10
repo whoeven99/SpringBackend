@@ -10,8 +10,6 @@ import com.bogdatech.entity.VO.SubscriptionVO;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.ConfigUtils;
-import com.bogdatech.utils.WhiteListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
@@ -169,6 +167,17 @@ public class ShopifyController {
         return shopifyService.addUserFreeSubscription(request);
     }
 
+    private static BaseResponse<Object> checkWhiteList(String shopName, SubscriptionVO subscriptionVO, Integer feeType){
+        if ("5bf8b3.myshopify.com".equals(shopName) || "c5ba7c-7c.myshopify.com".equals(shopName) || "digitevil.myshopify.com".equals(shopName)) {
+            subscriptionVO.setUserSubscriptionPlan(6);
+            subscriptionVO.setCurrentPeriodEnd(null);
+            subscriptionVO.setFeeType(feeType);
+            subscriptionVO.setPlanType("Premium");
+            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        }
+        return null;
+    }
+
     //获取用户订阅计划
     @GetMapping("/getUserSubscriptionPlan")
     public BaseResponse<Object> getUserSubscriptionPlan(@RequestParam String shopName) {
@@ -200,7 +209,7 @@ public class ShopifyController {
         Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
         subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
 
-        BaseResponse<Object> objectBaseResponse = WhiteListUtils.checkWhiteList(shopName, subscriptionVO, userSubscriptionsDO.getFeeType());
+        BaseResponse<Object> objectBaseResponse = checkWhiteList(shopName, subscriptionVO, userSubscriptionsDO.getFeeType());
         if (objectBaseResponse != null) {
             return objectBaseResponse;
         }

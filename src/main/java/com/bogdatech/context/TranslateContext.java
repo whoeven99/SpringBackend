@@ -45,20 +45,22 @@ public class TranslateContext {
     private Map<String, String> translateVariables = new HashMap<>();
 
     // For single
-    public TranslateContext(String content, String targetLanguage, String type, String key) {
+    public TranslateContext(String content, String targetLanguage, String type, String key, Map<String, GlossaryDO> glossaryMap) {
         this.content = content;
         this.targetLanguage = targetLanguage;
         this.shopifyTextType = type;
         this.shopifyTextKey = key;
+        this.glossaryMap = glossaryMap;
         this.startTime = System.currentTimeMillis();
         this.translatedChars = content.length();
     }
 
     // For batch
     public TranslateContext(Map<Integer, String> batchOriginalTextMap,
-                            String targetLanguage) {
+                            String targetLanguage, Map<String, GlossaryDO> glossaryMap) {
         this.originalTextMap = batchOriginalTextMap;
         this.targetLanguage = targetLanguage;
+        this.glossaryMap = glossaryMap;
 
         int totalChars = 0;
         for (String value : batchOriginalTextMap.values()) {

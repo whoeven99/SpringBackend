@@ -1,6 +1,9 @@
 package com.bogdatech.task;
 
+import com.bogdatech.Service.ITranslatesService;
+import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.logic.TencentEmailService;
+import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
@@ -58,6 +61,10 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     private TranslateV2Service translateV2Service;
     @Autowired
     private InitialTaskV2Repo initialTaskV2Repo;
+    @Autowired
+    private ITranslatesService translatesService;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(40);
     private final Set<String> initializingShops = new HashSet<>();
@@ -124,7 +131,6 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
                 translateV2Service::saveToShopify);
     }
 
-    // 定时30秒扫描一次
     @Scheduled(fixedDelay = 30 * 1000)
     public void sendEmail() {
         // 自动翻译的邮件
@@ -160,6 +166,21 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
 
         for (InitialTaskV2DO initialTaskV2DO : manualTask) {
             translateV2Service.sendManualEmail(initialTaskV2DO);
+        }
+    }
+
+    // 自动翻译，每小时整点执行一次，只翻译登录小时=当前小时的店铺
+    // TODO 刚启动的时候断电怎么处理
+    @Scheduled(cron = "0 0 * * * ?")
+    public void autoTranslateTask() {
+        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+        if (CollectionUtils.isEmpty(translatesDOList)) {
+            return;
+        }
+        for (TranslatesDO translatesDO : translatesDOList) {
+            if (configRedisRepo.isWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
+                translateV2Service.autoTranslateV2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
+            }
         }
     }
 }

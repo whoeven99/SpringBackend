@@ -128,9 +128,6 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
             // 查找翻译
             String translated = translatedMap.get(key);
 
-            // 添加到缓存里面
-//            redisProcessService.setCacheData(targetLang, translated, originalTextMap.get(key));
-
             // 拼回空格
             if (translated != null && !translated.equals(core)) {
                 translated = leading + translated + trailing;

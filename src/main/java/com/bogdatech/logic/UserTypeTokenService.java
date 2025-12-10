@@ -21,16 +21,12 @@ import static com.bogdatech.utils.TypeConversionUtils.convertTranslateRequestToS
 @Component
 @EnableAsync
 public class UserTypeTokenService {
-    private final IUserTypeTokenService userTypeTokenService;
-    private final ITranslatesService translatesService;
-    private final ShopifyService shopifyService;
-
     @Autowired
-    public UserTypeTokenService(IUserTypeTokenService userTypeTokenService, ITranslatesService translatesService, ShopifyService shopifyService) {
-        this.userTypeTokenService = userTypeTokenService;
-        this.translatesService = translatesService;
-        this.shopifyService = shopifyService;
-    }
+    private IUserTypeTokenService userTypeTokenService;
+    @Autowired
+    private ITranslatesService translatesService;
+    @Autowired
+    private ShopifyService shopifyService;
 
     /**
      * 调用方法获取数据库Translates里面的id值，根据id值从UserTypeToken表获取对应的数据

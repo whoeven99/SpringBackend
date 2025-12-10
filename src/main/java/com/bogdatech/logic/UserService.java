@@ -139,9 +139,6 @@ public class UserService {
     //检测以上四个接口返回值是否符合预期，符合预期则返回{`${接口名}`:true ...}，后续前端根据返回值调用对应的接口，其中语言数据也会在返回值中存在false值集体调用，正常情况下都是经过webhook通知后调用
     public Map<String, Boolean> InitializationDetection(String shopName) {
         Map<String, Boolean> map = new HashMap<>();
-        //查询用户是否初始化
-//        map.put("add", false);
-
 
         //查询是否添加免费额度
         if (translationCounterService.getMaxCharsByShopName(shopName) != null) {

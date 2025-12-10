@@ -300,10 +300,6 @@ public class TaskService {
     }
 
     @Autowired
-    private UserTokenService userTokenService;
-    @Autowired
-    private TranslateV2Service translateV2Service;
-    @Autowired
     private ConfigRedisRepo configRedisRepo;
 
     public void autoTranslate() {
@@ -314,61 +310,10 @@ public class TaskService {
         }
 
         for (TranslatesDO translatesDO : translatesDOList) {
-            if (configRedisRepo.shopNameWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList")) {
-                autoTranslatev2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
-            } else {
+            if (!configRedisRepo.isWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList") && !configRedisRepo.isWhiteList(translatesDO.getTarget(), "forbiddenTarget")) {
                 autoTranslate(translatesDO);
             }
         }
-    }
-
-    public boolean autoTranslatev2(String shopName, String source, String target) {
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        if (usersDO == null) {
-            appInsights.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
-            return false;
-        }
-
-        if (usersDO.getUninstallTime() != null) {
-            if (usersDO.getLoginTime() == null) {
-                appInsights.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
-                return false;
-            } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
-                appInsights.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
-                return false;
-            }
-        }
-
-        Integer maxToken = userTokenService.getMaxToken(shopName);
-        Integer usedToken = userTokenService.getUsedToken(shopName);
-        appInsights.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
-        // 如果字符超限，则直接返回字符超限
-        if (usedToken >= maxToken) {
-            appInsights.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
-            return false;
-        }
-
-        // 判断这条语言是否在用户本地存在
-        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
-                API_VERSION_LAST, getShopLanguageQuery());
-        appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
-        if (shopifyByQuery == null) {
-            appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
-            return false;
-        }
-
-        String userCode = "\"" + target + "\"";
-        if (!shopifyByQuery.contains(userCode)) {
-            // 将用户的自动翻译标识改为false
-            translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
-            appInsights.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
-            return false;
-        }
-
-        appInsights.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
-        translateV2Service.createAutoTask(shopName, source, target);
-        appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
-        return true;
     }
 
     public void autoTranslate(TranslatesDO translatesDO) {

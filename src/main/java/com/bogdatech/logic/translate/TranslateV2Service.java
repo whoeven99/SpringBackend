@@ -6,7 +6,9 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.TencentEmailService;
+import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
@@ -34,14 +36,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
@@ -77,30 +79,12 @@ public class TranslateV2Service {
     private ShopNameRedisRepo shopNameRedisRepo;
     @Autowired
     private TencentEmailService tencentEmailService;
-
-    public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
-        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
-        if (initialTaskV2DO != null) {
-            initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-            redisStoppedRepository.removeStoppedFlag(shopName);
-            // return true;
-        }
-        // 否则 操作失败，前端展示错误码
-
-        // 删除用户停止标识
-        return new BaseResponse<>().CreateSuccessResponse(true);
-    }
-
-    public void continueTranslating(String shopName) {
-        List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(shopName);
-        if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(shopName)) {
-            redisStoppedRepository.removeStoppedFlag(shopName);
-            for (InitialTaskV2DO initialTaskV2DO : list) {
-                initialTaskV2DO.setStatus(TranslateV2Service.InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                initialTaskV2Repo.updateById(initialTaskV2DO);
-            }
-        }
-    }
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
+    @Autowired
+    private IUsersService usersService;
+    @Autowired
+    private ITranslatesService translatesService;
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -126,20 +110,6 @@ public class TranslateV2Service {
         return BaseResponse.SuccessResponse(returnVO);
     }
 
-    public TranslateContext singleTranslate(String shopName, String content, String target,
-                                            String type, String key,
-                                            Map<String, GlossaryDO> glossaryMap) {
-        TranslateContext context = new TranslateContext(content, target, type, key);
-        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-        context.setGlossaryMap(glossaryMap);
-
-        service.translate(context);
-        service.finishAndGetJsonRecord(context);
-
-        userTokenService.addUsedToken(shopName, context.getUsedToken());
-        return context;
-    }
-
     // 手动开启翻译任务入口
     // 翻译 step 1, 用户 -> initial任务创建
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
@@ -149,7 +119,30 @@ public class TranslateV2Service {
 
         if (StringUtils.isEmpty(shopName) ||
                 targets == null || targets.length == 0 || CollectionUtils.isEmpty(moduleList)) {
-            return new BaseResponse<>().CreateErrorResponse("Missing parameters");
+            return BaseResponse.FailedResponse("Missing parameters");
+        }
+
+        // 判断用户语言是否正在翻译，翻译的不管；没翻译的翻译。
+        List<InitialTaskV2DO> initialTaskV2DOS =
+                initialTaskV2Repo.selectByShopNameSourceManual(shopName, request.getSource());
+        Set<String> targetSet = new HashSet<>(Arrays.asList(targets));
+
+        // 找出已经 INIT，READ_DONE，TRANSLATE_DONE，SAVE_DONE 的 target
+        Set<String> filteredTargets = initialTaskV2DOS.stream()
+                .filter(it -> it.getStatus() == InitialTaskStatus.INIT_READING_SHOPIFY.getStatus()
+                        || it.getStatus() == InitialTaskStatus.READ_DONE_TRANSLATING.getStatus()
+                        || it.getStatus() == InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus()
+                        || it.getStatus() == InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())
+                .map(InitialTaskV2DO::getTarget)
+                .collect(Collectors.toSet());
+
+        // 将filteredTargets和targets对比，去除targets里和filteredTargets相同的值
+        Set<String> finalTargets = targetSet.stream()
+                .filter(t -> !filteredTargets.contains(t) && !configRedisRepo.isWhiteList(t, "forbiddenTarget"))
+                .collect(Collectors.toSet());
+
+        if (finalTargets.isEmpty()) {
+            return new BaseResponse<>().CreateErrorResponse("No Target Language Can Create");
         }
 
         // 收集所有的resourceType到一个列表中
@@ -158,14 +151,25 @@ public class TranslateV2Service {
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        this.createManualTask(shopName, request.getSource(), targets, resourceTypeList, request.getIsCover());
+        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
 
         // 找前端，把这里的返回改了
-        return new BaseResponse<>().CreateSuccessResponse(request);
+        return BaseResponse.SuccessResponse(request);
     }
 
-    public void createManualTask(String shopName, String source, String[] targets,
-                                 List<String> moduleList, Boolean isCover) {
+    public TranslateContext singleTranslate(String shopName, String content, String target, String type, String key,
+                                            Map<String, GlossaryDO> glossaryMap) {
+        TranslateContext context = new TranslateContext(content, target, type, key, glossaryMap);
+        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+        service.translate(context);
+        service.finishAndGetJsonRecord(context);
+
+        userTokenService.addUsedToken(shopName, context.getUsedToken());
+        return context;
+    }
+
+    private void createManualTask(String shopName, String source, Set<String> targets,
+                                  List<String> moduleList, Boolean isCover) {
         initialTaskV2Repo.deleteByShopNameSource(shopName, source);
         redisStoppedRepository.removeStoppedFlag(shopName);
 
@@ -186,6 +190,9 @@ public class TranslateV2Service {
     }
 
     public void createAutoTask(String shopName, String source, String target) {
+        if (configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
+            return;
+        }
         initialTaskV2Repo.deleteByShopNameSourceTarget(shopName, source, target);
         redisStoppedRepository.removeStoppedFlag(shopName);
 
@@ -225,6 +232,8 @@ public class TranslateV2Service {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(2);
                 progress.setTranslateStatus("translation_process_init");
+                defaultProgressTranslateData.put("TotalQuantity", 1);
+                defaultProgressTranslateData.put("RemainingQuantity", 1);
                 progress.setProgressData(defaultProgressTranslateData);
                 progress.setTaskId(task.getId());
                 list.add(progress);
@@ -245,7 +254,8 @@ public class TranslateV2Service {
 
                 progress.setProgressData(progressData);
                 list.add(progress);
-            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus()) ||
+                    task.getStatus().equals(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
                 ProgressResponse.Progress progress = new ProgressResponse.Progress();
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
@@ -378,18 +388,24 @@ public class TranslateV2Service {
                     || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)
                     || SINGLE_LINE_TEXT_FIELD.equals(textType)) {
                 // 批量翻译
-                List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
+                List<TranslateTaskV2DO> originTaskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
                         initialTaskId, textType, 50);
-//                int tokens = calculateBaiLianToken(text);
+
+                List<TranslateTaskV2DO> taskList = new ArrayList<>();
+                int totalChars = 0;
+                for (TranslateTaskV2DO task : originTaskList) {
+                    totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(task.getSourceValue());
+                    if (totalChars > 1000) {
+                        break;
+                    }
+                    taskList.add(task);
+                }
 
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
-                TranslateContext context = new TranslateContext(idToSourceValueMap, target);
-                ITranslateStrategyService service =
-                        translateStrategyFactory.getServiceByContext(context);
-                context.setGlossaryMap(glossaryMap);
-
+                TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap);
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
                 service.translate(context);
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
@@ -436,7 +452,7 @@ public class TranslateV2Service {
             initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
             initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
             initialTaskV2Repo.updateById(initialTaskV2DO);
-            if (initialTaskV2DO.getTaskType().equals("auto")) {
+            if ("auto".equals(initialTaskV2DO.getTaskType())) {
                 shopNameRedisRepo.hdecAutoTaskCount(shopName);
             }
 
@@ -512,7 +528,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
-        if (initialTaskV2DO.getTaskType().equals("auto")) {
+        if ("auto".equals(initialTaskV2DO.getTaskType())) {
             shopNameRedisRepo.hdecAutoTaskCount(shopName);
         }
     }
@@ -544,7 +560,8 @@ public class TranslateV2Service {
         if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
             // 中断翻译的话 token limit才发邮件
             if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
-                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {});
+                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
+                });
                 assert moduleList != null;
                 List<TranslateResourceDTO> resourceList = convertALL(moduleList);
                 TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
@@ -557,6 +574,97 @@ public class TranslateV2Service {
                 initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.STOPPED.status);
             }
         }
+    }
+
+    public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
+        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
+        if (initialTaskV2DO != null) {
+            initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+            redisStoppedRepository.removeStoppedFlag(shopName);
+            // return true;
+        }
+        // 否则 操作失败，前端展示错误码
+
+        // 删除用户停止标识
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    public void continueTranslating(String shopName) {
+        List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(shopName);
+        if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(shopName)) {
+            redisStoppedRepository.removeStoppedFlag(shopName);
+            for (InitialTaskV2DO initialTaskV2DO : list) {
+                initialTaskV2DO.setStatus(TranslateV2Service.InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+                initialTaskV2Repo.updateById(initialTaskV2DO);
+            }
+        }
+    }
+
+    // 在TranslateTask里定时调用这里
+    public boolean autoTranslateV2(String shopName, String source, String target) {
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        if (usersDO == null) {
+            appInsights.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
+            return false;
+        }
+
+        if (usersDO.getUninstallTime() != null) {
+            if (usersDO.getLoginTime() == null) {
+                appInsights.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
+                return false;
+            } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
+                appInsights.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
+                return false;
+            }
+        }
+
+        // 判断注册时间
+        if (usersDO.getLoginTime() == null) {
+            appInsights.trackTrace("autoTranslateV2 用户未登录 或 登录时间为空: " + shopName);
+            return false;
+        }
+
+        // 将登录时间与当前时间都按 UTC 时区比较小时
+        int loginHour = usersDO.getLoginTime().toInstant().atZone(ZoneOffset.UTC).getHour();
+        int currentHour = Instant.now().atZone(ZoneOffset.UTC).getHour();
+        appInsights.trackTrace("autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
+
+        // 只有当登录小时与当前小时一致时才继续执行，其他情况按分片逻辑跳过
+        if (loginHour != currentHour) {
+            appInsights.trackTrace("autoTranslateV2 非当前小时，不执行自动翻译 shop: " + shopName);
+            return false;
+        }
+
+        Integer maxToken = userTokenService.getMaxToken(shopName);
+        Integer usedToken = userTokenService.getUsedToken(shopName);
+        appInsights.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
+        // 如果字符超限，则直接返回字符超限
+        if (usedToken >= maxToken) {
+            appInsights.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
+            return false;
+        }
+
+        // 判断这条语言是否在用户本地存在
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
+                API_VERSION_LAST, getShopLanguageQuery());
+        appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
+        if (shopifyByQuery == null) {
+            appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
+            return false;
+        }
+
+        String userCode = "\"" + target + "\"";
+        if (!shopifyByQuery.contains(userCode)) {
+            // 将用户的自动翻译标识改为false
+            translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
+            appInsights.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
+            return false;
+        }
+
+        appInsights.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
+        createAutoTask(shopName, source, target);
+        appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
+        return true;
     }
 
     // 根据翻译规则，不翻译的直接不用存
@@ -667,9 +775,6 @@ public class TranslateV2Service {
 //        }
         return true;
     }
-
-    // 获取一条最新的没翻译数据，为空，改为searching； 有值则返回值
-
 
     @Getter
     public enum InitialTaskStatus {

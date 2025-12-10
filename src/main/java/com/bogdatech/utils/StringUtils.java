@@ -28,23 +28,12 @@ public class StringUtils {
 
     /**
      * 将字符串中的空格替换为指定字符。
-     *
-     * @param input       原始字符串
-     * @param replacement 用于替换空格的字符
-     * @return 替换后的字符串
      */
     public static String replaceSpaces(String input, String replacement) {
         if (input == null) {
             return null;
         }
         return input.replaceAll("\\s+", replacement);
-    }
-
-    // 对prompt_word的文本进行处理，将第一个{{Chinese}}替换成target
-    public static String replaceLanguage(String prompt, String target, String translateResourceType, String industry) {
-        prompt = prompt.replaceFirst("\\{\\{apparel\\}\\}", industry);
-        prompt = prompt.replaceFirst("\\{\\{product\\}\\}", translateResourceType);
-        return prompt.replaceFirst("\\{\\{Chinese\\}\\}", target);
     }
 
     // 计算一段文本中的单词数
@@ -74,9 +63,6 @@ public class StringUtils {
 
     /**
      * 解析shopName的数据，去掉后缀
-     *
-     * @param shopName
-     * @return parseShopName 去掉后缀的parseShopName
      */
     public static String parseShopName(String shopName) {
         // 定义要移除的后缀
@@ -112,6 +98,7 @@ public class StringUtils {
 
     /**
      * 判断value是否为空
+     * todo 这个方法别人没法用，返回值是反的
      */
     public static boolean isValueBlank(String value) {
         if (value == null || value.trim().isEmpty()) {
@@ -129,22 +116,10 @@ public class StringUtils {
     }
 
     /**
-     * base64编码问题
-     */
-    public static boolean isValidBase64(String s) {
-        try {
-            Base64.getDecoder().decode(s);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    /**
      * 将图片的url转化为MultipartFile文件
+     * todo 这个跟string有关系吗
      */
     public static MultipartFile convertUrlToMultipartFile(String imageUrl) {
-
         try {
             // 1. 打开URL连接
             URL url = new URL(imageUrl);
@@ -185,6 +160,7 @@ public class StringUtils {
 
     /**
      * 判断计划名称 最终输出：Free || Basic || Pro || Premium
+     * todo 这个跟string有关系吗 放到各自的逻辑里面
      */
     public static String parsePlanName(String planName) {
         if (planName == null) {
@@ -259,32 +235,10 @@ public class StringUtils {
         return map;
     }
 
-    // TODO 这个逻辑不该放在StringUtils里
-    public static LinkedHashMap<Integer, String> parseOutputTransactionV2(String input) {
-        // 预处理 - 提取 JSON 部分
-        String jsonPart = extractJsonBlock(input);
-
-        if (jsonPart == null) {
-            return null;
-        }
-
-        // 解析为 Map
-        LinkedHashMap<Integer, String> map = JsonUtils.jsonToObjectWithNull(jsonPart, new TypeReference<LinkedHashMap<Integer, String>>() {
-        });
-
-        if (map == null) {
-            return null;
-        }
-
-        // 过滤空值
-        map.entrySet().removeIf(e -> e.getValue() == null || e.getValue().trim().isEmpty());
-        return map;
-    }
-
     /**
      * 从混合字符串中提取出 JSON 部分
      */
-    private static String extractJsonBlock(String input) {
+    public static String extractJsonBlock(String input) {
         // 匹配从第一个 { 到最后一个 } 之间的所有内容
         Pattern pattern = Pattern.compile("\\{.*\\}", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(input);

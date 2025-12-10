@@ -1,5 +1,7 @@
 package com.bogdatech.utils;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -189,47 +191,6 @@ public class PlaceholderUtils {
     }
 
     /**
-     * list 翻译提示词
-     * @param target 目标语言
-     * @param languagePackId 语言包
-     * @param translationKeyType 翻译key
-     * @param modelType 模型类型
-     * */
-    public static String getListPrompt(String target, String languagePackId, String translationKeyType, String modelType) {
-        StringBuilder prompt = new StringBuilder();
-
-        prompt.append("你是一个精通翻译的小助手，你会帮我把每个语言都翻译的准确。\n")
-                .append("你会自动识别源语言，并将其翻译成我指定的目标语言。\n")
-                .append("你不会翻译key值，只翻译值的内容。\n")
-                .append("你不会翻译emoji。\n")
-                .append("翻译之前你会判断他是不是一个变量名，如果是变量名你就不会翻译。\n")
-                .append("我会给你一个待翻译的列表，你翻译之后给我返回一个固定的返回格式。\n");
-
-        // 1,如果有行业，才加上这一行
-        if (languagePackId != null && !languagePackId.isBlank()) {
-            prompt.append(String.format("翻译时你会使用适合 %s 行业的专业术语和友好语气。\n", languagePackId));
-        }
-
-        // 2,如果有 keyByModel，才加上这一行
-        String keyByModel = getKeyByModel(modelType, translationKeyType);
-        if (keyByModel != null && !keyByModel.isBlank()) {
-            prompt.append(String.format("待翻译的数据类型是 %s，不要输出解释性文本。\n", keyByModel));
-        }
-
-        prompt.append("你给我的返回值里面的key保持我给的内容不变，后面的value是你翻译后的内容。\n")
-                .append("举例说明：\n")
-                .append("我给你一个列表：[\"按钮\",\"[%-S] sec%!S\", \"{{ select }}\"]\n")
-                .append("再给你一个待翻译语言：Chinese (Traditional) \n")
-                .append("你给我按照如下格式返回: {\n")
-                .append("\"按钮\": \"按鈕\",\"[%-S] sec%!S\": \"[%-S] sec%!S\", \"{{ select }}\": \"{{ select }}\"}\n")
-                .append("好，现在帮我翻译一下如下内容\n")
-                .append(String.format("待翻译语言为：%s\n", target))
-                .append("待翻译列表为：");
-
-        return prompt.toString();
-    }
-
-    /**
      * 根据key和modelType生成不同的字段
      * */
     public static String getKeyByModel(String modelType, String key) {
@@ -311,16 +272,11 @@ public class PlaceholderUtils {
      * 判断动态构成提示词
      * */
     private static void buildSection(StringBuilder builder, Map<String, String> fields) {
-//        appInsights.trackTrace("fields: " + fields);
         fields.forEach((label, value) -> {
-            if (isNotBlank(value)) {
+            if (!StringUtils.isEmpty(value)) {
                 builder.append("- ").append(label).append(": ").append(value.trim()).append("\n");
             }
         });
-    }
-
-    private static boolean isNotBlank(String str) {
-        return str != null && !str.trim().isEmpty();
     }
 
     public static Map<String, String> buildNonNullMap(Object[][] pairs) {
