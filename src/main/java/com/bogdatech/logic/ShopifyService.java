@@ -34,7 +34,6 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateWriteStatusKey;
@@ -926,28 +925,6 @@ public class ShopifyService {
             userTypeTokenService.update(null, updateWrapper);
         } else {
             throw new IllegalArgumentException("Invalid column name");
-        }
-    }
-
-    //封装调用云服务器实现将数据存入shopify本地的方法
-    public static void saveToShopify(CloudInsertRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
-        Map<String, Object> body = cloudServiceRequest.getBody();
-
-        try {
-            String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
-            if (!ConfigUtils.isLocalEnv()) {
-                String s = registerTransaction(request, body);
-                appInsights.trackTrace("saveToShopify 用户： " + cloudServiceRequest.getShopName() + " target: " + cloudServiceRequest.getTarget() + " saveToShopify : " + s);
-            } else {
-                sendShopifyPost("translate/insertTranslatedText", requestBody);
-            }
-
-        } catch (JsonProcessingException | ClientException e) {
-            appInsights.trackTrace("saveToShopify " + request.getShopName() + " Failed to save to Shopify errors : " + e.getMessage());
         }
     }
 

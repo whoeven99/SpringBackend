@@ -79,13 +79,6 @@ public class TestController {
         redisProcessService.setCacheData(target, targetText, value);
     }
 
-    //测试自动翻译功能
-    @PutMapping("/testAutoTranslate")
-    public void testAutoTranslate() {
-        appInsights.trackTrace("testAutoTranslate 开始调用");
-        executorService.execute(() -> taskService.autoTranslate());
-    }
-
     // 暂时存在下
     @GetMapping("/testUnlock")
     public Boolean testUnlock(@RequestParam String shopName) {
