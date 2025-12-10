@@ -2,7 +2,6 @@ package com.bogdatech.logic.translate.stragety;
 
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.GlossaryDO;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.translate.TranslateGateway;
@@ -22,8 +21,6 @@ import java.util.Map;
 public class BatchTranslateStrategyService implements ITranslateStrategyService {
     @Autowired
     private RedisProcessService redisProcessService;
-    @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
     private TranslateGateway translateGateway;
 
@@ -105,7 +102,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
     private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target) {
         // Translate api
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+        Pair<String, Integer> pair = translateGateway.translate(prompt, target);
         if (pair == null) {
             // fatalException
             return null;

@@ -22,4 +22,8 @@ public class TranslateGateway {
             return chatGptIntegration.chatWithGpt(prompt, null, null, targetLanguage, privateKey);
         }
     }
+
+    public Pair<String, Integer> translate(String prompt, String targetLanguage) {
+        return translate(prompt, targetLanguage, null, null);
+    }
 }

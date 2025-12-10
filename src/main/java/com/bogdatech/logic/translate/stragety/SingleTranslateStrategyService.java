@@ -2,7 +2,6 @@ package com.bogdatech.logic.translate.stragety;
 
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.GlossaryDO;
-import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.translate.TranslateGateway;
@@ -19,8 +18,6 @@ import static com.bogdatech.constants.TranslateConstants.URI;
 
 @Component
 public class SingleTranslateStrategyService implements ITranslateStrategyService {
-    @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
