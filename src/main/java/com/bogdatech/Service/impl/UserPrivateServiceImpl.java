@@ -11,7 +11,6 @@ import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 
 @Service
 public class UserPrivateServiceImpl extends ServiceImpl<UserPrivateMapper, UserPrivateDO> implements IUserPrivateService {
-
     @Override
     public UserPrivateDO selectOneByShopName(String shopName) {
         return baseMapper.selectOne(new QueryWrapper<UserPrivateDO>()
@@ -32,11 +31,6 @@ public class UserPrivateServiceImpl extends ServiceImpl<UserPrivateMapper, UserP
             return baseMapper.update(userPrivate, new QueryWrapper<UserPrivateDO>()
                     .eq(SHOP_NAME,shopName));
         }
-    }
-
-    @Override
-    public Integer getUserId(String shopName) {
-        return baseMapper.getUserIdByShopName(shopName);
     }
 
     @Override
