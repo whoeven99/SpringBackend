@@ -16,7 +16,7 @@ public class AutoTranslateTask {
     @Autowired
     private TaskService taskService;
 
-    @Scheduled(cron = "0 0 1 * * ?")
+//    @Scheduled(cron = "0 0 1 * * ?")
     public void autoTranslate() {
         executorService.execute(() -> {
             taskService.autoTranslate();
