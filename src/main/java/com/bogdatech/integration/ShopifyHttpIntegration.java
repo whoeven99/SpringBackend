@@ -13,7 +13,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TimeOutUtils.*;
@@ -192,20 +191,6 @@ public class ShopifyHttpIntegration {
 
         // 如果重试后仍然失败，返回 null
         return null;
-    }
-
-    // 删除用户数据
-    public static String deleteTranslateData(String shopName, String accessToken, String resourceId, String locals, String translationKeys) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("resourceId", resourceId);
-        String[] localsString = {locals};
-        variables.put("locales", localsString);
-        String[] translationKeysString = {translationKeys};
-        variables.put("translationKeys", translationKeysString);
-        ShopifyRequest shopifyRequest = new ShopifyRequest();
-        shopifyRequest.setShopName(shopName);
-        shopifyRequest.setAccessToken(accessToken);
-        return sendShopifyPost(shopifyRequest, ShopifyRequestBody.deleteTranslationQuery(), variables);
     }
 }
 

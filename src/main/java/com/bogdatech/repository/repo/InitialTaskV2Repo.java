@@ -14,9 +14,10 @@ import java.util.List;
 
 @Service
 public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialTaskV2DO> {
-    public List<InitialTaskV2DO> selectByLast24Hours() {
+    public List<InitialTaskV2DO> selectByLastDaysAndType(String type, Integer day) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
-                .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24 * 7))
+                .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24 * day))
+                .eq(InitialTaskV2DO::getTaskType, type)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
@@ -100,12 +101,12 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
         ) > 0;
     }
 
-    public boolean deleteByShopNameSource(String shopName, String source) {
+    public boolean deleteByShopNameSourceAndType(String shopName, String source, String type) {
         return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
                 .eq(InitialTaskV2DO::getSource, source)
                 .eq(InitialTaskV2DO::getIsDeleted, false)
-                .eq(InitialTaskV2DO::getTaskType, "manual")
+                .eq(InitialTaskV2DO::getTaskType, type)
                 .and(w -> w.eq(InitialTaskV2DO::getStatus, 4)
                         .or()
                         .eq(InitialTaskV2DO::getStatus, 5))
