@@ -1,7 +1,6 @@
 package com.bogdatech.logic.redis;
 
 import com.bogdatech.integration.RedisIntegration;
-import com.bogdatech.logic.RabbitMqTranslateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +21,7 @@ public class TranslationCounterRedisService {
     public Long increaseLanguage(String shopName, String target, long value, String translateType) {
         String key = generateProcessKey(shopName, target);
 
-        if (RabbitMqTranslateService.AUTO.equals(translateType)) {
+        if ("auto".equals(translateType)) {
             return redisIntegration.incrementHash(key, AUTO_LANGUAGE_TOKEN_COUNTER, value);
         } else {
             return redisIntegration.incrementHash(key, CLICK_LANGUAGE_TOKEN_COUNTER, value);

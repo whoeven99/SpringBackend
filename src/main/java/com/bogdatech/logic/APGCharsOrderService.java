@@ -23,7 +23,6 @@ public class APGCharsOrderService {
     @Autowired
     private IAPGUserPlanService iapgUserPlanService;
 
-
     /**
      * 更新和插入APG_Chars_Order数据
      */
@@ -57,5 +56,4 @@ public class APGCharsOrderService {
         Integer creditBalance = userMaxLimit - userCounter.getUserToken();
         return tencentEmailService.sendAPGPurchaseEmail(usersDO, purchaseToken, purchaseAmount, creditBalance);
     }
-
 }

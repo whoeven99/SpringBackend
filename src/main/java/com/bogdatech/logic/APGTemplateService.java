@@ -35,7 +35,6 @@ public class APGTemplateService {
     @Autowired
     private IAPGUserTemplateService iapgUserTemplateService;
 
-
     /**
      * 根据用户shopName获取官方模板数据 和 他自己的模板数据
      */
@@ -105,7 +104,6 @@ public class APGTemplateService {
 
         return templates;
     }
-
 
     /**
      * 初始化默认模板数据，前4条

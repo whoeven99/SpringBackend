@@ -39,7 +39,6 @@ public class OrderService {
     @Autowired
     private IUserSubscriptionsService iUserSubscriptionsService;
 
-
     public Boolean insertOrUpdateOrder(CharsOrdersDO charsOrdersDO) {
         CharsOrdersDO charsOrdersServiceById = charsOrdersService.getById(charsOrdersDO.getId());
         if (charsOrdersServiceById == null) {
