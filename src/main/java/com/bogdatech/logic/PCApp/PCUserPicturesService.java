@@ -1,7 +1,6 @@
 package com.bogdatech.logic.PCApp;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.constants.TranslateConstants;
 import com.bogdatech.entity.DO.PCUserPicturesDO;
 import com.bogdatech.entity.DO.PCUsersDO;
@@ -21,7 +20,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
+
 import static com.bogdatech.controller.UserPicturesController.allowedMimeTypes;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.utils.ApiCodeUtils.getLanguageName;
