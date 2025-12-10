@@ -2,11 +2,13 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.bogdatech.Service.*;
+import com.bogdatech.Service.IItemsService;
+import com.bogdatech.Service.ITranslatesService;
+import com.bogdatech.Service.IUserSubscriptionsService;
+import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
-import com.bogdatech.exception.ClientException;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.model.ShopifyGraphResponse;
@@ -23,31 +25,32 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogdatech.integration.TestingEnvironmentIntegration.sendShopifyPost;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateWriteStatusKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.*;
+import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
 
 @Service
 public class ShopifyService {
-
     @Autowired
     private IUserTypeTokenService userTypeTokenService;
     @Autowired
@@ -927,33 +930,6 @@ public class ShopifyService {
         } else {
             throw new IllegalArgumentException("Invalid column name");
         }
-    }
-
-    //封装调用云服务器实现将数据存入shopify本地的方法
-    public static void saveToShopify(CloudInsertRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
-        Map<String, Object> body = cloudServiceRequest.getBody();
-
-        try {
-            String requestBody = OBJECT_MAPPER.writeValueAsString(cloudServiceRequest);
-            if (!ConfigUtils.isLocalEnv()) {
-                String s = registerTransaction(request, body);
-                appInsights.trackTrace("saveToShopify 用户： " + cloudServiceRequest.getShopName() + " target: " + cloudServiceRequest.getTarget() + " saveToShopify : " + s);
-            } else {
-                sendShopifyPost("translate/insertTranslatedText", requestBody);
-            }
-
-        } catch (JsonProcessingException | ClientException e) {
-            appInsights.trackTrace("saveToShopify " + request.getShopName() + " Failed to save to Shopify errors : " + e.getMessage());
-        }
-    }
-
-    public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId,
-                              String shopName, String accessToken, String target, String apiVersion) {
-        saveToShopify(translatedValue, translation, resourceId, new ShopifyRequest(shopName, accessToken, apiVersion, target));
     }
 
     //将翻译后的数据存shopify本地中

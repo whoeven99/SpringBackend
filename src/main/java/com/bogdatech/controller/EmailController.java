@@ -50,21 +50,4 @@ public class EmailController {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
     }
-
-    /**
-     * 发送自动翻译的邮件
-     * */
-    @PostMapping("/sendAutoTranslateEmail")
-    public BaseResponse<Object> sendAutoTranslateEmail() {
-        Boolean b = tencentEmailService.sendAutoTranslateEmail("shopName");
-        if(b){
-            return new BaseResponse<>().CreateSuccessResponse(true);
-        }
-        else {
-            return new BaseResponse<>().CreateErrorResponse("false");
-        }
-    }
-
-
-
 }

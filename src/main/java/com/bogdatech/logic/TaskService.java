@@ -8,30 +8,23 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
-import com.bogdatech.logic.redis.*;
-import com.bogdatech.logic.token.UserTokenService;
-import com.bogdatech.logic.translate.TranslateV2Service;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
-import com.bogdatech.model.controller.request.*;
+import com.bogdatech.model.controller.request.UserPriceRequest;
 import com.bogdatech.repository.entity.PCOrdersDO;
 import com.bogdatech.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogdatech.repository.entity.PCUserTrialsDO;
 import com.bogdatech.repository.repo.*;
-import com.bogdatech.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
+
 import java.sql.Timestamp;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.logic.RabbitMqTranslateService.AUTO;
-import static com.bogdatech.logic.TranslateService.userEmailStatus;
-import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.ShopifyUtils.isQueryValid;
@@ -67,21 +60,7 @@ public class TaskService {
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
-    private ITranslationUsageService iTranslationUsageService;
-    @Autowired
-    private RedisTranslateLockService redisTranslateLockService;
-    @Autowired
-    private TranslationParametersRedisService translationParametersRedisService;
-    @Autowired
-    private InitialTranslateRedisService initialTranslateRedisService;
-    @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
-    @Autowired
     private ShopifyService shopifyService;
-    @Autowired
-    private TranslationCounterRedisService translationCounterRedisService;
-    @Autowired
-    private TranslationMonitorRedisService translationMonitorRedisService;
     @Autowired
     private PCOrdersRepo pcOrdersRepo;
     @Autowired
@@ -257,149 +236,6 @@ public class TaskService {
                 return;
             }
             tencentEmailService.sendSubscribeEmail(userPriceRequest.getShopName(), chars);
-        }
-    }
-
-    //当自动重启后，重启翻译状态为2的任务
-    public void translateStatus2WhenSystemRestart() {
-        // 查找翻译状态为2的任务
-        QueryWrapper<TranslateTasksDO> wrapper = new QueryWrapper<>();
-        wrapper.select("DISTINCT shop_name");
-
-        List<Map<String, Object>> maps = translateTasksService.listMaps(wrapper);
-        List<String> allShopName = maps.stream()
-                .map(m -> (String) m.get("shop_name"))
-                .toList();
-
-        // 将所有状态为2的任务状态改为0
-        translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("status", 2).set("status", 0));
-        appInsights.trackTrace("TaskServiceLog 系统重启，获取翻译状态为2的任务数： " + allShopName.size());
-
-//        // 将initial表中所有状态为2的任务状态改为0
-//        initialTranslateTasksMapper.update(new UpdateWrapper<InitialTranslateTasksDO>().eq("status", 2).set("status", 0));
-
-        // 循环处理获取到的任务，先将状态改为3，然后调用翻译API
-        for (String shop : allShopName) {
-            // 给这些用户添加停止标志符的状态
-            // 重置用户发送的邮件
-            userEmailStatus.put(shop, new AtomicBoolean(false));
-
-            // 初始化用户的停止标志(删除标识)
-            Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(shop);
-            if (stopFlag) {
-                appInsights.trackTrace("TaskServiceLog 系统重启，删除标识： " + shop);
-            }
-
-            // 删除redis里面的tl:锁值
-            redisTranslateLockService.setRemove(shop);
-            appInsights.trackTrace("TaskServiceLog 系统重启，删除锁： " + shop);
-
-            // 删除redis中initial shop的值
-            initialTranslateRedisService.setRemove(shop);
-        }
-    }
-
-    @Autowired
-    private ConfigRedisRepo configRedisRepo;
-
-    public void autoTranslate() {
-        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
-        appInsights.trackTrace("autoTranslateV2 自动翻译任务: " + translatesDOList.size());
-        if (CollectionUtils.isEmpty(translatesDOList)) {
-            return;
-        }
-
-        for (TranslatesDO translatesDO : translatesDOList) {
-            if (!configRedisRepo.isWhiteList(translatesDO.getShopName(), "autoTranslateWhiteList") && !configRedisRepo.isWhiteList(translatesDO.getTarget(), "forbiddenTarget")) {
-//                autoTranslate(translatesDO);
-            }
-        }
-    }
-
-    public void autoTranslate(TranslatesDO translatesDO) {
-        String shopName = translatesDO.getShopName();
-        appInsights.trackTrace("autoTranslate 用户: " + shopName);
-
-        // 判断这些用户是否卸载了，卸载了就不管了
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        if (usersDO == null) {
-            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了");
-            return;
-        }
-
-        if (usersDO.getUninstallTime() != null) {
-            // 如果用户卸载了，但有登陆时间，需要判断两者的前后
-            if (usersDO.getLoginTime() == null) {
-                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了未登陆");
-                return;
-            } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
-                appInsights.trackTrace("autoTranslate 用户: " + shopName + " 卸载了时间在登陆时间后");
-                return;
-            }
-        }
-
-        // 判断字符是否超限
-        TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
-        Integer remainingChars = translationCounterService.getMaxCharsByShopName(shopName);
-        appInsights.trackTrace("clickTranslation 判断字符是否超限 : " + shopName + " remainingChars: " + remainingChars + " usedChars: " + counterDO.getUsedChars());
-
-        // 如果字符超限，则直接返回字符超限
-        if (counterDO.getUsedChars() >= remainingChars) {
-            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 字符超限");
-            return;
-        }
-
-        // 判断这条语言是否在用户本地存在
-        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, getShopLanguageQuery());
-        appInsights.trackTrace("autoTranslate 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
-        if (shopifyByQuery == null) {
-            appInsights.trackTrace("FatalException autoTranslate 用户: " + shopName + " 获取用户本地语言数据失败");
-            return;
-        }
-
-        String userCode = "\"" + translatesDO.getTarget() + "\"";
-        if (!shopifyByQuery.contains(userCode)) {
-            // 将用户的自动翻译标识改为false
-            translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, translatesDO.getTarget());
-            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 用户本地语言数据不存在 target: " + translatesDO.getTarget());
-            return;
-        }
-
-        // 判断这条翻译项在Usage表中是否存在，在的话跳过，不在的话插入
-        TranslationUsageDO usageServiceOne = iTranslationUsageService.getOne(new LambdaQueryWrapper<TranslationUsageDO>().eq(TranslationUsageDO::getShopName, shopName).eq(TranslationUsageDO::getLanguageName, translatesDO.getTarget()));
-        if (usageServiceOne == null) {
-            iTranslationUsageService.save(new TranslationUsageDO(translatesDO.getId(), translatesDO.getShopName(), translatesDO.getTarget(), 0, 0, 0, 0));
-            appInsights.trackTrace("autoTranslate 用户: " + shopName + " 存一个消耗记录");
-        }
-
-        // 将任务存到数据库等待翻译
-        // 初始化用户状态
-        Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(translatesDO.getShopName());
-        if (stopFlag) {
-            appInsights.trackTrace("autoTranslate 系统重启，删除标识： " + translatesDO.getShopName());
-        }
-        appInsights.trackTrace("autoTranslate 用户: " + shopName + " 初始化用户状态");
-
-        // 在自动翻译初始化时，按target，将对应的计数删除
-        translationCounterRedisService.deleteLanguage(shopName, translatesDO.getTarget(), AUTO);
-
-        // 将自动翻译的任务初始化，存到initial表中
-        String resourceToJson = JsonUtils.objectToJson(AUTO_TRANSLATE_MAP);
-        InitialTranslateTasksDO initialTranslateTasksDO = new InitialTranslateTasksDO(null, 0,
-                translatesDO.getSource(), translatesDO.getTarget(), false, false, "1"
-                , "1", resourceToJson, null, shopName, false, AUTO,
-                Timestamp.from(Instant.now()), false);
-        try {
-            appInsights.trackTrace("将自动翻译参数存到数据库中： " + initialTranslateTasksDO);
-
-            // Monitor 记录shop开始的时间（中国区时间）
-            String chinaTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            translationMonitorRedisService.hsetStartTranslationAt(shopName, chinaTime);
-            int insert = initialTranslateTasksMapper.insert(initialTranslateTasksDO);
-            appInsights.trackTrace("将自动翻译参数存到数据库后： " + insert);
-        } catch (Exception e) {
-            appInsights.trackTrace("autoTranslate 每日须看 用户: " + shopName + " 存入数据库失败" + initialTranslateTasksDO);
-            appInsights.trackException(e);
         }
     }
 

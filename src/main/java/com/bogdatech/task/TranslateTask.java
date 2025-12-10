@@ -3,16 +3,12 @@ package com.bogdatech.task;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.logic.TencentEmailService;
-import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.ShopNameRedisRepo;
+import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
-import com.bogdatech.logic.TaskService;
-import com.bogdatech.logic.translate.TranslateV2Service;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,29 +28,27 @@ import java.util.stream.Collectors;
 @Component
 @EnableAsync
 @EnableScheduling
-public class TranslateTask implements ApplicationListener<ApplicationReadyEvent> {
-    @Autowired
-    private TaskService taskService;
+public class TranslateTask {
     @Autowired
     private ShopNameRedisRepo shopNameRedisRepo;
     @Autowired
     private TencentEmailService tencentEmailService;
 
-    @Override
-    public void onApplicationEvent(ApplicationReadyEvent event) {
-        // 执行业务代码
-        executorService.execute(() -> {
-            taskService.translateStatus2WhenSystemRestart();
-        });
-    }
+//    @Override
+//    public void onApplicationEvent(ApplicationReadyEvent event) {
+//        // 执行业务代码
+//        executorService.execute(() -> {
+//            taskService.translateStatus2WhenSystemRestart();
+//        });
+//    }
 
     /**
      * 每分钟做次打印--正在翻译中和等待翻译的用户数据
      */
-    @Scheduled(cron = "0 * * * * ?")
-    public void printTranslatingAndWaitTranslatingData() {
-        taskService.printTranslatingAndWaitTranslatingData();
-    }
+//    @Scheduled(cron = "0 * * * * ?")
+//    public void printTranslatingAndWaitTranslatingData() {
+//        taskService.printTranslatingAndWaitTranslatingData();
+//    }
 
 
     @Autowired
@@ -63,8 +57,6 @@ public class TranslateTask implements ApplicationListener<ApplicationReadyEvent>
     private InitialTaskV2Repo initialTaskV2Repo;
     @Autowired
     private ITranslatesService translatesService;
-    @Autowired
-    private ConfigRedisRepo configRedisRepo;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(40);
     private final Set<String> initializingShops = new HashSet<>();

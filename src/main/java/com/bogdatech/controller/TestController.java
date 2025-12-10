@@ -3,7 +3,9 @@ package com.bogdatech.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.bogdatech.Service.*;
+import com.bogdatech.Service.IAPGUsersService;
+import com.bogdatech.Service.ITranslateTasksService;
+import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.impl.TranslatesServiceImpl;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.DTO.KeyValueDTO;
@@ -13,33 +15,34 @@ import com.bogdatech.integration.RateHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.*;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
-import com.bogdatech.logic.redis.TranslationMonitorRedisService;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.logic.translate.TranslateDataService;
 import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.task.DBTask;
 import com.bogdatech.task.IpEmailTask;
 import com.bogdatech.utils.AESUtils;
 import com.bogdatech.utils.TimeOutUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.RateHttpIntegration.rateMap;
 import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogdatech.logic.TranslateService.*;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.StringUtils.*;
+import static com.bogdatech.utils.StringUtils.replaceHyphensWithSpaces;
 
 @RestController
 public class TestController {
@@ -55,8 +58,6 @@ public class TestController {
     private TencentEmailService tencentEmailService;
     @Autowired
     private ITranslateTasksService translateTasksService;
-    @Autowired
-    private DBTask dBTask;
     @Autowired
     private UserTranslationDataService userTranslationDataService;
     @Autowired
@@ -158,13 +159,6 @@ public class TestController {
         return "需要翻译";
     }
 
-    //测试自动翻译功能
-    @PutMapping("/testAutoTranslate")
-    public void testAutoTranslate() {
-        appInsights.trackTrace("testAutoTranslate 开始调用");
-        executorService.execute(() -> taskService.autoTranslate());
-    }
-
     @GetMapping("/testFreeTrialTask")
     public void testFreeTrialTask() {
         taskService.freeTrialTask();
@@ -191,14 +185,6 @@ public class TestController {
         if (stopFlag) {
             appInsights.trackTrace("停止成功");
         }
-    }
-
-    /**
-     * 启动DB翻译
-     */
-    @PutMapping("/testDBTranslate")
-    public void testDBTranslate() {
-        dBTask.scanAndSubmitTasks();
     }
 
     /**
@@ -315,8 +301,6 @@ public class TestController {
     }
 
     @Autowired
-    private TranslationMonitorRedisService translationMonitorRedisService;
-    @Autowired
     private InitialTranslateTasksMapper initialTranslateTasksMapper;
 
     @GetMapping("/monitor")
@@ -335,45 +319,45 @@ public class TestController {
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("Step0-创建总翻译任务的用户-未开始（则说明有问题）", initialTranslateTasksDOS0.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
         responseMap.put("Step0-创建总翻译任务的用户-进行中", initialTranslateTasksDOS2.stream().map(InitialTranslateTasksDO::getShopName).collect(Collectors.toSet()));
-
-        List<TranslatesDO> startedTasks = translatesServiceImpl.getStatus2Data();
-        Set<String> startedShops = startedTasks.stream().map(TranslatesDO::getShopName).collect(Collectors.toSet());
-        responseMap.put("Step1-有进度条的用户", startedShops);
-
-        // 统计待翻译的 task
-        List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
-        responseMap.put("总的子任务数量", tasks.size());
-
-        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
-        responseMap.put("自动翻译的任务数量", translatesDOList.size());
-
-        // 统计shopName数量
-        Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
-        responseMap.put("Step2-创建了翻译子任务的用户", shops);
-
-        Set<String> translatingShops = redisTranslateLockService.members();
-        responseMap.put("Step3-翻译中的用户", translatingShops);
-
-        for (String shop : shops) {
-            Set<TranslateTasksDO> shopTasks = tasks.stream()
-                    .filter(taskDo -> taskDo.getShopName().equals(shop))
-                    .collect(Collectors.toSet());
-
-            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
-            map.put("翻译子任务数量", shopTasks.size());
-
-            responseMap.put(shop, map);
-//            Map<String, List<RabbitMqTranslateVO>> targetMap = shopTasks.stream()
-//                    .map(translateTasksDO -> jsonToObject(translateTasksDO.getPayload(), RabbitMqTranslateVO.class))
-//                    .filter(Objects::nonNull)
-//                    .collect(Collectors.groupingBy(RabbitMqTranslateVO::getTarget));
 //
-//            targetMap.forEach((target, list) -> {
-//                Map<String, List<RabbitMqTranslateVO>> moeMap = list.stream().collect(Collectors.groupingBy(RabbitMqTranslateVO::getModeType));
-//                // TODO 在这里对shop下的task进行分类：语言分类，模块分类，安排不同的线程同时翻译
-//            });
-
-        }
+//        List<TranslatesDO> startedTasks = translatesServiceImpl.getStatus2Data();
+//        Set<String> startedShops = startedTasks.stream().map(TranslatesDO::getShopName).collect(Collectors.toSet());
+//        responseMap.put("Step1-有进度条的用户", startedShops);
+//
+//        // 统计待翻译的 task
+//        List<TranslateTasksDO> tasks = translateTasksService.find0StatusTasks();
+//        responseMap.put("总的子任务数量", tasks.size());
+//
+//        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
+//        responseMap.put("自动翻译的任务数量", translatesDOList.size());
+//
+//        // 统计shopName数量
+//        Set<String> shops = tasks.stream().map(TranslateTasksDO::getShopName).collect(Collectors.toSet());
+//        responseMap.put("Step2-创建了翻译子任务的用户", shops);
+//
+//        Set<String> translatingShops = redisTranslateLockService.members();
+//        responseMap.put("Step3-翻译中的用户", translatingShops);
+//
+//        for (String shop : shops) {
+//            Set<TranslateTasksDO> shopTasks = tasks.stream()
+//                    .filter(taskDo -> taskDo.getShopName().equals(shop))
+//                    .collect(Collectors.toSet());
+//
+//            Map map = translationMonitorRedisService.getShopTranslationStats(shop);
+//            map.put("翻译子任务数量", shopTasks.size());
+//
+//            responseMap.put(shop, map);
+////            Map<String, List<RabbitMqTranslateVO>> targetMap = shopTasks.stream()
+////                    .map(translateTasksDO -> jsonToObject(translateTasksDO.getPayload(), RabbitMqTranslateVO.class))
+////                    .filter(Objects::nonNull)
+////                    .collect(Collectors.groupingBy(RabbitMqTranslateVO::getTarget));
+////
+////            targetMap.forEach((target, list) -> {
+////                Map<String, List<RabbitMqTranslateVO>> moeMap = list.stream().collect(Collectors.groupingBy(RabbitMqTranslateVO::getModeType));
+////                // TODO 在这里对shop下的task进行分类：语言分类，模块分类，安排不同的线程同时翻译
+////            });
+//
+//        }
         return responseMap;
     }
 

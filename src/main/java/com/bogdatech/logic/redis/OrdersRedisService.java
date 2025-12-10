@@ -12,7 +12,6 @@ public class OrdersRedisService {
     // 存一个订单的id 做标识
     private static String ORDER_ID = "oi:{shopName}:{orderId}";
 
-
     public static String generalOrderIdKey(String shopName, String orderId) {
         if (shopName == null ) {
             return null;

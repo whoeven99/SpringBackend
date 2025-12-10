@@ -6,7 +6,7 @@ import com.bogdatech.utils.RedisKeyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import static com.bogdatech.utils.RedisKeyUtils.*;
+import static com.bogdatech.utils.RedisKeyUtils.DAY_14;
 
 @Service
 public class RedisProcessService {
@@ -19,15 +19,6 @@ public class RedisProcessService {
             return;
         }
          redisIntegration.incrementHash(key,field,value);
-    }
-
-    public String getFieldProcessData(String key, String field){
-        return redisIntegration.getHash(key,field);
-    }
-
-    public void initProcessData(String key) {
-        redisIntegration.setHash(key, PROGRESS_TOTAL, 0);
-        redisIntegration.setHash(key, PROGRESS_DONE, 0);
     }
 
     public void setCacheData(String targetCode, String targetValue, String sourceValue){
@@ -54,5 +45,4 @@ public class RedisProcessService {
         }
         return null;
     }
-
 }

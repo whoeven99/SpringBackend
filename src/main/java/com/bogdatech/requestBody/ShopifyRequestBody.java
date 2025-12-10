@@ -133,27 +133,6 @@ public class ShopifyRequestBody {
                 "}";
     }
 
-    /**
-     * 根据产品id获取对应的数据,目前简单的写就是获取title的值
-     */
-    public static String getProductsQueryById(String productId) {
-        return "query MyQuery {\n" +
-                "  product(id: \"" + productId + "\") {\n" +
-                "    title\n" +
-                "  }\n" +
-                "}";
-    }
-
-    /**
-     * 根据集合id获取对应的数据,目前简单的写就是获取title的值
-     */
-    public static String getCollectionsQueryById(String collectionId) {
-        return "query {\n" +
-                "  collection(id: \"" + collectionId + "\") {\n" +
-                "    title\n" +
-                "  }\n" +
-                "}";
-    }
 
     /**
      * 根据查询语句获取用户所有语言代码
@@ -194,20 +173,6 @@ public class ShopifyRequestBody {
                 "  }\n" +
                 "}";
     }
-
-    /**
-     * 查询用户商店创建时间
-     */
-    public static String getShopCreatedDateQuery() {
-        return """
-                query MyQuery {
-                    shop {
-                      createdAt
-                    }
-                  }
-                """;
-    }
-
     /**
      * 获取用户商店开启的语言和未开启的语言
      */

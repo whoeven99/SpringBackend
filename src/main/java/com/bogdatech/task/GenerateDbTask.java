@@ -83,7 +83,6 @@ public class GenerateDbTask {
                 });
             }
         }
-
     }
 
     /**
@@ -130,8 +129,6 @@ public class GenerateDbTask {
             //删除限制
             GENERATE_SHOP.remove(subtaskDO.getUserId());
         }
-
-
     }
 
     /**
