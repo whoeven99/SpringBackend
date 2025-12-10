@@ -13,42 +13,57 @@ public class ShopifyRequestUtils {
                 query.replace("%target%", target);
     }
 
-    public static String query =
-            "    nodes {\n" +
-            "      resourceId\n" +
-            "      translations(locale: \"%target%\") {\n" +
-            "        locale\n" +
-            "        value\n" +
-            "        key\n" +
-            "        outdated\n" +
-            "      }\n" +
-            "      translatableContent {\n" +
-            "        type\n" +
-            "        locale\n" +
-            "        key\n" +
-            "        value\n" +
-            "        digest\n" +
-            "      }\n" +
-            "    }\n" +
-            "    pageInfo {\n" +
-            "      endCursor\n" +
-            "      hasNextPage\n" +
-            "    }\n" +
-            "  }\n" +
-            "}";
+    public static String query = """
+        nodes {
+          resourceId
+          translations(locale: "%target%") {
+            locale
+            value
+            key
+            outdated
+          }
+          translatableContent {
+            type
+            locale
+            key
+            value
+            digest
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    """;
 
     public static String registerTransactionQuery() {
-        return "mutation translationsRegister($resourceId: ID!, $translations: [TranslationInput!]!) {\n" +
-                "  translationsRegister(resourceId: $resourceId, translations: $translations) {\n" +
-                "    userErrors {\n" +
-                "      message\n" +
-                "      field\n" +
-                "    }\n" +
-                "    translations {\n" +
-                "      key\n" +
-                "      value\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        return """
+            mutation translationsRegister($resourceId: ID!, $translations: [TranslationInput!]!) {
+              translationsRegister(resourceId: $resourceId, translations: $translations) {
+                userErrors {
+                  message
+                  field
+                }
+                translations {
+                  key
+                  value
+                }
+              }
+            }
+        """;
+    }
+
+    public static String getLanguagesQuery() {
+        return """
+            query MyQuery {
+              shopLocales {
+                locale
+                name
+                primary
+                published
+              }
+            }
+        """;
     }
 }

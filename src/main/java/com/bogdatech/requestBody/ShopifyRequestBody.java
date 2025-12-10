@@ -75,14 +75,6 @@ public class ShopifyRequestBody {
                 "}";
     }
 
-    public String test() {
-        return "{\n" +
-                "\tshop {\n" +
-                "\t\tname\n" +
-                "\t}\n" +
-                "}";
-    }
-
     //根据用户付费订单id获取订单信息
     public static String getSubscriptionQuery(String subscriptionId) {
         return "query GetSubscriptionDetails {\n" +
@@ -185,26 +177,6 @@ public class ShopifyRequestBody {
                          primary
                          published
                          }
-                }
-                """;
-    }
-
-    /**
-     * 删除翻译
-     */
-    public static String deleteTranslationQuery() {
-        return """
-                mutation translationsRemove($resourceId: ID!, $translationKeys: [String!]!, $locales: [String!]!) {
-                  translationsRemove(resourceId: $resourceId, translationKeys: $translationKeys, locales: $locales) {
-                    userErrors {
-                      message
-                      field
-                    }
-                    translations {
-                      key
-                      value
-                    }
-                  }
                 }
                 """;
     }

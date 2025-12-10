@@ -6,34 +6,38 @@ import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
+import com.bogdatech.entity.DO.GlossaryDO;
+import com.bogdatech.entity.DO.TranslateResourceDTO;
+import com.bogdatech.entity.DO.TranslatesDO;
+import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.integration.ShopifyHttpIntegration;
+import com.bogdatech.integration.model.ShopifyGraphResponse;
+import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.logic.PrivateKeyService;
+import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
+import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
+import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
 import com.bogdatech.logic.translate.stragety.TranslateStrategyFactory;
+import com.bogdatech.model.controller.request.ClickTranslateRequest;
+import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.model.controller.response.TypeSplitResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.entity.TranslateTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.repository.repo.TranslateTaskV2Repo;
-import com.bogdatech.entity.DO.*;
-import com.bogdatech.integration.ShopifyHttpIntegration;
-import com.bogdatech.integration.model.ShopifyGraphResponse;
-import com.bogdatech.logic.GlossaryService;
-import com.bogdatech.logic.ShopifyService;
-import com.bogdatech.logic.redis.RedisStoppedRepository;
-import com.bogdatech.logic.token.UserTokenService;
-import com.bogdatech.model.controller.request.ClickTranslateRequest;
-import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.requestBody.ShopifyRequestBody;
-import com.bogdatech.utils.*;
+import com.bogdatech.utils.JsonUtils;
+import com.bogdatech.utils.JudgeTranslateUtils;
+import com.bogdatech.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
@@ -41,10 +45,12 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.enums.ErrorEnum.GOOGLE_RANGE;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
@@ -137,10 +143,6 @@ public class TranslateV2Service {
         if (usedToken >= maxToken) {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.TOKEN_LIMIT);
         }
-
-        String userKey = shopName.replace(".", "") + "-" + modelFlag;
-        KeyVaultSecret keyVaultSecret = secretClient.getSecret(userKey);
-        String privateKey = keyVaultSecret.getValue();
 
         boolean handleFlag = false;
         List<String> translateModel = request.getTranslateSettings3();
@@ -248,7 +250,7 @@ public class TranslateV2Service {
         }
 
         // 3. 获取 Shopify 语言数据
-        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestBody.getLanguagesQuery());
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestUtils.getLanguagesQuery());
         JsonNode root = JsonUtils.readTree(shopifyData);
 
         if (root == null) {
