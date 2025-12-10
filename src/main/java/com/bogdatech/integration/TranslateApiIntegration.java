@@ -7,6 +7,7 @@ import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.ApiCodeUtils;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.ConfigUtils;
+import kotlin.Pair;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -67,6 +68,37 @@ public class TranslateApiIntegration {
 //        }
 //        return result;
 //    }
+
+    //谷歌翻译API
+    public Pair<String, Integer> googleTranslate(String content, String target, String privateKey) {
+        String encodedQuery = URLEncoder.encode(content, StandardCharsets.UTF_8);
+        String apikey = privateKey != null ? privateKey : ConfigUtils.getConfig("GOOGLE_API_KEY");
+        String url = "https://translation.googleapis.com/language/translate/v2?key=" + apikey +
+                "&q=" + encodedQuery +
+                "&target=" + target +
+                "&model=base";
+        String result = null;
+        // 创建HttpGet请求
+        HttpPost httpPost = new HttpPost(url);
+        // 执行请求
+        JSONObject jsonObject;
+        try (CloseableHttpClient httpClient = HttpClients.createDefault(); CloseableHttpResponse response = httpClient.execute(httpPost)) {
+            // 获取响应实体并转换为字符串
+            HttpEntity responseEntity = response.getEntity();
+            String responseBody = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
+            jsonObject = JSONObject.parseObject(responseBody);
+            // 获取翻译结果
+            JSONArray translationsArray = jsonObject.getJSONObject("data").getJSONArray("translations");
+            JSONObject translation = translationsArray.getJSONObject(0);
+            result = translation.getString("translatedText");
+            int totalToken = encodedQuery.length();
+            return new Pair<>(result, totalToken);
+//            AppInsightsUtils.printTranslateCost(totalToken, totalToken, totalToken);
+        } catch (Exception e) {
+            appInsights.trackTrace("信息：" + e.getMessage());
+        }
+        return null;
+    }
 
     //谷歌翻译API
     public static String googleTranslate(TranslateRequest request) {

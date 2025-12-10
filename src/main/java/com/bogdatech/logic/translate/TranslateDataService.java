@@ -590,7 +590,7 @@ public class TranslateDataService {
         appInsights.trackTrace("千问或gpt翻译 用户： " + shopName + " 模型类型： " + translationModel);
         Pair<String, Integer> pair;
         if ("2".equals(translationModel)) {
-            pair = chatGptIntegration.chatWithGpt(prompt, content, shopName, target);
+            pair = chatGptIntegration.chatWithGpt(prompt, content, shopName, target, null);
         } else {
             pair = aLiYunTranslateIntegration.userTranslate(content, prompt, target, shopName);
         }

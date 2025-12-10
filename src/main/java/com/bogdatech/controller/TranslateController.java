@@ -51,7 +51,7 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
-        return translateV2Service.createInitialTask(request);
+        return translateV2Service.manualTask(request);
     }
 
     @PostMapping("/getAllProgressData")

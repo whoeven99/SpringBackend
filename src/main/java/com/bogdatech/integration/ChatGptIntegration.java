@@ -26,11 +26,11 @@ public class ChatGptIntegration {
     public static final int OPENAI_MAGNIFICATION = 3;
 
     // content - allToken
-    public Pair<String, Integer> chatWithGpt(String prompt, String sourceText, String shopName, String target) {
+    public Pair<String, Integer> chatWithGpt(String prompt, String sourceText, String shopName, String target, String privateKey) {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
-                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
+                .credential(privateKey != null ? privateKey : new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
                 .buildClient();
 
         // 模拟聊天交互

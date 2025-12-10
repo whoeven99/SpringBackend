@@ -1,6 +1,8 @@
 package com.bogdatech.logic.translate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
@@ -8,6 +10,7 @@ import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
+import com.bogdatech.logic.PrivateKeyService;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.ShopNameRedisRepo;
@@ -43,10 +46,12 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.enums.ErrorEnum.GOOGLE_RANGE;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JsoupUtils.LANGUAGE_CODES;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.ListUtils.convertALL;
@@ -86,6 +91,8 @@ public class TranslateV2Service {
     private IUsersService usersService;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private SecretClient secretClient;
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -111,9 +118,67 @@ public class TranslateV2Service {
         return BaseResponse.SuccessResponse(returnVO);
     }
 
+    public BaseResponse privateKeyTask(ClickTranslateRequest request) {
+        String shopName = request.getShopName();
+
+        // 找前端把字段改了。。。
+        Integer modelFlag = PrivateKeyService.judgeModelByValue(request.getTranslateSettings1());
+        String target = request.getTarget()[0];
+        if (modelFlag.equals(PrivateKeyService.GOOGLE_MODEL) &&
+                (LANGUAGE_CODES.contains(request.getSource()) || LANGUAGE_CODES.contains(target))) {
+            return new BaseResponse<>().CreateErrorResponse(GOOGLE_RANGE);
+        }
+
+        // 判断字符是否超限
+        Integer maxToken = userTokenService.getMaxToken(shopName);
+        Integer usedToken = userTokenService.getUsedToken(shopName);
+
+        // 如果字符超限，则直接返回字符超限
+        if (usedToken >= maxToken) {
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.TOKEN_LIMIT);
+        }
+
+        String userKey = shopName.replace(".", "") + "-" + modelFlag;
+        KeyVaultSecret keyVaultSecret = secretClient.getSecret(userKey);
+        String privateKey = keyVaultSecret.getValue();
+
+        boolean handleFlag = false;
+        List<String> translateModel = request.getTranslateSettings3();
+        if (translateModel.contains("handle")) {
+            translateModel.removeIf("handle"::equals);
+            handleFlag = true;
+        }
+
+        List<String> resourceTypeList = request.getTranslateSettings3().stream()
+                .flatMap(module -> TranslateResourceDTO.TOKEN_MAP.get(module).stream())
+                .map(TranslateResourceDTO::getResourceType)
+                .toList();
+
+        String source = request.getSource();
+        initialTaskV2Repo.deleteByShopNameSourceAndType(shopName, source, "private");
+        // 等待中断taskid功能上线再开启
+//        redisStoppedRepository.removeStoppedFlag(shopName);
+
+        InitialTaskV2DO initialTask = new InitialTaskV2DO();
+        initialTask.setShopName(shopName);
+        initialTask.setSource(source);
+        initialTask.setTarget(target);
+        initialTask.setCover(request.getIsCover());
+        initialTask.setModuleList(JsonUtils.objectToJson(resourceTypeList));
+        initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
+        initialTask.setTaskType("private");
+        initialTask.setModelFlag(modelFlag);
+        initialTaskV2Repo.insert(initialTask);
+
+        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+        iTranslatesService.updateTranslateStatus(shopName, 2, target, source);
+
+        return new BaseResponse<>().CreateSuccessResponse(request);
+    }
+
     // 手动开启翻译任务入口
     // 翻译 step 1, 用户 -> initial任务创建
-    public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
+    public BaseResponse<Object> manualTask(ClickTranslateRequest request) {
         String shopName = request.getShopName();
         String[] targets = request.getTarget();
         List<String> moduleList = request.getTranslateSettings3();
@@ -162,15 +227,16 @@ public class TranslateV2Service {
                 .toList();
 
         this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
-        this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
+        this.checkAndAddIfNotExist(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
 
-        // 找前端，把这里的返回改了
+        // 每个controller都要对应一个自己的request + response 不要随便返回个内容就完事
+        //  找前端，把这里的返回改了
         request.setTarget(finalTargets.toArray(new String[0]));
         return BaseResponse.SuccessResponse(request);
     }
 
-    public void isExistInDatabase(String shopName, String[] targets, String source, String accessToken) {
-
+    public void checkAndAddIfNotExist(String shopName, String[] targets, String source, String accessToken) {
+        // TODO @庄泽 accessToken自己从数据库拿，不要用前端传的
         // 1. 查询当前 DB 中已有的 target
         List<String> dbTargetList = translatesService.selectTargetByShopNameSource(shopName, source)
                 .stream().map(TranslatesDO::getTarget).toList();
@@ -199,6 +265,7 @@ public class TranslateV2Service {
         for (JsonNode node : shopLocales) {
             String locale = node.path("locale").asText(null);
             if (locale != null && !dbTargetList.contains(locale)) {
+                // TODO @庄泽 同样的 token已经在user表里了，其他表不要再存了
                 translatesService.insertShopTranslateInfoByShopify(shopName, accessToken, locale, source);
             }
         }
@@ -217,7 +284,7 @@ public class TranslateV2Service {
 
     private void createManualTask(String shopName, String source, Set<String> targets,
                                   List<String> moduleList, Boolean isCover) {
-        initialTaskV2Repo.deleteByShopNameSource(shopName, source);
+        initialTaskV2Repo.deleteByShopNameSourceAndType(shopName, source, "manual");
         redisStoppedRepository.removeStoppedFlag(shopName);
 
         for (String target : targets) {
@@ -413,6 +480,13 @@ public class TranslateV2Service {
         String shopName = initialTaskV2DO.getShopName();
 
         Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, target);
+        String privateKey = null;
+        if (initialTaskV2DO.getTaskType().equals("private")) {
+            Integer modelFlag = initialTaskV2DO.getModelFlag();
+            String userKey = shopName.replace(".", "") + "-" + modelFlag;
+            KeyVaultSecret keyVaultSecret = secretClient.getSecret(userKey);
+            privateKey = keyVaultSecret.getValue();
+        }
 
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
@@ -453,6 +527,10 @@ public class TranslateV2Service {
 
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap);
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+                if (initialTaskV2DO.getTaskType().equals("private")) {
+                    context.setPrivateKey(privateKey);
+                    context.setPrivateKeyModel(initialTaskV2DO.getModelFlag());
+                }
                 service.translate(context);
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
@@ -469,8 +547,17 @@ public class TranslateV2Service {
                         context.getUsedToken(), context.getTranslatedChars());
             } else {
                 // 其他单条翻译
-                TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
+                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target,
                         textType, randomDo.getNodeKey(), glossaryMap);
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+                if (initialTaskV2DO.getTaskType().equals("private")) {
+                    context.setPrivateKey(privateKey);
+                    context.setPrivateKeyModel(initialTaskV2DO.getModelFlag());
+                }
+                service.translate(context);
+                service.finishAndGetJsonRecord(context);
+
+                userTokenService.addUsedToken(shopName, context.getUsedToken());
 
                 // 翻译后更新db
                 randomDo.setTargetValue(context.getTranslatedContent());
