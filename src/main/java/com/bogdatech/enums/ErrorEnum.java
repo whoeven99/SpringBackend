@@ -63,7 +63,11 @@ public enum ErrorEnum {
     /**
      * 用户正在翻译中
      * */
-    USER_TRANSLATING(10015, "USER_TRANSLATING")
+    USER_TRANSLATING(10015, "USER_TRANSLATING"),
+    /**
+     * 额度不足
+     */
+    TOKEN_LIMIT(10016, "Cannot translate because the character limit has been reached. Please upgrade your plan to continue translating."),
     ;
 
     public int errCode;

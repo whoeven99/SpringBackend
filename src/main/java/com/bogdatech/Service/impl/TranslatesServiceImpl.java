@@ -9,13 +9,13 @@ import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.mapper.TranslatesMapper;
 import com.bogdatech.model.controller.request.AutoTranslateRequest;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -234,5 +234,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public void updateAutoTranslateByShopNameAndTargetToFalse(String shopName, String target) {
         baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getTarget, target).set(TranslatesDO::getAutoTranslate, false));
+    }
+
+    @Override
+    public List<String> selectTargetByShopName(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().select(TranslatesDO::getTarget).eq(TranslatesDO::getShopName, shopName)).stream().map(TranslatesDO::getTarget).collect(Collectors.toList());
     }
 }

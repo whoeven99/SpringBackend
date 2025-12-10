@@ -1,5 +1,6 @@
 package com.bogdatech.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.ICurrenciesService;
 import com.bogdatech.entity.DO.CurrenciesDO;
@@ -112,5 +113,10 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
         } else {
             return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
         }
+    }
+
+    @Override
+    public List<CurrenciesDO> selectByShopName(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<CurrenciesDO>().eq(CurrenciesDO::getShopName, shopName));
     }
 }

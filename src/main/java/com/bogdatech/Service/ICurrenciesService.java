@@ -5,6 +5,7 @@ import com.bogdatech.entity.DO.CurrenciesDO;
 import com.bogdatech.model.controller.request.CurrencyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 
+import java.util.List;
 import java.util.Map;
 
 public interface ICurrenciesService extends IService<CurrenciesDO> {
@@ -21,4 +22,6 @@ public interface ICurrenciesService extends IService<CurrenciesDO> {
     String getCurrencyCodeByPrimaryStatusAndShopName(String shopName);
 
     BaseResponse<Object> updateDefaultCurrency(CurrencyRequest request);
+
+    List<CurrenciesDO> selectByShopName(String shopName);
 }
