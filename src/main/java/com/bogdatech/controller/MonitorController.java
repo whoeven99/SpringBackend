@@ -10,7 +10,6 @@ import com.bogdatech.entity.DO.*;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
-import com.bogdatech.mapper.InitialTranslateTasksMapper;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
@@ -23,8 +22,6 @@ import java.util.*;
 public class MonitorController {
     @Autowired
     private ICharsOrdersService charsOrdersService;
-    @Autowired
-    private InitialTranslateTasksMapper initialTranslateTasksMapper;
     @Autowired
     private ITranslatesService iTranslatesService;
     @Autowired
@@ -61,14 +58,6 @@ public class MonitorController {
         map.put("TranslationCounter", new ArrayList<TranslationCounterDO>() {{
             add(translationCounterDO);
         }});
-
-        // 获取initial表的数据
-        List<InitialTranslateTasksDO> initialTranslateTasksDOS = initialTranslateTasksMapper.selectList(
-                new LambdaQueryWrapper<InitialTranslateTasksDO>()
-                        .eq(InitialTranslateTasksDO::getShopName, shopName)
-                        .eq(InitialTranslateTasksDO::isDeleted, false));
-        map.put("InitialTranslateTasks", initialTranslateTasksDOS);
-
         return map;
     }
 

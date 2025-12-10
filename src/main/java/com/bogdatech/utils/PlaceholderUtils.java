@@ -8,10 +8,6 @@ import java.util.Map;
 public class PlaceholderUtils {
     /**
      * 极简提示词
-     *
-     * @param target         目标语言
-     * @param languagePackId 语言包
-     * @return 极简提示词
      */
     public static String getSimplePrompt(String target, String languagePackId){
         if (languagePackId != null && !languagePackId.isEmpty()){
@@ -22,11 +18,6 @@ public class PlaceholderUtils {
 
     /**
      * 词汇表的提示词
-     *
-     * @param target         目标语言
-     * @param glossary       词汇表
-     * @param languagePackId 语言包
-     * @return 词汇表的提示词
      */
     public static String getGlossaryPrompt(String target, String glossary, String languagePackId) {
         if (languagePackId != null && !languagePackId.isEmpty()) {
@@ -37,28 +28,13 @@ public class PlaceholderUtils {
 
     /**
      * handle类型的提示词
-     *
-     * @param target 目标语言
-     * @return handle类型的提示词
      */
     public static String getHandlePrompt(String target) {
         return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
     }
 
-
-    /**
-     * handle类型的提示词
-     *
-     * @return handle类型的提示词
-     */
-    public static String getCategoryPrompt() {
-        return "Based on the following website description, return which category of e-commerce website this belongs to. Only return the category name.";
-    }
-
     /**
      * 完整翻译html的提示词
-     * @param target 目标语言
-     * @param languagePackId 语言包
      * */
     public static String getFullHtmlPrompt(String target, String languagePackId) {
         if (languagePackId == null) {
