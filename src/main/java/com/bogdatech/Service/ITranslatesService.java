@@ -2,7 +2,6 @@ package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.bogdatech.entity.DO.TranslatesDO;
-import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 
@@ -23,15 +22,11 @@ public interface ITranslatesService extends IService<TranslatesDO> {
 
     Boolean deleteFromTranslates(TranslateRequest request);
 
-    List<TranslatesDO> getLanguageListCounter(String shopName);
-
     void updateTranslatesResourceType(String shopName, String target, String source, String resourceType);
 
     Integer getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
 
     Integer getIdByShopNameAndTargetAndSource(String shopName, String target, String source);
-
-    TranslatesDO selectLatestOne(TranslateRequest request);
 
     String getResourceTypeByshopNameAndTargetAndSource(String shopName, String target, String source);
 
@@ -49,9 +44,7 @@ public interface ITranslatesService extends IService<TranslatesDO> {
 
     void updateAllStatusTo0(String shopName);
 
-    void insertShopTranslateInfoByShopify(String shopName, String accessToken, String locale, String source);
-
-    void updateStopStatus(String shopName, String source);
+    boolean insertShopTranslateInfoByShopify(String shopName, String accessToken, String locale, String source);
 
     List<TranslatesDO> listTranslatesDOByShopName(String shopName);
 
@@ -60,4 +53,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     void updateAutoTranslateByShopNameAndTargetToFalse(String shopName, String target);
 
     List<String> selectTargetByShopName(String shopName);
+
+    List<TranslatesDO> selectTargetByShopNameSource(String shopName, String source);
 }

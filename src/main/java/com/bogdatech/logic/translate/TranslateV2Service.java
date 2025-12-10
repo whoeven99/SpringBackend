@@ -6,6 +6,7 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
@@ -28,19 +29,19 @@ import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.model.controller.request.ClickTranslateRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
+import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
@@ -122,6 +123,15 @@ public class TranslateV2Service {
             return BaseResponse.FailedResponse("Missing parameters");
         }
 
+        // 判断字符是否超限
+        Integer maxToken = userTokenService.getMaxToken(shopName);
+        Integer usedToken = userTokenService.getUsedToken(shopName);
+
+        // 如果字符超限，则直接返回字符超限
+        if (usedToken >= maxToken) {
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.TOKEN_LIMIT);
+        }
+
         // 判断用户语言是否正在翻译，翻译的不管；没翻译的翻译。
         List<InitialTaskV2DO> initialTaskV2DOS =
                 initialTaskV2Repo.selectByShopNameSourceManual(shopName, request.getSource());
@@ -152,10 +162,46 @@ public class TranslateV2Service {
                 .toList();
 
         this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
+        this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
 
         // 找前端，把这里的返回改了
         request.setTarget(finalTargets.toArray(new String[0]));
         return BaseResponse.SuccessResponse(request);
+    }
+
+    public void isExistInDatabase(String shopName, String[] targets, String source, String accessToken) {
+
+        // 1. 查询当前 DB 中已有的 target
+        List<String> dbTargetList = translatesService.selectTargetByShopNameSource(shopName, source)
+                .stream().map(TranslatesDO::getTarget).toList();
+
+        // 2. 检查是否缺少任意一个 target
+        boolean needSync = Arrays.stream(targets).anyMatch(t -> !dbTargetList.contains(t));
+        if (!needSync) {
+            return;
+        }
+
+        // 3. 获取 Shopify 语言数据
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestBody.getLanguagesQuery());
+        JsonNode root = JsonUtils.readTree(shopifyData);
+
+        if (root == null) {
+            return;
+        }
+
+        JsonNode shopLocales = root.path("shopLocales");
+        if (!shopLocales.isArray()) {
+            appInsights.trackTrace("syncShopifyAndDatabase: shopLocales is not an array.");
+            return;
+        }
+
+        // 4. 写入缺失的 locale
+        for (JsonNode node : shopLocales) {
+            String locale = node.path("locale").asText(null);
+            if (locale != null && !dbTargetList.contains(locale)) {
+                translatesService.insertShopTranslateInfoByShopify(shopName, accessToken, locale, source);
+            }
+        }
     }
 
     public TranslateContext singleTranslate(String shopName, String content, String target, String type, String key,
