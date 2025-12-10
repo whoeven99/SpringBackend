@@ -30,7 +30,6 @@ public class RabbitMqTranslateService {
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
 
-    public static final int BATCH_SIZE = 50;
     public static String MANUAL = "click"; // db 设置的10字符， 改动的时候需要注意
     public static String AUTO = "auto";
 

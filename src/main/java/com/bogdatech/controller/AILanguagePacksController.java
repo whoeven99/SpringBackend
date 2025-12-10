@@ -1,10 +1,8 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.IAILanguagePacksService;
-import com.bogdatech.logic.AILanguagePackService;
 import com.bogdatech.model.controller.request.UserLanguageRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
-import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

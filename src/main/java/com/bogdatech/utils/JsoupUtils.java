@@ -42,10 +42,4 @@ public class JsoupUtils {
             "ce", "kw", "fo", "ia", "kl", "ks", "ki", "lu", "gv", "nd", "pt",
             "se", "nb", "nn", "os", "rm", "sc", "ii", "bo", "to", "wo", "ar-EG"
     ));
-
-    //定义百炼可以调用的语言代码集合
-    public static final Set<String> QWEN_MT_CODES = new HashSet<>(Arrays.asList(
-            "zh-CN", "en", "ja", "ko", "th", "fr", "de", "es", "ar",
-            "id", "vi", "pt-BR", "it", "nl", "ru", "km", "cs", "pl", "fa", "he", "tr", "hi", "bn", "ur"
-    ));
 }
