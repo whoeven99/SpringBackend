@@ -21,15 +21,6 @@ public class RedisProcessService {
          redisIntegration.incrementHash(key,field,value);
     }
 
-    public String getFieldProcessData(String key, String field){
-        return redisIntegration.getHash(key,field);
-    }
-
-    public void initProcessData(String key) {
-        redisIntegration.setHash(key, PROGRESS_TOTAL, 0);
-        redisIntegration.setHash(key, PROGRESS_DONE, 0);
-    }
-
     public void setCacheData(String targetCode, String targetValue, String sourceValue){
         String encryptedSource = AESUtils.encryptMD5(sourceValue);
         if (encryptedSource == null) {
