@@ -6,6 +6,7 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
@@ -37,12 +38,10 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
@@ -122,6 +121,15 @@ public class TranslateV2Service {
         if (StringUtils.isEmpty(shopName) ||
                 targets == null || targets.length == 0 || CollectionUtils.isEmpty(moduleList)) {
             return BaseResponse.FailedResponse("Missing parameters");
+        }
+
+        // 判断字符是否超限
+        Integer maxToken = userTokenService.getMaxToken(shopName);
+        Integer usedToken = userTokenService.getUsedToken(shopName);
+
+        // 如果字符超限，则直接返回字符超限
+        if (usedToken >= maxToken) {
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.TOKEN_LIMIT);
         }
 
         // 判断用户语言是否正在翻译，翻译的不管；没翻译的翻译。
