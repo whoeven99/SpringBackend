@@ -178,22 +178,6 @@ public class TranslateService {
         }
         appInsights.trackTrace("修改自定义提示词 : " + shopName);
 
-        // 改为循环遍历，将相关target状态改为2
-        List<String> listTargets = Arrays.asList(targets);
-        listTargets.forEach(target -> {
-            translatesService.updateTranslateStatus(
-                    shopName,
-                    2,
-                    target,
-                    source
-            );
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                appInsights.trackException(e);
-            }
-        });
-
         appInsights.trackTrace("修改相关target状态改为2 : " + shopName);
 
         // 将模块数据List类型转化为Json类型
@@ -224,6 +208,7 @@ public class TranslateService {
             }
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopName);
 
+            translatesService.updateTranslateStatus(shopName, 2, target, source);
             // 将language级别的token数据删除掉
             boolean deletedLanguage = translationCounterRedisService.deleteLanguage(shopName, target, MANUAL);
             appInsights.trackTrace("mqTranslateWrapper 用户: " + shopName + " 删除这个语言的language的token统计 是否删除 languageToken： " + deletedLanguage + " 语言是： " + target);
