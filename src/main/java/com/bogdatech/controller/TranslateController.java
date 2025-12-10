@@ -12,10 +12,8 @@ import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.*;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
-import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslationParametersRedisService;
-import com.bogdatech.logic.translate.TranslateProgressService;
 import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -23,6 +21,7 @@ import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
+import java.util.concurrent.Future;
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -46,11 +45,7 @@ public class TranslateController {
     @Autowired
     private IUsersService iUsersService;
     @Autowired
-    private TranslateProgressService translateProgressService;
-    @Autowired
     private TranslateV2Service translateV2Service;
-    @Autowired
-    private ConfigRedisRepo configRedisRepo;
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
@@ -75,6 +70,13 @@ public class TranslateController {
     @PutMapping("/stopTranslatingTask")
     public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
         redisStoppedRepository.manuallyStopped(shopName);
+
+        // 目前能用到的就是私有key
+        Future<?> future = TranslateService.userTasks.get(shopName);
+        if (future != null && !future.isDone()) {
+            // 中断正在执行的任务
+            future.cancel(true);
+        }
         return new BaseResponse<>().CreateSuccessResponse(true);
 //        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
 //        if (!stopFlag) {
