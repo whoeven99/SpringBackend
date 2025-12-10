@@ -2,88 +2,10 @@ package com.bogdatech.utils;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.bogdatech.constants.TranslateConstants.ARTICLE;
-import static com.bogdatech.constants.TranslateConstants.PRODUCT;
-
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class PlaceholderUtils {
-    // 定义占位符的正则表达式
-    private static final Pattern PLACEHOLDER_PATTERN =
-            Pattern.compile("\\{\\{[^}]+\\}\\}|\\{\\s*[^}]*\\s*\\}|%\\{[^}]+\\}|\\{%(.*?)%\\}|\\[[^\\]]+\\]|\\{\\}");
-
-    /**
-     * 判断文本中是否包含指定类型的占位符
-     *
-     * @param text 输入的文本
-     * @return 如果包含任意一种占位符返回 true，否则返回 false
-     */
-    public static boolean hasPlaceholders(String text) {
-        // 检查输入是否为空
-        if (text == null || text.trim().isEmpty()) {
-            return false;
-        }
-
-        // 使用正则表达式匹配
-        return PLACEHOLDER_PATTERN.matcher(text).find();
-    }
-
-    /**
-     * 根据变量前缀，输出变量全值
-     *
-     * @param placeholder 变量
-     * @return 变量的全值
-     **/
-    private static String getOuterMarker(String placeholder) {
-        if (placeholder.startsWith("{{")) {
-            return "{{ }}";
-        } else if (placeholder.startsWith("%{")) {
-            return "%{ }";
-        } else if (placeholder.startsWith("{%")) {
-            return "{% %}";
-        } else if (placeholder.startsWith("[")) {
-            return "[ ]";
-        } else if (placeholder.startsWith("[{{")) {
-            return "[{{ }}]";
-        } else if (placeholder.startsWith("{")) {
-            return "{ }";
-        }
-        return "";
-    }
-
-    /**
-     * 根据变量前缀，输出变量全值，将所有的变量全值拼接起来
-     * 目前用简单的 + 拼接，后续可以优化为使用 StringBuffer
-     *
-     * @param input 变量
-     * @return 拼接所有变量的全值
-     **/
-    public static String getOuterString(String input) {
-        Matcher matcher = PLACEHOLDER_PATTERN.matcher(input);
-        // 使用 Set 去重外层标记
-        Set<String> uniqueOuterMarkers = new HashSet<>();
-        String output = "";
-        while (matcher.find()) {
-            String placeholder = matcher.group(); // 完整的占位符，如 {{name}}
-            String outerMarker = getOuterMarker(placeholder); // 提取外层标记，如 {{}}
-            uniqueOuterMarkers.add(outerMarker);
-        }
-        int i = 0;
-        for (String outerMarker : uniqueOuterMarkers) {
-            if (i == 0) {
-                i++;
-                output = output + outerMarker;
-            } else {
-                output = output + "," + outerMarker;
-            }
-
-        }
-        return output;
-    }
-
     /**
      * 极简提示词
      *
@@ -96,21 +18,6 @@ public class PlaceholderUtils {
             return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
         }
         return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-    }
-
-    /**
-     * 变量提示词
-     *
-     * @param target         目标语言
-     * @param variables      变量
-     * @param languagePackId 语言包
-     * @return 变量提示词
-     */
-    public static String getVariablePrompt(String target, String variables, String languagePackId) {
-        if (languagePackId != null && !languagePackId.isEmpty()) {
-            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Do not translate any content enclosed in " + variables + " —these are variable placeholders and must remain exactly as they are. Output only the translated text. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        }
-        return "Translate the following text into " + target + ". Do not translate any content enclosed in " + variables + " —these are variable placeholders and must remain exactly as they are. Output only the translated text. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
     }
 
     /**
@@ -149,14 +56,6 @@ public class PlaceholderUtils {
     }
 
     /**
-     * 5字符内的数据文本翻译
-     * qwen-max 专用提示词
-     */
-    public static String getShortPrompt(String target) {
-        return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation.";
-    }
-
-    /**
      * 完整翻译html的提示词
      * @param target 目标语言
      * @param languagePackId 语言包
@@ -167,53 +66,6 @@ public class PlaceholderUtils {
         }
         return "Translate the following HTML content to " + target + "  with " + languagePackId + " appropriate terminology and tone. Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
     }
-
-    /**
-     * 11/07 版提示词
-     * 目前最新的
-     */
-    public static String getNewestPrompt(String target, String sourceMap) {
-        String prompt = """
-                You are a professional translator who can accurately translate text from various languages. Your task is to translate the given list of texts into the specified target language.
-                First, carefully read the following list of texts to be translated:
-                {{SOURCE_LANGUAGE_LIST}}
-                When translating, please follow these rules:
-                1. Do not translate key - values; only translate the content of the values.
-                2. Do not translate emojis.
-                3. If a text is a variable name(e.g., {{aaa}}, {{aa.bbb}}, {% ccc %}, {% capture email_title %} etc.)., do not translate it.
-                The target language for translation is:
-                {{TARGET_LANGUAGE}}
-                Please return your translation in the following JSON - like format:
-                {"1": "translated text1", "2": "translated text2",...}
-                Start your translation now.
-                """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", target).replace("{{SOURCE_LANGUAGE_LIST}}", sourceMap);
-    }
-
-    /**
-     * 根据key和modelType生成不同的字段
-     * */
-    public static String getKeyByModel(String modelType, String key) {
-        if (key == null || modelType == null){
-            return null;
-        }
-
-        String prefix;
-        switch (modelType) {
-            case ARTICLE -> prefix = "article";
-            case PRODUCT -> prefix = "product";
-            default -> {
-                return null; // modelType 不匹配
-            }
-        }
-
-        return switch (key) {
-            case "title" ->  prefix + " title";
-            case "meta_title" -> prefix + " meta title";
-            default -> null;
-        };
-    }
-
 
     /**
      * 构建描述生成提示词的动态方法
