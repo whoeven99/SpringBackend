@@ -48,29 +48,13 @@ public class TestController {
     @Autowired
     private TaskService taskService;
     @Autowired
-    private RateHttpIntegration rateHttpIntegration;
-    @Autowired
-    private UserTypeTokenService userTypeTokenService;
-    @Autowired
-    private TencentEmailService tencentEmailService;
-    @Autowired
     private ITranslateTasksService translateTasksService;
-    @Autowired
-    private DBTask dBTask;
-    @Autowired
-    private UserTranslationDataService userTranslationDataService;
-    @Autowired
-    private IAPGUsersService iapgUsersService;
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
     private RedisDataReportService redisDataReportService;
     @Autowired
     private RedisTranslateLockService redisTranslateLockService;
-    @Autowired
-    private TranslationParametersRedisService translationParametersRedisService;
-    @Autowired
-    private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
@@ -89,7 +73,7 @@ public class TestController {
         return "";
     }
 
-    //通过测试环境调shopify的API
+    // 通过测试环境调shopify的API
     @PostMapping("/test123")
     public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
         ShopifyRequest request = new ShopifyRequest();
@@ -104,20 +88,6 @@ public class TestController {
         return infoByShopify.toString();
     }
 
-    //发送成功翻译的邮件gei
-    @GetMapping("/sendEmail")
-    public void sendEmail() {
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        tencentEmailService.sendAPGSuccessEmail("daoyee@ciwi.ai", 1L, "product", "daoyee", now, 9989, 10, 100001);
-    }
-
-    //获取汇率
-    @GetMapping("/getRate")
-    public void getRate() {
-        rateHttpIntegration.getFixerRate();
-        appInsights.trackTrace("rateMap: " + rateMap.toString());
-    }
-
     //测试获取缓存功能
     @GetMapping("/testCache")
     public String testCache(@RequestParam String target, @RequestParam String value) {
@@ -129,35 +99,6 @@ public class TestController {
         redisProcessService.setCacheData(target, targetText, value);
     }
 
-    //测试theme判断
-    @PostMapping("/testKeyValue")
-    public String testKeyValue(@RequestBody KeyValueDTO keyValueDTO) {
-        String key = keyValueDTO.getKey();
-        String value = keyValueDTO.getValue();
-        if (SUSPICIOUS2_PATTERN.matcher(value).matches()) {
-            return "Metafield不翻译";
-        }
-
-        //通用的不翻译数据
-        if (!generalTranslate(key, value)) {
-            return "通用不翻译";
-        }
-
-        //如果是theme模块的数据
-        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
-            //进行白名单的确认
-            if (whiteListTranslate(key)) {
-                return "白名单翻译";
-            }
-            //如果包含对应key和value，则跳过
-            if (!shouldTranslate(key, value)) {
-                return "theme不翻译";
-            }
-        }
-
-        return "需要翻译";
-    }
-
     //测试自动翻译功能
     @PutMapping("/testAutoTranslate")
     public void testAutoTranslate() {
@@ -165,95 +106,10 @@ public class TestController {
         executorService.execute(() -> taskService.autoTranslate());
     }
 
-    @GetMapping("/testFreeTrialTask")
-    public void testFreeTrialTask() {
-        taskService.freeTrialTask();
-    }
-
-    @PostMapping("/testToken")
-    public void testToken(@RequestBody ShopifyRequest request) {
-        for (String key : TOKEN_MAP.keySet()
-        ) {
-            userTypeTokenService.testTokenCount(request, key);
-        }
-        appInsights.trackTrace("统计结束！！！");
-    }
-
-    @GetMapping("/testHandle")
-    public String testHandle(@RequestParam String value) {
-        return replaceHyphensWithSpaces(value);
-    }
-
-    // 停止mq翻译任务
-    @PutMapping("/stopMqTask")
-    public void stopMqTask(@RequestParam String shopName) {
-        Boolean stopFlag = translationParametersRedisService.delStopTranslationKey(shopName);
-        if (stopFlag) {
-            appInsights.trackTrace("停止成功");
-        }
-    }
-
-    /**
-     * 启动DB翻译
-     */
-    @PutMapping("/testDBTranslate")
-    public void testDBTranslate() {
-        dBTask.scanAndSubmitTasks();
-    }
-
-    /**
-     * 测试开头为general或section的判断
-     */
-    @PutMapping("/testGeneralOrSection")
-    public String testGeneralOrSection(@RequestParam String key) {
-        if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
-            return "true";
-        } else {
-            return "false";
-        }
-    }
-
-    /**
-     * 一键式恢复用户翻译
-     */
-    @PutMapping("/testRecover")
-    public String testRecover(@RequestParam String shopName) {
-        //获取用户，redis锁情况
-        translateTasksService.update(new UpdateWrapper<TranslateTasksDO>().eq("shop_name", shopName).and(wrapper -> wrapper.eq("status", 2)).set("status", 4));
-        boolean flag = redisTranslateLockService.setRemove(shopName);
-        return "是否解锁成功： " + flag;
-    }
-
-    /**
-     * 测试加锁
-     */
-    @GetMapping("/testLock")
-    public Boolean testLock(@RequestParam String shopName) {
-        return redisTranslateLockService.setAdd(shopName);
-    }
-
+    // 暂时存在下
     @GetMapping("/testUnlock")
     public Boolean testUnlock(@RequestParam String shopName) {
         return redisTranslateLockService.setRemove(shopName);
-    }
-
-    @GetMapping("/testReadList")
-    public List<UserTranslationDataDO> testreadList() {
-        return userTranslationDataService.selectTranslationDataList();
-    }
-
-    @GetMapping("/testRemove")
-    public boolean testRemove(@RequestParam String taskId) {
-        return userTranslationDataService.updateStatusTo2(taskId, 2);
-    }
-
-    /**
-     * 暂停APG应用的生成任务
-     */
-    @GetMapping("/testAPGStop")
-    public boolean userMaxLimit(@RequestParam String shopName) {
-        APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
-        return GENERATE_SHOP.add(usersDO.getId());
     }
 
     /**
@@ -272,7 +128,6 @@ public class TestController {
         redisDataReportService.saveUserDataReport(shopName, userDataReportVO);
     }
 
-
     /**
      * 读取相关数据
      */
@@ -283,35 +138,6 @@ public class TestController {
             return new BaseResponse<>().CreateSuccessResponse(userDataReport);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
-    }
-
-    /**
-     * 加密后输出数据
-     */
-    @GetMapping("/testEncryptMD5")
-    public String testEncryptMD5(@RequestBody String source) {
-        return AESUtils.encryptMD5(source);
-    }
-
-    /**
-     * 测试时间超时的问题
-     */
-    @GetMapping("/testTimeOut")
-    public void testTimeOut() throws Exception {
-        String s = TimeOutUtils.callWithTimeoutAndRetry(() -> {
-            // 模拟耗时操作
-            LocalDateTime first = LocalDateTime.now();
-            System.out.println("first: " + first);
-            try {
-                Thread.sleep(310000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            LocalDateTime second = LocalDateTime.now();
-            System.out.println("second: " + second);
-            return "任务完成";
-        }, 5, TimeUnit.MINUTES, 3);
-        System.out.println("结果: " + s);
     }
 
     @Autowired
@@ -375,61 +201,6 @@ public class TestController {
 
         }
         return responseMap;
-    }
-
-    /**
-     * 获取redis中的进度条数据
-     */
-    @GetMapping("/getRedisTranslationData")
-    public Map<String, String> getRedisTranslationData(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
-        return translationParametersRedisService.getProgressTranslationKey(TranslationParametersRedisService.generateProgressTranslationKey(shopName, source, target));
-    }
-
-    /**
-     * 递增
-     */
-    @GetMapping("/increase")
-    public Long increase(@RequestParam String shopName, @RequestParam String target, @RequestParam long value, @RequestParam String type) {
-        return translationCounterRedisService.increaseLanguage(shopName, target, value, type);
-    }
-
-    /**
-     * 手动启动自动翻译
-     */
-    @PutMapping("/startAuto")
-    public void startAuto(@RequestParam String source, @RequestParam String target, @RequestParam String shopName) {
-        //
-    }
-
-    // 测试glossary缓存
-    @GetMapping("/getGlossary")
-    public Map<String, String> getGlossary() {
-        return TranslateDataService.glossaryCache;
-    }
-
-    // 存glossary 缓存
-    @GetMapping("/setGlossary")
-    public void setGlossary(@RequestParam String shopName, @RequestParam String sourceText, @RequestParam String target, @RequestParam String targetText) {
-        TranslateDataService.glossaryCache.put(TranslateDataService.generateGlossaryKey(shopName, target, sourceText), targetText);
-    }
-
-    // 获取glossary 缓存
-    @GetMapping("/getGlossaryCache")
-    public String getGlossaryCache(@RequestParam String shopName, @RequestParam String sourceText, @RequestParam String target) {
-        return TranslateDataService.glossaryCache.get(TranslateDataService.generateGlossaryKey(shopName, target, sourceText));
-    }
-
-    /**
-     * 测试删除shopify数据方法
-     */
-    @GetMapping("/testDeleteShopifyData")
-    public String testDeleteShopifyData(@RequestParam String resourceId, @RequestParam String locals, @RequestParam String translationKeys, @RequestParam String accessToken) {
-        return ShopifyHttpIntegration.deleteTranslateData("ciwishop.myshopify.com", accessToken, resourceId, locals, translationKeys);
-    }
-
-    @GetMapping("/testFee")
-    public void testFee() {
-        taskService.freeTrialTaskForImage();
     }
 
     @GetMapping("/testEmail")

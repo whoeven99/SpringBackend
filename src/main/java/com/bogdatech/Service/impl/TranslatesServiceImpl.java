@@ -77,11 +77,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public List<TranslatesDO> getLanguageListCounter(String shopName) {
-        return baseMapper.getLanguageListCounter(shopName);
-    }
-
-    @Override
     public void updateTranslatesResourceType(String shopName, String target, String source, String resourceType) {
         baseMapper.updateTranslatesResourceType(shopName, target, source, resourceType);
     }
@@ -94,21 +89,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public Integer getIdByShopNameAndTargetAndSource(String shopName, String target, String source) {
         return baseMapper.getIdByShopNameAndTarget(shopName, target, source);
-    }
-
-    @Override
-    public TranslatesDO selectLatestOne(TranslateRequest request) {
-        QueryWrapper<TranslatesDO> wrapper = new QueryWrapper<>();
-        wrapper.select(
-                "TOP 1 id, source, access_token, target, shop_name, status, resource_type"
-        );
-        // shopName 是参数
-        wrapper.eq(SHOP_NAME, request.getShopName());
-        // source 是参数
-        wrapper.eq("source", request.getSource());
-        wrapper.orderByDesc("update_at");
-
-        return baseMapper.selectOne(wrapper);
     }
 
     @Override
@@ -199,26 +179,8 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public void insertShopTranslateInfoByShopify(String shopName, String accessToken, String locale, String source) {
-        //获取shopify店铺信息
-        TranslatesDO translatesDO = baseMapper.selectOne(new QueryWrapper<TranslatesDO>()
-                .eq("shop_name", shopName)
-                .eq("source", source).eq("target", locale));
-        if (translatesDO == null) {
-            //插入这条数据
-            baseMapper.insertShopTranslateInfo(source, accessToken, locale, shopName, 0);
-        }
-    }
-
-    @Override
-    public void updateStopStatus(String shopName, String source) {
-        baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>()
-                .eq(TranslatesDO::getShopName, shopName)
-                .eq(TranslatesDO::getSource, source)
-                .eq(TranslatesDO::getStatus, 2)
-                .set(TranslatesDO::getStatus, 7)
-        );
-
+    public boolean insertShopTranslateInfoByShopify(String shopName, String accessToken, String locale, String source) {
+        return baseMapper.insertShopTranslateInfo(source, accessToken, locale, shopName, 0) > 0;
     }
 
     @Override
@@ -239,5 +201,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public List<String> selectTargetByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().select(TranslatesDO::getTarget).eq(TranslatesDO::getShopName, shopName)).stream().map(TranslatesDO::getTarget).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TranslatesDO> selectTargetByShopNameSource(String shopName, String source) {
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
     }
 }
