@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.entity.DO.APGUserCounterDO;
 import com.bogdatech.mapper.APGUserCounterMapper;
-import com.bogdatech.utils.CharacterCountUtils;
 import org.springframework.stereotype.Service;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;

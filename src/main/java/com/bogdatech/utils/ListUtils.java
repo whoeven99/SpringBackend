@@ -3,10 +3,9 @@ package com.bogdatech.utils;
 import com.bogdatech.entity.DO.TranslateResourceDTO;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.MAX_LENGTH;
-import static com.bogdatech.entity.DO.TranslateResourceDTO.*;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.ALL_RESOURCES;
 
 public class ListUtils {
 

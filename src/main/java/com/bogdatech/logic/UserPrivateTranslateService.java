@@ -6,9 +6,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogdatech.Service.IUserPrivateTranslateService;
 import com.bogdatech.entity.DO.UserPrivateTranslateDO;
-import com.bogdatech.integration.PrivateIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.UserPrivateUtils.getApiKey;
 

@@ -1,9 +1,7 @@
 package com.bogdatech.repository.repo;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogdatech.entity.DO.SubscriptionQuotaRecordDO;
 import com.bogdatech.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogdatech.repository.mapper.PCSubscriptionQuotaRecordMapper;
 import org.springframework.stereotype.Service;

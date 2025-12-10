@@ -3,7 +3,10 @@ package com.bogdatech.logic;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogdatech.Service.*;
-import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.DO.EmailDO;
+import com.bogdatech.entity.DO.GlossaryDO;
+import com.bogdatech.entity.DO.UsersDO;
+import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.EmailIntegration;
 import com.bogdatech.model.controller.request.TencentSendEmailRequest;
@@ -12,8 +15,10 @@ import com.bogdatech.utils.AESUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashMap;
 import java.util.Map;
+
 import static com.bogdatech.constants.MailChimpConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 

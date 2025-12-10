@@ -14,9 +14,9 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TimeOutUtils.*;
-import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
 
 @Component
 public class ShopifyHttpIntegration {

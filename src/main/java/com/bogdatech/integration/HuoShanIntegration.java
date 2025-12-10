@@ -13,6 +13,7 @@ import com.volcengine.model.response.translate.TranslateTextResponse;
 import com.volcengine.service.translate.ITranslateService;
 import com.volcengine.service.translate.impl.TranslateServiceImpl;
 import org.springframework.stereotype.Component;
+
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
