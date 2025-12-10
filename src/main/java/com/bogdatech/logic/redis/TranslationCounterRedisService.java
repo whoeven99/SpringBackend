@@ -12,9 +12,6 @@ public class TranslationCounterRedisService {
     @Autowired
     private RedisIntegration redisIntegration;
 
-//    // task级 token记录
-//    public static final String TASK_TOKEN_COUNTER = "task_all";
-
     // 手动翻译 token记录 放到进度条数据里面
     private static final String CLICK_LANGUAGE_TOKEN_COUNTER = "language_all_click";
 
