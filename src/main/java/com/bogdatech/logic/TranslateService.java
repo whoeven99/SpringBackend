@@ -8,6 +8,7 @@ import com.bogdatech.Service.*;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.SingleReturnVO;
 import com.bogdatech.entity.VO.SingleTranslateVO;
+import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.AidgeIntegration;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
@@ -110,7 +111,7 @@ public class TranslateService {
         // 如果字符超限，则直接返回字符超限
         if (counterDO.getUsedChars() >= remainingChars) {
             return new BaseResponse<>().CreateErrorResponse(
-                    "Cannot translate because the character limit has been reached. Please upgrade your plan to continue translating.");
+                    ErrorEnum.TOKEN_LIMIT);
         }
         appInsights.trackTrace("clickTranslation 判断字符不超限 : " + shopName);
 

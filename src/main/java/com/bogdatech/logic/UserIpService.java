@@ -1,13 +1,8 @@
 package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.bogdatech.Service.ITranslationCounterService;
-import com.bogdatech.Service.IUserIpService;
-import com.bogdatech.Service.IUserSubscriptionsService;
-import com.bogdatech.Service.IWidgetConfigurationsService;
-import com.bogdatech.entity.DO.TranslationCounterDO;
-import com.bogdatech.entity.DO.UserIpDO;
-import com.bogdatech.entity.DO.WidgetConfigurationsDO;
+import com.bogdatech.Service.*;
+import com.bogdatech.entity.DO.*;
 import com.bogdatech.entity.VO.IncludeCrawlerVO;
 import com.bogdatech.entity.VO.NoCrawlerVO;
 import com.bogdatech.entity.VO.WidgetReturnVO;
@@ -21,11 +16,14 @@ import com.bogdatech.repository.repo.UserIPRedirectionRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Service
@@ -46,6 +44,10 @@ public class UserIpService {
     private UserIPCountRepo userIPCountRepo;
     @Autowired
     private UserTokenService userTokenService;
+    @Autowired
+    private ITranslatesService iTranslatesService;
+    @Autowired
+    private ICurrenciesService iCurrenciesService;
 
     public static final String ALL_LANGUAGE_IP_COUNT = "ALL_LANGUAGE_IP_COUNT"; // 所有语言ip计数
     public static final String ALL_CURRENCY_IP_COUNT = "ALL_CURRENCY_IP_COUNT"; // 所有货币ip计数
@@ -131,74 +133,64 @@ public class UserIpService {
                 + noCrawlerVO.getCurrencyCodeStatus() + " , checkUserIp接口花费时间： " + noCrawlerVO.getCostTime() + " , ipApi接口花费时间： " + noCrawlerVO.getIpApiCostTime()
                 + " , 错误信息： " + noCrawlerVO.getErrorMessage());
 
-        // 获取该用户的所有ip计数，不同语言计数，不同货币计数
-        List<UserIPCountDO> userIPCounts = userIPCountRepo.selectAllByShopName(shopName);
-
-        // 将已有的记录转成 Map，便于判断是否存在
-        Map<String, UserIPCountDO> countMap = userIPCounts.stream()
+        // --- 查询已有计数记录 ---
+        Map<String, UserIPCountDO> countMap = userIPCountRepo
+                .selectAllByShopName(shopName)
+                .stream()
                 .collect(Collectors.toMap(UserIPCountDO::getCountType, v -> v));
 
-        // 批处理列表
         List<UserIPCountDO> toInsert = new ArrayList<>();
         List<UserIPCountDO> toUpdate = new ArrayList<>();
 
-        // 所有需要维护的类型
-        String langCode = noCrawlerVO.getLanguageCode();
-        String currencyCode = noCrawlerVO.getCurrencyCode();
+        // 公共方法：处理计数更新/插入
+        BiConsumer<String, Boolean> handleCount = (type, increment) -> {
+            UserIPCountDO record = countMap.get(type);
+            if (record != null) {
+                if (increment) {
+                    record.setCountValue(record.getCountValue() + 1);
+                }
+                toUpdate.add(record);
+            } else {
+                toInsert.add(new UserIPCountDO(shopName, type, increment ? 1 : 0));
+            }
+        };
 
         // 1. ALL_LANGUAGE_IP_COUNT
-        UserIPCountDO langAll = countMap.get(ALL_LANGUAGE_IP_COUNT);
-        if (langAll != null) {
-            langAll.setCountValue(langAll.getCountValue() + 1);
-            toUpdate.add(langAll);
-        } else {
-            toInsert.add(new UserIPCountDO(shopName, ALL_LANGUAGE_IP_COUNT, 1));
-        }
+        handleCount.accept(ALL_LANGUAGE_IP_COUNT, true);
 
         // 2. ALL_CURRENCY_IP_COUNT
-        UserIPCountDO currencyAll = countMap.get(ALL_CURRENCY_IP_COUNT);
-        if (currencyAll != null) {
-            currencyAll.setCountValue(currencyAll.getCountValue() + 1);
-            toUpdate.add(currencyAll);
+        handleCount.accept(ALL_CURRENCY_IP_COUNT, true);
+
+        // 3. 处理语言统计（含 pt 特殊规则）
+        List<String> shopLangs = iTranslatesService.selectTargetByShopName(shopName);
+        String langCode = noCrawlerVO.getLanguageCode();
+
+        String finalLangKey;
+        if ("pt".equals(langCode)) {
+            finalLangKey = NO_LANGUAGE_CODE + langCode + "-" + noCrawlerVO.getCountryCode();
+            langCode = langCode + "-" + noCrawlerVO.getCountryCode();
         } else {
-            toInsert.add(new UserIPCountDO(shopName, ALL_CURRENCY_IP_COUNT, 1));
+            finalLangKey = NO_LANGUAGE_CODE + langCode;
         }
 
-        // 3. 按 languageCode 匹配
-        UserIPCountDO langSpec = countMap.get(NO_LANGUAGE_CODE + langCode);
-        boolean status1 = noCrawlerVO.getLanguageCodeStatus();
+        boolean langExists = shopLangs.contains(langCode);
+        boolean shouldIncLang = !noCrawlerVO.getLanguageCodeStatus() && !langExists;
 
-        if (langSpec != null) {
-            // 已存在记录
-            if (!status1) {
-                langSpec.setCountValue(langSpec.getCountValue() + 1);
-            }
-            toUpdate.add(langSpec);
-        } else {
-            // 不存在记录 → 初始化
-            int initValue = status1 ? 0 : 1;
-            langSpec = new UserIPCountDO(shopName, NO_LANGUAGE_CODE + langCode, initValue);
-            toInsert.add(langSpec);
-        }
+        handleCount.accept(finalLangKey, shouldIncLang);
 
-        // 4. 按 currencyCode 匹配
-        UserIPCountDO currencySpec = countMap.get(NO_CURRENCY_CODE + currencyCode);
-        boolean status2 = noCrawlerVO.getCurrencyCodeStatus();
+        // 4. 处理货币统计
+        List<String> shopCurrencies = iCurrenciesService.selectByShopName(shopName)
+                .stream().map(CurrenciesDO::getCurrencyCode).toList();
 
-        if (currencySpec != null) {
-            // 已存在记录
-            if (!status2) {
-                currencySpec.setCountValue(currencySpec.getCountValue() + 1);
-            }
-            toUpdate.add(currencySpec);
-        } else {
-            // 不存在记录 → 初始化
-            int initValue = status2 ? 0 : 1;
-            currencySpec = new UserIPCountDO(shopName, NO_CURRENCY_CODE + currencyCode, initValue);
-            toInsert.add(currencySpec);
-        }
+        String currencyCode = noCrawlerVO.getCurrencyCode();
+        String currencyKey = NO_CURRENCY_CODE + currencyCode;
 
-        // 执行批量 SQL
+        boolean currencyExists = shopCurrencies.contains(currencyCode);
+        boolean shouldIncCurrency = !noCrawlerVO.getCurrencyCodeStatus() && !currencyExists;
+
+        handleCount.accept(currencyKey, shouldIncCurrency);
+
+        // 执行批处理
         if (!toUpdate.isEmpty()) {
             userIPCountRepo.updateBatchById(toUpdate);
         }
@@ -381,7 +373,7 @@ public class UserIpService {
 
     public BaseResponse<Object> getWidgetConfigurations(String shopName) {
         WidgetConfigurationsDO data = iWidgetConfigurationsService.getData(shopName);
-        if (data == null){
+        if (data == null) {
             return new BaseResponse<>().CreateErrorResponse("query error");
         }
 
@@ -389,11 +381,11 @@ public class UserIpService {
         List<UserIPRedirectionDO> userIPRedirectionDOS = userIPRedirectionRepo.selectIpRedirectionByShopName(shopName);
         WidgetReturnVO widgetReturnVO = new WidgetReturnVO(shopName, data.getLanguageSelector(), data.getCurrencySelector()
                 , data.getIpOpen(), data.getIncludedFlag(), data.getFontColor(), data.getBackgroundColor(), data.getButtonColor(), data.getButtonBackgroundColor()
-        , data.getOptionBorderColor(), data.getSelectorPosition(), data.getPositionData(), data.getIsTransparent(), userIPRedirectionDOS);
+                , data.getOptionBorderColor(), data.getSelectorPosition(), data.getPositionData(), data.getIsTransparent(), userIPRedirectionDOS);
 
         if (userIPRedirectionDOS != null) {
             return new BaseResponse<>().CreateSuccessResponse(widgetReturnVO);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse("query error");
         }
 
