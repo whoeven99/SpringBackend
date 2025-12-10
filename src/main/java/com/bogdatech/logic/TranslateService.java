@@ -11,6 +11,7 @@ import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.AidgeIntegration;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.model.controller.request.TranslateRequest;
+import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
-import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
