@@ -216,8 +216,10 @@ public class TranslateService {
             appInsights.trackException(e);
         }
 
+        List<String> list = new ArrayList<>(Arrays.asList(targets));
         for (String target : targets) {
             if (configRedisRepo.isWhiteList(target, "forbiddenTarget")){
+                list.remove(target);
                 continue;
             }
             appInsights.trackTrace("MQ翻译开始: " + target + " shopName: " + shopName);
@@ -260,6 +262,7 @@ public class TranslateService {
         }
 
         request.setAccessToken(null);
+        request.setTarget(list.toArray(new String[0]));
         return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
