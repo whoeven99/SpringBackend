@@ -117,8 +117,8 @@ public class MonitorController {
 
     @GetMapping("/monitorv2")
     public Map<String, Object> monitorv2() {
-        // 获取过去24小时以内所有的任务
-        List<InitialTaskV2DO> initialList = initialTaskV2Repo.selectByLast24Hours();
+        List<InitialTaskV2DO> initialList = initialTaskV2Repo.selectByLastDaysAndType("auto", 1);
+        initialList.addAll(initialTaskV2Repo.selectByLastDaysAndType("manual", 3));
 
         Map<String, Object> responseMap = new HashMap<>();
         for (InitialTaskV2DO initialTaskV2DO : initialList) {

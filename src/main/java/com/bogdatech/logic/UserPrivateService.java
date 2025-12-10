@@ -16,15 +16,10 @@ import static com.bogdatech.utils.StringUtils.replaceDot;
 
 @Component
 public class UserPrivateService {
-
-    private final IUserPrivateService userPrivateService;
-    private final SecretClient secretClient;
-
     @Autowired
-    public UserPrivateService(IUserPrivateService userPrivateService, SecretClient secretClient) {
-        this.userPrivateService = userPrivateService;
-        this.secretClient = secretClient;
-    }
+    private IUserPrivateService userPrivateService;
+    @Autowired
+    private SecretClient secretClient;
 
     public BaseResponse<Object> saveOrUpdateUserData(UserPrivateRequest userPrivateRequest) {
         String model = userPrivateRequest.getModel();
