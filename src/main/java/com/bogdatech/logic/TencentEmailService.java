@@ -279,8 +279,7 @@ public class TencentEmailService {
             return true;
         }
         templateData.put("html_data", String.valueOf(divBuilder));
-        return emailIntegration.sendEmailByTencent(140352L, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, templateData, TENCENT_FROM_EMAIL, "bogda.official@gmail.com");
-//        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        return emailIntegration.sendEmailByTencent(140352L, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, templateData, TENCENT_FROM_EMAIL, usersDO.getEmail());
     }
 
     public boolean sendSuccessEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, Integer usedToken, Integer totalToken) {

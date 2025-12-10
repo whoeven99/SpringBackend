@@ -56,18 +56,12 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
-        if (configRedisRepo.isWhiteList(shopName, "clickTranslateWhiteList")) {
-            return translateV2Service.createInitialTask(request);
-        }
-        return translateService.createInitialTask(request);
+        return translateV2Service.createInitialTask(request);
     }
 
     @PostMapping("/getAllProgressData")
     public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
-        if (configRedisRepo.isWhiteList(shopName, "clickTranslateWhiteList")) {
-            return translateV2Service.getProcess(shopName, source);
-        }
-        return translateProgressService.getAllProgressData(shopName, source);
+        return translateV2Service.getProcess(shopName, source);
     }
 
     // 单条文本翻译 修改返回值类型
@@ -80,25 +74,22 @@ public class TranslateController {
     // 用户手动点击停止翻译
     @PutMapping("/stopTranslatingTask")
     public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
-        if (configRedisRepo.isWhiteList(shopName, "clickTranslateWhiteList")) {
-            redisStoppedRepository.manuallyStopped(shopName);
-            return new BaseResponse<>().CreateSuccessResponse(true);
-        } else {
-            Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
-            if (!stopFlag) {
-                return new BaseResponse<>().CreateErrorResponse("already stopped");
-            }
-
-            // 将所有状态2的任务改成7
-            translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
-
-            // 将所有状态为0和2的task任务，改为7
-            Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
-            if (flag) {
-                return new BaseResponse<>().CreateSuccessResponse(true);
-            }
-            return new BaseResponse<>().CreateErrorResponse(false);
-        }
+        redisStoppedRepository.manuallyStopped(shopName);
+        return new BaseResponse<>().CreateSuccessResponse(true);
+//        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
+//        if (!stopFlag) {
+//            return new BaseResponse<>().CreateErrorResponse("already stopped");
+//        }
+//
+//        // 将所有状态2的任务改成7
+//        translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
+//
+//        // 将所有状态为0和2的task任务，改为7
+//        Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
+//        if (flag) {
+//            return new BaseResponse<>().CreateSuccessResponse(true);
+//        }
+//        return new BaseResponse<>().CreateErrorResponse(false);
     }
 
     // 用户手动点击继续翻译
