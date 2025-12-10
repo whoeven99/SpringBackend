@@ -154,6 +154,7 @@ public class TranslateV2Service {
         this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
 
         // 找前端，把这里的返回改了
+        request.setTarget(finalTargets.toArray(new String[0]));
         return BaseResponse.SuccessResponse(request);
     }
 
@@ -581,9 +582,8 @@ public class TranslateV2Service {
         if (initialTaskV2DO != null) {
             initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
             redisStoppedRepository.removeStoppedFlag(shopName);
-            // return true;
+            translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         }
-        // 否则 操作失败，前端展示错误码
 
         // 删除用户停止标识
         return new BaseResponse<>().CreateSuccessResponse(true);

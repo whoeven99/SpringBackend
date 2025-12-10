@@ -8,7 +8,7 @@ import com.bogdatech.Service.IUsersService;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.AidgeIntegration;
-import com.bogdatech.logic.redis.TranslationParametersRedisService;
+import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.model.controller.request.TranslateRequest;
 import com.bogdatech.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -41,11 +41,11 @@ public class TranslateService {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
-    private TranslationParametersRedisService translationParametersRedisService;
-    @Autowired
     private ShopifyService shopifyService;
     @Autowired
     private AidgeIntegration aidgeIntegration;
+    @Autowired
+    private RedisStoppedRepository redisStoppedRepository;
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -58,32 +58,27 @@ public class TranslateService {
 
     /**
      * 手动停止用户的翻译任务
-     * */
+     */
     public String stopTranslationManually(String shopName) {
 //         v2, 后面的以后删掉
-//        redisStoppedRepository.manuallyStopped(shopName);
+        redisStoppedRepository.manuallyStopped(shopName);
+        appInsights.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");
 
-        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
-        if (stopFlag) {
-            appInsights.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");
+        // 将Task表DB中的status改为5
+        translateTasksService.updateStatusAllTo5ByShopName(shopName);
 
-            //将Task表DB中的status改为5
-            translateTasksService.updateStatusAllTo5ByShopName(shopName);
+        // 将翻译状态改为“部分翻译” shopName, status=3
+        translatesService.updateStatusByShopNameAnd2(shopName);
 
-            // 将翻译状态改为“部分翻译” shopName, status=3
-            translatesService.updateStatusByShopNameAnd2(shopName);
+        Future<?> future = userTasks.get(shopName);
 
-            Future<?> future = userTasks.get(shopName);
-
-            // 目前能用到的就是私有key
-            if (future != null && !future.isDone()) {
-                // 中断正在执行的任务
-                future.cancel(true);
-            }
-
-            return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
+        // 目前能用到的就是私有key
+        if (future != null && !future.isDone()) {
+            // 中断正在执行的任务
+            future.cancel(true);
         }
-        return "已经有停止标识， 需要删除后再次停止";
+
+        return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
     }
 
     //google翻译接口
