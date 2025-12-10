@@ -5,6 +5,7 @@ import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
+import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.AidgeIntegration;
@@ -117,7 +118,7 @@ public class TranslateService {
      * 用户shopify和数据库同步的方法
      */
     public void syncShopifyAndDatabase(String shopName, String accessToken, String source) {
-        String query = getLanguagesQuery();
+        String query = ShopifyRequestBody.getLanguagesQuery();
         String shopifyData;
         JsonNode root;
         try {
@@ -135,13 +136,19 @@ public class TranslateService {
 
         // 分析获取到的数据，然后存储到list集合里面
         JsonNode shopLocales = root.path("shopLocales");
-        if (shopLocales.isArray()) {
-            for (JsonNode node : shopLocales) {
-                String locale = node.path("locale").asText(null);
-                if (locale != null) {
-                    //存储到数据库中
-                    translatesService.insertShopTranslateInfoByShopify(shopName, accessToken, locale, source);
-                }
+
+        if (!shopLocales.isArray()) {
+            appInsights.trackTrace("syncShopifyAndDatabase: shopLocales is not an array.");
+            return;
+        }
+
+        // 获取db中用户，source下对应的所有target
+        List<String> targetList = translatesService.selectTargetByShopNameSource(shopName, source).stream().map(TranslatesDO::getTarget).toList();
+        for (JsonNode node : shopLocales) {
+            String locale = node.path("locale").asText(null);
+            if (locale != null && !targetList.contains(locale)) {
+                // 存储到数据库中
+                translatesService.insertShopTranslateInfoByShopify(shopName, accessToken, locale, source);
             }
         }
     }
