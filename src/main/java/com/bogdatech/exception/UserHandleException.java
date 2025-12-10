@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.bogdatech.enums.ErrorEnum.SERVER_ERROR;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 

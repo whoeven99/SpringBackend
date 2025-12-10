@@ -7,7 +7,6 @@ import com.microsoft.applicationinsights.TelemetryClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class CaseSensitiveUtils {
     public static TelemetryClient appInsights = new TelemetryClient();

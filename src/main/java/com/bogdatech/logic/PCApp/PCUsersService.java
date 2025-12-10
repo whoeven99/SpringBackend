@@ -1,7 +1,7 @@
 package com.bogdatech.logic.PCApp;
 
 import com.alibaba.fastjson.JSONObject;
-import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.entity.VO.PCUserPointsVO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
 import com.bogdatech.logic.ShopifyService;
@@ -14,9 +14,11 @@ import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.ShopifyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 

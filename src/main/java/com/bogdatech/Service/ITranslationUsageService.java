@@ -1,7 +1,6 @@
 package com.bogdatech.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationUsageDO;
 
 import java.util.List;

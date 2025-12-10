@@ -6,6 +6,7 @@ import com.bogdatech.Service.IAPGOfficialTemplateService;
 import com.bogdatech.entity.DO.APGOfficialTemplateDO;
 import com.bogdatech.mapper.APGOfficialTemplateMapper;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 @Service
 public class APGOfficialTemplateServiceImpl extends ServiceImpl<APGOfficialTemplateMapper, APGOfficialTemplateDO> implements IAPGOfficialTemplateService {

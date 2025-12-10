@@ -6,7 +6,7 @@ import com.bogdatech.utils.RedisKeyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import static com.bogdatech.utils.RedisKeyUtils.*;
+import static com.bogdatech.utils.RedisKeyUtils.DAY_14;
 
 @Service
 public class RedisProcessService {

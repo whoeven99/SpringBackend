@@ -2,7 +2,7 @@ package com.bogdatech.logic.PCApp;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.entity.VO.SubscriptionVO;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -13,6 +13,7 @@ import com.bogdatech.repository.repo.*;
 import com.bogdatech.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.StringUtils.parsePlanName;

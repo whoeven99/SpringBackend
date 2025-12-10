@@ -4,11 +4,18 @@ package com.bogdatech.utils;
 import com.bogdatech.entity.DTO.FullAttributeSnapshotDTO;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
-import java.util.*;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 public class LiquidHtmlTranslatorUtils {

@@ -1,6 +1,7 @@
 package com.bogdatech.utils;
 
 import com.bogdatech.exception.FatalException;
+
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 

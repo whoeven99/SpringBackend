@@ -2,12 +2,11 @@ package com.bogdatech.repository.repo;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogdatech.entity.DO.UserSubscriptionsDO;
 import com.bogdatech.repository.entity.PCUserSubscriptionsDO;
 import com.bogdatech.repository.mapper.PCUserSubscriptionsMapper;
 import org.springframework.stereotype.Service;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 

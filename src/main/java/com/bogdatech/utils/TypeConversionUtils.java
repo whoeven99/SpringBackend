@@ -1,6 +1,9 @@
 package com.bogdatech.utils;
 
-import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.DO.APGOfficialTemplateDO;
+import com.bogdatech.entity.DO.APGUserGeneratedTaskDO;
+import com.bogdatech.entity.DO.APGUserTemplateDO;
+import com.bogdatech.entity.DO.UserSubscriptionsDO;
 import com.bogdatech.entity.DTO.TemplateDTO;
 import com.bogdatech.entity.VO.GenerateDescriptionVO;
 import com.bogdatech.entity.VO.GenerateDescriptionsVO;

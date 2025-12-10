@@ -13,11 +13,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.bogdatech.constants.TranslateConstants.PIC_FEE;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.global.iop.util.WebUtils.doGet;

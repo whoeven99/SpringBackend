@@ -10,11 +10,13 @@ import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationR
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.Role;
-import com.alibaba.dashscope.exception.*;
+import com.alibaba.dashscope.exception.NoSpecialTokenExists;
+import com.alibaba.dashscope.exception.UnSupportedSpecialTokenMode;
 import com.alibaba.dashscope.tokenizers.Tokenizer;
 import com.alibaba.dashscope.tokenizers.TokenizerFactory;
 import com.aliyun.alimt20181012.Client;
-import com.aliyun.alimt20181012.models.*;
+import com.aliyun.alimt20181012.models.TranslateImageResponse;
+import com.aliyun.alimt20181012.models.TranslateImageResponseBody;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.logic.PCApp.PCUserPicturesService;
 import com.bogdatech.logic.redis.TranslationCounterRedisService;
@@ -27,10 +29,12 @@ import com.bogdatech.utils.JsonUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;

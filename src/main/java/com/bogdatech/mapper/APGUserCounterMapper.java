@@ -2,8 +2,6 @@ package com.bogdatech.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.bogdatech.entity.DO.APGUserCounterDO;
-import com.bogdatech.utils.CharacterCountUtils;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;

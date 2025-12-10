@@ -1,12 +1,14 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogdatech.Service.ICharsOrdersService;
 import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
-import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.DO.CharsOrdersDO;
+import com.bogdatech.entity.DO.TranslateTasksDO;
+import com.bogdatech.entity.DO.TranslatesDO;
+import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
@@ -16,7 +18,10 @@ import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 public class MonitorController {

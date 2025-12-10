@@ -1,7 +1,6 @@
 package com.bogdatech.utils;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 

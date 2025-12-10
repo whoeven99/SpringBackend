@@ -2,7 +2,10 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogdatech.Service.*;
+import com.bogdatech.Service.IAPGOfficialTemplateService;
+import com.bogdatech.Service.IAPGUserCounterService;
+import com.bogdatech.Service.IAPGUserProductService;
+import com.bogdatech.Service.IAPGUserTemplateService;
 import com.bogdatech.entity.DO.APGOfficialTemplateDO;
 import com.bogdatech.entity.DO.APGUserCounterDO;
 import com.bogdatech.entity.DO.APGUserTemplateDO;
@@ -17,12 +20,14 @@ import com.bogdatech.utils.CharacterCountUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.Random;
+
 import static com.bogdatech.constants.TranslateConstants.APIVERSION;
 import static com.bogdatech.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogdatech.logic.APGUserGeneratedTaskService.*;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogdatech.requestBody.ShopifyRequestBody.*;
+import static com.bogdatech.requestBody.ShopifyRequestBody.getProductDataQuery;
 import static com.bogdatech.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.PlaceholderUtils.buildDescriptionPrompt;

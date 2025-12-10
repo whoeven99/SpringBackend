@@ -2,7 +2,10 @@ package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.bogdatech.Service.*;
+import com.bogdatech.Service.IItemsService;
+import com.bogdatech.Service.ITranslatesService;
+import com.bogdatech.Service.IUserSubscriptionsService;
+import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
@@ -22,12 +25,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
@@ -38,7 +43,8 @@ import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_
 import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateWriteStatusKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.JsonUtils.*;
+import static com.bogdatech.utils.JsonUtils.isJson;
+import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
