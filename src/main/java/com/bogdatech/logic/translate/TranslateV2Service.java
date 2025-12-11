@@ -56,7 +56,6 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.ListUtils.convertALL;
 import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 
 @Component
@@ -635,6 +634,15 @@ public class TranslateV2Service {
                 initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.STOPPED.status);
             }
         }
+    }
+
+    private static List<TranslateResourceDTO> convertALL(List<String> list){
+        //修改模块的排序
+        List<TranslateResourceDTO> translateResourceDTOList = new ArrayList<>();
+        for (String s : list) {
+            translateResourceDTOList.add(new TranslateResourceDTO(s, MAX_LENGTH, "", ""));
+        }
+        return translateResourceDTOList;
     }
 
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
