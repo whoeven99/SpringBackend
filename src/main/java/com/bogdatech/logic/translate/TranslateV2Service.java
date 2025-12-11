@@ -1,8 +1,6 @@
 package com.bogdatech.logic.translate;
 
 import com.alibaba.fastjson.JSONObject;
-import com.azure.security.keyvault.secrets.SecretClient;
-import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUsersService;
 import com.bogdatech.context.TranslateContext;
@@ -34,6 +32,7 @@ import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.entity.TranslateTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.repository.repo.TranslateTaskV2Repo;
+import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.JsonUtils;
 import com.bogdatech.utils.JudgeTranslateUtils;
 import com.bogdatech.utils.ShopifyRequestUtils;
@@ -94,8 +93,6 @@ public class TranslateV2Service {
     private IUsersService usersService;
     @Autowired
     private ITranslatesService translatesService;
-    @Autowired
-    private SecretClient secretClient;
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -123,7 +120,7 @@ public class TranslateV2Service {
 
     // 手动开启翻译任务入口
     // 翻译 step 1, 用户 -> initial任务创建
-    public BaseResponse<Object> manualTask(ClickTranslateRequest request) {
+    public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
         String shopName = request.getShopName();
         String[] targets = request.getTarget();
         List<String> moduleList = request.getTranslateSettings3();
@@ -172,16 +169,14 @@ public class TranslateV2Service {
                 .toList();
 
         this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
-        this.checkAndAddIfNotExist(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
+        this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
 
-        // 每个controller都要对应一个自己的request + response 不要随便返回个内容就完事
-        //  找前端，把这里的返回改了
+        // 找前端，把这里的返回改了
         request.setTarget(finalTargets.toArray(new String[0]));
         return BaseResponse.SuccessResponse(request);
     }
 
-    public void checkAndAddIfNotExist(String shopName, String[] targets, String source, String accessToken) {
-        // TODO @庄泽 accessToken自己从数据库拿，不要用前端传的
+    public void isExistInDatabase(String shopName, String[] targets, String source, String accessToken) {
         // 1. 查询当前 DB 中已有的 target
         List<TranslatesDO> doList = translatesService.selectTargetByShopNameSource(shopName, source);
         boolean needSync;
@@ -201,7 +196,7 @@ public class TranslateV2Service {
         }
 
         // 3. 获取 Shopify 语言数据
-        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestUtils.getLanguagesQuery());
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestBody.getLanguagesQuery());
         JsonNode root = JsonUtils.readTree(shopifyData);
 
         if (root == null) {
@@ -218,7 +213,6 @@ public class TranslateV2Service {
         for (JsonNode node : shopLocales) {
             String locale = node.path("locale").asText(null);
             if (locale != null && !dbTargetList.contains(locale)) {
-                // TODO @庄泽 同样的 token已经在user表里了，其他表不要再存了
                 translatesService.insertShopTranslateInfoByShopify(shopName, accessToken, locale, source);
             }
         }
@@ -433,13 +427,6 @@ public class TranslateV2Service {
         String shopName = initialTaskV2DO.getShopName();
 
         Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, target);
-        String privateKey = null;
-        if (initialTaskV2DO.getTaskType().equals("private")) {
-            Integer modelFlag = initialTaskV2DO.getModelFlag();
-            String userKey = shopName.replace(".", "") + "-" + modelFlag;
-            KeyVaultSecret keyVaultSecret = secretClient.getSecret(userKey);
-            privateKey = keyVaultSecret.getValue();
-        }
 
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
@@ -480,10 +467,6 @@ public class TranslateV2Service {
 
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap);
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-                if (initialTaskV2DO.getTaskType().equals("private")) {
-                    context.setPrivateKey(privateKey);
-                    context.setPrivateKeyModel(initialTaskV2DO.getModelFlag());
-                }
                 service.translate(context);
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
@@ -500,17 +483,8 @@ public class TranslateV2Service {
                         context.getUsedToken(), context.getTranslatedChars());
             } else {
                 // 其他单条翻译
-                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target,
+                TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
                         textType, randomDo.getNodeKey(), glossaryMap);
-                ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-                if (initialTaskV2DO.getTaskType().equals("private")) {
-                    context.setPrivateKey(privateKey);
-                    context.setPrivateKeyModel(initialTaskV2DO.getModelFlag());
-                }
-                service.translate(context);
-                service.finishAndGetJsonRecord(context);
-
-                userTokenService.addUsedToken(shopName, context.getUsedToken());
 
                 // 翻译后更新db
                 randomDo.setTargetValue(context.getTranslatedContent());

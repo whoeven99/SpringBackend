@@ -2,9 +2,9 @@ package com.bogdatech.logic.translate.stragety;
 
 import com.bogdatech.context.TranslateContext;
 import com.bogdatech.entity.DO.GlossaryDO;
+import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.logic.GlossaryService;
 import com.bogdatech.logic.RedisProcessService;
-import com.bogdatech.logic.translate.TranslateGateway;
 import com.bogdatech.utils.PlaceholderUtils;
 import com.bogdatech.utils.PromptUtils;
 import kotlin.Pair;
@@ -19,9 +19,9 @@ import static com.bogdatech.constants.TranslateConstants.URI;
 @Component
 public class SingleTranslateStrategyService implements ITranslateStrategyService {
     @Autowired
-    private RedisProcessService redisProcessService;
+    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
-    private TranslateGateway translateGateway;
+    private RedisProcessService redisProcessService;
 
     @Override
     public String getType() {
@@ -65,9 +65,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             ctx.setPrompt(prompt);
         }
 
-        // Translate api
-        Pair<String, Integer> pair = translateGateway.translate(ctx.getPrompt(), ctx.getTargetLanguage(),
-                ctx.getPrivateKey(), ctx.getPrivateKeyModel());
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(ctx.getPrompt(), ctx.getTargetLanguage());
         if (pair == null) {
             // fatalException
             return;

@@ -35,9 +35,6 @@ public class TranslateContext {
     private int cachedCount;
     private int glossaryCount;
 
-    private Integer privateKeyModel = null;
-    private String privateKey = null;
-
     // Finish
     private int usedToken;
     private int translatedChars;

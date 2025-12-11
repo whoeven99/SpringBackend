@@ -34,6 +34,4 @@ public class InitialTaskV2DO extends BaseDO {
     private Integer usedToken;
     @TableField("task_type")
     private String taskType; // manual, auto, private
-    @TableField("model_flag")
-    private Integer modelFlag; // 0 google, 1 openai
 }
