@@ -603,7 +603,7 @@ public class TranslateV2Service {
 
         // 手动翻译 正常结束，发送邮件
         if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
-            appInsights.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
+            System.out.println("TranslateTaskV2 Completed Email sent to user: " + shopName +
                     " Total time (minutes): " + usingTimeMinutes +
                     " Total tokens used: " + usedTokenByTask);
 
@@ -685,7 +685,7 @@ public class TranslateV2Service {
         }
 
         // 将登录时间与当前时间都按 UTC 时区比较小时
-        int loginHour = usersDO.getLoginTime().toInstant().atZone(ZoneOffset.UTC).getHour();
+        int loginHour = usersDO.getCreateAt().toInstant().atZone(ZoneOffset.UTC).getHour();
         int currentHour = Instant.now().atZone(ZoneOffset.UTC).getHour();
         appInsights.trackTrace("autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
 
