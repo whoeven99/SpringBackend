@@ -685,7 +685,7 @@ public class TranslateV2Service {
         }
 
         // 将登录时间与当前时间都按 UTC 时区比较小时
-        int loginHour = usersDO.getLoginTime().toInstant().atZone(ZoneOffset.UTC).getHour();
+        int loginHour = usersDO.getCreateAt().toInstant().atZone(ZoneOffset.UTC).getHour();
         int currentHour = Instant.now().atZone(ZoneOffset.UTC).getHour();
         appInsights.trackTrace("autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
 
