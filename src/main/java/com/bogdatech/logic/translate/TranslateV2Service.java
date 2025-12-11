@@ -796,7 +796,7 @@ public class TranslateV2Service {
             if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                 //进行白名单的确认
                 if (whiteListTranslate(key)) {
-                    return false;
+                    return true;
                 }
 
                 //如果包含对应key和value，则跳过
