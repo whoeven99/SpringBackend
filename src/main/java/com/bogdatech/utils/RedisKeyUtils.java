@@ -2,8 +2,6 @@ package com.bogdatech.utils;
 
 public class RedisKeyUtils {
     // 模板字符串，所有 key 统一放在这里
-    // 翻译进度条key
-    private static final String TRANSLATE_PROGRESS_KEY_TEMPLATE = "tr:{shopName}:{targetCode}";
     // redis 缓存模板字符串
     public static final String TRANSLATE_CACHE_KEY_TEMPLATE = "tc:{targetCode}:{source}";
     public static final Long DAY_14 = 1209600L;

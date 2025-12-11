@@ -1,23 +1,12 @@
 package com.bogdatech.constants;
 
 public class TranslateConstants {
-    public static final String DOUBLE_BRACES = "{{}}";
-    public static final String PERCENTAGE_CURLY_BRACES = "%{}";
-    public static final String CURLY_BRACKET_ARRAY = "{{xx[x].xx}}";
-    public static final String DOUBLE_CURLY_BRACKET_AND_HUNDRED = "{%%}";
     public static final String PLAIN_TEXT = "PLAIN_TEXT";
     public static final String HTML = "HTML";
     public static final String TITLE = "title";
     public static final String META_TITLE = "meta_title";
-    public static final String LIST_SINGLE = "LIST_SINGLE_LINE_TEXT_FIELD";
     public static final String LOWERCASE_HANDLE = "handle";
-    public static final String HANDLE = "HANDLE";
     public static final String URI = "URI";
-    public static final String GENERAL = "GENERAL";
-    public static final String DATABASE = "DATABASE";
-    public static final String JSON_TEXT = "JSON_TEXT";
-    public static final String GLOSSARY = "GLOSSARY";
-    public static final String OPENAI = "OPENAI";
     public static final String APIVERSION = "2024-10";
     public static final String DEEPL_API_KEY = "DEEPL_API_KEY";
 
