@@ -603,7 +603,7 @@ public class TranslateV2Service {
 
         // 手动翻译 正常结束，发送邮件
         if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
-            System.out.println("TranslateTaskV2 Completed Email sent to user: " + shopName +
+            appInsights.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
                     " Total time (minutes): " + usingTimeMinutes +
                     " Total tokens used: " + usedTokenByTask);
 
