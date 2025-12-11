@@ -45,8 +45,7 @@ public class PCUserPicturesService {
 
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
-    public static int APP_PIC_FEE = 2000;
-    public static int APP_ALT_FEE = 2000; // alt和pic翻译一块扣除
+    public static int APP_PIC_FEE = 2000;  // alt和pic翻译一块扣除
 
     public BaseResponse<Object> insertPicToDbAndCloud(MultipartFile file, String shopName, String pcUserPicturesDoJson) {
         //解析userPicturesDO
