@@ -17,7 +17,6 @@ import com.bogdatech.integration.ALiYunTranslateIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.model.ShopifyGraphResponse;
 import com.bogdatech.logic.GlossaryService;
-import com.bogdatech.logic.PrivateKeyService;
 import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
@@ -52,12 +51,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.bogdatech.constants.TranslateConstants.*;
-import static com.bogdatech.enums.ErrorEnum.GOOGLE_RANGE;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
-import static com.bogdatech.utils.JsoupUtils.LANGUAGE_CODES;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.ListUtils.convertALL;
@@ -122,60 +119,6 @@ public class TranslateV2Service {
         returnVO.setTargetText(context.getTranslatedContent());
         returnVO.setTranslateVariables(context.getTranslateVariables());
         return BaseResponse.SuccessResponse(returnVO);
-    }
-
-    public BaseResponse privateKeyTask(ClickTranslateRequest request) {
-        String shopName = request.getShopName();
-
-        // 找前端把字段改了。。。
-        Integer modelFlag = PrivateKeyService.judgeModelByValue(request.getTranslateSettings1());
-        String target = request.getTarget()[0];
-        if (modelFlag.equals(PrivateKeyService.GOOGLE_MODEL) &&
-                (LANGUAGE_CODES.contains(request.getSource()) || LANGUAGE_CODES.contains(target))) {
-            return new BaseResponse<>().CreateErrorResponse(GOOGLE_RANGE);
-        }
-
-        // 判断字符是否超限
-        Integer maxToken = userTokenService.getMaxToken(shopName);
-        Integer usedToken = userTokenService.getUsedToken(shopName);
-
-        // 如果字符超限，则直接返回字符超限
-        if (usedToken >= maxToken) {
-            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.TOKEN_LIMIT);
-        }
-
-        boolean handleFlag = false;
-        List<String> translateModel = request.getTranslateSettings3();
-        if (translateModel.contains("handle")) {
-            translateModel.removeIf("handle"::equals);
-            handleFlag = true;
-        }
-
-        List<String> resourceTypeList = request.getTranslateSettings3().stream()
-                .flatMap(module -> TranslateResourceDTO.TOKEN_MAP.get(module).stream())
-                .map(TranslateResourceDTO::getResourceType)
-                .toList();
-
-        String source = request.getSource();
-        initialTaskV2Repo.deleteByShopNameSourceAndType(shopName, source, "private");
-        // 等待中断taskid功能上线再开启
-//        redisStoppedRepository.removeStoppedFlag(shopName);
-
-        InitialTaskV2DO initialTask = new InitialTaskV2DO();
-        initialTask.setShopName(shopName);
-        initialTask.setSource(source);
-        initialTask.setTarget(target);
-        initialTask.setCover(request.getIsCover());
-        initialTask.setModuleList(JsonUtils.objectToJson(resourceTypeList));
-        initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
-        initialTask.setTaskType("private");
-        initialTask.setModelFlag(modelFlag);
-        initialTaskV2Repo.insert(initialTask);
-
-        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
-        iTranslatesService.updateTranslateStatus(shopName, 2, target, source);
-
-        return new BaseResponse<>().CreateSuccessResponse(request);
     }
 
     // 手动开启翻译任务入口

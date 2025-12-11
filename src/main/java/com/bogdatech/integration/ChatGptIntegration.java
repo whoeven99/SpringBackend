@@ -32,7 +32,7 @@ public class ChatGptIntegration {
         // 使用基于密钥的身份验证来初始化 OpenAI 客户端
         OpenAIClient client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
-                .credential(privateKey != null ? privateKey : new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
+                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
                 .buildClient();
 
         // 模拟聊天交互
