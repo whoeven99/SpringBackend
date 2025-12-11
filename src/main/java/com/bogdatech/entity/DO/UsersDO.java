@@ -28,4 +28,5 @@ public class UsersDO {
     private Timestamp uninstallTime;
     private Timestamp loginTime;
     private String encryptionEmail;
+    private Timestamp createAt;
 }
