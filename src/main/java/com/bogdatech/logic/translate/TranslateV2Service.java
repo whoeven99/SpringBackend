@@ -240,11 +240,19 @@ public class TranslateV2Service {
     public void checkAndAddIfNotExist(String shopName, String[] targets, String source, String accessToken) {
         // TODO @庄泽 accessToken自己从数据库拿，不要用前端传的
         // 1. 查询当前 DB 中已有的 target
-        List<String> dbTargetList = translatesService.selectTargetByShopNameSource(shopName, source)
-                .stream().map(TranslatesDO::getTarget).toList();
+        List<TranslatesDO> doList = translatesService.selectTargetByShopNameSource(shopName, source);
+        boolean needSync;
+        List<String> dbTargetList;
+        if (CollectionUtils.isEmpty(doList)) {
+            dbTargetList = new ArrayList<>();
+            needSync = false;
+        } else {
+            dbTargetList = doList.stream().map(TranslatesDO::getTarget).toList();
 
-        // 2. 检查是否缺少任意一个 target
-        boolean needSync = Arrays.stream(targets).anyMatch(t -> !dbTargetList.contains(t));
+            // 2. 检查是否缺少任意一个 target
+            needSync = Arrays.stream(targets).anyMatch(t -> !dbTargetList.contains(t));
+        }
+
         if (!needSync) {
             return;
         }
