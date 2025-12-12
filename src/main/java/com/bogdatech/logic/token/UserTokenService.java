@@ -1,6 +1,5 @@
 package com.bogdatech.logic.token;
 
-import com.bogdatech.Service.impl.SubscriptionPlansServiceImpl;
 import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.logic.redis.RedisTokenRepository;
@@ -12,16 +11,11 @@ public class UserTokenService {
     @Autowired
     private TranslationCounterServiceImpl translationCounterService;
     @Autowired
-    private SubscriptionPlansServiceImpl subscriptionPlansService;
-    @Autowired
     private RedisTokenRepository redisTokenRepository;
 
     // Max token以数据库为准
     public Integer getMaxToken(String shopName) {
         return translationCounterService.getMaxCharsByShopName(shopName);
-//        Integer planChars = subscriptionPlansService.getCharsByPlanName(shopName);
-//        TranslationCounterDO counterDO = translationCounterService.readCharsByShopName(shopName);
-//        return counterDO.getTotalChars() + planChars;
     }
 
     // Used token以Redis为准

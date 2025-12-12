@@ -7,40 +7,10 @@ import java.util.Map;
 
 public class PlaceholderUtils {
     /**
-     * 极简提示词
-     */
-    public static String getSimplePrompt(String target, String languagePackId){
-        if (languagePackId != null && !languagePackId.isEmpty()){
-            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        }
-        return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-    }
-
-    /**
-     * 词汇表的提示词
-     */
-    public static String getGlossaryPrompt(String target, String glossary, String languagePackId) {
-        if (languagePackId != null && !languagePackId.isEmpty()) {
-            return "Translate the following text into " + target + " using terminology and tone appropriate for the " + languagePackId + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-        }
-        return "Translate the following text into " + target + ", using the specified translations for certain words (e.g.," + glossary + "). Output only the translated text. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-    }
-
-    /**
      * handle类型的提示词
      */
     public static String getHandlePrompt(String target) {
         return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-    }
-
-    /**
-     * 完整翻译html的提示词
-     * */
-    public static String getFullHtmlPrompt(String target, String languagePackId) {
-        if (languagePackId == null) {
-            return "Translate the following HTML content to " + target  + ". Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
-        }
-        return "Translate the following HTML content to " + target + "  with " + languagePackId + " appropriate terminology and tone. Follow these rules: 1. Don't translate HTML tags; keep them as they are. 2. Translate only the visible text between HTML tags, preserving the original HTML structure and formatting. 3. Maintain all original whitespace, line breaks, and formatting; don't change the layout. 4. Do not translate or modify any emoji. 5. Output the translated HTML as plain text, no code - block wrapping (no triple backticks or language tags).";
     }
 
     /**

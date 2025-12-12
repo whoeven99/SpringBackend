@@ -46,16 +46,6 @@ public class TypeConversionUtils {
         return userSubscriptionsDO;
     }
 
-
-    public static TranslateRequest ClickTranslateRequestToTranslateRequest(ClickTranslateRequest request){
-        TranslateRequest translateRequest = new TranslateRequest();
-        translateRequest.setSource(request.getSource());
-        translateRequest.setTarget(request.getTarget()[0]);
-        translateRequest.setAccessToken(request.getAccessToken());
-        translateRequest.setShopName(request.getShopName());
-        return translateRequest;
-    }
-
     public static TranslateRequest TargetListRequestToTranslateRequest(TargetListRequest targetListRequest){
         TranslateRequest translateRequest = new TranslateRequest();
         translateRequest.setAccessToken(targetListRequest.getAccessToken());
@@ -63,7 +53,6 @@ public class TypeConversionUtils {
         translateRequest.setSource(targetListRequest.getSource());
         return translateRequest;
     }
-
 
     //将用户模板转化为通用模板
     public static TemplateDTO userTemplateToTemplateDTO(APGUserTemplateDO templateDO){

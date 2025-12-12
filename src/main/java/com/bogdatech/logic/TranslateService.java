@@ -87,24 +87,6 @@ public class TranslateService {
         return getGoogleTranslationWithRetry(request);
     }
 
-    public static final Set<String> EXCLUDED_SHOPS = new HashSet<>(Arrays.asList(
-            "qnxrrk-2n.myshopify.com",
-            "gemxco.myshopify.com"
-    ));
-
-    public static final Set<String> PRODUCT_MODEL = new HashSet<>(Arrays.asList(
-            PRODUCT_OPTION,
-            PRODUCT_OPTION_VALUE
-    ));
-
-    public static Map<String, Object> createTranslationMap(String target, String key, String translatableContentDigest) {
-        Map<String, Object> translation = new HashMap<>();
-        translation.put("locale", target);
-        translation.put("key", key);
-        translation.put("translatableContentDigest", translatableContentDigest);
-        return translation;
-    }
-
     /**
      * 根据店铺名称和target获取对应的 ID。
      *

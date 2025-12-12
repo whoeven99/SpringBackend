@@ -13,12 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/userTypeToken")
 public class UserTypeTokenController {
-    private final UserTypeTokenService userTypeTokenService;
-
     @Autowired
-    public UserTypeTokenController(UserTypeTokenService userTypeTokenService) {
-        this.userTypeTokenService = userTypeTokenService;
-    }
+    private UserTypeTokenService userTypeTokenService;
 
     //获取用户所有模块的token
     @PostMapping("/getUserToken")
