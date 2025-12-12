@@ -18,7 +18,7 @@ public class TranslateConstants {
     public static final String JSON_TEXT = "JSON_TEXT";
     public static final String GLOSSARY = "GLOSSARY";
     public static final String OPENAI = "OPENAI";
-    public static final String APIVERSION = "2024-10";
+    public static final String APIVERSION = "2025-07";
     public static final String DEEPL_API_KEY = "DEEPL_API_KEY";
 
     public static final String PRODUCT = "PRODUCT";
