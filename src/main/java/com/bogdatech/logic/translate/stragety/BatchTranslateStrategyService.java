@@ -13,9 +13,7 @@ import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class BatchTranslateStrategyService implements ITranslateStrategyService {
@@ -31,6 +29,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
     @Override
     public void translate(TranslateContext ctx) {
+        ctx.setStrategy("Batch json 翻译");
         String target = ctx.getTargetLanguage();
         Map<Integer, String> originalTextMap = ctx.getOriginalTextMap();
         Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
@@ -72,20 +71,31 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         if (ctx.getUncachedTextMap().isEmpty()) {
             return;
         }
-        String prompt = PromptUtils.JsonPrompt(target, ctx.getUncachedTextMap());
-        Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target);
-        if (pair == null) {
-            // fatalException
-            return;
+        // 防止ctx.getUncachedTextMap()太多，需要拆分几次调用ai
+        Map<Integer, String> subMap = new HashMap<>();
+        int totalChars = 0;
+        for (Map.Entry<Integer, String> entry : ctx.getUncachedTextMap().entrySet()) {
+            subMap.put(entry.getKey(), entry.getValue());
+            totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(entry.getValue());
+            if (totalChars < 1000) {
+                continue;
+            }
+
+            // 调用一次翻译
+            String prompt = PromptUtils.JsonPrompt(target, subMap);
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target);
+            if (pair == null) {
+                // fatalException 返回重新调用翻译，后续有更好的处理办法
+                return;
+            }
+            ctx.getTranslatedTextMap().putAll(pair.getFirst());
+            ctx.incrementUsedTokenCount(pair.getSecond());
+            pair.getFirst().forEach((key, value) -> {
+                redisProcessService.setCacheData(target, value, ctx.getUncachedTextMap().get(key));
+            });
+            totalChars = 0;
+            subMap.clear();
         }
-
-        pair.getFirst().forEach((key, value) -> {
-            redisProcessService.setCacheData(target, value, ctx.getUncachedTextMap().get(key));
-        });
-
-        ctx.setStrategy("Batch json 翻译");
-        ctx.incrementUsedTokenCount(pair.getSecond());
-        ctx.getTranslatedTextMap().putAll(pair.getFirst());
     }
 
     public void finishAndGetJsonRecord(TranslateContext ctx) {
