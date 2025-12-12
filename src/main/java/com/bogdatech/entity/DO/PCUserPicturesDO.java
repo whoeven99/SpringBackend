@@ -19,6 +19,7 @@ public class PCUserPicturesDO {
     private String shopName;
     private String imageId;
     private String productId;
+    private String mediaId;
     private String imageBeforeUrl;
     private String imageAfterUrl;
     private String altBeforeTranslation;
