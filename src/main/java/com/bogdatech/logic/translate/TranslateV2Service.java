@@ -177,8 +177,9 @@ public class TranslateV2Service {
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
         this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
+        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
+
 
         // 找前端，把这里的返回改了
         request.setTarget(finalTargets.toArray(new String[0]));
