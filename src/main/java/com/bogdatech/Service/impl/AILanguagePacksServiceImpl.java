@@ -14,23 +14,6 @@ import static com.bogdatech.enums.ErrorEnum.SQL_UPDATE_ERROR;
 
 @Service
 public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMapper, AILanguagePacksDO> implements IAILanguagePacksService {
-
-    private final AILanguagePacksMapper aiLanguagePacksMapper;
-
-    @Autowired
-    public AILanguagePacksServiceImpl(AILanguagePacksMapper aiLanguagePacksMapper) {
-        this.aiLanguagePacksMapper = aiLanguagePacksMapper;
-    }
-
-    @Override
-    public BaseResponse<Object> readAILanguagePacks() {
-        AILanguagePacksDO[] aiLanguagePacksDOS = aiLanguagePacksMapper.readAILanguagePacks();
-        if (aiLanguagePacksDOS != null) {
-            return new BaseResponse<>().CreateSuccessResponse(aiLanguagePacksDOS);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
-    }
-
     @Override
     public void addDefaultLanguagePack(String shopName) {
         //先判断数据库里是否有数据 没有就添加 有就跳过
@@ -39,15 +22,6 @@ public class AILanguagePacksServiceImpl extends ServiceImpl<AILanguagePacksMappe
             baseMapper.addDefaultLanguagePack(shopName, id);
 
         }
-    }
-
-    @Override
-    public BaseResponse<Object> changeLanguagePack(UserLanguageRequest userLanguageRequest) {
-        Integer i = baseMapper.changeLanguagePack(userLanguageRequest.getShopName(), userLanguageRequest.getPackId());
-        if (i > 0) {
-            return new BaseResponse<>().CreateSuccessResponse(200);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
     }
 
     @Override

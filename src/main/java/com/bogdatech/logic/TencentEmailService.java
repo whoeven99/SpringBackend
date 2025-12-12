@@ -36,28 +36,9 @@ public class TencentEmailService {
     @Autowired
     private IUsersService usersService;
     @Autowired
-    private ITranslationUsageService translationUsageService;
-    @Autowired
     private ITranslationCounterService translationCounterService;
     @Autowired
     private IAPGEmailService iapgEmailService;
-
-    // 由腾讯发送邮件
-    public void sendEmailByEmail(TencentSendEmailRequest tencentSendEmailRequest) {
-        emailIntegration.sendEmailByTencent(tencentSendEmailRequest);
-    }
-
-    /**
-     * 发生未成功翻译的邮件
-     */
-    public Boolean sendEmailByOnline(String shopName, String source, String target) {
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put(SHOP_NAME, shopName);
-        templateData.put("source_language", source);
-        templateData.put("target_language", target);
-        return emailIntegration.sendEmailByTencent(
-                new TencentSendEmailRequest(134741L, templateData, ONLINE_NOT_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, "notification@ciwi.ai"));
-    }
 
     /**
      * 发送IP请求即将不足的邮件
@@ -83,50 +64,6 @@ public class TencentEmailService {
         templateData.put("shop_name", name);
         return emailIntegration.sendEmailByTencent(
                 new TencentSendEmailRequest(141471L, templateData, EMAIL_IP_OUT, TENCENT_FROM_EMAIL, userByName.getEmail()));
-    }
-
-    /**
-     * 发送自动翻译后邮件
-     */
-    public Boolean sendAutoTranslateEmail(String shopName) {
-        String name = parseShopName(shopName);
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("user", usersDO.getFirstName());
-        templateData.put("shop_name", name);
-        List<TranslationUsageDO> translationUsageDOS = translationUsageService.readTranslationUsageData(shopName);
-        StringBuilder divBuilder = new StringBuilder();
-        for (TranslationUsageDO translationUsageDO : translationUsageDOS
-        ) {
-            if (translationUsageDO.getCreditCount() == 0) {
-                continue;
-            }
-            Integer remainingCredits = translationUsageDO.getRemainingCredits();
-            if (remainingCredits < 0) {
-                remainingCredits = 0;
-            }
-
-            divBuilder.append("<div class=\"language-block\">");
-            divBuilder.append("<h4>").append(translationUsageDO.getLanguageName()).append("</h4>");
-            divBuilder.append("<ul>");
-            divBuilder.append("<li><span>Credits Used:</span> ").append(translationUsageDO.getCreditCount()).append(" credits used").append("</li>");
-            divBuilder.append("<li><span>Translation Time:</span> ").append(translationUsageDO.getConsumedTime()).append(" minutes").append("</li>");
-            divBuilder.append("<li><span>Credits Remaining:</span> ").append(remainingCredits).append(" credits left").append("</li>");
-            divBuilder.append("</ul>");
-            divBuilder.append("</div>");
-        }
-        templateData.put("html_data", String.valueOf(divBuilder));
-//        appInsights.trackTrace("templateData" + templateData);
-        //由腾讯发送邮件
-        //判断邮件代码divBuilder里面是否为空，空就不发送邮件
-        if (divBuilder.toString().isEmpty()) {
-//            appInsights.trackTrace("divBuilder is empty");
-            return true;
-        }
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(140352L, templateData, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        //存入数据库中
-        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUCCESSFUL_TRANSLATION_SUBJECT, b ? 1 : 0));
-        return b;
     }
 
     public boolean sendAutoTranslateEmail(String shopName, List<InitialTaskV2DO> shopTasks) {
@@ -327,7 +264,7 @@ public class TencentEmailService {
 
         // 发送邮件（如果需要）
         boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
-                        templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, "bogda.official@gmail.com"));
+                templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, "bogda.official@gmail.com"));
         appInsights.trackTrace("sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
     }
 

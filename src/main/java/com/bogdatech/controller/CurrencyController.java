@@ -13,14 +13,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/currency")
 public class CurrencyController {
-
-    private final ICurrenciesService currencyService;
-    private final PurchaseService purchaseService;
     @Autowired
-    public CurrencyController(ICurrenciesService currencyService, PurchaseService purchaseService) {
-        this.currencyService = currencyService;
-        this.purchaseService = purchaseService;
-    }
+    private ICurrenciesService currencyService;
+    @Autowired
+    private PurchaseService purchaseService;
 
     //根据传入的货币代码插入货币信息
     @PostMapping("/insertCurrency")
@@ -52,12 +48,12 @@ public class CurrencyController {
         Map<String, Object> cacheData = purchaseService.getCacheData(request);
         if (cacheData != null) {
             return new BaseResponse<>().CreateSuccessResponse(cacheData);
-        }else {
+        } else {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
     }
 
-   //对currency的初始化方法，添加默认代码
+    //对currency的初始化方法，添加默认代码
     @GetMapping("/initCurrency")
     public BaseResponse<Object> initCurrency(@RequestParam String shopName) {
         return currencyService.initCurrency(shopName);

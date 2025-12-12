@@ -7,7 +7,7 @@ public class TranslateConstants {
     public static final String META_TITLE = "meta_title";
     public static final String LOWERCASE_HANDLE = "handle";
     public static final String URI = "URI";
-    public static final String APIVERSION = "2024-10";
+    public static final String APIVERSION = "2025-07";
     public static final String DEEPL_API_KEY = "DEEPL_API_KEY";
 
     public static final String PRODUCT = "PRODUCT";

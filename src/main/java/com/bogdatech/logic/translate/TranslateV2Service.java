@@ -48,6 +48,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
@@ -121,6 +122,7 @@ public class TranslateV2Service {
     // 翻译 step 1, 用户 -> initial任务创建
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
         String shopName = request.getShopName();
+        appInsights.trackTrace("createInitialTask : " + " shopName : " + shopName + request);
         String[] targets = request.getTarget();
         List<String> moduleList = request.getTranslateSettings3();
 
@@ -163,7 +165,15 @@ public class TranslateV2Service {
 
         // 收集所有的resourceType到一个列表中
         List<String> resourceTypeList = moduleList.stream()
-                .flatMap(module -> TranslateResourceDTO.TOKEN_MAP.get(module).stream())
+                .flatMap(module -> {
+                    List<TranslateResourceDTO> list = TranslateResourceDTO.TOKEN_MAP.get(module);
+                    if (list == null) {
+                        appInsights.trackTrace("FatalException createInitialTask Warning: Unknown module: " + module);
+                        return Stream.empty(); // 目前先忽略 还是要做
+                    }
+                    return list.stream();
+                })
+                .filter(Objects::nonNull)
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
@@ -182,7 +192,7 @@ public class TranslateV2Service {
         List<String> dbTargetList;
         if (CollectionUtils.isEmpty(doList)) {
             dbTargetList = new ArrayList<>();
-            needSync = false;
+            needSync = true;
         } else {
             dbTargetList = doList.stream().map(TranslatesDO::getTarget).toList();
 
@@ -789,7 +799,7 @@ public class TranslateV2Service {
         if (TRANSLATABLE_RESOURCE_TYPES.contains(module)) {
             //如果是html放html文本里面
             if (isHtml(value)) {
-                return false;
+                return true;
             }
 
             //对key中包含slide  slideshow  general.lange 的数据不翻译
