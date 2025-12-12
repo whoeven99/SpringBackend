@@ -12,22 +12,9 @@ public class AILanguagePacksController {
     @Autowired
     private IAILanguagePacksService aiLanguagePacksService;
 
-    //获取AI语言包的数据
-    @GetMapping("/readAILanguagePacks")
-    public BaseResponse<Object> readAILanguagePacks() {
-        return aiLanguagePacksService.readAILanguagePacks();
-    }
-
     //默认新增默认语言包
     @PutMapping("/addDefaultLanguagePack")
     public void addDefaultLanguagePack(@RequestParam String shopName) {
         aiLanguagePacksService.addDefaultLanguagePack(shopName);
     }
-
-    //切换语言包功能
-    @PostMapping("/changeLanguagePack")
-    public BaseResponse<Object> changeLanguagePack(@RequestBody UserLanguageRequest userLanguageRequest) {
-        return aiLanguagePacksService.changeLanguagePack(userLanguageRequest);
-    }
-
 }

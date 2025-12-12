@@ -125,14 +125,6 @@ public class TranslateController {
     }
 
     /**
-     * 调用谷歌翻译的API接口
-     */
-    @PostMapping("/googleTranslate")
-    public String googleTranslate(@RequestBody TranslateRequest request) {
-        return translateService.googleTranslate(request);
-    }
-
-    /**
      * 读取所有的翻译状态信息
      */
     @GetMapping("/readTranslateInfo")
