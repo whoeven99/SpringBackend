@@ -40,7 +40,7 @@ public class TranslateTask {
     @Autowired
     private ITranslatesService translatesService;
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(40);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
     private final Set<String> initializingShops = new HashSet<>();
     private final Set<String> savingShops = new HashSet<>();
     private final Set<Integer> translatingInitialIds = new HashSet<>();

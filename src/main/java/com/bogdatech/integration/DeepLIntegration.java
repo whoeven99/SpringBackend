@@ -1,13 +1,11 @@
 package com.bogdatech.integration;
 
-import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
 import com.bogdatech.utils.ConfigUtils;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.TextResult;
-import com.deepl.api.Usage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,15 +20,10 @@ import static com.bogdatech.utils.TimeOutUtils.*;
 @Component
 public class DeepLIntegration {
     private static final String API_KEY = ConfigUtils.getConfig(DEEPL_API_KEY);
-    private static final String FREE_API_URL = "https://api-free.deepl.com/v2/translate";
-    private static final String API_URL = "https://api.deepl.com/v2/translate";
     @Autowired
     private UserTokenService userTokenService;
-    @Autowired
-    private TranslationCounterRedisService translationCounterRedisService;
 
     DeepLClient client;
-    private final int MAX_LIMIT = 500000;
 
     /**
      * 使用deepL进行翻译,计数翻译数
@@ -66,7 +59,6 @@ public class DeepLIntegration {
                 userTokenService.addUsedToken(shopName, totalToken);
             } else {
                 userTokenService.addUsedToken(shopName, totalToken);
-                translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
 
             counter.addChars(totalToken);
@@ -76,42 +68,6 @@ public class DeepLIntegration {
             appInsights.trackException(e);
         }
         return sourceText;
-    }
-
-    /**
-     * 用于用户deepL翻译
-     */
-    public String privateTranslateByDeepL(String sourceText, String targetCode, CharacterCountUtils counter, String shopName, Integer limitChars, DeepLClient client) {
-        TextResult result;
-        try {
-            String target = DEEPL_LANGUAGE_MAP.get(targetCode);
-            result = client.translateText(sourceText, null, target);
-            String targetText = result.getText();
-            int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
-            appInsights.trackTrace("translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
-            userTokenService.addUsedToken(shopName, totalToken);
-            counter.addChars(totalToken);
-            return targetText;
-        } catch (Exception e) {
-            appInsights.trackTrace("DeepL翻译失败 errors : " + e);
-        }
-        return sourceText;
-    }
-
-
-    /**
-     * 在翻译前判断deepL额度是否足够,是继续翻译,不是改为ciwi翻译
-     */
-    public Boolean isDeepLEnough() {
-        client = new DeepLClient(API_KEY);
-        try {
-            Usage usage = client.getUsage();
-            appInsights.trackTrace("DeepL额度: " + usage.getCharacter());
-            return usage.getCharacter().getCount() > MAX_LIMIT;
-        } catch (Exception e) {
-            appInsights.trackTrace("DeepL额度查询失败 errors : " + e);
-            return true;
-        }
     }
 
     /**

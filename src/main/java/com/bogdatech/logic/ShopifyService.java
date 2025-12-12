@@ -12,7 +12,6 @@ import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.model.ShopifyGraphResponse;
-import com.bogdatech.logic.redis.TranslationParametersRedisService;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.requestBody.ShopifyRequestBody;
@@ -39,12 +38,9 @@ import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.WRITE_TOTAL;
-import static com.bogdatech.logic.redis.TranslationParametersRedisService.generateWriteStatusKey;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
-import static com.bogdatech.utils.JsonUtils.objectToJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
 import static com.bogdatech.utils.StringUtils.isValueBlank;
@@ -60,10 +56,6 @@ public class ShopifyService {
     private IItemsService itemsService;
     @Autowired
     private ITranslatesService translatesService;
-    @Autowired
-    private UserTranslationDataService userTranslationDataService;
-    @Autowired
-    private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
@@ -930,69 +922,6 @@ public class ShopifyService {
             userTypeTokenService.update(null, updateWrapper);
         } else {
             throw new IllegalArgumentException("Invalid column name");
-        }
-    }
-
-    //将翻译后的数据存shopify本地中
-    public void saveToShopify(String translatedValue, Map<String, Object> translation, String resourceId, ShopifyRequest request) {
-        String shopName = request.getShopName();
-        String accessToken = request.getAccessToken();
-        String target = request.getTarget();
-        String apiVersion = request.getApiVersion();
-        try {
-            // 创建一个新的映射，避免修改原始的 translation
-            Map<String, Object> newTranslation = new HashMap<>(translation);
-            newTranslation.put("value", translatedValue);
-
-            // 构建 variables 映射
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("resourceId", resourceId);
-
-            // 创建 translations 数组
-            Object[] translations = new Object[]{newTranslation};
-            variables.put("translations", translations);
-//        //将翻译后的内容发送mq，通过ShopifyAPI记录到shopify本地
-            CloudInsertRequest cloudServiceRequest = new CloudInsertRequest(shopName, accessToken, apiVersion, target, variables);
-            String json = objectToJson(cloudServiceRequest);
-
-            // 存到数据库中
-            int maxRetries = 3;           // 最大重试次数
-            int retryCount = 0;           // 当前重试次数
-            long waitTime = 1000;         // 初始等待时间（毫秒） = 1s
-
-            boolean insertFlag;
-            while (retryCount < maxRetries) {
-                try {
-                    insertFlag = userTranslationDataService.insertTranslationData(json, shopName);
-                    if (insertFlag) {
-                        translationParametersRedisService.addWritingData(generateWriteStatusKey(shopName, target), WRITE_TOTAL, 1L);
-                        appInsights.trackTrace("saveToShopify 用户： " + shopName + " target: " + target + " 插入成功 数据是： " + json);
-                        break; // 成功就跳出循环
-                    } else {
-                        throw new RuntimeException("插入返回false");
-                    }
-                } catch (Exception e1) {
-                    retryCount++;
-                    if (retryCount >= maxRetries) {
-                        appInsights.trackTrace("saveToShopify 已达到最大重试次数，插入失败: " + shopName + " 要插入的数据" + json + e1.getMessage());
-                        break;
-                    }
-
-                    appInsights.trackTrace("saveToShopify 第 " + retryCount + " 次插入失败，" +
-                            "等待 " + waitTime + " 毫秒后重试..." + " 用户： " + shopName + " 要插入的数据" + json);
-
-                    try {
-                        Thread.sleep(waitTime);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-
-                    waitTime *= 2; // 等待时间翻倍（指数退避）
-                }
-            }
-        } catch (Exception e2) {
-            appInsights.trackTrace("saveToShopify 每日须看 " + shopName + " save to Shopify errors : " + e2.getMessage());
         }
     }
 }

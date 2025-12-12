@@ -19,7 +19,6 @@ import com.aliyun.alimt20181012.models.TranslateImageResponse;
 import com.aliyun.alimt20181012.models.TranslateImageResponseBody;
 import com.bogdatech.Service.IAPGUserCounterService;
 import com.bogdatech.logic.PCApp.PCUserPicturesService;
-import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.repository.repo.PCUsersRepo;
 import com.bogdatech.utils.AppInsightsUtils;
@@ -44,8 +43,6 @@ import static com.bogdatech.utils.TimeOutUtils.*;
 public class ALiYunTranslateIntegration {
     @Autowired
     private IAPGUserCounterService iapgUserCounterService;
-    @Autowired
-    private TranslationCounterRedisService translationCounterRedisService;
     @Autowired
     private PCUsersRepo pcUsersRepo;
     @Autowired
@@ -134,7 +131,6 @@ public class ALiYunTranslateIntegration {
                 userTokenService.addUsedToken(shopName, totalToken);
             } else {
                 userTokenService.addUsedToken(shopName, totalToken);
-                translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
 
             countUtils.addChars(totalToken);
@@ -315,7 +311,6 @@ public class ALiYunTranslateIntegration {
                 userTokenService.addUsedToken(shopName, totalToken);
             } else {
                 userTokenService.addUsedToken(shopName, totalToken);
-                translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
 
             countUtils.addChars(totalToken);
@@ -381,7 +376,6 @@ public class ALiYunTranslateIntegration {
                 userTokenService.addUsedToken(shopName, totalToken);
             } else {
                 userTokenService.addUsedToken(shopName, totalToken);
-                translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
             }
             countUtils.addChars(totalToken);
         } catch (Exception e) {

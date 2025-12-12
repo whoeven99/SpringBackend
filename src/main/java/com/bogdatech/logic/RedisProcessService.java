@@ -10,16 +10,8 @@ import static com.bogdatech.utils.RedisKeyUtils.DAY_14;
 
 @Service
 public class RedisProcessService {
-
     @Autowired
     private RedisIntegration redisIntegration;
-
-    public void addProcessData(String key, String field , Long value){
-        if (key == null) {
-            return;
-        }
-         redisIntegration.incrementHash(key,field,value);
-    }
 
     public void setCacheData(String targetCode, String targetValue, String sourceValue){
         String encryptedSource = AESUtils.encryptMD5(sourceValue);

@@ -1,6 +1,5 @@
 package com.bogdatech.integration;
 
-import com.bogdatech.logic.redis.TranslationCounterRedisService;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.utils.AppInsightsUtils;
 import com.bogdatech.utils.CharacterCountUtils;
@@ -23,8 +22,6 @@ import static com.bogdatech.utils.TimeOutUtils.*;
 public class HunYuanIntegration {
     @Autowired
     private UserTokenService userTokenService;
-    @Autowired
-    private TranslationCounterRedisService translationCounterRedisService;
 
     // 静态初始化的 Credential 和 HunyuanClient
     private static final Credential CREDENTIAL;
@@ -103,7 +100,6 @@ public class HunYuanIntegration {
                     userTokenService.addUsedToken(shopName, totalToken);
                 } else {
                     userTokenService.addUsedToken(shopName, totalToken);
-                    translationCounterRedisService.increaseLanguage(shopName, target, totalToken, translateType);
                 }
 
                 countUtils.addChars(totalToken);
