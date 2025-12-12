@@ -15,10 +15,6 @@ public class PurchaseService {
 
     @Autowired
     private ICurrenciesService currenciesService;
-    // 付费表单推荐购买字符数（根据商店总字符数推荐）
-    public int recommendPurchaseAmount() {
-        return 1000000;
-    }
 
     //从缓存中获取数据，根据传入的数据作为判断条件
     public Map<String, Object> getCacheData(CurrenciesDO currencyDO){
