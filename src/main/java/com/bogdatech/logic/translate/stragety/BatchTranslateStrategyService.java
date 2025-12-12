@@ -96,6 +96,20 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             totalChars = 0;
             subMap.clear();
         }
+
+        if (!subMap.isEmpty()) {
+            String prompt = PromptUtils.JsonPrompt(target, subMap);
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target);
+            if (pair == null) {
+                // fatalException 返回重新调用翻译，后续有更好的处理办法
+                return;
+            }
+            ctx.getTranslatedTextMap().putAll(pair.getFirst());
+            ctx.incrementUsedTokenCount(pair.getSecond());
+            pair.getFirst().forEach((key, value) -> {
+                redisProcessService.setCacheData(target, value, ctx.getUncachedTextMap().get(key));
+            });
+        }
     }
 
     public void finishAndGetJsonRecord(TranslateContext ctx) {
