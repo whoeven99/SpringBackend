@@ -14,6 +14,7 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -199,7 +200,11 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public List<String> selectTargetByShopName(String shopName) {
-        return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().select(TranslatesDO::getTarget).eq(TranslatesDO::getShopName, shopName)).stream().map(TranslatesDO::getTarget).collect(Collectors.toList());
+        List<TranslatesDO> doList = baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().select(TranslatesDO::getTarget).eq(TranslatesDO::getShopName, shopName));
+        if (doList.isEmpty()){
+            return Collections.emptyList();
+        }
+        return doList.stream().map(TranslatesDO::getTarget).collect(Collectors.toList());
     }
 
     @Override

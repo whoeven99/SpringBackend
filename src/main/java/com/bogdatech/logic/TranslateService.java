@@ -149,7 +149,14 @@ public class TranslateService {
         }
 
         // 获取db中用户，source下对应的所有target
-        List<String> targetList = translatesService.selectTargetByShopNameSource(shopName, source).stream().map(TranslatesDO::getTarget).toList();
+        List<TranslatesDO> doList = translatesService.selectTargetByShopNameSource(shopName, source);
+        List<String> targetList;
+        if (doList == null || doList.isEmpty()) {
+            targetList = new ArrayList<>();
+        }else {
+            targetList = doList.stream().map(TranslatesDO::getTarget).toList();
+        }
+
         for (JsonNode node : shopLocales) {
             String locale = node.path("locale").asText(null);
             if (locale != null && !targetList.contains(locale)) {
