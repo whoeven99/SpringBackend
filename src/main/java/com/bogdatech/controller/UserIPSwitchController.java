@@ -11,12 +11,8 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/IpSwitch")
 public class UserIPSwitchController {
-    private final IUserIPSwitchService userIPSwitchService;
-
     @Autowired
-    public UserIPSwitchController(IUserIPSwitchService userIPSwitchService) {
-        this.userIPSwitchService = userIPSwitchService;
-    }
+    private IUserIPSwitchService userIPSwitchService;
 
     @PostMapping("/insertSwitch")
     public BaseResponse<Object> insertSwitch(@RequestBody UserIPSwitchDO userIPSwitchDO) {

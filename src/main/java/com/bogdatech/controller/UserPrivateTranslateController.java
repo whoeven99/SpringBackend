@@ -11,12 +11,8 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 @RestController
 @RequestMapping("/private/translate")
 public class UserPrivateTranslateController {
-    private final UserPrivateTranslateService userPrivateTranslateService;
-
     @Autowired
-    public UserPrivateTranslateController(UserPrivateTranslateService userPrivateTranslateService) {
-        this.userPrivateTranslateService = userPrivateTranslateService;
-    }
+    private UserPrivateTranslateService userPrivateTranslateService;
 
     /**
      * 配置用户私有模型
