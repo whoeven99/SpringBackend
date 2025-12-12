@@ -43,6 +43,7 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
                 .eq(InitialTaskV2DO::getTaskType, taskType)
+                .eq(InitialTaskV2DO::isSendEmail, false)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
