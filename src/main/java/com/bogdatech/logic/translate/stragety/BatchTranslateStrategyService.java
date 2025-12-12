@@ -75,9 +75,9 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         Map<Integer, String> subMap = new HashMap<>();
         int totalChars = 0;
         for (Map.Entry<Integer, String> entry : ctx.getUncachedTextMap().entrySet()) {
+            subMap.put(entry.getKey(), entry.getValue());
             totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(entry.getValue());
             if (totalChars < 1000) {
-                subMap.put(entry.getKey(), entry.getValue());
                 continue;
             }
 
