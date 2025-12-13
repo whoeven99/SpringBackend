@@ -19,7 +19,7 @@ public class TranslateGateway {
             if (Integer.valueOf(0).equals(translateModelFlag)) {
                 // google
             } else {
-                return chatGptIntegration.chatWithGpt(prompt, null, null, targetLanguage, privateKey);
+                return chatGptIntegration.chatWithGpt(prompt, null, null, targetLanguage);
             }
         }
         return null;

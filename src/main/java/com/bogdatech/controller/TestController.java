@@ -3,6 +3,7 @@ package com.bogdatech.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
+import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.RedisDataReportService;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.logic.RedisTranslateLockService;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
@@ -44,6 +44,8 @@ public class TestController {
         return "";
     }
 
+    @Autowired
+    private ShopifyHttpIntegration shopifyHttpIntegration;
     // 通过测试环境调shopify的API
     @PostMapping("/test123")
     public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
@@ -52,7 +54,7 @@ public class TestController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
-        JSONObject infoByShopify = getInfoByShopify(request, body);
+        JSONObject infoByShopify = shopifyHttpIntegration.getInfoByShopify(request, body);
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }

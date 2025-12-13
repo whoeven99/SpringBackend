@@ -568,8 +568,7 @@ public class TranslateV2Service {
                     })
                     .collect(Collectors.toList()));
             node.setResourceId(resourceId);
-            String strResponse = shopifyHttpIntegration.sendShopifyPost(
-                    shopName, token, APIVERSION, ShopifyRequestUtils.registerTransactionQuery(), node);
+            String strResponse = shopifyHttpIntegration.updateNodes(shopName, token, node);
             JSONObject jsonObject = JSONObject.parseObject(strResponse);
             if (jsonObject != null && jsonObject.getJSONObject("data") != null) {
                 appInsights.trackTrace("TranslateTaskV2 saving success: " + shopName +

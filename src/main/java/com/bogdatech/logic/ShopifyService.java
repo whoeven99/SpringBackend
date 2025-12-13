@@ -36,7 +36,6 @@ import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogdatech.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogdatech.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
-import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -489,14 +488,14 @@ public class ShopifyService {
         shopifyRequest.setAccessToken(registerTransactionRequest.getAccessToken());
         shopifyRequest.setTarget(registerTransactionRequest.getTarget());
         Map<String, Object> variables = getVariables(registerTransactionRequest);
-        return registerTransaction(shopifyRequest, variables);
+        return shopifyHttpIntegration.registerTransaction(shopifyRequest, variables);
     }
 
     //修改多个文本数据
     public String updateShopifyManyData(ShopifyRequest shopifyRequest, List<RegisterTransactionRequest> registerTransactionRequests) {
         // 将List<RegisterTransactionRequest>处理成variables数据
         Map<String, Object> variables = toVariables(registerTransactionRequests);
-        return registerTransaction(shopifyRequest, variables);
+        return shopifyHttpIntegration.registerTransaction(shopifyRequest, variables);
     }
 
     //一次修改多条shopify本地数据
