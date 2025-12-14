@@ -21,7 +21,6 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.constants.TranslateConstants.MAX_LENGTH;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
-import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.parsePlanName;
@@ -72,7 +71,7 @@ public class ShopifyController {
     //通过测试环境调shopify的API
     @PostMapping("/shopifyApi")
     public BaseResponse<Object> shopifyApi(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(getShopifyDataByCloud(cloudServiceRequest));
+        return new BaseResponse<>().CreateSuccessResponse(shopifyService.getShopifyDataByCloud(cloudServiceRequest));
     }
 
     // 用户消耗的字符数

@@ -11,6 +11,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -21,6 +22,12 @@ public class BaseHttpIntegration {
     private final CloseableHttpClient httpClient;
     public BaseHttpIntegration() {
         this.httpClient = HttpClients.createDefault();
+    }
+
+    public String httpPost(String url, String requestBodyString) {
+        HttpPost http = new HttpPost(url);
+        http.setEntity(new StringEntity(requestBodyString, "UTF-8"));
+        return sendHttp(http, new HashMap<>());
     }
 
     public String httpPost(String url, String requestBodyString, Map<String, String> headers) {
@@ -62,6 +69,7 @@ public class BaseHttpIntegration {
         }
     }
 
+    // todo remove
     public String sendHttpGet(String url, String key) throws Exception {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(url);

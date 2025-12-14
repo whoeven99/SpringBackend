@@ -9,8 +9,8 @@ import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
 import com.bogdatech.enums.ErrorEnum;
+import com.bogdatech.integration.BaseHttpIntegration;
 import com.bogdatech.integration.ShopifyHttpIntegration;
-import com.bogdatech.integration.TestingEnvironmentIntegration;
 import com.bogdatech.integration.model.ShopifyGraphResponse;
 import com.bogdatech.model.controller.request.*;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -46,7 +46,6 @@ import static com.bogdatech.utils.StringUtils.isValueBlank;
 
 @Service
 public class ShopifyService {
-
     @Autowired
     private IUserTypeTokenService userTypeTokenService;
     @Autowired
@@ -57,8 +56,6 @@ public class ShopifyService {
     private ITranslatesService translatesService;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
-    @Autowired
-    private TestingEnvironmentIntegration testingEnvironmentIntegration;
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
@@ -93,18 +90,26 @@ public class ShopifyService {
         }
     }
 
+    @Autowired
+    private BaseHttpIntegration httpIntegration;
+
     //封装调用云服务器实现获取shopify数据的方法
-    public static String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
-        String requestBody = JsonUtils.objectToJson(cloudServiceRequest);
-        return TestingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
+    public String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
+        return httpIntegration.httpPost("https://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/test123",
+                JsonUtils.objectToJson(cloudServiceRequest));
     }
 
     public String getShopifyData(String shopName, String accessToken, String apiVersion, String query) {
         if (!ConfigUtils.isLocalEnv()) {
             return shopifyHttpIntegration.getInfoByShopify(shopName, accessToken, apiVersion, query);
         } else {
-            // 本地调用shopify
-            return testingEnvironmentIntegration.sendShopifyPost("test123", shopName, accessToken, apiVersion, query);
+            CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
+            cloudServiceRequest.setShopName(shopName);
+            cloudServiceRequest.setAccessToken(accessToken);
+            cloudServiceRequest.setTarget(apiVersion);
+            cloudServiceRequest.setBody(query);
+            return httpIntegration.httpPost("https://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/test123",
+                    JsonUtils.objectToJson(cloudServiceRequest));
         }
     }
 
