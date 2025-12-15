@@ -81,6 +81,8 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         }
         ctx.setStrategy("HTML的json翻译");
         ctx.setTranslatedContent(replacedBackString);
+        ctx.setDoc(null);
+        ctx.getNodeMap().clear();
     }
 
     public void finishAndGetJsonRecord(TranslateContext ctx) {
