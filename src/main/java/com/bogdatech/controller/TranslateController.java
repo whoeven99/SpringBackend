@@ -10,6 +10,7 @@ import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.*;
+import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.logic.TranslateService;
 import com.bogdatech.logic.UserTypeTokenService;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
@@ -27,7 +28,6 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import static com.bogdatech.enums.ErrorEnum.*;
-import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
@@ -197,6 +197,9 @@ public class TranslateController {
         redisStoppedRepository.removeStoppedFlag(shopName);
     }
 
+    @Autowired
+    private ShopifyHttpIntegration shopifyHttpIntegration;
+
     /**
      * 将一条数据存shopify本地
      */
@@ -207,7 +210,7 @@ public class TranslateController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
-        String s = registerTransaction(request, body);
+        String s = shopifyHttpIntegration.registerTransaction(request, body);
         appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
     }
 
