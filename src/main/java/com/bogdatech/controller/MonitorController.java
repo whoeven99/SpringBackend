@@ -127,8 +127,14 @@ public class MonitorController {
         Map<String, Object> responseMap = new HashMap<>();
         for (InitialTaskV2DO initialTaskV2DO : initialList) {
             Map<String, String> taskMap = translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
+            if ("0".equals(taskMap.get("totalCount"))) {
+                continue;
+            }
             taskMap.put("task_type", initialTaskV2DO.getTaskType());
             taskMap.put("status", initialTaskV2DO.getStatus().toString());
+            if (initialTaskV2DO.getStatus().equals(5) || initialTaskV2DO.getStatus().equals(4)) {
+                taskMap.remove("lastUpdatedTime");
+            }
             if (initialTaskV2DO.getStatus().equals(5)) {
                 boolean isTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName());
                 if (isTokenLimit) {
