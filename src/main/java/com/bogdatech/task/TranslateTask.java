@@ -114,10 +114,16 @@ public class TranslateTask {
                     .map(InitialTaskV2DO::getShopName)
                     .collect(Collectors.toSet());
             for (String shopName : shopNames) {
-                if (shopNameRedisRepo.getAutoTaskCount(shopName).equals(0L)) {
-                    List<InitialTaskV2DO> shopTasks = initialTaskV2Repo.selectByShopNameAndType(shopName, "auto");
-                    tencentEmailService.sendAutoTranslateEmail(shopName, shopTasks);
+                List<InitialTaskV2DO> shopTasks = initialTaskV2Repo.selectByShopNameAndType(shopName, "auto");
+                boolean allDone = true;
+                for (InitialTaskV2DO shopTask : shopTasks) {
+                    if (shopTask.getStatus() != 3 & shopTask.getStatus() != 5) {
+                        allDone = false;
+                    }
+                }
 
+                if (allDone) {
+                    tencentEmailService.sendAutoTranslateEmail(shopName, shopTasks);
                     for (InitialTaskV2DO shopTask : shopTasks) {
                         shopTask.setSendEmail(true);
                         if (shopTask.getStatus().equals(TranslateV2Service.InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
@@ -126,7 +132,6 @@ public class TranslateTask {
                             initialTaskV2Repo.updateById(shopTask);
                         }
                     }
-                    shopNameRedisRepo.deleteShopName(shopName);
                 }
             }
         }
