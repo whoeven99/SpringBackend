@@ -34,6 +34,7 @@ import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.repository.repo.TranslateTaskV2Repo;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.JsonUtils;
+import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.JudgeTranslateUtils;
 import com.bogdatech.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -180,8 +181,9 @@ public class TranslateV2Service {
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
-        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover(), hasHandle);
         this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
+        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
+
 
         // 找前端，把这里的返回改了
         request.setTarget(finalTargets.toArray(new String[0]));
@@ -459,7 +461,22 @@ public class TranslateV2Service {
 
             // 随机找一个text type出来
             String textType = randomDo.getType();
-            if (PLAIN_TEXT.equals(textType) || TITLE.equals(textType)
+            // 先判断html，  todo 后续优化下代码
+            if (JsoupUtils.isHtml(randomDo.getSourceValue())) {
+                // 其他单条翻译
+                TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
+                        textType, randomDo.getNodeKey(), glossaryMap);
+
+                // 翻译后更新db
+                randomDo.setTargetValue(context.getTranslatedContent());
+                randomDo.setHasTargetValue(true);
+                translateTaskV2Repo.update(randomDo);
+
+                // 更新redis和sql的used token
+                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
+                        context.getUsedToken(), context.getTranslatedChars());
+            } else if (PLAIN_TEXT.equals(textType) || TITLE.equals(textType)
                     || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)
                     || SINGLE_LINE_TEXT_FIELD.equals(textType)) {
                 // 批量翻译
