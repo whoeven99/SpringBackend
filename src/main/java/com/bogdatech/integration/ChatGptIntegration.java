@@ -27,17 +27,21 @@ public class ChatGptIntegration {
     private String deploymentName;
     public static final int OPENAI_MAGNIFICATION = 3;
 
-    private final OpenAIClient client;
+//    private final OpenAIClient client;
 
     public ChatGptIntegration() {
-        client = new OpenAIClientBuilder()
-                .endpoint(endpoint)
-                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
-                .buildClient();
+//        client = new OpenAIClientBuilder()
+//                .endpoint(endpoint)
+//                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
+//                .buildClient();
     }
 
     // content - allToken
     public Pair<String, Integer> chatWithGpt(String prompt, String sourceText, String shopName, String target) {
+        OpenAIClient client = new OpenAIClientBuilder()
+                .endpoint(endpoint)
+                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
+                .buildClient();
         ChatMessage userMessage = new ChatMessage(ChatRole.USER);
         userMessage.setContent(prompt + (sourceText != null ? "\n" + sourceText : ""));
 
