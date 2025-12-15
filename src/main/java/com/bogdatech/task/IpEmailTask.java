@@ -78,7 +78,8 @@ public class IpEmailTask {
 
         return userIPCounts.stream()
                 .filter(item -> item.getCountType().startsWith(prefix))
-                .filter(item -> item.getCountValue() * 100 > total * 2)
+                .filter(item -> item.getCountValue() * 100 > total * 2
+                        || item.getCountValue() > 100)
                 .map(item -> {
                     String key = item.getCountType().substring(prefix.length());
                     return Map.of(key, item.getCountValue());

@@ -30,7 +30,11 @@ public class UserIpServiceImpl extends ServiceImpl<UserIpMapper, UserIpDO> imple
 
     @Override
     public Long getIpCountByShopName(String shopName) {
-        return baseMapper.selectOne(new LambdaQueryWrapper<UserIpDO>().eq(UserIpDO::getShopName, shopName)).getTimes();
+        UserIpDO userIpDO = baseMapper.selectOne(new LambdaQueryWrapper<UserIpDO>().eq(UserIpDO::getShopName, shopName));
+        if (userIpDO == null) {
+            return 0L;
+        }
+        return userIpDO.getTimes();
     }
 
     @Override
