@@ -182,7 +182,7 @@ public class TranslateV2Service {
                 .toList();
 
         this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
-        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
+        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover(), hasHandle);
 
 
         // 找前端，把这里的返回改了
