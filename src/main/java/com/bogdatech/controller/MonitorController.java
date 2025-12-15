@@ -110,13 +110,23 @@ public class MonitorController {
     }
 
     @GetMapping("/monitorv2")
-    public Map<String, Object> monitorv2() {
-        List<InitialTaskV2DO> initialList = initialTaskV2Repo.selectByLastDaysAndType("auto", 1);
-        initialList.addAll(initialTaskV2Repo.selectByLastDaysAndType("manual", 3));
+    public Map<String, Object> monitorv2(@RequestParam(required = false) String type, @RequestParam(required = false) Boolean includeFinish) {
+        List<InitialTaskV2DO> initialList;
+        if ("auto".equals(type)) {
+            initialList = initialTaskV2Repo.selectByLastDaysAndType("auto", 1);
+        } else if ("manual".equals(type)) {
+            initialList = initialTaskV2Repo.selectByLastDaysAndType("manual", 3);
+        } else {
+            initialList = initialTaskV2Repo.selectByLastDaysAndType("auto", 1);
+            initialList.addAll(initialTaskV2Repo.selectByLastDaysAndType("manual", 3));
+        }
+        initialList = initialList.stream()
+                .filter(initialTaskV2DO -> (includeFinish != null && includeFinish) || !initialTaskV2DO.getStatus().equals(4))
+                .toList();
 
         Map<String, Object> responseMap = new HashMap<>();
         for (InitialTaskV2DO initialTaskV2DO : initialList) {
-            Map<String, String> taskMap =  translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
+            Map<String, String> taskMap = translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
             taskMap.put("task_type", initialTaskV2DO.getTaskType());
             taskMap.put("status", initialTaskV2DO.getStatus().toString());
             if (initialTaskV2DO.getStatus().equals(5)) {

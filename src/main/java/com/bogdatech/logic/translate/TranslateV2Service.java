@@ -411,8 +411,13 @@ public class TranslateV2Service {
                                     translateTaskV2DO.setType(translatableContent.getType());
                                     translateTaskV2DO.setDigest(translatableContent.getDigest());
                                     translateTaskV2DO.setId(null);
-                                    translateTaskV2Repo.insert(translateTaskV2DO);
-                                    translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
+                                    try {
+                                        translateTaskV2Repo.insert(translateTaskV2DO);
+                                        translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
+                                    } catch (Exception e) {
+                                        appInsights.trackException(e);
+                                        appInsights.trackTrace("FatalException initialToTranslateTask insert error " + e.getMessage());
+                                    }
                                 }
                             });
                         }

@@ -34,6 +34,7 @@ public class TranslateTaskMonitorV2RedisService {
     public void incrementTotalCount(Integer initialTaskId) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.incrementHash(key, "totalCount", 1L);
+        redisIntegration.setHash(key, "lastUpdatedTime", String.valueOf(System.currentTimeMillis()));
     }
 
     public void setInitEndTime(Integer initialTaskId) {
@@ -46,6 +47,7 @@ public class TranslateTaskMonitorV2RedisService {
         redisIntegration.incrementHash(key, "translatedCount", count);
         redisIntegration.incrementHash(key, "usedToken", usedToken);
         redisIntegration.incrementHash(key, "translatedChars", translatedChars);
+        redisIntegration.setHash(key, "lastUpdatedTime", String.valueOf(System.currentTimeMillis()));
     }
 
     public void setTranslateEndTime(Integer initialTaskId) {
@@ -56,6 +58,7 @@ public class TranslateTaskMonitorV2RedisService {
     public void addSavedCount(Integer initialTaskId, int count) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.incrementHash(key, "savedCount", count);
+        redisIntegration.setHash(key, "lastUpdatedTime", String.valueOf(System.currentTimeMillis()));
     }
 
     public void setSavingShopifyEndTime(Integer initialTaskId) {
