@@ -17,6 +17,7 @@ public class RateHttpIntegration {
 
     public static Map<String, Double> rateMap = new HashMap<String, Double>();
 
+    // TODO 这里的rateMap改成privite，然后加一个getter方法
 
     public void getFixerRate() {
         String url = "https://api.apilayer.com/fixer/latest?base=EUR" +

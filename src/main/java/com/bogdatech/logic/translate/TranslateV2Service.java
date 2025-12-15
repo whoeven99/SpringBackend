@@ -19,7 +19,6 @@ import com.bogdatech.logic.ShopifyService;
 import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
-import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.token.UserTokenService;
 import com.bogdatech.logic.translate.stragety.ITranslateStrategyService;
@@ -52,13 +51,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.bogdatech.constants.TranslateConstants.*;
+import static com.bogdatech.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 import static com.bogdatech.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsonUtils.isJson;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
 import static com.bogdatech.utils.JudgeTranslateUtils.*;
-import static com.bogdatech.utils.ResourceTypeUtils.splitByType;
 
 @Component
 public class TranslateV2Service {
@@ -84,8 +83,6 @@ public class TranslateV2Service {
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
     private ITranslatesService iTranslatesService;
-    @Autowired
-    private ShopNameRedisRepo shopNameRedisRepo;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
@@ -279,7 +276,6 @@ public class TranslateV2Service {
         initialTaskV2Repo.insert(initialTask);
 
         translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
-        shopNameRedisRepo.hincrAutoTaskCount(shopName);
     }
 
     // 获取进度条
@@ -544,10 +540,6 @@ public class TranslateV2Service {
             initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
             initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
             initialTaskV2Repo.updateById(initialTaskV2DO);
-            if ("auto".equals(initialTaskV2DO.getTaskType())) {
-                shopNameRedisRepo.hdecAutoTaskCount(shopName);
-            }
-
             return;
         }
 
@@ -620,9 +612,6 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateById(initialTaskV2DO);
-        if ("auto".equals(initialTaskV2DO.getTaskType())) {
-            shopNameRedisRepo.hdecAutoTaskCount(shopName);
-        }
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
@@ -765,6 +754,86 @@ public class TranslateV2Service {
         createAutoTask(shopName, source, target);
         appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
         return true;
+    }
+
+    private static TypeSplitResponse splitByType(String targetType, List<TranslateResourceDTO> resourceList) {
+        List<TranslateResourceDTO> before;
+        List<TranslateResourceDTO> after;
+
+        StringBuilder beforeType = new StringBuilder();
+        StringBuilder afterType = new StringBuilder();
+
+        if (targetType == null) {
+            // 提前把 EMAIL_MAP 的 values 转成 Set，提高查找效率
+            Set<String> emailResources = new HashSet<>(EMAIL_MAP.values());
+
+            for (TranslateResourceDTO dto : resourceList) {
+                if (emailResources.contains(dto.getResourceType())) {
+                    afterType.append(dto.getResourceType()).append(",");
+                }
+            }
+
+            // 去掉最后一个逗号
+            if (!afterType.isEmpty()) {
+                afterType.setLength(afterType.length() - 1);
+            }
+
+            return new TypeSplitResponse(beforeType, afterType);
+        }
+        Set<String> beforeSet = new HashSet<>();
+        Set<String> afterSet = new HashSet<>();
+        int index = -1;
+
+        // 查找目标 type 的索引
+        for (int i = 0; i < resourceList.size(); i++) {
+            if (resourceList.get(i).getResourceType().equals(targetType)) {
+                index = i;
+                break;
+            }
+        }
+
+        // 如果没找到目标 type，返回空集合并打印错误信息
+        if (index == -1) {
+            appInsights.trackTrace("errors 错误：未找到 type 为 '" + targetType + "' 的资源");
+            after = resourceList;
+            for (TranslateResourceDTO resource : after) {
+                afterSet.add(EMAIL_MAP.get(resource.getResourceType()));
+            }
+            for (String resource : afterSet) {
+                afterType.append(resource).append(",");
+            }
+            return new TypeSplitResponse(beforeType, afterType);
+        }
+
+        // 分割列表
+        before = index > 0 ? resourceList.subList(0, index) : new ArrayList<>();
+        after = index < resourceList.size() ? resourceList.subList(index, resourceList.size()) : new ArrayList<>();
+        //根据TranslateResourceDTO来获取展示的类型名，且不重名
+        if (!before.isEmpty()) {
+            for (TranslateResourceDTO resource : before) {
+                if (EMAIL_MAP.containsKey(resource.getResourceType())) {
+                    beforeSet.add(EMAIL_MAP.get(resource.getResourceType()));
+                }
+            }
+        }
+
+        if (!after.isEmpty()) {
+            for (TranslateResourceDTO resource : after) {
+                if (EMAIL_MAP.containsKey(resource.getResourceType())) {
+                    afterSet.add(EMAIL_MAP.get(resource.getResourceType()));
+                }
+            }
+        }
+
+        beforeSet.removeAll(afterSet);
+        // 遍历before和after，只获取type字段，转为为String类型
+        for (String resource : beforeSet) {
+            beforeType.append(resource).append(",");
+        }
+        for (String resource : afterSet) {
+            afterType.append(resource).append(",");
+        }
+        return new TypeSplitResponse(beforeType, afterType);
     }
 
     // 根据翻译规则，不翻译的直接不用存

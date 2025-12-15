@@ -3,7 +3,6 @@ package com.bogdatech.task;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.logic.TencentEmailService;
-import com.bogdatech.logic.redis.ShopNameRedisRepo;
 import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
@@ -29,8 +28,6 @@ import java.util.stream.Collectors;
 @EnableAsync
 @EnableScheduling
 public class TranslateTask {
-    @Autowired
-    private ShopNameRedisRepo shopNameRedisRepo;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired

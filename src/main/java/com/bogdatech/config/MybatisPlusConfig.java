@@ -19,10 +19,8 @@ public class MybatisPlusConfig {
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
         MybatisSqlSessionFactoryBean factory = new MybatisSqlSessionFactoryBean();
         factory.setDataSource(dataSource);
-        // You can also configure other properties of MyBatis or MyBatis-Plus here
         return factory.getObject();
     }
-    // You can add more beans for configuring plugins, interceptors, etc.
 
     @Bean
     public DataSource dataSource() throws Exception {
