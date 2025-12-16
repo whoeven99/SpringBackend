@@ -142,6 +142,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     }
 
     public static LinkedHashMap<Integer, String> parseOutput(String input) {
+        if (input == null) {
+            return null;
+        }
+
         // 预处理 - 提取 JSON 部分
         String jsonPart = StringUtils.extractJsonBlock(input);
 

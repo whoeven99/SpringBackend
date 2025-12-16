@@ -5,7 +5,6 @@ import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
 import com.bogdatech.logic.RedisDataReportService;
 import com.bogdatech.logic.RedisProcessService;
-import com.bogdatech.logic.RedisTranslateLockService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
 import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
@@ -26,8 +25,6 @@ public class TestController {
     private RedisProcessService redisProcessService;
     @Autowired
     private RedisDataReportService redisDataReportService;
-    @Autowired
-    private RedisTranslateLockService redisTranslateLockService;
     @Autowired
     private IpEmailTask ipEmailTask;
 
@@ -68,12 +65,6 @@ public class TestController {
     @GetMapping("/testAddCache")
     public void testAddCache(String target, String value, String targetText) {
         redisProcessService.setCacheData(target, targetText, value);
-    }
-
-    // 暂时存在下
-    @GetMapping("/testUnlock")
-    public Boolean testUnlock(@RequestParam String shopName) {
-        return redisTranslateLockService.setRemove(shopName);
     }
 
     /**
