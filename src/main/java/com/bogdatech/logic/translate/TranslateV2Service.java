@@ -406,7 +406,7 @@ public class TranslateV2Service {
 //                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                             // 每个node有几个translatableContent
                             node.getTranslatableContent().forEach(translatableContent -> {
-                                if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover(), initialTaskV2DO.isHandle())) {
+                                if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover())) {
                                     translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                     translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                     translateTaskV2DO.setType(translatableContent.getType());
@@ -531,6 +531,7 @@ public class TranslateV2Service {
 
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
+            initialTaskV2DO.setTransModelType(randomDo.getModule());
         }
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
@@ -844,7 +845,7 @@ public class TranslateV2Service {
     // 根据翻译规则，不翻译的直接不用存
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
-                                  String module, boolean isCover, boolean isHandle) {
+                                  String module, boolean isCover) {
         String value = translatableContent.getValue();
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
@@ -879,8 +880,11 @@ public class TranslateV2Service {
 
         //如果handleFlag为false，则跳过
         if (type.equals(URI) && "handle".equals(key)) {
-            // 自动翻译的handle默认为false, 手动的记得添加
-            return isHandle;
+            // TODO 自动翻译的handle默认为false, 手动的记得添加
+//            if (!handleFlag) {
+//                return false;
+//            }
+            return false;
         }
 
         //通用的不翻译数据
