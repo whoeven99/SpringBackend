@@ -34,4 +34,6 @@ public class InitialTaskV2DO extends BaseDO {
     private Integer usedToken;
     @TableField("task_type")
     private String taskType; // manual, auto, private
+    @TableField("is_handle")
+    private boolean isHandle;
 }

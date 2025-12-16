@@ -145,7 +145,7 @@ public class PCUserPicturesService {
         // 剩余额度
         int remainingPoints = pcUsersDO.getPurchasePoints() - pcUsersDO.getUsedPoints();
         if (pcUsersDO.getUsedPoints() >= maxCharsByShopName || remainingPoints < APP_PIC_FEE) {
-            return new BaseResponse<>().CreateErrorResponse("额度不够");
+            return new BaseResponse<>().CreateErrorResponse("Insufficient credit");
         }
 
         // 根据modelType 选择不同模型翻译

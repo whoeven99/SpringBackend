@@ -161,13 +161,16 @@ public class TranslateV2Service {
             return new BaseResponse<>().CreateErrorResponse("No Target Language Can Create");
         }
 
+        boolean hasHandle = moduleList.contains("handle");
+
         // 收集所有的resourceType到一个列表中
         List<String> resourceTypeList = moduleList.stream()
+                .filter(module -> !"handle".equals(module)) // 去掉 handle
                 .flatMap(module -> {
                     List<TranslateResourceDTO> list = TranslateResourceDTO.TOKEN_MAP.get(module);
                     if (list == null) {
                         appInsights.trackTrace("FatalException createInitialTask Warning: Unknown module: " + module);
-                        return Stream.empty(); // 目前先忽略 还是要做
+                        return Stream.empty();
                     }
                     return list.stream();
                 })
@@ -176,11 +179,12 @@ public class TranslateV2Service {
                 .toList();
 
         this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
-        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover());
+        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover(), hasHandle);
 
 
         // 找前端，把这里的返回改了
         request.setTarget(finalTargets.toArray(new String[0]));
+        request.setAccessToken("");
         return BaseResponse.SuccessResponse(request);
     }
 
@@ -238,7 +242,7 @@ public class TranslateV2Service {
     }
 
     private void createManualTask(String shopName, String source, Set<String> targets,
-                                  List<String> moduleList, Boolean isCover) {
+                                  List<String> moduleList, Boolean isCover, Boolean hasHandle) {
         initialTaskV2Repo.deleteByShopNameSourceAndType(shopName, source, "manual");
         redisStoppedRepository.removeStoppedFlag(shopName);
 
@@ -251,6 +255,7 @@ public class TranslateV2Service {
             initialTask.setModuleList(JsonUtils.objectToJson(moduleList));
             initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
             initialTask.setTaskType("manual");
+            initialTask.setHandle(hasHandle);
             initialTaskV2Repo.insert(initialTask);
 
             translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
@@ -401,7 +406,7 @@ public class TranslateV2Service {
 //                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                             // 每个node有几个translatableContent
                             node.getTranslatableContent().forEach(translatableContent -> {
-                                if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover())) {
+                                if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover(), initialTaskV2DO.isHandle())) {
                                     translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                     translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                     translateTaskV2DO.setType(translatableContent.getType());
@@ -839,7 +844,7 @@ public class TranslateV2Service {
     // 根据翻译规则，不翻译的直接不用存
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
-                                  String module, boolean isCover) {
+                                  String module, boolean isCover, boolean isHandle) {
         String value = translatableContent.getValue();
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
@@ -874,11 +879,8 @@ public class TranslateV2Service {
 
         //如果handleFlag为false，则跳过
         if (type.equals(URI) && "handle".equals(key)) {
-            // TODO 自动翻译的handle默认为false, 手动的记得添加
-//            if (!handleFlag) {
-//                return false;
-//            }
-            return false;
+            // 自动翻译的handle默认为false, 手动的记得添加
+            return isHandle;
         }
 
         //通用的不翻译数据

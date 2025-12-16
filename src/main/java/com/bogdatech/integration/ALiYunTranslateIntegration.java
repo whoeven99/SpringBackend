@@ -183,7 +183,7 @@ public class ALiYunTranslateIntegration {
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +
-                    " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " +
+                    " token ali  all: " + totalToken + " input: " + inputTokens + " output: " +
                     outputTokens);
             return new Pair<>(content, totalToken);
         } catch (Exception e) {

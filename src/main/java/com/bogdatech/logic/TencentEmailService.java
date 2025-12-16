@@ -90,6 +90,7 @@ public class TencentEmailService {
 
         // 都continue了
         if (divBuilder.toString().isEmpty()) {
+            appInsights.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
             return true;
         }
         templateData.put("html_data", String.valueOf(divBuilder));
