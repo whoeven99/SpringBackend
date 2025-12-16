@@ -41,7 +41,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             prompt += "The text is: " + fixContent;
             ctx.setStrategy("Handle 长文本翻译");
             ctx.setPrompt(prompt);
-            return;
+//            return;
         }
 
         // check glossary
@@ -60,9 +60,12 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
                 return;
             }
 
-            String prompt = PromptUtils.SinglePrompt(target, value);
-            ctx.setStrategy("普通单条文本翻译");
-            ctx.setPrompt(prompt);
+            // 普通 prompt（仅当前面没设置）
+            if (ctx.getPrompt() == null) {
+                String prompt = PromptUtils.SinglePrompt(target, value);
+                ctx.setStrategy("普通单条文本翻译");
+                ctx.setPrompt(prompt);
+            }
         }
 
         Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(ctx.getPrompt(), ctx.getTargetLanguage());
