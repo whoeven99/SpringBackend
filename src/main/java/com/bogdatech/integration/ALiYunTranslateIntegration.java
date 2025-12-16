@@ -358,7 +358,7 @@ public class ALiYunTranslateIntegration {
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
             if (call == null) {
-                return new Pair<>(null, 0);;
+                return new Pair<>(null, 0);
             }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             totalToken = call.getUsage().getTotalTokens();
