@@ -54,6 +54,8 @@ public class EmailIntegration {
                         + " templateId : " + templateId + " from: " + from + " to: " + to);
                 return false;
             }
+
+            appInsights.trackTrace("腾讯邮件信息 ： response is : " + JsonUtils.objectToJson(resp) + " templateId : " + templateId + " from: " + from + " to: " + to + " templateData : " + JsonUtils.objectToJson(templateData));
             return true;
         } catch (Exception e) {
             appInsights.trackException(e);
