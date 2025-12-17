@@ -68,7 +68,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             }
         }
 
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(ctx.getPrompt(), ctx.getTargetLanguage());
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.callWithMessageMT(ctx.getPrompt(), ctx.getTargetLanguage());
         if (pair == null) {
             // fatalException
             return;

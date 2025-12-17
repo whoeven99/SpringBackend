@@ -324,38 +324,32 @@ public class ALiYunTranslateIntegration {
 
     /**
      * 用qwen-MT的部分代替google翻译。
-     *
-     * @param model         模型的类型 turbo和plus
-     * @param translateText 要翻译的文本
-     * @param source        源语言代码
      * @param target        目标语言代码
-     * @param countUtils    计数器
      * @return 翻译后的文本
      */
-    public String callWithMessageMT(String model, String translateText, String source, String target
-            , CharacterCountUtils countUtils, String shopName, Integer limitChars, boolean isSingleFlag, String translateType) {
+    public Pair<String, Integer> callWithMessageMT(String prompt, String target) {
         Generation gen = new Generation();
         Message userMsg = Message.builder()
                 .role(Role.USER.getValue())
-                .content(translateText)
+                .content(prompt)
                 .build();
-        //根据目标语言
+
+        // 根据目标语言
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model(model)
+                .model("qwen-mt-plus")
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
-                .parameter("translation_options", "{\"source_lang\":\"" + source + "\",\"target_lang\":\"" + target + "\"}")
                 .build();
-        String content = null;
+        String content;
         int totalToken;
         try {
             GenerationResult call = callWithTimeoutAndRetry(() -> {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 callWithMessageMT 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + translateText + " 用户：" + shopName);
+                            appInsights.trackTrace("每日须看 callWithMessageMT 百炼翻译报错信息 errors ： " + e.getMessage());
                             appInsights.trackException(e);
                             return null;
                         }
@@ -364,26 +358,20 @@ public class ALiYunTranslateIntegration {
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
             if (call == null) {
-                return translateText;
+                return new Pair<>(null, 0);
             }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
             totalToken = call.getUsage().getTotalTokens();
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("callWithMessageMT 用户： " + shopName + " token ali mt : 原文本- " + translateText + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            appInsights.trackTrace("callWithMessageMT  token ali mt  原文本 : " + prompt + "目标文本： " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
-            if (isSingleFlag) {
-                userTokenService.addUsedToken(shopName, totalToken);
-            } else {
-                userTokenService.addUsedToken(shopName, totalToken);
-            }
-            countUtils.addChars(totalToken);
+            return new Pair<>(content, totalToken);
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("callWithMessageMT " + shopName + " 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + translateText);
+            appInsights.trackTrace("FatalException callWithMessageMT 百炼翻译报错信息 errors ： " + e.getMessage());
+            return new Pair<>(null, 0);
         }
-        return content;
-
     }
 
     public static String TRANSLATE_APP = "TRANSLATE_APP";
