@@ -377,7 +377,7 @@ public class JudgeTranslateUtils {
      * 打印被白名单和黑名单命中的理由
      * */
     public static void printTranslateReason(String reason) {
-        System.out.println("命中的理由： " + reason);
+        appInsights.trackTrace("命中的理由： " + reason);
     }
 
     /**

@@ -47,10 +47,10 @@ public class JudgeTranslateUtilsTest {
     }
 
     @Test
-    @DisplayName("+= 开头应被拦截")
+    @DisplayName("=+ 开头应被拦截")
     void testPlusEqualPrefix() {
-        assertFalse(generalTranslateV2("k", "+=1+2"));
-        assertFalse(generalTranslateV2("k", "+=SUM(A1:A2)"));
+        assertFalse(generalTranslateV2("k", "=+1+2"));
+        assertFalse(generalTranslateV2("k", "=+SUM(A1:A2)"));
     }
 
     @Test
@@ -146,6 +146,17 @@ public class JudgeTranslateUtilsTest {
         assertTrue(generalTranslateV2("k", "Hello world"));
         assertTrue(generalTranslateV2("k", "这是一个商品标题"));
         assertTrue(generalTranslateV2("k", "Buy now and save more"));
+    }
+
+    @Test
+    @DisplayName("质量文档数据")
+    void testQualityDoc() {
+        assertFalse(generalTranslateV2("k", "f72ySxJ79BVY6Jx"));
+        assertFalse(generalTranslateV2("k", "kOnfPGijtn3d0Lw"));
+        assertFalse(generalTranslateV2("k", "4.8,755"));
+        assertFalse(generalTranslateV2("k", "GA1.1.1942061952.1762770638"));
+        assertFalse(generalTranslateV2("k", "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="));
+        assertFalse(generalTranslateV2("k", "=+ Use new payment method"));
     }
 
     @Test

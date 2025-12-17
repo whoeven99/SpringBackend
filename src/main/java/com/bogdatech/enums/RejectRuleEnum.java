@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 @Getter
 public enum RejectRuleEnum {
     PLUS_EQUAL_PREFIX(
-            Pattern.compile("^\\+=.*"),
+            Pattern.compile("^\\=+.*"),
             "以 += 开头"
     ),
 
