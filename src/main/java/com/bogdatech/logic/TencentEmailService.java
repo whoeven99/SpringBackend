@@ -243,7 +243,7 @@ public class TencentEmailService {
                                   List<Map<String, Integer>> languageEmailData, List<Map<String, Integer>> currencyEmailData) {
         UsersDO user = usersService.getUserByName(shopName);
         if (user == null) {
-            appInsights.trackTrace("sendIpReportEmail user is null " + shopName);
+            appInsights.trackTrace("FatalException sendIpReportEmail user is null " + shopName);
             return;
         }
 
@@ -265,7 +265,7 @@ public class TencentEmailService {
 
         // 发送邮件（如果需要）
         boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
-                templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, "bogda.official@gmail.com"));
+                templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, user.getEmail()));
         appInsights.trackTrace("sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
     }
 
