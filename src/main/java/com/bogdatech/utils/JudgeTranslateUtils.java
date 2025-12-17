@@ -345,12 +345,6 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        // 第十一步，包含<svg>
-        if (value.contains("<svg>")) {
-            printTranslateReason(value + "包含<svg>, key是： " + key);
-            return false;
-        }
-
         // enum 规则驱动
         for (RejectRuleEnum rule : ALL_RULES) {
             if (rule.matches(value)) {
