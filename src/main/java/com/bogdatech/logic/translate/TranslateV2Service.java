@@ -379,6 +379,19 @@ public class TranslateV2Service {
         return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
     }
 
+    private boolean containsModule(String modules, String module) {
+        if (StringUtils.isEmpty(modules)) {
+            return false;
+        }
+        String[] moduleArray = modules.split(",");
+        for (String mod : moduleArray) {
+            if (mod.equals(module)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // 翻译 step 2, initial -> 查询shopify，翻译任务创建
     public void initialToTranslateTask(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
@@ -394,7 +407,7 @@ public class TranslateV2Service {
         String finishedModules = translateTaskMonitorV2RedisService.getFinishedModules(initialTaskV2DO.getId());
         String afterEndCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId());
         for (String module : moduleList) {
-            if (finishedModules.contains(module)) {
+            if (containsModule(finishedModules, module)) {
                 continue;
             }
             TranslateTaskV2DO translateTaskV2DO = new TranslateTaskV2DO();
@@ -428,7 +441,7 @@ public class TranslateV2Service {
                             });
                         }
                     }),
-                    (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), afterEndCursor)));
+                    (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), after)));
             // 断电后 跳过这个module
             translateTaskMonitorV2RedisService.addFinishedModule(initialTaskV2DO.getId(), module);
             // 清空afterEndCursor
