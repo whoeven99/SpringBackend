@@ -450,6 +450,13 @@ public class TranslateV2Service {
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
 
         while (randomDo != null) {
+
+            try {
+                initialTaskV2DO.setTransModelType(randomDo.getModule());
+            } catch (Exception e) {
+                appInsights.trackTrace("FatalException initialToTranslateTask setTransModelType error " + e.getMessage() + " randomDo: " + randomDo);
+            }
+
             appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
             if (usedToken >= maxToken) {
                 // 记录是因为token limit中断的
