@@ -47,7 +47,7 @@ public class TranslateTask {
     private <T> void process(int status,
                              Function<InitialTaskV2DO, T> groupByFunc,
                              Set<T> shopsSet,
-                             String statusName,
+                             String taskName,
                              Consumer<InitialTaskV2DO> taskConsumer) {
         List<InitialTaskV2DO> tasks = initialTaskV2Repo.selectByStatus(status);
         if (CollectionUtils.isEmpty(tasks)) {
@@ -67,13 +67,18 @@ public class TranslateTask {
             executorService.submit(() -> {
                 shopsSet.add(groupKey);
                 List<InitialTaskV2DO> groupTasks = entry.getValue();
-                appInsights.trackTrace("TranslateTaskV2 start " + statusName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
+                appInsights.trackTrace("TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
 
-                for (InitialTaskV2DO initialTaskV2DO : groupTasks) {
-                    taskConsumer.accept(initialTaskV2DO);
-                    appInsights.trackTrace("TranslateTaskV2 " + statusName + " success for group: " + groupKey + ", initialTaskId: " + initialTaskV2DO.getId());
+                try {
+                    for (InitialTaskV2DO initialTaskV2DO : groupTasks) {
+                        taskConsumer.accept(initialTaskV2DO);
+                        appInsights.trackTrace("TranslateTaskV2 " + taskName + " success for group: " + groupKey + ", initialTaskId: " + initialTaskV2DO.getId());
+                    }
+                } catch (Exception e) {
+                    appInsights.trackTrace("FatalException TaskRunFailed " + taskName + " " + e.getMessage());
+                } finally {
+                    shopsSet.remove(groupKey);
                 }
-                shopsSet.remove(groupKey);
             });
         }
     }
