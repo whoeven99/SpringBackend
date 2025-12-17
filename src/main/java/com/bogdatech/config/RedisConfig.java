@@ -17,11 +17,6 @@ import java.time.Duration;
 
 @Configuration
 public class RedisConfig {
-
-    /**
-     * 配置redis
-     */
-
     @Bean
     public JedisConnectionFactory redisConnectionFactory() {
         String cacheHostname = ConfigUtils.getConfig("REDISCACHEHOSTNAME");

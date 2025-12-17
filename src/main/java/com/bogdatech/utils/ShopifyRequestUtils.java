@@ -57,14 +57,14 @@ public class ShopifyRequestUtils {
 
     public static String getLanguagesQuery() {
         return """
-                    query MyQuery {
-                      shopLocales {
-                        locale
-                        name
-                        primary
-                        published
-                      }
-                    }
+                  query MyQuery {
+                   shopLocales(published: false) {
+                         locale
+                         name
+                         primary
+                         published
+                         }
+                }
                 """;
     }
 }
