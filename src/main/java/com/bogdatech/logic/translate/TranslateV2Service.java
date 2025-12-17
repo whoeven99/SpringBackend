@@ -450,6 +450,13 @@ public class TranslateV2Service {
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
 
         while (randomDo != null) {
+
+            try {
+                initialTaskV2DO.setTransModelType(randomDo.getModule());
+            } catch (Exception e) {
+                appInsights.trackTrace("FatalException initialToTranslateTask setTransModelType error " + e.getMessage() + " randomDo: " + randomDo);
+            }
+
             appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
             if (usedToken >= maxToken) {
                 // 记录是因为token limit中断的
@@ -531,7 +538,6 @@ public class TranslateV2Service {
 
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
-            initialTaskV2DO.setTransModelType(randomDo.getModule());
         }
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 

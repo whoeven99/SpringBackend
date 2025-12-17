@@ -101,7 +101,7 @@ public class EmailIntegration {
                         try {
                             return client.SendEmail(req);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+                            appInsights.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
                             appInsights.trackException(e);
                             return null;
                         }
@@ -110,7 +110,7 @@ public class EmailIntegration {
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
             if (resp == null) {
-                appInsights.trackTrace("sendEmailByTencent 腾讯邮件报错信息 errors ： templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+                appInsights.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
                 return false;
             }
 
@@ -119,7 +119,7 @@ public class EmailIntegration {
             appInsights.trackTrace("sendEmailByTencent 腾讯邮件信息 jsonString : " + jsonString + " data: " + tencentSendEmailRequest.getTemplateData());
         } catch (Exception e1){
             appInsights.trackException(e1);
-            appInsights.trackTrace("sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+            appInsights.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
         }
         //判断服务的返回值是否含有RequestId
         if (jsonString == null) {
