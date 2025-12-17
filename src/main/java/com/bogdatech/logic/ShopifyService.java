@@ -288,7 +288,7 @@ public class ShopifyService {
             }
 
             //通用的不翻译数据
-            if (!generalTranslate(key, value)) {
+            if (!generalTranslateV2(key, value)) {
                 continue;
             }
 
