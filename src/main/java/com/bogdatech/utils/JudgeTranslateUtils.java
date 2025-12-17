@@ -1,5 +1,7 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.enums.RejectRuleEnum;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -255,7 +257,7 @@ public class JudgeTranslateUtils {
             }
         }
 
-        // 第十步，包含-或—，检查特定模式
+        // TODO: 第十步，包含-或—，检查特定模式
         if (value.contains("-") || value.contains("—")) {
             if (DASH_PATTERN.matcher(value).matches()) {
                 printTranslateReason(value + "包含-或—，且符合特定模式, key是： " + key);
@@ -309,7 +311,54 @@ public class JudgeTranslateUtils {
             printTranslateReason(value + "是class hash, key是： " + key);
             return false;
         }
+
         // 如果以上条件都不满足，则需要翻译
+        return true;
+    }
+
+    private static final RejectRuleEnum[] ALL_RULES = RejectRuleEnum.values();
+
+    public static boolean generalTranslateV2(String key, String value) {
+
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+
+        if (isHtml(value)) {
+            return true;
+        }
+
+        if (value.contains("px")) {
+            printTranslateReason(value + "包含px, key是： " + key);
+            return false;
+        }
+
+        //第五步检查value是否为TRUE或FLASE
+        if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+            printTranslateReason(value + "是true或false, key是： " + key);
+            return false;
+        }
+
+        //第六步，1.以#开头，且长度不超过90
+        if (value.startsWith("#") && value.length() <= HASH_PREFIX_MAX_LENGTH) {
+            printTranslateReason(value + "以#开头，且长度不超过90, key是： " + key);
+            return false;
+        }
+
+        // 第十一步，包含<svg>
+        if (value.contains("<svg>")) {
+            printTranslateReason(value + "包含<svg>, key是： " + key);
+            return false;
+        }
+
+        // enum 规则驱动
+        for (RejectRuleEnum rule : ALL_RULES) {
+            if (rule.matches(value)) {
+                printTranslateReason(value + " 命中规则：" + rule.getReason() + ", key是：" + key);
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -326,7 +375,7 @@ public class JudgeTranslateUtils {
      * 打印被白名单和黑名单命中的理由
      * */
     public static void printTranslateReason(String reason) {
-        appInsights.trackTrace("命中的理由： " + reason);
+        System.out.println("命中的理由： " + reason);
     }
 
     /**
