@@ -37,6 +37,31 @@ public class TranslateTaskMonitorV2RedisService {
         redisIntegration.setHash(key, "lastUpdatedTime", String.valueOf(System.currentTimeMillis()));
     }
 
+    public void addFinishedModule(Integer initialTaskId, String moduleName) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        String existingModules = redisIntegration.getHash(key, "finishedModules");
+        if (existingModules == null || existingModules.isEmpty()) {
+            redisIntegration.setHash(key, "finishedModules", moduleName);
+        } else {
+            redisIntegration.setHash(key, "finishedModules", existingModules + "," + moduleName);
+        }
+    }
+
+    public String getFinishedModules(Integer initialTaskId) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        return redisIntegration.getHash(key, "finishedModules");
+    }
+
+    public void setAfterEndCursor(Integer initialTaskId, String afterEndCursor) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        redisIntegration.setHash(key, "afterEndCursor", afterEndCursor);
+    }
+
+    public String getAfterEndCursor(Integer initialTaskId) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        return redisIntegration.getHash(key, "afterEndCursor");
+    }
+
     public void setInitEndTime(Integer initialTaskId) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.setHash(key, "initEndTime", String.valueOf(System.currentTimeMillis()));

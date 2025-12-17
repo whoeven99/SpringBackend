@@ -8,6 +8,9 @@ public class ShopifyRequestUtils {
     }
 
     public static String getQuery(String resourceType, String first, String target, String after) {
+        if (after == null || after.isEmpty()) {
+            return getQuery(resourceType, first, target);
+        }
         return "query MyQuery {\n" +
                 "  translatableResources(resourceType: " + resourceType + ", first: " + first + ", after: " + "\"" + after + "\"" + ") {\n" +
                 query.replace("%target%", target);
