@@ -125,7 +125,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     }
 
     private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target) {
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.callWithMessageMT(prompt, target);
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
         if (pair == null) {
             // fatalException
             return null;
