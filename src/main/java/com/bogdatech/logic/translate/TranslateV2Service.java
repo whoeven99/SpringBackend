@@ -531,6 +531,9 @@ public class TranslateV2Service {
 
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
+            if (Objects.nonNull(randomDo)) {
+                initialTaskV2DO.setTransModelType(randomDo.getModule());
+            }
         }
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
