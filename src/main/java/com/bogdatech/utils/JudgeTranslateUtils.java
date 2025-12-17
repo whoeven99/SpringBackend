@@ -333,16 +333,24 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        //第五步检查value是否为TRUE或FLASE
+        // 检查value是否为TRUE或FLASE
         if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
             printTranslateReason(value + "是true或false, key是： " + key);
             return false;
         }
 
-        //第六步，1.以#开头，且长度不超过90
+        // 1.以#开头，且长度不超过90
         if (value.startsWith("#") && value.length() <= HASH_PREFIX_MAX_LENGTH) {
             printTranslateReason(value + "以#开头，且长度不超过90, key是： " + key);
             return false;
+        }
+
+        // 包含http://、https://或shopify://
+        for (String prefix : URL_PREFIXES) {
+            if (value.startsWith(prefix)) {
+                printTranslateReason(value + "包含" + prefix + ", key是： " + key );
+                return false;
+            }
         }
 
         // enum 规则驱动
