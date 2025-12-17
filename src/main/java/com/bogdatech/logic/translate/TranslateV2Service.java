@@ -455,13 +455,18 @@ public class TranslateV2Service {
                 // 记录是因为token limit中断的
                 redisStoppedRepository.tokenLimitStopped(shopName);
             }
+
             // 还可能是手动中断
             if (redisStoppedRepository.isTaskStopped(shopName)) {
                 break;
             }
+            if (randomDo.getModule() != null) {
+                initialTaskV2DO.setTransModelType(randomDo.getModule());
+            }
 
             // 随机找一个text type出来
             String textType = randomDo.getType();
+
             // 先判断html，  todo 后续优化下代码
             if (JsoupUtils.isHtml(randomDo.getSourceValue())) {
                 // 其他单条翻译
@@ -531,9 +536,6 @@ public class TranslateV2Service {
 
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
-            if (Objects.nonNull(randomDo)) {
-                initialTaskV2DO.setTransModelType(randomDo.getModule());
-            }
         }
         appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
@@ -665,7 +667,7 @@ public class TranslateV2Service {
         }
     }
 
-    private static List<TranslateResourceDTO> convertALL(List<String> list){
+    private static List<TranslateResourceDTO> convertALL(List<String> list) {
         //修改模块的排序
         List<TranslateResourceDTO> translateResourceDTOList = new ArrayList<>();
         for (String s : list) {
