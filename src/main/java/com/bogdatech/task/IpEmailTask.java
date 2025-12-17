@@ -28,8 +28,7 @@ public class IpEmailTask {
     @Autowired
     private TencentEmailService tencentEmailService;
 
-    //    @Scheduled(cron = "0 0 4 ? * 6")
-    @Scheduled(cron = "0 0 4 */2 * ?")
+    @Scheduled(cron = "0 0 4 ? * SAT")
     public void sendEmailTask() {
         List<WidgetConfigurationsDO> allIpOpenByTrue = iWidgetConfigurationsService.getAllIpOpenByTrue();
         if (allIpOpenByTrue == null || allIpOpenByTrue.isEmpty()) {
