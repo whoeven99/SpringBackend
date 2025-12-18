@@ -65,9 +65,10 @@ public class ShopifyService {
 
     // TODO 所有需要轮询shopify数据的， 挪到这里
     public void rotateAllShopifyGraph(String shopName, String resourceType, String accessToken,
-                                      Integer first, String target,
-                                      Consumer<ShopifyGraphResponse.TranslatableResources.Node> consumer) {
-        String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target);
+                                      Integer first, String target, String afterEndCursor,
+                                      Consumer<ShopifyGraphResponse.TranslatableResources.Node> consumer,
+                                      Consumer<String> setAfterEndCursorConsumer) {
+        String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, afterEndCursor);
         String shopifyData = getShopifyData(shopName, accessToken, API_VERSION_LAST, graphQuery);
         ShopifyGraphResponse shopifyRes = JsonUtils.jsonToObject(shopifyData, ShopifyGraphResponse.class);
         while (shopifyRes != null) {
@@ -85,6 +86,7 @@ public class ShopifyService {
                     && shopifyRes.getTranslatableResources().getPageInfo().isHasNextPage()) {
                 String endCursor = shopifyRes.getTranslatableResources().getPageInfo().getEndCursor();
 
+                setAfterEndCursorConsumer.accept(endCursor);
                 graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, endCursor);
                 String nextShopifyData = getShopifyData(shopName, accessToken, APIVERSION, graphQuery);
                 shopifyRes = JsonUtils.jsonToObject(nextShopifyData, ShopifyGraphResponse.class);

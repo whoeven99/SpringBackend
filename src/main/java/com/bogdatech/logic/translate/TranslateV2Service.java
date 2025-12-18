@@ -379,6 +379,19 @@ public class TranslateV2Service {
         return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
     }
 
+    private boolean containsModule(String modules, String module) {
+        if (StringUtils.isEmpty(modules)) {
+            return false;
+        }
+        String[] moduleArray = modules.split(",");
+        for (String mod : moduleArray) {
+            if (mod.equals(module)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // 翻译 step 2, initial -> 查询shopify，翻译任务创建
     public void initialToTranslateTask(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
@@ -391,12 +404,17 @@ public class TranslateV2Service {
 
         UsersDO userDO = iUsersService.getUserByName(initialTaskV2DO.getShopName());
 
+        String finishedModules = translateTaskMonitorV2RedisService.getFinishedModules(initialTaskV2DO.getId());
+        String afterEndCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId());
         for (String module : moduleList) {
+            if (containsModule(finishedModules, module)) {
+                continue;
+            }
             TranslateTaskV2DO translateTaskV2DO = new TranslateTaskV2DO();
             translateTaskV2DO.setModule(module);
             translateTaskV2DO.setInitialTaskId(initialTaskV2DO.getId());
 
-            shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target,
+            shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target, afterEndCursor,
                     (node -> {
                         if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
                             translateTaskV2DO.setResourceId(node.getResourceId());
@@ -422,7 +440,12 @@ public class TranslateV2Service {
                                 }
                             });
                         }
-                    }));
+                    }),
+                    (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), after)));
+            // 断电后 跳过这个module
+            translateTaskMonitorV2RedisService.addFinishedModule(initialTaskV2DO.getId(), module);
+            // 清空afterEndCursor
+            translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), "");
             appInsights.trackTrace("TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
         }
 
@@ -447,17 +470,14 @@ public class TranslateV2Service {
 
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
+
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
-
         while (randomDo != null) {
-
-            try {
-                initialTaskV2DO.setTransModelType(randomDo.getModule());
-            } catch (Exception e) {
-                appInsights.trackTrace("FatalException initialToTranslateTask setTransModelType error " + e.getMessage() + " randomDo: " + randomDo);
-            }
-
             appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
+
+            // 用于中断之后的邮件描述
+            initialTaskV2DO.setTransModelType(randomDo.getModule());
+
             if (usedToken >= maxToken) {
                 // 记录是因为token limit中断的
                 redisStoppedRepository.tokenLimitStopped(shopName);
