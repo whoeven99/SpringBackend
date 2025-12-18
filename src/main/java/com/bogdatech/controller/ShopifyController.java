@@ -20,7 +20,6 @@ import java.util.Map;
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.constants.TranslateConstants.MAX_LENGTH;
 import static com.bogdatech.enums.ErrorEnum.SQL_SELECT_ERROR;
-import static com.bogdatech.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogdatech.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -45,27 +44,6 @@ public class ShopifyController {
     private IUserTrialsService iUserTrialsService;
     @Autowired
     private ISubscriptionPlansService iSubscriptionPlansService;
-
-    //通过测试环境调shopify的API
-    @PostMapping("/test123")
-    public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
-        String body = cloudServiceRequest.getBody();
-        JSONObject infoByShopify = null;
-        try {
-            infoByShopify = getInfoByShopify(request, body);
-        } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("test123 " + request.getShopName() + " 无法获取shopify数据");
-        }
-        if (infoByShopify == null || infoByShopify.isEmpty()) {
-            return null;
-        }
-        return infoByShopify.toString();
-    }
 
     //通过测试环境调shopify的API
     @PostMapping("/shopifyApi")
