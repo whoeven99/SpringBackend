@@ -75,7 +75,13 @@ public enum RejectRuleEnum {
     EMAIL(
             Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"),
             "邮箱"
-    );
+    ),
+
+    WITH_DATA(Pattern.compile("^[A-Za-z0-9]+(-[A-Za-z0-9]+)+$"), "大小写 + 数字 + 多段 -"),
+
+    HORIZONTAL_BAR_DATE(Pattern.compile("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$"), "日期")
+    ;
+
 
     private final Pattern pattern;
     private final String reason;

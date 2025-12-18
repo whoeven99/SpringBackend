@@ -163,7 +163,7 @@ public class TranslateTask {
         }
     }
 
-    @Scheduled(cron = "0 35 * * * ?")
+    @Scheduled(fixedDelay = 13 * 1000)
     public void cleanTask() {
         // 5天前 且 isDeleted 的任务清理掉
         List<InitialTaskV2DO> cleanTask = initialTaskV2Repo.selectTaskBeforeDaysAndDeleted(5);
