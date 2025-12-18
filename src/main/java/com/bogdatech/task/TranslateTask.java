@@ -162,4 +162,16 @@ public class TranslateTask {
             translateV2Service.autoTranslateV2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
         }
     }
+
+    @Scheduled(fixedDelay = 13 * 1000)
+    public void cleanTask() {
+        // 5天前 且 isDeleted 的任务清理掉
+        List<InitialTaskV2DO> cleanTask = initialTaskV2Repo.selectTaskBeforeDaysAndDeleted(5);
+        if (CollectionUtils.isEmpty(cleanTask)) {
+            return;
+        }
+
+        appInsights.trackTrace("TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
+        translateV2Service.cleanTask(cleanTask.get(0));
+    }
 }

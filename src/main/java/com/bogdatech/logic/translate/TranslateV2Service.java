@@ -779,6 +779,20 @@ public class TranslateV2Service {
         return true;
     }
 
+    public void cleanTask(InitialTaskV2DO initialTaskV2DO) {
+        appInsights.trackTrace("TranslateTaskV2 cleanTask start clean task: " + initialTaskV2DO.getId());
+        while (true) {
+            List<TranslateTaskV2DO> list = translateTaskV2Repo.selectByInitialTaskIdWithLimit(initialTaskV2DO.getId());
+            if (CollectionUtils.isEmpty(list)) {
+                break;
+            }
+
+            translateTaskV2Repo.deleteByIds(list.stream().map(TranslateTaskV2DO::getId).collect(Collectors.toList()));
+            appInsights.trackTrace("TranslateTaskV2 cleanTask delete: " + list.size());
+        }
+        initialTaskV2Repo.deleteById(initialTaskV2DO.getId());
+    }
+
     private static TypeSplitResponse splitByType(String targetType, List<TranslateResourceDTO> resourceList) {
         List<TranslateResourceDTO> before;
         List<TranslateResourceDTO> after;
@@ -902,7 +916,7 @@ public class TranslateV2Service {
         }
 
         //通用的不翻译数据
-        if (!JudgeTranslateUtils.generalTranslate(key, value)) {
+        if (!JudgeTranslateUtils.translationRuleJudgment(key, value)) {
             return false;
         }
 
