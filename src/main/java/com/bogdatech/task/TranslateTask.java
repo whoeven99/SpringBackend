@@ -106,10 +106,10 @@ public class TranslateTask {
                 savingShops, "SAVE SHOPIFY",
                 translateV2Service::saveToShopify);
 
-        process(5,
-                InitialTaskV2DO::getShopName,
-                savingShops, "SAVE SHOPIFY",
-                translateV2Service::saveToShopify);
+//        process(5,
+//                InitialTaskV2DO::getShopName,
+//                savingShops, "SAVE SHOPIFY",
+//                translateV2Service::saveToShopify);
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
