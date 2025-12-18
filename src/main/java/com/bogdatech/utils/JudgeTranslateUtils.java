@@ -203,7 +203,7 @@ public class JudgeTranslateUtils {
      * @param value 对应的value，可能为null
      * @return true表示需要翻译，false表示不需要翻译
      */
-    public static boolean generalTranslateV2(String key, String value) {
+    public static boolean translationRuleJudgment(String key, String value) {
 
         if (value == null || value.isBlank()) {
             return false;
