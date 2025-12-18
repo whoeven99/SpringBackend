@@ -14,6 +14,12 @@ import java.util.List;
 
 @Service
 public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialTaskV2DO> {
+    public List<InitialTaskV2DO> selectTaskBeforeDaysAndDeleted(Integer day) {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .le(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24 * day))
+                .eq(InitialTaskV2DO::getIsDeleted, true));
+    }
+
     public List<InitialTaskV2DO> selectByLastDaysAndType(String type, Integer day) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24 * day))
@@ -123,5 +129,9 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getSource, source)
                 .eq(InitialTaskV2DO::getIsDeleted, false)
                 .eq(InitialTaskV2DO::getTaskType, "manual"));
+    }
+
+    public boolean deleteById(Integer id) {
+        return baseMapper.deleteById(id) > 0;
     }
 }

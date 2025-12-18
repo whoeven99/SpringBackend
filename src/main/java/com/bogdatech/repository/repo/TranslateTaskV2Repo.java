@@ -44,6 +44,13 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         return baseMapper.selectList(wrapper);
     }
 
+    public List<TranslateTaskV2DO> selectByInitialTaskIdWithLimit(Integer initialTaskId) {
+        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+        wrapper.select("TOP " + 20 + " *")
+                .eq("initial_task_id", initialTaskId);
+        return baseMapper.selectList(wrapper);
+    }
+
     public TranslateTaskV2DO selectOneByInitialTaskIdAndEmptyValue(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP 1 *")
@@ -73,5 +80,9 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
     public boolean update(TranslateTaskV2DO taskDo) {
         DbUtils.setUpdatedAt(taskDo);
         return baseMapper.updateById(taskDo) > 0;
+    }
+
+    public boolean deleteByIds(List<Integer> ids) {
+        return baseMapper.deleteBatchIds(ids) > 0;
     }
 }
