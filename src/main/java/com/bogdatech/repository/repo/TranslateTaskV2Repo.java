@@ -62,11 +62,11 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
     }
 
     public List<TranslateTaskV2DO> selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
-            Integer initialTaskId, int limit) {
+            Integer initialTaskId, String type, int limit) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP " + limit + " *")
                 .eq("initial_task_id", initialTaskId)
-                .eq("is_single_html", false)
+                .eq("type", type)
                 .eq("has_target_value", false)
                 .eq("is_deleted", false);
         return baseMapper.selectList(wrapper);
