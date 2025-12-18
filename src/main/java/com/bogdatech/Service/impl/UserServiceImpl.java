@@ -32,11 +32,6 @@ public class UserServiceImpl extends ServiceImpl<UsersMapper, UsersDO> implement
     }
 
     @Override
-    public LoginAndUninstallRequest getUserLoginTime(String shopName) {
-        return baseMapper.getUserLoginTime(shopName);
-    }
-
-    @Override
     public void updateUserTokenByShopName(String shopName, String accessToken) {
         baseMapper.updateUserTokenByShopName(shopName, accessToken);
     }
