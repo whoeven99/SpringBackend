@@ -12,6 +12,7 @@ import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
+import com.bogdatech.logic.translate.TranslateV2Service;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
@@ -87,6 +88,23 @@ public class MonitorController {
     public Map<String, String> config(@RequestParam String key) {
         configRedisRepo.delConfig(key);
         return configRedisRepo.getAllConfigs();
+    }
+
+    @Autowired
+    private TranslateV2Service translateV2Service;
+
+    @PostMapping("/aiTest")
+    public String aiTest(@RequestBody Map<String, Object> map) {
+        String prompt = map.get("prompt").toString();
+        Map<String, String> variables = (Map<String, String>) map.get("variables");
+        for (Map.Entry<String, String> stringStringEntry : variables.entrySet()) {
+            String varKey = stringStringEntry.getKey();
+            String varValue = stringStringEntry.getValue();
+            prompt = prompt.replace("{{" + varKey + "}}", varValue);
+        }
+
+        translateV2Service.testTranslate(prompt);
+        return "ok";
     }
 
     @PostMapping("/todoBConfig")

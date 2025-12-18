@@ -241,6 +241,9 @@ public class TranslateV2Service {
         return context;
     }
 
+    public TranslateContext testTranslate(String prompt) {
+    }
+
     private void createManualTask(String shopName, String source, Set<String> targets,
                                   List<String> moduleList, Boolean isCover, Boolean hasHandle) {
         initialTaskV2Repo.deleteByShopNameSourceAndType(shopName, source, "manual");
