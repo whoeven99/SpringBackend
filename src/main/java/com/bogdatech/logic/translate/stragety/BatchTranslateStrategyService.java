@@ -74,6 +74,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         if (ctx.getUncachedTextMap().isEmpty()) {
             return;
         }
+
         // 防止ctx.getUncachedTextMap()太多，需要拆分几次调用ai
         Map<Integer, String> subMap = new HashMap<>();
         int totalChars = 0;
