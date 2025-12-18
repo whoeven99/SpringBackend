@@ -902,7 +902,7 @@ public class TranslateV2Service {
         }
 
         //通用的不翻译数据
-        if (!JudgeTranslateUtils.generalTranslate(key, value)) {
+        if (!JudgeTranslateUtils.translationRuleJudgment(key, value)) {
             return false;
         }
 
