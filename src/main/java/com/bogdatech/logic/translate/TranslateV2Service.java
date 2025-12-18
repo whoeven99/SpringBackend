@@ -109,6 +109,7 @@ public class TranslateV2Service {
 
         TranslateContext context = singleTranslate(shopName, request.getContext(), request.getTarget(),
                 request.getType(), request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()));
+        userTokenService.addUsedToken(shopName, context.getUsedToken());
 
         SingleReturnVO returnVO = new SingleReturnVO();
         returnVO.setTargetText(context.getTranslatedContent());
@@ -237,7 +238,6 @@ public class TranslateV2Service {
         service.translate(context);
         service.finishAndGetJsonRecord(context);
 
-        userTokenService.addUsedToken(shopName, context.getUsedToken());
         return context;
     }
 
