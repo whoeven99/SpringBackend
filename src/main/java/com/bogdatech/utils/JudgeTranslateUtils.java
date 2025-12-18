@@ -1,5 +1,7 @@
 package com.bogdatech.utils;
 
+import com.bogdatech.enums.RejectRuleEnum;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -7,7 +9,6 @@ import java.util.regex.Pattern;
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.JsoupUtils.isHtml;
-import static com.bogdatech.utils.StringUtils.isNumber;
 
 public class JudgeTranslateUtils {
 
@@ -111,28 +112,10 @@ public class JudgeTranslateUtils {
     }
 
     // 正则表达式
-    private static final Pattern PURE_NUMBER = Pattern.compile("^\\d+$"); // 纯数字
     public static final Pattern SUSPICIOUS_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])[A-Za-z0-9]{9,}$"); //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。
     public static final Pattern SUSPICIOUS2_PATTERN = Pattern.compile("^(?=.*[A-Z])[A-Za-z0-9]{10}$"); //10位大写和 数字组合
-    public static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"); // UUID
-    private static final Pattern DASH_PATTERN = Pattern.compile(
-            "^[\\dA-Z+-.]+$" // 仅包含数字、全大写字母、标点符号（+、-、.()）
-    );
-    private static final Pattern DASH_WITH_HYPHEN = Pattern.compile(
-            "^[\\dA-Z]*[-—][\\dA-Z]*$" // 包含至少一个-或—，前后为数字或全大写字母
-    );
-    private static final Pattern PHONE_NUMBER_PATTERN = Pattern.compile(
-            "\\+\\d{1,3}(?:\\s?(?:\\(\\d+\\)|\\d+))?\\s?\\d[\\d\\s-]{3,13}\\d|" + // 国际号码
-                    "\\+86\\s?1\\d{10}|" +                                                  // 中国大陆手机号码
-                    "00\\d{1,3}\\s?1\\d{10}|" +                                             // 国际拨号前缀
-                    "\\+\\d{8,15}"
-    );// 包含电话号码
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-    );// 包含邮箱
     public static final Pattern BASE64_PATTERN = Pattern.compile("^(?=[A-Za-z0-9+/]*[A-Z])(?=[A-Za-z0-9+/]*[a-z])(?=[A-Za-z0-9+/]*[0-9])(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"); // Base64编码
-    private static final Pattern HASH_PATTERN = Pattern.compile("^[a-fA-F0-9]{64}$"); // 64位十六进制字符串
-    private static final Pattern CLASS_HASH_PATTERN = Pattern.compile("^[a-fA-F0-9]{32}$"); // 32位十六进制字符串
+
     // 长度限制常量
     private static final int HASH_PREFIX_MAX_LENGTH = 90;
     private static final int SLASH_CONTAINS_MAX_LENGTH = 20; // 可改为15
@@ -211,6 +194,7 @@ public class JudgeTranslateUtils {
         return true;
     }
 
+    private static final RejectRuleEnum[] ALL_RULES = RejectRuleEnum.values();
 
     /**
      * 通用不翻译的数据类型判断
@@ -219,35 +203,34 @@ public class JudgeTranslateUtils {
      * @param value 对应的value，可能为null
      * @return true表示需要翻译，false表示不需要翻译
      */
-    public static boolean generalTranslate(String key, String value) {
-        if (isHtml(value)){
+    public static boolean translationRuleJudgment(String key, String value) {
+
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+
+        if (isHtml(value)) {
             return true;
         }
-        // 第四步：检查value包含px的情况
+
         if (value.contains("px")) {
             printTranslateReason(value + "包含px, key是： " + key);
             return false;
         }
 
-        //第五步检查value是否为TRUE或FLASE
+        // 检查value是否为TRUE或FLASE
         if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
             printTranslateReason(value + "是true或false, key是： " + key);
             return false;
         }
 
-        //第六步，1.以#开头，且长度不超过90
+        // 1.以#开头，且长度不超过90
         if (value.startsWith("#") && value.length() <= HASH_PREFIX_MAX_LENGTH) {
             printTranslateReason(value + "以#开头，且长度不超过90, key是： " + key);
             return false;
         }
 
-        // 第七步，纯数字
-        if (PURE_NUMBER.matcher(value).matches()) {
-            printTranslateReason(value + "是纯数字, key是： " + key);
-            return false;
-        }
-
-        // 第八步，包含http://、https://或shopify://
+        // 包含http://、https://或shopify://
         for (String prefix : URL_PREFIXES) {
             if (value.startsWith(prefix)) {
                 printTranslateReason(value + "包含" + prefix + ", key是： " + key );
@@ -255,61 +238,14 @@ public class JudgeTranslateUtils {
             }
         }
 
-        // 第十步，包含-或—，检查特定模式
-        if (value.contains("-") || value.contains("—")) {
-            if (DASH_PATTERN.matcher(value).matches()) {
-                printTranslateReason(value + "包含-或—，且符合特定模式, key是： " + key);
-                return false;
-
-            }
-            // 仅包含数字、全大写字母、标点符号，且有-或—
-            if (DASH_WITH_HYPHEN.matcher(value).matches()) {
-                printTranslateReason(value + "仅包含数字、全大写字母、标点符号，且有-或—, key是： " + key);
+        // enum 规则驱动
+        for (RejectRuleEnum rule : ALL_RULES) {
+            if (rule.matches(value)) {
+                printTranslateReason(value + " 命中规则：" + rule.getReason() + ", key是：" + key);
                 return false;
             }
         }
 
-        // 第十一步，包含<svg>
-        if (value.contains("<svg>")) {
-            printTranslateReason(value + "包含<svg>, key是： " + key);
-            return false;
-        }
-
-        // 第十二步，包含电话号码
-        if (PHONE_NUMBER_PATTERN.matcher(value).matches()) {
-            printTranslateReason(value + "包含电话号码, key是： " + key);
-            return false;
-        }
-
-        //第十三步，包含邮箱
-        if (EMAIL_PATTERN.matcher(value).matches()) {
-            printTranslateReason(value + "包含邮箱, key是： " + key);
-            return false;
-        }
-
-        //如果值为纯数字,小数或负数的话，不翻译
-        if (isNumber(value)) {
-            printTranslateReason(value + "是纯数字,小数或负数, key是： " + key);
-            return false;
-        }
-
-        //如果是UUID类别的数据。不翻译
-        if (UUID_PATTERN.matcher(value).matches()) {
-            printTranslateReason(value + "是UUID类别的数据, key是： " + key);
-            return false;
-        }
-
-
-        //如果是32位十六进制字符串值，不翻译
-        if (HASH_PATTERN.matcher(value).matches()) {
-            printTranslateReason(value + "是32位十六进制字符串值, key是： " + key);
-            return false;
-        }
-        if (CLASS_HASH_PATTERN.matcher(value).matches()){
-            printTranslateReason(value + "是class hash, key是： " + key);
-            return false;
-        }
-        // 如果以上条件都不满足，则需要翻译
         return true;
     }
 
