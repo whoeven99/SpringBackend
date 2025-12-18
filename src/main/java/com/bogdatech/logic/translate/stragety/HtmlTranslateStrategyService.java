@@ -19,6 +19,9 @@ import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.*;
 
 @Component
 public class HtmlTranslateStrategyService implements ITranslateStrategyService {
+    // 判断是否有 <html> 标签的模式
+    public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
+
     @Autowired
     private BatchTranslateStrategyService batchTranslateStrategyService;
 

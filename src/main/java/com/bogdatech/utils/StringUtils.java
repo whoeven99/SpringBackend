@@ -26,6 +26,15 @@ public class StringUtils {
     // 正则表达式：匹配标点符号
     private static final Pattern PUNCT_PATTERN = Pattern.compile("[\\p{Punct}]");
 
+    public static boolean equals(String str1, String str2, boolean caseSensitive) {
+        if (str1 == null || str2 == null) {
+            return false;
+        }
+        str1 = str1.trim();
+        str2 = str2.trim();
+        return caseSensitive ? str1.equals(str2) : str1.equalsIgnoreCase(str2);
+    }
+
     /**
      * 将字符串中的空格替换为指定字符。
      */

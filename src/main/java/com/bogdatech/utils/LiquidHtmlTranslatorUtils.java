@@ -5,12 +5,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.util.regex.Pattern;
 
 public class LiquidHtmlTranslatorUtils {
-    // 判断是否有 <html> 标签的模式
-    public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
-
     //判断是否含有HTML实体
     public static String isHtmlEntity(String text) {
         int i = 0;

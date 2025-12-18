@@ -26,3 +26,6 @@ ON dbo.Translate_Tasks_V2 (initial_task_id, has_target_value, is_deleted);
 
 CREATE NONCLUSTERED INDEX IX_InitialTaskId_Type_TargetValue_IsDeleted
 ON dbo.Translate_Tasks_V2 (initial_task_id, type, has_target_value, is_deleted)
+
+ALTER TABLE dbo.Translate_Tasks_V2
+    ADD is_single_html BIT NOT NULL DEFAULT 0;
