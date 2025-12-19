@@ -76,6 +76,7 @@ public class TranslateTask {
                     }
                 } catch (Exception e) {
                     appInsights.trackTrace("FatalException TaskRunFailed " + taskName + " " + e.getMessage());
+                    appInsights.trackException(e);
                 } finally {
                     shopsSet.remove(groupKey);
                 }
