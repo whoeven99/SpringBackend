@@ -684,6 +684,8 @@ public class TranslateV2Service {
             if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
                 List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
                 });
+                List<String> list = com.bogdatech.utils.StringUtils.sortTranslateData(moduleList);
+
                 assert moduleList != null;
                 List<TranslateResourceDTO> resourceList = convertALL(moduleList);
                 TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
