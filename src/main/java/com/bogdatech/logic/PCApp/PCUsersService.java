@@ -5,6 +5,7 @@ import com.bogdatech.entity.DO.PCUsersDO;
 import com.bogdatech.entity.VO.PCUserPointsVO;
 import com.bogdatech.entity.VO.TranslationCharsVO;
 import com.bogdatech.logic.ShopifyService;
+import com.bogdatech.logic.TencentEmailService;
 import com.bogdatech.logic.redis.OrdersRedisService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.PCOrdersDO;
@@ -38,6 +39,8 @@ public class PCUsersService {
     private PCUserTrialsRepo pcUserTrialsRepo;
     @Autowired
     private OrdersRedisService ordersRedisService;
+    @Autowired
+    private PCEmailService pcEmailService;
 
     public void initUser(String shopName, PCUsersDO pcUsersDO) {
         // 获取用户是否存在 ，存在，做更新操作； 不存在，存储用户
@@ -51,6 +54,9 @@ public class PCUsersService {
             pcUsersDO.setPurchasePoints(20000);
             pcUsersRepo.saveSingleUser(pcUsersDO);
             pcUserSubscriptionsRepo.insertUserSubscriptions(shopName, PCUserSubscriptionsRepo.FREE_PLAN);
+
+            // 发送用户新初始化的邮件
+//            tencentEmailService.sendPc
         } else {
             Timestamp now = Timestamp.from(Instant.now());
             pcUsers.setEmail(pcUsersDO.getEmail());

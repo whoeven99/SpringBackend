@@ -700,7 +700,7 @@ public class TranslateV2Service {
         }
     }
 
-    private static List<TranslateResourceDTO> convertALL(List<String> list){
+    public static List<TranslateResourceDTO> convertALL(List<String> list){
         //修改模块的排序
         List<TranslateResourceDTO> translateResourceDTOList = new ArrayList<>();
         for (String s : list) {
@@ -813,7 +813,7 @@ public class TranslateV2Service {
         initialTaskV2Repo.deleteById(initialTaskV2DO.getId());
     }
 
-    private static TypeSplitResponse splitByType(String targetType, List<TranslateResourceDTO> resourceList) {
+    public static TypeSplitResponse splitByType(String targetType, List<TranslateResourceDTO> resourceList) {
         List<TranslateResourceDTO> before;
         List<TranslateResourceDTO> after;
 
