@@ -178,7 +178,7 @@ public class TranslateV2Service {
                 .filter(Objects::nonNull)
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
-
+        resourceTypeList = com.bogdatech.utils.StringUtils.sortTranslateData(resourceTypeList);
         this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
         this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover(), hasHandle);
 
@@ -684,9 +684,9 @@ public class TranslateV2Service {
             if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
                 List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
                 });
-                List<String> list = com.bogdatech.utils.StringUtils.sortTranslateData(moduleList);
 
                 assert moduleList != null;
+                moduleList = com.bogdatech.utils.StringUtils.sortTranslateData(moduleList);
                 List<TranslateResourceDTO> resourceList = convertALL(moduleList);
                 TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
                 TypeSplitResponse typeSplitResponse = splitByType(translateTaskV2DO != null ? translateTaskV2DO.getModule() : null, resourceList);
