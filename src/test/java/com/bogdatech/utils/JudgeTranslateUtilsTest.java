@@ -157,6 +157,11 @@ public class JudgeTranslateUtilsTest {
         assertFalse(translationRuleJudgment("k", "GA1.1.1942061952.1762770638"));
         assertFalse(translationRuleJudgment("k", "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="));
         assertFalse(translationRuleJudgment("k", "=+ Use new payment method"));
+        assertFalse(translationRuleJudgment("k", "YYYY-MM-DD"));
+        assertFalse(translationRuleJudgment("k", "G-V8YT1T7LZK"));
+        assertTrue(translationRuleJudgment("k", "I like A-B-C"));
+        assertFalse(translationRuleJudgment("k", "V-HUB"));
+        assertFalse(translationRuleJudgment("k", "essential-performance-t-shirt-navy-blue"));
     }
 
     @Test

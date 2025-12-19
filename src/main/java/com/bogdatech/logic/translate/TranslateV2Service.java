@@ -109,6 +109,7 @@ public class TranslateV2Service {
 
         TranslateContext context = singleTranslate(shopName, request.getContext(), request.getTarget(),
                 request.getType(), request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()));
+        userTokenService.addUsedToken(shopName, context.getUsedToken());
 
         SingleReturnVO returnVO = new SingleReturnVO();
         returnVO.setTargetText(context.getTranslatedContent());
@@ -237,7 +238,6 @@ public class TranslateV2Service {
         service.translate(context);
         service.finishAndGetJsonRecord(context);
 
-        userTokenService.addUsedToken(shopName, context.getUsedToken());
         return context;
     }
 
@@ -429,6 +429,7 @@ public class TranslateV2Service {
                                     translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                     translateTaskV2DO.setType(translatableContent.getType());
                                     translateTaskV2DO.setDigest(translatableContent.getDigest());
+                                    translateTaskV2DO.setSingleHtml(isSingleHtml(translatableContent, module));
                                     translateTaskV2DO.setId(null);
                                     try {
                                         translateTaskV2Repo.insert(translateTaskV2DO);
@@ -459,6 +460,15 @@ public class TranslateV2Service {
         initialTaskV2Repo.updateById(initialTaskV2DO);
     }
 
+    private boolean isSingleHtml(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
+                                 String module) {
+        if ("body".equals(translatableContent.getKey()) || "body_html".equals(translatableContent.getKey())
+                || "METAFIELD".equals(module)) {
+            return isHtml(translatableContent.getValue());
+        }
+        return false;
+    }
+
     // 翻译 step 3, 翻译任务 -> 具体翻译行为 直接对数据库操作
     public void translateEachTask(InitialTaskV2DO initialTaskV2DO) {
         // 这里可以从数据库，直接批量获取各种type，一次性翻译不同模块的数据
@@ -477,7 +487,6 @@ public class TranslateV2Service {
 
             // 用于中断之后的邮件描述
             initialTaskV2DO.setTransModelType(randomDo.getModule());
-
             if (usedToken >= maxToken) {
                 // 记录是因为token limit中断的
                 redisStoppedRepository.tokenLimitStopped(shopName);
@@ -509,13 +518,13 @@ public class TranslateV2Service {
                     || SINGLE_LINE_TEXT_FIELD.equals(textType)) {
                 // 批量翻译
                 List<TranslateTaskV2DO> originTaskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
-                        initialTaskId, textType, 50);
+                        initialTaskId, textType, 30);
 
                 List<TranslateTaskV2DO> taskList = new ArrayList<>();
                 int totalChars = 0;
                 for (TranslateTaskV2DO task : originTaskList) {
                     totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(task.getSourceValue());
-                    if (totalChars > 1000) {
+                    if (totalChars > 600) {
                         break;
                     }
                     taskList.add(task);

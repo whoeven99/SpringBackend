@@ -36,6 +36,16 @@ public class GlossaryService {
         return stringBuilder.toString().trim();
     }
 
+    public static String match(String content, Map<String, GlossaryDO> glossaryMap) {
+        for (String key : glossaryMap.keySet()) {
+            if (com.bogdatech.utils.StringUtils.equals(content, key,
+                    Integer.valueOf(1).equals(glossaryMap.get(key).getCaseSensitive()))) {
+                return glossaryMap.get(key).getTargetText();
+            }
+        }
+        return null;
+    }
+
     public static boolean hasGlossary(String content, Map<String, GlossaryDO> glossaryMap,
                                       Map<String, GlossaryDO> usedGlossaryMap) {
         if (content == null || glossaryMap == null || glossaryMap.isEmpty()) {

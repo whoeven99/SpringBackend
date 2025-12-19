@@ -36,8 +36,11 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // Glossary + Cache
         originalTextMap.forEach((key, value) -> {
-            // 1. 先过滤和提取glossary的
-            if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
+            String glossaryed = GlossaryService.match(value, glossaryMap);
+            if (glossaryed != null) {
+                ctx.incrementGlossaryCount();
+                ctx.getTranslatedTextMap().put(key, glossaryed);
+            } else if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
                 ctx.getGlossaryTextMap().put(key, value);
                 ctx.incrementGlossaryCount();
             } else {
@@ -71,6 +74,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         if (ctx.getUncachedTextMap().isEmpty()) {
             return;
         }
+
         // 防止ctx.getUncachedTextMap()太多，需要拆分几次调用ai
         Map<Integer, String> subMap = new HashMap<>();
         int totalChars = 0;
