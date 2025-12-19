@@ -153,7 +153,7 @@ public class TranslateTask {
 
     // 自动翻译，每小时整点执行一次，只翻译拆创建小时=当前小时的店铺
     // TODO 刚启动的时候断电怎么处理
-    @Scheduled(cron = "0 0 * * * ?")
+//    @Scheduled(cron = "0 0 * * * ?")
     public void autoTranslateTask() {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
         if (CollectionUtils.isEmpty(translatesDOList)) {

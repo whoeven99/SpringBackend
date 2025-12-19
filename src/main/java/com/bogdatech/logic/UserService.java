@@ -7,11 +7,14 @@ import com.bogdatech.entity.DO.EmailDO;
 import com.bogdatech.entity.DO.GlossaryDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.DO.WidgetConfigurationsDO;
+import com.bogdatech.entity.VO.ThemeAndLanguageVO;
+import com.bogdatech.entity.VO.UserInitialVO;
 import com.bogdatech.enums.ErrorEnum;
-import com.bogdatech.integration.EmailIntegration;
-import com.bogdatech.model.controller.request.TencentSendEmailRequest;
+import com.bogdatech.logic.redis.UserInitialRedisService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.utils.AESUtils;
+import com.bogdatech.utils.JsonUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,15 +37,17 @@ public class UserService {
     @Autowired
     private IUserSubscriptionsService userSubscriptionsService;
     @Autowired
-    private EmailIntegration emailIntegration;
+    private TencentEmailService tencentEmailService;
     @Autowired
-    private IEmailService emailServicel;
+    private IEmailService emailService;
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
     private IGlossaryService iGlossaryService;
     @Autowired
     private IWidgetConfigurationsService widgetConfigurationsService;
+    @Autowired
+    private UserInitialRedisService userInitialRedisService;
 
     //添加用户
     public BaseResponse<Object> addUser(UsersDO usersDO) {
@@ -52,19 +57,19 @@ public class UserService {
                 usersDO.setEncryptionEmail(encryptionEmail);
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            appInsights.trackTrace("FatalException addUser " + usersDO.getShopName() + " 加密失败");
         }
+
         int i = usersService.addUser(usersDO);
         if (i > 0) {
 
             //首次登陆 发送邮件
             Map<String, String> templateData = new HashMap<>();
             templateData.put("user", usersDO.getFirstName());
-            Boolean flag1 = emailIntegration.sendEmailByTencent(
-                    new TencentSendEmailRequest(137916L, templateData, FIRST_INSTALL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+            Boolean flag1 = tencentEmailService.sendInitialUserEmail(137916L, templateData, FIRST_INSTALL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail());
 
             //存数据库中
-            Integer flag2 = emailServicel.saveEmail(new EmailDO(0, usersDO.getShopName(), TENCENT_FROM_EMAIL, usersDO.getEmail(), FIRST_INSTALL_SUBJECT, flag1 ? 1 : 0));
+            Integer flag2 = emailService.saveEmail(new EmailDO(0, usersDO.getShopName(), TENCENT_FROM_EMAIL, usersDO.getEmail(), FIRST_INSTALL_SUBJECT, flag1 ? 1 : 0));
 
             if (flag2 > 0 && flag1) {
                 return new BaseResponse<>().CreateSuccessResponse(true);
@@ -79,10 +84,10 @@ public class UserService {
     }
 
     //获取用户信息
-    public UsersDO getUser(UsersDO request) {
+    public UsersDO getUser(String shopName) {
         //更新用户登陆时间
-        usersService.updateUserLoginTime(request.getShopName());
-        return usersService.getUserByName(request.getShopName());
+        usersService.updateUserLoginTime(shopName);
+        return usersService.getUserByName(shopName);
     }
 
     //用户卸载应用
@@ -196,5 +201,108 @@ public class UserService {
                 .set("encryption_email", encryptionEmail));
         //返回对应的值
         return encryptionEmail;
+    }
+
+    public BaseResponse<Object> userInitialization(String shopName, UserInitialVO userInitialVO) {
+        // 判断主题数据，然后判断原语言数据
+        String themeName = userInitialVO.getDefaultThemeName();
+        String themeId = userInitialVO.getDefaultThemeId();
+        if (themeName == null || themeId == null) {
+            appInsights.trackTrace("FatalException userInitialization themeData is null : " + userInitialVO);
+            return new BaseResponse<>().CreateErrorResponse("Theme data is null");
+        }
+
+        // 判断redis中的数据是否改变，如果改变，发送邮件
+        String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
+
+        // redis 无值，直接写入
+        if (userDefaultTheme == null) {
+            userInitialRedisService.setUserDefaultTheme(shopName, themeId);
+        }
+
+        // 判断原语言数据
+        String userDefaultLanguage = userInitialRedisService.getUserDefaultLanguage(shopName);
+        String defaultLanguageData = userInitialVO.getDefaultLanguageData();
+        if (defaultLanguageData == null) {
+            return new BaseResponse<>().CreateErrorResponse("Default language data is null");
+        }
+
+        // redis 无值
+        if (userDefaultLanguage == null) {
+            userInitialRedisService.setUserDefaultLanguage(shopName, defaultLanguageData);
+        }
+
+        userInitialVO.setShopName(shopName);
+        if (getUser(shopName) == null) {
+            UsersDO userRequest = new UsersDO();
+            userRequest.setShopName(shopName);
+            userRequest.setAccessToken(userInitialVO.getAccessToken());
+            userRequest.setUserTag(userInitialVO.getUserTag());
+            userRequest.setFirstName(userInitialVO.getFirstName());
+            userRequest.setLastName(userInitialVO.getLastName());
+            userRequest.setEmail(userInitialVO.getEmail());
+            return addUser(userRequest);
+        }
+
+        // 更新user表里面的token
+        updateUserTokenByShopName(shopName, userInitialVO.getAccessToken());
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    public BaseResponse<Object> webhookDefaultTheme(String shopName, ThemeAndLanguageVO data) {
+        // 解析数据
+        JsonNode jsonNode = JsonUtils.readTree(data.getThemeData());
+        if (jsonNode == null) {
+            return new BaseResponse<>().CreateErrorResponse("Theme data is null");
+        }
+
+        String themeName = jsonNode.get("name").asText(null);
+        String themeId = jsonNode.get("admin_graphql_api_id").asText(null);
+        if (themeName == null || themeId == null) {
+            appInsights.trackTrace("FatalException webhookDefaultTheme themeData is null : " + data);
+            return new BaseResponse<>().CreateErrorResponse("Theme data is null");
+        }
+
+        String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
+        if (!themeId.equals(userDefaultTheme)) {
+            // 发送主题邮件
+            tencentEmailService.sendThemeEmail(shopName);
+
+            // 修改theme为新theme
+            userInitialRedisService.setUserDefaultTheme(shopName, themeId);
+
+            // 判断switch是否创建，如果创建，再发送一封switch更换的邮件
+//            if (widgetConfigurationsService.getData(shopName) != null) {
+//                tencentEmailService.sendThemeSwitchEmail(shopName);
+//            }
+            appInsights.trackTrace("webhookDefaultTheme 用户主题改变 ： " + shopName + " name : " + themeName + " id : " + themeId );
+        }
+
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    public BaseResponse<Object> webhookDefaultLanguage(String shopName, ThemeAndLanguageVO data) {
+        // 解析数据
+        JsonNode jsonNode = JsonUtils.readTree(data.getLanguageData());
+        if (jsonNode == null) {
+            return new BaseResponse<>().CreateErrorResponse("Language data is null");
+        }
+
+        String defaultLanguageData = jsonNode.get("primary_locale").asText(null);
+        String userDefaultLanguage = userInitialRedisService.getUserDefaultLanguage(shopName);
+
+        if (defaultLanguageData == null) {
+            return new BaseResponse<>().CreateErrorResponse("Default language data is null : " + data);
+        }
+
+        // redis 无值
+        if (!defaultLanguageData.equals(userDefaultLanguage)) {
+            // 发送默认语言邮件
+            tencentEmailService.sendDefaultLanguageEmail(shopName);
+            userInitialRedisService.setUserDefaultLanguage(shopName, defaultLanguageData);
+            appInsights.trackTrace("webhookDefaultLanguage 用户默认语言改变 ： " + shopName + " source : " + userDefaultLanguage + " language : " + defaultLanguageData );
+        }
+
+        return new BaseResponse<>().CreateSuccessResponse(true);
     }
 }

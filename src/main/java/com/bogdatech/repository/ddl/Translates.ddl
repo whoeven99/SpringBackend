@@ -21,3 +21,9 @@ go
 create unique index UQ_Translates_ShopName_Source_Target
     on Translates (shop_name, source, target)
 go
+
+CREATE INDEX idx_shop_source ON translates (shop_name, source);
+CREATE INDEX idx_shop_status ON translates (shop_name, status);
+CREATE INDEX idx_status ON translates (status);
+CREATE INDEX idx_auto_shop ON translates (auto_translate, shop_name);
+CREATE INDEX idx_shop_target ON translates (shop_name, target);
