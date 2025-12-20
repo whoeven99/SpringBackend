@@ -499,29 +499,21 @@ public class TranslateV2Service {
                 break;
             }
 
-            // 随机找一个text type出来
-            String textType = randomDo.getType();
-            // 先判断html，  todo 后续优化下代码
-            if (JsoupUtils.isHtml(randomDo.getSourceValue())) {
-                // 其他单条翻译
+            // 随机找一条，如果是html就单条翻译，不是就直接批量
+            boolean isHtml = randomDo.isSingleHtml();
+            if (isHtml) {
                 TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
-                        textType, randomDo.getNodeKey(), glossaryMap);
+                        randomDo.getType(), randomDo.getNodeKey(), glossaryMap);
 
                 // 翻译后更新db
                 randomDo.setTargetValue(context.getTranslatedContent());
-                randomDo.setHasTargetValue(true);
-                translateTaskV2Repo.update(randomDo);
-
-                // 更新redis和sql的used token
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
                         context.getUsedToken(), context.getTranslatedChars());
-            } else if (PLAIN_TEXT.equals(textType) || TITLE.equals(textType)
-                    || META_TITLE.equals(textType) || LOWERCASE_HANDLE.equals(textType)
-                    || SINGLE_LINE_TEXT_FIELD.equals(textType)) {
+            } else  {
                 // 批量翻译
-                List<TranslateTaskV2DO> originTaskList = translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(
-                        initialTaskId, textType, 30);
+                List<TranslateTaskV2DO> originTaskList =
+                        translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(initialTaskId, 30);
 
                 List<TranslateTaskV2DO> taskList = new ArrayList<>();
                 int totalChars = 0;
@@ -551,20 +543,6 @@ public class TranslateV2Service {
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
-                        context.getUsedToken(), context.getTranslatedChars());
-            } else {
-                // 其他单条翻译
-                TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
-                        textType, randomDo.getNodeKey(), glossaryMap);
-
-                // 翻译后更新db
-                randomDo.setTargetValue(context.getTranslatedContent());
-                randomDo.setHasTargetValue(true);
-                translateTaskV2Repo.update(randomDo);
-
-                // 更新redis和sql的used token
-                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
-                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
                         context.getUsedToken(), context.getTranslatedChars());
             }
 
