@@ -33,11 +33,11 @@ import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.repository.repo.TranslateTaskV2Repo;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.JsonUtils;
-import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.JudgeTranslateUtils;
 import com.bogdatech.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +91,8 @@ public class TranslateV2Service {
     private IUsersService usersService;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -115,6 +117,20 @@ public class TranslateV2Service {
         returnVO.setTargetText(context.getTranslatedContent());
         returnVO.setTranslateVariables(context.getTranslateVariables());
         return BaseResponse.SuccessResponse(returnVO);
+    }
+
+    // For monitor
+    public Map<String, Object> testTranslate(Map<String, Object> map) {
+        String prompt = map.get("prompt").toString();
+        String target = map.get("target").toString();
+        String content = map.get("content").toString();
+
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, "");
+
+        Map<String, Object> ans = new HashMap<>();
+        ans.put("content", pair.getFirst());
+        ans.put("allToken", pair.getSecond());
+        return ans;
     }
 
     // 手动开启翻译任务入口
@@ -239,9 +255,6 @@ public class TranslateV2Service {
         service.finishAndGetJsonRecord(context);
 
         return context;
-    }
-
-    public TranslateContext testTranslate(String prompt) {
     }
 
     private void createManualTask(String shopName, String source, Set<String> targets,

@@ -13,9 +13,14 @@ import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogdatech.logic.translate.TranslateV2Service;
+import com.bogdatech.logic.translate.stragety.HtmlTranslateStrategyService;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
+import kotlin.Pair;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +28,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.parseHtml;
 
 @RestController
 public class MonitorController {
@@ -93,18 +101,37 @@ public class MonitorController {
     @Autowired
     private TranslateV2Service translateV2Service;
 
-    @PostMapping("/aiTest")
-    public String aiTest(@RequestBody Map<String, Object> map) {
-        String prompt = map.get("prompt").toString();
-        Map<String, String> variables = (Map<String, String>) map.get("variables");
-        for (Map.Entry<String, String> stringStringEntry : variables.entrySet()) {
-            String varKey = stringStringEntry.getKey();
-            String varValue = stringStringEntry.getValue();
-            prompt = prompt.replace("{{" + varKey + "}}", varValue);
+    @PostMapping("/promptTest")
+    public Map<String, Object> promptTest(@RequestBody Map<String, Object> map) {
+        return translateV2Service.testTranslate(map);
+    }
+
+    @PostMapping("htmlToJson")
+    public Map<Integer, String> htmlToJson(@RequestBody Map<String, Object> map) {
+        String value = map.get("html").toString();
+        String target = map.get("target").toString();
+
+        value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
+
+        boolean hasHtmlTag = HtmlTranslateStrategyService.HTML_TAG_PATTERN.matcher(value).find();
+        Document doc = parseHtml(value, target, hasHtmlTag);
+
+        List<TextNode> nodes = new ArrayList<>();
+        for (Element element : doc.getAllElements()) {
+            nodes.addAll(element.textNodes());
         }
 
-        translateV2Service.testTranslate(prompt);
-        return "ok";
+        Map<Integer, String> ans = new HashMap<>();
+        // 生成json
+        int index = 0;
+        for (TextNode node : nodes) {
+            String text = node.text().trim();
+            if (!text.isEmpty()) {
+                ans.put(index, text);
+                index++;
+            }
+        }
+        return ans;
     }
 
     @PostMapping("/todoBConfig")
