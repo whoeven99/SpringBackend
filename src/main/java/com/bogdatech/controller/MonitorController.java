@@ -109,12 +109,11 @@ public class MonitorController {
     @PostMapping("htmlToJson")
     public Map<Integer, String> htmlToJson(@RequestBody Map<String, Object> map) {
         String value = map.get("html").toString();
-        String target = map.get("target").toString();
 
         value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
 
         boolean hasHtmlTag = HtmlTranslateStrategyService.HTML_TAG_PATTERN.matcher(value).find();
-        Document doc = parseHtml(value, target, hasHtmlTag);
+        Document doc = parseHtml(value, "en", hasHtmlTag);
 
         List<TextNode> nodes = new ArrayList<>();
         for (Element element : doc.getAllElements()) {
