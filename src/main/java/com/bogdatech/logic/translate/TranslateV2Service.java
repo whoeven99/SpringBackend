@@ -33,6 +33,7 @@ import com.bogdatech.repository.repo.InitialTaskV2Repo;
 import com.bogdatech.repository.repo.TranslateTaskV2Repo;
 import com.bogdatech.requestBody.ShopifyRequestBody;
 import com.bogdatech.utils.JsonUtils;
+import com.bogdatech.utils.JsoupUtils;
 import com.bogdatech.utils.JudgeTranslateUtils;
 import com.bogdatech.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
