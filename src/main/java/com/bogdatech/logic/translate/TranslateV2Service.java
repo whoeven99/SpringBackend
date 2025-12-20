@@ -123,9 +123,9 @@ public class TranslateV2Service {
     public Map<String, Object> testTranslate(Map<String, Object> map) {
         String prompt = map.get("prompt").toString();
         String target = map.get("target").toString();
-        String content = map.get("content").toString();
+        Map<Integer, String> json = JsonUtils.jsonToObject(map.get("json").toString(), new TypeReference<Map<Integer, String>>() {});
 
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, "");
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
 
         Map<String, Object> ans = new HashMap<>();
         ans.put("content", pair.getFirst());
