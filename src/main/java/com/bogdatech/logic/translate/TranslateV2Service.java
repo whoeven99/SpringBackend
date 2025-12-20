@@ -127,6 +127,7 @@ public class TranslateV2Service {
         Map<Integer, String> json = JsonUtils.jsonToObject(map.get("json").toString(), new TypeReference<Map<Integer, String>>() {});
 
         prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", json.toString());
+        prompt = prompt.replace("{{TARGET_LANGUAGE}}", target);
         Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
 
         Map<String, Object> ans = new HashMap<>();
