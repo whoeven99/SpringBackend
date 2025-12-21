@@ -523,6 +523,9 @@ public class TranslateV2Service {
 
                 // 翻译后更新db
                 randomDo.setTargetValue(context.getTranslatedContent());
+                randomDo.setHasTargetValue(true);
+                translateTaskV2Repo.update(randomDo);
+
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
                         context.getUsedToken(), context.getTranslatedChars());
