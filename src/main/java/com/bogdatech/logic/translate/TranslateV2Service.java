@@ -109,9 +109,11 @@ public class TranslateV2Service {
         if (usedToken >= maxToken) {
             return BaseResponse.FailedResponse("Token limit reached");
         }
-
-        TranslateContext context = singleTranslate(shopName, request.getContext(), request.getTarget(),
+        TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(),
                 request.getType(), request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()));
+        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+        service.translate(context);
+        service.finishAndGetJsonRecord(context);
         userTokenService.addUsedToken(shopName, context.getUsedToken());
 
         SingleReturnVO returnVO = new SingleReturnVO();
@@ -518,8 +520,9 @@ public class TranslateV2Service {
             // 随机找一条，如果是html就单条翻译，不是就直接批量
             boolean isHtml = randomDo.isSingleHtml();
             if (isHtml) {
-                TranslateContext context = singleTranslate(shopName, randomDo.getSourceValue(), target,
-                        randomDo.getType(), randomDo.getNodeKey(), glossaryMap);
+                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap);
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("html");
+                service.translate(context);
 
                 // 翻译后更新db
                 randomDo.setTargetValue(context.getTranslatedContent());
