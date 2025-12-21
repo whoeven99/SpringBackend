@@ -819,13 +819,11 @@ public class TranslateV2Service {
     public void cleanTask(InitialTaskV2DO initialTaskV2DO) {
         appInsights.trackTrace("TranslateTaskV2 cleanTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
-            List<TranslateTaskV2DO> list = translateTaskV2Repo.selectByInitialTaskIdWithLimit(initialTaskV2DO.getId());
-            if (CollectionUtils.isEmpty(list)) {
+            int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
+            appInsights.trackTrace("TranslateTaskV2 cleanTask delete: " + deleted);
+            if (deleted <= 0) {
                 break;
             }
-
-            translateTaskV2Repo.deleteByIds(list.stream().map(TranslateTaskV2DO::getId).collect(Collectors.toList()));
-            appInsights.trackTrace("TranslateTaskV2 cleanTask delete: " + list.size());
         }
         initialTaskV2Repo.deleteById(initialTaskV2DO.getId());
     }
