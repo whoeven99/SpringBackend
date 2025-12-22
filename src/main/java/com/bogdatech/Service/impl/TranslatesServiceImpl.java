@@ -52,11 +52,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public List<Integer> readStatusInTranslatesByShopName(String shopName) {
-        return baseMapper.readStatusInTranslatesByShopName(shopName);
-    }
-
-    @Override
     public TranslatesDO readTranslateDOByArray(TranslatesDO translatesDO) {
         return baseMapper.readTranslatesDOByArray(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
     }
@@ -77,11 +72,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     }
 
     @Override
-    public void updateTranslatesResourceType(String shopName, String target, String source, String resourceType) {
-        baseMapper.updateTranslatesResourceType(shopName, target, source, resourceType);
-    }
-
-    @Override
     public Integer getStatusByShopNameAndTargetAndSource(String shopName, String target, String source) {
         return baseMapper.getStatusByShopNameAndTargetAndSource(shopName, target, source);
     }
@@ -89,11 +79,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public Integer getIdByShopNameAndTargetAndSource(String shopName, String target, String source) {
         return baseMapper.getIdByShopNameAndTarget(shopName, target, source);
-    }
-
-    @Override
-    public String getResourceTypeByshopNameAndTargetAndSource(String shopName, String target, String source) {
-        return baseMapper.getResourceTypeByshopNameAndTarget(shopName, target, source);
     }
 
     @Override
@@ -123,11 +108,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
             }
         }
         return false;
-    }
-
-    @Override
-    public List<TranslatesDO> getStatus2Data() {
-        return baseMapper.selectList(new QueryWrapper<TranslatesDO>().eq("status", 2));
     }
 
     @Override
@@ -186,11 +166,6 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public List<TranslatesDO> listTranslatesDOByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName));
-    }
-
-    @Override
-    public TranslatesDO getSingleTranslateDO(String shopName, String source, String target) {
-        return baseMapper.selectOne(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source).eq(TranslatesDO::getTarget, target));
     }
 
     @Override

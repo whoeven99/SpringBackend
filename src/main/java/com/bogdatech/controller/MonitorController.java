@@ -1,12 +1,10 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ICharsOrdersService;
-import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
 import com.bogdatech.entity.DO.CharsOrdersDO;
-import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
@@ -17,18 +15,15 @@ import com.bogdatech.logic.translate.stragety.HtmlTranslateStrategyService;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
-import kotlin.Pair;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
 import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.parseHtml;
 
@@ -38,8 +33,6 @@ public class MonitorController {
     private ICharsOrdersService charsOrdersService;
     @Autowired
     private ITranslatesService iTranslatesService;
-    @Autowired
-    private ITranslateTasksService translateTasksService;
     @Autowired
     private ITranslationCounterService translationCounterService;
     @Autowired
@@ -62,10 +55,6 @@ public class MonitorController {
         // 获取Translates表数据
         List<TranslatesDO> translatesDOS = iTranslatesService.listTranslatesDOByShopName(shopName);
         map.put("Translates", translatesDOS);
-
-        // 获取task表准备翻译和正在翻译的数据
-        List<TranslateTasksDO> translateTasksDOS = translateTasksService.listTranslateStatus2And0TasksByShopName(shopName);
-        map.put("TranslateTasks", translateTasksDOS);
 
         // 获取用户额度表数据
         TranslationCounterDO translationCounterDO = translationCounterService.getTranslationCounterByShopName(shopName);
