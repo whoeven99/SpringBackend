@@ -8,6 +8,7 @@ import com.bogdatech.Service.IUserSubscriptionsService;
 import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.config.LanguageFlagConfig;
 import com.bogdatech.entity.DO.*;
+import com.bogdatech.entity.DTO.TranslateTextDTO;
 import com.bogdatech.enums.ErrorEnum;
 import com.bogdatech.integration.ShopifyHttpIntegration;
 import com.bogdatech.integration.TestingEnvironmentIntegration;
@@ -204,7 +205,7 @@ public class ShopifyService {
         translateObjectNode(rootNode, request, counter, translateResource);
 
         //1, 获取所有要翻译的数据, 将单个语言的所有数据都统计
-        Set<TranslateTextDO> needTranslatedData = translatedAllDataParse(rootNode, request.getShopName());
+        Set<TranslateTextDTO> needTranslatedData = translatedAllDataParse(rootNode, request.getShopName());
         if (needTranslatedData != null) {
             filterNeedTranslateSetAndCount(translateResource.getResourceType(), true, needTranslatedData, counter);
         }
@@ -249,7 +250,7 @@ public class ShopifyService {
     //对node节点进行判断，是否调用方法
     public void translateObjectNode(JsonNode objectNode, ShopifyRequest request, CharacterCountUtils counter, TranslateResourceDTO translateResource) {
         //1, 获取所有要翻译的数据, 将单个语言的所有数据都统计
-        Set<TranslateTextDO> needTranslatedData = translatedAllDataParse(objectNode, request.getShopName());
+        Set<TranslateTextDTO> needTranslatedData = translatedAllDataParse(objectNode, request.getShopName());
         if (needTranslatedData == null) {
             return;
         }
@@ -260,16 +261,16 @@ public class ShopifyService {
     /**
      * 遍历needTranslatedSet, 对Set集合进行通用规则的筛选，返回筛选后的数据
      */
-    public void filterNeedTranslateSetAndCount(String modeType, boolean handleFlag, Set<TranslateTextDO> needTranslateSet, CharacterCountUtils counter) {
-        for (TranslateTextDO translateTextDO : needTranslateSet) {
-            String value = translateTextDO.getSourceText();
+    public void filterNeedTranslateSetAndCount(String modeType, boolean handleFlag, Set<TranslateTextDTO> needTranslateSet, CharacterCountUtils counter) {
+        for (TranslateTextDTO translateTextDTO : needTranslateSet) {
+            String value = translateTextDTO.getSourceText();
 
             // 当 value 为空时跳过
             if (!isValueBlank(value)) {
                 continue;
             }
 
-            String type = translateTextDO.getTextType();
+            String type = translateTextDTO.getTextType();
 
             // 如果是特定类型，也从集合中移除
             if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
@@ -281,7 +282,7 @@ public class ShopifyService {
                 continue;
             }
 
-            String key = translateTextDO.getTextKey();
+            String key = translateTextDTO.getTextKey();
             //如果handleFlag为false，则跳过
             if (type.equals(URI) && "handle".equals(key)) {
                 if (!handleFlag) {
@@ -313,7 +314,7 @@ public class ShopifyService {
                 if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                     //进行白名单的确认
                     if (whiteListTranslate(key)) {
-                        counter.addChars(calculateBaiLianToken(translateTextDO.getSourceText()));
+                        counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
                         continue;
                     }
 
@@ -322,7 +323,7 @@ public class ShopifyService {
                         continue;
                     }
                 }
-                counter.addChars(calculateBaiLianToken(translateTextDO.getSourceText()));
+                counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
                 continue;
             }
             //对METAOBJECT字段翻译
@@ -330,7 +331,7 @@ public class ShopifyService {
                 if (isJson(value)) {
                     continue;
                 }
-                counter.addChars(calculateBaiLianToken(translateTextDO.getSourceText()));
+                counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
                 continue;
             }
 
@@ -350,18 +351,18 @@ public class ShopifyService {
                 if (isJson(value)) {
                     continue;
                 }
-                counter.addChars(calculateBaiLianToken(translateTextDO.getSourceText()));
+                counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
                 continue;
             }
-            counter.addChars(calculateBaiLianToken(translateTextDO.getSourceText()));
+            counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
         }
     }
 
     /**
      * 解析shopifyData数据，将所有数据都存Set里面
      */
-    public Set<TranslateTextDO> translatedAllDataParse(JsonNode shopDataJson, String shopName) {
-        Set<TranslateTextDO> doubleTranslateTextDOSet = new HashSet<>();
+    public Set<TranslateTextDTO> translatedAllDataParse(JsonNode shopDataJson, String shopName) {
+        Set<TranslateTextDTO> doubleTranslateTextDTOSet = new HashSet<>();
         try {
             // 获取 translatableResources 节点
             JsonNode translatableResourcesNode = shopDataJson.path("translatableResources");
@@ -377,20 +378,20 @@ public class ShopifyService {
             ArrayNode nodesArray = (ArrayNode) nodesNode;
             for (JsonNode nodeElement : nodesArray) {
                 if (nodeElement.isObject()) {
-                    doubleTranslateTextDOSet.addAll(needTranslatedSet(nodeElement));
+                    doubleTranslateTextDTOSet.addAll(needTranslatedSet(nodeElement));
                 }
             }
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
         }
-        return doubleTranslateTextDOSet;
+        return doubleTranslateTextDTOSet;
     }
 
     /**
      * 解析一下所有Set
      */
-    public Set<TranslateTextDO> needTranslatedSet(JsonNode shopDataJson) {
+    public Set<TranslateTextDTO> needTranslatedSet(JsonNode shopDataJson) {
         Iterator<Map.Entry<String, JsonNode>> fields = shopDataJson.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> field = fields.next();
@@ -403,8 +404,8 @@ public class ShopifyService {
                     continue;
                 }
                 // 提取翻译内容映射
-                Map<String, TranslateTextDO> partTranslateTextDOMap = extractTranslationsByResourceId(shopDataJson);
-                Set<TranslateTextDO> needTranslatedSet = new HashSet<>(partTranslateTextDOMap.values());
+                Map<String, TranslateTextDTO> partTranslateTextDOMap = extractTranslationsByResourceId(shopDataJson);
+                Set<TranslateTextDTO> needTranslatedSet = new HashSet<>(partTranslateTextDOMap.values());
                 return new HashSet<>(needTranslatedSet);
             }
         }
@@ -414,8 +415,8 @@ public class ShopifyService {
     /**
      * 同一个resourceId下的获取所有数据
      */
-    public static Map<String, TranslateTextDO> extractTranslationsByResourceId(JsonNode shopDataJson) {
-        Map<String, TranslateTextDO> translations = new HashMap<>();
+    public static Map<String, TranslateTextDTO> extractTranslationsByResourceId(JsonNode shopDataJson) {
+        Map<String, TranslateTextDTO> translations = new HashMap<>();
         JsonNode translationsNode = shopDataJson.path("translatableContent");
         if (translationsNode.isArray() && !translationsNode.isEmpty()) {
             translationsNode.forEach(translation -> {
@@ -426,12 +427,12 @@ public class ShopifyService {
                     return;
                 }
                 //当用户修改数据后，outdated的状态为true，将该数据放入要翻译的集合中
-                TranslateTextDO translateTextDO = new TranslateTextDO();
+                TranslateTextDTO translateTextDTO = new TranslateTextDTO();
                 String key = translation.path("key").asText(null);
-                translateTextDO.setTextKey(key);
-                translateTextDO.setSourceText(translation.path("value").asText(null));
-                translateTextDO.setTextType(translation.path("type").asText(null));
-                translations.put(key, translateTextDO);
+                translateTextDTO.setTextKey(key);
+                translateTextDTO.setSourceText(translation.path("value").asText(null));
+                translateTextDTO.setTextType(translation.path("type").asText(null));
+                translations.put(key, translateTextDTO);
             });
         }
         return translations;

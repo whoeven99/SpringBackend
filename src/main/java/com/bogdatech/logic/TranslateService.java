@@ -1,7 +1,6 @@
 package com.bogdatech.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.IUsersService;
@@ -18,14 +17,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.bogdatech.constants.TranslateConstants.*;
 import static com.bogdatech.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -35,8 +31,6 @@ import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 public class TranslateService {
     @Autowired
     private ITranslatesService translatesService;
-    @Autowired
-    private ITranslateTasksService translateTasksService;
     @Autowired
     private IUsersService iUsersService;
     @Autowired
@@ -52,9 +46,6 @@ public class TranslateService {
 
     // 判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
-
-    // 使用 ConcurrentHashMap 存储每个用户的邮件发送状态
-    public static ConcurrentHashMap<String, AtomicBoolean> userEmailStatus = new ConcurrentHashMap<>();
     public static ExecutorService executorService = Executors.newFixedThreadPool(50);
 
     /**
@@ -64,9 +55,6 @@ public class TranslateService {
 //         v2, 后面的以后删掉
         redisStoppedRepository.manuallyStopped(shopName);
         appInsights.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");
-
-        // 将Task表DB中的status改为5
-        translateTasksService.updateStatusAllTo5ByShopName(shopName);
 
         // 将翻译状态改为“部分翻译” shopName, status=3
         translatesService.updateStatusByShopNameAnd2(shopName);

@@ -18,6 +18,8 @@ public class WebConfig {
         configuration.addAllowedOrigin("*"); //允许所有域名
         configuration.addAllowedMethod("GET");  //允许的请求方式,get,put,post,delete
         configuration.addAllowedMethod("POST");
+        configuration.addAllowedMethod("PUT");
+        configuration.addAllowedMethod("DELETE");
         configuration.addAllowedHeader("*");//允许的头信息
 
         //初始化cors的源对象配置
