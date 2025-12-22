@@ -1,12 +1,9 @@
 package com.bogdatech.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.IUserTypeTokenService;
 import com.bogdatech.Service.IUsersService;
-import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.VO.*;
@@ -20,12 +17,10 @@ import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
-
 import static com.bogdatech.enums.ErrorEnum.*;
 import static com.bogdatech.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -42,8 +37,6 @@ public class TranslateController {
     private IUserTypeTokenService userTypeTokenService;
     @Autowired
     private UserTypeTokenService userTypeTokensService;
-    @Autowired
-    private ITranslateTasksService iTranslateTasksService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
     @Autowired
@@ -145,8 +138,8 @@ public class TranslateController {
             TranslateArrayVO translateArrayVO = new TranslateArrayVO();
             TranslatesDO[] translatesDOResult = new TranslatesDO[translatesDOS.length];
             int i = 0;
+
             // 初始化 flag用于判断前端是否要继续请求
-            boolean flag = false;
             for (TranslatesDO translatesDO : translatesDOS
             ) {
                 translatesDOResult[i] = translatesService.readTranslateDOByArray(translatesDO);
@@ -161,13 +154,7 @@ public class TranslateController {
                 i++;
             }
 
-            // 判断任务表里面是否存在该任务，存在将flag改为true
-            List<TranslateTasksDO> list = iTranslateTasksService.list(new LambdaQueryWrapper<TranslateTasksDO>().eq(TranslateTasksDO::getShopName, translatesDOS[0].getShopName()).in(TranslateTasksDO::getStatus, 0, 2));
-            if (!list.isEmpty()) {
-                flag = true;
-            }
             translateArrayVO.setTranslatesDOResult(translatesDOResult);
-            translateArrayVO.setFlag(flag);
             appInsights.trackTrace("readTranslateDOByArray : " + Arrays.toString(translatesDOS));
             return new BaseResponse<>().CreateSuccessResponse(translateArrayVO);
         } else {

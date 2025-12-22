@@ -1,27 +1,31 @@
 package com.bogdatech.controller;
 
 import com.bogdatech.Service.ICharsOrdersService;
-import com.bogdatech.Service.ITranslateTasksService;
 import com.bogdatech.Service.ITranslatesService;
 import com.bogdatech.Service.ITranslationCounterService;
 import com.bogdatech.Service.impl.TranslationCounterServiceImpl;
 import com.bogdatech.entity.DO.CharsOrdersDO;
-import com.bogdatech.entity.DO.TranslateTasksDO;
 import com.bogdatech.entity.DO.TranslatesDO;
 import com.bogdatech.entity.DO.TranslationCounterDO;
 import com.bogdatech.logic.redis.ConfigRedisRepo;
 import com.bogdatech.logic.redis.RedisStoppedRepository;
 import com.bogdatech.logic.redis.TranslateTaskMonitorV2RedisService;
+import com.bogdatech.logic.translate.TranslateV2Service;
+import com.bogdatech.logic.translate.stragety.HtmlTranslateStrategyService;
 import com.bogdatech.model.controller.response.ProgressResponse;
 import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.repository.repo.InitialTaskV2Repo;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogdatech.utils.LiquidHtmlTranslatorUtils.parseHtml;
 
 @RestController
 public class MonitorController {
@@ -29,8 +33,6 @@ public class MonitorController {
     private ICharsOrdersService charsOrdersService;
     @Autowired
     private ITranslatesService iTranslatesService;
-    @Autowired
-    private ITranslateTasksService translateTasksService;
     @Autowired
     private ITranslationCounterService translationCounterService;
     @Autowired
@@ -53,10 +55,6 @@ public class MonitorController {
         // 获取Translates表数据
         List<TranslatesDO> translatesDOS = iTranslatesService.listTranslatesDOByShopName(shopName);
         map.put("Translates", translatesDOS);
-
-        // 获取task表准备翻译和正在翻译的数据
-        List<TranslateTasksDO> translateTasksDOS = translateTasksService.listTranslateStatus2And0TasksByShopName(shopName);
-        map.put("TranslateTasks", translateTasksDOS);
 
         // 获取用户额度表数据
         TranslationCounterDO translationCounterDO = translationCounterService.getTranslationCounterByShopName(shopName);
@@ -87,6 +85,41 @@ public class MonitorController {
     public Map<String, String> config(@RequestParam String key) {
         configRedisRepo.delConfig(key);
         return configRedisRepo.getAllConfigs();
+    }
+
+    @Autowired
+    private TranslateV2Service translateV2Service;
+
+    @PostMapping("/promptTest")
+    public Map<String, Object> promptTest(@RequestBody Map<String, Object> map) {
+        return translateV2Service.testTranslate(map);
+    }
+
+    @PostMapping("htmlToJson")
+    public Map<Integer, String> htmlToJson(@RequestBody Map<String, Object> map) {
+        String value = map.get("html").toString();
+
+        value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
+
+        boolean hasHtmlTag = HtmlTranslateStrategyService.HTML_TAG_PATTERN.matcher(value).find();
+        Document doc = parseHtml(value, "en", hasHtmlTag);
+
+        List<TextNode> nodes = new ArrayList<>();
+        for (Element element : doc.getAllElements()) {
+            nodes.addAll(element.textNodes());
+        }
+
+        Map<Integer, String> ans = new HashMap<>();
+        // 生成json
+        int index = 0;
+        for (TextNode node : nodes) {
+            String text = node.text().trim();
+            if (!text.isEmpty()) {
+                ans.put(index, text);
+                index++;
+            }
+        }
+        return ans;
     }
 
     @PostMapping("/todoBConfig")

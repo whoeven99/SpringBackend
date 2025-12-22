@@ -38,6 +38,7 @@ import com.bogdatech.utils.JudgeTranslateUtils;
 import com.bogdatech.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +92,8 @@ public class TranslateV2Service {
     private IUsersService usersService;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -115,6 +118,22 @@ public class TranslateV2Service {
         returnVO.setTargetText(context.getTranslatedContent());
         returnVO.setTranslateVariables(context.getTranslateVariables());
         return BaseResponse.SuccessResponse(returnVO);
+    }
+
+    // For monitor
+    public Map<String, Object> testTranslate(Map<String, Object> map) {
+        String prompt = map.get("prompt").toString();
+        String target = map.get("target").toString();
+        Map<Integer, String> json = JsonUtils.jsonToObject(map.get("json").toString(), new TypeReference<Map<Integer, String>>() {});
+
+        prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", json.toString());
+        prompt = prompt.replace("{{TARGET_LANGUAGE}}", target);
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+
+        Map<String, Object> ans = new HashMap<>();
+        ans.put("content", pair.getFirst());
+        ans.put("allToken", pair.getSecond());
+        return ans;
     }
 
     // 手动开启翻译任务入口
@@ -802,13 +821,11 @@ public class TranslateV2Service {
     public void cleanTask(InitialTaskV2DO initialTaskV2DO) {
         appInsights.trackTrace("TranslateTaskV2 cleanTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
-            List<TranslateTaskV2DO> list = translateTaskV2Repo.selectByInitialTaskIdWithLimit(initialTaskV2DO.getId());
-            if (CollectionUtils.isEmpty(list)) {
+            int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
+            appInsights.trackTrace("TranslateTaskV2 cleanTask delete: " + deleted);
+            if (deleted <= 0) {
                 break;
             }
-
-            translateTaskV2Repo.deleteByIds(list.stream().map(TranslateTaskV2DO::getId).collect(Collectors.toList()));
-            appInsights.trackTrace("TranslateTaskV2 cleanTask delete: " + list.size());
         }
         initialTaskV2Repo.deleteById(initialTaskV2DO.getId());
     }
