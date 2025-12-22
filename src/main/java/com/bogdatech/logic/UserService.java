@@ -264,6 +264,10 @@ public class UserService {
         }
 
         String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
+        if (userDefaultTheme == null){
+            return new BaseResponse<>().CreateErrorResponse("userDefaultTheme is null");
+        }
+
         if (!themeId.equals(userDefaultTheme)) {
             // 发送主题邮件
             tencentEmailService.sendThemeEmail(shopName);
@@ -291,7 +295,7 @@ public class UserService {
         String defaultLanguageData = jsonNode.get("primary_locale").asText(null);
         String userDefaultLanguage = userInitialRedisService.getUserDefaultLanguage(shopName);
 
-        if (defaultLanguageData == null) {
+        if (defaultLanguageData == null || userDefaultLanguage == null) {
             return new BaseResponse<>().CreateErrorResponse("Default language data is null : " + data);
         }
 
