@@ -521,7 +521,7 @@ public class TranslateV2Service {
             boolean isHtml = randomDo.isSingleHtml();
             if (isHtml) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap);
-                ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("html");
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("HTML");
                 service.translate(context);
 
                 // 翻译后更新db
