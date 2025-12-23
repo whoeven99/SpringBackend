@@ -2,14 +2,13 @@ package com.bogdatech.integration;
 
 import com.bogdatech.utils.TimeOutUtils;
 import com.google.genai.Client;
-import com.google.genai.types.*;
+import com.google.genai.types.GenerateContentResponse;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
+import com.google.genai.types.*;
 import java.util.Base64;
 import java.util.List;
-
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.TimeOutUtils.*;
 import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
