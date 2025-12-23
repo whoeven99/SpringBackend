@@ -38,8 +38,10 @@ public class PCUsersService {
     private PCUserTrialsRepo pcUserTrialsRepo;
     @Autowired
     private OrdersRedisService ordersRedisService;
+    @Autowired
+    private PCEmailService pcEmailService;
 
-    public void initUser(String shopName, PCUsersDO pcUsersDO) {
+    public void initUser(String shopName, PCUsersDO pcUsersDO)  {
         // 获取用户是否存在 ，存在，做更新操作； 不存在，存储用户
         PCUsersDO pcUsers = pcUsersRepo.getUserByShopName(shopName);
         if (pcUsers == null) {
@@ -51,6 +53,9 @@ public class PCUsersService {
             pcUsersDO.setPurchasePoints(20000);
             pcUsersRepo.saveSingleUser(pcUsersDO);
             pcUserSubscriptionsRepo.insertUserSubscriptions(shopName, PCUserSubscriptionsRepo.FREE_PLAN);
+
+            // 发送用户新初始化的邮件
+            pcEmailService.sendPcInitialEmail(pcUsersDO.getEmail(), pcUsersDO.getFirstName());
         } else {
             Timestamp now = Timestamp.from(Instant.now());
             pcUsers.setEmail(pcUsersDO.getEmail());

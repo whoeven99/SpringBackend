@@ -6,7 +6,9 @@ import com.bogdatech.config.CurrencyConfig;
 import com.bogdatech.entity.DO.CurrenciesDO;
 
 import java.lang.reflect.Field;
+import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
@@ -55,5 +57,34 @@ public class ShopifyUtils {
             appInsights.trackTrace(" currency error :  " + e.getMessage());
         }
         return map;
+    }
+
+    /**
+     * 根据name 获取对应的额度
+     */
+    public static Integer getAmount(String name){
+        return switch (name) {
+            case "50 extra times" -> 100000;
+            case "100 extra times" -> 200000;
+            case "200 extra times" -> 400000;
+            case "300 extra times" -> 600000;
+            case "500 extra times" -> 1000000;
+            case "1000 extra times" -> 2000000;
+            case "2000 extra times" -> 4000000;
+            case "3000 extra times" -> 6000000;
+            default -> 0;
+        };
+    }
+
+    /**
+     * 数字类数据，转为千分位
+     */
+    public static String getNumberFormat(String number){
+        if (number == null || number.isEmpty()) {
+            return number;
+        }
+        return NumberFormat
+                .getNumberInstance(Locale.CHINA)
+                .format(Long.parseLong(number));
     }
 }
