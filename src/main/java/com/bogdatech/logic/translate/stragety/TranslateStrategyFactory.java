@@ -25,6 +25,14 @@ public class TranslateStrategyFactory {
                 .collect(Collectors.toUnmodifiableMap(ITranslateStrategyService::getType, Function.identity()));
     }
 
+    public ITranslateStrategyService getServiceByStrategy(String strategy) {
+        ITranslateStrategyService service = serviceMap.get(strategy);
+        if (service == null) {
+            throw new FatalException("Invalid strategy type: " + strategy);
+        }
+        return service;
+    }
+
     public ITranslateStrategyService getServiceByContext(TranslateContext ctx) {
         String strategy;
         if (ctx.getOriginalTextMap() != null && !ctx.getOriginalTextMap().isEmpty()) {

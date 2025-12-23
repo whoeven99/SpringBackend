@@ -44,6 +44,16 @@ public class TranslateContext {
 
     private Map<String, String> translateVariables = new HashMap<>();
 
+    // For html
+    public TranslateContext(String content, String targetLanguage, Map<String, GlossaryDO> glossaryMap) {
+        this.content = content;
+        this.targetLanguage = targetLanguage;
+        this.glossaryMap = glossaryMap;
+
+        this.startTime = System.currentTimeMillis();
+        this.translatedChars = content.length();
+    }
+
     // For single
     public TranslateContext(String content, String targetLanguage, String type, String key, Map<String, GlossaryDO> glossaryMap) {
         this.content = content;
