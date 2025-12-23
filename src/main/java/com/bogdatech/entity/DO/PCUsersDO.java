@@ -18,13 +18,13 @@ public class PCUsersDO {
     private Integer id;
     private String shopName;
     private String accessToken;
-    private Integer purchasePoints;
-    private Integer usedPoints;
+    private Integer purchasePoints; //购买点数
+    private Integer usedPoints; // 使用点数
     private String email;
     private String phone;
     private String realAddress;
     private String ipAddress;
-    private String userTag;
+    private String userTag; // 用户名全称
     private String firstName;
     private String lastName;
     private Timestamp uninstallTime;

@@ -24,6 +24,16 @@ public class MailChimpConstants {
 
 
     // from_email
+    public static final String PC_PURCHASE_EMAIL = "Image Translation Credits Have Been Added Successfully"; //发送购买额度邮件
+    // 发送首次登录安装邮件
+    public static final String PC_FIRST_INSTALL_EMAIL = "Welcome to Ciwi Image Translate — Start Localizing Your Images Instantly";
+    // 计划订阅成功
+    public static final String PC_PLAN_SUBSCRIBE_SUCCESSFUL = "Your Ciwi Image Translate Subscription Is Now Active";
+    // 订阅计划更新额度
+    public static final String PC_PLAN_UPGRADE_SUCCESSFUL = "Your Plan Has Renewed — Ciwi Image Translate";
+    // 批量任务完成的邮件
+    public static final String PC_TASK_FINISH_EMAIL = "Image Translation Task Is Complete — Ciwi Image Translate";
+    //from_email
     public static final String CC_EMAIL = "feynman@ciwi.ai";
     public static final String[] CC_EMAIL_ARRAY = {"feynman@ciwi.ai", "yewen@ciwi.ai"};
     public static final String TENCENT_FROM_EMAIL = "support@msg.ciwi.ai";

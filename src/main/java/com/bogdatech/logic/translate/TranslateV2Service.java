@@ -542,11 +542,11 @@ public class TranslateV2Service {
                 List<TranslateTaskV2DO> taskList = new ArrayList<>();
                 int totalChars = 0;
                 for (TranslateTaskV2DO task : originTaskList) {
+                    taskList.add(task);
                     totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(task.getSourceValue());
                     if (totalChars > 600) {
                         break;
                     }
-                    taskList.add(task);
                 }
 
                 Map<Integer, String> idToSourceValueMap = taskList.stream()

@@ -42,7 +42,7 @@ public class PCUsersService {
     @Autowired
     private PCEmailService pcEmailService;
 
-    public void initUser(String shopName, PCUsersDO pcUsersDO) {
+    public void initUser(String shopName, PCUsersDO pcUsersDO)  {
         // 获取用户是否存在 ，存在，做更新操作； 不存在，存储用户
         PCUsersDO pcUsers = pcUsersRepo.getUserByShopName(shopName);
         if (pcUsers == null) {
@@ -56,7 +56,7 @@ public class PCUsersService {
             pcUserSubscriptionsRepo.insertUserSubscriptions(shopName, PCUserSubscriptionsRepo.FREE_PLAN);
 
             // 发送用户新初始化的邮件
-//            tencentEmailService.sendPc
+            pcEmailService.sendPcInitialEmail(pcUsersDO.getEmail(), pcUsersDO.getFirstName());
         } else {
             Timestamp now = Timestamp.from(Instant.now());
             pcUsers.setEmail(pcUsersDO.getEmail());
