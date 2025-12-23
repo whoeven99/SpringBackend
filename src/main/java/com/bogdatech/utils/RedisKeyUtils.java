@@ -11,7 +11,5 @@ public class RedisKeyUtils {
     public static final Long DAY_1 = 86400L;
     // 对clientId去重 set
     public static final String CLIENT_ID_SET = "ci:{shopName}:{language}:{yyyyMMdd}:{eventName}";
-    // redis 存用户查询语言状态（翻译状态）
-    public static final String TRANSLATE_USER_STATUS = "us:{shopName}:{sourceCode}:{targetCode}";
     public static final String STOPPED_FLAG = "tsk:stp:{shopName}";
 }

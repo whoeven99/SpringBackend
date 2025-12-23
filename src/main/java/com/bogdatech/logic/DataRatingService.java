@@ -14,11 +14,9 @@ import com.bogdatech.entity.DO.UsersDO;
 import com.bogdatech.entity.DO.WidgetConfigurationsDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import static com.bogdatech.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogdatech.constants.TranslateConstants.IS_PUBLISH;
 import static com.bogdatech.requestBody.ShopifyRequestBody.getShopLanguageQuery;
@@ -34,8 +32,6 @@ public class DataRatingService {
     private ITranslatesService iTranslatesService;
     @Autowired
     private IUsersService iUsersService;
-    @Autowired
-    private RedisTranslateUserStatusService redisTranslateUserStatusService;
     @Autowired
     private ShopifyService shopifyService;
 
@@ -115,7 +111,6 @@ public class DataRatingService {
         for (TranslatesDO translatesDO : list
         ) {
             if (statusMap.containsKey(getLanguageName(translatesDO.getTarget()))) {
-                redisTranslateUserStatusService.saveTranslateStatus(shopName, translatesDO.getTarget(), source, String.valueOf(translatesDO.getStatus()));
                 statusMap.put(getLanguageName(translatesDO.getTarget()), translatesDO.getStatus());
             }
         }
