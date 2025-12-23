@@ -3,6 +3,7 @@ package com.bogdatech.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.bogdatech.entity.VO.GptVO;
 import com.bogdatech.entity.VO.UserDataReportVO;
+import com.bogdatech.integration.GeminiIntegration;
 import com.bogdatech.logic.RedisDataReportService;
 import com.bogdatech.logic.RedisProcessService;
 import com.bogdatech.model.controller.request.CloudServiceRequest;
@@ -10,6 +11,7 @@ import com.bogdatech.model.controller.request.ShopifyRequest;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.task.IpEmailTask;
 import com.microsoft.applicationinsights.TelemetryClient;
+import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,16 @@ public class TestController {
     private RedisDataReportService redisDataReportService;
     @Autowired
     private IpEmailTask ipEmailTask;
+    @Autowired
+    private GeminiIntegration geminiIntegration;
+
+    @PostMapping("/test")
+    public String test() {
+        String prompt = "翻译下面文本为中文： hello word";
+
+        Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText("gemini-2.5-flash", prompt);
+        return stringIntegerPair.getFirst();
+    }
 
     @GetMapping("/ping")
     public String ping() {

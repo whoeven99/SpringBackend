@@ -128,6 +128,8 @@ public class TranslateV2Service {
 
         prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", json.toString());
         prompt = prompt.replace("{{TARGET_LANGUAGE}}", target);
+
+        //TODO 接入多个模型
         Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
 
         Map<String, Object> ans = new HashMap<>();
