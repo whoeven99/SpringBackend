@@ -13,8 +13,13 @@ import com.bogdatech.task.IpEmailTask;
 import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.BufferedInputStream;
+import java.net.URL;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +43,26 @@ public class TestController {
 
         Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText("gemini-2.5-flash", prompt);
         return stringIntegerPair.getFirst();
+    }
+
+    @PostMapping("/testPic")
+    public ResponseEntity<byte[]> testPic() {
+        String picUrl = "https://cdn.shopify.com/s/files/1/0892/3437/5004/files/ChatGPT_Image_Jun_25_2025_10_33_50_AM_ac0e4bff-73f3-4065-80dc-9801cb862bc3.png?v=1750856533";
+        String prompt = "翻译图片里面的文本为简体中文";
+        byte[] imageBytes;
+        try (BufferedInputStream in = new BufferedInputStream(new URL(picUrl).openStream())) {
+            imageBytes = in.readAllBytes();
+            Pair<String, Integer> stringIntegerPair = geminiIntegration.generateImage("gemini-2.5-flash", prompt, imageBytes, "image/png");
+
+            String first = stringIntegerPair.getFirst();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_PNG) // 或 IMAGE_JPEG
+                    .body(Base64.getDecoder().decode(first));
+        } catch (Exception e) {
+            appInsights.trackException(e);
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @GetMapping("/ping")
