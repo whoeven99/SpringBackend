@@ -12,3 +12,6 @@ create table Glossary
     updated_date   datetime default getutcdate()
 )
 go
+
+CREATE INDEX idx_glossary_shop ON glossary (shop_name);
+CREATE INDEX idx_shop_range ON glossary (shop_name, range_code);

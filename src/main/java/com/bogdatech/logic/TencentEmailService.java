@@ -10,7 +10,6 @@ import com.bogdatech.repository.entity.InitialTaskV2DO;
 import com.bogdatech.utils.ApiCodeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -21,9 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import static com.bogdatech.constants.MailChimpConstants.*;
-import static com.bogdatech.constants.TranslateConstants.SHOP_NAME;
 import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 import static com.bogdatech.utils.StringUtils.parseShopName;
 
@@ -290,5 +287,49 @@ public class TencentEmailService {
                     return String.format("<li>%s - %d visitors</li>\n", displayName, value);
                 })
                 .collect(Collectors.joining());
+    }
+
+    public Boolean sendInitialUserEmail(long emailId, Map<String, String> templateData, String firstInstallSubject, String tencentFromEmail, String email) {
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(emailId,
+                templateData, firstInstallSubject, tencentFromEmail, email));
+    }
+
+    public void sendThemeEmail(String shopName) {
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("name", usersDO.getFirstName());
+
+        // 定义要移除的后缀
+        String name = parseShopName(shopName);
+        templateData.put("admin", name);
+        Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159294L,
+                templateData, MailChimpConstants.USER_THEME_EMAIL, TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
+        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_THEME_EMAIL, flag ? 1 : 0));
+    }
+
+    public void sendDefaultLanguageEmail(String shopName) {
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("username", usersDO.getFirstName());
+
+        // 定义要移除的后缀
+        String name = parseShopName(shopName);
+        templateData.put("admin", name);
+        Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159295L,
+                templateData, MailChimpConstants.USER_LANGUAGE_EMAIL, TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
+        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_LANGUAGE_EMAIL, flag ? 1 : 0));
+    }
+
+    public void sendThemeSwitchEmail(String shopName) {
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("username", usersDO.getFirstName());
+
+        // 定义要移除的后缀
+        String name = parseShopName(shopName);
+        templateData.put("admin", name);
+        Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159296L,
+                templateData, MailChimpConstants.USER_SWITCH_EMAIL, TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
+        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_SWITCH_EMAIL, flag ? 1 : 0));
     }
 }
