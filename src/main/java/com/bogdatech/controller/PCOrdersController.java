@@ -1,5 +1,6 @@
 package com.bogdatech.controller;
 
+import com.bogdatech.entity.VO.PCEmailVO;
 import com.bogdatech.logic.PCApp.PCOrdersService;
 import com.bogdatech.model.controller.response.BaseResponse;
 import com.bogdatech.repository.entity.PCOrdersDO;
@@ -22,9 +23,22 @@ public class PCOrdersController {
 
     /**
      * 查询用户最新一次订阅状态为Active的订阅id
-     * */
+     */
     @PostMapping("/getLatestActiveSubscribeId")
     public BaseResponse<Object> getLatestActiveSubscribeId(@RequestParam String shopName) {
         return pcOrdersService.getLatestActiveSubscribeId(shopName);
     }
+
+    // 发送购买计划成功的邮件
+    @PostMapping("/sendSubscribeSuccessEmail")
+    public BaseResponse<Object> sendSubscribeSuccessEmail(@RequestParam String shopName, @RequestBody PCEmailVO pcEmailVO) {
+        return pcOrdersService.sendSubscribeSuccessEmail(shopName, pcEmailVO.getSubscribeData());
+    }
+
+    // 发送一次性购买成功的邮件
+    @PostMapping("/sendOneTimeBuySuccessEmail")
+    public BaseResponse<Object> sendOneTimeBuySuccessEmail(@RequestParam String shopName, @RequestBody PCEmailVO pcEmailVO) {
+        return pcOrdersService.sendOneTimeBuySuccessEmail(shopName, pcEmailVO.getOneTimePurchaseData());
+    }
+
 }
