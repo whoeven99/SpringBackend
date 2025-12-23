@@ -43,7 +43,7 @@ public class PCUserPicturesService {
     @Autowired
     private UserTokenService userTokenService;
 
-    public static String CDN_URL = "https://img.bogda.api.com";
+    public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
     public static int APP_PIC_FEE = 2000;  // alt和pic翻译一块扣除
 
