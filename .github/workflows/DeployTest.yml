@@ -19,14 +19,15 @@ jobs:
           java-version: '21'
           distribution: 'microsoft'
 
-      - name: Build with Maven
+      - name: Build BogdaApi module with Maven
+        working-directory: ./BogdaApi
         run: mvn clean install
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          path: 'BogdaApi/target/*.jar'
 
   deploy:
     runs-on: ubuntu-latest
@@ -57,4 +58,3 @@ jobs:
           app-name: 'SpringBackendService'
           slot-name: 'Production'
           package: '*.jar'
-          
