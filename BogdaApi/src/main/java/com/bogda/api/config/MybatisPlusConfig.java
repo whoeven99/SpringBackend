@@ -34,10 +34,10 @@ public class MybatisPlusConfig {
             dataSource.setPassword(properties.getProperty("spring.datasource.master.password"));
             dataSource.setDriverClassName(properties.getProperty("spring.datasource.master.driver-class-name"));
         } else {
-            dataSource.setUrl(properties.getProperty("spring.datasource.test.url"));
-            dataSource.setUsername(properties.getProperty("spring.datasource.test.username"));
-            dataSource.setPassword(properties.getProperty("spring.datasource.test.password"));
-            dataSource.setDriverClassName(properties.getProperty("spring.datasource.test.driver-class-name"));
+            dataSource.setUrl(properties.getProperty("spring.datasource.url"));
+            dataSource.setUsername(properties.getProperty("spring.datasource.username"));
+            dataSource.setPassword(properties.getProperty("spring.datasource.password"));
+            dataSource.setDriverClassName(properties.getProperty("spring.datasource.driver-class-name"));
         }
         return dataSource;
     }
