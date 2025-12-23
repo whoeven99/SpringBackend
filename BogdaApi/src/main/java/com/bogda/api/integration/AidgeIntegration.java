@@ -301,8 +301,8 @@ public class AidgeIntegration {
         // Calculate sign
         StringBuilder sign = new StringBuilder();
         try {
-            javax.crypto.SecretKey secretKey = new javax.crypto.spec.SecretKeySpec(ApiConfig.ACCESS_KEY_SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance(secretKey.getAlgorithm());
+            SecretKey secretKey = new SecretKeySpec(ApiConfig.ACCESS_KEY_SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
+            Mac mac = Mac.getInstance(secretKey.getAlgorithm());
             mac.init(secretKey);
             byte[] bytes = mac.doFinal((ApiConfig.ACCESS_KEY_SECRET + timestamp).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             for (int i = 0; i < bytes.length; i++) {

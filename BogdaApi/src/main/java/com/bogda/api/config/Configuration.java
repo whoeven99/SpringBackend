@@ -17,6 +17,11 @@ public class Configuration {
 
         ClassPathResource resource = new ClassPathResource(fileName);
 
+        var ss = resource.exists();
+
+         resource = new ClassPathResource("application.properties");
+        var ss1 = resource.exists();
+
         try (InputStream in = resource.getInputStream()) {
             properties.load(in);
         }
