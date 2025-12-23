@@ -9,8 +9,8 @@
         <version>0.0.2</version>
     </parent>
 
-    <groupId>com.bogda</groupId>
-    <artifactId>BogdaApi</artifactId>
+    <groupId>com.bogda.common</groupId>
+    <artifactId>BogdaCommon</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -19,7 +19,6 @@
     </properties>
 
     <dependencies>
-
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -264,14 +263,6 @@
             <version>5.18.0</version>
             <scope>test</scope>
         </dependency>
-        <!-- Aidge图片翻译 -->
-        <dependency>
-            <groupId>com.company</groupId>
-            <artifactId>aidge</artifactId>
-            <version>1.0.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/aidge.jar</systemPath>
-        </dependency>
     </dependencies>
 
     <build>
@@ -279,11 +270,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
-                </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>
