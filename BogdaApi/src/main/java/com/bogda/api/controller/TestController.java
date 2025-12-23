@@ -52,7 +52,7 @@ public class TestController {
         byte[] imageBytes;
         try (BufferedInputStream in = new BufferedInputStream(new URL(picUrl).openStream())) {
             imageBytes = in.readAllBytes();
-            Pair<String, Integer> stringIntegerPair = geminiIntegration.generateImage("gemini-2.5-flash", prompt, imageBytes, "image/png");
+            Pair<String, Integer> stringIntegerPair = geminiIntegration.generateImage("gemini-2.5-flash-image", prompt, imageBytes, "image/png");
 
             String first = stringIntegerPair.getFirst();
             return ResponseEntity.ok()
