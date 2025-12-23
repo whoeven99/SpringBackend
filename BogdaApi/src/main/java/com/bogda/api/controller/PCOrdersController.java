@@ -30,13 +30,13 @@ public class PCOrdersController {
 
     // 发送购买计划成功的邮件
     @PostMapping("/sendSubscribeSuccessEmail")
-    public BaseResponse<Object> sendSubscribeSuccessEmail(@RequestParam String shopName, @RequestBody PCEmailVO pcEmailVO) {
+    public BaseResponse<Object> sendSubscribeSuccessEmail(@RequestParam String shopName, @RequestBody com.bogdatech.entity.VO.PCEmailVO pcEmailVO) {
         return pcOrdersService.sendSubscribeSuccessEmail(shopName, pcEmailVO.getSubscribeData());
     }
 
     // 发送一次性购买成功的邮件
     @PostMapping("/sendOneTimeBuySuccessEmail")
-    public BaseResponse<Object> sendOneTimeBuySuccessEmail(@RequestParam String shopName, @RequestBody PCEmailVO pcEmailVO) {
+    public BaseResponse<Object> sendOneTimeBuySuccessEmail(@RequestParam String shopName, @RequestBody com.bogdatech.entity.VO.PCEmailVO pcEmailVO) {
         return pcOrdersService.sendOneTimeBuySuccessEmail(shopName, pcEmailVO.getOneTimePurchaseData());
     }
 

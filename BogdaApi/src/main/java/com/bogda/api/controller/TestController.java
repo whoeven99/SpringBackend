@@ -3,6 +3,7 @@ package com.bogda.api.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.entity.VO.GptVO;
 import com.bogda.api.entity.VO.UserDataReportVO;
+import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.logic.RedisDataReportService;
 import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.model.controller.request.CloudServiceRequest;

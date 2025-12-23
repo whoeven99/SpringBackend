@@ -1,8 +1,14 @@
 package com.bogda.api.logic.PCApp;
 
+import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.repository.entity.PCOrdersDO;
 import com.bogda.api.repository.repo.PCOrdersRepo;
+import com.bogda.api.repository.repo.PCSubscriptionsRepo;
+import com.bogda.api.repository.repo.PCUsersRepo;
+import com.bogda.api.utils.JsonUtils;
+import com.bogda.api.utils.ShopifyUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +16,8 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+
 
 @Component
 public class PCOrdersService {

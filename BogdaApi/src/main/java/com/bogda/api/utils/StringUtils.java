@@ -1,5 +1,6 @@
 package com.bogda.api.utils;
 
+import com.bogda.api.entity.DO.TranslateResourceDTO;
 import com.bogda.api.entity.DTO.SimpleMultipartFileDTO;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.core.dependencies.apachecommons.io.FilenameUtils;
@@ -9,7 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -262,7 +263,7 @@ public class StringUtils {
      * */
     public static List<String> sortTranslateData(List<String> list){
         // 1. 提取 ALL_RESOURCES 中的顺序
-        List<String> orderList = ALL_RESOURCES.stream()
+        List<String> orderList = TranslateResourceDTO.ALL_RESOURCES.stream()
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
 
