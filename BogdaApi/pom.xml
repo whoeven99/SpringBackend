@@ -9,6 +9,7 @@
         <version>0.0.2</version>
     </parent>
 
+    <groupId>com.bogda</groupId>
     <artifactId>BogdaApi</artifactId>
 
     <properties>
@@ -274,12 +275,10 @@
 
     <build>
         <plugins>
-            <!-- Spring Boot 可执行jar打包插件 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.bogda.task.Main</mainClass>
                     <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
                 </configuration>
             </plugin>
