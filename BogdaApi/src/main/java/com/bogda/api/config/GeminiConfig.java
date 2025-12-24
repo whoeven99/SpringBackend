@@ -1,6 +1,6 @@
-package com.bogdatech.config;
+package com.bogda.api.config;
 
-import com.bogdatech.utils.ConfigUtils;
+import com.bogda.api.utils.ConfigUtils;
 import com.google.genai.Client;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
