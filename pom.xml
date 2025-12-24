@@ -269,7 +269,7 @@
 			<scope>system</scope>
 			<systemPath>${project.basedir}/libs/aidge.jar</systemPath>
 		</dependency>
-		<!-- google相关 -->
+		<!-- google Gemini相关 -->
 		<dependency>
 			<groupId>com.google.genai</groupId>
 			<artifactId>google-genai</artifactId>
