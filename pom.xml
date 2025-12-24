@@ -11,9 +11,14 @@
 	<groupId>com.example</groupId>
 	<artifactId>spring-backend</artifactId>
 	<version>0.0.2</version>
-	<name>bogda-backend-java-app</name>
+    <packaging>pom</packaging>
+    <name>bogda-backend-java-app</name>
 	<description>BogdaApplication</description>
-	<properties>
+    <modules>
+        <module>BogdaApi</module>
+        <module>BogdaTask</module>
+    </modules>
+    <properties>
 		<java.version>17</java.version>
 	</properties>
 	<dependencies>
@@ -261,14 +266,6 @@
 			<version>5.18.0</version>
 			<scope>test</scope>
 		</dependency>
-		<!-- Aidge图片翻译 -->
-		<dependency>
-			<groupId>com.company</groupId>
-			<artifactId>aidge</artifactId>
-			<version>1.0.0</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/libs/aidge.jar</systemPath>
-		</dependency>
 		<!-- google Gemini相关 -->
 		<dependency>
 			<groupId>com.google.genai</groupId>
@@ -282,9 +279,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
-                </configuration>
 			</plugin>
 		</plugins>
 	</build>
