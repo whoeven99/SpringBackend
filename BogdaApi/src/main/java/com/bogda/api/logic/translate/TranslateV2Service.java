@@ -166,7 +166,7 @@ public class TranslateV2Service {
      */
     private Map<String, Object> handleAliYun(String prompt, String target) {
         Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-        return buildResponse(pair.getFirst(), pair.getSecond());
+        return buildResponse(pair.getFirst(), pair.getSecond(), "text");
     }
 
     /**
@@ -175,7 +175,7 @@ public class TranslateV2Service {
     private Map<String, Object> handleGemini(String model, String prompt, String picUrl) throws Exception {
         if (picUrl == null) {
             Pair<String, Integer> pair = geminiIntegration.generateText(model, prompt);
-            return buildResponse(pair.getFirst(), pair.getSecond());
+            return buildResponse(pair.getFirst(), pair.getSecond(), "text");
         }
 
         // 图片处理逻辑
@@ -190,20 +190,19 @@ public class TranslateV2Service {
             byte[] imageBytes = in.readAllBytes();
             Pair<String, Integer> pair = geminiIntegration.generateImage(model, prompt, imageBytes, mimeType);
 
-            // 构建包含 MediaType 的响应对象
-            MediaType mediaType = PictureUtils.getMediaTypeByImageType(mimeType);
-            ResponseEntity<byte[]> responseEntity = ResponseEntity.ok()
-                    .contentType(mediaType)
-                    .body(Base64.getDecoder().decode(pair.getFirst()));
+            // 拼接成前端可以直接识别的 Data URL 格式
+            // 最终格式示例：data:image/png;base64,iVBORw0KGgoAAA...
+            String dataUrl = "data:" + mimeType + ";base64," + pair.getFirst();
 
-            return buildResponse(responseEntity, pair.getSecond());
+            return buildResponse(dataUrl, pair.getSecond(), "pic");
         }
     }
 
-    private Map<String, Object> buildResponse(Object content, Integer tokens) {
+    private Map<String, Object> buildResponse(Object content, Integer tokens, String translateModel) {
         Map<String, Object> ans = new HashMap<>();
         ans.put("content", content);
         ans.put("allToken", tokens);
+        ans.put("translateModel", translateModel);
         return ans;
     }
 
