@@ -67,6 +67,7 @@ public class GeminiIntegration {
      */
     public Pair<String, Integer> generateImage(String model, String prompt, byte[] picBytes, String mimeType) {
         try {
+            appInsights.trackTrace("model : " + model + " translateText : " + prompt + " picBytes : " + picBytes + " mimeType : " + mimeType);
             Content content = Content.fromParts(Part.fromText(prompt), Part.fromBytes(picBytes, mimeType));
             GenerateContentConfig config = GenerateContentConfig.builder().responseModalities(List.of("IMAGE")).build();// 关键：指定输出图片
             GenerateContentResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
