@@ -23,6 +23,7 @@ public class GeminiIntegration {
     public Pair<String, Integer> generateText(String model, String prompt) {
         // 发送对话请求
         try {
+            appInsights.trackTrace("model : " + model + " translateText : " + prompt);
             GenerateContentResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
                         try {
                             return client.models.generateContent(
@@ -64,6 +65,7 @@ public class GeminiIntegration {
      */
     public Pair<String, Integer> generateImage(String model, String prompt, byte[] picBytes, String mimeType) {
         try {
+            appInsights.trackTrace("model : " + model + " translateText : " + prompt + " picBytes : " + picBytes + " mimeType : " + mimeType);
             Content content = Content.fromParts(Part.fromText(prompt), Part.fromBytes(picBytes, mimeType));
             GenerateContentConfig config = GenerateContentConfig.builder().responseModalities(List.of("IMAGE")).build();// 关键：指定输出图片
             GenerateContentResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
@@ -87,7 +89,7 @@ public class GeminiIntegration {
             if (response == null) {
                 return new Pair<>(null, 0);
             }
-
+            appInsights.trackTrace("generateImage 模型说明: " + response.toString());
             byte[] translatedBytes = new byte[0];
 
             for (Part part : response.parts()) {
