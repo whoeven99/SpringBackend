@@ -1,6 +1,6 @@
-package com.bogdatech.integration;
+package com.bogda.api.integration;
 
-import com.bogdatech.utils.TimeOutUtils;
+import com.bogda.api.utils.TimeOutUtils;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
 import kotlin.Pair;
@@ -9,9 +9,8 @@ import org.springframework.stereotype.Component;
 import com.google.genai.types.*;
 import java.util.Base64;
 import java.util.List;
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
-import static com.bogdatech.utils.TimeOutUtils.*;
-import static com.bogdatech.utils.TimeOutUtils.DEFAULT_MAX_RETRIES;
+import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
 public class GeminiIntegration {
@@ -63,9 +62,9 @@ public class GeminiIntegration {
     /**
      * gemini 图片调用
      */
-    public Pair<String, Integer> generateImage(String model, String prompt, byte[] picBytes, String picType) {
+    public Pair<String, Integer> generateImage(String model, String prompt, byte[] picBytes, String mimeType) {
         try {
-            Content content = Content.fromParts(Part.fromText(prompt), Part.fromBytes(picBytes, picType));
+            Content content = Content.fromParts(Part.fromText(prompt), Part.fromBytes(picBytes, mimeType));
             GenerateContentConfig config = GenerateContentConfig.builder().responseModalities(List.of("TEXT", "IMAGE")).build();// 关键：指定输出图片
             GenerateContentResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
                         try {
@@ -94,7 +93,8 @@ public class GeminiIntegration {
             for (Part part : response.parts()) {
                 if (part.text().isPresent()) {
                     appInsights.trackTrace("模型说明: " + part.text().get());
-                } else if (part.inlineData().isPresent()) {
+                }
+                if (part.inlineData().isPresent()) {
                     var blob = part.inlineData().get();
                     if (blob.data().isPresent()) {
                         translatedBytes = blob.data().get();
@@ -102,7 +102,6 @@ public class GeminiIntegration {
                     }
                 }
             }
-
 
             var usage = response.usageMetadata().orElse(null);
             int inputToken = (usage != null) ? usage.promptTokenCount().orElse(0) : 0;

@@ -1,9 +1,11 @@
 package com.bogda.api.utils;
 
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -93,4 +95,26 @@ public class PictureUtils {
         return null;
     }
 
+    /**
+     * 根据图片格式输出-MediaType类型
+     */
+    public static MediaType getMediaTypeByImageType(String imageType) {
+        return switch (imageType) {
+            case "png" -> MediaType.IMAGE_PNG;
+            case "jpg", "jpeg" -> MediaType.IMAGE_JPEG;
+            case "webp" -> MediaType.parseMediaType("image/webp");
+            case "heic" -> MediaType.parseMediaType("image/heic");
+            case "heif" -> MediaType.parseMediaType("image/heif");
+            default -> null;
+        };
+    }
+
+    public static final Map<String, String> IMAGE_MIME_MAP = Map.of(
+            "png",  "image/png",
+            "jpeg", "image/jpeg",
+            "jpg",  "image/jpeg",
+            "webp", "image/webp",
+            "heic", "image/heic",
+            "heif", "image/heif"
+    );
 }
