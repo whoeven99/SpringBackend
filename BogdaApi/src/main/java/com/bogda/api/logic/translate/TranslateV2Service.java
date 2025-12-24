@@ -12,6 +12,7 @@ import com.bogda.api.entity.VO.SingleReturnVO;
 import com.bogda.api.entity.VO.SingleTranslateVO;
 import com.bogda.api.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
+import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.logic.GlossaryService;
@@ -32,19 +33,21 @@ import com.bogda.api.repository.entity.TranslateTaskV2DO;
 import com.bogda.api.repository.repo.InitialTaskV2Repo;
 import com.bogda.api.repository.repo.TranslateTaskV2Repo;
 import com.bogda.api.requestBody.ShopifyRequestBody;
-import com.bogda.api.utils.JsonUtils;
-import com.bogda.api.utils.JsoupUtils;
-import com.bogda.api.utils.JudgeTranslateUtils;
-import com.bogda.api.utils.ShopifyRequestUtils;
+import com.bogda.api.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.net.URL;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -94,6 +97,8 @@ public class TranslateV2Service {
     private ITranslatesService translatesService;
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private GeminiIntegration geminiIntegration;
 
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
@@ -124,18 +129,88 @@ public class TranslateV2Service {
 
     // For monitor
     public Map<String, Object> testTranslate(Map<String, Object> map) {
-        String prompt = map.get("prompt").toString();
-        String target = map.get("target").toString();
-        Map<Integer, String> json = JsonUtils.jsonToObject(map.get("json").toString(), new TypeReference<Map<Integer, String>>() {});
+        // 1. 提取并校验参数
+        String model = String.valueOf(map.getOrDefault("model", ""));
+        String prompt = String.valueOf(map.getOrDefault("prompt", ""));
+        String target = String.valueOf(map.getOrDefault("target", ""));
+        String picUrl = (map.get("picUrl") != null) ? map.get("picUrl").toString() : null;
 
-        prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", json.toString());
-        prompt = prompt.replace("{{TARGET_LANGUAGE}}", target);
+        // 解析 JSON 列表并替换占位符
+        try {
+            String jsonStr = String.valueOf(map.getOrDefault("json", "{}"));
+            Map<Integer, String> languageMap = JsonUtils.jsonToObject(jsonStr, new TypeReference<Map<Integer, String>>() {});
+            prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", languageMap.toString())
+                    .replace("{{TARGET_LANGUAGE}}", target);
+        } catch (Exception e) {
+            appInsights.trackTrace("FatalException testTranslate JSON parsing failed: " + e.getMessage());
+            return defaultNullMap();
+        }
+
+        // 2. 模型路由调度
+        try {
+            if (model.contains("qwen")) {
+                return handleAliYun(prompt, target);
+            } else if (model.contains("gemini")) {
+                return handleGemini(model, prompt, picUrl);
+            }
+        } catch (Exception e) {
+            appInsights.trackException(e);
+            appInsights.trackTrace("FatalException in testTranslate: " + e.getMessage());
+        }
+
+        return defaultNullMap();
+    }
+
+    /**
+     * 处理通义千问逻辑
+     */
+    private Map<String, Object> handleAliYun(String prompt, String target) {
         Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+        return buildResponse(pair.getFirst(), pair.getSecond(), "text");
+    }
 
+    /**
+     * 处理 Gemini 逻辑 (包含多模态判断)
+     */
+    private Map<String, Object> handleGemini(String model, String prompt, String picUrl) throws Exception {
+        if (picUrl == null) {
+            Pair<String, Integer> pair = geminiIntegration.generateText(model, prompt);
+            return buildResponse(pair.getFirst(), pair.getSecond(), "text");
+        }
+
+        // 图片处理逻辑
+        String picType = PictureUtils.getExtensionFromUrl(picUrl);
+        String mimeType = (picType != null) ? PictureUtils.IMAGE_MIME_MAP.get(picType.toLowerCase()) : null;
+
+        if (mimeType == null) {
+            return defaultNullMap();
+        }
+
+        try (InputStream in = new URL(picUrl).openStream()) {
+            byte[] imageBytes = in.readAllBytes();
+            Pair<String, Integer> pair = geminiIntegration.generateImage(model, prompt, imageBytes, mimeType);
+
+            // 拼接成前端可以直接识别的 Data URL 格式
+            // 最终格式示例：data:image/png;base64,iVBORw0KGgoAAA...
+            String dataUrl = "data:" + mimeType + ";base64," + pair.getFirst();
+
+            return buildResponse(dataUrl, pair.getSecond(), "pic");
+        }
+    }
+
+    private Map<String, Object> buildResponse(Object content, Integer tokens, String translateModel) {
         Map<String, Object> ans = new HashMap<>();
-        ans.put("content", pair.getFirst());
-        ans.put("allToken", pair.getSecond());
+        ans.put("content", content);
+        ans.put("allToken", tokens);
+        ans.put("translateModel", translateModel);
         return ans;
+    }
+
+    private Map<String, Object> defaultNullMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("content", "error");
+        map.put("allToken", 0);
+        return map;
     }
 
     // 手动开启翻译任务入口
