@@ -91,7 +91,7 @@ public class GeminiIntegration {
             if (response == null) {
                 return new Pair<>(null, 0);
             }
-            appInsights.trackTrace("generateImage 模型说明: " + response.text());
+            appInsights.trackTrace("generateImage 模型说明: " + response.toString());
             byte[] translatedBytes = new byte[0];
 
             for (Part part : response.parts()) {
