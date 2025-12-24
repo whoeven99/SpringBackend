@@ -46,13 +46,13 @@ public class TestController {
     }
 
     @PostMapping("/testPic")
-    public ResponseEntity<byte[]> testPic() {
+    public ResponseEntity<byte[]> testPic(@RequestParam String model) {
         String picUrl = "https://cdn.shopify.com/s/files/1/0892/3437/5004/files/ChatGPT_Image_Jun_25_2025_10_33_50_AM_ac0e4bff-73f3-4065-80dc-9801cb862bc3.png?v=1750856533";
         String prompt = "翻译图片里面的文本为简体中文";
         byte[] imageBytes;
         try (BufferedInputStream in = new BufferedInputStream(new URL(picUrl).openStream())) {
             imageBytes = in.readAllBytes();
-            Pair<String, Integer> stringIntegerPair = geminiIntegration.generateImage("gemini-2.5-flash-image", prompt, imageBytes, "image/png");
+            Pair<String, Integer> stringIntegerPair = geminiIntegration.generateImage(model, prompt, imageBytes, "image/png");
 
             String first = stringIntegerPair.getFirst();
             return ResponseEntity.ok()
