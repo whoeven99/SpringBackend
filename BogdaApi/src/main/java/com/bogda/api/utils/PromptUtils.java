@@ -31,9 +31,9 @@ public class PromptUtils {
                 3. Do not translate variable names (e.g., {{aaa}}, {{aa.bbb}}, {% ccc %}, {% capture email_title %} etc.).
                 4. Ensure the translation is natural and contextually appropriate for an e-commerce website.
 
-                Please return your translation in the following JSON - like format:
-                                {"1": "translated text1", "2": "translated text2",...}
-                                Start your translation now.
+                Return the translated result using the exact same JSON-like structure as the input,
+                with all keys unchanged, and only values translated.
+                Start your translation now.
                 """;
         return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(target))
                 .replace("{{SOURCE_LANGUAGE_LIST}}", JsonUtils.objectToJson(glossaryTextMap))
@@ -58,8 +58,8 @@ public class PromptUtils {
                 <TargetLanguage>
                 {{TARGET_LANGUAGE}}
                 </TargetLanguage>
-                Please return your translation in the following JSON - like format:
-                {"1": "translated text1", "2": "translated text2",...}
+                Return the translated result using the exact same JSON-like structure as the input,
+                with all keys unchanged, and only values translated.
                 Start your translation now.
                 """;
         return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(target))
