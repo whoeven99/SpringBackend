@@ -8,6 +8,7 @@ import com.bogda.api.logic.TranslateService;
 import com.bogda.api.logic.UserService;
 import com.bogda.api.model.controller.request.UserSubscriptionsRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.api.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,6 +42,7 @@ public class UserController {
     // 用户初始化 上面addUser的新方法
     @PostMapping("/userInitialization")
     public BaseResponse<Object> userInitialization(@RequestParam String shopName, @RequestBody UserInitialVO userInitialVO) {
+        CaseSensitiveUtils.appInsights.trackTrace("userInitialization userInitialVO : " + userInitialVO);
         return userService.userInitialization(shopName, userInitialVO);
     }
 
