@@ -216,7 +216,7 @@ public class UserService {
         String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
 
         // redis 无值，直接写入
-        if (userDefaultTheme == null) {
+        if ("null".equals(userDefaultTheme)) {
             userInitialRedisService.setUserDefaultTheme(shopName, themeId);
         }
 
@@ -228,7 +228,7 @@ public class UserService {
         }
 
         // redis 无值
-        if (userDefaultLanguage == null) {
+        if ("null".equals(userDefaultLanguage)) {
             userInitialRedisService.setUserDefaultLanguage(shopName, defaultLanguageData);
         }
 
@@ -264,7 +264,7 @@ public class UserService {
         }
 
         String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
-        if (userDefaultTheme == null){
+        if ("null".equals(userDefaultTheme)){
             return new BaseResponse<>().CreateErrorResponse("userDefaultTheme is null");
         }
 
@@ -295,7 +295,7 @@ public class UserService {
         String defaultLanguageData = jsonNode.get("primary_locale").asText(null);
         String userDefaultLanguage = userInitialRedisService.getUserDefaultLanguage(shopName);
 
-        if (defaultLanguageData == null || userDefaultLanguage == null) {
+        if (defaultLanguageData == null || "null".equals(userDefaultLanguage)) {
             return new BaseResponse<>().CreateErrorResponse("Default language data is null : " + data);
         }
 
