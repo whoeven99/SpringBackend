@@ -1,14 +1,13 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.CharsOrdersDO;
-import com.bogda.api.entity.VO.TranslationCharsVO;
-import com.bogda.api.logic.OrderService;
-import com.bogda.api.model.controller.request.PurchaseSuccessRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.CharsOrdersDO;
+import com.bogda.common.entity.VO.TranslationCharsVO;
+import com.bogda.common.enums.ErrorEnum;
+import com.bogda.common.logic.OrderService;
+import com.bogda.common.model.controller.request.PurchaseSuccessRequest;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.enums.ErrorEnum.SQL_INSERT_ERROR;
 
 @RestController
 @RequestMapping("/orders")
@@ -23,7 +22,7 @@ public class CharsOrdersController {
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
     }
 
     //购买字符成功后发送相应邮件

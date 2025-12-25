@@ -1,7 +1,7 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.model.controller.request.ClickTranslateRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.model.controller.request.ClickTranslateRequest;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

@@ -1,12 +1,11 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.APGCharsOrderDO;
-import com.bogda.api.logic.APGCharsOrderService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.APGCharsOrderDO;
+import com.bogda.common.enums.ErrorEnum;
+import com.bogda.common.logic.APGCharsOrderService;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.enums.ErrorEnum.SQL_INSERT_ERROR;
 
 @RestController
 @RequestMapping("/apg/orders")
@@ -21,7 +20,7 @@ public class APGCharsOrderController {
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
     }
 
 

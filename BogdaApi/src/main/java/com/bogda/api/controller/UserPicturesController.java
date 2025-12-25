@@ -1,36 +1,27 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.api.Service.IUserPicturesService;
-import com.bogda.api.entity.DO.UserPicturesDO;
-import com.bogda.api.integration.HunYuanBucketIntegration;
-import com.bogda.api.logic.PCApp.PCUserPicturesService;
-import com.bogda.api.model.controller.response.BaseResponse;
+
+import com.bogda.common.service.IUserPicturesService;
+import com.bogda.common.entity.DO.UserPicturesDO;
+import com.bogda.common.integration.HunYuanBucketIntegration;
+import com.bogda.common.logic.PCApp.PCUserPicturesService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.JsonUtils;
+import com.bogda.common.utils.PictureUtils;
+import com.bogda.common.utils.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
-
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.StringUtils.convertUrlToMultipartFile;
 
 @RestController
 @RequestMapping("/picture")
 public class UserPicturesController {
     @Autowired
     private IUserPicturesService iUserPicturesService;
-
-    public static List<String> allowedMimeTypes = List.of(
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/heic",
-            "image/gif",
-            "image/jpg"
-    );
 
     /**
      * 存储图片到数据库和腾讯云服务器上面
@@ -40,14 +31,14 @@ public class UserPicturesController {
         //解析userPicturesDO
         UserPicturesDO userPicturesDO = null;
         try {
-            userPicturesDO = OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
+            userPicturesDO = JsonUtils.OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
+            CaseSensitiveUtils.appInsights.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }
         //先判断是否有图片,有图片做上传和插入更新数据;没有图片,做插入和更新数据
         if (!file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {
             //做图片的限制
-            if (!allowedMimeTypes.contains(file.getContentType())) {
+            if (!PictureUtils.allowedMimeTypes.contains(file.getContentType())) {
                 return new BaseResponse<>().CreateErrorResponse("Image format error");
             }
             //将图片上传到腾讯云
@@ -128,17 +119,17 @@ public class UserPicturesController {
     public BaseResponse<Object> saveImageToCloud(@RequestParam("pic") String pic, @RequestParam("shopName") String shopName, @RequestParam("userPicturesDoJson") String userPicturesDoJson) {
         UserPicturesDO userPicturesDO = null;
         try {
-            userPicturesDO = OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
+            userPicturesDO = JsonUtils.OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("saveImageToCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
+            CaseSensitiveUtils.appInsights.trackException(e);
+            CaseSensitiveUtils.appInsights.trackTrace("saveImageToCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }
         if (userPicturesDO == null) {
             return new BaseResponse<>().CreateSuccessResponse(false);
         }
 
         // 对返回的图片url做处理
-        MultipartFile multipartFile = convertUrlToMultipartFile(pic);
+        MultipartFile multipartFile = StringUtils.convertUrlToMultipartFile(pic);
         if (multipartFile == null || multipartFile.isEmpty()){
             return new BaseResponse<>().CreateErrorResponse(false);
         }

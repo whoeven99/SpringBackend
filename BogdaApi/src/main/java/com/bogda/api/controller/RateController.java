@@ -1,14 +1,12 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.logic.RateDataService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.logic.RateDataService;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import static com.bogda.api.logic.RateDataService.getRateByRateMap;
 
 @RestController
 @RequestMapping("/rate")
@@ -21,7 +19,7 @@ public class RateController {
     public BaseResponse<Object> getRateByCurrency(@RequestParam("from") String from,
                                                   @RequestParam("to") String to) {
         return new BaseResponse<>().CreateSuccessResponse(
-                getRateByRateMap(from, to));
+                RateDataService.getRateByRateMap(from, to));
     }
 
     @GetMapping("/getRateValue")

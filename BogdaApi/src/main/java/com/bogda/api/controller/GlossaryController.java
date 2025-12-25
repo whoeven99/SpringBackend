@@ -1,14 +1,12 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.Service.IGlossaryService;
-import com.bogda.api.entity.DO.GlossaryDO;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.service.IGlossaryService;
+import com.bogda.common.entity.DO.GlossaryDO;
+import com.bogda.common.enums.ErrorEnum;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Objects;
-
-import static com.bogda.api.enums.ErrorEnum.*;
 
 @RestController
 @RequestMapping("/glossary")
@@ -38,7 +36,7 @@ public class GlossaryController {
             GlossaryDO glossary = glossaryService.getSingleGlossaryByShopNameAndSource(glossaryDO.getShopName(), glossaryDO.getSourceText(), glossaryDO.getRangeCode());
             return new BaseResponse<>().CreateSuccessResponse(glossary);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_INSERT_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_INSERT_ERROR);
     }
 
     /**
@@ -49,7 +47,7 @@ public class GlossaryController {
         if (glossaryService.deleteGlossaryById(glossaryDO)) {
             return new BaseResponse<>().CreateSuccessResponse(glossaryDO);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_DELETE_ERROR);
     }
 
     /**
@@ -87,7 +85,7 @@ public class GlossaryController {
         if (glossaryService.updateGlossaryInfoById(glossaryDO)) {
             return new BaseResponse<>().CreateSuccessResponse(glossaryDO);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_UPDATE_ERROR);
     }
 
 

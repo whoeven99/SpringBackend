@@ -1,14 +1,13 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.logic.PCApp.PCUserTrialsService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.logic.PCApp.PCUserTrialsService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.RetryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import static com.bogda.api.utils.RetryUtils.retryWithParam;
 
 @RestController
 @RequestMapping("/pc/userTrials")
@@ -21,7 +20,7 @@ public class PCUserTrialsController {
      */
     @PostMapping("/startFreePlan")
     public BaseResponse<Object> startFreePlan(@RequestParam String shopName) {
-        boolean result = retryWithParam(
+        boolean result = RetryUtils.retryWithParam(
                 pcUserTrialsService::insertUserTrial,
                 shopName,
                 3,

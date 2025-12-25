@@ -1,7 +1,7 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.logic.PCApp.PCUserSubscriptionService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.logic.PCApp.PCUserSubscriptionService;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

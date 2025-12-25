@@ -1,9 +1,9 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.integration.AidgeIntegration;
-import com.bogda.api.model.controller.request.SignRequest;
-import com.bogda.api.model.controller.response.AidgeResponse;
-import com.bogda.api.model.controller.response.SignResponse;
+import com.bogda.common.integration.AidgeIntegration;
+import com.bogda.common.model.controller.request.SignRequest;
+import com.bogda.common.model.controller.response.AidgeResponse;
+import com.bogda.common.model.controller.response.SignResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,10 +1,11 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.PCUsersDO;
-import com.bogda.api.entity.VO.AddCharsVO;
-import com.bogda.api.entity.VO.TranslationCharsVO;
-import com.bogda.api.logic.PCApp.PCUsersService;
-import com.bogda.api.model.controller.response.BaseResponse;
+
+import com.bogda.common.entity.DO.PCUsersDO;
+import com.bogda.common.entity.VO.AddCharsVO;
+import com.bogda.common.entity.VO.TranslationCharsVO;
+import com.bogda.common.logic.PCApp.PCUsersService;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

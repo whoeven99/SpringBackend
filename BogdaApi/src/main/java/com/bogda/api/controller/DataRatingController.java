@@ -1,16 +1,14 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.logic.DataRatingService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.logic.DataRatingService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.ApiCodeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.Map;
-
-import static com.bogda.api.utils.ApiCodeUtils.getLanguageName;
 
 @RestController
 @RequestMapping("/rating")
@@ -38,7 +36,7 @@ public class DataRatingController {
         if (translationStatus == null || translationStatus.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
-        translationStatus.remove(getLanguageName(source));
+        translationStatus.remove(ApiCodeUtils.getLanguageName(source));
         return new BaseResponse<>().CreateSuccessResponse(translationStatus);
     }
 

@@ -1,16 +1,16 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.Service.IWidgetConfigurationsService;
-import com.bogda.api.entity.DO.WidgetConfigurationsDO;
-import com.bogda.api.logic.UserIpService;
-import com.bogda.api.model.controller.response.BaseResponse;
+
+import com.bogda.common.service.IWidgetConfigurationsService;
+import com.bogda.common.entity.DO.WidgetConfigurationsDO;
+import com.bogda.common.logic.UserIpService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/widgetConfigurations")
@@ -27,7 +27,7 @@ public class WidgetConfigurationsController {
         int maxRetries = 3;
         int attempt = 0;
         boolean success = false;
-        appInsights.trackTrace("saveAndUpdateData 传的数据是： " + widgetConfigurationsDO);
+        CaseSensitiveUtils.appInsights.trackTrace("saveAndUpdateData 传的数据是： " + widgetConfigurationsDO);
         while (attempt < maxRetries && !success) {
             try {
                 b = widgetConfigurationsService.saveAndUpdateData(widgetConfigurationsDO);
@@ -36,11 +36,11 @@ public class WidgetConfigurationsController {
                     return new BaseResponse<>().CreateSuccessResponse(widgetConfigurationsDO);
                 } else {
                     attempt++;
-                    appInsights.trackTrace("saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存失败 (b=" + b + ")，正在重试第 " + (attempt + 1) + " 次");
+                    CaseSensitiveUtils.appInsights.trackTrace("saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存失败 (b=" + b + ")，正在重试第 " + (attempt + 1) + " 次");
                 }
             } catch (Exception e) {
                 attempt++;
-                appInsights.trackTrace("saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
+                CaseSensitiveUtils.appInsights.trackTrace("saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
             }
         }
         return new BaseResponse<>().CreateErrorResponse("保存失败，已重试3次仍未成功");

@@ -1,12 +1,11 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.APGUsersDO;
-import com.bogda.api.logic.APGUserService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.logic.APGUserService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.RetryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.utils.RetryUtils.retryWithParam;
 
 @RestController
 @RequestMapping("/apg/users")
@@ -24,7 +23,7 @@ public class APGUsersController {
     @PostMapping("/insertOrUpdateApgUser")
     public BaseResponse<Object> insertOrUpdateApgUser(@RequestParam String shopName, @RequestBody APGUsersDO usersDO) {
         usersDO.setShopName(shopName);
-        boolean result = retryWithParam(
+        boolean result = RetryUtils.retryWithParam(
                 apgUserService::insertOrUpdateApgUser,  // 方法引用，等同于 input -> service.insertOrUpdateApgUser(input)
                 usersDO,
                 3,        // 最大重试次数

@@ -1,20 +1,22 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.Service.ICharsOrdersService;
-import com.bogda.api.Service.ITranslatesService;
-import com.bogda.api.Service.ITranslationCounterService;
-import com.bogda.api.Service.impl.TranslationCounterServiceImpl;
-import com.bogda.api.entity.DO.CharsOrdersDO;
-import com.bogda.api.entity.DO.TranslatesDO;
-import com.bogda.api.entity.DO.TranslationCounterDO;
-import com.bogda.api.logic.redis.ConfigRedisRepo;
-import com.bogda.api.logic.redis.RedisStoppedRepository;
-import com.bogda.api.logic.redis.TranslateTaskMonitorV2RedisService;
-import com.bogda.api.logic.translate.TranslateV2Service;
-import com.bogda.api.logic.translate.stragety.HtmlTranslateStrategyService;
-import com.bogda.api.model.controller.response.ProgressResponse;
-import com.bogda.api.repository.entity.InitialTaskV2DO;
-import com.bogda.api.repository.repo.InitialTaskV2Repo;
+
+import com.bogda.common.service.ICharsOrdersService;
+import com.bogda.common.service.ITranslatesService;
+import com.bogda.common.service.ITranslationCounterService;
+import com.bogda.common.service.impl.TranslationCounterServiceImpl;
+import com.bogda.common.entity.DO.CharsOrdersDO;
+import com.bogda.common.entity.DO.TranslatesDO;
+import com.bogda.common.entity.DO.TranslationCounterDO;
+import com.bogda.common.logic.redis.ConfigRedisRepo;
+import com.bogda.common.logic.redis.RedisStoppedRepository;
+import com.bogda.common.logic.redis.TranslateTaskMonitorV2RedisService;
+import com.bogda.common.logic.translate.TranslateV2Service;
+import com.bogda.common.logic.translate.stragety.HtmlTranslateStrategyService;
+import com.bogda.common.model.controller.response.ProgressResponse;
+import com.bogda.common.repository.entity.InitialTaskV2DO;
+import com.bogda.common.repository.repo.InitialTaskV2Repo;
+import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
@@ -24,8 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.bogda.api.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogda.api.utils.LiquidHtmlTranslatorUtils.parseHtml;
+
 
 @RestController
 public class MonitorController {
@@ -99,10 +100,10 @@ public class MonitorController {
     public Map<Integer, String> htmlToJson(@RequestBody Map<String, Object> map) {
         String value = map.get("html").toString();
 
-        value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
+        value = LiquidHtmlTranslatorUtils.isHtmlEntity(value); //判断是否含有HTML实体,然后解码
 
         boolean hasHtmlTag = HtmlTranslateStrategyService.HTML_TAG_PATTERN.matcher(value).find();
-        Document doc = parseHtml(value, "en", hasHtmlTag);
+        Document doc = LiquidHtmlTranslatorUtils.parseHtml(value, "en", hasHtmlTag);
 
         List<TextNode> nodes = new ArrayList<>();
         for (Element element : doc.getAllElements()) {

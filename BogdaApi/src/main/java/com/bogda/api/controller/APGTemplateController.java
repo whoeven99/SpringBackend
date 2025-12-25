@@ -1,16 +1,15 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.api.Service.IAPGUsersService;
-import com.bogda.api.entity.DO.APGUserTemplateDO;
-import com.bogda.api.entity.DO.APGUserTemplateMappingDO;
-import com.bogda.api.entity.DO.APGUsersDO;
-import com.bogda.api.entity.DTO.TemplateDTO;
-import com.bogda.api.logic.APGTemplateService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.service.IAPGUsersService;
+import com.bogda.common.entity.DO.APGUserTemplateDO;
+import com.bogda.common.entity.DO.APGUserTemplateMappingDO;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.entity.DTO.TemplateDTO;
+import com.bogda.common.logic.APGTemplateService;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.List;
 

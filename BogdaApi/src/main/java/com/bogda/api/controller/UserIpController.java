@@ -1,17 +1,17 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.Service.IUserIpService;
-import com.bogda.api.entity.VO.IncludeCrawlerVO;
-import com.bogda.api.entity.VO.NoCrawlerVO;
-import com.bogda.api.logic.UserIpService;
-import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.UserIPRedirectionDO;
+
+import com.bogda.common.service.IUserIpService;
+import com.bogda.common.entity.VO.IncludeCrawlerVO;
+import com.bogda.common.entity.VO.NoCrawlerVO;
+import com.bogda.common.logic.UserIpService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.repository.entity.UserIPRedirectionDO;
+import com.bogda.common.utils.RetryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static com.bogda.api.utils.RetryUtils.retryWithParam;
 
 @RestController
 @RequestMapping("/userIp")
@@ -27,7 +27,7 @@ public class UserIpController {
      */
     @PostMapping("/addOrUpdateUserIp")
     public BaseResponse<Object> addOrUpdateUserIp(@RequestParam String shopName) {
-        boolean result = retryWithParam(
+        boolean result = RetryUtils.retryWithParam(
                 iUserIpService::addOrUpdateUserIp,
                 shopName,
                 3,

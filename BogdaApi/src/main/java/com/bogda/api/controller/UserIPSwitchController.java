@@ -1,12 +1,11 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.Service.IUserIPSwitchService;
-import com.bogda.api.entity.DO.UserIPSwitchDO;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.service.IUserIPSwitchService;
+import com.bogda.common.entity.DO.UserIPSwitchDO;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/IpSwitch")
@@ -30,8 +29,8 @@ public class UserIPSwitchController {
         try {
             return new BaseResponse<>().CreateSuccessResponse(userIPSwitchService.getSwitchId(shopName));
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("getSwitchId error: " + e.getMessage());
+            CaseSensitiveUtils.appInsights.trackException(e);
+            CaseSensitiveUtils.appInsights.trackTrace("getSwitchId error: " + e.getMessage());
         }
         return new BaseResponse<>().CreateErrorResponse("fail");
     }

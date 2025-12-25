@@ -1,30 +1,27 @@
 package com.bogda.api.controller;
 
 import com.alibaba.fastjson.JSONObject;
-import com.bogda.api.entity.VO.GptVO;
-import com.bogda.api.entity.VO.UserDataReportVO;
-import com.bogda.api.integration.GeminiIntegration;
-import com.bogda.api.logic.RedisDataReportService;
-import com.bogda.api.logic.RedisProcessService;
-import com.bogda.api.model.controller.request.CloudServiceRequest;
-import com.bogda.api.model.controller.request.ShopifyRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.task.IpEmailTask;
+import com.bogda.common.entity.VO.GptVO;
+import com.bogda.common.entity.VO.UserDataReportVO;
+import com.bogda.common.integration.GeminiIntegration;
+import com.bogda.common.integration.ShopifyHttpIntegration;
+import com.bogda.common.logic.RedisDataReportService;
+import com.bogda.common.logic.RedisProcessService;
+import com.bogda.common.model.controller.request.CloudServiceRequest;
+import com.bogda.common.model.controller.request.ShopifyRequest;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.CaseSensitiveUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.BufferedInputStream;
 import java.net.URL;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.bogda.api.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 public class TestController {
@@ -32,8 +29,6 @@ public class TestController {
     private RedisProcessService redisProcessService;
     @Autowired
     private RedisDataReportService redisDataReportService;
-    @Autowired
-    private IpEmailTask ipEmailTask;
     @Autowired
     private GeminiIntegration geminiIntegration;
 
@@ -59,7 +54,7 @@ public class TestController {
                     .contentType(MediaType.IMAGE_PNG) // 或 IMAGE_JPEG
                     .body(Base64.getDecoder().decode(first));
         } catch (Exception e) {
-            appInsights.trackException(e);
+            CaseSensitiveUtils.appInsights.trackException(e);
             e.printStackTrace();
         }
         return null;
@@ -86,7 +81,7 @@ public class TestController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
-        JSONObject infoByShopify = getInfoByShopify(request, body);
+        JSONObject infoByShopify = ShopifyHttpIntegration.getInfoByShopify(request, body);
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }
@@ -109,7 +104,7 @@ public class TestController {
      */
     @PostMapping("/frontEndPrinting")
     public void frontEndPrinting(@RequestBody String data) {
-        appInsights.trackTrace(data);
+        CaseSensitiveUtils.appInsights.trackTrace(data);
     }
 
     /**
@@ -136,10 +131,5 @@ public class TestController {
     public Map<String, Object> monitor() {
         Map<String, Object> responseMap = new HashMap<>();
         return responseMap;
-    }
-
-    @GetMapping("/testEmail")
-    public void testEmail() {
-        ipEmailTask.sendEmailTask();
     }
 }

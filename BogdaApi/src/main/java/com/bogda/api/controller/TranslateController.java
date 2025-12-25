@@ -1,30 +1,30 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.api.Service.ITranslatesService;
-import com.bogda.api.Service.IUserTypeTokenService;
-import com.bogda.api.Service.IUsersService;
-import com.bogda.api.entity.DO.TranslatesDO;
-import com.bogda.api.entity.DO.UsersDO;
-import com.bogda.api.entity.VO.*;
-import com.bogda.api.logic.TranslateService;
-import com.bogda.api.logic.UserTypeTokenService;
-import com.bogda.api.logic.redis.RedisStoppedRepository;
-import com.bogda.api.logic.redis.TranslationParametersRedisService;
-import com.bogda.api.logic.translate.TranslateV2Service;
-import com.bogda.api.model.controller.request.*;
-import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.model.controller.response.ProgressResponse;
+import com.bogda.common.service.ITranslatesService;
+import com.bogda.common.service.IUserTypeTokenService;
+import com.bogda.common.service.IUsersService;
+import com.bogda.common.entity.DO.TranslatesDO;
+import com.bogda.common.entity.DO.UsersDO;
+import com.bogda.common.entity.VO.*;
+import com.bogda.common.enums.ErrorEnum;
+import com.bogda.common.integration.ShopifyHttpIntegration;
+import com.bogda.common.logic.TranslateService;
+import com.bogda.common.logic.UserTypeTokenService;
+import com.bogda.common.logic.redis.RedisStoppedRepository;
+import com.bogda.common.logic.redis.TranslationParametersRedisService;
+import com.bogda.common.logic.translate.TranslateV2Service;
+import com.bogda.common.model.controller.request.*;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.model.controller.response.ProgressResponse;
+import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.TypeConversionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
-import static com.bogda.api.enums.ErrorEnum.*;
-import static com.bogda.api.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
 @RestController
 @RequestMapping("/translate")
@@ -126,7 +126,7 @@ public class TranslateController {
         if (list != null && !list.isEmpty()) {
             return new BaseResponse<>().CreateSuccessResponse(list);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_SELECT_ERROR);
     }
 
     /**
@@ -155,10 +155,10 @@ public class TranslateController {
             }
 
             translateArrayVO.setTranslatesDOResult(translatesDOResult);
-            appInsights.trackTrace("readTranslateDOByArray : " + Arrays.toString(translatesDOS));
+            CaseSensitiveUtils.appInsights.trackTrace("readTranslateDOByArray : " + Arrays.toString(translatesDOS));
             return new BaseResponse<>().CreateSuccessResponse(translateArrayVO);
         } else {
-            return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.DATA_IS_EMPTY);
         }
     }
 
@@ -171,7 +171,7 @@ public class TranslateController {
         if (!translatesDos.isEmpty()) {
             return new BaseResponse<>().CreateSuccessResponse(translatesDos);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_SELECT_ERROR);
     }
 
     @Autowired
@@ -194,8 +194,8 @@ public class TranslateController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
-        String s = registerTransaction(request, body);
-        appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
+        String s = ShopifyHttpIntegration.registerTransaction(request, body);
+        CaseSensitiveUtils.appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
     }
 
 
@@ -203,11 +203,11 @@ public class TranslateController {
     @PostMapping("/deleteFromTranslates")
     public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
         Boolean b = translatesService.deleteFromTranslates(request);
-        appInsights.trackTrace("deleteFromTranslates 用户删除翻译语言： " + request);
+        CaseSensitiveUtils.appInsights.trackTrace("deleteFromTranslates 用户删除翻译语言： " + request);
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
-            return new BaseResponse<>().CreateErrorResponse(SQL_DELETE_ERROR);
+            return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_DELETE_ERROR);
         }
     }
 
@@ -215,7 +215,7 @@ public class TranslateController {
     @PostMapping("/insertTargets")
     public void insertTargets(@RequestBody TargetListRequest request) {
         List<String> targetList = request.getTargetList();
-        TranslateRequest translateRequest = TargetListRequestToTranslateRequest(request);
+        TranslateRequest translateRequest = TypeConversionUtils.targetListRequestToTranslateRequest(request);
         if (!targetList.isEmpty()) {
             translateRequest.setTarget(targetList.get(0));
             userTypeTokensService.getUserInitToken(translateRequest);

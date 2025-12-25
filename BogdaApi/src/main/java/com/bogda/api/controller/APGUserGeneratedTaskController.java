@@ -2,28 +2,25 @@ package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.api.Service.IAPGUserCounterService;
-import com.bogda.api.Service.IAPGUserGeneratedSubtaskService;
-import com.bogda.api.Service.IAPGUserPlanService;
-import com.bogda.api.Service.IAPGUsersService;
-import com.bogda.api.entity.DO.APGUserCounterDO;
-import com.bogda.api.entity.DO.APGUserGeneratedTaskDO;
-import com.bogda.api.entity.DO.APGUsersDO;
-import com.bogda.api.entity.VO.GenerateDescriptionsVO;
-import com.bogda.api.entity.VO.GenerateProgressBarVO;
-import com.bogda.api.exception.ClientException;
-import com.bogda.api.logic.APGUserGeneratedTaskService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.service.IAPGUserCounterService;
+import com.bogda.common.service.IAPGUserGeneratedSubtaskService;
+import com.bogda.common.service.IAPGUserPlanService;
+import com.bogda.common.service.IAPGUsersService;
+import com.bogda.common.constants.TranslateConstants;
+import com.bogda.common.entity.DO.APGUserCounterDO;
+import com.bogda.common.entity.DO.APGUserGeneratedTaskDO;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.entity.VO.GenerateDescriptionsVO;
+import com.bogda.common.entity.VO.GenerateProgressBarVO;
+import com.bogda.common.exception.ClientException;
+import com.bogda.common.logic.APGUserGeneratedTaskService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP;
-import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/apg/userGeneratedTask")
@@ -74,11 +71,11 @@ public class APGUserGeneratedTaskController {
     public BaseResponse<Object> batchGenerateDescription(@RequestParam String shopName, @RequestBody GenerateDescriptionsVO generateDescriptionsVO) {
         //创建这样一个任务
         try {
-            String json = OBJECT_MAPPER.writeValueAsString(generateDescriptionsVO);
+            String json = JsonUtils.OBJECT_MAPPER.writeValueAsString(generateDescriptionsVO);
             apgUserGeneratedTaskService.initOrUpdateData(shopName, 0, generateDescriptionsVO.getPageType() + " " + generateDescriptionsVO.getContentType(), json);
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户 批量生成任务失败 errors ：" + e);
-            appInsights.trackException(e);
+            CaseSensitiveUtils.appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户 批量生成任务失败 errors ：" + e);
+            CaseSensitiveUtils.appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
 
@@ -90,7 +87,7 @@ public class APGUserGeneratedTaskController {
             // 根据shopName获取用户数据
             APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
             //将用户暂停标志改为false
-            GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), false);
+            APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), false);
             // 获取用户最大额度限制
             Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
             //判断额度是否足够，然后决定是否继续调用
@@ -98,7 +95,7 @@ public class APGUserGeneratedTaskController {
             if (counterDO.getUserToken() >= userMaxLimit) {
                 //修改状态
                 apgUserGeneratedTaskService.initOrUpdateData(shopName, 3, null, null);
-                throw new ClientException(CHARACTER_LIMIT);
+                throw new ClientException(TranslateConstants.CHARACTER_LIMIT);
             }
             //将该用户的状态3，4改为9 （问题数据）
             iapgUserGeneratedSubtaskService.update34StatusTo9(usersDO.getId());
@@ -106,16 +103,16 @@ public class APGUserGeneratedTaskController {
         } catch (ClientException e1) {
             //发送对应邮件
             //修改状态
-            appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
+            CaseSensitiveUtils.appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
 //            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
-            appInsights.trackException(e1);
-            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+            CaseSensitiveUtils.appInsights.trackException(e1);
+            return new BaseResponse<>().CreateErrorResponse(TranslateConstants.CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件
-            appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e);
+            CaseSensitiveUtils.appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e);
 //            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
-            appInsights.trackException(e);
+            CaseSensitiveUtils.appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
         return new BaseResponse<>().CreateSuccessResponse(true);
@@ -126,7 +123,7 @@ public class APGUserGeneratedTaskController {
      */
     @GetMapping("/getGenerateShop")
     public BaseResponse<Object> getGenerateShop() {
-        return new BaseResponse<>().CreateSuccessResponse(GENERATE_SHOP);
+        return new BaseResponse<>().CreateSuccessResponse(APGUserGeneratedTaskService.GENERATE_SHOP);
     }
 
     /**
@@ -136,7 +133,7 @@ public class APGUserGeneratedTaskController {
     public BaseResponse<Object> deleteGenerateShop(@RequestParam String shopName) {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
-        GENERATE_SHOP.remove(usersDO.getId());
+        APGUserGeneratedTaskService.GENERATE_SHOP.remove(usersDO.getId());
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
@@ -147,8 +144,8 @@ public class APGUserGeneratedTaskController {
     public BaseResponse<Object> stopBatchGenerateDescription(@RequestParam String shopName) {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
-        Boolean result = GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
-        appInsights.trackTrace("stopBatchGenerateDescription " + shopName + " 停止翻译标识 : " + result);
+        Boolean result = APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
+        CaseSensitiveUtils.appInsights.trackTrace("stopBatchGenerateDescription " + shopName + " 停止翻译标识 : " + result);
         //将任务和子任务的状态改为1
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
         if (Boolean.TRUE.equals(result) && updateFlag) {
@@ -163,6 +160,6 @@ public class APGUserGeneratedTaskController {
      */
     @GetMapping("/getStopFlag")
     public BaseResponse<Object> getStopFlag() {
-        return new BaseResponse<>().CreateSuccessResponse(GENERATE_SHOP_STOP_FLAG);
+        return new BaseResponse<>().CreateSuccessResponse(APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG);
     }
 }

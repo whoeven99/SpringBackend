@@ -1,19 +1,18 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.api.Service.IAPGUserCounterService;
-import com.bogda.api.Service.IAPGUserGeneratedTaskService;
-import com.bogda.api.Service.IAPGUserPlanService;
-import com.bogda.api.Service.IAPGUsersService;
-import com.bogda.api.entity.DO.APGUserCounterDO;
-import com.bogda.api.entity.DO.APGUsersDO;
-import com.bogda.api.entity.VO.APGTokenVO;
-import com.bogda.api.logic.APGCharsOrderService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.service.IAPGUserCounterService;
+import com.bogda.common.service.IAPGUserGeneratedTaskService;
+import com.bogda.common.service.IAPGUserPlanService;
+import com.bogda.common.service.IAPGUsersService;
+import com.bogda.common.entity.DO.APGUserCounterDO;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.entity.VO.APGTokenVO;
+import com.bogda.common.logic.APGCharsOrderService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.RetryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.utils.RetryUtils.retryWithParam;
 
 @RestController
 @RequestMapping("/apg/userCounter")
@@ -35,7 +34,7 @@ public class APGUserCounterController {
      */
     @GetMapping("/initUserCounter")
     public BaseResponse<Object> initUserCounter(@RequestParam String shopName) {
-        boolean result = retryWithParam(
+        boolean result = RetryUtils.retryWithParam(
                 iapgUserCounterService::initUserCounter,
                 shopName,
                 3,

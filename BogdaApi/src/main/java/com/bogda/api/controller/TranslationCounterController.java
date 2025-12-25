@@ -1,21 +1,20 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.api.Service.ITranslationCounterService;
-import com.bogda.api.Service.IUsersService;
-import com.bogda.api.entity.DO.TranslationCounterDO;
-import com.bogda.api.entity.DO.UsersDO;
-import com.bogda.api.entity.VO.AddCharsVO;
-import com.bogda.api.entity.VO.TranslationCharsVO;
-import com.bogda.api.logic.TranslationCounterService;
-import com.bogda.api.logic.redis.OrdersRedisService;
-import com.bogda.api.model.controller.request.TranslationCounterRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.service.ITranslationCounterService;
+import com.bogda.common.service.IUsersService;
+import com.bogda.common.entity.DO.TranslationCounterDO;
+import com.bogda.common.entity.DO.UsersDO;
+import com.bogda.common.entity.VO.AddCharsVO;
+import com.bogda.common.entity.VO.TranslationCharsVO;
+import com.bogda.common.enums.ErrorEnum;
+import com.bogda.common.logic.TranslationCounterService;
+import com.bogda.common.logic.redis.OrdersRedisService;
+import com.bogda.common.model.controller.request.TranslationCounterRequest;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.enums.ErrorEnum.*;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/translationCounter")
@@ -55,7 +54,7 @@ public class TranslationCounterController {
         if (translatesDOS != null){
             return new BaseResponse().CreateSuccessResponse(translatesDOS);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_SELECT_ERROR);
     }
 
     /**
@@ -68,16 +67,16 @@ public class TranslationCounterController {
         // 判断是否有订单标识 有的话 就直接返回true
         String orderId = ordersRedisService.getOrderId(shopName, addCharsVO.getGid());
         if (!"null".equals(orderId)) {
-            appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
+            CaseSensitiveUtils.appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateErrorResponse(false);
         }
 
         // 获取用户accessToken
         if (translationCounterService.updateOnceCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars())){
-            appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " id: " + addCharsVO.getGid());
-            return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
+            CaseSensitiveUtils.appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " id: " + addCharsVO.getGid());
+            return new BaseResponse<>().CreateSuccessResponse(ErrorEnum.SERVER_SUCCESS);
         }
-        return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);
+        return new BaseResponse<>().CreateErrorResponse(ErrorEnum.SQL_UPDATE_ERROR);
     }
 
     /**

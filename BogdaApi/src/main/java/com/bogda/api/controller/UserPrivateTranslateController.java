@@ -1,12 +1,11 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.UserPrivateTranslateDO;
-import com.bogda.api.logic.UserPrivateTranslateService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.UserPrivateTranslateDO;
+import com.bogda.common.logic.UserPrivateTranslateService;
+import com.bogda.common.model.controller.response.BaseResponse;
+import com.bogda.common.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/private/translate")
@@ -21,7 +20,7 @@ public class UserPrivateTranslateController {
     public BaseResponse<Object> configPrivateModel(@RequestParam String shopName, @RequestBody UserPrivateTranslateDO data) {
         boolean flag;
         if (data.getApiKey() != null) {
-            appInsights.trackTrace("configPrivateModel " + shopName + " apiKey : " + data.getApiKey());
+            CaseSensitiveUtils.appInsights.trackTrace("configPrivateModel " + shopName + " apiKey : " + data.getApiKey());
             flag = userPrivateTranslateService.configPrivateModel(shopName, data);
         }else {
             flag = userPrivateTranslateService.configPrivateModelExceptApiKey(shopName, data);

@@ -1,10 +1,10 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.Service.ICurrenciesService;
-import com.bogda.api.entity.DO.CurrenciesDO;
-import com.bogda.api.logic.PurchaseService;
-import com.bogda.api.model.controller.request.CurrencyRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.service.ICurrenciesService;
+import com.bogda.common.entity.DO.CurrenciesDO;
+import com.bogda.common.logic.PurchaseService;
+import com.bogda.common.model.controller.request.CurrencyRequest;
+import com.bogda.common.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
