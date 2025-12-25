@@ -216,7 +216,7 @@ public class UserService {
         String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
 
         // redis 无值，直接写入
-        if (userDefaultTheme == null) {
+        if ("null".equals(userDefaultTheme)) {
             userInitialRedisService.setUserDefaultTheme(shopName, themeId);
         }
 
@@ -228,7 +228,7 @@ public class UserService {
         }
 
         // redis 无值
-        if (userDefaultLanguage == null) {
+        if ("null".equals(userDefaultLanguage)) {
             userInitialRedisService.setUserDefaultLanguage(shopName, defaultLanguageData);
         }
 
