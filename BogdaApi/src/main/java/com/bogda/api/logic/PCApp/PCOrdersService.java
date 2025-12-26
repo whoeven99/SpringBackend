@@ -58,6 +58,12 @@ public class PCOrdersService {
     }
 
     public BaseResponse<Object> sendSubscribeSuccessEmail(String shopName, String subscribeData) {
+        try {
+            Thread.sleep(3000); // 睡眠 3 秒（3000 毫秒）
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // 推荐写法
+        }
+
         // 解析计划数据，如果是Active，发送邮件，反之不发送
         JsonNode jsonNode = JsonUtils.readTree(subscribeData);
         if (jsonNode == null) {
@@ -68,7 +74,7 @@ public class PCOrdersService {
         String status = jsonNode.path("app_subscription").path("status").asText(null);
         String subscribeId = jsonNode.path("app_subscription").path("admin_graphql_api_id").asText(null);
         String createdAt = jsonNode.path("app_subscription").path("created_at").asText(null);
-        if (!"ACITVE".equals(status) || subscribeId == null || createdAt == null) {
+        if (!"ACTIVE".equals(status) || subscribeId == null || createdAt == null) {
             System.out.println("status : " + status + " subscribeId : " + subscribeId + " createdAt : " + createdAt);
             return new BaseResponse<>().CreateErrorResponse("subscribe status is not Active");
         }
@@ -91,6 +97,13 @@ public class PCOrdersService {
     }
 
     public BaseResponse<Object> sendOneTimeBuySuccessEmail(String shopName, String oneTimePurchaseData) {
+        // 睡眠3s
+        try {
+            Thread.sleep(3000); // 睡眠 3 秒（3000 毫秒）
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // 推荐写法
+        }
+
         // 解析一次性购买数据， 如果是Active，发送邮件，反之不发送
         JsonNode jsonNode = JsonUtils.readTree(oneTimePurchaseData);
         if (jsonNode == null) {
