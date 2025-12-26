@@ -73,7 +73,7 @@ public class HunYuanIntegration {
                         try {
                             return CLIENT.ChatCompletions(req);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 hunYuanTranslate 混元报错信息 errors ： " + e.getMessage() + " sourceText : " + sourceText + " 用户：" + shopName);
+                            appInsights.trackTrace("FatalException 每日须看 hunYuanTranslate 混元报错信息 errors ： " + e.getMessage() + " sourceText : " + sourceText + " 用户：" + shopName);
                             appInsights.trackException(e);
                             return null;
                         }
@@ -109,7 +109,7 @@ public class HunYuanIntegration {
             }
         } catch (TencentCloudSDKException e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("hunYuanTranslate 混元报错信息 errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
+            appInsights.trackTrace("FatalException hunYuanTranslate 混元报错信息 errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
             return null;
         } catch (Exception e) {
             appInsights.trackException(e);

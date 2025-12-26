@@ -180,7 +180,7 @@ public class ShopifyService {
 
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("Failed to sync Shopify languages for shop: " + shopName + " - " + e.getMessage());
+            appInsights.trackTrace("FatalException Failed to sync Shopify languages for shop: " + shopName + " - " + e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -383,7 +383,7 @@ public class ShopifyService {
             }
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
+            appInsights.trackTrace("FatalException clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
         }
         return doubleTranslateTextDTOSet;
     }
@@ -471,7 +471,7 @@ public class ShopifyService {
             infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
         } catch (Exception e) {
             // 如果出现异常，则跳过, 翻译其他的内容
-            appInsights.trackTrace("fetchNextPage errors : " + e.getMessage());
+            appInsights.trackTrace("FatalException fetchNextPage errors : " + e.getMessage());
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
@@ -648,7 +648,7 @@ public class ShopifyService {
                     infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
-                    appInsights.trackTrace("getTranslationItemsInfo errors : " + e.getMessage());
+                    appInsights.trackTrace("FatalException getTranslationItemsInfo errors : " + e.getMessage());
                     continue;
                 }
                 if (infoByShopify == null || infoByShopify.isEmpty()) {
@@ -672,7 +672,7 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("getTranslationItemsInfoAll errors : 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
+            appInsights.trackTrace("FatalException getTranslationItemsInfoAll errors : 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
         }
         return result;
     }
@@ -799,7 +799,7 @@ public class ShopifyService {
                         continue;
                     }
                 } catch (Exception e) {
-                    appInsights.trackTrace("失败的原因： " + e.getMessage());
+                    appInsights.trackTrace("FatalException 失败的原因： " + e.getMessage());
                     translatedCounter.addChars(1);
                     continue;
                 }

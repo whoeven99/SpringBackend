@@ -36,11 +36,11 @@ public class WidgetConfigurationsController {
                     return new BaseResponse<>().CreateSuccessResponse(widgetConfigurationsDO);
                 } else {
                     attempt++;
-                    appInsights.trackTrace("saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存失败 (b=" + b + ")，正在重试第 " + (attempt + 1) + " 次");
+                    appInsights.trackTrace("FatalException saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存失败 (b=" + b + ")，正在重试第 " + (attempt + 1) + " 次");
                 }
             } catch (Exception e) {
                 attempt++;
-                appInsights.trackTrace("saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
+                appInsights.trackTrace("FatalException saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
             }
         }
         return new BaseResponse<>().CreateErrorResponse("保存失败，已重试3次仍未成功");

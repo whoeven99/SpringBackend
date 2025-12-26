@@ -64,7 +64,7 @@ public class ChatGptIntegration {
                     sourceText + " token openai : " + content + " all: " + allToken);
             return new Pair<>(content, allToken);
         } catch (Exception e) {
-            appInsights.trackTrace("ChatGptIntegration " + shopName + " chatWithGpt error: " + e.getMessage() + " sourceText: " + sourceText + " prompt: " + prompt);
+            appInsights.trackTrace("FatalException ChatGptIntegration " + shopName + " chatWithGpt error: " + e.getMessage() + " sourceText: " + sourceText + " prompt: " + prompt);
             appInsights.trackException(e);
             return new Pair<>(null, 0);
         }

@@ -31,12 +31,12 @@ public class RateHttpIntegration {
         try {
             response = baseHttpIntegration.sendHttpGet(url, ConfigUtils.getConfig("Fixer_Api_Key"));
         } catch (Exception e) {
-            appInsights.trackTrace("每日须看 getFixerRate 获取汇率失败 " + e.getMessage());
+            appInsights.trackTrace("FatalException 每日须看 getFixerRate 获取汇率失败 " + e.getMessage());
             appInsights.trackException(e);
             return;
         }
         if (response == null){
-            appInsights.trackTrace("每日须看 getFixerRate 获取汇率失败");
+            appInsights.trackTrace("FatalException 每日须看 getFixerRate 获取汇率失败");
             return;
         }
         JSONObject jsonObject = JSONObject.parseObject(response);

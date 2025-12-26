@@ -99,7 +99,7 @@ public class HunYuanBucketIntegration {
                             try {
                                 return new PutObjectRequest(BUCKET_NAME, key, file.getInputStream(), metadata);
                             } catch (Exception e) {
-                                appInsights.trackTrace("每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " imageId : " + imageId + " 用户：" + shopName);
+                                appInsights.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " imageId : " + imageId + " 用户：" + shopName);
                                 appInsights.trackException(e);
                                 return null;
                             }
@@ -119,7 +119,7 @@ public class HunYuanBucketIntegration {
                 transferManager.shutdownNow();
                 return afterUrl; // 上传成功直接返回true
             } catch (Exception e) {
-                appInsights.trackTrace("每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", shopName: " + shopName + " imageId: " + imageId);
+                appInsights.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", shopName: " + shopName + " imageId: " + imageId);
             } finally {
                 transferManager.shutdownNow();
             }
@@ -143,7 +143,7 @@ public class HunYuanBucketIntegration {
                         try {
                             return new PutObjectRequest(BUCKET_NAME, key, inputStream, metadata);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " key : " + key );
+                            appInsights.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " key : " + key );
                             appInsights.trackException(e);
                             return null;
                         }
@@ -164,7 +164,7 @@ public class HunYuanBucketIntegration {
             transferManager.shutdownNow();
             return HTTP + key; // 上传成功直接返回true
         } catch (Exception e) {
-            appInsights.trackTrace("每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", key : " + key );
+            appInsights.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", key : " + key );
         } finally {
             transferManager.shutdownNow();
         }

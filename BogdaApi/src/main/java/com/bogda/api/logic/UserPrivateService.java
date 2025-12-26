@@ -62,7 +62,7 @@ public class UserPrivateService {
             }
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("saveOrUpdateUserData " + userPrivateRequest.getShopName() + " 保存用户数据失败：" + e.getMessage());
+            appInsights.trackTrace("FatalException saveOrUpdateUserData " + userPrivateRequest.getShopName() + " 保存用户数据失败：" + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse("保存用户数据失败");
         }
 

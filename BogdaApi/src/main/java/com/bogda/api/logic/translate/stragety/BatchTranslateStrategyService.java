@@ -81,7 +81,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         for (Map.Entry<Integer, String> entry : ctx.getUncachedTextMap().entrySet()) {
             subMap.put(entry.getKey(), entry.getValue());
             totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(entry.getValue());
-            if (totalChars < 1000) {
+            if (totalChars < 600) {
                 continue;
             }
 

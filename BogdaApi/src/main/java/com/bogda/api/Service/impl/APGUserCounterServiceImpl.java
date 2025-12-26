@@ -47,11 +47,11 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
                     return true;
                 } else {
                     retryCount++;
-                    appInsights.trackTrace("updateUserUsedCount 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + userId);
+                    appInsights.trackTrace("FatalException updateUserUsedCount 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + userId);
                 }
             } catch (Exception e) {
                 retryCount++;
-                appInsights.trackTrace("updateUserUsedCount 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + userId + ", 错误=" + e);
+                appInsights.trackTrace("FatalException updateUserUsedCount 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + userId + ", 错误=" + e);
             }
 
             try {

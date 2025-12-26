@@ -31,13 +31,13 @@ public class RetryUtils {
                 }
 
                 if (attempt < maxRetries) {
-                    appInsights.trackTrace("retryWithParam 第 " + attempt + " 次失败，等待 " + delay + " 毫秒后重试...");
+                    appInsights.trackTrace("FatalException retryWithParam 第 " + attempt + " 次失败，等待 " + delay + " 毫秒后重试...");
                     Thread.sleep(delay);
                     delay = Math.min(delay * 2, maxDelayMillis);
                 }
             } catch (Exception e) {
                 appInsights.trackException(e);
-                appInsights.trackTrace("retryWithParam 执行出错（第 " + attempt + " 次）：" + e.getMessage());
+                appInsights.trackTrace("FatalException retryWithParam 执行出错（第 " + attempt + " 次）：" + e.getMessage());
 
                 if (attempt < maxRetries) {
                     try {

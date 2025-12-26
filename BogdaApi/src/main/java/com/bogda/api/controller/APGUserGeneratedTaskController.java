@@ -113,7 +113,7 @@ public class APGUserGeneratedTaskController {
         } catch (Exception e) {
             //修改状态
             //发送邮件
-            appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e);
+            appInsights.trackTrace("FatalException batchGenerateDescription " + shopName + " 用户  errors ：" + e);
 //            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
             appInsights.trackException(e);
             return new BaseResponse<>().CreateErrorResponse(false);

@@ -40,11 +40,11 @@ public class SubscriptionQuotaRecordController {
                     success = true; // 成功条件：i == 1
                 } else {
                     attempt++;
-                    appInsights.trackTrace("addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 插入结果不符合预期 (i=" + i + ")，正在重试第 " + (attempt + 1) + " 次");
+                    appInsights.trackTrace("FatalException addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 插入结果不符合预期 (i=" + i + ")，正在重试第 " + (attempt + 1) + " 次");
                 }
             } catch (Exception e) {
                 attempt++;
-                appInsights.trackTrace("addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 插入异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
+                appInsights.trackTrace("FatalException addSubscriptionQuotaRecord " + subscriptionQuotaRecordDO.getSubscriptionId() + " 插入异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
             }
         }
 

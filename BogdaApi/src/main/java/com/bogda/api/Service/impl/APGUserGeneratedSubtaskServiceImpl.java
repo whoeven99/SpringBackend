@@ -23,11 +23,11 @@ public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGener
                     return true;
                 } else {
                     retryCount++;
-                    appInsights.trackTrace("updateStatusById 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + subtaskId);
+                    appInsights.trackTrace("FatalException updateStatusById 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + subtaskId);
                 }
             } catch (Exception e) {
                 retryCount++;
-                appInsights.trackTrace("updateStatusById 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + subtaskId + ", 错误=" + e);
+                appInsights.trackTrace("FatalException updateStatusById 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + subtaskId + ", 错误=" + e);
             }
 
             try {

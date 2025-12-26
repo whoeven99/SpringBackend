@@ -82,7 +82,6 @@ public class AidgeIntegration {
             JsonNode imageUrlNode = jsonNode.path("data").path("imageUrl");
             return imageUrlNode.asText(null);
         } catch (Exception e) {
-            e.printStackTrace();
             appInsights.trackTrace("FatalException aidgeStandPictureTranslate " + e.getMessage());
             return null;
         }

@@ -59,7 +59,7 @@ public class ShopifyController {
             infoByShopify = getInfoByShopify(request, body);
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("test123 " + request.getShopName() + " 无法获取shopify数据");
+            appInsights.trackTrace("FatalException test123 " + request.getShopName() + " 无法获取shopify数据");
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
@@ -89,7 +89,7 @@ public class ShopifyController {
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
                 appInsights.trackException(e);
-                appInsights.trackTrace("getConsumedWords Error while getConsumedWords for shop " + e.getMessage());
+                appInsights.trackTrace("FatalException getConsumedWords Error while getConsumedWords for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -147,7 +147,7 @@ public class ShopifyController {
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                appInsights.trackTrace("getUserLimitChars Error while getUserLimitChars for shop " + e.getMessage());
+                appInsights.trackTrace("FatalException getUserLimitChars Error while getUserLimitChars for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试

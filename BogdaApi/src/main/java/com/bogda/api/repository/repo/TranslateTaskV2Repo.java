@@ -68,7 +68,8 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
                 .eq("initial_task_id", initialTaskId)
                 .eq("is_single_html", false)
                 .eq("has_target_value", false)
-                .eq("is_deleted", false);
+                .eq("is_deleted", false)
+                .orderByAsc("created_at");
         return baseMapper.selectList(wrapper);
     }
 

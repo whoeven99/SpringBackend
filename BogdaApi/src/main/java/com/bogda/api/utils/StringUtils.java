@@ -154,7 +154,7 @@ public class StringUtils {
             );
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("convertUrlToMultipartFile error: " + e.getMessage());
+            appInsights.trackTrace("FatalException convertUrlToMultipartFile error: " + e.getMessage());
         }
         return null;
     }

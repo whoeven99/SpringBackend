@@ -60,7 +60,7 @@ public class ShopifyHttpIntegration {
             response.close();
             httpClient.close();
         } catch (Exception e) {
-            appInsights.trackTrace("sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + shopName);
+            appInsights.trackTrace("FatalException sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + shopName);
             appInsights.trackException(e);
             return null;
         }
@@ -93,7 +93,7 @@ public class ShopifyHttpIntegration {
                         try {
                             return httpClient.execute(httpPost);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + request.getShopName());
+                            appInsights.trackTrace("FatalException 每日须看 sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + request.getShopName());
                             appInsights.trackException(e);
                             return null;
                         }
@@ -109,7 +109,7 @@ public class ShopifyHttpIntegration {
             response.close();
             httpClient.close();
         } catch (Exception e) {
-            appInsights.trackTrace("sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + request.getShopName());
+            appInsights.trackTrace("FatalException sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + request.getShopName());
             appInsights.trackException(e);
             return null;
         }
@@ -136,7 +136,7 @@ public class ShopifyHttpIntegration {
                 }
             } catch (Exception e) {
                 appInsights.trackException(e);
-                appInsights.trackTrace("getInfoByShopify Shopify request failed on attempt " + attempt + ": " + e.getMessage());
+                appInsights.trackTrace("FatalException getInfoByShopify Shopify request failed on attempt " + attempt + ": " + e.getMessage());
             }
 
             if (attempt < maxRetries) {
@@ -178,7 +178,7 @@ public class ShopifyHttpIntegration {
                 }
             } catch (Exception e) {
                 appInsights.trackException(e);
-                appInsights.trackTrace("每日须看 registerTransaction errors : " + "用户： " + request.getShopName() + " 目标： " + request.getTarget() + "  " + e.getMessage());
+                appInsights.trackTrace("FatalException 每日须看 registerTransaction errors : " + "用户： " + request.getShopName() + " 目标： " + request.getTarget() + "  " + e.getMessage());
             }
 
             // 如果没有成功，等待一段时间再重试

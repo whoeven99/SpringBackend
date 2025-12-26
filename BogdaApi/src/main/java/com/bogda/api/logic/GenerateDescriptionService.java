@@ -110,7 +110,7 @@ public class GenerateDescriptionService {
             productDTO.setProductTitle(root.at("/product/title").asText(null));
             return productDTO;
         } catch (Exception e) {
-            appInsights.trackTrace("getProductsQueryByProductId errors : " + e);
+            appInsights.trackTrace("FatalException getProductsQueryByProductId errors : " + e);
             appInsights.trackException(e);
             return null;
         }

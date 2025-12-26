@@ -52,7 +52,7 @@ public class TestingEnvironmentIntegration {
                             try {
                                 return httpClient.execute(httpPost);
                             } catch (Exception e) {
-                                appInsights.trackTrace("每日须看 sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " api：" + api);
+                                appInsights.trackTrace("FatalException 每日须看 sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " api：" + api);
                                 appInsights.trackException(e);
                                 return null;
                             }
