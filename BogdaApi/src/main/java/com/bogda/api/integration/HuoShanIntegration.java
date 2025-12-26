@@ -59,7 +59,7 @@ public class HuoShanIntegration {
                 appInsights.trackTrace("Translation list is empty or not present.");
             }
         } catch (Exception e) {
-            appInsights.trackTrace("huoShanTranslate " + e.getMessage());
+            appInsights.trackTrace("FatalException huoShanTranslate " + e.getMessage());
         }
         return translation;
     }
@@ -92,7 +92,7 @@ public class HuoShanIntegration {
             return Base64.getDecoder().decode(translateImageResponse.getImage());
 
         } catch (Exception e) {
-            appInsights.trackTrace("huoShanImageTranslate " + e.getMessage());
+            appInsights.trackTrace("FatalException huoShanImageTranslate " + e.getMessage());
         }
         return null;
     }

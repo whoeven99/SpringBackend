@@ -39,7 +39,7 @@ public class DeepLIntegration {
                         try {
                             return client.translateText(sourceText, null, target);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 translateByDeepL deepL翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
+                            appInsights.trackTrace("FatalException 每日须看 translateByDeepL deepL翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
                             appInsights.trackException(e);
                             return null;
                         }
@@ -64,7 +64,7 @@ public class DeepLIntegration {
             counter.addChars(totalToken);
             return targetText;
         } catch (Exception e) {
-            appInsights.trackTrace("clickTranslation translateByDeepL deepL翻译报错信息 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
+            appInsights.trackTrace("FatalException clickTranslation translateByDeepL deepL翻译报错信息 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
             appInsights.trackException(e);
         }
         return sourceText;

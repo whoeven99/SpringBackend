@@ -79,7 +79,7 @@ public class BaseHttpIntegration {
                     try {
                         return httpClient.execute(httpGet);
                     } catch (Exception e) {
-                        appInsights.trackTrace("每日须看 sendHttpGet api报错信息 errors ： " + e.getMessage() + " url : " + url + " key：" + key);
+                        appInsights.trackTrace("FatalException 每日须看 sendHttpGet api报错信息 errors ： " + e.getMessage() + " url : " + url + " key：" + key);
                         appInsights.trackException(e);
                         return null;
                     }
