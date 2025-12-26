@@ -35,7 +35,7 @@ public class AESUtils {
                 hexString.append(String.format("%02x", b));
             }
             return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
+        } catch (Exception e) {
             appInsights.trackException(e);
             return null;
         }
