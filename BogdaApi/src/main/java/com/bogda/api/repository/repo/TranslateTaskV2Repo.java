@@ -24,7 +24,7 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
 
     public TranslateTaskV2DO selectOneByInitialTaskIdAndNotSaved(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.select("TOP 1 *")
+        wrapper.select("TOP 1 id, resource_id")
                 .eq("initial_task_id", initialTaskId)
                 .eq("has_target_value", true)
                 .eq("saved_to_shopify", false)
@@ -53,7 +53,7 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
 
     public TranslateTaskV2DO selectOneByInitialTaskIdAndEmptyValue(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.select("TOP 1 *")
+        wrapper.select("TOP 1 id, module, source_value, is_single_html")
                 .eq("initial_task_id", initialTaskId)
                 .eq("has_target_value", false)
                 .eq("is_deleted", false);
