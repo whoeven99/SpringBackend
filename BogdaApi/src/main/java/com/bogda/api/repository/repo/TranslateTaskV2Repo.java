@@ -13,7 +13,7 @@ import java.util.List;
 public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
     public TranslateTaskV2DO selectLastTranslateOne(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.select("TOP 1 *")
+        wrapper.select("TOP 1 module")
                 .eq("initial_task_id", initialTaskId)
                 .eq("has_target_value", true)
                 .eq("is_deleted", false)
