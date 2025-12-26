@@ -134,7 +134,7 @@ public class ALiYunTranslateIntegration {
                         try {
                             return conv.call(param);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 callWithPicMess 百炼翻译报错信息 errors ： " + e.getMessage() + " picUrl : " + picUrl + " 用户：" + userId);
+                            appInsights.trackTrace("FatalException 每日须看 callWithPicMess 百炼翻译报错信息 errors ： " + e.getMessage() + " picUrl : " + picUrl + " 用户：" + userId);
                             appInsights.trackException(e);
                             return null;
                         }
@@ -157,7 +157,7 @@ public class ALiYunTranslateIntegration {
             counter.addChars(totalToken);
             return (String) content.get(0).get("text");
         } catch (Exception e) {
-            appInsights.trackTrace("callWithPicMess 用户 " + userId + " 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
+            appInsights.trackTrace("FatalException callWithPicMess 用户 " + userId + " 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             appInsights.trackException(e);
             return null;
         }
@@ -186,7 +186,7 @@ public class ALiYunTranslateIntegration {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt : " + prompt + " 用户：" + userId);
+                            appInsights.trackTrace("FatalException 每日须看 callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt : " + prompt + " 用户：" + userId);
                             appInsights.trackException(e);
                             return null;
                         }
@@ -206,7 +206,7 @@ public class ALiYunTranslateIntegration {
             appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);
         } catch (Exception e) {
-            appInsights.trackTrace("callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
+            appInsights.trackTrace("FatalException callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             return null;
         }
         return content;
@@ -239,7 +239,7 @@ public class ALiYunTranslateIntegration {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text + " 用户：" + shopName);
+                            appInsights.trackTrace("FatalException 每日须看 textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text + " 用户：" + shopName);
                             appInsights.trackException(e);
                             return null;
                         }
@@ -259,7 +259,7 @@ public class ALiYunTranslateIntegration {
 //            pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_ALT_FEE);
 
         } catch (Exception e) {
-            appInsights.trackTrace("textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
+            appInsights.trackTrace("FatalException textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
             appInsights.trackException(e);
             return null;
         }

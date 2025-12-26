@@ -1,6 +1,5 @@
 package com.bogda.api.config;
 
-
 import com.bogda.api.utils.ConfigUtils;
 import com.google.genai.Client;
 import org.springframework.context.annotation.Bean;

@@ -112,7 +112,7 @@ public class TaskService {
                 addCharsByUserData(userPriceRequest);
             } catch (Exception e) {
                 appInsights.trackException(e);
-                appInsights.trackTrace("judgeAddChars 用户： " + userPriceRequest.getShopName() + " 获取数据 errors : " + e);
+                appInsights.trackTrace("FatalException judgeAddChars 用户： " + userPriceRequest.getShopName() + " 获取数据 errors : " + e);
             }
         }
 
@@ -153,7 +153,7 @@ public class TaskService {
                 }
             } catch (Exception e) {
                 appInsights.trackException(e);
-                appInsights.trackTrace("judgeAddChars 用户： " + order.getShopName() + " 获取订阅计划数据 errors : " + e);
+                appInsights.trackTrace("FatalException judgeAddChars 用户： " + order.getShopName() + " 获取订阅计划数据 errors : " + e);
             }
         }
     }
@@ -310,7 +310,7 @@ public class TaskService {
                         // 词汇表改为0
                         iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userTrialsDO.getShopName()).set("status", 0));
                     } catch (Exception e) {
-                        appInsights.trackTrace(userTrialsDO.getShopName() + "用户  errors 修改用户计划失败: " + e.getMessage());
+                        appInsights.trackTrace("FatalException " + userTrialsDO.getShopName() + "用户  errors 修改用户计划失败: " + e.getMessage());
                     }
                     continue;
                 }
@@ -344,7 +344,7 @@ public class TaskService {
                 addPCCharsByUserData(usersDO.getShopName(), usersDO.getAccessToken(), pcOrdersDO.getOrderId(), pcOrdersDO.getCreatedAt());
             } catch (Exception e) {
                 appInsights.trackException(e);
-                appInsights.trackTrace("judgeAddChars 用户： " + pcOrdersDO.getShopName() + " 获取数据 errors : " + e);
+                appInsights.trackTrace("FatalException judgeAddChars 用户： " + pcOrdersDO.getShopName() + " 获取数据 errors : " + e);
             }
         }
 
@@ -468,7 +468,7 @@ public class TaskService {
                         // 将用户计划改为1 免费计划
                         pcUserSubscriptionsRepo.updateUserPlanIdByShopName(shopName, 1);
                     } catch (Exception e) {
-                        appInsights.trackTrace(shopName + " 用户  errors PC 修改用户计划失败: " + e.getMessage());
+                        appInsights.trackTrace("FatalException " + shopName + " 用户  errors PC 修改用户计划失败: " + e.getMessage());
                     }
                     continue;
                 }

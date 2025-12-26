@@ -607,7 +607,7 @@ public class TranslateV2Service {
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
                         context.getUsedToken(), context.getTranslatedChars());
-            } else  {
+            } else {
                 // 批量翻译
                 List<TranslateTaskV2DO> originTaskList =
                         translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(initialTaskId, 30);
@@ -762,7 +762,6 @@ public class TranslateV2Service {
             if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
                 List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
                 });
-
                 assert moduleList != null;
                 moduleList = com.bogda.api.utils.StringUtils.sortTranslateData(moduleList);
                 List<TranslateResourceDTO> resourceList = convertALL(moduleList);
@@ -778,7 +777,7 @@ public class TranslateV2Service {
         }
     }
 
-    public static List<TranslateResourceDTO> convertALL(List<String> list){
+    private static List<TranslateResourceDTO> convertALL(List<String> list) {
         //修改模块的排序
         List<TranslateResourceDTO> translateResourceDTOList = new ArrayList<>();
         for (String s : list) {

@@ -61,7 +61,7 @@ public class UserTypeTokenService {
                 try {
                     shopifyService.insertInitialByTranslation(shopifyRequest, key, "initial");
                 } catch (Exception e) {
-                    appInsights.trackTrace("getUserInitToken " + shopifyRequest.getShopName() + " " + key + "模块获取失败： " + request);
+                    appInsights.trackTrace("FatalException getUserInitToken " + shopifyRequest.getShopName() + " " + key + "模块获取失败： " + request);
                 }
             }
 
@@ -106,7 +106,7 @@ public class UserTypeTokenService {
             }
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("startTokenCount " + request.getShopName() + "错误原因 errors ： " + e.getMessage());
+            appInsights.trackTrace("FatalException startTokenCount " + request.getShopName() + "错误原因 errors ： " + e.getMessage());
         }
     }
 

@@ -53,8 +53,7 @@ public class ShopifyUtils {
             }
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            appInsights.trackTrace(currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
-            appInsights.trackTrace(" currency error :  " + e.getMessage());
+            appInsights.trackTrace("FatalException : " + currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
         }
         return map;
     }

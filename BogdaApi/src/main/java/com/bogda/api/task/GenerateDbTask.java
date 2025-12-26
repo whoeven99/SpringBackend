@@ -80,7 +80,7 @@ public class GenerateDbTask {
                         // 调用单条生成接口
                         fixGenerateSubtask(subtaskDO);
                     } catch (Exception e) {
-                        appInsights.trackTrace("用户 " + subtaskDO.getUserId() + " 生成 子任务： " + subtaskDO.getSubtaskId() + " errors ：" + e);
+                        appInsights.trackTrace("FatalException 用户 " + subtaskDO.getUserId() + " 生成 子任务： " + subtaskDO.getSubtaskId() + " errors ：" + e);
                     }
                 });
             }
@@ -177,7 +177,7 @@ public class GenerateDbTask {
             //将这次任务的token数清零
             iapgUserCounterService.updateCharsByUserId(usersDO.getId());
         } catch (Exception e) {
-            appInsights.trackTrace(subtaskDO.getUserId() + " 用户 发送邮件接口 errors ：" + e);
+            appInsights.trackTrace("FatalException " + subtaskDO.getUserId() + " 用户 发送邮件接口 errors ：" + e);
             //删除限制
             GENERATE_SHOP.remove(subtaskDO.getUserId());
             // 将状态改为4
@@ -234,7 +234,7 @@ public class GenerateDbTask {
             GENERATE_STATE_BAR.remove(usersDO.getId());
             tencentEmailService.sendAPGTaskInterruptEmail(usersDO, completeProductsSize, productIds.size() - completeProductsSize, userCounter.getChars());
         } catch (Exception e) {
-            appInsights.trackTrace("用户 " + usersDO.getShopName() + "  发送失败邮件接口 errors ：" + e);
+            appInsights.trackTrace("FatalException 用户 " + usersDO.getShopName() + "  发送失败邮件接口 errors ：" + e);
             appInsights.trackException(e);
         } finally {
             //将这次任务的token数清零
