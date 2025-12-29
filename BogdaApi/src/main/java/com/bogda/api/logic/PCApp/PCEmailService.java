@@ -23,7 +23,7 @@ public class PCEmailService {
     public void sendPcInitialEmail(String email, String userName) {
         // 发送邮件
         Map<String, String> templateData = new HashMap<>();
-        templateData.put("user", userName);
+        templateData.put("name", userName);
         emailIntegration.sendEmailByTencent(158999L, MailChimpConstants.PC_FIRST_INSTALL_EMAIL, templateData, MailChimpConstants.TENCENT_FROM_EMAIL, email);
     }
 
