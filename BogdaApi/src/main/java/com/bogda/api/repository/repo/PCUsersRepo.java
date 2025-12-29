@@ -95,4 +95,9 @@ public class PCUsersRepo extends ServiceImpl<PCUsersMapper, PCUsersDO> {
         return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName, shopName)
                 .set(PCUsersDO::getUpdateAt, Timestamp.from(Instant.now())).setSql("purchase_points = purchase_points + " + chars)) > 0;
     }
+
+    public boolean updateUninstallTimeByShopName(String shopName) {
+        return baseMapper.update(new LambdaUpdateWrapper<PCUsersDO>().eq(PCUsersDO::getShopName
+                , shopName).set(PCUsersDO::getUninstallTime, Timestamp.from(Instant.now()))) > 0;
+    }
 }
