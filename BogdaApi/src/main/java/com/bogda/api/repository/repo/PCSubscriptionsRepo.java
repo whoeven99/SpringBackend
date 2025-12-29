@@ -13,6 +13,10 @@ public class PCSubscriptionsRepo extends ServiceImpl<PCSubscriptionsMapper, PCSu
     }
 
     public Integer getCharsByPlanName(String name) {
-        return baseMapper.selectOne(new LambdaQueryWrapper<PCSubscriptionsDO>().eq(PCSubscriptionsDO::getPlanName, name)).getEveryMonthToken();
+        PCSubscriptionsDO pcSubscriptionsDO = baseMapper.selectOne(new LambdaQueryWrapper<PCSubscriptionsDO>().eq(PCSubscriptionsDO::getPlanName, name));
+        if (pcSubscriptionsDO == null) {
+            return null;
+        }
+        return pcSubscriptionsDO.getEveryMonthToken();
     }
 }

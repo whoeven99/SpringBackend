@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.api.Service.*;
 import com.bogda.api.entity.DO.*;
+import com.bogda.api.logic.PCApp.PCEmailService;
 import com.bogda.api.model.controller.request.UserPriceRequest;
 import com.bogda.api.repository.entity.PCOrdersDO;
 import com.bogda.api.repository.entity.PCSubscriptionQuotaRecordDO;
@@ -71,6 +72,8 @@ public class TaskService {
     private PCUserSubscriptionsRepo pcUserSubscriptionsRepo;
     @Autowired
     private PCUserTrialsRepo pcUserTrialsRepo;
+    @Autowired
+    private PCEmailService pcEmailService;
 
     /**
      * 异步调用根据订阅信息，判断是否添加额度的方法
@@ -372,7 +375,8 @@ public class TaskService {
 
         // 只处理活跃、非试用、且还在本期内的订阅
         if (!"ACTIVE".equals(status) || now.isAfter(end)) {
-//            appInsights.trackTrace("不满足条件");
+            appInsights.trackTrace("FatalException 不满足条件 只处理活跃、非试用、且还在本期内的订阅: " + shopName + " " + status + " " + end + " " + now);
+
             return;
         }
 
@@ -387,6 +391,11 @@ public class TaskService {
             // 满足条件，执行添加字符的逻辑
             // 根据计划获取对应的字符
             Integer chars = pcSubscriptionsRepo.getCharsByPlanName(name);
+            if (chars == null) {
+                appInsights.trackTrace("FatalException test chars is null : " + shopName);
+                return;
+            }
+
             pcSubscriptionQuotaRecordRepo.insertQuotaRecord(subscriptionId, billingCycle);
             boolean flag = pcUsersRepo.updatePurchasePointsByShopName(shopName, accessToken, subscriptionId, chars);
             appInsights.trackTrace("PC addCharsByUserData 用户： " + shopName + " 添加字符额度： " + chars + " 是否成功： " + flag);
@@ -394,8 +403,15 @@ public class TaskService {
             // 修改该用户过期时间
             pcUserSubscriptionsRepo.updateUserEndDate(shopName, subEnd);
 
-            // 发送邮件通知 还没给邮件
-//            tencentEmailService.sendSubscribeEmail(userPriceRequest.getShopName(), chars);
+            // 发送邮件通知
+            PCUsersDO userByShopName = pcUsersRepo.getUserByShopName(shopName);
+
+            // 发送对应的邮件
+            // 计算token转化为图片张数 除于2000
+            String planPicChars = String.valueOf(chars / 2000);
+            String allPicLimit = (userByShopName.getPurchasePoints() - userByShopName.getUsedPoints()) / 2000 + "";
+
+            pcEmailService.sendPcFreeEmail(userByShopName.getEmail(), userByShopName.getFirstName(), name, planPicChars, allPicLimit);
         }
     }
 
@@ -463,7 +479,6 @@ public class TaskService {
 
                 // 如果订单存在，并且支付成功，添加相关计划额度
                 boolean flag = pcUsersRepo.updatePurchasePoints(shopName, charsByPlanName);
-                System.out.println(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
                 appInsights.trackTrace(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
             }
         }
