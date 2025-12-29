@@ -1,16 +1,23 @@
 package com.bogda.api.logic.PCApp;
 
+import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.repository.entity.PCOrdersDO;
+import com.bogda.api.repository.entity.PCUserSubscriptionsDO;
 import com.bogda.api.repository.repo.PCOrdersRepo;
+import com.bogda.api.repository.repo.PCSubscriptionsRepo;
+import com.bogda.api.repository.repo.PCUserSubscriptionsRepo;
+import com.bogda.api.repository.repo.PCUsersRepo;
+import com.bogda.api.utils.CaseSensitiveUtils;
+import com.bogda.api.utils.JsonUtils;
+import com.bogda.api.utils.ShopifyUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-
-import static com.bogdatech.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class PCOrdersService {
@@ -22,6 +29,8 @@ public class PCOrdersService {
     private PCUsersRepo pcUsersRepo;
     @Autowired
     private PCSubscriptionsRepo pcSubscriptionsRepo;
+    @Autowired
+    private PCUserSubscriptionsRepo pcUserSubscriptionsRepo;
 
     public BaseResponse<Object> insertOrUpdateOrder(PCOrdersDO pcOrdersDO) {
         PCOrdersDO selectOrder = pcOrdersRepo.getOrderByOrderId(pcOrdersDO.getOrderId());
@@ -60,7 +69,7 @@ public class PCOrdersService {
         // 解析计划数据，如果是Active，发送邮件，反之不发送
         JsonNode jsonNode = JsonUtils.readTree(subscribeData);
         if (jsonNode == null) {
-            appInsights.trackTrace("FatalException sendSubscribeSuccessEmail jsonNode is null : " + subscribeData);
+            CaseSensitiveUtils.appInsights.trackTrace("FatalException sendSubscribeSuccessEmail jsonNode is null : " + subscribeData);
             return new BaseResponse<>().CreateErrorResponse("subscribe data is null");
         }
 
@@ -83,9 +92,15 @@ public class PCOrdersService {
             return new BaseResponse<>().CreateErrorResponse("no chars by plan name: " + orderBySubGid.getName());
         }
 
+        // 获取订单类型 是年费还是月费 然后年费 + yearly
+        PCUserSubscriptionsDO pcUserSubscriptionsByShopName = pcUserSubscriptionsRepo.getPcUserSubscriptionsByShopName(shopName);
+        String planName = orderBySubGid.getName();
+        if (pcUserSubscriptionsByShopName != null && pcUserSubscriptionsByShopName.getFeeType() == 1) {
+            planName += " yearly";
+        }
 
         String picChars = String.valueOf(charsByPlanName / 2000);
-        pcEmailService.sendPcSubscribeEmail(user.getEmail(), user.getFirstName(), orderBySubGid.getName(), picChars, createdAt);
+        pcEmailService.sendPcSubscribeEmail(user.getEmail(), user.getFirstName(), planName, picChars, createdAt);
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
@@ -100,7 +115,7 @@ public class PCOrdersService {
         // 解析一次性购买数据， 如果是Active，发送邮件，反之不发送
         JsonNode jsonNode = JsonUtils.readTree(oneTimePurchaseData);
         if (jsonNode == null) {
-            appInsights.trackTrace("FatalException sendOneTimeBuySuccessEmail jsonNode is null : " + oneTimePurchaseData);
+            CaseSensitiveUtils.appInsights.trackTrace("FatalException sendOneTimeBuySuccessEmail jsonNode is null : " + oneTimePurchaseData);
             return new BaseResponse<>().CreateErrorResponse("subscribe data is null");
         }
 
@@ -134,7 +149,7 @@ public class PCOrdersService {
         // 根据计划获取对应的字符
         Integer chars = pcSubscriptionsRepo.getCharsByPlanName("Basic");
         if (chars == null) {
-            appInsights.trackTrace("FatalException test chars is null : " + shopName);
+            CaseSensitiveUtils.appInsights.trackTrace("FatalException test chars is null : " + shopName);
             return new BaseResponse<>().CreateErrorResponse("no active subscribe");
         }
 

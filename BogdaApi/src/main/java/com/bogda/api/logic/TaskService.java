@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.api.Service.*;
 import com.bogda.api.entity.DO.*;
+import com.bogda.api.logic.PCApp.PCEmailService;
 import com.bogda.api.model.controller.request.UserPriceRequest;
 import com.bogda.api.repository.entity.PCOrdersDO;
 import com.bogda.api.repository.entity.PCSubscriptionQuotaRecordDO;
@@ -374,7 +375,8 @@ public class TaskService {
 
         // 只处理活跃、非试用、且还在本期内的订阅
         if (!"ACTIVE".equals(status) || now.isAfter(end)) {
-//            appInsights.trackTrace("不满足条件");
+            appInsights.trackTrace("FatalException 不满足条件 只处理活跃、非试用、且还在本期内的订阅: " + shopName + " " + status + " " + end + " " + now);
+
             return;
         }
 

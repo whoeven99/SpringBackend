@@ -1,11 +1,10 @@
-package com.bogdatech.logic.PCApp;
+package com.bogda.api.logic.PCApp;
 
-import com.bogdatech.constants.MailChimpConstants;
-import com.bogdatech.integration.EmailIntegration;
-import com.bogdatech.utils.ShopifyUtils;
+import com.bogda.api.constants.MailChimpConstants;
+import com.bogda.api.integration.EmailIntegration;
+import com.bogda.api.utils.ShopifyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
