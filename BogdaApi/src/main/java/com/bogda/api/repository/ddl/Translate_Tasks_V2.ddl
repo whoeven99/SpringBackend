@@ -29,5 +29,9 @@ CREATE NONCLUSTERED INDEX IX_InitTask_Resource_Target_Shopify_Deleted
 
 CREATE NONCLUSTERED INDEX IX_Translate_Tasks_V2_TaskStatus
     ON dbo.Translate_Tasks_V2(initial_task_id,has_target_value,is_deleted,resource_id,saved_to_shopify);
-CREATE NONCLUSTERED INDEX IX_Translate_Tasks_V2_Search
-    ON dbo.Translate_Tasks_V2(initial_task_id,has_target_value,is_deleted);
+
+CREATE NONCLUSTERED INDEX idx_task_queue
+    ON dbo.Translate_Tasks_V2 (initial_task_id,is_single_html,has_target_value,is_deleted,created_at);
+
+CREATE NONCLUSTERED INDEX IX_TasksV2_TaskStatus_Shopify
+    ON dbo.Translate_Tasks_V2 (initial_task_id,has_target_value,saved_to_shopify,is_deleted);

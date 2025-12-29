@@ -89,7 +89,7 @@ public class APGUserGeneratedTaskService {
             //获取产品标题
             return generateProgressBarVO;
         } catch (Exception e) {
-            appInsights.trackTrace(shopName + " 用户 " + userDO.getId() + " 的taskData有问题 errors ： " + e);
+            appInsights.trackTrace("FatalException " + shopName + " 用户 " + userDO.getId() + " 的taskData有问题 errors ： " + e);
             appInsights.trackException(e);
         }
         //获取
@@ -108,7 +108,7 @@ public class APGUserGeneratedTaskService {
                 //将json 存到APG_User_Generated_Subtask中
                 iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, json, usersDO.getId(), null));
             } catch (Exception e) {
-                appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
+                appInsights.trackTrace("FatalException " + shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
 //                appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
                 appInsights.trackException(e);
             }

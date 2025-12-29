@@ -57,10 +57,10 @@ public enum RejectRuleEnum {
             "JWT Token"
     ),
 
-    SUSPICIOUS_ALNUM(
-            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])[A-Za-z0-9]{9,}$"),
-            "疑似随机字符串"
-    ),
+//    SUSPICIOUS_ALNUM(
+//            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])[A-Za-z0-9]{9,}$"),
+//            "疑似随机字符串"
+//    ),
 
     PHONE(
             Pattern.compile(

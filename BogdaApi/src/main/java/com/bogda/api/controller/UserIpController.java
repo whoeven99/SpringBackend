@@ -6,6 +6,7 @@ import com.bogda.api.entity.VO.NoCrawlerVO;
 import com.bogda.api.logic.UserIpService;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.repository.entity.UserIPRedirectionDO;
+import com.bogda.api.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -74,6 +75,7 @@ public class UserIpController {
         try {
             return userIpService.syncUserIp(shopName, userIPRedirectionDOList);
         } catch (Exception e) {
+            CaseSensitiveUtils.appInsights.trackTrace("FatalException syncUserIp error" + e.getMessage());
             e.printStackTrace();
         }
         return new BaseResponse<>().CreateErrorResponse("syncUserIp error");

@@ -120,14 +120,6 @@ public class JudgeTranslateUtilsTest {
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4ifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
         ));
     }
-
-    @Test
-    @DisplayName("疑似随机字符串应被拦截")
-    void testSuspiciousAlnum() {
-        assertFalse(translationRuleJudgment("k", "UXxSP8cSm"));
-        assertFalse(translationRuleJudgment("k", "UgvyqJcxm123"));
-    }
-
     @Test
     @DisplayName("电话号码应被拦截")
     void testPhone() {

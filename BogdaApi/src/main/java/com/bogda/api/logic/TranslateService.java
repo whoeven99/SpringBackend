@@ -102,7 +102,7 @@ public class TranslateService {
             root = JsonUtils.readTree(shopifyData);
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
+            appInsights.trackTrace("FatalException syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
             return;
         }
 
