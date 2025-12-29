@@ -77,7 +77,7 @@ public class PCOrdersService {
         String subscribeId = jsonNode.path("app_subscription").path("admin_graphql_api_id").asText(null);
         String createdAt = jsonNode.path("app_subscription").path("created_at").asText(null);
         if (!"ACTIVE".equals(status) || subscribeId == null || createdAt == null) {
-            System.out.println("status : " + status + " subscribeId : " + subscribeId + " createdAt : " + createdAt);
+            CaseSensitiveUtils.appInsights.trackTrace("status : " + status + " subscribeId : " + subscribeId + " createdAt : " + createdAt);
             return new BaseResponse<>().CreateErrorResponse("subscribe status is not Active");
         }
 
