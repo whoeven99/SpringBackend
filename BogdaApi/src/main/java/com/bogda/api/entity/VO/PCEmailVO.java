@@ -1,4 +1,4 @@
-package com.bogdatech.entity.VO;
+package com.bogda.api.entity.VO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

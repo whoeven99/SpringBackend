@@ -18,11 +18,6 @@ public class MailChimpConstants {
     public static final String APG_PURCHASE_EMAIL = "Confirmation of Successful Credits Purchase｜Ciwi.ai:Product Description";
     public static final String APG_TASK_INTERRUPT_EMAIL = "Your Product Content Task Could Not Be Completed｜Ciwi.ai:Product Description";
     public static final String IP_REPORT_EMAIL = "You’re Losing Visitors This Week | Ciwi-Translator";
-    public static final String USER_THEME_EMAIL = "Theme Change Detected — Some Content May Need Translation｜Ciwi Translator";
-    public static final String USER_LANGUAGE_EMAIL = "Store Default Language Changed — Translation Update Required ｜Ciwi Translator";
-    public static final String USER_SWITCH_EMAIL = "Theme Change Detected — Ciwi Language Switcher Update Required";
-
-
     // from_email
     public static final String PC_PURCHASE_EMAIL = "Image Translation Credits Have Been Added Successfully"; //发送购买额度邮件
     // 发送首次登录安装邮件
@@ -34,6 +29,12 @@ public class MailChimpConstants {
     // 批量任务完成的邮件
     public static final String PC_TASK_FINISH_EMAIL = "Image Translation Task Is Complete — Ciwi Image Translate";
     //from_email
+    public static final String USER_THEME_EMAIL = "Theme Change Detected — Some Content May Need Translation｜Ciwi Translator";
+    public static final String USER_LANGUAGE_EMAIL = "Store Default Language Changed — Translation Update Required ｜Ciwi Translator";
+    public static final String USER_SWITCH_EMAIL = "Theme Change Detected — Ciwi Language Switcher Update Required";
+
+
+    // from_email
     public static final String CC_EMAIL = "feynman@ciwi.ai";
     public static final String[] CC_EMAIL_ARRAY = {"feynman@ciwi.ai", "yewen@ciwi.ai"};
     public static final String TENCENT_FROM_EMAIL = "support@msg.ciwi.ai";
