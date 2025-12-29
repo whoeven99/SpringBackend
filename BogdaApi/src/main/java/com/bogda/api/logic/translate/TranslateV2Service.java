@@ -991,7 +991,7 @@ public class TranslateV2Service {
 
         // From TranslateDataService filterNeedTranslateSet
         // 如果是特定类型，也从集合中移除
-        if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
+        if ("FILE_REFERENCE".equals(type) || "LINK".equals(type) || "URL".equals(type)
                 || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
                 || "LIST_URL".equals(type)
                 || "JSON".equals(type)

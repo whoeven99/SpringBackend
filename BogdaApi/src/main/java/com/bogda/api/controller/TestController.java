@@ -9,7 +9,7 @@ import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.model.controller.request.CloudServiceRequest;
 import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.task.SubscriptionTask;
+import com.bogda.api.task.IpEmailTask;
 import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ public class TestController {
     @Autowired
     private GeminiIntegration geminiIntegration;
     @Autowired
-    private SubscriptionTask subscriptionTask;
+    private IpEmailTask ipEmailTask;
 
     @PostMapping("/test")
     public String test() {
@@ -140,7 +140,7 @@ public class TestController {
 
     @GetMapping("/testEmail")
     public void testEmail() {
-        subscriptionTask.subscriptionTaskForImage();
+        ipEmailTask.sendEmailTask();
     }
 
 }
