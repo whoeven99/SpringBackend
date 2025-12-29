@@ -3,8 +3,11 @@ package com.bogda.api.logic.translate.stragety;
 import com.bogda.api.context.TranslateContext;
 import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
+import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.RedisProcessService;
+import com.bogda.api.logic.redis.ConfigRedisRepo;
+import com.bogda.api.utils.CaseSensitiveUtils;
 import com.bogda.api.utils.JsonUtils;
 import com.bogda.api.utils.PromptUtils;
 import com.bogda.api.utils.StringUtils;
@@ -21,6 +24,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     private RedisProcessService redisProcessService;
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    @Autowired
+    private GeminiIntegration geminiIntegration;
+    @Autowired
+    private ConfigRedisRepo configRedisRepo;
 
     @Override
     public String getType() {
@@ -129,7 +136,14 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     }
 
     private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target) {
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+//        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+        String configValue = configRedisRepo.getConfig("geminiModel");
+        if (configValue == null) {
+            CaseSensitiveUtils.appInsights.trackTrace("FatalException configValue is null");
+            return null;
+        }
+        Pair<String, Integer> pair = geminiIntegration.generateText(configValue, prompt);
+
         if (pair == null) {
             // fatalException
             return null;

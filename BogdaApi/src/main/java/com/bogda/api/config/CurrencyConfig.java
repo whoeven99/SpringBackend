@@ -163,10 +163,38 @@ public class CurrencyConfig {
     public static final Map<String, Object> ZMW = new HashMap<>();
     public static final Map<String, Object> STD = new HashMap<>();
     public static final Map<String, Object> STN = new HashMap<>();
+    public static final Map<String, Object> IRR = new HashMap<>();
+    public static final Map<String, Object> ZWL = new HashMap<>();
+    public static final Map<String, Object> SVC = new HashMap<>();
+    public static final Map<String, Object> KPW = new HashMap<>();
     public static final String defaultPic = "https://ciwi-1327177217.cos.ap-singapore.myqcloud.com/flag_webp/flag-default.webp";
     public static final Map<String, Map<String, Object>> CURRENCIES = new HashMap<>();
 
     static {
+        // KPW
+        KPW.put("currency", "North Korean Won");
+        KPW.put("code", "KPW");
+        KPW.put("symbol", "₩");
+        CURRENCIES.put("KPW", KPW);
+
+        // SVC
+        SVC.put("currency", "El Salvador Colon");
+        SVC.put("code", "SVC");
+        SVC.put("symbol", "$");
+        CURRENCIES.put("SVC", SVC);
+
+        // ZWL
+        ZWL.put("currency", "Zimbabwean Dollar (1980–2013)");
+        ZWL.put("code", "ZWL");
+        ZWL.put("symbol", "Z$");
+        CURRENCIES.put("ZWL", ZWL);
+
+        // IRR
+        IRR.put("currency", "Iranian Rial");
+        IRR.put("code", "IRR");
+        IRR.put("symbol", "ریال");
+        CURRENCIES.put("IRR", IRR);
+
         // AFN
         AFN.put("currency", "Afghan Afghani");
         AFN.put("code", "AFN");
