@@ -14,10 +14,7 @@ import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import static com.bogda.api.constants.MailChimpConstants.*;
@@ -259,7 +256,6 @@ public class TencentEmailService {
 
         templateData.put("Currency_top",
                 buildHtmlList(currencyEmailData, CurrencyConfig::getCurrentName));
-
         // 发送邮件（如果需要）
         boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
                 templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, user.getEmail()));
@@ -281,10 +277,18 @@ public class TencentEmailService {
 
         return data.stream()
                 .flatMap(map -> map.entrySet().stream())
+                .filter(entry -> {
+                    String displayName = nameResolver.apply(entry.getKey());
+                    return !entry.getKey().equals(displayName);
+                })
                 .map(entry -> {
                     String displayName = nameResolver.apply(entry.getKey());
                     int value = entry.getValue();
-                    return String.format("<li>%s - %d visitors</li>\n", displayName, value);
+                    return String.format(
+                            "<li>%s - %d visitors</li>\n",
+                            displayName,
+                            value
+                    );
                 })
                 .collect(Collectors.joining());
     }
