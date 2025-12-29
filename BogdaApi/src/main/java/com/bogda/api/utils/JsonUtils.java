@@ -86,7 +86,7 @@ public class JsonUtils {
         try {
             return OBJECT_MAPPER.readTree(str);
         }catch (Exception e) {
-            appInsights.trackTrace("clickTranslation String to Json errors: " + e);
+            appInsights.trackTrace("FatalException clickTranslation String to Json errors: " + e);
             throw new RuntimeException(e);
         }
     }
