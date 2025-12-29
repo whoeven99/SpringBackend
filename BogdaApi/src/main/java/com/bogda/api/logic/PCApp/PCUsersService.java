@@ -52,10 +52,10 @@ public class PCUsersService {
             pcUsersDO.setLoginTime(now);
             pcUsersDO.setPurchasePoints(20000);
             pcUsersRepo.saveSingleUser(pcUsersDO);
-            pcUserSubscriptionsRepo.insertUserSubscriptions(shopName, PCUserSubscriptionsRepo.FREE_PLAN);
 
             // 发送用户新初始化的邮件
             pcEmailService.sendPcInitialEmail(pcUsersDO.getEmail(), pcUsersDO.getFirstName());
+            pcUserSubscriptionsRepo.insertUserSubscriptions(shopName, PCUserSubscriptionsRepo.FREE_PLAN);
         } else {
             Timestamp now = Timestamp.from(Instant.now());
             pcUsers.setEmail(pcUsersDO.getEmail());
@@ -102,6 +102,10 @@ public class PCUsersService {
 
     public BaseResponse<Object> uninstall(String shopName) {
         boolean flag = pcUsersRepo.updateUninstallByShopName(shopName);
+
+        // 修改计划为免费计划 修改卸载时间为当前时间
+        pcUserSubscriptionsRepo.updateUserPlanIdByShopName(shopName, PCUserSubscriptionsRepo.FREE_PLAN);
+        pcUsersRepo.updateUninstallTimeByShopName(shopName);
 
         // 判断免费试用额度是否扣除，然后扣除
         PCUserTrialsDO pcUserTrialsDO = pcUserTrialsRepo.getUserTrialByShopName(shopName);

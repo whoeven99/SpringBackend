@@ -138,30 +138,9 @@ public class PCOrdersService {
         String utcTime = DateTimeFormatter.ofPattern("yyyy-MM-dd")
                 .withZone(ZoneOffset.UTC)
                 .format(Instant.parse(createdAt));
-        String picChars = String.valueOf(user.getPurchasePoints() - user.getUsedPoints());
-        System.out.println(picChars);
-        pcEmailService.sendPcBuyEmail(user.getEmail(), user.getFirstName(), String.valueOf(amount), picChars, utcTime);
+        String picChars = String.valueOf((user.getPurchasePoints() - user.getUsedPoints()) / 2000);
+        String amountCount = String.valueOf(amount / 2000);
+        pcEmailService.sendPcBuyEmail(user.getEmail(), user.getFirstName(), amountCount, picChars, utcTime);
         return new BaseResponse<>().CreateSuccessResponse(true);
-    }
-
-    public BaseResponse<Object> test(String shopName) {
-        // 满足条件，执行添加字符的逻辑
-        // 根据计划获取对应的字符
-        Integer chars = pcSubscriptionsRepo.getCharsByPlanName("Basic");
-        if (chars == null) {
-            CaseSensitiveUtils.appInsights.trackTrace("FatalException test chars is null : " + shopName);
-            return new BaseResponse<>().CreateErrorResponse("no active subscribe");
-        }
-
-        // 发送邮件通知
-        PCUsersDO userByShopName = pcUsersRepo.getUserByShopName(shopName);
-
-        // 发送对应的邮件
-        // 计算token转化为图片张数 除于2000
-        String planPicChars = String.valueOf(chars / 2000);
-        String allPicLimit = (userByShopName.getPurchasePoints() - userByShopName.getUsedPoints()) / 2000 + "";
-
-        pcEmailService.sendPcFreeEmail(userByShopName.getEmail(), userByShopName.getFirstName(), "Basic", planPicChars, allPicLimit);
-        return null;
     }
 }
