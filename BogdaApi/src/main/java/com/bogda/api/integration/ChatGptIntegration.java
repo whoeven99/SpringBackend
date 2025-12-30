@@ -10,6 +10,7 @@ import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.api.utils.ConfigUtils;
 import com.bogda.api.utils.TimeOutUtils;
 import kotlin.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -26,24 +27,25 @@ public class ChatGptIntegration {
     @Value("${gpt.deploymentName}")
     private String deploymentName;
     public static final int OPENAI_MAGNIFICATION = 3;
+    public static String GPT_4 = "gpt-4.1";
+    private final OpenAIClient client;
 
-//    private final OpenAIClient client;
-
+    @Autowired
     public ChatGptIntegration() {
-//        client = new OpenAIClientBuilder()
-//                .endpoint(endpoint)
-//                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
-//                .buildClient();
-    }
-
-    // content - allToken
-    public Pair<String, Integer> chatWithGpt(String prompt, String sourceText, String shopName, String target) {
-        OpenAIClient client = new OpenAIClientBuilder()
+        client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
                 .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
                 .buildClient();
+    }
+
+    // content - allToken
+    public Pair<String, Integer> chatWithGpt(String prompt, String target) {
+//        OpenAIClient client = new OpenAIClientBuilder()
+//                .endpoint(endpoint)
+//                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
+//                .buildClient();
         ChatMessage userMessage = new ChatMessage(ChatRole.USER);
-        userMessage.setContent(prompt + (sourceText != null ? "\n" + sourceText : ""));
+        userMessage.setContent(prompt);
 
         List<ChatMessage> prompts = new ArrayList<>();
         prompts.add(userMessage);
@@ -60,13 +62,15 @@ public class ChatGptIntegration {
                     client.getChatCompletions(deploymentName, options), TimeOutUtils.rateLimiter1);
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
-            appInsights.trackTrace("ChatGptIntegration 用户： " + shopName + " 翻译语言： " + target + " 翻译的文本： " +
-                    sourceText + " token openai : " + content + " all: " + allToken);
+            int input = chatCompletions.getUsage().getPromptTokens();
+            int output = chatCompletions.getUsage().getCompletionTokens();
+            appInsights.trackTrace("ChatGptIntegration 翻译提示词： " + prompt + " token openai : " + content + " all: "
+                    + allToken + " input: " + input + " output: " + output + " target: " + target);
             return new Pair<>(content, allToken);
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException ChatGptIntegration " + shopName + " chatWithGpt error: " + e.getMessage() + " sourceText: " + sourceText + " prompt: " + prompt);
+            appInsights.trackTrace("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " prompt: " + prompt);
             appInsights.trackException(e);
-            return new Pair<>(null, 0);
+            return null;
         }
     }
 }

@@ -35,7 +35,7 @@ public class PromptUtils {
                 with all keys unchanged, and only values translated.
                 Start your translation now.
                 """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(target))
+        return prompt.replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(target))
                 .replace("{{SOURCE_LANGUAGE_LIST}}", JsonUtils.objectToJson(glossaryTextMap))
                 .replace("{{TERM_RULES}}", glossaryMapping);
     }
@@ -62,7 +62,7 @@ public class PromptUtils {
                 with all keys unchanged, and only values translated.
                 Start your translation now.
                 """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(target))
+        return prompt.replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(target))
                 .replace("{{SOURCE_LANGUAGE_LIST}}", JsonUtils.objectToJson(originalTextMap));
     }
 
@@ -94,7 +94,7 @@ public class PromptUtils {
                 
                 Start your translation now.
                 """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(targetLanguage))
+        return prompt.replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage))
                 .replace("{{SOURCE_TEXT}}", text)
                 .replace("{{TERM_RULES}}", glossaryMapping);
     }
@@ -117,7 +117,7 @@ public class PromptUtils {
                 
                 Start your translation now.
                 """;
-        return prompt.replace("{{TARGET_LANGUAGE}}", ApiCodeUtils.getLanguageName(targetLanguage))
+        return prompt.replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage))
                 .replace("{{SOURCE_TEXT}}", text);
     }
 }

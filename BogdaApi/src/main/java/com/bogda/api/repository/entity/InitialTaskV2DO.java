@@ -36,4 +36,6 @@ public class InitialTaskV2DO extends BaseDO {
     private String taskType; // manual, auto, private
     @TableField("is_handle")
     private boolean isHandle;
+    @TableField("ai_model")
+    private String aiModel;
 }

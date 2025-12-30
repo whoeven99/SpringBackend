@@ -6,7 +6,7 @@ import com.bogda.api.logic.TencentEmailService;
 import com.bogda.api.logic.UserIpService;
 import com.bogda.api.repository.entity.UserIPCountDO;
 import com.bogda.api.repository.repo.UserIPCountRepo;
-import com.bogda.api.utils.ApiCodeUtils;
+import com.bogda.api.utils.ModuleCodeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -82,7 +82,7 @@ public class IpEmailTask {
                 .map(item -> {
                     String key = item.getCountType().substring(prefix.length());
                     int value = item.getCountValue();
-                    String apiCode = ApiCodeUtils.getLanguageName(key);
+                    String apiCode = ModuleCodeUtils.getLanguageName(key);
 
                     return new AbstractMap.SimpleEntry<>(key,
                             new AbstractMap.SimpleEntry<>(value, apiCode));

@@ -18,6 +18,7 @@ import com.bogda.api.Service.IAPGUserCounterService;
 import com.bogda.api.utils.AppInsightsUtils;
 import com.bogda.api.utils.CharacterCountUtils;
 import com.bogda.api.utils.ConfigUtils;
+import com.bogda.api.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,7 @@ public class ALiYunTranslateIntegration {
 
     private static Tokenizer tokenizer;
     public static String TRANSLATE_APP = "TRANSLATE_APP";
+    public static String QWEN_MAX = "qwen-max";
 
     public ALiYunTranslateIntegration() {
         tokenizer = TokenizerFactory.qwen();
@@ -81,7 +83,7 @@ public class ALiYunTranslateIntegration {
                 .build();
 
         try {
-            GenerationResult call = callWithTimeoutAndRetry(() -> {
+            GenerationResult call = TimeOutUtils.callWithTimeoutAndRetry(() -> {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
@@ -95,7 +97,7 @@ public class ALiYunTranslateIntegration {
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
             if (call == null) {
-                return new Pair<>(null, 0);
+                return null;
             }
             String content = call.getOutput().getChoices().get(0).getMessage().getContent();
 
@@ -108,7 +110,7 @@ public class ALiYunTranslateIntegration {
         } catch (Exception e) {
             appInsights.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
             appInsights.trackException(e);
-            return new Pair<>(null, 0);
+            return null;
         }
     }
 

@@ -25,7 +25,7 @@ import java.util.List;
 
 import static com.bogda.api.controller.UserPicturesController.allowedMimeTypes;
 import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
-import static com.bogda.api.utils.ApiCodeUtils.getLanguageName;
+import static com.bogda.api.utils.ModuleCodeUtils.getLanguageName;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component

@@ -40,12 +40,9 @@ import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.time.Instant;
@@ -114,8 +111,8 @@ public class TranslateV2Service {
         if (usedToken >= maxToken) {
             return BaseResponse.FailedResponse("Token limit reached");
         }
-        TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(),
-                request.getType(), request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()));
+        TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
+                request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()), ALiYunTranslateIntegration.QWEN_MAX);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
         service.finishAndGetJsonRecord(context);
@@ -138,7 +135,8 @@ public class TranslateV2Service {
         // 解析 JSON 列表并替换占位符
         try {
             String jsonStr = String.valueOf(map.getOrDefault("json", "{}"));
-            Map<Integer, String> languageMap = JsonUtils.jsonToObject(jsonStr, new TypeReference<Map<Integer, String>>() {});
+            Map<Integer, String> languageMap = JsonUtils.jsonToObject(jsonStr, new TypeReference<Map<Integer, String>>() {
+            });
             prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", languageMap.toString())
                     .replace("{{TARGET_LANGUAGE}}", target);
         } catch (Exception e) {
@@ -166,6 +164,9 @@ public class TranslateV2Service {
      */
     private Map<String, Object> handleAliYun(String prompt, String target) {
         Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+        if (pair == null) {
+            return defaultNullMap();
+        }
         return buildResponse(pair.getFirst(), pair.getSecond(), "text");
     }
 
@@ -175,6 +176,9 @@ public class TranslateV2Service {
     private Map<String, Object> handleGemini(String model, String prompt, String picUrl) throws Exception {
         if (picUrl == null) {
             Pair<String, Integer> pair = geminiIntegration.generateText(model, prompt);
+            if (pair == null) {
+                return defaultNullMap();
+            }
             return buildResponse(pair.getFirst(), pair.getSecond(), "text");
         }
 
@@ -189,6 +193,9 @@ public class TranslateV2Service {
         try (InputStream in = new URL(picUrl).openStream()) {
             byte[] imageBytes = in.readAllBytes();
             Pair<String, Integer> pair = geminiIntegration.generateImage(model, prompt, imageBytes, mimeType);
+            if (pair == null) {
+                return defaultNullMap();
+            }
 
             // 拼接成前端可以直接识别的 Data URL 格式
             // 最终格式示例：data:image/png;base64,iVBORw0KGgoAAA...
@@ -217,12 +224,12 @@ public class TranslateV2Service {
     // 翻译 step 1, 用户 -> initial任务创建
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
         String shopName = request.getShopName();
-        appInsights.trackTrace("createInitialTask : " + " shopName : " + shopName + request);
+        appInsights.trackTrace("createInitialTask : " + " shopName : " + shopName + " " + request);
         String[] targets = request.getTarget();
         List<String> moduleList = request.getTranslateSettings3();
-
-        if (StringUtils.isEmpty(shopName) ||
-                targets == null || targets.length == 0 || CollectionUtils.isEmpty(moduleList)) {
+        String translateSettings1 = request.getTranslateSettings1();
+        if (StringUtils.isEmpty(shopName) || targets == null || targets.length == 0 ||
+                CollectionUtils.isEmpty(moduleList) || translateSettings1 == null) {
             return BaseResponse.FailedResponse("Missing parameters");
         }
 
@@ -234,6 +241,8 @@ public class TranslateV2Service {
         if (usedToken >= maxToken) {
             return new BaseResponse<>().CreateErrorResponse(ErrorEnum.TOKEN_LIMIT);
         }
+
+        translateSettings1 = ModuleCodeUtils.getModuleCode(translateSettings1);
 
         // 判断用户语言是否正在翻译，翻译的不管；没翻译的翻译。
         List<InitialTaskV2DO> initialTaskV2DOS =
@@ -274,9 +283,9 @@ public class TranslateV2Service {
                 .filter(Objects::nonNull)
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
-
+        resourceTypeList = com.bogda.api.utils.StringUtils.sortTranslateData(resourceTypeList);
         this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
-        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover(), hasHandle);
+        this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover(), hasHandle, translateSettings1);
 
 
         // 找前端，把这里的返回改了
@@ -327,18 +336,8 @@ public class TranslateV2Service {
         }
     }
 
-    public TranslateContext singleTranslate(String shopName, String content, String target, String type, String key,
-                                            Map<String, GlossaryDO> glossaryMap) {
-        TranslateContext context = new TranslateContext(content, target, type, key, glossaryMap);
-        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-        service.translate(context);
-        service.finishAndGetJsonRecord(context);
-
-        return context;
-    }
-
     private void createManualTask(String shopName, String source, Set<String> targets,
-                                  List<String> moduleList, Boolean isCover, Boolean hasHandle) {
+                                  List<String> moduleList, Boolean isCover, Boolean hasHandle, String aiModel) {
         initialTaskV2Repo.deleteByShopNameSourceAndType(shopName, source, "manual");
         redisStoppedRepository.removeStoppedFlag(shopName);
 
@@ -352,9 +351,10 @@ public class TranslateV2Service {
             initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
             initialTask.setTaskType("manual");
             initialTask.setHandle(hasHandle);
+            initialTask.setAiModel(aiModel);
             initialTaskV2Repo.insert(initialTask);
 
-            translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+            translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, aiModel);
             iTranslatesService.updateTranslateStatus(shopName, 2, target, source);
         }
     }
@@ -376,7 +376,7 @@ public class TranslateV2Service {
         initialTask.setTaskType("auto");
         initialTaskV2Repo.insert(initialTask);
 
-        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, ALiYunTranslateIntegration.QWEN_MAX);
     }
 
     // 获取进度条
@@ -491,7 +491,6 @@ public class TranslateV2Service {
     // 翻译 step 2, initial -> 查询shopify，翻译任务创建
     public void initialToTranslateTask(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
-        String source = initialTaskV2DO.getSource();
         String target = initialTaskV2DO.getTarget();
 
         List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
@@ -571,6 +570,7 @@ public class TranslateV2Service {
         Integer initialTaskId = initialTaskV2DO.getId();
         String target = initialTaskV2DO.getTarget();
         String shopName = initialTaskV2DO.getShopName();
+        String aiModel = initialTaskV2DO.getAiModel();
 
         Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, target);
 
@@ -595,7 +595,7 @@ public class TranslateV2Service {
             // 随机找一条，如果是html就单条翻译，不是就直接批量
             boolean isHtml = randomDo.isSingleHtml();
             if (isHtml) {
-                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap);
+                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("HTML");
                 service.translate(context);
 
@@ -625,7 +625,7 @@ public class TranslateV2Service {
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
-                TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap);
+                TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap, aiModel);
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
                 service.translate(context);
 
@@ -763,6 +763,7 @@ public class TranslateV2Service {
                 List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
                 });
                 assert moduleList != null;
+                moduleList = com.bogda.api.utils.StringUtils.sortTranslateData(moduleList);
                 List<TranslateResourceDTO> resourceList = convertALL(moduleList);
                 TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
                 TypeSplitResponse typeSplitResponse = splitByType(translateTaskV2DO != null ? translateTaskV2DO.getModule() : null, resourceList);

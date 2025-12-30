@@ -96,7 +96,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                                 .set(TranslatesDO::getStatus, 6)
                 );
 
-                appInsights.trackTrace("FatalException updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
+                appInsights.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
 
                 // 正常结束，无需再重试
                 return true;

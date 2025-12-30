@@ -168,7 +168,7 @@ public class TaskService {
 
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
-            appInsights.trackTrace(shopName + " 定时任务根据订单id: " + subscriptionId + "获取数据失败" + " token: " + accessToken);
+            appInsights.trackTrace("FatalException " + shopName + " 定时任务根据订单id: " + subscriptionId + "获取数据失败" + " token: " + accessToken);
             return null;
         }
         JSONObject node = root.getJSONObject("node");
@@ -195,9 +195,12 @@ public class TaskService {
         //用户购买订阅时间
         LocalDateTime buyCreate = userPriceRequest.getCreateAt();
         Instant buyCreateInstant = buyCreate.atZone(ZoneId.of("UTC")).toInstant();
-        //订阅开始时间
-        Instant created = Instant.parse(createdAt);
+
         //订阅结束时间
+        if (currentPeriodEnd == null) {
+            appInsights.trackTrace("FatalException addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 订阅结束时间为null : " + node);
+            return;
+        }
         Instant end = Instant.parse(currentPeriodEnd);
         LocalDateTime subEnd = end.atZone(ZoneOffset.UTC).toLocalDateTime();
         //当前时间

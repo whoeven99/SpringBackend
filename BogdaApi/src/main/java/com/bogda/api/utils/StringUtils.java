@@ -1,5 +1,6 @@
 package com.bogda.api.utils;
 
+import com.bogda.api.entity.DO.TranslateResourceDTO;
 import com.bogda.api.entity.DTO.SimpleMultipartFileDTO;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.core.dependencies.apachecommons.io.FilenameUtils;
@@ -9,7 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -255,5 +256,26 @@ public class StringUtils {
             return matcher.group(0).trim();
         }
         return null;
+    }
+
+    /**
+     * 修改排序
+     * */
+    public static List<String> sortTranslateData(List<String> list){
+        // 1. 提取 ALL_RESOURCES 中的顺序
+        List<String> orderList = TranslateResourceDTO.ALL_RESOURCES.stream()
+                .map(TranslateResourceDTO::getResourceType)
+                .toList();
+
+        // 2. 构造 name -> index 的 Map
+        Map<String, Integer> orderMap = new HashMap<>();
+        for (int i = 0; i < orderList.size(); i++) {
+            orderMap.put(orderList.get(i), i);
+        }
+
+        // 3. 对 targetList 排序
+        List<String> sortedList = new ArrayList<>(list);
+        sortedList.sort(Comparator.comparingInt(name -> orderMap.getOrDefault(name, Integer.MAX_VALUE)));
+        return sortedList;
     }
 }
