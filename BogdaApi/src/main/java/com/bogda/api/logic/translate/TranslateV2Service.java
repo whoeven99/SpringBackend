@@ -40,12 +40,8 @@ import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
-import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.time.Instant;
@@ -553,7 +549,8 @@ public class TranslateV2Service {
         initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.status);
         initialTaskV2DO.setInitMinutes((int) initTimeInMinutes);
         translateTaskMonitorV2RedisService.setInitEndTime(initialTaskV2DO.getId());
-        initialTaskV2Repo.updateById(initialTaskV2DO);
+        initialTaskV2Repo.updateStatusAndInitMinutes(initialTaskV2DO.getStatus(), initialTaskV2DO.getInitMinutes()
+                , initialTaskV2DO.getId());
     }
 
     private boolean isSingleHtml(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
@@ -658,7 +655,10 @@ public class TranslateV2Service {
             initialTaskV2DO.setStatus(InitialTaskStatus.STOPPED.status);
             initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
             initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
-            initialTaskV2Repo.updateById(initialTaskV2DO);
+
+            initialTaskV2Repo.updateStatusUsedTokenTranslationMinutesModuleById(initialTaskV2DO.getStatus(),
+                    initialTaskV2DO.getUsedToken(), initialTaskV2DO.getTranslationMinutes()
+                    , initialTaskV2DO.getTransModelType(), initialTaskV2DO.getId());
             return;
         }
 
@@ -669,7 +669,9 @@ public class TranslateV2Service {
         initialTaskV2DO.setStatus(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.status);
         initialTaskV2DO.setUsedToken(userTokenService.getUsedTokenByTaskId(shopName, initialTaskId));
         initialTaskV2DO.setTranslationMinutes((int) translationTimeInMinutes);
-        initialTaskV2Repo.updateById(initialTaskV2DO);
+        initialTaskV2Repo.updateStatusUsedTokenTranslationMinutesModuleById(initialTaskV2DO.getStatus(),
+                initialTaskV2DO.getUsedToken(), initialTaskV2DO.getTranslationMinutes()
+                , initialTaskV2DO.getTransModelType(), initialTaskV2DO.getId());
         translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
     }
 
@@ -727,10 +729,13 @@ public class TranslateV2Service {
 
         if (initialTaskV2DO.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.status)) {
             initialTaskV2DO.setStatus(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status);
-        } // 否则是中断，不改变状态
+        }
+
+        // 否则是中断，不改变状态
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
-        initialTaskV2Repo.updateById(initialTaskV2DO);
+        initialTaskV2Repo.updateStatusSavingShopifyMinutesById(initialTaskV2DO.getStatus(), initialTaskV2DO.getSavingShopifyMinutes()
+        , initialTaskV2DO.getId());
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
@@ -751,8 +756,7 @@ public class TranslateV2Service {
             tencentEmailService.sendSuccessEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
                     usedToken, totalToken);
 
-            initialTaskV2DO.setSendEmail(true);
-            initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.ALL_DONE.status);
+            initialTaskV2Repo.updateSendEmailAndStatusById(true, InitialTaskStatus.ALL_DONE.status, initialTaskV2DO.getId());
             return;
         }
 
@@ -770,8 +774,7 @@ public class TranslateV2Service {
                 tencentEmailService.sendFailedEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
                         typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString());
 
-                initialTaskV2DO.setSendEmail(true);
-                initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.STOPPED.status);
+                initialTaskV2Repo.updateSendEmailAndStatusById(true, InitialTaskStatus.STOPPED.status, initialTaskV2DO.getId());
             }
         }
     }
@@ -788,7 +791,7 @@ public class TranslateV2Service {
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
         if (initialTaskV2DO != null) {
-            initialTaskV2Repo.updateToStatus(initialTaskV2DO, InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+            initialTaskV2Repo.updateStatusById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId());
             redisStoppedRepository.removeStoppedFlag(shopName);
             translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         }
@@ -803,7 +806,8 @@ public class TranslateV2Service {
             redisStoppedRepository.removeStoppedFlag(shopName);
             for (InitialTaskV2DO initialTaskV2DO : list) {
                 initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                initialTaskV2Repo.updateById(initialTaskV2DO);
+                boolean updateFlag = initialTaskV2Repo.updateStatusById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId());
+                appInsights.trackTrace("continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
             }
         }
     }

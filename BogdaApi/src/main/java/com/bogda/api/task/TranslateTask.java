@@ -136,11 +136,10 @@ public class TranslateTask {
                 if (allDone) {
                     tencentEmailService.sendAutoTranslateEmail(shopName, shopTasks);
                     for (InitialTaskV2DO shopTask : shopTasks) {
-                        shopTask.setSendEmail(true);
                         if (shopTask.getStatus().equals(TranslateV2Service.InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
-                            initialTaskV2Repo.updateToStatus(shopTask, TranslateV2Service.InitialTaskStatus.ALL_DONE.getStatus());
+                            initialTaskV2Repo.updateSendEmailAndStatusById(true, TranslateV2Service.InitialTaskStatus.ALL_DONE.getStatus(), shopTask.getId());
                         } else {
-                            initialTaskV2Repo.updateById(shopTask);
+                            initialTaskV2Repo.updateSendEmailById(shopTask.getId(), true);
                         }
                     }
                 }
