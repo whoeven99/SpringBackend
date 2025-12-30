@@ -39,9 +39,10 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getId, taskId));
     }
 
-    public List<InitialTaskV2DO> selectByShopName(String shopName) {
+    public List<InitialTaskV2DO> selectStoppedByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getStatus, 5)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
@@ -95,17 +96,6 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
         return baseMapper.insert(initialTaskV2DO) > 0;
     }
 
-    public boolean updateToStatus(InitialTaskV2DO initialTaskV2DO, int status) {
-        initialTaskV2DO.setStatus(status);
-        DbUtils.setUpdatedAt(initialTaskV2DO);
-        return baseMapper.updateById(initialTaskV2DO) > 0;
-    }
-
-    public boolean updateById(InitialTaskV2DO initialTaskV2DO) {
-        DbUtils.setUpdatedAt(initialTaskV2DO);
-        return baseMapper.updateById(initialTaskV2DO) > 0;
-    }
-
     public boolean deleteByShopNameSourceTarget(String shopName, String source, String target) {
         return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
@@ -141,5 +131,53 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
 
     public boolean deleteById(Integer id) {
         return baseMapper.deleteById(id) > 0;
+    }
+
+    public boolean updateSendEmailById(Integer id, boolean sendEmail) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>()
+                .set(InitialTaskV2DO::isSendEmail, sendEmail)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
+                .eq(InitialTaskV2DO::getId, id)) > 0;
+    }
+
+    public boolean updateSendEmailAndStatusById(boolean sendEmail, int status, Integer id) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>()
+                .set(InitialTaskV2DO::isSendEmail, sendEmail)
+                .set(InitialTaskV2DO::getStatus, status)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
+                .eq(InitialTaskV2DO::getId, id)) > 0;
+    }
+
+    public boolean updateStatusAndInitMinutes(int status, int initTimeInMinutes, Integer id) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().set(InitialTaskV2DO::getStatus, status)
+                .set(InitialTaskV2DO::getInitMinutes, initTimeInMinutes)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
+                .eq(InitialTaskV2DO::getId, id)) > 0;
+    }
+
+    public boolean updateStatusUsedTokenTranslationMinutesModuleById(int status, Integer usedToken,
+                                                                     int translationTimeInMinutes, String transModelType,
+                                                                     int initialId) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().set(InitialTaskV2DO::getStatus, status)
+                .set(InitialTaskV2DO::getUsedToken, usedToken)
+                .set(InitialTaskV2DO::getTranslationMinutes, translationTimeInMinutes)
+                .set(InitialTaskV2DO::getTransModelType, transModelType)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
+                .eq(InitialTaskV2DO::getId, initialId)) > 0;
+
+    }
+
+    public boolean updateStatusById(Integer status, Integer id) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().set(InitialTaskV2DO::getStatus, status)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
+                .eq(InitialTaskV2DO::getId, id)) > 0;
+
+    }
+
+    public boolean updateStatusSavingShopifyMinutesById(Integer status, Integer savingShopifyMinutes, Integer id) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().set(InitialTaskV2DO::getStatus, status)
+                .set(InitialTaskV2DO::getSavingShopifyMinutes, savingShopifyMinutes)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
+                .eq(InitialTaskV2DO::getId, id)) > 0;
     }
 }
