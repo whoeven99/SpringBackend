@@ -2,9 +2,9 @@ package com.bogda.api.logic.translate.stragety;
 
 import com.bogda.api.context.TranslateContext;
 import com.bogda.api.entity.DO.GlossaryDO;
-import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.RedisProcessService;
+import com.bogda.api.logic.translate.modelStragety.TranslateModelStrategyFactory;
 import com.bogda.api.utils.PlaceholderUtils;
 import com.bogda.api.utils.PromptUtils;
 import kotlin.Pair;
@@ -19,7 +19,7 @@ import static com.bogda.api.constants.TranslateConstants.URI;
 @Component
 public class SingleTranslateStrategyService implements ITranslateStrategyService {
     @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    private TranslateModelStrategyFactory translateModelStrategyFactory;
     @Autowired
     private RedisProcessService redisProcessService;
 
@@ -68,11 +68,17 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             }
         }
 
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(ctx.getPrompt(), ctx.getTargetLanguage());
+        Pair<String, Integer> pair = translateModelStrategyFactory.getTranslateModelStrategy
+                (ctx.getAiModel()).chooseModelTranslate(ctx.getPrompt(), ctx.getTargetLanguage());
+
         if (pair == null) {
-            // fatalException
-            return;
+            // 做一个保底处理，当pair为null的时候，用qwen-max再翻译一次，如果再为null，就直接返回
+            pair = translateModelStrategyFactory.guaranteedTranslation(ctx.getAiModel(), ctx.getPrompt(), target);
+            if (pair == null) {
+                return;
+            }
         }
+
         redisProcessService.setCacheData(target, pair.getFirst(), value);
         ctx.setUsedToken(pair.getSecond());
         ctx.setTranslatedContent(pair.getFirst());

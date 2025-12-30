@@ -250,7 +250,7 @@ public class UserService {
     }
 
     public BaseResponse<Object> webhookDefaultTheme(String shopName, ThemeAndLanguageVO data) {
-        CaseSensitiveUtils.appInsights.trackTrace("UserEmail webhookDefaultTheme 主题相关数据 : " + data.getThemeData());
+        CaseSensitiveUtils.appInsights.trackTrace("UserEmail webhookDefaultTheme 主题相关数据 : " + data.getThemeData() + " shopName : " + shopName);
 
         // 解析数据
         JsonNode jsonNode = JsonUtils.readTree(data.getThemeData());
@@ -288,7 +288,7 @@ public class UserService {
     }
 
     public BaseResponse<Object> webhookDefaultLanguage(String shopName, ThemeAndLanguageVO data) {
-        CaseSensitiveUtils.appInsights.trackTrace("UserEmail webhookDefaultLanguage 语言相关数据 : " + data.getLanguageData());
+        CaseSensitiveUtils.appInsights.trackTrace("UserEmail webhookDefaultLanguage 语言相关数据 : " + data.getLanguageData() + " shopName : " + shopName);
 
         // 解析数据
         JsonNode jsonNode = JsonUtils.readTree(data.getLanguageData());
