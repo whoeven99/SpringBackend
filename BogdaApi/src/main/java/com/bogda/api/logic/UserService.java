@@ -13,6 +13,7 @@ import com.bogda.api.enums.ErrorEnum;
 import com.bogda.api.logic.redis.UserInitialRedisService;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.utils.AESUtils;
+import com.bogda.api.utils.CaseSensitiveUtils;
 import com.bogda.api.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -250,6 +251,7 @@ public class UserService {
     }
 
     public BaseResponse<Object> webhookDefaultTheme(String shopName, ThemeAndLanguageVO data) {
+        CaseSensitiveUtils.appInsights.trackTrace("UserEmail webhookDefaultLanguage 语言相关数据 : " + data.getThemeData());
         // 解析数据
         JsonNode jsonNode = JsonUtils.readTree(data.getThemeData());
         if (jsonNode == null) {
@@ -286,6 +288,7 @@ public class UserService {
     }
 
     public BaseResponse<Object> webhookDefaultLanguage(String shopName, ThemeAndLanguageVO data) {
+        CaseSensitiveUtils.appInsights.trackTrace("UserEmail webhookDefaultLanguage 语言相关数据 : " + data.getLanguageData());
         // 解析数据
         JsonNode jsonNode = JsonUtils.readTree(data.getLanguageData());
         if (jsonNode == null) {
