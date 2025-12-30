@@ -801,8 +801,8 @@ public class TranslateV2Service {
     }
 
     public void continueTranslating(String shopName) {
-        List<InitialTaskV2DO> list = initialTaskV2Repo.selectByShopName(shopName);
-        if (!list.isEmpty() && redisStoppedRepository.isTaskStopped(shopName)) {
+        List<InitialTaskV2DO> list = initialTaskV2Repo.selectStoppedByShopName(shopName);
+        if (!list.isEmpty()) {
             redisStoppedRepository.removeStoppedFlag(shopName);
             for (InitialTaskV2DO initialTaskV2DO : list) {
                 initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());

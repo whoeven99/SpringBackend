@@ -39,9 +39,10 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getId, taskId));
     }
 
-    public List<InitialTaskV2DO> selectByShopName(String shopName) {
+    public List<InitialTaskV2DO> selectStoppedByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getStatus, 5)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
