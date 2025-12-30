@@ -53,6 +53,14 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
+    public List<InitialTaskV2DO> selectByStoppedAndNotSaveLastDay() {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getStatus, 5)
+                .eq(InitialTaskV2DO::getSavingShopifyMinutes, 0)
+                .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24))
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
     public List<InitialTaskV2DO> selectByStatus(int status) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getStatus, status)
