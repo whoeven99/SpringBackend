@@ -6,11 +6,13 @@ import com.bogda.api.logic.TencentEmailService;
 import com.bogda.api.logic.UserIpService;
 import com.bogda.api.repository.entity.UserIPCountDO;
 import com.bogda.api.repository.repo.UserIPCountRepo;
+import com.bogda.api.utils.ApiCodeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -77,12 +79,20 @@ public class IpEmailTask {
 
         return userIPCounts.stream()
                 .filter(item -> item.getCountType().startsWith(prefix))
-                .filter(item -> item.getCountValue() * 100 > total * 2
-                        || item.getCountValue() > 100)
                 .map(item -> {
                     String key = item.getCountType().substring(prefix.length());
-                    return Map.of(key, item.getCountValue());
+                    int value = item.getCountValue();
+                    String apiCode = ApiCodeUtils.getLanguageName(key);
+
+                    return new AbstractMap.SimpleEntry<>(key,
+                            new AbstractMap.SimpleEntry<>(value, apiCode));
                 })
+                .filter(e -> {
+                    int value = e.getValue().getKey();
+                    return value * 100 > total * 2 || value > 100;
+                })
+                .filter(e -> !e.getKey().equals(e.getValue().getValue()))
+                .map(e -> Map.of(e.getKey(), e.getValue().getKey()))
                 .collect(Collectors.toList());
     }
 }
