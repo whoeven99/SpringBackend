@@ -14,10 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -49,7 +46,13 @@ public class TranslateTask {
                              Set<T> shopsSet,
                              String taskName,
                              Consumer<InitialTaskV2DO> taskConsumer) {
-        List<InitialTaskV2DO> tasks = initialTaskV2Repo.selectByStatus(status);
+        List<InitialTaskV2DO> tasks = new ArrayList<>();
+        if (status == 5) {
+            // 一天内 状态为中断 且 没有写入时间
+            tasks = initialTaskV2Repo.selectByStoppedAndNotSaveLastDay();
+        } else {
+            tasks = initialTaskV2Repo.selectByStatus(status);
+        }
         if (CollectionUtils.isEmpty(tasks)) {
             return;
         }
@@ -107,10 +110,10 @@ public class TranslateTask {
                 savingShops, "SAVE SHOPIFY",
                 translateV2Service::saveToShopify);
 
-//        process(5,
-//                InitialTaskV2DO::getShopName,
-//                savingShops, "SAVE SHOPIFY",
-//                translateV2Service::saveToShopify);
+        process(5,
+                InitialTaskV2DO::getShopName,
+                savingShops, "SAVE SHOPIFY",
+                translateV2Service::saveToShopify);
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
