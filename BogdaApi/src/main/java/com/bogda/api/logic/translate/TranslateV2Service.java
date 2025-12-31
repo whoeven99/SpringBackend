@@ -283,7 +283,7 @@ public class TranslateV2Service {
                 .filter(Objects::nonNull)
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
-        resourceTypeList = com.bogda.api.utils.StringUtils.sortTranslateData(resourceTypeList);
+        resourceTypeList = ModelTranslateUtils.sortTranslateData(resourceTypeList);
         this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
         this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover(), hasHandle, translateSettings1);
 
@@ -600,9 +600,7 @@ public class TranslateV2Service {
                 service.translate(context);
 
                 // 翻译后更新db
-                randomDo.setTargetValue(context.getTranslatedContent());
-                randomDo.setHasTargetValue(true);
-                translateTaskV2Repo.update(randomDo);
+                translateTaskV2Repo.updateTargetValueAndHasTargetValue(context.getTranslatedContent(), true, randomDo.getId());
 
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
@@ -632,11 +630,9 @@ public class TranslateV2Service {
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
                 for (TranslateTaskV2DO updatedDo : taskList) {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
-                    updatedDo.setTargetValue(targetValue);
-                    updatedDo.setHasTargetValue(true);
 
                     // 3.3 回写数据库 todo 批量
-                    translateTaskV2Repo.update(updatedDo);
+                    translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, randomDo.getId());
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
@@ -710,8 +706,7 @@ public class TranslateV2Service {
                 // 回写数据库，标记已写入 TODO 批量
                 // 需要data.translationsRegister.translations[]不为空，并且有key，才是最严格的
                 for (TranslateTaskV2DO taskDO : taskList) {
-                    taskDO.setSavedToShopify(true);
-                    translateTaskV2Repo.update(taskDO);
+                    translateTaskV2Repo.updateSavedToShopify(taskDO.getId());
                 }
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             } else {
@@ -763,7 +758,7 @@ public class TranslateV2Service {
                 List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
                 });
                 assert moduleList != null;
-                moduleList = com.bogda.api.utils.StringUtils.sortTranslateData(moduleList);
+                moduleList = ModelTranslateUtils.sortTranslateData(moduleList);
                 List<TranslateResourceDTO> resourceList = convertALL(moduleList);
                 TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
                 TypeSplitResponse typeSplitResponse = splitByType(translateTaskV2DO != null ? translateTaskV2DO.getModule() : null, resourceList);

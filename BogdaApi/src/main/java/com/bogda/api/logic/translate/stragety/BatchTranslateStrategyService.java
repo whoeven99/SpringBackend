@@ -5,7 +5,7 @@ import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.RedisProcessService;
-import com.bogda.api.logic.translate.modelStragety.TranslateModelStrategyFactory;
+import com.bogda.api.logic.translate.ModelTranslateService;
 import com.bogda.api.utils.JsonUtils;
 import com.bogda.api.utils.PromptUtils;
 import com.bogda.api.utils.StringUtils;
@@ -21,7 +21,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
-    private TranslateModelStrategyFactory translateModelStrategyFactory;
+    private ModelTranslateService modelTranslateService;
 
     @Override
     public String getType() {
@@ -129,14 +129,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         ctx.setTranslateVariables(variable);
     }
 
-    private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target, String translateModel) {
-        Pair<String, Integer> pair = translateModelStrategyFactory.getTranslateModelStrategy(translateModel).chooseModelTranslate(prompt, target);
+    private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target, String aiModel) {
+        Pair<String, Integer> pair = modelTranslateService.modelTranslate(aiModel, prompt, target);
         if (pair == null) {
-            // 做一个保底处理，当pair为null的时候，用qwen-max再翻译一次，如果再为null，就直接返回
-            pair = translateModelStrategyFactory.guaranteedTranslation(translateModel, prompt, target);
-            if (pair == null) {
-                return null;
-            }
+            return null;
         }
         String aiResponse = pair.getFirst();
 
