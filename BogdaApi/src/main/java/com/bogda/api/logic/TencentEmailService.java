@@ -5,12 +5,14 @@ import com.bogda.api.config.CurrencyConfig;
 import com.bogda.api.constants.MailChimpConstants;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.integration.EmailIntegration;
+import com.bogda.api.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
 import com.bogda.api.repository.entity.InitialTaskV2DO;
 import com.bogda.api.utils.ApiCodeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -33,6 +35,8 @@ public class TencentEmailService {
     private ITranslationCounterService translationCounterService;
     @Autowired
     private IAPGEmailService iapgEmailService;
+    @Autowired
+    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
 
     /**
      * 发送IP请求即将不足的邮件
@@ -324,6 +328,7 @@ public class TencentEmailService {
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_LANGUAGE_EMAIL, flag ? 1 : 0));
     }
 
+    // 这个switch的邮件是要的，不是无用代码
     public void sendThemeSwitchEmail(String shopName) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
@@ -335,5 +340,51 @@ public class TencentEmailService {
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159296L,
                 templateData, MailChimpConstants.USER_SWITCH_EMAIL, TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_SWITCH_EMAIL, flag ? 1 : 0));
+    }
+
+    public boolean sendAutoTranslatePartialEmail(String shopName, List<InitialTaskV2DO> partialTasks) {
+        String name = parseShopName(shopName);
+
+        UsersDO usersDO = usersService.getUserByName(shopName);
+        Map<String, String> templateData = new HashMap<>();
+        templateData.put("username", usersDO.getFirstName());
+        templateData.put("translation", "auto translation");
+        templateData.put("admin", name);
+
+        StringBuilder divBuilder = new StringBuilder();
+
+        for (InitialTaskV2DO taskV2DO : partialTasks) {
+            // 计算百分比数据
+            Map<String, String> taskMap = translateTaskMonitorV2RedisService.getAllByTaskId(taskV2DO.getId());
+            String totalCount = taskMap.getOrDefault("totalCount", null);
+            String translatedCount = taskMap.getOrDefault("translatedCount", null);
+            if (totalCount == null ||totalCount.isEmpty() || translatedCount == null || translatedCount.isEmpty()) {
+                continue;
+            }
+
+            int total = Integer.parseInt(totalCount);
+            int translated = Integer.parseInt(translatedCount);
+
+            DecimalFormat df = new DecimalFormat("0.00");
+            double percentage = translated * 100.0 / total;
+            String percentageStr = df.format(percentage);
+
+            divBuilder.append("<tr>")
+                    .append("<td style=\"padding:8px;border-bottom:1px solid #e5e7eb;\">")
+                    .append(taskV2DO.getTarget())
+                    .append("</td>")
+                    .append("<td style=\"padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;\">")
+                    .append(percentageStr).append("%")
+                    .append("</td>")
+                    .append("</tr>");
+        }
+
+        // 都continue了
+        if (divBuilder.toString().isEmpty()) {
+            appInsights.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
+            return true;
+        }
+        templateData.put("language_progress_rows", String.valueOf(divBuilder));
+        return emailIntegration.sendEmailByTencent(159297L, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, templateData, TENCENT_FROM_EMAIL, CC_EMAIL);
     }
 }
