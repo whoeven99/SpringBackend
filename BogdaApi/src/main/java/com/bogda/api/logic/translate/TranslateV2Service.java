@@ -17,6 +17,7 @@ import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.ShopifyService;
+import com.bogda.api.logic.TaskService;
 import com.bogda.api.logic.TencentEmailService;
 import com.bogda.api.logic.redis.ConfigRedisRepo;
 import com.bogda.api.logic.redis.RedisStoppedRepository;
@@ -374,6 +375,27 @@ public class TranslateV2Service {
 
         translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
     }
+
+    /**
+     * test 自动翻译，仅主题模块
+     */
+    public void testAutoTranslate(String shopName, String source, String target) {
+        initialTaskV2Repo.deleteByShopNameSourceTarget(shopName, source, target);
+        redisStoppedRepository.removeStoppedFlag(shopName);
+
+        InitialTaskV2DO initialTask = new InitialTaskV2DO();
+        initialTask.setShopName(shopName);
+        initialTask.setSource(source);
+        initialTask.setTarget(target);
+        initialTask.setCover(false);
+        initialTask.setModuleList(JsonUtils.objectToJson(TaskService.TEST_AUTO_TRANSLATE_MAP));
+        initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
+        initialTask.setTaskType("auto");
+        initialTaskV2Repo.insert(initialTask);
+
+        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+    }
+
 
     // 获取进度条
     public BaseResponse<ProgressResponse> getProcess(String shopName, String source) {

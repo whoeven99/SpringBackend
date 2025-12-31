@@ -121,26 +121,51 @@ public class TranslateTask {
         // 自动翻译的邮件
         List<InitialTaskV2DO> autoTask = initialTaskV2Repo.selectByTaskTypeAndNotEmail("auto");
         if (!CollectionUtils.isEmpty(autoTask)) {
+
             Set<String> shopNames = autoTask.stream()
                     .map(InitialTaskV2DO::getShopName)
                     .collect(Collectors.toSet());
+
             for (String shopName : shopNames) {
-                List<InitialTaskV2DO> shopTasks = initialTaskV2Repo.selectByShopNameAndType(shopName, "auto");
-                boolean allDone = true;
-                for (InitialTaskV2DO shopTask : shopTasks) {
-                    if (shopTask.getStatus() != 3 & shopTask.getStatus() != 5) {
-                        allDone = false;
-                    }
+
+                List<InitialTaskV2DO> shopTasks =
+                        initialTaskV2Repo.selectByShopNameAndType(shopName, "auto");
+
+                if (CollectionUtils.isEmpty(shopTasks)) {
+                    continue;
                 }
 
-                if (allDone) {
-                    tencentEmailService.sendAutoTranslateEmail(shopName, shopTasks);
-                    for (InitialTaskV2DO shopTask : shopTasks) {
-                        if (shopTask.getStatus().equals(TranslateV2Service.InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
-                            initialTaskV2Repo.updateSendEmailAndStatusById(true, TranslateV2Service.InitialTaskStatus.ALL_DONE.getStatus(), shopTask.getId());
-                        } else {
-                            initialTaskV2Repo.updateSendEmailById(shopTask.getId(), true);
-                        }
+                // 1. 按状态分组
+                List<InitialTaskV2DO> translatedTasks = shopTasks.stream()
+                        .filter(t -> t.getStatus() == 4)
+                        .collect(Collectors.toList());
+
+                List<InitialTaskV2DO> partialTasks = shopTasks.stream()
+                        .filter(t -> t.getStatus() == 5)
+                        .collect(Collectors.toList());
+
+                // 2. 判断是否全部属于 4 / 5
+                if (translatedTasks.size() + partialTasks.size() != shopTasks.size()) {
+                    continue;
+                }
+
+                // 3. 已翻译 → 发送成功邮件
+                if (!translatedTasks.isEmpty()) {
+                    tencentEmailService.sendAutoTranslateEmail(shopName, translatedTasks);
+                }
+
+                // 4. 部分翻译（额度不足）→ 发送部分翻译邮件
+                if (!partialTasks.isEmpty()) {
+                    tencentEmailService.sendAutoTranslatePartialEmail(shopName, partialTasks);
+                }
+
+                // 5. 更新发送邮件状态 & 最终状态
+                for (InitialTaskV2DO task : shopTasks) {
+                    if (task.getStatus().equals(TranslateV2Service.InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
+                        initialTaskV2Repo.updateSendEmailAndStatusById(true,
+                                TranslateV2Service.InitialTaskStatus.ALL_DONE.getStatus(), task.getId());
+                    } else {
+                        initialTaskV2Repo.updateSendEmailById(task.getId(), true);
                     }
                 }
             }
