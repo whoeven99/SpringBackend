@@ -137,7 +137,7 @@ public class TranslateTask {
 
                 // 1. 按状态分组
                 List<InitialTaskV2DO> translatedTasks = shopTasks.stream()
-                        .filter(t -> t.getStatus() == 4)
+                        .filter(t -> t.getStatus() == 3)
                         .collect(Collectors.toList());
 
                 List<InitialTaskV2DO> partialTasks = shopTasks.stream()
