@@ -2,11 +2,11 @@ package com.bogda.api.logic;
 
 import com.bogda.api.integration.RedisIntegration;
 import com.bogda.api.utils.AESUtils;
-import com.bogda.integration.utils.RedisKeyUtils;
+import com.bogda.repository.utils.RedisKeyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import static com.bogda.integration.utils.RedisKeyUtils.DAY_14;
+import static com.bogda.repository.utils.RedisKeyUtils.DAY_14;
 
 @Service
 public class RedisProcessService {

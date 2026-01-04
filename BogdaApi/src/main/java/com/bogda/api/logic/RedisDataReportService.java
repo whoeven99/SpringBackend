@@ -14,7 +14,7 @@ import java.util.Set;
 
 import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.integration.utils.RedisKeyUtils.*;
+import static com.bogda.repository.utils.RedisKeyUtils.*;
 import static com.mysql.cj.util.TimeUtil.DATE_FORMATTER;
 
 @Service
