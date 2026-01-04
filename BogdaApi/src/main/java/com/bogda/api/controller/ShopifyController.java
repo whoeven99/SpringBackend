@@ -163,7 +163,7 @@ public class ShopifyController {
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
 
-    //当用户第一次订阅时，在用户订阅表里面添加用户及其付费计划
+    // 在UserSubscription表里面添加一个购买了免费订阅计划的用户
     @PostMapping("/addUserFreeSubscription")
     public BaseResponse<Object> registerTransaction(@RequestBody UserSubscriptionsRequest request) {
         return shopifyService.addUserFreeSubscription(request);

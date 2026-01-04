@@ -1,5 +1,6 @@
 package com.bogdatech.utils;
 
+import com.bogda.api.utils.TimeOutUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;

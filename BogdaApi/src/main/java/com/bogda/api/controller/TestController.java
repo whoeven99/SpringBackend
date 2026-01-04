@@ -1,11 +1,14 @@
 package com.bogda.api.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogda.api.Service.ITranslatesService;
+import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.VO.GptVO;
 import com.bogda.api.entity.VO.UserDataReportVO;
 import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.logic.RedisDataReportService;
 import com.bogda.api.logic.RedisProcessService;
+import com.bogda.api.logic.translate.TranslateV2Service;
 import com.bogda.api.model.controller.request.CloudServiceRequest;
 import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
@@ -21,6 +24,7 @@ import java.io.BufferedInputStream;
 import java.net.URL;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.bogda.api.integration.ShopifyHttpIntegration.getInfoByShopify;
@@ -36,6 +40,10 @@ public class TestController {
     private GeminiIntegration geminiIntegration;
     @Autowired
     private IpEmailTask ipEmailTask;
+    @Autowired
+    private TranslateV2Service translateV2Service;
+    @Autowired
+    private ITranslatesService iTranslatesService;
 
     @PostMapping("/test")
     public String test() {
@@ -143,4 +151,11 @@ public class TestController {
         ipEmailTask.sendEmailTask();
     }
 
+    @GetMapping("/testAutoEmail")
+    public void testAutoEmail(@RequestParam String shopName) {
+        List<TranslatesDO> translatesDOList = iTranslatesService.listAutoTranslates(shopName);
+        for (TranslatesDO translatesDO : translatesDOList) {
+            translateV2Service.testAutoTranslate(shopName, translatesDO.getSource(), translatesDO.getTarget());
+        }
+    }
 }

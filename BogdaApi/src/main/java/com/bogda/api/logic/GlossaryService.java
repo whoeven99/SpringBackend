@@ -2,12 +2,14 @@ package com.bogda.api.logic;
 
 import com.bogda.api.Service.IGlossaryService;
 import com.bogda.api.entity.DO.GlossaryDO;
+import com.bogda.api.utils.CaseSensitiveUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Component
 public class GlossaryService {
@@ -52,15 +54,29 @@ public class GlossaryService {
             return false;
         }
 
-        boolean flag = false;
-        for (String key : glossaryMap.keySet()) {
-            if (content.contains(key)) {
-                usedGlossaryMap.put(key, glossaryMap.get(key));
-                // 可能一句话命中多个语法
-                flag = true;
+        if (usedGlossaryMap == null) {
+            CaseSensitiveUtils.appInsights.trackTrace("FatalException usedGlossaryMap is null" + glossaryMap);
+            return false;
+        }
+
+        boolean matched = false;
+
+        for (Map.Entry<String, GlossaryDO> entry : glossaryMap.entrySet()) {
+            String key = entry.getKey();
+            GlossaryDO glossary = entry.getValue();
+
+            boolean caseSensitive = Integer.valueOf(1).equals(glossary.getCaseSensitive());
+
+            Pattern pattern = caseSensitive
+                    ? Pattern.compile("\\b" + Pattern.quote(key) + "\\b")
+                    : Pattern.compile("\\b" + Pattern.quote(key) + "\\b", Pattern.CASE_INSENSITIVE);
+
+            if (pattern.matcher(content).find()) {
+                usedGlossaryMap.put(key, glossary);
+                matched = true;
             }
         }
-        return flag;
+        return matched;
     }
 
     public Map<String, GlossaryDO> getGlossaryDoByShopName(String shopName, String target) {
