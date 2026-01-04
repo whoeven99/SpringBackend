@@ -19,7 +19,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
+import static com.bogda.common.constant.TranslateConstants.API_VERSION_LAST;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component

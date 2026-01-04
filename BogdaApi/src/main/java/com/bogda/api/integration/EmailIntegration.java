@@ -1,6 +1,6 @@
 package com.bogda.api.integration;
 
-import com.bogda.api.constants.MailChimpConstants;
+import com.bogda.common.constant.MailChimpConstants;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
 import com.bogda.api.utils.ConfigUtils;
 import com.bogda.api.utils.JsonUtils;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.bogda.api.constants.MailChimpConstants.CC_EMAIL;
+import static com.bogda.common.constant.MailChimpConstants.CC_EMAIL;
 import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;

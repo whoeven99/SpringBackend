@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.constants.TranslateConstants.SHOP_NAME;
+import static com.bogda.common.constant.TranslateConstants.SHOP_NAME;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;

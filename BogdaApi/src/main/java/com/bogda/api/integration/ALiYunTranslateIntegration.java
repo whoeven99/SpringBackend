@@ -27,8 +27,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogda.api.constants.TranslateConstants.QWEN_VL_LAST;
+import static com.bogda.common.constant.TranslateConstants.MAGNIFICATION;
+import static com.bogda.common.constant.TranslateConstants.QWEN_VL_LAST;
 import static com.bogda.api.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;

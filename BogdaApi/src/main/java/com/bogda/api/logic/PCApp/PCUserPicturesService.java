@@ -1,7 +1,7 @@
 package com.bogda.api.logic.PCApp;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.api.constants.TranslateConstants;
+import com.bogda.common.constant.TranslateConstants;
 import com.bogda.api.entity.DO.PCUserPicturesDO;
 import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.entity.VO.AltTranslateVO;

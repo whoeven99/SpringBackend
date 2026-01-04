@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.bogda.api.constants.MailChimpConstants.*;
-import static com.bogda.api.constants.TranslateConstants.ANNUAL_FEE;
-import static com.bogda.api.constants.TranslateConstants.MONTHLY_FEE;
+import static com.bogda.common.constant.MailChimpConstants.*;
+import static com.bogda.common.constant.TranslateConstants.ANNUAL_FEE;
+import static com.bogda.common.constant.TranslateConstants.MONTHLY_FEE;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component

@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
+import static com.bogda.common.constant.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;

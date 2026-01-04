@@ -23,8 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Random;
 
-import static com.bogda.api.constants.TranslateConstants.APIVERSION;
-import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
+import static com.bogda.common.constant.TranslateConstants.APIVERSION;
+import static com.bogda.common.constant.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.*;
 import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getProductDataQuery;

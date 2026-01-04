@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
+import static com.bogda.common.constant.TranslateConstants.API_VERSION_LAST;
 
 @Data
 @AllArgsConstructor

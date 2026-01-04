@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static com.bogda.api.constants.TranslateConstants.*;
+import static com.bogda.common.constant.TranslateConstants.*;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.JsoupUtils.isHtml;
 

@@ -7,7 +7,7 @@ import com.bogda.api.entity.DO.UserPrivateDO;
 import com.bogda.api.mapper.UserPrivateMapper;
 import org.springframework.stereotype.Service;
 
-import static com.bogda.api.constants.TranslateConstants.SHOP_NAME;
+import static com.bogda.common.constant.TranslateConstants.SHOP_NAME;
 
 @Service
 public class UserPrivateServiceImpl extends ServiceImpl<UserPrivateMapper, UserPrivateDO> implements IUserPrivateService {

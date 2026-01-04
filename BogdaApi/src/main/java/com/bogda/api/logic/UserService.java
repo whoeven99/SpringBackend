@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogda.api.constants.MailChimpConstants.*;
+import static com.bogda.common.constant.MailChimpConstants.*;
 
 @Component
 @Transactional

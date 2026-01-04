@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
-import static com.bogda.api.constants.TranslateConstants.IS_PUBLISH;
+import static com.bogda.common.constant.TranslateConstants.API_VERSION_LAST;
+import static com.bogda.common.constant.TranslateConstants.IS_PUBLISH;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogda.api.utils.ApiCodeUtils.getLanguageName;
 

@@ -10,7 +10,7 @@ import com.bogda.api.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.constants.TranslateConstants.SHOP_NAME;
+import static com.bogda.common.constant.TranslateConstants.SHOP_NAME;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.replaceDot;
 

@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.*;
 
-import static com.bogda.api.constants.TranslateConstants.*;
+import static com.bogda.common.constant.TranslateConstants.*;
 
 @Data
 @AllArgsConstructor

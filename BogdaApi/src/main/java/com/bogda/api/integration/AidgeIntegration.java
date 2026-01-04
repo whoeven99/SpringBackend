@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.PIC_FEE;
+import static com.bogda.common.constant.TranslateConstants.PIC_FEE;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.global.iop.util.WebUtils.doGet;
 import static com.global.iop.util.WebUtils.doPost;

@@ -1,6 +1,5 @@
 package com.bogda.api.enums;
 
-
 import lombok.Getter;
 
 import java.util.regex.Pattern;

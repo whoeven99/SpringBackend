@@ -2,7 +2,7 @@ package com.bogda.api.logic;
 
 import com.bogda.api.Service.*;
 import com.bogda.api.config.CurrencyConfig;
-import com.bogda.api.constants.MailChimpConstants;
+import com.bogda.common.constant.MailChimpConstants;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.integration.EmailIntegration;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
@@ -17,7 +17,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import static com.bogda.api.constants.MailChimpConstants.*;
+import static com.bogda.common.constant.MailChimpConstants.*;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.parseShopName;
 

@@ -14,7 +14,7 @@ import com.bogda.api.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
+import static com.bogda.common.constant.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController

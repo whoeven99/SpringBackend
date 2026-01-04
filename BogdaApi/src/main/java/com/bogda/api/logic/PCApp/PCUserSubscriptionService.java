@@ -14,7 +14,7 @@ import com.bogda.api.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
+import static com.bogda.common.constant.TranslateConstants.API_VERSION_LAST;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.api.utils.StringUtils.parsePlanName;
 
