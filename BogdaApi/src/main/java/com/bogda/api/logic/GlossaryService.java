@@ -20,14 +20,16 @@ public class GlossaryService {
         StringBuilder stringBuilder = new StringBuilder();
         for (Map.Entry<String, GlossaryDO> entry : usedGlossary.entrySet()) {
             String key = entry.getKey();
+            GlossaryDO glossary = entry.getValue();
+            boolean caseSensitive = Integer.valueOf(1).equals(glossary.getCaseSensitive());
 
-            // TODO 有空值的情况出现吗 这里的值都是自己控制的，尽量保证不需要这种判断
-            if (StringUtils.isEmpty(key)) {
-                continue;
-            }
+            Pattern pattern = caseSensitive
+                    ? Pattern.compile("\\b" + Pattern.quote(key) + "\\b")
+                    : Pattern.compile("\\b" + Pattern.quote(key) + "\\b", Pattern.CASE_INSENSITIVE);
 
             // TODO @庄泽 前面做过校验了，这里应该都contains?
-            if (mergedText.contains(key)) {
+            // TODO 这个还是不能用contains 有大小写的问题
+            if (pattern.matcher(mergedText).find()) {
                 stringBuilder.append(key)
                         .append(" -> ")
                         .append(entry.getValue().getTargetText())
@@ -35,6 +37,7 @@ public class GlossaryService {
             }
         }
 
+        System.out.println("stringBuilder ： " + stringBuilder.toString().trim());
         return stringBuilder.toString().trim();
     }
 
