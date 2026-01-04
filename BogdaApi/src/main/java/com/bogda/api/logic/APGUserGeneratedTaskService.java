@@ -12,6 +12,7 @@ import com.bogda.api.entity.VO.GenerateDescriptionVO;
 import com.bogda.api.entity.VO.GenerateDescriptionsVO;
 import com.bogda.api.entity.VO.GenerateEmailVO;
 import com.bogda.api.entity.VO.GenerateProgressBarVO;
+import com.bogda.api.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -21,7 +22,6 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.bogda.api.constants.TranslateConstants.EMAIL;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
@@ -77,7 +77,7 @@ public class APGUserGeneratedTaskService {
         }
 
         try {
-            GenerateDescriptionsVO generateDescriptionsVO = OBJECT_MAPPER.readValue(taskDO.getTaskData(), GenerateDescriptionsVO.class);
+            GenerateDescriptionsVO generateDescriptionsVO = JsonUtils.OBJECT_MAPPER.readValue(taskDO.getTaskData(), GenerateDescriptionsVO.class);
             Integer totalCount = generateDescriptionsVO.getProductIds().length;
             Integer unfinishedCount = iapgUserGeneratedSubtaskService.list(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>()
                     .in(APGUserGeneratedSubtaskDO::getStatus, Arrays.asList(0, 3, 4))
@@ -104,7 +104,7 @@ public class APGUserGeneratedTaskService {
         for (String productId : generateDescriptionsVO.getProductIds()) {
             GenerateDescriptionVO generateDescriptionVO = generateDescriptionsVOToGenerateDescriptionVO(productId, generateDescriptionsVO);
             try {
-                String json = OBJECT_MAPPER.writeValueAsString(generateDescriptionVO);
+                String json = JsonUtils.OBJECT_MAPPER.writeValueAsString(generateDescriptionVO);
                 //将json 存到APG_User_Generated_Subtask中
                 iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, json, usersDO.getId(), null));
             } catch (Exception e) {
@@ -118,7 +118,7 @@ public class APGUserGeneratedTaskService {
         GenerateEmailVO generateEmailVO = null;
         try {
             generateEmailVO = new GenerateEmailVO(EMAIL, generateDescriptionsVO.getProductIds());
-            String email = OBJECT_MAPPER.writeValueAsString(generateEmailVO);
+            String email = JsonUtils.OBJECT_MAPPER.writeValueAsString(generateEmailVO);
             iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, email, usersDO.getId(), null));
         } catch (JsonProcessingException e) {
             appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);

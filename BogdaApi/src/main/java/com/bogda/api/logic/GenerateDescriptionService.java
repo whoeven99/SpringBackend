@@ -17,6 +17,7 @@ import com.bogda.api.entity.VO.GenerateDescriptionVO;
 import com.bogda.api.exception.ClientException;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.utils.CharacterCountUtils;
+import com.bogda.api.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,6 @@ import java.util.Random;
 import static com.bogda.api.constants.TranslateConstants.APIVERSION;
 import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.*;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getProductDataQuery;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
@@ -101,7 +101,7 @@ public class GenerateDescriptionService {
         ProductDTO productDTO = new ProductDTO();
         // 对productData进行解析，输出productDTO类型数据
         try {
-            JsonNode root = OBJECT_MAPPER.readTree(productData);
+            JsonNode root = JsonUtils.OBJECT_MAPPER.readTree(productData);
             productDTO.setProductDescription(root.at("/product/descriptionHtml").asText(null));
             productDTO.setId(root.at("/product/id").asText());
             productDTO.setProductType(root.at("/product/productType").asText(null));

@@ -42,7 +42,6 @@ public class TranslateService {
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
 
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     // 判断是否可以终止翻译流程
     public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
