@@ -70,4 +70,27 @@ public class ShopifyRequestUtils {
                 }
                 """;
     }
+
+    /**
+     * 直接根据 resourceId 查询翻译内容
+     * 使用 Shopify GraphQL API 的 translations 查询
+     * 
+     * @param resourceId 资源的全局唯一标识符，格式如: "gid://shopify/Product/1234567890"
+     * @param locale 目标语言代码，如: "fr", "zh-CN"
+     * @return GraphQL 查询字符串
+     * 
+     * 文档参考: https://shopify.dev/docs/api/admin-graphql/latest/queries/translations
+     */
+    public static String getTranslationsByResourceIdQuery(String resourceId, String locale) {
+        return """
+                query MyQuery {
+                  translations(resourceId: "%s", locale: "%s") {
+                    key
+                    value
+                    locale
+                    outdated
+                  }
+                }
+                """.formatted(resourceId, locale);
+    }
 }

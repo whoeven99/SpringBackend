@@ -729,6 +729,117 @@ public class TranslateV2Service {
         , initialTaskV2DO.getId());
     }
 
+    public void checkingSaveShops(InitialTaskV2DO initialTaskV2DO) {
+        Integer initialTaskId = initialTaskV2DO.getId();
+        String shopName = initialTaskV2DO.getShopName();
+        String target = initialTaskV2DO.getTarget();
+
+        UsersDO userDO = iUsersService.getUserByName(shopName);
+        String token = userDO.getAccessToken();
+
+        // 使用 while 循环，每次处理一个 resourceId，避免一次性加载大量数据
+        TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdSavedButNotChecked(initialTaskId);
+        while (randomDo != null) {
+            appInsights.trackTrace("TranslateTaskV2 checkingSaveShops: " + shopName + " randomDo: " + randomDo.getId());
+            String resourceId = randomDo.getResourceId();
+
+            // 获取该 resourceId 下的所有未检查任务
+            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdSavedButNotChecked(initialTaskId, resourceId);
+            if (CollectionUtils.isEmpty(taskList)) {
+                randomDo = translateTaskV2Repo.selectOneByInitialTaskIdSavedButNotChecked(initialTaskId);
+                continue;
+            }
+
+            // 对于每个 resourceType，查询 Shopify 并对比
+            if (!checkResourceTranslations(shopName, token, target, resourceId, taskList)) {
+                appInsights.trackTrace("FatalException TranslateTaskV2 checkingSaveShops: failed to check translations for resourceId: " + resourceId);
+            }
+
+            // 继续处理下一个未检查的任务
+            randomDo = translateTaskV2Repo.selectOneByInitialTaskIdSavedButNotChecked(initialTaskId);
+            appInsights.trackTrace("TranslateTaskV2 checkingSaveShops: " + shopName + " checked resourceId: " + resourceId + " with " + taskList.size() + " tasks");
+        }
+
+        // 所有任务都检查完成后，更新 isCheckSaved = true
+        // 再次检查是否还有未检查的任务，确保所有任务都已检查
+        TranslateTaskV2DO remainingTask = translateTaskV2Repo.selectOneByInitialTaskIdSavedButNotChecked(initialTaskId);
+        if (remainingTask == null) {
+            // 所有任务都已检查，更新 InitialTaskV2DO 的 isCheckSaved 字段
+            initialTaskV2Repo.updateCheckSavedById(initialTaskId, true);
+            appInsights.trackTrace("TranslateTaskV2 checkingSaveShops: all tasks checked for initialTaskId: " + initialTaskId + ", shopName: " + shopName);
+        }
+    }
+
+    /**
+     * 查询 Shopify 并对比翻译值
+     * 使用直接按 resourceId 查询的方式，比查询所有资源然后过滤更高效
+     * 
+     * @return true 如果成功查询并对比，false 如果未找到对应的 resourceId 或查询失败
+     */
+    private boolean checkResourceTranslations(String shopName, String token, String target,
+                                              String targetResourceId, List<TranslateTaskV2DO> taskList) {
+        // 直接根据 resourceId 查询翻译内容（更高效）
+        // 注意：resourceId 需要是 GID 格式，如 "gid://shopify/Product/1234567890"
+        String query = ShopifyRequestUtils.getTranslationsByResourceIdQuery(targetResourceId, target);
+        String response = shopifyHttpIntegration.getInfoByShopify(shopName, token, APIVERSION, query);
+        
+        if (response == null || response.isEmpty()) {
+            appInsights.trackTrace("TranslateTaskV2 checkingSaveShops: failed to get Shopify response for shop: " + shopName + ", resourceId: " + targetResourceId);
+            return false;
+        }
+
+        // 解析响应字符串为 JSONObject
+        JSONObject jsonObject = JSONObject.parseObject(response);
+        if (jsonObject == null) {
+            appInsights.trackTrace("TranslateTaskV2 checkingSaveShops: failed to parse Shopify response for shop: " + shopName + ", resourceId: " + targetResourceId);
+            return false;
+        }
+
+        JSONObject data = jsonObject.getJSONObject("data");
+        if (data == null) {
+            appInsights.trackTrace("TranslateTaskV2 checkingSaveShops: no data in Shopify response for shop: " + shopName + ", resourceId: " + targetResourceId);
+            return false;
+        }
+
+        // 解析 translations 数组
+        com.alibaba.fastjson.JSONArray translations = data.getJSONArray("translations");
+        if (translations == null || translations.isEmpty()) {
+            appInsights.trackTrace("TranslateTaskV2 checkingSaveShops: no translations found in Shopify for resourceId: " + targetResourceId);
+            return false;
+        }
+
+        // 构建 key-value 映射
+        Map<String, String> shopifyKeyValueMap = new HashMap<>();
+        for (int i = 0; i < translations.size(); i++) {
+            JSONObject translation = translations.getJSONObject(i);
+            String key = translation.getString("key");
+            String value = translation.getString("value");
+            if (key != null && value != null) {
+                shopifyKeyValueMap.put(key, value);
+            }
+        }
+
+        if (shopifyKeyValueMap.isEmpty()) {
+            appInsights.trackTrace("TranslateTaskV2 checkingSaveShops: no valid translations found in Shopify for resourceId: " + targetResourceId);
+            return false;
+        }
+
+        // 对比每个任务的 targetValue 和 Shopify 的值
+        for (TranslateTaskV2DO task : taskList) {
+            String nodeKey = task.getNodeKey();
+            String targetValue = task.getTargetValue();
+            String shopifyValue = shopifyKeyValueMap.get(nodeKey);
+
+            if (shopifyValue != null && shopifyValue.equals(targetValue)) {
+                // 值一致，标记为已检查
+                task.setCheckSaved(true);
+                translateTaskV2Repo.update(task);
+            }
+        }
+
+        return true;
+    }
+
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
     public void sendManualEmail(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();

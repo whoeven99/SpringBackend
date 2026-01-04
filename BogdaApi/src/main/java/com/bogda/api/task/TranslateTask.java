@@ -38,21 +38,15 @@ public class TranslateTask {
     private final Set<String> initializingShops = new HashSet<>();
     private final Set<String> savingShops = new HashSet<>();
     private final Set<Integer> translatingInitialIds = new HashSet<>();
+    private final Set<String> checkingSaveShops = new HashSet<>();
 
     public static TelemetryClient appInsights = new TelemetryClient();
 
-    private <T> void process(int status,
+    private <T> void process(List<InitialTaskV2DO> tasks,
                              Function<InitialTaskV2DO, T> groupByFunc,
                              Set<T> shopsSet,
                              String taskName,
                              Consumer<InitialTaskV2DO> taskConsumer) {
-        List<InitialTaskV2DO> tasks = new ArrayList<>();
-        if (status == 5) {
-            // 一天内 状态为中断 且 没有写入时间
-            tasks = initialTaskV2Repo.selectByStoppedAndNotSaveLastDay();
-        } else {
-            tasks = initialTaskV2Repo.selectByStatus(status);
-        }
         if (CollectionUtils.isEmpty(tasks)) {
             return;
         }
@@ -89,7 +83,7 @@ public class TranslateTask {
 
     @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTask() {
-        process(0,
+        process(initialTaskV2Repo.selectByStatus(0),
                 InitialTaskV2DO::getShopName,
                 initializingShops, "INIT",
                 translateV2Service::initialToTranslateTask);
@@ -97,7 +91,7 @@ public class TranslateTask {
 
     @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
-        process(1,
+        process(initialTaskV2Repo.selectByStatus(1),
                 InitialTaskV2DO::getId,
                 translatingInitialIds, "TRANSLATE",
                 translateV2Service::translateEachTask);
@@ -105,15 +99,24 @@ public class TranslateTask {
 
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
-        process(2,
+        process(initialTaskV2Repo.selectByStatus(2),
                 InitialTaskV2DO::getShopName,
                 savingShops, "SAVE SHOPIFY",
                 translateV2Service::saveToShopify);
 
-        process(5,
+        process(initialTaskV2Repo.selectByStoppedAndNotSaveLastDay(),
                 InitialTaskV2DO::getShopName,
                 savingShops, "SAVE SHOPIFY",
                 translateV2Service::saveToShopify);
+    }
+
+    // 创建定时任务，查询status4和5的，checkingSaveShops, "check save", translateV2Service::checkingSaveShops
+    @Scheduled(fixedDelay = 30 * 1000)
+    public void checkingSaveShops() {
+        process(initialTaskV2Repo.selectByFinishedAndNotCheckSaved(),
+                InitialTaskV2DO::getShopName,
+                checkingSaveShops, "CHECK SHOPIFY",
+                translateV2Service::checkingSaveShops);
     }
 
     @Scheduled(fixedDelay = 30 * 1000)

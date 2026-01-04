@@ -36,4 +36,6 @@ public class InitialTaskV2DO extends BaseDO {
     private String taskType; // manual, auto, private
     @TableField("is_handle")
     private boolean isHandle;
+    @TableField("is_check_saved")
+    private boolean isCheckSaved; // 表示这个任务的所有翻译都已经检查过了
 }

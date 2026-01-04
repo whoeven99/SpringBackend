@@ -44,6 +44,30 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         return baseMapper.selectList(wrapper);
     }
 
+    public TranslateTaskV2DO selectOneByInitialTaskIdSavedButNotChecked(Integer initialTaskId) {
+        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+        wrapper.select("TOP 1 id, resource_id, module")
+                .eq("initial_task_id", initialTaskId)
+                .eq("has_target_value", true)
+                .eq("saved_to_shopify", true)
+                .eq("is_check_saved", false)
+                .eq("is_deleted", false);
+        List<TranslateTaskV2DO> list = baseMapper.selectList(wrapper);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public List<TranslateTaskV2DO> selectByInitialTaskIdAndResourceIdSavedButNotChecked(Integer initialTaskId, String resourceId) {
+        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+        wrapper.select("TOP " + 10 + " *")
+                .eq("initial_task_id", initialTaskId)
+                .eq("resource_id", resourceId)
+                .eq("has_target_value", true)
+                .eq("saved_to_shopify", true)
+                .eq("is_check_saved", false)
+                .eq("is_deleted", false);
+        return baseMapper.selectList(wrapper);
+    }
+
     public List<TranslateTaskV2DO> selectByInitialTaskIdWithLimit(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP " + 20 + " *")

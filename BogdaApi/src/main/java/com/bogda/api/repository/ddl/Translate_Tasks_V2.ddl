@@ -11,6 +11,7 @@ CREATE TABLE dbo.Translate_Tasks_V2
     target_value     NVARCHAR(3000) NOT NULL default '',
     has_target_value Bit            Not null default 0,
     saved_to_shopify Bit            NOT NULL default 0,
+    is_check_saved   Bit            NOT NULL default 0,
     is_handle        BIT            NOT NULL default 0,
     is_deleted       BIT            NOT NULL DEFAULT 0,
     updated_at       DATETIME                DEFAULT GETUTCDATE(),
