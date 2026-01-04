@@ -4,13 +4,13 @@ import com.bogda.api.exception.ClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.bogda.api.enums.ErrorEnum.JSON_PARSE_ERROR;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 public class JsonUtils {
-
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static JsonNode readTree(String str) {
         try {
             return OBJECT_MAPPER.readTree(str);

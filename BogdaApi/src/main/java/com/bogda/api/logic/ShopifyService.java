@@ -39,7 +39,6 @@ import static com.bogda.api.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.api.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogda.api.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.JsonUtils.isJson;
@@ -240,7 +239,7 @@ public class ShopifyService {
     public JsonNode ConvertStringToJsonNode(String infoByShopify, TranslateResourceDTO translateResource) {
         JsonNode rootNode = null;
         try {
-            rootNode = OBJECT_MAPPER.readTree(infoByShopify);
+            rootNode = JsonUtils.OBJECT_MAPPER.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
             appInsights.trackException(e);
             appInsights.trackTrace("解析JSON数据失败 errors： " + translateResource);
@@ -481,7 +480,7 @@ public class ShopifyService {
         }
         JsonNode rootNode;
         try {
-            rootNode = OBJECT_MAPPER.readTree(infoByShopify);
+            rootNode = JsonUtils.OBJECT_MAPPER.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -592,7 +591,7 @@ public class ShopifyService {
     private static String getMessage(String json) {
         String message = null;
         try {
-            JsonNode root = OBJECT_MAPPER.readTree(json);
+            JsonNode root = JsonUtils.OBJECT_MAPPER.readTree(json);
 
             JsonNode messageNode = root
                     .path("translationsRegister")
