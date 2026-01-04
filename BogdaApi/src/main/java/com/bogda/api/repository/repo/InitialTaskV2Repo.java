@@ -62,6 +62,15 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
+    
+    public List<InitialTaskV2DO> selectByFinishedAndNotCheckSaved() {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::isCheckSaved, false)
+                .eq(InitialTaskV2DO::getIsDeleted, false)
+                .in(InitialTaskV2DO::getStatus, 4, 5)
+        );
+    }
+
     public List<InitialTaskV2DO> selectByStatus(int status) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getStatus, status)
@@ -177,6 +186,13 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
     public boolean updateStatusSavingShopifyMinutesById(Integer status, Integer savingShopifyMinutes, Integer id) {
         return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().set(InitialTaskV2DO::getStatus, status)
                 .set(InitialTaskV2DO::getSavingShopifyMinutes, savingShopifyMinutes)
+                .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
+                .eq(InitialTaskV2DO::getId, id)) > 0;
+    }
+
+    public boolean updateCheckSavedById(Integer id, boolean isCheckSaved) {
+        return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>()
+                .set(InitialTaskV2DO::isCheckSaved, isCheckSaved)
                 .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
                 .eq(InitialTaskV2DO::getId, id)) > 0;
     }

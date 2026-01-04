@@ -13,6 +13,7 @@ CREATE TABLE dbo.Initial_Translate_Tasks_V2
     translation_minutes    INT            NOT NULL default 0,
     saving_shopify_minutes INT            NOT NULL default 0,
     used_token             INT            NOT NULL default 0,
+    is_check_saved         BIT            NOT NULL default 0,
 
     is_deleted             BIT                     DEFAULT 0 NOT NULL,
     updated_at             DATETIME                DEFAULT GETUTCDATE(),

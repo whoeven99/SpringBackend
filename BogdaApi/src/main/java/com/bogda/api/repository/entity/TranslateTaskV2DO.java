@@ -28,6 +28,8 @@ public class TranslateTaskV2DO extends BaseDO {
     private boolean hasTargetValue; // 因为target value太长，不好做索引
     @TableField("saved_to_shopify")
     private boolean savedToShopify;
+    @TableField("is_check_saved")
+    private boolean isCheckSaved;
     @TableField("is_single_html")
     private boolean isSingleHtml;
 }
