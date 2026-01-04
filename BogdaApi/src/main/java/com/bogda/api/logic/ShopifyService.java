@@ -10,6 +10,7 @@ import com.bogda.api.config.LanguageFlagConfig;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.entity.DTO.TranslateTextDTO;
 import com.bogda.api.enums.ErrorEnum;
+import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.integration.TestingEnvironmentIntegration;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
@@ -275,34 +276,35 @@ public class ShopifyService {
             // 如果是特定类型，也从集合中移除
             if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
                     || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                    || "LIST_URL".equals(type)
-                    || "JSON".equals(type)
-                    || "JSON_STRING".equals(type) || isJson(value)
-            ) {
+                    || "LIST_URL".equals(type)) {
                 continue;
             }
 
             String key = translateTextDTO.getTextKey();
-            //如果handleFlag为false，则跳过
+            // 如果handleFlag为false，则跳过
             if (type.equals(URI) && "handle".equals(key)) {
                 if (!handleFlag) {
                     continue;
                 }
             }
 
-            //通用的不翻译数据
-            if (!translationRuleJudgment(key, value)) {
+            // 通用的不翻译数据
+            if (!JudgeTranslateUtils.translationRuleJudgment(key, value)) {
                 continue;
             }
 
             //如果是theme模块的数据
-            if (TRANSLATABLE_RESOURCE_TYPES.contains(modeType)) {
-                //如果是html放html文本里面
-                if (isHtml(value)) {
+            if (JudgeTranslateUtils.TRANSLATABLE_RESOURCE_TYPES.contains(modeType)) {
+                // 如果是html放html文本里面
+                if (JsoupUtils.isHtml(value)) {
                     continue;
                 }
 
-                //对key中包含slide  slideshow  general.lange 的数据不翻译
+                if (JsonUtils.isJson(value)) {
+                    continue;
+                }
+
+                // 对key中包含slide  slideshow  general.lange 的数据不翻译
                 if (key.contains("slide") || key.contains("slideshow") || key.contains("general.lange")) {
                     continue;
                 }
@@ -310,41 +312,42 @@ public class ShopifyService {
                 if (key.contains("block") && key.contains("add_button_selector")) {
                     continue;
                 }
-                //对key中含section和general的做key值判断
-                if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
-                    //进行白名单的确认
-                    if (whiteListTranslate(key)) {
-                        counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
+                // 对key中含section和general的做key值判断
+                if (JudgeTranslateUtils.GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+                    // 进行白名单的确认
+                    if (JudgeTranslateUtils.whiteListTranslate(key)) {
+                        counter.addChars(ALiYunTranslateIntegration.calculateBaiLianToken(translateTextDTO.getSourceText()));
                         continue;
                     }
 
-                    //如果包含对应key和value，则跳过
-                    if (!shouldTranslate(key, value)) {
+                    // 如果包含对应key和value，则跳过
+                    if (!JudgeTranslateUtils.shouldTranslate(key, value)) {
                         continue;
                     }
                 }
-                counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
+                counter.addChars(ALiYunTranslateIntegration.calculateBaiLianToken(translateTextDTO.getSourceText()));
                 continue;
             }
-            //对METAOBJECT字段翻译
+
+            // 对METAOBJECT字段翻译
             if (modeType.equals(METAOBJECT)) {
-                if (isJson(value)) {
+                if (JsonUtils.isJson(value)) {
                     continue;
                 }
-                counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
+                counter.addChars(ALiYunTranslateIntegration.calculateBaiLianToken(translateTextDTO.getSourceText()));
                 continue;
             }
 
-            //对METAFIELD字段翻译
+            // 对METAFIELD字段翻译
             if (modeType.equals(METAFIELD)) {
-                //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
+                // 如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
                 if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
                     continue;
                 }
-                if (!metaTranslate(value)) {
+                if (!JudgeTranslateUtils.metaTranslate(value)) {
                     continue;
                 }
-                //如果是base64编码的数据，不翻译
+                // 如果是base64编码的数据，不翻译
                 if (BASE64_PATTERN.matcher(value).matches()) {
                     continue;
                 }
@@ -354,7 +357,7 @@ public class ShopifyService {
                 counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
                 continue;
             }
-            counter.addChars(calculateBaiLianToken(translateTextDTO.getSourceText()));
+            counter.addChars(ALiYunTranslateIntegration.calculateBaiLianToken(translateTextDTO.getSourceText()));
         }
     }
 

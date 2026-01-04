@@ -14,6 +14,7 @@ import com.bogda.api.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
+import com.bogda.api.integration.model.ShopifyCheckMetafieldResponse;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.ShopifyService;
@@ -55,9 +56,7 @@ import static com.bogda.api.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 import static com.bogda.api.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.JsonUtils.isJson;
 import static com.bogda.api.utils.JsoupUtils.isHtml;
-import static com.bogda.api.utils.JudgeTranslateUtils.*;
 
 @Component
 public class TranslateV2Service {
@@ -134,7 +133,8 @@ public class TranslateV2Service {
         // 解析 JSON 列表并替换占位符
         try {
             String jsonStr = String.valueOf(map.getOrDefault("json", "{}"));
-            Map<Integer, String> languageMap = JsonUtils.jsonToObject(jsonStr, new TypeReference<Map<Integer, String>>() {});
+            Map<Integer, String> languageMap = JsonUtils.jsonToObject(jsonStr, new TypeReference<Map<Integer, String>>() {
+            });
             prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", languageMap.toString())
                     .replace("{{TARGET_LANGUAGE}}", target);
         } catch (Exception e) {
@@ -516,7 +516,8 @@ public class TranslateV2Service {
 //                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                             // 每个node有几个translatableContent
                             node.getTranslatableContent().forEach(translatableContent -> {
-                                if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover(), initialTaskV2DO.isHandle())) {
+                                if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover()
+                                        , initialTaskV2DO.isHandle(), shopName, userDO.getAccessToken(), node.getResourceId())) {
                                     translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                     translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                     translateTaskV2DO.setType(translatableContent.getType());
@@ -718,7 +719,7 @@ public class TranslateV2Service {
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             } else {
                 // 写入失败 fatalException
-                appInsights.trackTrace("FatalException TranslateTaskV2 saving failed: " + shopName +
+                CaseSensitiveUtils.appInsights.trackTrace("TranslateTaskV2 saving failed: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
@@ -735,7 +736,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateStatusSavingShopifyMinutesById(initialTaskV2DO.getStatus(), initialTaskV2DO.getSavingShopifyMinutes()
-        , initialTaskV2DO.getId());
+                , initialTaskV2DO.getId());
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
@@ -747,7 +748,7 @@ public class TranslateV2Service {
 
         // 手动翻译 正常结束，发送邮件
         if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
-            appInsights.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
+            CaseSensitiveUtils.appInsights.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
                     " Total time (minutes): " + usingTimeMinutes +
                     " Total tokens used: " + usedTokenByTask);
 
@@ -974,7 +975,8 @@ public class TranslateV2Service {
     // 根据翻译规则，不翻译的直接不用存
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
-                                  String module, boolean isCover, boolean isHandle) {
+                                  String module, boolean isCover, boolean isHandle, String shopName, String accessToken
+            , String resourceId) {
         String value = translatableContent.getValue();
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
@@ -997,13 +999,7 @@ public class TranslateV2Service {
         // 如果是特定类型，也从集合中移除
         if ("FILE_REFERENCE".equals(type) || "LINK".equals(type) || "URL".equals(type)
                 || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                || "LIST_URL".equals(type)
-                || "JSON".equals(type)
-                || "JSON_STRING".equals(type)) {
-            return false;
-        }
-
-        if (JsonUtils.isJson(value)) {
+                || "LIST_URL".equals(type)) {
             return false;
         }
 
@@ -1019,10 +1015,14 @@ public class TranslateV2Service {
         }
 
         //如果是theme模块的数据
-        if (TRANSLATABLE_RESOURCE_TYPES.contains(module)) {
+        if (JudgeTranslateUtils.TRANSLATABLE_RESOURCE_TYPES.contains(module)) {
             //如果是html放html文本里面
-            if (isHtml(value)) {
+            if (JsoupUtils.isHtml(value)) {
                 return true;
+            }
+
+            if (JsonUtils.isJson(value)) {
+                return false;
             }
 
             //对key中包含slide  slideshow  general.lange 的数据不翻译
@@ -1034,14 +1034,14 @@ public class TranslateV2Service {
                 return false;
             }
             //对key中含section和general的做key值判断
-            if (GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
+            if (JudgeTranslateUtils.GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                 //进行白名单的确认
-                if (whiteListTranslate(key)) {
+                if (JudgeTranslateUtils.whiteListTranslate(key)) {
                     return true;
                 }
 
                 //如果包含对应key和value，则跳过
-                if (!shouldTranslate(key, value)) {
+                if (!JudgeTranslateUtils.shouldTranslate(key, value)) {
                     return false;
                 }
             }
@@ -1050,18 +1050,29 @@ public class TranslateV2Service {
         //对METAFIELD字段翻译
         if (METAFIELD.equals(module)) {
             //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
-            if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
+            if (JudgeTranslateUtils.SUSPICIOUS_PATTERN.matcher(value).matches() ||
+                    JudgeTranslateUtils.SUSPICIOUS2_PATTERN.matcher(value).matches()) {
                 return false;
             }
-            if (!metaTranslate(value)) {
+            if (!JudgeTranslateUtils.metaTranslate(value)) {
                 return false;
             }
             //如果是base64编码的数据，不翻译
-            if (BASE64_PATTERN.matcher(value).matches()) {
+            if (JudgeTranslateUtils.BASE64_PATTERN.matcher(value).matches()) {
                 return false;
             }
-            if (isJson(value)) {
-                return false;
+            if (JsonUtils.isJson(value)) {
+                // 判断是否与product相关联
+                String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST,
+                        ShopifyRequestUtils.getQueryForCheckMetafieldId(resourceId));
+                ShopifyCheckMetafieldResponse shopifyCheckMetafieldResponse = JsonUtils.jsonToObject(shopifyData,
+                        ShopifyCheckMetafieldResponse.class);
+                return Optional.ofNullable(shopifyCheckMetafieldResponse)
+                        .map(ShopifyCheckMetafieldResponse::getCheckMetafieldResources)
+                        .map(ShopifyCheckMetafieldResponse.CheckMetafieldResources::getNode)
+                        .map(ShopifyCheckMetafieldResponse.CheckMetafieldResources.Node::getOwner)
+                        .map(ShopifyCheckMetafieldResponse.CheckMetafieldResources.Node.Owner::getId)
+                        .isPresent();
             }
         }
 

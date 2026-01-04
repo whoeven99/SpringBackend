@@ -69,11 +69,12 @@ public class JsonUtils {
 
     // 判断一个string类型是不是Json数据
     public static boolean isJson(String str) {
+        if (str == null || str.trim().isEmpty()) {
+            return false;
+        }
         try {
-            //清除空格
-            str = str.replaceAll(" ", "");
-            OBJECT_MAPPER.readTree(str);
-            return true;
+            JsonNode node = OBJECT_MAPPER.readTree(str);
+            return node.isObject();
         } catch (Exception e) {
             return false;
         }

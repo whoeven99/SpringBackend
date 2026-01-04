@@ -209,7 +209,11 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        if (isHtml(value)) {
+        if ("value".equals(key) && JsonUtils.isJson(value)){
+            return true;
+        }
+
+        if (JsoupUtils.isHtml(value)) {
             return true;
         }
 
