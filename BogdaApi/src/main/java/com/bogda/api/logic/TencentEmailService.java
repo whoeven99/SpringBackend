@@ -9,6 +9,7 @@ import com.bogda.api.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
 import com.bogda.api.repository.entity.InitialTaskV2DO;
 import com.bogda.api.utils.ApiCodeUtils;
+import com.bogda.api.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
@@ -381,10 +382,10 @@ public class TencentEmailService {
 
         // 都continue了
         if (divBuilder.toString().isEmpty()) {
-            appInsights.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
+            CaseSensitiveUtils.appInsights.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
             return true;
         }
         templateData.put("language_progress_rows", String.valueOf(divBuilder));
-        return emailIntegration.sendEmailByTencent(159297L, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, templateData, TENCENT_FROM_EMAIL, CC_EMAIL);
+        return emailIntegration.sendEmailByTencent(159297L, AUTO_FAILED_EMAIL, templateData, TENCENT_FROM_EMAIL, CC_EMAIL);
     }
 }
