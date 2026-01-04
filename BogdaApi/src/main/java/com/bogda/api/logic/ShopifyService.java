@@ -17,6 +17,7 @@ import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.*;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;

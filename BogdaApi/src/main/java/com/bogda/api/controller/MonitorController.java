@@ -15,6 +15,7 @@ import com.bogda.api.logic.translate.stragety.HtmlTranslateStrategyService;
 import com.bogda.api.model.controller.response.ProgressResponse;
 import com.bogda.api.repository.entity.InitialTaskV2DO;
 import com.bogda.api.repository.repo.InitialTaskV2Repo;
+import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
@@ -24,8 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.bogda.api.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogda.api.utils.LiquidHtmlTranslatorUtils.parseHtml;
 
 @RestController
 public class MonitorController {
@@ -99,10 +98,10 @@ public class MonitorController {
     public Map<Integer, String> htmlToJson(@RequestBody Map<String, Object> map) {
         String value = map.get("html").toString();
 
-        value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
+        value = LiquidHtmlTranslatorUtils.isHtmlEntity(value); //判断是否含有HTML实体,然后解码
 
         boolean hasHtmlTag = HtmlTranslateStrategyService.HTML_TAG_PATTERN.matcher(value).find();
-        Document doc = parseHtml(value, "en", hasHtmlTag);
+        Document doc = LiquidHtmlTranslatorUtils.parseHtml(value, "en", hasHtmlTag);
 
         List<TextNode> nodes = new ArrayList<>();
         for (Element element : doc.getAllElements()) {

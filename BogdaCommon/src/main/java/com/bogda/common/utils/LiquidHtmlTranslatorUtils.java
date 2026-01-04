@@ -1,10 +1,9 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-
 
 public class LiquidHtmlTranslatorUtils {
     //判断是否含有HTML实体

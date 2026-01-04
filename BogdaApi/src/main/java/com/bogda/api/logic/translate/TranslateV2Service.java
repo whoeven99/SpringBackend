@@ -34,6 +34,7 @@ import com.bogda.api.repository.repo.InitialTaskV2Repo;
 import com.bogda.api.repository.repo.TranslateTaskV2Repo;
 import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.*;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import kotlin.Pair;

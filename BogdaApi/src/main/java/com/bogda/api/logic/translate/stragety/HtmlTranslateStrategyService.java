@@ -1,6 +1,7 @@
 package com.bogda.api.logic.translate.stragety;
 
 import com.bogda.api.context.TranslateContext;
+import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -14,8 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.bogda.api.utils.LiquidHtmlTranslatorUtils.*;
 
 @Component
 public class HtmlTranslateStrategyService implements ITranslateStrategyService {
@@ -35,10 +34,10 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         String value = ctx.getContent();
         String target = ctx.getTargetLanguage();
 
-        value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
+        value = LiquidHtmlTranslatorUtils.isHtmlEntity(value); //判断是否含有HTML实体,然后解码
 
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(value).find();
-        Document doc = parseHtml(value, target, hasHtmlTag);
+        Document doc = LiquidHtmlTranslatorUtils.parseHtml(value, target, hasHtmlTag);
         ctx.setDoc(doc);
         ctx.setHasHtmlTag(hasHtmlTag);
 
@@ -68,7 +67,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         // 输出翻译后的 HTML
         if (ctx.isHasHtmlTag()) {
             String results = ctx.getDoc().outerHtml(); // 返回完整的HTML结构
-            replacedBackString = isHtmlEntity(results);
+            replacedBackString = LiquidHtmlTranslatorUtils.isHtmlEntity(results);
         } else {
             Element body = ctx.getDoc().body();
             // 只返回子节点内容，不包含 <body>
@@ -80,7 +79,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
                 }
             }
             String output2 = results.toString();
-            replacedBackString = isHtmlEntity(output2);
+            replacedBackString = LiquidHtmlTranslatorUtils.isHtmlEntity(output2);
         }
         ctx.setStrategy("HTML的json翻译");
         ctx.setTranslatedContent(replacedBackString);
