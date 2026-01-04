@@ -1,4 +1,4 @@
-package com.bogda.api.constants;
+package com.bogda.common.constant;
 
 public class TranslateConstants {
     public static final String PLAIN_TEXT = "PLAIN_TEXT";

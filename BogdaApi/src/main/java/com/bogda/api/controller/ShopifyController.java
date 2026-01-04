@@ -17,8 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
-import static com.bogda.api.constants.TranslateConstants.MAX_LENGTH;
+import static com.bogda.common.constant.TranslateConstants.API_VERSION_LAST;
+import static com.bogda.common.constant.TranslateConstants.MAX_LENGTH;
 import static com.bogda.api.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogda.api.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogda.api.logic.ShopifyService.getShopifyDataByCloud;

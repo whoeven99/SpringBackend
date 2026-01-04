@@ -14,7 +14,7 @@ import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.constants.TranslateConstants.MAGNIFICATION;
+import static com.bogda.common.constant.TranslateConstants.MAGNIFICATION;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 

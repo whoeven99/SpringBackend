@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import static com.bogda.api.constants.TranslateConstants.*;
+import static com.bogda.common.constant.TranslateConstants.*;
 import static com.bogda.api.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 

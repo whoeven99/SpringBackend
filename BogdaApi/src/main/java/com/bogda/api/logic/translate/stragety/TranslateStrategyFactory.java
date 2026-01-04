@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.bogda.api.constants.TranslateConstants.HTML;
+import static com.bogda.common.constant.TranslateConstants.HTML;
 
 @Component
 public class TranslateStrategyFactory {

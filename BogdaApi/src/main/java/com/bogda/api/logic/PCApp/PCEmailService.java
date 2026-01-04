@@ -1,6 +1,6 @@
 package com.bogda.api.logic.PCApp;
 
-import com.bogda.api.constants.MailChimpConstants;
+import com.bogda.common.constant.MailChimpConstants;
 import com.bogda.api.integration.EmailIntegration;
 import com.bogda.api.utils.ShopifyUtils;
 import org.springframework.beans.factory.annotation.Autowired;

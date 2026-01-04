@@ -25,7 +25,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static com.bogda.api.constants.TranslateConstants.*;
+import static com.bogda.common.constant.TranslateConstants.*;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;

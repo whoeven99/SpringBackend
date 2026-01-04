@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.bogda.api.constants.TranslateConstants.EMAIL;
+import static com.bogda.common.constant.TranslateConstants.EMAIL;
 import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;

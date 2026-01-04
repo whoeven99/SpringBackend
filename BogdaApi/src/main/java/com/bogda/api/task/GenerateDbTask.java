@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.bogda.api.constants.TranslateConstants.EMAIL;
+import static com.bogda.common.constant.TranslateConstants.EMAIL;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.GENERATE_STATE_BAR;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.INITIALIZATION;
 import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;

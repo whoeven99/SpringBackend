@@ -51,7 +51,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.bogda.api.constants.TranslateConstants.*;
+import static com.bogda.common.constant.TranslateConstants.*;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 import static com.bogda.api.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getShopLanguageQuery;

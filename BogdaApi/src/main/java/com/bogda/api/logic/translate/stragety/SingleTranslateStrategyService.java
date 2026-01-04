@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.URI;
+import static com.bogda.common.constant.TranslateConstants.URI;
 
 @Component
 public class SingleTranslateStrategyService implements ITranslateStrategyService {
