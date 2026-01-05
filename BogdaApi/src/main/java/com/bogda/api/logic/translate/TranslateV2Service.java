@@ -396,7 +396,7 @@ public class TranslateV2Service {
         initialTask.setTaskType("auto");
         initialTaskV2Repo.insert(initialTask);
 
-        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target);
+        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, ALiYunTranslateIntegration.QWEN_MAX);
     }
 
 
