@@ -44,6 +44,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+
 import java.io.InputStream;
 import java.net.URL;
 import java.time.Instant;
@@ -536,7 +537,7 @@ public class TranslateV2Service {
                                     translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                     translateTaskV2DO.setType(translatableContent.getType());
                                     translateTaskV2DO.setDigest(translatableContent.getDigest());
-                                    translateTaskV2DO.setSingleHtml(isSingleHtml(translatableContent, module));
+                                    translateTaskV2DO.setSingleHtml(JsoupUtils.isHtml(translatableContent.getValue()));
                                     translateTaskV2DO.setId(null);
                                     try {
                                         translateTaskV2Repo.insert(translateTaskV2DO);
@@ -566,15 +567,6 @@ public class TranslateV2Service {
         translateTaskMonitorV2RedisService.setInitEndTime(initialTaskV2DO.getId());
         initialTaskV2Repo.updateStatusAndInitMinutes(initialTaskV2DO.getStatus(), initialTaskV2DO.getInitMinutes()
                 , initialTaskV2DO.getId());
-    }
-
-    private boolean isSingleHtml(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
-                                 String module) {
-        if ("body".equals(translatableContent.getKey()) || "body_html".equals(translatableContent.getKey())
-                || "METAFIELD".equals(module)) {
-            return isHtml(translatableContent.getValue());
-        }
-        return false;
     }
 
     // 翻译 step 3, 翻译任务 -> 具体翻译行为 直接对数据库操作
@@ -762,7 +754,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateStatusSavingShopifyMinutesById(initialTaskV2DO.getStatus(), initialTaskV2DO.getSavingShopifyMinutes()
-        , initialTaskV2DO.getId());
+                , initialTaskV2DO.getId());
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
@@ -1095,10 +1087,9 @@ public class TranslateV2Service {
                 ShopifyCheckMetafieldResponse shopifyCheckMetafieldResponse = JsonUtils.jsonToObject(shopifyData,
                         ShopifyCheckMetafieldResponse.class);
                 return Optional.ofNullable(shopifyCheckMetafieldResponse)
-                        .map(ShopifyCheckMetafieldResponse::getCheckMetafieldResources)
-                        .map(ShopifyCheckMetafieldResponse.CheckMetafieldResources::getNode)
-                        .map(ShopifyCheckMetafieldResponse.CheckMetafieldResources.Node::getOwner)
-                        .map(ShopifyCheckMetafieldResponse.CheckMetafieldResources.Node.Owner::getId)
+                        .map(ShopifyCheckMetafieldResponse::getNode)
+                        .map(ShopifyCheckMetafieldResponse.Node::getOwner)
+                        .map(ShopifyCheckMetafieldResponse.Node.Owner::getId)
                         .isPresent();
             }
         }

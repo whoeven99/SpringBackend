@@ -1,5 +1,6 @@
 package com.bogda.api.integration.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,22 +9,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ShopifyCheckMetafieldResponse {
-    private ShopifyCheckMetafieldResponse.CheckMetafieldResources checkMetafieldResources;
+    private Node node;
+
     @Data
-    public static class CheckMetafieldResources {
-        private ShopifyCheckMetafieldResponse.CheckMetafieldResources.Node node;
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Node {
+        private String id;
+        private String type;
+        private Owner owner;
 
         @Data
-        public static class Node {
-            private String id; // 要查询的元字段resourceId
-            private ShopifyCheckMetafieldResponse.CheckMetafieldResources.Node.Owner owner; // 相关联的product数据
-            private String type;
-
-            @Data
-            public static class Owner {
-                private String id; // 相关联的productId
-                private String title; // 相关联的产品标题
-            }
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Owner {
+            private String id;
+            private String title;
         }
     }
 }

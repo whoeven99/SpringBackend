@@ -50,7 +50,6 @@ public class JsonTranslateStrategyService implements ITranslateStrategyService {
             return;
         }
 
-        // 调用假翻译方法进行翻译
         batchTranslateStrategyService.translate(ctx);
 
         // 回填翻译结果到 JSON
