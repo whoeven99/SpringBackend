@@ -607,7 +607,19 @@ public class TranslateV2Service {
 
             // 随机找一条，如果是html就单条翻译，不是就直接批量
             boolean isHtml = randomDo.isSingleHtml();
-            if (isHtml) {
+            if (JsonUtils.isJson(randomDo.getSourceValue())) {
+                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("JSON");
+                service.translate(context);
+
+                // 翻译后更新db
+                translateTaskV2Repo.updateTargetValueAndHasTargetValue(context.getTranslatedContent(), true, randomDo.getId());
+
+                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
+                        context.getUsedToken(), context.getTranslatedChars());
+
+            } else if (isHtml) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("HTML");
                 service.translate(context);
@@ -645,7 +657,7 @@ public class TranslateV2Service {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
 
                     // 3.3 回写数据库 todo 批量
-                    translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, randomDo.getId());
+                    translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),

@@ -3,6 +3,7 @@ package com.bogda.api.constants;
 public class TranslateConstants {
     public static final String PLAIN_TEXT = "PLAIN_TEXT";
     public static final String HTML = "HTML";
+    public static final String JSON = "JSON";
     public static final String TITLE = "title";
     public static final String META_TITLE = "meta_title";
     public static final String LOWERCASE_HANDLE = "handle";
