@@ -645,6 +645,10 @@ public class TranslateV2Service {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
 
                     // 3.3 回写数据库 todo 批量
+
+                    if (targetValue == null) {
+                        continue;
+                    }
                     translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, randomDo.getId());
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
