@@ -1,6 +1,5 @@
 package com.bogda.api.logic.translate;
 
-import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.Service.ITranslatesService;
 import com.bogda.api.Service.IUsersService;
 import com.bogda.api.context.TranslateContext;
@@ -13,7 +12,6 @@ import com.bogda.api.entity.VO.SingleTranslateVO;
 import com.bogda.api.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.GeminiIntegration;
-import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.ShopifyService;
@@ -43,6 +41,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+
 import java.io.InputStream;
 import java.net.URL;
 import java.time.Instant;
@@ -70,8 +69,6 @@ public class TranslateV2Service {
     private IUsersService iUsersService;
     @Autowired
     private ShopifyService shopifyService;
-    @Autowired
-    private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
     @Autowired
@@ -528,7 +525,6 @@ public class TranslateV2Service {
                             appInsights.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
                                     " resourceId: " + node.getResourceId());
 
-//                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                             // 每个node有几个translatableContent
                             node.getTranslatableContent().forEach(translatableContent -> {
                                 if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover(), initialTaskV2DO.isHandle())) {
@@ -715,10 +711,8 @@ public class TranslateV2Service {
                     })
                     .collect(Collectors.toList()));
             node.setResourceId(resourceId);
-            String strResponse = shopifyHttpIntegration.sendShopifyPost(
-                    shopName, token, APIVERSION, ShopifyRequestUtils.registerTransactionQuery(), node);
-            JSONObject jsonObject = JSONObject.parseObject(strResponse);
-            if (jsonObject != null && jsonObject.getJSONObject("data") != null) {
+            String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
+            if (strResponse != null) {
                 appInsights.trackTrace("TranslateTaskV2 saving success: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
                 // 回写数据库，标记已写入 TODO 批量
@@ -1077,15 +1071,6 @@ public class TranslateV2Service {
             }
         }
 
-        // 最终插入时，检查数据库， todo 还是需要再优化一下
-        // 检查本地数据库是否已有该 resourceId + key 的记录（防止初始化时断电造成重复插入）
-//        if (!CollectionUtils.isEmpty(existingTasks)) {
-//            for (TranslateTaskV2DO task : existingTasks) {
-//                if (translatableContent.getKey().equals(task.getNodeKey())) {
-//                    return false;
-//                }
-//            }
-//        }
         return true;
     }
 
