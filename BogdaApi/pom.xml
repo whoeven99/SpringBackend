@@ -19,20 +19,23 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.bogda.common</groupId>
-            <artifactId>BogdaCommon</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.bogda.common</groupId>-->
+<!--            <artifactId>BogdaCommon</artifactId>-->
+<!--            <version>${project.parent.version}</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>com.bogda.integration</groupId>
-            <artifactId>BogdaIntegration</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.bogda.integration</groupId>-->
+<!--            <artifactId>BogdaIntegration</artifactId>-->
+<!--            <version>${project.parent.version}</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>com.bogda.repository</groupId>
-            <artifactId>BogdaRepository</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.bogda.repository</groupId>-->
+<!--            <artifactId>BogdaRepository</artifactId>-->
+<!--            <version>${project.parent.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
