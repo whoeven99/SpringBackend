@@ -5,6 +5,7 @@ import com.bogda.api.entity.DO.CurrenciesDO;
 import com.bogda.api.logic.PurchaseService;
 import com.bogda.api.model.controller.request.CurrencyRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.api.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class CurrencyController {
     //根据传入的货币代码插入货币信息
     @PostMapping("/insertCurrency")
     public BaseResponse<Object> addCurrency(@RequestBody CurrenciesDO currenciesDO) {
+        CaseSensitiveUtils.appInsights.trackTrace("insertCurrency currenciesDO: " + currenciesDO);
         return currencyService.insertCurrency(currenciesDO);
     }
 
