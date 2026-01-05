@@ -645,12 +645,11 @@ public class TranslateV2Service {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
 
                     // 3.3 回写数据库 todo 批量
-
                     if (targetValue == null) {
                         CaseSensitiveUtils.appInsights.trackTrace("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         continue;
                     }
-                    translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, randomDo.getId());
+                    translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
