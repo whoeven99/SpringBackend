@@ -2,9 +2,9 @@ package com.bogda.api.logic.translate.stragety;
 
 import com.bogda.api.context.TranslateContext;
 import com.bogda.api.entity.DO.GlossaryDO;
-import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.RedisProcessService;
+import com.bogda.api.logic.translate.ModelTranslateService;
 import com.bogda.api.utils.PlaceholderUtils;
 import com.bogda.api.utils.PromptUtils;
 import kotlin.Pair;
@@ -19,7 +19,7 @@ import static com.bogda.api.constants.TranslateConstants.URI;
 @Component
 public class SingleTranslateStrategyService implements ITranslateStrategyService {
     @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    private ModelTranslateService modelTranslateService;
     @Autowired
     private RedisProcessService redisProcessService;
 
@@ -68,11 +68,12 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             }
         }
 
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(ctx.getPrompt(), ctx.getTargetLanguage());
+        Pair<String, Integer> pair = modelTranslateService.modelTranslate(ctx.getAiModel(), ctx.getPrompt(), ctx.getTargetLanguage());
+
         if (pair == null) {
-            // fatalException
             return;
         }
+
         redisProcessService.setCacheData(target, pair.getFirst(), value);
         ctx.setUsedToken(pair.getSecond());
         ctx.setTranslatedContent(pair.getFirst());

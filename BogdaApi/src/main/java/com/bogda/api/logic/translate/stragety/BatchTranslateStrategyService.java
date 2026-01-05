@@ -5,6 +5,7 @@ import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.RedisProcessService;
+import com.bogda.api.logic.translate.ModelTranslateService;
 import com.bogda.api.utils.JsonUtils;
 import com.bogda.api.utils.PromptUtils;
 import com.bogda.api.utils.StringUtils;
@@ -20,7 +21,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
-    private ALiYunTranslateIntegration aLiYunTranslateIntegration;
+    private ModelTranslateService modelTranslateService;
 
     @Override
     public String getType() {
@@ -61,7 +62,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             String glossaryMapping = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(),
                     String.join(" ", ctx.getGlossaryTextMap().values()));
             String prompt = PromptUtils.GlossaryJsonPrompt(target, glossaryMapping, ctx.getGlossaryTextMap());
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target);
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel());
             if (pair == null) {
                 // fatalException
                 return;
@@ -87,7 +88,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
             // 调用一次翻译
             String prompt = PromptUtils.JsonPrompt(target, subMap);
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target);
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel());
             if (pair == null) {
                 // fatalException 返回重新调用翻译，后续有更好的处理办法
                 return;
@@ -103,7 +104,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         if (!subMap.isEmpty()) {
             String prompt = PromptUtils.JsonPrompt(target, subMap);
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target);
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel());
             if (pair == null) {
                 // fatalException 返回重新调用翻译，后续有更好的处理办法
                 return;
@@ -128,10 +129,9 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         ctx.setTranslateVariables(variable);
     }
 
-    private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target) {
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+    private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target, String aiModel) {
+        Pair<String, Integer> pair = modelTranslateService.modelTranslate(aiModel, prompt, target);
         if (pair == null) {
-            // fatalException
             return null;
         }
         String aiResponse = pair.getFirst();

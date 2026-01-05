@@ -20,7 +20,7 @@ import java.util.Map;
 import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogda.api.constants.TranslateConstants.IS_PUBLISH;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getShopLanguageQuery;
-import static com.bogda.api.utils.ApiCodeUtils.getLanguageName;
+import static com.bogda.api.utils.ModuleCodeUtils.getLanguageName;
 
 @Service
 public class DataRatingService {
