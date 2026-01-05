@@ -17,6 +17,7 @@ public class GeminiIntegration {
     @Autowired
     private Client client;
 
+    public static String Gemini_3_FLASH = "gemini-3-flash-preview";
     /**
      * gemini 文本调用
      */
@@ -43,7 +44,7 @@ public class GeminiIntegration {
             );
 
             if (response == null) {
-                return new Pair<>(null, 0);
+                return null;
             }
             String text = response.text();
             var usage = response.usageMetadata().orElse(null);
@@ -56,7 +57,7 @@ public class GeminiIntegration {
         } catch (Exception e) {
             appInsights.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
             appInsights.trackException(e);
-            return new Pair<>(null, 0);
+            return null;
         }
     }
 
@@ -87,7 +88,7 @@ public class GeminiIntegration {
             );
 
             if (response == null) {
-                return new Pair<>(null, 0);
+                return null;
             }
             appInsights.trackTrace("generateImage 模型说明: " + response.toString());
             byte[] translatedBytes = new byte[0];
@@ -115,7 +116,7 @@ public class GeminiIntegration {
         } catch (Exception e) {
             appInsights.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
             appInsights.trackException(e);
-            return new Pair<>(null, 0);
+            return null;
         }
     }
 }

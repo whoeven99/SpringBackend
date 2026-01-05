@@ -97,7 +97,7 @@ public class TranslateController {
         return translateV2Service.continueTranslating(shopName, taskId);
     }
 
-    //当支付成功后，调用该方法，将该用户的状态3，改为状态6
+    // 当支付成功后，调用该方法，将该用户的状态3，改为状态6
     // 支付之后，前端调用api，停止状态改为继续翻译
     @PostMapping("/updateStatus")
     public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
