@@ -657,6 +657,10 @@ public class TranslateV2Service {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
 
                     // 3.3 回写数据库 todo 批量
+                    if (targetValue == null) {
+                        CaseSensitiveUtils.appInsights.trackTrace("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
+                        continue;
+                    }
                     translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
@@ -758,7 +762,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateStatusSavingShopifyMinutesById(initialTaskV2DO.getStatus(), initialTaskV2DO.getSavingShopifyMinutes()
-                , initialTaskV2DO.getId());
+        , initialTaskV2DO.getId());
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据

@@ -55,7 +55,7 @@ public class GeminiIntegration {
             appInsights.trackTrace("Gemini 提示词： " + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
             return new Pair<>(text, allToken);
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
+            appInsights.trackTrace("FatalException generateText errors ： " + e.getMessage() + " translateText : " + prompt);
             appInsights.trackException(e);
             return null;
         }
@@ -114,7 +114,7 @@ public class GeminiIntegration {
             appInsights.trackTrace("Gemini 提示词： " + prompt + " 生成文本： " + Base64.getEncoder().encodeToString(translatedBytes) + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
             return new Pair<>(Base64.getEncoder().encodeToString(translatedBytes), allToken);
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
+            appInsights.trackTrace("FatalException generateImage errors ： " + e.getMessage() + " translateText : " + prompt);
             appInsights.trackException(e);
             return null;
         }
