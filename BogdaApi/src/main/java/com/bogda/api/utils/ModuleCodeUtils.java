@@ -1,8 +1,21 @@
 package com.bogda.api.utils;
 
+import com.bogda.api.integration.ALiYunTranslateIntegration;
+import com.bogda.api.integration.ChatGptIntegration;
+
 import java.util.*;
 
-public class ApiCodeUtils {
+public class ModuleCodeUtils {
+
+    /**
+     * 判断翻译调用的模型
+     */
+    public static String getModuleCode(String code) {
+        return switch (code) {
+            case "2" -> ChatGptIntegration.GPT_4;
+            default -> ALiYunTranslateIntegration.QWEN_MAX;
+        };
+    }
 
     //微软代码处理
     public static String microsoftTransformCode(String code) {

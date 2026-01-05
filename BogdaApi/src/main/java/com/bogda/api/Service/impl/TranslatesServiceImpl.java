@@ -96,7 +96,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                                 .set(TranslatesDO::getStatus, 6)
                 );
 
-                appInsights.trackTrace("FatalException updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
+                appInsights.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
 
                 // 正常结束，无需再重试
                 return true;
@@ -185,5 +185,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public List<TranslatesDO> selectTargetByShopNameSource(String shopName, String source) {
         return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
+    }
+
+    @Override
+    public List<TranslatesDO> listAutoTranslates(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getAutoTranslate, true));
     }
 }

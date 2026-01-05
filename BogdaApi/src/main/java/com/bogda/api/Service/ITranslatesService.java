@@ -46,4 +46,6 @@ public interface ITranslatesService extends IService<TranslatesDO> {
     List<String> selectTargetByShopName(String shopName);
 
     List<TranslatesDO> selectTargetByShopNameSource(String shopName, String source);
+
+    List<TranslatesDO> listAutoTranslates(String shopName);
 }

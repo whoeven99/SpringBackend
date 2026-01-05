@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.model.controller.request.TranslateRequest;
-import com.bogda.api.utils.ApiCodeUtils;
+import com.bogda.api.utils.ModuleCodeUtils;
 import com.bogda.api.utils.ConfigUtils;
 import com.volcengine.model.request.translate.TranslateImageRequest;
 import com.volcengine.model.request.translate.TranslateTextRequest;
@@ -33,7 +33,7 @@ public class HuoShanIntegration {
         translateService.setSecretKey(ConfigUtils.getConfig("HUOSHAN_API_SECRET"));
 
         //对火山翻译API的语言进行处理
-        String huoShanTarget = ApiCodeUtils.huoShanTransformCode(request.getTarget());
+        String huoShanTarget = ModuleCodeUtils.huoShanTransformCode(request.getTarget());
 //        appInsights.trackTrace("huoShanTarget: " + huoShanTarget);
         // translate text
         TranslateTextResponse translateText = null;

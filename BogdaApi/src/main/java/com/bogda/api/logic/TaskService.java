@@ -168,7 +168,7 @@ public class TaskService {
 
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
-            appInsights.trackTrace(shopName + " 定时任务根据订单id: " + subscriptionId + "获取数据失败" + " token: " + accessToken);
+            appInsights.trackTrace("FatalException " + shopName + " 定时任务根据订单id: " + subscriptionId + "获取数据失败" + " token: " + accessToken);
             return null;
         }
         JSONObject node = root.getJSONObject("node");
@@ -195,9 +195,12 @@ public class TaskService {
         //用户购买订阅时间
         LocalDateTime buyCreate = userPriceRequest.getCreateAt();
         Instant buyCreateInstant = buyCreate.atZone(ZoneId.of("UTC")).toInstant();
-        //订阅开始时间
-        Instant created = Instant.parse(createdAt);
+
         //订阅结束时间
+        if (currentPeriodEnd == null) {
+            appInsights.trackTrace("FatalException addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 订阅结束时间为null : " + node);
+            return;
+        }
         Instant end = Instant.parse(currentPeriodEnd);
         LocalDateTime subEnd = end.atZone(ZoneOffset.UTC).toLocalDateTime();
         //当前时间
@@ -245,6 +248,12 @@ public class TaskService {
             SHOP, MENU, LINK, FILTER, PACKING_SLIP_TEMPLATE, DELIVERY_METHOD_DEFINITION, METAOBJECT, ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP,
             ONLINE_STORE_THEME_SETTINGS_CATEGORY, ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, ONLINE_STORE_THEME_LOCALE_CONTENT,
             COLLECTION, PRODUCT, PRODUCT_OPTION, PRODUCT_OPTION_VALUE, BLOG, ARTICLE, PAGE, METAFIELD, SHOP_POLICY, EMAIL_TEMPLATE, SELLING_PLAN, SELLING_PLAN_GROUP
+    ));
+
+    // test自动翻译模块
+    public static final List<String> TEST_AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
+            ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP,
+            ONLINE_STORE_THEME_SETTINGS_CATEGORY, ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, ONLINE_STORE_THEME_LOCALE_CONTENT
     ));
 
     /**
