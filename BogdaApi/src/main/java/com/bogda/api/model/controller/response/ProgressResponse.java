@@ -25,5 +25,6 @@ public class ProgressResponse {
         private Map<String, Integer> progressData;
         private Map<String, Integer> writingData;
         private Integer taskId; // initial_task_v2 id
+        private String initialCount; // 初始化的计数
     }
 }

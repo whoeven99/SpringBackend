@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.model.controller.request.TranslateRequest;
-import com.bogda.api.utils.ApiCodeUtils;
+import com.bogda.api.utils.ModuleCodeUtils;
 import com.bogda.api.utils.AppInsightsUtils;
 import com.bogda.api.utils.ConfigUtils;
 import kotlin.Pair;
@@ -167,7 +167,7 @@ public class TranslateApiIntegration {
     public String microsoftTranslate(TranslateRequest request) {
 //        String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
         CloseableHttpClient httpClient = HttpClients.createDefault();
-        String micTarget = ApiCodeUtils.microsoftTransformCode(request.getTarget());
+        String micTarget = ModuleCodeUtils.microsoftTransformCode(request.getTarget());
         HttpPost httpPost = new HttpPost(microsoftEndpoint + micTarget);
 
         // 随机生成一个 32 位的 Guid设置请求头

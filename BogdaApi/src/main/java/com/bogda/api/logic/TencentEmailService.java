@@ -8,7 +8,7 @@ import com.bogda.api.integration.EmailIntegration;
 import com.bogda.api.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
 import com.bogda.api.repository.entity.InitialTaskV2DO;
-import com.bogda.api.utils.ApiCodeUtils;
+import com.bogda.api.utils.ModuleCodeUtils;
 import com.bogda.api.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -257,7 +257,7 @@ public class TencentEmailService {
 
         // HTML 列表生成
         templateData.put("Language_top",
-                buildHtmlList(languageEmailData, ApiCodeUtils::getLanguageName));
+                buildHtmlList(languageEmailData, ModuleCodeUtils::getLanguageName));
 
         templateData.put("Currency_top",
                 buildHtmlList(currencyEmailData, CurrencyConfig::getCurrentName));

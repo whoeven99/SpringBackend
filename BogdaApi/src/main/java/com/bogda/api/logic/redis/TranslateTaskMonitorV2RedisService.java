@@ -18,7 +18,7 @@ public class TranslateTaskMonitorV2RedisService {
         return redisIntegration.hGetAll(key);
     }
 
-    public void createRecord(Integer initialTaskId, String shopName, String source, String target) {
+    public void createRecord(Integer initialTaskId, String shopName, String source, String target, String aiModel) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.setHash(key, "shopName", shopName);
         redisIntegration.setHash(key, "source", source);
@@ -29,6 +29,7 @@ public class TranslateTaskMonitorV2RedisService {
         redisIntegration.setHash(key, "usedToken", 0);
         redisIntegration.setHash(key, "translatedChars", 0);
         redisIntegration.setHash(key, "initStartTime", String.valueOf(System.currentTimeMillis()));
+        redisIntegration.setHash(key, "aiModel", aiModel);
     }
 
     public void incrementTotalCount(Integer initialTaskId) {
