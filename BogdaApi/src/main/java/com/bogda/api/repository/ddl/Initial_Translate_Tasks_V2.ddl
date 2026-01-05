@@ -35,3 +35,6 @@ CREATE NONCLUSTERED INDEX IX_TaskType_Status_SendEmail_IsDeleted
 
 ALTER TABLE dbo.Initial_Translate_Tasks_V2
     ADD task_type NVARCHAR(10) NOT NULL DEFAULT 'manual';
+
+CREATE NONCLUSTERED INDEX IX_status_savingminutes_isdeleted_createdat
+ON dbo.Initial_Translate_Tasks_V2 ([status], [saving_shopify_minutes], [is_deleted], [created_at]);

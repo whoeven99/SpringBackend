@@ -13,3 +13,4 @@ target/
 # JARs
 !libs/aidge.jar
 /src/main/resources/application.local.properties
+*.iml

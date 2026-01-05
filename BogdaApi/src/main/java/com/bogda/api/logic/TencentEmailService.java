@@ -307,7 +307,7 @@ public class TencentEmailService {
         String name = parseShopName(shopName);
         templateData.put("admin", name);
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159294L,
-                templateData, MailChimpConstants.USER_THEME_EMAIL, TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
+                templateData, MailChimpConstants.USER_THEME_EMAIL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_THEME_EMAIL, flag ? 1 : 0));
     }
 
@@ -320,7 +320,7 @@ public class TencentEmailService {
         String name = parseShopName(shopName);
         templateData.put("admin", name);
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159295L,
-                templateData, MailChimpConstants.USER_LANGUAGE_EMAIL, TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
+                templateData, MailChimpConstants.USER_LANGUAGE_EMAIL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
         emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_LANGUAGE_EMAIL, flag ? 1 : 0));
     }
 
