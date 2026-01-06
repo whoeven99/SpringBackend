@@ -62,7 +62,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             String glossaryMapping = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(),
                     String.join(" ", ctx.getGlossaryTextMap().values()));
             String prompt = PromptUtils.GlossaryJsonPrompt(target, glossaryMapping, ctx.getGlossaryTextMap());
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel());
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), JsonUtils.objectToJson(ctx.getGlossaryTextMap()));
             if (pair == null) {
                 // fatalException
                 return;
@@ -88,7 +88,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
             // 调用一次翻译
             String prompt = PromptUtils.JsonPrompt(target, subMap);
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel());
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), JsonUtils.objectToJson(subMap));
             if (pair == null) {
                 // fatalException 返回重新调用翻译，后续有更好的处理办法
                 return;
@@ -104,7 +104,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         if (!subMap.isEmpty()) {
             String prompt = PromptUtils.JsonPrompt(target, subMap);
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel());
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), JsonUtils.objectToJson(subMap));
             if (pair == null) {
                 // fatalException 返回重新调用翻译，后续有更好的处理办法
                 return;
@@ -129,8 +129,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         ctx.setTranslateVariables(variable);
     }
 
-    private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target, String aiModel) {
-        Pair<String, Integer> pair = modelTranslateService.modelTranslate(aiModel, prompt, target);
+    private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target, String aiModel, String sourceText) {
+        Pair<String, Integer> pair = modelTranslateService.modelTranslate(aiModel, prompt, target, sourceText);
         if (pair == null) {
             return null;
         }

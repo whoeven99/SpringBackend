@@ -30,7 +30,7 @@ import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 @Component
 public class GoogleMachineIntegration {
     private static final int GOOGLE_MACHINE_COEFFICIENT = 2;
-    private Translate translate;
+    private final Translate translate;
 
     /**
      * 初始化 Google Translate 客户端
@@ -59,15 +59,16 @@ public class GoogleMachineIntegration {
             Translation translation = TimeOutUtils.callWithTimeoutAndRetry(() ->
                     translate.translate(content, Translate.TranslateOption.targetLanguage(target),
                             Translate.TranslateOption.model("base")), TimeOutUtils.rateLimiter1);
-            CaseSensitiveUtils.appInsights.trackTrace("translation: " + translation);
             String translatedText = translation.getTranslatedText();
-            int totalToken = content.length() * GOOGLE_MACHINE_COEFFICIENT;
 
+            // 将translatedText反转义下， 用json翻译返回是&quot;1&quot;:&quot;的数据
+            translatedText = LiquidHtmlTranslatorUtils.isHtmlEntity(translatedText);
+            int totalToken = content.length() * GOOGLE_MACHINE_COEFFICIENT;
+            CaseSensitiveUtils.appInsights.trackTrace("googleTranslateWithSDK 翻译文本: " + translation + " all：" + totalToken);
             return new Pair<>(translatedText, totalToken);
         } catch (Exception e) {
             appInsights.trackTrace("FatalException Google Translate SDK 翻译错误：" + e.getMessage());
             appInsights.trackException(e);
-            e.printStackTrace();
             return null;
         }
     }

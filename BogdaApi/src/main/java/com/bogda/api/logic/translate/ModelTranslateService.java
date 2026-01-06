@@ -3,6 +3,7 @@ package com.bogda.api.logic.translate;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.ChatGptIntegration;
 import com.bogda.api.integration.GeminiIntegration;
+import com.bogda.api.integration.GoogleMachineIntegration;
 import com.bogda.api.utils.CaseSensitiveUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +17,10 @@ public class ModelTranslateService {
     private GeminiIntegration geminiIntegration;
     @Autowired
     private ChatGptIntegration chatGptIntegration;
+    @Autowired
+    private GoogleMachineIntegration googleMachineIntegration;
 
-    public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target) {
+    public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, String sourceText) {
         Pair<String, Integer> pair = null;
         if (ALiYunTranslateIntegration.QWEN_MAX.equals(aiModel)){
             pair =  aLiYunTranslateIntegration.userTranslate(prompt, target);
@@ -28,10 +31,10 @@ public class ModelTranslateService {
         }
 
         if (pair == null){
-            // 做一个保底处理，当pair为null的时候，用qwen-max再翻译一次，如果再为null，就直接返回
+            // 做一个保底处理，当pair为null的时候，用google再翻译一次，如果再为null，就直接返回
             CaseSensitiveUtils.appInsights.trackTrace("FatalException  " + aiModel
-                    + " 翻译失败， 数据如下，用qwen翻译 : " + prompt);
-            return aLiYunTranslateIntegration.userTranslate(prompt, target);
+                    + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
+            return googleMachineIntegration.googleTranslateWithSDK(sourceText, target);
         }
 
         return pair;
