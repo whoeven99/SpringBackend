@@ -130,7 +130,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     }
 
     private Pair<Map<Integer, String>, Integer> batchTranslate(String prompt, String target, String aiModel, String sourceText) {
-        Pair<String, Integer> pair = modelTranslateService.modelTranslate(aiModel, prompt, target, sourceText);
+        Pair<String, Integer> pair = modelTranslateService.modelTranslate(aiModel, prompt, target, sourceText, "BATCH");
         if (pair == null) {
             return null;
         }

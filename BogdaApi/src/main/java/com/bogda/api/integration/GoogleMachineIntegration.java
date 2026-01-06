@@ -64,7 +64,7 @@ public class GoogleMachineIntegration {
             // 将translatedText反转义下， 用json翻译返回是&quot;1&quot;:&quot;的数据
             translatedText = LiquidHtmlTranslatorUtils.isHtmlEntity(translatedText);
             int totalToken = content.length() * GOOGLE_MACHINE_COEFFICIENT;
-            CaseSensitiveUtils.appInsights.trackTrace("googleTranslateWithSDK 翻译文本: " + translation + " all：" + totalToken);
+            CaseSensitiveUtils.appInsights.trackTrace("googleTranslateWithSDK 翻译文本: " + translatedText + " all：" + totalToken);
             return new Pair<>(translatedText, totalToken);
         } catch (Exception e) {
             appInsights.trackTrace("FatalException Google Translate SDK 翻译错误：" + e.getMessage());
