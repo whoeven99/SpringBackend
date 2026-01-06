@@ -1077,11 +1077,11 @@ public class TranslateV2Service {
                 return false;
             }
 
-            if (JsonUtils.isJson(value) && !value.contains(JSON_JUDGE)) {
+            if (JsonUtils.isJson(value) && (!value.contains(JSON_JUDGE) || !"RICH_TEXT_FIELD".equals(type))) {
                 return false;
             }
 
-            if (JsonUtils.isJson(value) && value.contains(JSON_JUDGE)) {
+            if (JsonUtils.isJson(value) && value.contains(JSON_JUDGE) && "RICH_TEXT_FIELD".equals(type)) {
                 // 判断是否与product相关联
                 String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST,
                         ShopifyRequestUtils.getQueryForCheckMetafieldId(resourceId));

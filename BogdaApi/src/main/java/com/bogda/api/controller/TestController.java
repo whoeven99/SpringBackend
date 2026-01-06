@@ -12,6 +12,7 @@ import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.logic.translate.TranslateV2Service;
 import com.bogda.api.model.controller.request.CloudServiceRequest;
 import com.bogda.api.model.controller.request.ShopifyRequest;
+import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.task.IpEmailTask;
 import com.bogda.api.utils.ModuleCodeUtils;
@@ -50,11 +51,11 @@ public class TestController {
     private GoogleMachineIntegration googleMachineIntegration;
 
     @PostMapping("/test")
-    public Pair<String, Integer> test(@RequestParam String target, @RequestParam String prompt) {
+    public Pair<String, Integer> test(@RequestBody TranslateRequest request) {
 //        Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText("gemini-2.5-flash", prompt);
         Pair<String, Integer> stringIntegerPair = null;
-        if (!ModuleCodeUtils.LANGUAGE_CODES.contains(target)) {
-            stringIntegerPair = googleMachineIntegration.googleTranslateWithSDK(prompt, target);
+        if (!ModuleCodeUtils.LANGUAGE_CODES.contains(request.getTarget())) {
+            stringIntegerPair = googleMachineIntegration.googleTranslateWithSDK(request.getContent(), request.getTarget());
         }
 
         return stringIntegerPair;
