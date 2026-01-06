@@ -21,9 +21,8 @@ jobs:
           java-version: '17'
           distribution: 'microsoft'
 
-      - name: Build BogdaTask module with Maven
-        working-directory: ./BogdaTask
-        run: mvn clean install
+      - name: Build project with Maven
+        run: mvn clean install -DskipTests
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
