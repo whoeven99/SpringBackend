@@ -6,6 +6,7 @@ import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.VO.GptVO;
 import com.bogda.api.entity.VO.UserDataReportVO;
 import com.bogda.api.integration.GeminiIntegration;
+import com.bogda.api.integration.GoogleMachineIntegration;
 import com.bogda.api.logic.RedisDataReportService;
 import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.logic.translate.TranslateV2Service;
@@ -13,6 +14,7 @@ import com.bogda.api.model.controller.request.CloudServiceRequest;
 import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.task.IpEmailTask;
+import com.bogda.api.utils.ModuleCodeUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,12 +46,18 @@ public class TestController {
     private TranslateV2Service translateV2Service;
     @Autowired
     private ITranslatesService iTranslatesService;
+    @Autowired
+    private GoogleMachineIntegration googleMachineIntegration;
 
     @PostMapping("/test")
-    public String test() {
+    public String test(@RequestParam String target) {
         String prompt = "翻译下面文本为中文： hello word";
+//        Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText("gemini-2.5-flash", prompt);
+        Pair<String, Integer> stringIntegerPair = null;
+        if (!ModuleCodeUtils.LANGUAGE_CODES.contains(target)) {
+            stringIntegerPair = googleMachineIntegration.googleTranslateWithSDK(prompt, target);
+        }
 
-        Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText("gemini-2.5-flash", prompt);
         return stringIntegerPair.getFirst();
     }
 
