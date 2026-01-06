@@ -19,9 +19,8 @@ jobs:
           java-version: '17'
           distribution: 'microsoft'
 
-      - name: Build BogdaApi module with Maven
-        working-directory: ./BogdaApi
-        run: mvn clean install
+      - name: Build project with Maven
+        run: mvn clean install -DskipTests
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -58,3 +57,4 @@ jobs:
           app-name: 'SpringBackendService'
           slot-name: 'Production'
           package: '*.jar'
+

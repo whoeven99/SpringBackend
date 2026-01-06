@@ -14,13 +14,13 @@ import com.bogda.api.entity.VO.GenerateProgressBarVO;
 import com.bogda.api.exception.ClientException;
 import com.bogda.api.logic.APGUserGeneratedTaskService;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.api.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
 import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
@@ -74,7 +74,7 @@ public class APGUserGeneratedTaskController {
     public BaseResponse<Object> batchGenerateDescription(@RequestParam String shopName, @RequestBody GenerateDescriptionsVO generateDescriptionsVO) {
         //创建这样一个任务
         try {
-            String json = OBJECT_MAPPER.writeValueAsString(generateDescriptionsVO);
+            String json = JsonUtils.OBJECT_MAPPER.writeValueAsString(generateDescriptionsVO);
             apgUserGeneratedTaskService.initOrUpdateData(shopName, 0, generateDescriptionsVO.getPageType() + " " + generateDescriptionsVO.getContentType(), json);
         } catch (JsonProcessingException e) {
             appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户 批量生成任务失败 errors ：" + e);

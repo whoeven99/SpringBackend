@@ -11,6 +11,7 @@ import com.bogda.api.mapper.TranslatesMapper;
 import com.bogda.api.model.controller.request.AutoTranslateRequest;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.api.utils.CaseSensitiveUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,14 +97,14 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                                 .set(TranslatesDO::getStatus, 6)
                 );
 
-                appInsights.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
+                CaseSensitiveUtils.appInsights.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
 
                 // 正常结束，无需再重试
                 return true;
             } catch (Exception e) {
-                appInsights.trackException(e);
+                CaseSensitiveUtils.appInsights.trackException(e);
                 if (attempt >= maxRetries) {
-                    appInsights.trackTrace("FatalException updateStatus3To6: " + shopName + " 最终失败");
+                    CaseSensitiveUtils.appInsights.trackTrace("FatalException updateStatus3To6: " + shopName + " 最终失败");
                 }
             }
         }

@@ -14,6 +14,7 @@ import com.bogda.api.exception.ClientException;
 import com.bogda.api.logic.GenerateDescriptionService;
 import com.bogda.api.logic.TencentEmailService;
 import com.bogda.api.utils.CharacterCountUtils;
+import com.bogda.api.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -30,7 +31,6 @@ import java.util.stream.Collectors;
 import static com.bogda.api.constants.TranslateConstants.EMAIL;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.GENERATE_STATE_BAR;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.INITIALIZATION;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.logic.TranslateService.executorService;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
@@ -106,7 +106,7 @@ public class GenerateDbTask {
             if (GENERATE_SHOP_STOP_FLAG.get(usersDO.getId())) {
                 return;
             }
-            gvo = OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateDescriptionVO.class);
+            gvo = JsonUtils.OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateDescriptionVO.class);
             ProductDTO product = generateDescriptionService.getProductsQueryByProductId(gvo.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
             generateDescriptionService.generateDescription(usersDO, gvo, counter, userMaxLimit, product);
         } catch (JsonProcessingException e) {
@@ -153,7 +153,7 @@ public class GenerateDbTask {
         //将payload转化为GenerateEmailVO类型数据
         try {
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
-            GenerateEmailVO generateEmailVO = OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateEmailVO.class);
+            GenerateEmailVO generateEmailVO = JsonUtils.OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateEmailVO.class);
 
             //调用发送邮件接口
             //获取该用户这一次任务的所有token值
@@ -211,7 +211,7 @@ public class GenerateDbTask {
         APGUserCounterDO userCounter = iapgUserCounterService.getUserCounter(usersDO.getShopName());
         //转化数据类型
         try {
-            GenerateDescriptionsVO generateDescriptionsVO = OBJECT_MAPPER.readValue(taskData, GenerateDescriptionsVO.class);
+            GenerateDescriptionsVO generateDescriptionsVO = JsonUtils.OBJECT_MAPPER.readValue(taskData, GenerateDescriptionsVO.class);
             Set<String> productIds = Arrays.stream(generateDescriptionsVO.getProductIds()).collect(Collectors.toSet());
             //获取状态为3的任务id
             List<APGUserGeneratedSubtaskDO> status3List = iapgUserGeneratedSubtaskService.list(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>().eq(APGUserGeneratedSubtaskDO::getUserId, usersDO.getId()).eq(APGUserGeneratedSubtaskDO::getStatus, 3));
@@ -223,7 +223,7 @@ public class GenerateDbTask {
                     continue;
                 }
                 //解析payload，获取里面的productId
-                GenerateDescriptionVO generateDescriptionVO = OBJECT_MAPPER.readValue(subtask.getPayload(), GenerateDescriptionVO.class);
+                GenerateDescriptionVO generateDescriptionVO = JsonUtils.OBJECT_MAPPER.readValue(subtask.getPayload(), GenerateDescriptionVO.class);
                 if (productIds.contains(generateDescriptionVO.getProductId())) {
                     completeProductsSize++;
                     break;

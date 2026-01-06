@@ -19,23 +19,23 @@
     </properties>
 
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>com.bogda.common</groupId>-->
-<!--            <artifactId>BogdaCommon</artifactId>-->
-<!--            <version>${project.parent.version}</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.bogda.common</groupId>
+            <artifactId>BogdaCommon</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>com.bogda.integration</groupId>-->
-<!--            <artifactId>BogdaIntegration</artifactId>-->
-<!--            <version>${project.parent.version}</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.bogda.integration</groupId>
+            <artifactId>BogdaIntegration</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>com.bogda.repository</groupId>-->
-<!--            <artifactId>BogdaRepository</artifactId>-->
-<!--            <version>${project.parent.version}</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.bogda.repository</groupId>
+            <artifactId>BogdaRepository</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -296,6 +296,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <skip>false</skip>
                     <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
                 </configuration>
             </plugin>

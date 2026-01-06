@@ -36,7 +36,6 @@ public class PCEmailService {
         templateData.put("credits_purchased", ShopifyUtils.getNumberFormat(purchaseCredits));
         templateData.put("credits_total", ShopifyUtils.getNumberFormat(totalCredits));
         templateData.put("purchase_time", purchaseTime);
-        System.out.println("templateData: " + templateData);
         emailIntegration.sendEmailByTencent(159001L, MailChimpConstants.PC_PURCHASE_EMAIL, templateData, MailChimpConstants.TENCENT_FROM_EMAIL, email);
     }
 

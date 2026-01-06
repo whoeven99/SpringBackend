@@ -37,7 +37,6 @@ public class GlossaryService {
             }
         }
 
-        System.out.println("stringBuilder ： " + stringBuilder.toString().trim());
         return stringBuilder.toString().trim();
     }
 
