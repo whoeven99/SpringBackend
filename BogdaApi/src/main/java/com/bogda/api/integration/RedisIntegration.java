@@ -8,7 +8,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class RedisIntegration {

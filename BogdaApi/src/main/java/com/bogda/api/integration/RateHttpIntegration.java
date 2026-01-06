@@ -1,14 +1,14 @@
 package com.bogda.api.integration;
 
 import com.alibaba.fastjson.JSONObject;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.utils.ConfigUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 @Component
 public class RateHttpIntegration {
 

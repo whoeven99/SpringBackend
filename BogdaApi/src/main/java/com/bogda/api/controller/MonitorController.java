@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.bogda.api.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogda.api.utils.LiquidHtmlTranslatorUtils.parseHtml;
+import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
+import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.parseHtml;
 
 @RestController
 public class MonitorController {

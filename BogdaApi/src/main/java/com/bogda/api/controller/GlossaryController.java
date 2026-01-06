@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
 
-import static com.bogda.api.enums.ErrorEnum.*;
+import static com.bogda.common.enums.ErrorEnum.*;
 
 @RestController
 @RequestMapping("/glossary")

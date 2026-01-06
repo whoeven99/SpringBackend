@@ -3,7 +3,7 @@ package com.bogda.api.logic.translate;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.ChatGptIntegration;
 import com.bogda.api.integration.GeminiIntegration;
-import com.bogda.api.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.CaseSensitiveUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ public class ModelTranslateService {
             pair =  aLiYunTranslateIntegration.userTranslate(prompt, target);
         }else if (ChatGptIntegration.GPT_4.equals(aiModel)){
             pair =  chatGptIntegration.chatWithGpt(prompt, target);
-        }else if (GeminiIntegration.Gemini_3_FLASH.equals(aiModel)){
+        }else if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)){
             pair =  geminiIntegration.generateText(prompt, target);
         }
 

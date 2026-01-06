@@ -7,7 +7,7 @@ import com.bogda.api.entity.DO.APGUserCounterDO;
 import com.bogda.api.mapper.APGUserCounterMapper;
 import org.springframework.stereotype.Service;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper, APGUserCounterDO> implements IAPGUserCounterService {

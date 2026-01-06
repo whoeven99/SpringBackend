@@ -1,6 +1,6 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 public class AppInsightsUtils {
 

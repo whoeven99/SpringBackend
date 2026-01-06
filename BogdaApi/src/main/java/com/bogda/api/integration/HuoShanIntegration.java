@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.utils.ModuleCodeUtils;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.volcengine.model.request.translate.TranslateImageRequest;
 import com.volcengine.model.request.translate.TranslateTextRequest;
 import com.volcengine.model.response.translate.TranslateImageResponse;
@@ -20,7 +20,7 @@ import java.net.URLConnection;
 import java.util.Base64;
 import java.util.List;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class HuoShanIntegration {

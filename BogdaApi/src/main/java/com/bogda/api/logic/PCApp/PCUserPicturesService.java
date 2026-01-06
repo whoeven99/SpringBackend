@@ -1,7 +1,6 @@
 package com.bogda.api.logic.PCApp;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.api.constants.TranslateConstants;
 import com.bogda.api.entity.DO.PCUserPicturesDO;
 import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.entity.VO.AltTranslateVO;
@@ -14,8 +13,9 @@ import com.bogda.api.logic.token.UserTokenService;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.repository.repo.PCUserPicturesRepo;
 import com.bogda.api.repository.repo.PCUsersRepo;
-import com.bogda.api.utils.JsonUtils;
-import com.bogda.api.utils.PictureUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.JsonUtils;
+import com.bogda.common.utils.PictureUtils;
 import com.bogda.api.utils.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.bogda.api.controller.UserPicturesController.allowedMimeTypes;
 import static com.bogda.api.utils.ModuleCodeUtils.getLanguageName;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class PCUserPicturesService {

@@ -6,7 +6,7 @@ import com.bogda.api.entity.DO.APGUserGeneratedSubtaskDO;
 import com.bogda.api.mapper.APGUserGeneratedSubtaskMapper;
 import org.springframework.stereotype.Service;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGeneratedSubtaskMapper, APGUserGeneratedSubtaskDO> implements IAPGUserGeneratedSubtaskService {

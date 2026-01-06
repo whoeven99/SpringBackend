@@ -1,9 +1,9 @@
 package com.bogda.api.integration;
 
-import com.bogda.api.constants.MailChimpConstants;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
-import com.bogda.api.utils.ConfigUtils;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.MailChimpConstants;
+import com.bogda.common.utils.ConfigUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.tencentcloudapi.common.AbstractModel;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -13,11 +13,8 @@ import com.tencentcloudapi.ses.v20201002.models.SendEmailRequest;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailResponse;
 import com.tencentcloudapi.ses.v20201002.models.Template;
 import org.springframework.stereotype.Component;
-
 import java.util.Map;
-
-import static com.bogda.api.constants.MailChimpConstants.CC_EMAIL;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
@@ -93,7 +90,7 @@ public class EmailIntegration {
             template1.setTemplateID(tencentSendEmailRequest.getTemplateId());
             template1.setTemplateData(templateDataJson);
             req.setTemplate(template1);
-            String [] cc1 = {CC_EMAIL};
+            String [] cc1 = {MailChimpConstants.CC_EMAIL};
             req.setCc(cc1);
             // 返回的resp是一个SendEmailResponse的实例，与请求对象对应
             SendEmailResponse resp = callWithTimeoutAndRetry(() -> {

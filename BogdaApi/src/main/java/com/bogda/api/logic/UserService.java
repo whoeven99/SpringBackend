@@ -9,12 +9,13 @@ import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.DO.WidgetConfigurationsDO;
 import com.bogda.api.entity.VO.ThemeAndLanguageVO;
 import com.bogda.api.entity.VO.UserInitialVO;
-import com.bogda.api.enums.ErrorEnum;
+import com.bogda.common.contants.MailChimpConstants;
+import com.bogda.common.enums.ErrorEnum;
 import com.bogda.api.logic.redis.UserInitialRedisService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.AESUtils;
-import com.bogda.api.utils.CaseSensitiveUtils;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.AESUtils;
+import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,8 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.bogda.api.constants.MailChimpConstants.*;
 
 @Component
 @Transactional
@@ -66,15 +65,17 @@ public class UserService {
             //首次登陆 发送邮件
             Map<String, String> templateData = new HashMap<>();
             templateData.put("user", usersDO.getFirstName());
-            Boolean flag1 = tencentEmailService.sendInitialUserEmail(137916L, templateData, FIRST_INSTALL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail());
+            Boolean flag1 = tencentEmailService.sendInitialUserEmail(137916L, templateData,
+                    MailChimpConstants.FIRST_INSTALL_SUBJECT, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
 
             //存数据库中
-            Integer flag2 = emailService.saveEmail(new EmailDO(0, usersDO.getShopName(), TENCENT_FROM_EMAIL, usersDO.getEmail(), FIRST_INSTALL_SUBJECT, flag1 ? 1 : 0));
+            Integer flag2 = emailService.saveEmail(new EmailDO(0, usersDO.getShopName(),
+                    MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.FIRST_INSTALL_SUBJECT, flag1 ? 1 : 0));
 
             if (flag2 > 0 && flag1) {
                 return new BaseResponse<>().CreateSuccessResponse(true);
             } else {
-                return new BaseResponse<>().CreateErrorResponse(TENCENT_SEND_FAILED);
+                return new BaseResponse<>().CreateErrorResponse(MailChimpConstants.TENCENT_SEND_FAILED);
             }
 
         } else {

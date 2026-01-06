@@ -21,9 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
-import static com.bogda.api.enums.ErrorEnum.*;
+import static com.bogda.common.enums.ErrorEnum.*;
 import static com.bogda.api.integration.ShopifyHttpIntegration.registerTransaction;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
 @RestController

@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.api.repository.entity.InitialTaskV2DO;
 import com.bogda.api.repository.mapper.InitialTaskV2Mapper;
-import com.bogda.api.utils.DbUtils;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -92,7 +91,7 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
     }
 
     public boolean insert(InitialTaskV2DO initialTaskV2DO) {
-        DbUtils.setAllTime(initialTaskV2DO);
+        initialTaskV2DO.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         return baseMapper.insert(initialTaskV2DO) > 0;
     }
 

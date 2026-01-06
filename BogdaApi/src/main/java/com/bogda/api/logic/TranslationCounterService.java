@@ -7,6 +7,7 @@ import com.bogda.api.Service.*;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.entity.VO.TranslationCharsVO;
 import com.bogda.api.logic.redis.OrdersRedisService;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,9 +17,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
 
 @Component
@@ -60,7 +60,7 @@ public class TranslationCounterService {
         translationCharsVO.setAccessToken(userByName.getAccessToken());
         //根据传来的gid获取，相关订阅信息
         String subscriptionQuery = getSubscriptionQuery(translationCharsVO.getSubGid());
-        String shopifyByQuery = shopifyService.getShopifyData(shopName, userByName.getAccessToken(), API_VERSION_LAST, subscriptionQuery);
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, userByName.getAccessToken(), TranslateConstants.API_VERSION_LAST, subscriptionQuery);
         appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
         //判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);

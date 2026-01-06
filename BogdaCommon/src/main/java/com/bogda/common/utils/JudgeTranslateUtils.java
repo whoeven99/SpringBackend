@@ -1,27 +1,26 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
-import com.bogda.api.enums.RejectRuleEnum;
-import com.bogda.common.utils.JsoupUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.enums.RejectRuleEnum;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static com.bogda.api.constants.TranslateConstants.*;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.common.utils.JsoupUtils.isHtml;
 
 public class JudgeTranslateUtils {
 
     //主题模块
     public static final Set<String> TRANSLATABLE_RESOURCE_TYPES = Set.of(
-            ONLINE_STORE_THEME,
-            ONLINE_STORE_THEME_APP_EMBED,
-            ONLINE_STORE_THEME_JSON_TEMPLATE,
-            ONLINE_STORE_THEME_SECTION_GROUP,
-            ONLINE_STORE_THEME_SETTINGS_CATEGORY,
-            ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS,
-            ONLINE_STORE_THEME_LOCALE_CONTENT
+            TranslateConstants.ONLINE_STORE_THEME,
+            TranslateConstants.ONLINE_STORE_THEME_APP_EMBED,
+            TranslateConstants.ONLINE_STORE_THEME_JSON_TEMPLATE,
+            TranslateConstants.ONLINE_STORE_THEME_SECTION_GROUP,
+            TranslateConstants.ONLINE_STORE_THEME_SETTINGS_CATEGORY,
+            TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS,
+            TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT
     );
 
     // 明确不翻译的key集合

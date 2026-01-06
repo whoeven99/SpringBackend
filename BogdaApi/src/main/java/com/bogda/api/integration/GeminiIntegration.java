@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import com.google.genai.types.*;
 import java.util.Base64;
 import java.util.List;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
@@ -17,7 +17,7 @@ public class GeminiIntegration {
     @Autowired
     private Client client;
 
-    public static String Gemini_3_FLASH = "gemini-3-flash-preview";
+    public static String GEMINI_3_FLASH = "gemini-3-flash-preview";
     /**
      * gemini 文本调用
      */

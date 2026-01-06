@@ -10,7 +10,10 @@ import com.bogda.api.Service.IUserTypeTokenService;
 import com.bogda.api.config.LanguageFlagConfig;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.entity.DTO.TranslateTextDTO;
-import com.bogda.api.enums.ErrorEnum;
+import com.bogda.api.utils.StringUtils;
+import com.bogda.api.utils.TypeConversionUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.integration.TestingEnvironmentIntegration;
@@ -19,10 +22,8 @@ import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.TranslateTaskV2DO;
 import com.bogda.api.requestBody.ShopifyRequestBody;
-import com.bogda.api.utils.*;
-import com.bogda.common.utils.JsoupUtils;
+import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -40,15 +41,14 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static com.bogda.api.constants.TranslateConstants.*;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.api.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogda.api.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getLanguagesQuery;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.JsonUtils.isJson;
-import static com.bogda.api.utils.JudgeTranslateUtils.*;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.JsonUtils.isJson;
+import static com.bogda.common.utils.JudgeTranslateUtils.*;
 import static com.bogda.api.utils.StringUtils.isValueBlank;
 
 @Service
@@ -197,7 +197,7 @@ public class ShopifyService {
         try {
             // Step 1: 获取 Shopify 数据
             String query = getLanguagesQuery();
-            String shopifyData = getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
+            String shopifyData = getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
             JsonNode root = JsonUtils.readTree(shopifyData);
 
             if (root == null || !root.has("shopLocales")) {
@@ -335,7 +335,7 @@ public class ShopifyService {
 
             String key = translateTextDTO.getTextKey();
             // 如果handleFlag为false，则跳过
-            if (type.equals(URI) && "handle".equals(key)) {
+            if (type.equals(TranslateConstants.URI) && "handle".equals(key)) {
                 if (!handleFlag) {
                     continue;
                 }
@@ -383,7 +383,7 @@ public class ShopifyService {
             }
 
             // 对METAOBJECT字段翻译
-            if (modeType.equals(METAOBJECT)) {
+            if (modeType.equals(TranslateConstants.METAOBJECT)) {
                 if (JsonUtils.isJson(value)) {
                     continue;
                 }
@@ -392,7 +392,7 @@ public class ShopifyService {
             }
 
             // 对METAFIELD字段翻译
-            if (modeType.equals(METAFIELD)) {
+            if (modeType.equals(TranslateConstants.METAFIELD)) {
                 // 如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
                 if (SUSPICIOUS_PATTERN.matcher(value).matches() || SUSPICIOUS2_PATTERN.matcher(value).matches()) {
                     continue;
@@ -524,7 +524,7 @@ public class ShopifyService {
         cloudServiceRequest.setBody(query);
         String infoByShopify = null;
         try {
-            infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
+            infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
         } catch (Exception e) {
             // 如果出现异常，则跳过, 翻译其他的内容
             appInsights.trackTrace("FatalException fetchNextPage errors : " + e.getMessage());
@@ -701,7 +701,7 @@ public class ShopifyService {
                 cloudServiceRequest.setBody(query);
                 String infoByShopify;
                 try {
-                    infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
+                    infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
                     appInsights.trackTrace("FatalException getTranslationItemsInfo errors : " + e.getMessage());
@@ -786,10 +786,10 @@ public class ShopifyService {
             ObjectNode contentItemNode = (ObjectNode) contentItem;
             JsonNode translationsNode = contentItemNode.path("translations");
             JsonNode translatableContentNode = contentItemNode.path("translatableContent");
-            if (ONLINE_STORE_THEME.equals(translateResource.getResourceType()) || SHOP.equals(translateResource.getResourceType())) {
+            if (TranslateConstants.ONLINE_STORE_THEME.equals(translateResource.getResourceType()) || TranslateConstants.SHOP.equals(translateResource.getResourceType())) {
                 // 当资源类型为 ONLINE_STORE_THEME 时，调用专门的计数方法
                 countThemeData(translationsNode, translatableContentNode, counter, translatedCounter);
-            } else if (METAFIELD.equals(translateResource.getResourceType())) {
+            } else if (TranslateConstants.METAFIELD.equals(translateResource.getResourceType())) {
                 countMetafieldData(translationsNode, translatableContentNode, counter, translatedCounter);
             } else {
                 // 处理其他类型的数据
@@ -870,12 +870,12 @@ public class ShopifyService {
                 }
 
                 //如果是METAFIELD模块的数据
-                if (SINGLE_LINE_TEXT_FIELD.equals(type) && !JsoupUtils.isHtml(value)) {
+                if (TranslateConstants.SINGLE_LINE_TEXT_FIELD.equals(type) && !JsoupUtils.isHtml(value)) {
                     //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
                     if (StringUtils.isValidString(value)) {
                         translatedCounter.addChars(1);
                     }
-                } else if (!LIST_SINGLE_LINE_TEXT_FIELD.equals(type)) {
+                } else if (!TranslateConstants.LIST_SINGLE_LINE_TEXT_FIELD.equals(type)) {
                     translatedCounter.addChars(1);
                 }
                 counter.addChars(1);
@@ -974,7 +974,7 @@ public class ShopifyService {
                 || "pages".equals(key) || "products".equals(key) || "navigation".equals(key)
                 || "shop".equals(key) || "shipping".equals(key) || "delivery".equals(key) || "metadata".equals(key) || "policies".equals(key)) {
             UpdateWrapper<UserTypeTokenDO> updateWrapper = new UpdateWrapper<>();
-            updateWrapper.eq(SHOP_NAME, shopifyRequest.getShopName());
+            updateWrapper.eq(TranslateConstants.SHOP_NAME, shopifyRequest.getShopName());
 
             // 根据传入的列名动态设置更新的字段
             updateWrapper.set(key, tokens);

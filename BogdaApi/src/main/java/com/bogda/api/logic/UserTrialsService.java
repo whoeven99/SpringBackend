@@ -15,7 +15,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 public class UserTrialsService {

@@ -1,9 +1,9 @@
 package com.bogda.api.logic.translate.stragety;
 
-import com.bogda.api.constants.TranslateConstants;
 import com.bogda.api.context.TranslateContext;
 import com.bogda.api.exception.FatalException;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

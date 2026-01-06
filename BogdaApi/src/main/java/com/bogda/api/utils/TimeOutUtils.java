@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 import java.util.function.Supplier;
 import com.google.common.util.concurrent.RateLimiter;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 public class TimeOutUtils {
     public static final int DEFAULT_TIMEOUT = 5;

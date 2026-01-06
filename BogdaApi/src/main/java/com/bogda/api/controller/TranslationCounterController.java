@@ -14,8 +14,8 @@ import com.bogda.api.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogda.api.enums.ErrorEnum.*;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.enums.ErrorEnum.*;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/translationCounter")

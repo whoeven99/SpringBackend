@@ -1,4 +1,4 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
 public class ShopifyRequestUtils {
     public static String getQuery(String resourceType, String first, String target) {

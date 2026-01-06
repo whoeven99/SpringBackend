@@ -1,9 +1,10 @@
 package com.bogda.api.integration;
 
 import com.bogda.api.logic.token.UserTokenService;
-import com.bogda.api.utils.AppInsightsUtils;
-import com.bogda.api.utils.CharacterCountUtils;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.CharacterCountUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -14,8 +15,7 @@ import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
@@ -91,7 +91,7 @@ public class HunYuanIntegration {
                 if (resp.getUsage() != null && resp.getUsage().getTotalTokens() != null) {
                     countUtils.addChars(resp.getUsage().getTotalTokens().intValue());
                 }
-                int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
+                int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * TranslateConstants.MAGNIFICATION);
                 long completionTokens = resp.getUsage().getCompletionTokens();
                 long promptTokens = resp.getUsage().getPromptTokens();
                 AppInsightsUtils.printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);

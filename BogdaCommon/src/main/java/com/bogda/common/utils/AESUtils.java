@@ -1,13 +1,12 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 public class AESUtils {
     // 密钥（长度必须为 16、24 或 32 字节）

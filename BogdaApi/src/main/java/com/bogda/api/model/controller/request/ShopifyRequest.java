@@ -1,10 +1,9 @@
 package com.bogda.api.model.controller.request;
 
+import com.bogda.common.contants.TranslateConstants;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
 
 @Data
 @AllArgsConstructor
@@ -15,7 +14,7 @@ public class ShopifyRequest {
 
     private String accessToken;
 
-    private String apiVersion = API_VERSION_LAST;
+    private String apiVersion = TranslateConstants.API_VERSION_LAST;
 
     private String target;
 

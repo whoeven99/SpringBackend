@@ -8,16 +8,16 @@ import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.logic.redis.OrdersRedisService;
 import com.bogda.api.repository.mapper.PCUsersMapper;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSingleQuery;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
 
 
@@ -55,7 +55,7 @@ public class PCUsersRepo extends ServiceImpl<PCUsersMapper, PCUsersDO> {
             query = getSubscriptionQuery(orderId);
         }
 
-        String shopifyByQuery = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
         appInsights.trackTrace("PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
 
         // 判断和解析相关数据

@@ -5,8 +5,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.utils.ModuleCodeUtils;
-import com.bogda.api.utils.AppInsightsUtils;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.ConfigUtils;
 import kotlin.Pair;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class TranslateApiIntegration {

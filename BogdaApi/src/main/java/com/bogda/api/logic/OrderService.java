@@ -8,6 +8,8 @@ import com.bogda.api.entity.DO.*;
 import com.bogda.api.integration.EmailIntegration;
 import com.bogda.api.model.controller.request.PurchaseSuccessRequest;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
+import com.bogda.common.contants.MailChimpConstants;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,10 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.bogda.api.constants.MailChimpConstants.*;
-import static com.bogda.api.constants.TranslateConstants.ANNUAL_FEE;
-import static com.bogda.api.constants.TranslateConstants.MONTHLY_FEE;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class OrderService {
@@ -74,7 +73,7 @@ public class OrderService {
             String formattedNumber2 = formatter.format(remainingChars - usedChars);
             templateData.put("total_credits_count", formattedNumber2 + " Credits");
         }
-        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(138372L, templateData, CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(138372L, templateData, MailChimpConstants.CHARACTER_PURCHASE_SUCCESSFUL_SUBJECT, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
     }
 
     public Boolean sendSubscribeSuccessEmail(String shopName, String subId, int feeType) {
@@ -101,7 +100,7 @@ public class OrderService {
             String trialEnd = sdf.format(userTrialsDO.getTrialEnd());
             templateData.put("Start date", trialStart + " UTC");
             templateData.put("End date", trialEnd + " UTC");
-            emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146220L, templateData, PLAN_TRIALS_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+            emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146220L, templateData, MailChimpConstants.PLAN_TRIALS_SUCCESSFUL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
             appInsights.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
             return false;
         }
@@ -120,13 +119,13 @@ public class OrderService {
         targetShop = usersDO.getShopName().substring(0, usersDO.getShopName().length() - suffix.length());
         templateData.put("shop_name", targetShop);
 
-        if (feeType == MONTHLY_FEE) {
-            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        } else if (feeType == ANNUAL_FEE) {
+        if (feeType == TranslateConstants.MONTHLY_FEE) {
+            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(139251L, templateData, MailChimpConstants.PLAN_UPGRADE_SUCCESSFUL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        } else if (feeType == TranslateConstants.ANNUAL_FEE) {
             double value = userData.getAmount() * 12;
             String formatted = String.format("%.2f", value);
             templateData.put("new_fee", "$" + formatted);
-            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146081L, templateData, PLAN_UPGRADE_SUCCESSFUL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
+            return emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146081L, templateData, MailChimpConstants.PLAN_UPGRADE_SUCCESSFUL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
         }
         return false;
     }

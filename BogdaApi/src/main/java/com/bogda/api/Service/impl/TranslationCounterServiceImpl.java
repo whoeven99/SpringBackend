@@ -11,14 +11,14 @@ import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.logic.redis.OrdersRedisService;
 import com.bogda.api.mapper.TranslationCounterMapper;
 import com.bogda.api.model.controller.request.TranslationCounterRequest;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSingleQuery;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
 
 @Service
@@ -69,7 +69,7 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         }
         appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " query: " + query);
 
-        String shopifyByQuery = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
         appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
 
 

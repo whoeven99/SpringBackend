@@ -7,8 +7,9 @@ import com.bogda.api.logic.PCApp.PCUserPicturesService;
 import com.bogda.api.logic.token.UserTokenService;
 import com.bogda.api.model.controller.response.SignResponse;
 import com.bogda.api.repository.repo.PCUsersRepo;
-import com.bogda.api.utils.ConfigUtils;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.ConfigUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.PIC_FEE;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.global.iop.util.WebUtils.doGet;
 import static com.global.iop.util.WebUtils.doPost;
 
@@ -189,7 +189,7 @@ public class AidgeIntegration {
         }
 
         if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
-            userTokenService.addUsedToken(shopName, PIC_FEE);
+            userTokenService.addUsedToken(shopName, TranslateConstants.PIC_FEE);
         }else {
             pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE);
         }

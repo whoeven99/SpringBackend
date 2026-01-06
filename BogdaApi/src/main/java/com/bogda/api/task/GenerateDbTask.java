@@ -13,8 +13,9 @@ import com.bogda.api.entity.VO.GenerateEmailVO;
 import com.bogda.api.exception.ClientException;
 import com.bogda.api.logic.GenerateDescriptionService;
 import com.bogda.api.logic.TencentEmailService;
-import com.bogda.api.utils.CharacterCountUtils;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.CharacterCountUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -28,11 +29,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.bogda.api.constants.TranslateConstants.EMAIL;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.GENERATE_STATE_BAR;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.INITIALIZATION;
 import static com.bogda.api.logic.TranslateService.executorService;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 @EnableScheduling
@@ -219,7 +219,7 @@ public class GenerateDbTask {
             int completeProductsSize = 0;
             while (iterator.hasNext()) {
                 APGUserGeneratedSubtaskDO subtask = iterator.next();
-                if (subtask.getPayload().contains(EMAIL)) {
+                if (subtask.getPayload().contains(TranslateConstants.EMAIL)) {
                     continue;
                 }
                 //解析payload，获取里面的productId

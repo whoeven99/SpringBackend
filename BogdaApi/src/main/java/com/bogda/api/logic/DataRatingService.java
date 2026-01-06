@@ -12,13 +12,12 @@ import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.DO.WidgetConfigurationsDO;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
-import static com.bogda.api.constants.TranslateConstants.IS_PUBLISH;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogda.api.utils.ModuleCodeUtils.getLanguageName;
 
@@ -78,14 +77,14 @@ public class DataRatingService {
         List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
 
         // 2，从shopify中获取所有的语言状态数据
-        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, getShopLanguageQuery());
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, getShopLanguageQuery());
         if (shopifyByQuery == null) {
             return null;
         }
 
         // 3，对shopify返回的数据进行解析，判断用户是否所有翻译语言都发布
         // 默认是全部发布了
-        statusMap.put(IS_PUBLISH, 1);
+        statusMap.put(TranslateConstants.IS_PUBLISH, 1);
 
         // 先转成 JSONObject
         JSONObject jsonObject = JSON.parseObject(shopifyByQuery);
@@ -103,7 +102,7 @@ public class DataRatingService {
             statusMap.put(name, 0);
             if (Boolean.FALSE.equals(published) && statusMap.get(getLanguageName(locale)) >= 1) {
                 //翻译后的语言没有发布
-                statusMap.put(IS_PUBLISH, 0);
+                statusMap.put(TranslateConstants.IS_PUBLISH, 0);
             }
         }
 

@@ -1,4 +1,4 @@
-package com.bogda.api.enums;
+package com.bogda.common.enums;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

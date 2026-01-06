@@ -11,15 +11,13 @@ import com.bogda.api.mapper.TranslatesMapper;
 import com.bogda.api.model.controller.request.AutoTranslateRequest;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.CaseSensitiveUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 @Transactional

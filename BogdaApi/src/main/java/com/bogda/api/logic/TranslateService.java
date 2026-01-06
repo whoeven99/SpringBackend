@@ -11,9 +11,9 @@ import com.bogda.api.integration.AidgeIntegration;
 import com.bogda.api.logic.redis.RedisStoppedRepository;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.requestBody.ShopifyRequestBody;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
@@ -22,9 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import static com.bogda.api.constants.TranslateConstants.*;
 import static com.bogda.api.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 @EnableAsync
@@ -97,7 +96,7 @@ public class TranslateService {
         String shopifyData;
         JsonNode root;
         try {
-            shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
+            shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
             root = JsonUtils.readTree(shopifyData);
         } catch (Exception e) {
             appInsights.trackException(e);

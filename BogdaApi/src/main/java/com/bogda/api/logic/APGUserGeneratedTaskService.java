@@ -12,7 +12,8 @@ import com.bogda.api.entity.VO.GenerateDescriptionVO;
 import com.bogda.api.entity.VO.GenerateDescriptionsVO;
 import com.bogda.api.entity.VO.GenerateEmailVO;
 import com.bogda.api.entity.VO.GenerateProgressBarVO;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -21,9 +22,8 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.bogda.api.constants.TranslateConstants.EMAIL;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
 import static com.bogda.api.utils.TypeConversionUtils.generateDescriptionsVOToGenerateDescriptionVO;
 
@@ -117,7 +117,7 @@ public class APGUserGeneratedTaskService {
         // 发完所有productId后，插入一条发送邮件的任务
         GenerateEmailVO generateEmailVO = null;
         try {
-            generateEmailVO = new GenerateEmailVO(EMAIL, generateDescriptionsVO.getProductIds());
+            generateEmailVO = new GenerateEmailVO(TranslateConstants.EMAIL, generateDescriptionsVO.getProductIds());
             String email = JsonUtils.OBJECT_MAPPER.writeValueAsString(generateEmailVO);
             iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, email, usersDO.getId(), null));
         } catch (JsonProcessingException e) {

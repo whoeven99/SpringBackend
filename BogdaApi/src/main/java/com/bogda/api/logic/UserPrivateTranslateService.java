@@ -9,8 +9,8 @@ import com.bogda.api.entity.DO.UserPrivateTranslateDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.UserPrivateUtils.getApiKey;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.UserPrivateUtils.getApiKey;
 
 @Service
 public class UserPrivateTranslateService {

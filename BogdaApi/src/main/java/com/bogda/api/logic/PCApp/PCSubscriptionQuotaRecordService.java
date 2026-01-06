@@ -6,7 +6,7 @@ import com.bogda.api.repository.repo.PCSubscriptionQuotaRecordRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class PCSubscriptionQuotaRecordService {

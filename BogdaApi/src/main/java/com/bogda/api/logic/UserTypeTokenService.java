@@ -8,14 +8,14 @@ import com.bogda.api.entity.DO.TranslateResourceDTO;
 import com.bogda.api.entity.DO.UserTypeTokenDO;
 import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.api.model.controller.request.TranslateRequest;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.constants.TranslateConstants.SHOP_NAME;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.TOKEN_MAP;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component
@@ -48,7 +48,7 @@ public class UserTypeTokenService {
      */
     @Async
     public void getUserInitToken(TranslateRequest request) {
-        UserTypeTokenDO userTypeTokenDO = userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(SHOP_NAME, request.getShopName()));
+        UserTypeTokenDO userTypeTokenDO = userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(TranslateConstants.SHOP_NAME, request.getShopName()));
         if (userTypeTokenDO == null){
 
             ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
@@ -74,7 +74,7 @@ public class UserTypeTokenService {
      * @return UserTypeTokenDO  UserTypeTokenDO数据类型
      */
     public UserTypeTokenDO getUserInitTokenByShopName(String shopName) {
-        return userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(SHOP_NAME, shopName));
+        return userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(TranslateConstants.SHOP_NAME, shopName));
     }
 
     /**

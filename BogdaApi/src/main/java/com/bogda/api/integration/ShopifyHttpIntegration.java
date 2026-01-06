@@ -1,13 +1,13 @@
 package com.bogda.api.integration;
 
 import com.alibaba.fastjson.JSONObject;
-import com.bogda.api.constants.TranslateConstants;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.api.requestBody.ShopifyRequestBody;
-import com.bogda.api.utils.JsonUtils;
-import com.bogda.api.utils.ShopifyRequestUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.JsonUtils;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component

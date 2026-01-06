@@ -1,6 +1,6 @@
 package com.bogda.api.model.controller.response;
 
-import com.bogda.api.enums.ErrorEnum;
+import com.bogda.common.enums.ErrorEnum;
 import lombok.Data;
 
 @Data

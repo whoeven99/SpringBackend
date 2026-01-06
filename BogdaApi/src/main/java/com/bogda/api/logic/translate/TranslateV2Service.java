@@ -9,7 +9,10 @@ import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.VO.SingleReturnVO;
 import com.bogda.api.entity.VO.SingleTranslateVO;
-import com.bogda.api.enums.ErrorEnum;
+import com.bogda.api.utils.ModelTranslateUtils;
+import com.bogda.api.utils.ModuleCodeUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.model.ShopifyCheckMetafieldResponse;
@@ -33,8 +36,7 @@ import com.bogda.api.repository.entity.TranslateTaskV2DO;
 import com.bogda.api.repository.repo.InitialTaskV2Repo;
 import com.bogda.api.repository.repo.TranslateTaskV2Repo;
 import com.bogda.api.requestBody.ShopifyRequestBody;
-import com.bogda.api.utils.*;
-import com.bogda.common.utils.JsoupUtils;
+import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import kotlin.Pair;
@@ -52,11 +54,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.bogda.api.constants.TranslateConstants.*;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 import static com.bogda.api.logic.TaskService.AUTO_TRANSLATE_MAP;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getShopLanguageQuery;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class TranslateV2Service {
@@ -135,6 +136,9 @@ public class TranslateV2Service {
             String jsonStr = String.valueOf(map.getOrDefault("json", "{}"));
             Map<Integer, String> languageMap = JsonUtils.jsonToObject(jsonStr, new TypeReference<Map<Integer, String>>() {
             });
+            if (CollectionUtils.isEmpty(languageMap)) {
+                return defaultNullMap();
+            }
             prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", languageMap.toString())
                     .replace("{{TARGET_LANGUAGE}}", target);
         } catch (Exception e) {
@@ -312,7 +316,7 @@ public class TranslateV2Service {
         }
 
         // 3. 获取 Shopify 语言数据
-        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestBody.getLanguagesQuery());
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, ShopifyRequestBody.getLanguagesQuery());
         JsonNode root = JsonUtils.readTree(shopifyData);
 
         if (root == null) {
@@ -799,7 +803,7 @@ public class TranslateV2Service {
         //修改模块的排序
         List<TranslateResourceDTO> translateResourceDTOList = new ArrayList<>();
         for (String s : list) {
-            translateResourceDTOList.add(new TranslateResourceDTO(s, MAX_LENGTH, "", ""));
+            translateResourceDTOList.add(new TranslateResourceDTO(s, TranslateConstants.MAX_LENGTH, "", ""));
         }
         return translateResourceDTOList;
     }
@@ -874,7 +878,7 @@ public class TranslateV2Service {
 
         // 判断这条语言是否在用户本地存在
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
-                API_VERSION_LAST, getShopLanguageQuery());
+                TranslateConstants.API_VERSION_LAST, getShopLanguageQuery());
         appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
         if (shopifyByQuery == null) {
             appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
@@ -1019,7 +1023,7 @@ public class TranslateV2Service {
         }
 
         //如果handleFlag为false，则跳过
-        if (type.equals(URI) && "handle".equals(key)) {
+        if (type.equals(TranslateConstants.URI) && "handle".equals(key)) {
             // 自动翻译的handle默认为false, 手动的记得添加
             return isHandle;
         }
@@ -1063,7 +1067,7 @@ public class TranslateV2Service {
         }
 
         //对METAFIELD字段翻译
-        if (METAFIELD.equals(module)) {
+        if (TranslateConstants.METAFIELD.equals(module)) {
             //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
             if (JudgeTranslateUtils.SUSPICIOUS_PATTERN.matcher(value).matches() ||
                     JudgeTranslateUtils.SUSPICIOUS2_PATTERN.matcher(value).matches()) {
@@ -1083,7 +1087,7 @@ public class TranslateV2Service {
 
             if (JsonUtils.isJson(value) && value.contains(JSON_JUDGE)) {
                 // 判断是否与product相关联
-                String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST,
+                String shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST,
                         ShopifyRequestUtils.getQueryForCheckMetafieldId(resourceId));
                 ShopifyCheckMetafieldResponse shopifyCheckMetafieldResponse = JsonUtils.jsonToObject(shopifyData,
                         ShopifyCheckMetafieldResponse.class);

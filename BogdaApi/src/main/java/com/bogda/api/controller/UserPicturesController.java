@@ -6,7 +6,7 @@ import com.bogda.api.entity.DO.UserPicturesDO;
 import com.bogda.api.integration.HunYuanBucketIntegration;
 import com.bogda.api.logic.PCApp.PCUserPicturesService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.convertUrlToMultipartFile;
 
 @RestController

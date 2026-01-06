@@ -6,7 +6,7 @@ import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.logic.translate.ModelTranslateService;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.bogda.api.utils.PromptUtils;
 import com.bogda.api.utils.StringUtils;
 import com.fasterxml.jackson.core.type.TypeReference;

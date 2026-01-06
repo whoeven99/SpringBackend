@@ -2,8 +2,8 @@ package com.bogda.api.logic;
 
 import com.bogda.api.Service.IGlossaryService;
 import com.bogda.api.entity.DO.GlossaryDO;
-import com.bogda.api.utils.CaseSensitiveUtils;
-import org.apache.commons.lang.StringUtils;
+import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.api.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +42,7 @@ public class GlossaryService {
 
     public static String match(String content, Map<String, GlossaryDO> glossaryMap) {
         for (String key : glossaryMap.keySet()) {
-            if (com.bogda.api.utils.StringUtils.equals(content, key,
+            if (StringUtils.equals(content, key,
                     Integer.valueOf(1).equals(glossaryMap.get(key).getCaseSensitive()))) {
                 return glossaryMap.get(key).getTargetText();
             }

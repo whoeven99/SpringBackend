@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.bogda.api.utils.RetryUtils.retryWithParam;
+import static com.bogda.common.utils.RetryUtils.retryWithParam;
 
 @RestController
 @RequestMapping("/pc/userTrials")

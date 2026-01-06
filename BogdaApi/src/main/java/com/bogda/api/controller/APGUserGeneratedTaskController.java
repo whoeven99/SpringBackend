@@ -14,16 +14,16 @@ import com.bogda.api.entity.VO.GenerateProgressBarVO;
 import com.bogda.api.exception.ClientException;
 import com.bogda.api.logic.APGUserGeneratedTaskService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/apg/userGeneratedTask")
@@ -98,7 +98,7 @@ public class APGUserGeneratedTaskController {
             if (counterDO.getUserToken() >= userMaxLimit) {
                 //修改状态
                 apgUserGeneratedTaskService.initOrUpdateData(shopName, 3, null, null);
-                throw new ClientException(CHARACTER_LIMIT);
+                throw new ClientException(TranslateConstants.CHARACTER_LIMIT);
             }
             //将该用户的状态3，4改为9 （问题数据）
             iapgUserGeneratedSubtaskService.update34StatusTo9(usersDO.getId());
@@ -109,7 +109,7 @@ public class APGUserGeneratedTaskController {
             appInsights.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
 //            appInsights.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
             appInsights.trackException(e1);
-            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+            return new BaseResponse<>().CreateErrorResponse(TranslateConstants.CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件

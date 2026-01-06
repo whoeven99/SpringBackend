@@ -8,7 +8,7 @@ import com.bogda.api.logic.TranslateService;
 import com.bogda.api.logic.UserService;
 import com.bogda.api.model.controller.request.UserSubscriptionsRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.CaseSensitiveUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

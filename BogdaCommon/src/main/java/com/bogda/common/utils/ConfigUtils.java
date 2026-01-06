@@ -1,4 +1,4 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
 import java.util.HashMap;
 import java.util.Map;

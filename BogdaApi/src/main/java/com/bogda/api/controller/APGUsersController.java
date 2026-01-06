@@ -6,7 +6,7 @@ import com.bogda.api.model.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogda.api.utils.RetryUtils.retryWithParam;
+import static com.bogda.common.utils.RetryUtils.retryWithParam;
 
 @RestController
 @RequestMapping("/apg/users")

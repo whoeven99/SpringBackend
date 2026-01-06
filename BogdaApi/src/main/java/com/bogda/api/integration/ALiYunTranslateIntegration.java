@@ -15,9 +15,10 @@ import com.alibaba.dashscope.exception.UnSupportedSpecialTokenMode;
 import com.alibaba.dashscope.tokenizers.Tokenizer;
 import com.alibaba.dashscope.tokenizers.TokenizerFactory;
 import com.bogda.api.Service.IAPGUserCounterService;
-import com.bogda.api.utils.AppInsightsUtils;
-import com.bogda.api.utils.CharacterCountUtils;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.CharacterCountUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.bogda.api.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +29,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogda.api.constants.TranslateConstants.QWEN_VL_LAST;
-import static com.bogda.api.utils.AppInsightsUtils.printTranslateCost;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.AppInsightsUtils.printTranslateCost;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
@@ -101,7 +100,7 @@ public class ALiYunTranslateIntegration {
             }
             String content = call.getOutput().getChoices().get(0).getMessage().getContent();
 
-            int totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            int totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +
@@ -127,7 +126,7 @@ public class ALiYunTranslateIntegration {
 
         MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model(QWEN_VL_LAST)
+                .model(TranslateConstants.QWEN_VL_LAST)
                 .message(userMessage)
                 .build();
         MultiModalConversationResult result;
@@ -150,7 +149,7 @@ public class ALiYunTranslateIntegration {
             List<Map<String, Object>> content = result.getOutput().getChoices().get(0).getMessage().getContent();
             Integer inputTokens = result.getUsage().getInputTokens();
             Integer outputTokens = result.getUsage().getOutputTokens();
-            int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
+            int totalToken = (int) ((inputTokens + outputTokens) * TranslateConstants.MAGNIFICATION);
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             appInsights.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
@@ -200,7 +199,7 @@ public class ALiYunTranslateIntegration {
                 return null;
             }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
@@ -253,7 +252,7 @@ public class ALiYunTranslateIntegration {
                 return null;
             }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             appInsights.trackTrace("textTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);

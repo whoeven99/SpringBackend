@@ -10,6 +10,7 @@ import com.bogda.api.entity.VO.SubscriptionVO;
 import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,13 +18,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
-import static com.bogda.api.constants.TranslateConstants.MAX_LENGTH;
-import static com.bogda.api.enums.ErrorEnum.SQL_SELECT_ERROR;
+import static com.bogda.common.enums.ErrorEnum.SQL_SELECT_ERROR;
 import static com.bogda.api.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogda.api.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.parsePlanName;
 
 @RestController
@@ -115,7 +114,7 @@ public class ShopifyController {
     //查询需要翻译的总字数
     @PostMapping("/getUnTranslatedToken")
     public BaseResponse<Object> getTotalWords(@RequestParam String shopName, @RequestParam String modelType, @RequestParam String source, @RequestBody ShopifyRequest shopifyRequest) {
-        TranslateResourceDTO translateResourceDTO = new TranslateResourceDTO(modelType, MAX_LENGTH, shopifyRequest.getTarget(), "");
+        TranslateResourceDTO translateResourceDTO = new TranslateResourceDTO(modelType, TranslateConstants.MAX_LENGTH, shopifyRequest.getTarget(), "");
         shopifyRequest.setShopName(shopName);
         //获取该用户未翻译和已翻译的
         int totalWords = shopifyService.getUnTranslatedToken(shopifyRequest, null, translateResourceDTO, source);
@@ -251,7 +250,7 @@ public class ShopifyController {
         // 通过charsOrdersDO的id，获取信息
         // 根据新的集合获取这个订阅计划的信息
         String query = getSubscriptionQuery(charsOrdersDO.getId());
-        String infoByShopify = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, query);
+        String infoByShopify = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
 
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             subscriptionVO.setFeeType(0);

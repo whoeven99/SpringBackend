@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogda.api.enums.ErrorEnum.*;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.enums.ErrorEnum.*;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 @Transactional

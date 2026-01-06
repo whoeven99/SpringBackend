@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.api.Service.*;
-import com.bogda.api.constants.TranslateConstants;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.logic.PCApp.PCEmailService;
 import com.bogda.api.model.controller.request.UserPriceRequest;
@@ -15,6 +14,7 @@ import com.bogda.api.repository.entity.PCOrdersDO;
 import com.bogda.api.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogda.api.repository.entity.PCUserTrialsDO;
 import com.bogda.api.repository.repo.*;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +27,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
 
 @Component

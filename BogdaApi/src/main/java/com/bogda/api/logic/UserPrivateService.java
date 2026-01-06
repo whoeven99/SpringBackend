@@ -7,11 +7,11 @@ import com.bogda.api.Service.IUserPrivateService;
 import com.bogda.api.entity.DO.UserPrivateDO;
 import com.bogda.api.model.controller.request.UserPrivateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.constants.TranslateConstants.SHOP_NAME;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.replaceDot;
 
 @Component
@@ -51,7 +51,7 @@ public class UserPrivateService {
             if (user != null) {
                 //更新
                 //openaiKey和googleKey为空则不更新
-                userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(SHOP_NAME, userPrivateDO.getShopName()));
+                userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(TranslateConstants.SHOP_NAME, userPrivateDO.getShopName()));
                 //更新Azure的keyVault
 
             } else {
@@ -114,7 +114,7 @@ public class UserPrivateService {
         //更新用户
         UserPrivateDO userPrivateDO = new UserPrivateDO();
         userPrivateDO.setUsedAmount(usedChars);
-        userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(SHOP_NAME, shopName));
+        userPrivateService.update(userPrivateDO, new QueryWrapper<UserPrivateDO>().eq(TranslateConstants.SHOP_NAME, shopName));
     }
 
     //删除用户数据

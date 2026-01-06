@@ -2,7 +2,7 @@ package com.bogda.api.integration;
 
 import com.bogda.api.exception.ClientException;
 import com.bogda.api.model.controller.request.CloudServiceRequest;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.JsonUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-import static com.bogda.api.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.enums.ErrorEnum.SHOPIFY_CONNECT_ERROR;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component

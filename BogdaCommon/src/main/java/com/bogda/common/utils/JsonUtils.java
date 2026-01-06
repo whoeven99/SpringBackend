@@ -1,13 +1,10 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
-import com.bogda.api.exception.ClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static com.bogda.api.enums.ErrorEnum.JSON_PARSE_ERROR;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 public class JsonUtils {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -36,7 +33,7 @@ public class JsonUtils {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, clazz) : null;
         } catch (JsonProcessingException e) {
             appInsights.trackException(e);
-            throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
+            return null;
         }
     }
 
@@ -63,7 +60,7 @@ public class JsonUtils {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, typeRef) : null;
         } catch (JsonProcessingException e) {
             appInsights.trackException(e);
-            throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
+            return null;
         }
     }
 
