@@ -22,6 +22,7 @@ import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.repository.entity.TranslateTaskV2DO;
 import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.*;
+import com.bogda.common.utils.JsoupUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -47,7 +48,6 @@ import static com.bogda.api.integration.ShopifyHttpIntegration.registerTransacti
 import static com.bogda.api.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.JsonUtils.isJson;
-import static com.bogda.api.utils.JsoupUtils.isHtml;
 import static com.bogda.api.utils.JudgeTranslateUtils.*;
 import static com.bogda.api.utils.StringUtils.isValueBlank;
 
@@ -870,7 +870,7 @@ public class ShopifyService {
                 }
 
                 //如果是METAFIELD模块的数据
-                if (SINGLE_LINE_TEXT_FIELD.equals(type) && !isHtml(value)) {
+                if (SINGLE_LINE_TEXT_FIELD.equals(type) && !JsoupUtils.isHtml(value)) {
                     //纯数字字母符号 且有两个  标点符号 以#开头，长度为10 不翻译
                     if (StringUtils.isValidString(value)) {
                         translatedCounter.addChars(1);

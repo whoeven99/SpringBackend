@@ -1,6 +1,7 @@
 package com.bogda.api.utils;
 
 import com.bogda.api.enums.RejectRuleEnum;
+import com.bogda.common.utils.JsoupUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -8,7 +9,7 @@ import java.util.regex.Pattern;
 
 import static com.bogda.api.constants.TranslateConstants.*;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.JsoupUtils.isHtml;
+import static com.bogda.common.utils.JsoupUtils.isHtml;
 
 public class JudgeTranslateUtils {
 

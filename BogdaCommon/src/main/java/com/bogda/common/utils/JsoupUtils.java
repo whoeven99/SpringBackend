@@ -1,10 +1,8 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 @Component
 public class JsoupUtils {
