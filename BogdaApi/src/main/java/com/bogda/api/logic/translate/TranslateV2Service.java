@@ -97,6 +97,7 @@ public class TranslateV2Service {
     @Autowired
     private GeminiIntegration geminiIntegration;
 
+    private static final String JSON_JUDGE = "\"type\":\"text\"";
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
         if (request.getContext() == null || request.getTarget() == null
@@ -1080,7 +1081,7 @@ public class TranslateV2Service {
             if (JudgeTranslateUtils.BASE64_PATTERN.matcher(value).matches()) {
                 return false;
             }
-            if (JsonUtils.isJson(value)) {
+            if (JsonUtils.isJson(value) && value.contains(JSON_JUDGE)) {
                 // 判断是否与product相关联
                 String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST,
                         ShopifyRequestUtils.getQueryForCheckMetafieldId(resourceId));
