@@ -50,15 +50,14 @@ public class TestController {
     private GoogleMachineIntegration googleMachineIntegration;
 
     @PostMapping("/test")
-    public String test(@RequestParam String target) {
-        String prompt = "翻译下面文本为中文： hello word";
+    public Pair<String, Integer> test(@RequestParam String target, @RequestParam String prompt) {
 //        Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText("gemini-2.5-flash", prompt);
         Pair<String, Integer> stringIntegerPair = null;
         if (!ModuleCodeUtils.LANGUAGE_CODES.contains(target)) {
             stringIntegerPair = googleMachineIntegration.googleTranslateWithSDK(prompt, target);
         }
 
-        return stringIntegerPair.getFirst();
+        return stringIntegerPair;
     }
 
     @PostMapping("/testPic")
