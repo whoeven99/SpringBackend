@@ -1,7 +1,9 @@
 package com.bogda.api.logic.translate.stragety;
 
+import com.bogda.api.constants.TranslateConstants;
 import com.bogda.api.context.TranslateContext;
 import com.bogda.api.exception.FatalException;
+import com.bogda.api.utils.JsonUtils;
 import com.bogda.api.utils.JsoupUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -11,8 +13,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.bogda.api.constants.TranslateConstants.HTML;
 
 @Component
 public class TranslateStrategyFactory {
@@ -37,7 +37,9 @@ public class TranslateStrategyFactory {
         String strategy;
         if (ctx.getOriginalTextMap() != null && !ctx.getOriginalTextMap().isEmpty()) {
             strategy = "BATCH";
-        } else if (HTML.equals(ctx.getShopifyTextType()) || JsoupUtils.isHtml(ctx.getContent())) {
+        } else if (TranslateConstants.JSON.equals(ctx.getShopifyTextType()) || JsonUtils.isJson(ctx.getContent())) {
+            strategy = "JSON";
+        }else if (TranslateConstants.HTML.equals(ctx.getShopifyTextType()) || JsoupUtils.isHtml(ctx.getContent())) {
             strategy = "HTML";
         } else {
             strategy = "SINGLE";

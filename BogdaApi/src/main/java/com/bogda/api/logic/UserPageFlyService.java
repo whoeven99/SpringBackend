@@ -45,7 +45,6 @@ public class UserPageFlyService {
                 boolean success = false;
                 try {
                     success = iUserPageFlyService.insertUserPageFlysData(item);
-                    System.out.println("success: " + success);
                 } catch (Exception e) {
                     appInsights.trackTrace("FatalException editTranslatedData " + e.getMessage());
                 }
@@ -54,7 +53,6 @@ public class UserPageFlyService {
                     // 避免再次用多个字段查，可以考虑 insert 返回 id
                     UserPageFlyDO inserted = iUserPageFlyService.getUserPageFlysData(item.getLanguageCode(), shopName
                             , item.getTargetText(), item.getSourceText());
-                    System.out.println("inserted: " + inserted);
                     resultList.add(inserted != null ? inserted : item);
                 } else {
                     resultList.add(item);

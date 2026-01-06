@@ -23,7 +23,6 @@ public class UserPageFlyController {
     // 根据前端的传入数据更新或插入对应数据
     @PostMapping("/editTranslatedData")
     public BaseResponse<Object> editTranslatedData(@RequestParam String shopName, @RequestBody List<UserPageFlyDO> userPageFlyDO) {
-        System.out.println("userPageFlyDO " + userPageFlyDO);
         return userPageFlyService.editTranslatedData(shopName, userPageFlyDO);
     }
 }

@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 import static com.bogda.api.constants.MailChimpConstants.CC_EMAIL;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
@@ -73,7 +72,7 @@ public class EmailIntegration {
         String jsonString = null;
         try {
             Credential cred = new Credential(ConfigUtils.getConfig("Tencent_Cloud_KEY_ID"), ConfigUtils.getConfig("Tencent_Cloud_KEY"));
-            String templateDataJson = OBJECT_MAPPER.writeValueAsString(templateData);
+            String templateDataJson = JsonUtils.OBJECT_MAPPER.writeValueAsString(templateData);
             // 实例化一个http选项，可选的，没有特殊需求可以跳过
             HttpProfile httpProfile = new HttpProfile();
 //            httpProfile.setEndpoint("ses.ap-guangzhou-open.tencentcloudapi.com");

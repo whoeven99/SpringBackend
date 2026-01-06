@@ -21,14 +21,10 @@ import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class ChatGptIntegration {
-
-    @Value("${gpt.endpoint}")
-    private String endpoint;
-    @Value("${gpt.deploymentName}")
-    private String deploymentName;
     public static final int OPENAI_MAGNIFICATION = 3;
     public static String GPT_4 = "gpt-4.1";
     private final OpenAIClient client;
+    public static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
 
     @Autowired
     public ChatGptIntegration() {
@@ -59,7 +55,7 @@ public class ChatGptIntegration {
                 .setStream(false);
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
-                    client.getChatCompletions(deploymentName, options), TimeOutUtils.rateLimiter1);
+                    client.getChatCompletions(GPT_4, options), TimeOutUtils.rateLimiter1);
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
             int input = chatCompletions.getUsage().getPromptTokens();
