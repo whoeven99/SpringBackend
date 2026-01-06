@@ -46,11 +46,11 @@ public class TestController {
     private ITranslatesService iTranslatesService;
 
     @PostMapping("/test")
-    public String test() {
+    public Pair<String, Integer> test() {
         String prompt = "翻译下面文本为中文： hello word";
 
-        Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText("gemini-2.5-flash", prompt);
-        return stringIntegerPair.getFirst();
+        Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText(GeminiIntegration.GEMINI_3_FLASH, prompt);
+        return stringIntegerPair;
     }
 
     @PostMapping("/testPic")

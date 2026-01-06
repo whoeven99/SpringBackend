@@ -17,7 +17,7 @@ public class GeminiIntegration {
     @Autowired
     private Client client;
 
-    public static String Gemini_3_FLASH = "gemini-3-flash-preview";
+    public static String GEMINI_3_FLASH = "gemini-3-flash-preview";
     /**
      * gemini 文本调用
      */

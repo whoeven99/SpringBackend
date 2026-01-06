@@ -23,8 +23,8 @@ public class ModelTranslateService {
             pair =  aLiYunTranslateIntegration.userTranslate(prompt, target);
         }else if (ChatGptIntegration.GPT_4.equals(aiModel)){
             pair =  chatGptIntegration.chatWithGpt(prompt, target);
-        }else if (GeminiIntegration.Gemini_3_FLASH.equals(aiModel)){
-            pair =  geminiIntegration.generateText(prompt, target);
+        }else if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)){
+            pair =  geminiIntegration.generateText(aiModel, prompt);
         }
 
         if (pair == null){
