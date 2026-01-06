@@ -12,6 +12,7 @@ import com.bogda.api.entity.VO.SingleTranslateVO;
 import com.bogda.api.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.GeminiIntegration;
+import com.bogda.api.integration.model.ShopifyCheckMetafieldResponse;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.ShopifyService;
@@ -564,15 +565,6 @@ public class TranslateV2Service {
         translateTaskMonitorV2RedisService.setInitEndTime(initialTaskV2DO.getId());
         initialTaskV2Repo.updateStatusAndInitMinutes(initialTaskV2DO.getStatus(), initialTaskV2DO.getInitMinutes()
                 , initialTaskV2DO.getId());
-    }
-
-    private boolean isSingleHtml(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
-                                 String module) {
-        if ("body".equals(translatableContent.getKey()) || "body_html".equals(translatableContent.getKey())
-                || "METAFIELD".equals(module) || "summer_html") {
-            return isHtml(translatableContent.getValue());
-        }
-        return false;
     }
 
     // 翻译 step 3, 翻译任务 -> 具体翻译行为 直接对数据库操作
