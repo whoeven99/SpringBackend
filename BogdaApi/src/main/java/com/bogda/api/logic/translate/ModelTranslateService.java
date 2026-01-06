@@ -6,7 +6,6 @@ import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.GoogleMachineIntegration;
 import com.bogda.api.utils.CaseSensitiveUtils;
 import com.bogda.api.utils.JsonUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,7 +24,8 @@ public class ModelTranslateService {
     @Autowired
     private GoogleMachineIntegration googleMachineIntegration;
 
-    public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, String sourceText, String translateType) {
+    // ai translate
+    public Pair<String, Integer> aiTranslate(String aiModel, String prompt, String target) {
         Pair<String, Integer> pair = null;
         if (ALiYunTranslateIntegration.QWEN_MAX.equals(aiModel)) {
             pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
@@ -34,29 +34,31 @@ public class ModelTranslateService {
         } else if (GeminiIntegration.Gemini_3_FLASH.equals(aiModel)) {
             pair = geminiIntegration.generateText(prompt, target);
         }
+        return pair;
+    }
+    public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, String sourceText) {
+        Pair<String, Integer> pair = aiTranslate(aiModel, prompt, target);
 
         if (pair != null) {
             return pair;
         }
 
         // 做一个保底处理，当pair为null的时候，用google再翻译一次，如果再为null，就直接返回.
-        // json批量翻译不行，翻译值会少数据，目前只能循环批量翻译
         CaseSensitiveUtils.appInsights.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
-        if ("SINGLE".equals(translateType)) {
-            return googleMachineIntegration.googleTranslateWithSDK(sourceText, target);
+        return googleMachineIntegration.googleTranslateWithSDK(sourceText, target);
+    }
+
+    public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, Map<Integer, String> sourceMap) {
+        Pair<String, Integer> pair = aiTranslate(aiModel, prompt, target);
+
+        if (pair != null) {
+            return pair;
         }
+
+        // json批量翻译不行，翻译值会少数据，目前只能循环批量翻译
+        CaseSensitiveUtils.appInsights.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceMap);
 
         // 将文本转为Map<Integer, String>, 循环翻译
-        Map<Integer, String> sourceMap;
-        try {
-            sourceMap = JsonUtils.jsonToObject(
-                    sourceText, new TypeReference<Map<Integer, String>>() {});
-        } catch (Exception e) {
-            CaseSensitiveUtils.appInsights.trackException(e);
-            CaseSensitiveUtils.appInsights.trackTrace("FatalException 数据转化失败：" + sourceText);
-            return null;
-        }
-
         if (sourceMap == null || sourceMap.isEmpty()) {
             return null;
         }
@@ -90,7 +92,7 @@ public class ModelTranslateService {
             }
         }
 
-        return new Pair<>(JsonUtils.objectToJson(resultMap), totalCount);
+        return new Pair<String, Integer>(JsonUtils.objectToJson(resultMap), totalCount);
 
     }
 }
