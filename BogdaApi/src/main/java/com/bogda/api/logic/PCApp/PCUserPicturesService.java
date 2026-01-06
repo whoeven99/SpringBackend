@@ -14,6 +14,7 @@ import com.bogda.api.logic.token.UserTokenService;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.repository.repo.PCUserPicturesRepo;
 import com.bogda.api.repository.repo.PCUsersRepo;
+import com.bogda.api.utils.JsonUtils;
 import com.bogda.api.utils.PictureUtils;
 import com.bogda.api.utils.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,7 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 import static com.bogda.api.controller.UserPicturesController.allowedMimeTypes;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.utils.ModuleCodeUtils.getLanguageName;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
@@ -51,7 +51,7 @@ public class PCUserPicturesService {
         //解析userPicturesDO
         PCUserPicturesDO pcUserPicturesDO = null;
         try {
-            pcUserPicturesDO = OBJECT_MAPPER.readValue(pcUserPicturesDoJson, PCUserPicturesDO.class);
+            pcUserPicturesDO = JsonUtils.OBJECT_MAPPER.readValue(pcUserPicturesDoJson, PCUserPicturesDO.class);
         } catch (JsonProcessingException e) {
             appInsights.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }

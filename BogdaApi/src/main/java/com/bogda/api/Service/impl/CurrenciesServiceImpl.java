@@ -26,6 +26,9 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     @Override
     public BaseResponse<Object> insertCurrency(CurrenciesDO request) {
         // 准备SQL插入语句
+        if (request.getCurrencyCode() == null) {
+            return new BaseResponse<>().CreateErrorResponse("CURRENCY_CODE_NOT_NULL");
+        }
         if (baseMapper.insertCurrency(request.getShopName(), request.getCurrencyName(),
                 request.getCurrencyCode(), request.getRounding(), request.getExchangeRate(), request.getPrimaryStatus()) > 0) {
             return new BaseResponse<>().CreateSuccessResponse(baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode()));

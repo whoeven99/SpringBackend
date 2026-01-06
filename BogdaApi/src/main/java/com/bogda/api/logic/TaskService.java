@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.api.Service.*;
+import com.bogda.api.constants.TranslateConstants;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.logic.PCApp.PCEmailService;
 import com.bogda.api.model.controller.request.UserPriceRequest;
@@ -25,7 +26,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static com.bogda.api.constants.TranslateConstants.*;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
@@ -164,8 +164,7 @@ public class TaskService {
         String infoByShopify;
 
         // 根据新的集合获取这个订阅计划的信息
-        infoByShopify = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
-
+        infoByShopify = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
             appInsights.trackTrace("FatalException " + shopName + " 定时任务根据订单id: " + subscriptionId + "获取数据失败" + " token: " + accessToken);
@@ -245,15 +244,15 @@ public class TaskService {
 
     //自动翻译模块顺序
     public static final List<String> AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
-            SHOP, MENU, LINK, FILTER, PACKING_SLIP_TEMPLATE, DELIVERY_METHOD_DEFINITION, METAOBJECT, ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP,
-            ONLINE_STORE_THEME_SETTINGS_CATEGORY, ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, ONLINE_STORE_THEME_LOCALE_CONTENT,
-            COLLECTION, PRODUCT, PRODUCT_OPTION, PRODUCT_OPTION_VALUE, BLOG, ARTICLE, PAGE, METAFIELD, SHOP_POLICY, EMAIL_TEMPLATE, SELLING_PLAN, SELLING_PLAN_GROUP
+            TranslateConstants.SHOP, TranslateConstants.MENU, TranslateConstants.LINK, TranslateConstants.FILTER, TranslateConstants.PACKING_SLIP_TEMPLATE, TranslateConstants.DELIVERY_METHOD_DEFINITION, TranslateConstants.METAOBJECT, TranslateConstants.ONLINE_STORE_THEME_JSON_TEMPLATE, TranslateConstants.ONLINE_STORE_THEME_SECTION_GROUP, TranslateConstants.
+            ONLINE_STORE_THEME_SETTINGS_CATEGORY, TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT, TranslateConstants.
+            COLLECTION, TranslateConstants.PRODUCT, TranslateConstants.PRODUCT_OPTION, TranslateConstants.PRODUCT_OPTION_VALUE, TranslateConstants.BLOG, TranslateConstants.ARTICLE, TranslateConstants.PAGE, TranslateConstants.METAFIELD, TranslateConstants.SHOP_POLICY, TranslateConstants.EMAIL_TEMPLATE, TranslateConstants.SELLING_PLAN, TranslateConstants.SELLING_PLAN_GROUP
     ));
 
     // test自动翻译模块
     public static final List<String> TEST_AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
-            ONLINE_STORE_THEME_JSON_TEMPLATE, ONLINE_STORE_THEME_SECTION_GROUP,
-            ONLINE_STORE_THEME_SETTINGS_CATEGORY, ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, ONLINE_STORE_THEME_LOCALE_CONTENT
+            TranslateConstants.ONLINE_STORE_THEME_JSON_TEMPLATE, TranslateConstants.ONLINE_STORE_THEME_SECTION_GROUP, TranslateConstants.
+            ONLINE_STORE_THEME_SETTINGS_CATEGORY, TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT
     ));
 
     /**
@@ -292,7 +291,7 @@ public class TaskService {
 
                 // 如果订单存在，并且支付成功，添加相关计划额度；如果订单不存在，说明他未支付，修改免费试用计划表
                 String subscriptionQuery = getSubscriptionQuery(latestActiveSubscribeId);
-                String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, subscriptionQuery);
+                String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, subscriptionQuery);
 
                 // 判断和解析相关数据
                 JSONObject queryValid = isQueryValid(shopifyByQuery);
@@ -458,14 +457,13 @@ public class TaskService {
 
                 // 如果订单存在，并且支付成功，添加相关计划额度；如果订单不存在，说明他未支付，修改免费试用计划表
                 String subscriptionQuery = getSubscriptionQuery(latestActiveSubscribeId);
-                String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, subscriptionQuery);
+                String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, subscriptionQuery);
 
                 // 判断和解析相关数据
                 JSONObject queryValid = isQueryValid(shopifyByQuery);
                 if (queryValid == null) {
                     continue;
                 }
-                System.out.println("queryValid  " + queryValid);
                 String name = queryValid.getString("name");
                 Integer charsByPlanName = pcSubscriptionsRepo.getCharsByPlanName(name);
 

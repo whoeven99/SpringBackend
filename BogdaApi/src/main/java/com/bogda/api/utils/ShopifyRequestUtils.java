@@ -70,4 +70,30 @@ public class ShopifyRequestUtils {
                 }
                 """;
     }
+
+    /**
+     * 判断元字段id 是否关联到product
+     */
+    public static String getQueryForCheckMetafieldId(String metafieldId) {
+        return queryMetafieldId().replace("%metafieldId%", metafieldId);
+    }
+
+    public static String queryMetafieldId() {
+        return """
+                query MyQuery {
+                  node(id: "%metafieldId%") {
+                    ... on Metafield {
+                      id
+                      owner {
+                        ... on Product {
+                          id
+                          title
+                        }
+                      }
+                      type
+                    }
+                  }
+                }
+                """;
+    }
 }

@@ -4,13 +4,13 @@ import com.bogda.api.exception.ClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.bogda.api.enums.ErrorEnum.JSON_PARSE_ERROR;
-import static com.bogda.api.logic.TranslateService.OBJECT_MAPPER;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 public class JsonUtils {
-
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static JsonNode readTree(String str) {
         try {
             return OBJECT_MAPPER.readTree(str);
@@ -69,11 +69,12 @@ public class JsonUtils {
 
     // 判断一个string类型是不是Json数据
     public static boolean isJson(String str) {
+        if (str == null || str.trim().isEmpty()) {
+            return false;
+        }
         try {
-            //清除空格
-            str = str.replaceAll(" ", "");
-            OBJECT_MAPPER.readTree(str);
-            return true;
+            JsonNode node = OBJECT_MAPPER.readTree(str);
+            return node.isObject();
         } catch (Exception e) {
             return false;
         }
