@@ -1,5 +1,6 @@
 package com.bogda.api.logic;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.api.Service.IItemsService;
@@ -13,15 +14,19 @@ import com.bogda.api.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.integration.TestingEnvironmentIntegration;
+import com.bogda.api.integration.model.ShopifyExtensions;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
+import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.api.repository.entity.TranslateTaskV2DO;
 import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -61,6 +66,8 @@ public class ShopifyService {
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
     private TestingEnvironmentIntegration testingEnvironmentIntegration;
+    @Autowired
+    private ShopifyRateLimitService shopifyRateLimitService;
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
@@ -70,31 +77,78 @@ public class ShopifyService {
                                       Consumer<ShopifyGraphResponse.TranslatableResources.Node> consumer,
                                       Consumer<String> setAfterEndCursorConsumer) {
         String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, afterEndCursor);
-        String shopifyData = getShopifyData(shopName, accessToken, API_VERSION_LAST, graphQuery);
-        ShopifyGraphResponse shopifyRes = JsonUtils.jsonToObject(shopifyData, ShopifyGraphResponse.class);
-        while (shopifyRes != null) {
+        
+        // 在第一次请求前，获取速率限制器并等待许可
+        ShopifyGraphResponse data = getShopifyDataWithRateLimit(shopName, accessToken, graphQuery);
+        while (data != null) {
             // 一个shopify data有250个nodes
-            if (shopifyRes.getTranslatableResources() != null && !CollectionUtils.isEmpty(shopifyRes.getTranslatableResources().getNodes())) {
-                for (ShopifyGraphResponse.TranslatableResources.Node node : shopifyRes.getTranslatableResources().getNodes()) {
+            if (data.getTranslatableResources() != null && !CollectionUtils.isEmpty(data.getTranslatableResources().getNodes())) {
+                for (ShopifyGraphResponse.TranslatableResources.Node node : data.getTranslatableResources().getNodes()) {
                     // 外面自己处理node数据
                     consumer.accept(node);
                 }
             }
 
             // 还有下一页，就轮询
-            if (shopifyRes.getTranslatableResources() != null
-                    && shopifyRes.getTranslatableResources().getPageInfo() != null
-                    && shopifyRes.getTranslatableResources().getPageInfo().isHasNextPage()) {
-                String endCursor = shopifyRes.getTranslatableResources().getPageInfo().getEndCursor();
-
+            if (data.getTranslatableResources() != null
+                    && data.getTranslatableResources().getPageInfo() != null
+                    && data.getTranslatableResources().getPageInfo().isHasNextPage()) {
+                String endCursor = data.getTranslatableResources().getPageInfo().getEndCursor();
                 setAfterEndCursorConsumer.accept(endCursor);
+
                 graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, endCursor);
-                String nextShopifyData = getShopifyData(shopName, accessToken, APIVERSION, graphQuery);
-                shopifyRes = JsonUtils.jsonToObject(nextShopifyData, ShopifyGraphResponse.class);
+                
+                // 在请求下一页前，重新获取速率限制器（可能已被更新）并等待许可
+                data = getShopifyDataWithRateLimit(shopName, accessToken, graphQuery);
             } else {
-                shopifyRes = null;
+                data = null;
             }
         }
+    }
+
+    /**
+     * 获取 Shopify 数据（带速率限制，返回完整响应包括 extensions）
+     * @return 完整的响应字符串（包含 data 和 extensions），但只返回 data 部分以保持向后兼容
+     */
+    private ShopifyGraphResponse getShopifyDataWithRateLimit(String shopName, String accessToken, String query) {
+        RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
+        rateLimiter.acquire();
+
+        // 获取完整响应（包括 extensions）
+        ShopifyResponse shopifyResponse = shopifyHttpIntegration.getInfo(shopName, query, accessToken);
+        if (shopifyResponse == null) {
+            return null;
+        }
+        if (shopifyResponse.getExtensions() != null) {
+            shopifyRateLimitService.updateRateLimit(shopName, shopifyResponse.getExtensions());
+        }
+        return shopifyResponse.getData();
+    }
+
+    public String saveDataWithRateLimit(String shopName, String token, ShopifyGraphResponse.TranslatableResources.Node node) {
+        RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
+        rateLimiter.acquire();
+
+        String response = shopifyHttpIntegration.saveShopifyData(shopName, token, node);
+        if (response == null) {
+            return null;
+        }
+        JSONObject jsonObject = JSONObject.parseObject(response);
+        if (jsonObject == null) {
+            return null;
+        }
+
+        if (jsonObject.getJSONObject("extensions") != null) {
+            ShopifyExtensions extensions = JsonUtils.jsonToObjectWithNull(jsonObject.getJSONObject("extensions").toString(), ShopifyExtensions.class);
+            if (extensions != null) {
+                shopifyRateLimitService.updateRateLimit(shopName, extensions);
+            }
+        }
+
+        if (jsonObject.getJSONObject("data") == null) {
+            return null;
+        }
+        return response;
     }
 
     //封装调用云服务器实现获取shopify数据的方法

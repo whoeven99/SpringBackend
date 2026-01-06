@@ -1,6 +1,5 @@
 package com.bogda.api.logic.translate;
 
-import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.Service.ITranslatesService;
 import com.bogda.api.Service.IUsersService;
 import com.bogda.api.context.TranslateContext;
@@ -13,7 +12,6 @@ import com.bogda.api.entity.VO.SingleTranslateVO;
 import com.bogda.api.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.GeminiIntegration;
-import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.integration.model.ShopifyCheckMetafieldResponse;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.logic.GlossaryService;
@@ -70,8 +68,6 @@ public class TranslateV2Service {
     private IUsersService iUsersService;
     @Autowired
     private ShopifyService shopifyService;
-    @Autowired
-    private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
     @Autowired
@@ -652,7 +648,7 @@ public class TranslateV2Service {
 
                     // 3.3 回写数据库 todo 批量
                     if (targetValue == null) {
-                        CaseSensitiveUtils.appInsights.trackTrace("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
+                        CaseSensitiveUtils.appInsights.trackTrace("targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         continue;
                     }
                     translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
@@ -725,10 +721,8 @@ public class TranslateV2Service {
                     })
                     .collect(Collectors.toList()));
             node.setResourceId(resourceId);
-            String strResponse = shopifyHttpIntegration.sendShopifyPost(
-                    shopName, token, APIVERSION, ShopifyRequestUtils.registerTransactionQuery(), node);
-            JSONObject jsonObject = JSONObject.parseObject(strResponse);
-            if (jsonObject != null && jsonObject.getJSONObject("data") != null) {
+            String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
+            if (strResponse != null) {
                 appInsights.trackTrace("TranslateTaskV2 saving success: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
                 // 回写数据库，标记已写入 TODO 批量
@@ -739,7 +733,7 @@ public class TranslateV2Service {
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             } else {
                 // 写入失败 fatalException
-                CaseSensitiveUtils.appInsights.trackTrace("TranslateTaskV2 saving failed: " + shopName +
+                CaseSensitiveUtils.appInsights.trackTrace("FatalException TranslateTaskV2 saving failed: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
@@ -756,7 +750,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateStatusSavingShopifyMinutesById(initialTaskV2DO.getStatus(), initialTaskV2DO.getSavingShopifyMinutes()
-                , initialTaskV2DO.getId());
+        , initialTaskV2DO.getId());
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
@@ -1101,15 +1095,6 @@ public class TranslateV2Service {
             }
         }
 
-        // 最终插入时，检查数据库， todo 还是需要再优化一下
-        // 检查本地数据库是否已有该 resourceId + key 的记录（防止初始化时断电造成重复插入）
-//        if (!CollectionUtils.isEmpty(existingTasks)) {
-//            for (TranslateTaskV2DO task : existingTasks) {
-//                if (translatableContent.getKey().equals(task.getNodeKey())) {
-//                    return false;
-//                }
-//            }
-//        }
         return true;
     }
 

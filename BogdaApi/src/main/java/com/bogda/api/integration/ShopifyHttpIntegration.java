@@ -1,9 +1,13 @@
 package com.bogda.api.integration;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogda.api.constants.TranslateConstants;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
+import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.api.requestBody.ShopifyRequestBody;
+import com.bogda.api.utils.JsonUtils;
+import com.bogda.api.utils.ShopifyRequestUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -11,6 +15,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -20,51 +25,31 @@ import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
 public class ShopifyHttpIntegration {
-    public String sendShopifyPost(String shopName, String accessToken, String apiVersion,
-                                  String stringQuery, ShopifyGraphResponse.TranslatableResources.Node node) {
-        String url = "https://" + shopName + "/admin/api/" + apiVersion + "/graphql.json";
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(url);
+    @Autowired
+    private BaseHttpIntegration baseHttpIntegration;
 
-        // 设置头部信息
-        httpPost.addHeader("X-Shopify-Access-Token", accessToken);
-        httpPost.addHeader("Content-Type", "application/json");
+    public ShopifyResponse getInfo(String shopName, String query, String accessToken) {
+        String url = "https://" + shopName + "/admin/api/" + TranslateConstants.API_VERSION_LAST + "/graphql.json";
 
-        // 创建查询体
-        JSONObject query = new JSONObject();
-        query.put("query", stringQuery);
-        query.put("variables", node);
-        // 将查询体设置到实体中
-        StringEntity input = new StringEntity(query.toString(), "UTF-8");
-        httpPost.setEntity(input);
+        JSONObject queryMap = new JSONObject();
+        queryMap.put("query", query);
 
-        String responseContent = null;
-        try {
-            CloseableHttpResponse response = callWithTimeoutAndRetry(() -> {
-                        try {
-                            return httpClient.execute(httpPost);
-                        } catch (Exception e) {
-                            appInsights.trackTrace("每日须看 sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + shopName);
-                            appInsights.trackException(e);
-                            return null;
-                        }
-                    },
-                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
-                    DEFAULT_MAX_RETRIES                // 最多重试3次
-            );
-            if (response == null) {
-                return null;
-            }
-            HttpEntity entity = response.getEntity();
-            responseContent = EntityUtils.toString(entity, "UTF-8");
-            response.close();
-            httpClient.close();
-        } catch (Exception e) {
-            appInsights.trackTrace("FatalException sendShopifyPost api报错信息 errors ： " + e.getMessage() + " url : " + url + " 用户：" + shopName);
-            appInsights.trackException(e);
+        String httpRes = baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken));
+        if (httpRes == null) {
             return null;
         }
-        return responseContent;
+        return JsonUtils.jsonToObjectWithNull(httpRes, ShopifyResponse.class);
+    }
+
+    public String saveShopifyData(String shopName, String accessToken,
+                                  ShopifyGraphResponse.TranslatableResources.Node node) {
+        String url = "https://" + shopName + "/admin/api/" + TranslateConstants.API_VERSION_LAST + "/graphql.json";
+
+        JSONObject queryMap = new JSONObject();
+        queryMap.put("query", ShopifyRequestUtils.registerTransactionQuery());
+        queryMap.put("variables", node);
+
+        return baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken));
     }
 
     // 设置头部信息
