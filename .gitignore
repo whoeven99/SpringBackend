@@ -14,3 +14,4 @@ target/
 !libs/aidge.jar
 /src/main/resources/application.local.properties
 *.iml
+/.vscode
