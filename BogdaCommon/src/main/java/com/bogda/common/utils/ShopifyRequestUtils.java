@@ -2,44 +2,71 @@ package com.bogda.common.utils;
 
 public class ShopifyRequestUtils {
     public static String getQuery(String resourceType, String first, String target) {
-        return "query MyQuery {\n" +
-                "  translatableResources(resourceType: " + resourceType + ", first: " + first + ") {\n" +
-                query.replace("%target%", target);
+        return getQuery(resourceType, first, target, null);
     }
 
     public static String getQuery(String resourceType, String first, String target, String after) {
-        if (after == null || after.isEmpty()) {
-            return getQuery(resourceType, first, target);
-        }
-        return "query MyQuery {\n" +
-                "  translatableResources(resourceType: " + resourceType + ", first: " + first + ", after: " + "\"" + after + "\"" + ") {\n" +
-                query.replace("%target%", target);
+        String afterClause = (after == null || after.isEmpty())
+                ? ""
+                : ", after: \"%s\"".formatted(after);
+
+        return query.formatted(resourceType, first, afterClause, target);
     }
 
-    public static String query = """
-                nodes {
-                  resourceId
-                  translations(locale: "%target%") {
-                    locale
-                    value
-                    key
-                    outdated
-                  }
-                  translatableContent {
-                    type
-                    locale
-                    key
-                    value
-                    digest
+    public static final String query = """
+                query MyQuery {
+                  translatableResources(resourceType: %s, first: %s%s) {
+                    nodes {
+                      resourceId
+                      translations(locale: "%s") {
+                        locale
+                        value
+                        key
+                        outdated
+                      }
+                      translatableContent {
+                        type
+                        locale
+                        key
+                        value
+                        digest
+                      }
+                    }
+                    pageInfo {
+                      endCursor
+                      hasNextPage
+                    }
                   }
                 }
-                pageInfo {
-                  endCursor
-                  hasNextPage
-                }
-              }
-             }
             """;
+
+    /**
+     * 根据产品id获取对应信息
+     */
+    public static String getProductDataQuery(String productId) {
+        return """
+                {
+                  product(id: "%s") {
+                    descriptionHtml
+                    id
+                    media(first: 1) {
+                      edges {
+                        node {
+                          ... on MediaImage {
+                            image {
+                              url
+                              altText
+                            }
+                          }
+                        }
+                      }
+                    }
+                    productType
+                    title
+                  }
+                }
+                """.formatted(productId);
+    }
 
     public static String registerTransactionQuery() {
         return """
@@ -58,7 +85,7 @@ public class ShopifyRequestUtils {
                 """;
     }
 
-    public static String getLanguagesQuery() {
+    public static String getShopLanguageQuery() {
         return """
                   query MyQuery {
                    shopLocales(published: false) {
@@ -71,29 +98,38 @@ public class ShopifyRequestUtils {
                 """;
     }
 
+    public static String getLanguagesQuery() {
+        return """
+                  query MyQuery {
+                    shopLocales {
+                      locale
+                      name
+                      primary
+                      published
+                    }
+                  }
+                  """;
+    }
+
     /**
      * 判断元字段id 是否关联到product
      */
     public static String getQueryForCheckMetafieldId(String metafieldId) {
-        return queryMetafieldId().replace("%metafieldId%", metafieldId);
-    }
-
-    public static String queryMetafieldId() {
         return """
-                query MyQuery {
-                  node(id: "%metafieldId%") {
-                    ... on Metafield {
+            query MyQuery {
+              node(id: "%s") {
+                ... on Metafield {
+                  id
+                  owner {
+                    ... on Product {
                       id
-                      owner {
-                        ... on Product {
-                          id
-                          title
-                        }
-                      }
-                      type
+                      title
                     }
                   }
+                  type
                 }
-                """;
+              }
+            }
+            """.formatted(metafieldId);
     }
 }

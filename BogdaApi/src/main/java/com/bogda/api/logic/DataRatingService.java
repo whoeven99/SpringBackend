@@ -12,6 +12,7 @@ import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.DO.WidgetConfigurationsDO;
+import com.bogda.api.utils.ShopifyRequestUtils;
 import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -78,6 +79,7 @@ public class DataRatingService {
 
         // 2，从shopify中获取所有的语言状态数据
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, getShopLanguageQuery());
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         if (shopifyByQuery == null) {
             return null;
         }

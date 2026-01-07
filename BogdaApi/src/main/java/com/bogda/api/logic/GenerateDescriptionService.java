@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 import java.util.Random;
 
 import static com.bogda.api.logic.APGUserGeneratedTaskService.*;
-import static com.bogda.api.requestBody.ShopifyRequestBody.getProductDataQuery;
+import static com.bogda.api.utils.ShopifyRequestUtils.getProductDataQuery;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.common.utils.PlaceholderUtils.buildDescriptionPrompt;

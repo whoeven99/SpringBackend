@@ -1,6 +1,7 @@
 package com.bogda.api.logic;
 
 import com.bogda.api.integration.model.ShopifyExtensions;
+import com.bogda.api.utils.AppInsightsUtils;
 import com.google.common.util.concurrent.RateLimiter;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,7 @@ public class ShopifyRateLimitService {
      */
     public RateLimiter getOrCreateRateLimiter(String shopName) {
         return shopRateLimiters.computeIfAbsent(shopName, k -> {
-            appInsights.trackTrace("创建新的速率限制器，商店: " + shopName + "，默认速率: " + DEFAULT_RATE);
+            AppInsightsUtils.trackTrace("创建新的速率限制器，商店: %s，默认速率: %.2f", shopName, DEFAULT_RATE);
             return RateLimiter.create(DEFAULT_RATE);
         });
     }
@@ -88,10 +89,9 @@ public class ShopifyRateLimitService {
         // 只有当速率变化超过 10% 时才更新，避免频繁调整
         if (Math.abs(newRate - currentRate) / currentRate > 0.1) {
             rateLimiter.setRate(newRate);
-            appInsights.trackTrace(String.format(
-                "更新速率限制，商店: %s, 当前可用: %d/%.0f, 恢复速率: %.0f, 新速率: %.2f, 旧速率: %.2f",
+            AppInsightsUtils.trackTrace("更新速率限制，商店: %s, 当前可用: %d/%.0f, 恢复速率: %.0f, 新速率: %.2f, 旧速率: %.2f",
                 shopName, currentlyAvailable, maximumAvailable, restoreRate, newRate, currentRate
-            ));
+            );
         }
     }
 }
