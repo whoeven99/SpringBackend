@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogda.api.Service.*;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.entity.VO.SubscriptionVO;
+import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
@@ -20,8 +21,6 @@ import java.util.Map;
 import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogda.api.constants.TranslateConstants.MAX_LENGTH;
 import static com.bogda.api.enums.ErrorEnum.SQL_SELECT_ERROR;
-import static com.bogda.api.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogda.api.logic.ShopifyService.getShopifyDataByCloud;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.parsePlanName;
@@ -45,6 +44,8 @@ public class ShopifyController {
     private IUserTrialsService iUserTrialsService;
     @Autowired
     private ISubscriptionPlansService iSubscriptionPlansService;
+    @Autowired
+    private ShopifyHttpIntegration shopifyHttpIntegration;
 
     //通过测试环境调shopify的API
     @PostMapping("/test123")
@@ -56,7 +57,7 @@ public class ShopifyController {
         String body = cloudServiceRequest.getBody();
         JSONObject infoByShopify = null;
         try {
-            infoByShopify = getInfoByShopify(request, body);
+            infoByShopify = shopifyHttpIntegration.getInfoByShopify(request, body);
         } catch (Exception e) {
             appInsights.trackException(e);
             appInsights.trackTrace("FatalException test123 " + request.getShopName() + " 无法获取shopify数据");
@@ -65,12 +66,6 @@ public class ShopifyController {
             return null;
         }
         return infoByShopify.toString();
-    }
-
-    //通过测试环境调shopify的API
-    @PostMapping("/shopifyApi")
-    public BaseResponse<Object> shopifyApi(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        return new BaseResponse<>().CreateSuccessResponse(getShopifyDataByCloud(cloudServiceRequest));
     }
 
     // 用户消耗的字符数

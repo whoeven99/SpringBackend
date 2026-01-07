@@ -7,6 +7,7 @@ import com.bogda.api.entity.VO.GptVO;
 import com.bogda.api.entity.VO.UserDataReportVO;
 import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.GoogleMachineIntegration;
+import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.logic.RedisDataReportService;
 import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.logic.translate.TranslateV2Service;
@@ -30,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogda.api.integration.ShopifyHttpIntegration.getInfoByShopify;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
@@ -49,6 +49,8 @@ public class TestController {
     private ITranslatesService iTranslatesService;
     @Autowired
     private GoogleMachineIntegration googleMachineIntegration;
+    @Autowired
+    private ShopifyHttpIntegration shopifyHttpIntegration;
 
     @PostMapping("/test")
     public Pair<String, Integer> test(@RequestBody TranslateRequest request) {
@@ -102,7 +104,7 @@ public class TestController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
-        JSONObject infoByShopify = getInfoByShopify(request, body);
+        JSONObject infoByShopify = shopifyHttpIntegration.getInfoByShopify(request, body);
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }
