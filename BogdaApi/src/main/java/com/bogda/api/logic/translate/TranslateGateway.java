@@ -1,7 +1,7 @@
 package com.bogda.api.logic.translate;
 
 import com.bogda.api.integration.ChatGptIntegration;
-import com.bogda.api.integration.TranslateApiIntegration;
+import com.bogda.api.integration.GoogleMachineIntegration;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TranslateGateway {
     @Autowired
-    private TranslateApiIntegration translateApiIntegration;
+    private GoogleMachineIntegration googleMachineIntegration;
     @Autowired
     private ChatGptIntegration chatGptIntegration;
 

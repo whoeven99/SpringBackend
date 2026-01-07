@@ -23,7 +23,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import static com.bogda.api.constants.TranslateConstants.*;
-import static com.bogda.api.integration.TranslateApiIntegration.getGoogleTranslationWithRetry;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -67,11 +66,6 @@ public class TranslateService {
         }
 
         return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
-    }
-
-    //google翻译接口
-    public String googleTranslate(TranslateRequest request) {
-        return getGoogleTranslationWithRetry(request);
     }
 
     /**
