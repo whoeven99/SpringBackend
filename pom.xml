@@ -8,8 +8,8 @@
 		<version>3.2.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example</groupId>
-	<artifactId>spring-backend</artifactId>
+	<groupId>com.bogda</groupId>
+	<artifactId>translationBE</artifactId>
 	<version>0.0.2</version>
   	<packaging>pom</packaging>
   	<name>bogda-backend-java-app</name>
@@ -27,13 +27,31 @@
 
 	<build>
 		<plugins>
+			<!-- 最基础的 Checkstyle 插件配置，多模块通用 -->
 			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.5.0</version>
 				<configuration>
-					<skip>true</skip>
+					<!-- 使用 UTF-8 编码 -->
+					<encoding>UTF-8</encoding>
+					<!-- 指向刚才创建的配置文件 -->
+					<configLocation>config/checkstyle/checkstyle.xml</configLocation>
+					<!-- 只在有真正错误时失败，当前规则比较宽松 -->
+					<failsOnError>true</failsOnError>
+					<consoleOutput>true</consoleOutput>
 				</configuration>
+				<executions>
+					<execution>
+						<id>validate</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
+
 		</plugins>
 	</build>
 
