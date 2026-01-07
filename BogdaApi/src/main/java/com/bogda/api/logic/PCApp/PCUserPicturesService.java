@@ -14,6 +14,7 @@ import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.repository.repo.PCUserPicturesRepo;
 import com.bogda.api.repository.repo.PCUsersRepo;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.PictureUtils;
 import com.bogda.api.utils.StringUtils;
@@ -26,7 +27,7 @@ import java.util.List;
 
 import static com.bogda.api.controller.UserPicturesController.allowedMimeTypes;
 import static com.bogda.api.utils.ModuleCodeUtils.getLanguageName;
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+
 
 @Component
 public class PCUserPicturesService {
@@ -53,7 +54,7 @@ public class PCUserPicturesService {
         try {
             pcUserPicturesDO = JsonUtils.OBJECT_MAPPER.readValue(pcUserPicturesDoJson, PCUserPicturesDO.class);
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
+            AppInsightsUtils.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }
 
         // 先判断是否有图片,有图片做上传和插入更新数据;没有图片,做插入和更新数据
@@ -98,7 +99,7 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> translatePic(String shopName, ImageTranslateVO imageTranslateVO) {
-        appInsights.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + imageTranslateVO.getSourceCode() + " targetCode " + imageTranslateVO.getTargetCode() + " imageUrl " + imageTranslateVO.getImageUrl() + " accessToken " + imageTranslateVO.getAccessToken());
+        AppInsightsUtils.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + imageTranslateVO.getSourceCode() + " targetCode " + imageTranslateVO.getTargetCode() + " imageUrl " + imageTranslateVO.getImageUrl() + " accessToken " + imageTranslateVO.getAccessToken());
 
         // 判断 图片格式，语言范围，然后选择模型翻译
         String imageUrl = imageTranslateVO.getImageUrl();
@@ -173,7 +174,7 @@ public class PCUserPicturesService {
     }
 
     public BaseResponse<Object> altTranslate(String shopName, AltTranslateVO altTranslateVO) {
-        appInsights.trackTrace("altTranslate 用户 " + shopName + " sourceCode " + altTranslateVO.getTargetCode() + " targetCode " + altTranslateVO.getTargetCode() + " alt " + altTranslateVO.getAlt() + " accessToken " + altTranslateVO.getAccessToken());
+        AppInsightsUtils.trackTrace("altTranslate 用户 " + shopName + " sourceCode " + altTranslateVO.getTargetCode() + " targetCode " + altTranslateVO.getTargetCode() + " alt " + altTranslateVO.getAlt() + " accessToken " + altTranslateVO.getAccessToken());
         // 获取用户token，判断是否和数据库中一致再选择是否调用
         PCUsersDO pcUsersDO = pcUsersRepo.getUserByShopName(shopName);
         if (!pcUsersDO.getAccessToken().equals(altTranslateVO.getAccessToken())) {

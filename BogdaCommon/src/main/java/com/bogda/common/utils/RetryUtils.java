@@ -2,8 +2,6 @@ package com.bogda.common.utils;
 
 import java.util.function.Function;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
-
 public class RetryUtils {
 
     /**
@@ -31,13 +29,13 @@ public class RetryUtils {
                 }
 
                 if (attempt < maxRetries) {
-                    appInsights.trackTrace("FatalException retryWithParam 第 " + attempt + " 次失败，等待 " + delay + " 毫秒后重试...");
+                    AppInsightsUtils.trackTrace("FatalException retryWithParam 第 " + attempt + " 次失败，等待 " + delay + " 毫秒后重试...");
                     Thread.sleep(delay);
                     delay = Math.min(delay * 2, maxDelayMillis);
                 }
             } catch (Exception e) {
-                appInsights.trackException(e);
-                appInsights.trackTrace("FatalException retryWithParam 执行出错（第 " + attempt + " 次）：" + e.getMessage());
+                AppInsightsUtils.trackException(e);
+                AppInsightsUtils.trackTrace("FatalException retryWithParam 执行出错（第 " + attempt + " 次）：" + e.getMessage());
 
                 if (attempt < maxRetries) {
                     try {

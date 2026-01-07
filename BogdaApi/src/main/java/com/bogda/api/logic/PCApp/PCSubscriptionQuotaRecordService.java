@@ -3,10 +3,11 @@ package com.bogda.api.logic.PCApp;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogda.api.repository.repo.PCSubscriptionQuotaRecordRepo;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+
 
 @Component
 public class PCSubscriptionQuotaRecordService {
@@ -18,9 +19,9 @@ public class PCSubscriptionQuotaRecordService {
         //如果数据库中含有这条数据，就不插入了
         PCSubscriptionQuotaRecordDO quotaRecordDO = pcSubscriptionQuotaRecordRepo.getQuotaRecordBySubscriptionIdAndBillingCycle(pcSubscriptionQuotaRecordDO.getSubscriptionId(), 1);
 
-        appInsights.trackTrace("addSubscriptionQuotaRecord " + pcSubscriptionQuotaRecordDO.getSubscriptionId() + " 这条数据只是判断是否要往数据库存值 quotaRecordDO: " + quotaRecordDO);
+        AppInsightsUtils.trackTrace("addSubscriptionQuotaRecord " + pcSubscriptionQuotaRecordDO.getSubscriptionId() + " 这条数据只是判断是否要往数据库存值 quotaRecordDO: " + quotaRecordDO);
         if (quotaRecordDO != null) {
-            appInsights.trackTrace("addSubscriptionQuotaRecord " + pcSubscriptionQuotaRecordDO.getSubscriptionId() + " 数据库中含有这条数据，就不插入了");
+            AppInsightsUtils.trackTrace("addSubscriptionQuotaRecord " + pcSubscriptionQuotaRecordDO.getSubscriptionId() + " 数据库中含有这条数据，就不插入了");
             return new BaseResponse<>().CreateSuccessResponse("not need insert");
         }
 

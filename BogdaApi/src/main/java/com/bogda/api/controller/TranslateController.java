@@ -16,6 +16,7 @@ import com.bogda.api.logic.translate.TranslateV2Service;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.model.controller.response.ProgressResponse;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
@@ -23,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import static com.bogda.common.enums.ErrorEnum.*;
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
 @RestController
@@ -157,7 +157,7 @@ public class TranslateController {
             }
 
             translateArrayVO.setTranslatesDOResult(translatesDOResult);
-            appInsights.trackTrace("readTranslateDOByArray : " + Arrays.toString(translatesDOS));
+            AppInsightsUtils.trackTrace("readTranslateDOByArray : " + Arrays.toString(translatesDOS));
             return new BaseResponse<>().CreateSuccessResponse(translateArrayVO);
         } else {
             return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
@@ -193,7 +193,7 @@ public class TranslateController {
     public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
         Map<String, Object> body = cloudServiceRequest.getBody();
         String s = shopifyHttpIntegration.registerTransaction(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
-        appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
+        AppInsightsUtils.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
     }
 
 
@@ -201,7 +201,7 @@ public class TranslateController {
     @PostMapping("/deleteFromTranslates")
     public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
         Boolean b = translatesService.deleteFromTranslates(request);
-        appInsights.trackTrace("deleteFromTranslates 用户删除翻译语言： " + request);
+        AppInsightsUtils.trackTrace("deleteFromTranslates 用户删除翻译语言： " + request);
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {

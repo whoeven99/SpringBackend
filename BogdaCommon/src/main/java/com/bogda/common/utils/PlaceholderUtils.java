@@ -32,7 +32,7 @@ public class PlaceholderUtils {
             String brandWord,
             String brandSlogan
     ) {
-//        appInsights.trackTrace("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
+//        AppInsightsUtils.trackTrace("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a professional e-commerce ") ;
         prompt.append(templateType);

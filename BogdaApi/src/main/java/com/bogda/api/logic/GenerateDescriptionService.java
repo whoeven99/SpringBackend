@@ -17,6 +17,7 @@ import com.bogda.api.entity.VO.GenerateDescriptionVO;
 import com.bogda.api.exception.ClientException;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
@@ -28,7 +29,6 @@ import java.util.Random;
 
 import static com.bogda.api.logic.APGUserGeneratedTaskService.*;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.common.utils.PlaceholderUtils.buildDescriptionPrompt;
 import static com.bogda.api.utils.StringUtils.countWords;
 import static com.bogda.api.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
@@ -72,7 +72,7 @@ public class GenerateDescriptionService {
         counter.addChars(counterDO.getUserToken());
         //生成提示词
         String prompt = buildDescriptionPrompt(product.getProductTitle(), product.getProductType(), product.getProductDescription(), generateDescriptionVO.getSeoKeywords(), product.getImageUrl(), product.getImageAltText(), generateDescriptionVO.getTextTone(), templateById.getTemplateType(), generateDescriptionVO.getBrandTone(), templateById.getTemplateData(), generateDescriptionVO.getLanguage(), generateDescriptionVO.getContentType(), generateDescriptionVO.getBrandWord(), generateDescriptionVO.getBrandSlogan());
-        appInsights.trackTrace(usersDO.getShopName() + " 用户 " + product.getId() + " 的提示词为 ： " + prompt);
+        AppInsightsUtils.trackTrace(usersDO.getShopName() + " 用户 " + product.getId() + " 的提示词为 ： " + prompt);
         //调用大模型翻译
         //如果产品图片为空，换模型生成
         String des;
@@ -109,8 +109,8 @@ public class GenerateDescriptionService {
             productDTO.setProductTitle(root.at("/product/title").asText(null));
             return productDTO;
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException getProductsQueryByProductId errors : " + e);
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException getProductsQueryByProductId errors : " + e);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }

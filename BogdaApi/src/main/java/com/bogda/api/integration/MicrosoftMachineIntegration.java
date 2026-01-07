@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.utils.ModuleCodeUtils;
-import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -41,7 +41,7 @@ public class MicrosoftMachineIntegration {
         String requestBody = "[{\n" +
                 "    \"Text\": \"" + request.getContent() + "\"\n" +
                 "}]";
-//        appInsights.trackTrace("requestBody" + requestBody);
+//        AppInsightsUtils.trackTrace("requestBody" + requestBody);
         // 发送请求
         String responseContent = null;
         String result = null;
@@ -52,8 +52,8 @@ public class MicrosoftMachineIntegration {
             HttpEntity responseEntity = response.getEntity();
             responseContent = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             // 获取翻译结果
-            CaseSensitiveUtils.appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
-//            appInsights.trackTrace("翻译错误信息：" + responseContent);
+            AppInsightsUtils.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
+//            AppInsightsUtils.trackTrace("翻译错误信息：" + responseContent);
             JSONArray jsonArray = JSON.parseArray(responseContent);
             for (int i = 0; i < jsonArray.size(); i++) {
                 // 获取当前的 JSONObject

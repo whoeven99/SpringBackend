@@ -11,7 +11,7 @@ import com.bogda.api.repository.entity.PCUserSubscriptionsDO;
 import com.bogda.api.repository.entity.PCUserTrialsDO;
 import com.bogda.api.repository.repo.*;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -42,7 +42,7 @@ public class PCUserSubscriptionService {
         PCUserSubscriptionsDO pcUserSubscriptionsByShopName = pcUserSubscriptionsRepo.getPcUserSubscriptionsByShopName(shopName);
 
         if (pcUserSubscriptionsByShopName == null) {
-            CaseSensitiveUtils.appInsights.trackTrace("PC getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
+            AppInsightsUtils.trackTrace("PC getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("pcUserSubscriptionsByShopName is null");
         }
 

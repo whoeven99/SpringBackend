@@ -6,6 +6,7 @@ import com.bogda.api.repository.entity.PCOrdersDO;
 import com.bogda.api.repository.entity.PCUserTrialsDO;
 import com.bogda.api.repository.repo.PCOrdersRepo;
 import com.bogda.api.repository.repo.PCUserTrialsRepo;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +14,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+
 
 @Component
 public class PCUserTrialsService {
@@ -44,7 +45,7 @@ public class PCUserTrialsService {
         List<PCOrdersDO> pcOrdersDOList = pcOrdersRepo.selectOrdersByShopName(shopName);
 
         if (!pcOrdersDOList.isEmpty()) {
-            appInsights.trackTrace("queryUserTrialByShopName " + shopName + " 返回的pcOrdersDOList 值为 ： " + pcOrdersDOList);
+            AppInsightsUtils.trackTrace("queryUserTrialByShopName " + shopName + " 返回的pcOrdersDOList 值为 ： " + pcOrdersDOList);
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
 

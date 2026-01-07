@@ -10,6 +10,7 @@ import com.bogda.api.model.controller.request.PurchaseSuccessRequest;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
 import com.bogda.common.contants.MailChimpConstants;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,8 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class OrderService {
@@ -81,7 +80,7 @@ public class OrderService {
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
         //修改用户计划表里面用户feeType
         boolean update = iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName).set(UserSubscriptionsDO::getFeeType, feeType));
-        appInsights.trackTrace("sendSubscribeSuccessEmail 用户 " + shopName + " 修改用户计划表里面用户feeType " + update + " feeType为" + feeType + " subId为" + subId);
+        AppInsightsUtils.trackTrace("sendSubscribeSuccessEmail 用户 " + shopName + " 修改用户计划表里面用户feeType " + update + " feeType为" + feeType + " subId为" + subId);
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(shopName);
         //根据shopName获取订单信息
@@ -101,7 +100,7 @@ public class OrderService {
             templateData.put("Start date", trialStart + " UTC");
             templateData.put("End date", trialEnd + " UTC");
             emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146220L, templateData, MailChimpConstants.PLAN_TRIALS_SUCCESSFUL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
-            appInsights.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
+            AppInsightsUtils.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
             return false;
         }
         Map<String, String> templateData = new HashMap<>();

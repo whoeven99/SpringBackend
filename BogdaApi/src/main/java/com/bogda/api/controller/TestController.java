@@ -16,6 +16,7 @@ import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.task.IpEmailTask;
 import com.bogda.api.utils.ModuleCodeUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 public class TestController {
@@ -76,7 +75,7 @@ public class TestController {
                     .contentType(MediaType.IMAGE_PNG) // 或 IMAGE_JPEG
                     .body(Base64.getDecoder().decode(first));
         } catch (Exception e) {
-            appInsights.trackException(e);
+            AppInsightsUtils.trackException(e);
             e.printStackTrace();
         }
         return null;
@@ -84,8 +83,7 @@ public class TestController {
 
     @GetMapping("/ping")
     public String ping() {
-        TelemetryClient appInsights = new TelemetryClient();
-        appInsights.trackTrace("SpringBackend Ping Successful");
+        AppInsightsUtils.trackTrace("SpringBackend Ping Successful");
         return "Ping Successful!";
     }
 
@@ -122,7 +120,7 @@ public class TestController {
      */
     @PostMapping("/frontEndPrinting")
     public void frontEndPrinting(@RequestBody String data) {
-        appInsights.trackTrace(data);
+        AppInsightsUtils.trackTrace(data);
     }
 
     /**

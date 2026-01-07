@@ -6,11 +6,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.api.Service.IUserTrialsService;
 import com.bogda.api.entity.DO.UserTrialsDO;
 import com.bogda.api.mapper.UserTrialsMapper;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+
 
 @Service
 public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTrialsDO> implements IUserTrialsService {
@@ -29,7 +30,7 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
     public Boolean queryUserTrialByShopName(String shopName) {
         UserTrialsDO userTrialsDO = baseMapper.selectOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
         if (userTrialsDO != null && userTrialsDO.getIsTrialExpired() != null) {
-            appInsights.trackTrace("queryUserTrialByShopName " + shopName + " userTrialsDO: " + userTrialsDO);
+            AppInsightsUtils.trackTrace("queryUserTrialByShopName " + shopName + " userTrialsDO: " + userTrialsDO);
             return userTrialsDO.getIsTrialExpired();
         }
         return null;

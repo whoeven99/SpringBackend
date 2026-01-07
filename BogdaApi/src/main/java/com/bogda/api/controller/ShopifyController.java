@@ -12,6 +12,7 @@ import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogda.common.enums.ErrorEnum.SQL_SELECT_ERROR;
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.parsePlanName;
 
 @RestController
@@ -54,8 +54,8 @@ public class ShopifyController {
         try {
             infoByShopify = shopifyHttpIntegration.getInfoByShopify(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException test123 " + cloudServiceRequest.getShopName() + " 无法获取shopify数据");
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException test123 " + cloudServiceRequest.getShopName() + " 无法获取shopify数据");
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
@@ -78,8 +78,8 @@ public class ShopifyController {
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                appInsights.trackException(e);
-                appInsights.trackTrace("FatalException getConsumedWords Error while getConsumedWords for shop " + e.getMessage());
+                AppInsightsUtils.trackException(e);
+                AppInsightsUtils.trackTrace("FatalException getConsumedWords Error while getConsumedWords for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -132,12 +132,12 @@ public class ShopifyController {
                     Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
                     map.put("chars", translationCounterRequests.getUsedChars());
                     map.put("totalChars", maxCharsByShopName);
-                    appInsights.trackTrace("getUserLimitChars " + shopName + " chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
+                    AppInsightsUtils.trackTrace("getUserLimitChars " + shopName + " chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
                     return new BaseResponse<>().CreateSuccessResponse(map);
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                appInsights.trackTrace("FatalException getUserLimitChars Error while getUserLimitChars for shop " + e.getMessage());
+                AppInsightsUtils.trackTrace("FatalException getUserLimitChars Error while getUserLimitChars for shop " + e.getMessage());
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -181,7 +181,7 @@ public class ShopifyController {
         UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getOne(new LambdaQueryWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName));
 
         if (userSubscriptionsDO == null) {
-            appInsights.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
+            AppInsightsUtils.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
         }
 
@@ -298,7 +298,7 @@ public class ShopifyController {
             return new BaseResponse<>().CreateErrorResponse("registerTransactionRequest is empty");
         }
         String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
-        appInsights.trackTrace("updateItems 用户 " + registerTransactionRequest.get(0).getShopName() + " 返回数据 response: " + s);
+        AppInsightsUtils.trackTrace("updateItems 用户 " + registerTransactionRequest.get(0).getShopName() + " 返回数据 response: " + s);
         if (s.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {

@@ -7,6 +7,7 @@ import com.azure.ai.openai.models.ChatCompletionsOptions;
 import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.bogda.api.utils.TimeOutUtils;
 import kotlin.Pair;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+
 
 @Component
 public class ChatGptIntegration {
@@ -55,12 +56,12 @@ public class ChatGptIntegration {
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
             int input = chatCompletions.getUsage().getPromptTokens();
             int output = chatCompletions.getUsage().getCompletionTokens();
-            appInsights.trackTrace("ChatGptIntegration 翻译提示词： " + prompt + " token openai : " + content + " all: "
+            AppInsightsUtils.trackTrace("ChatGptIntegration 翻译提示词： " + prompt + " token openai : " + content + " all: "
                     + allToken + " input: " + input + " output: " + output + " target: " + target);
             return new Pair<>(content, allToken);
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " prompt: " + prompt);
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " prompt: " + prompt);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }

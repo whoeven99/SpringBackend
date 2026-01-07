@@ -8,7 +8,7 @@ import com.bogda.api.repository.repo.PCOrdersRepo;
 import com.bogda.api.repository.repo.PCSubscriptionsRepo;
 import com.bogda.api.repository.repo.PCUserSubscriptionsRepo;
 import com.bogda.api.repository.repo.PCUsersRepo;
-import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.api.utils.ShopifyUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -69,7 +69,7 @@ public class PCOrdersService {
         // 解析计划数据，如果是Active，发送邮件，反之不发送
         JsonNode jsonNode = JsonUtils.readTree(subscribeData);
         if (jsonNode == null) {
-            CaseSensitiveUtils.appInsights.trackTrace("FatalException sendSubscribeSuccessEmail jsonNode is null : " + subscribeData);
+            AppInsightsUtils.trackTrace("FatalException sendSubscribeSuccessEmail jsonNode is null : " + subscribeData);
             return new BaseResponse<>().CreateErrorResponse("subscribe data is null");
         }
 
@@ -77,7 +77,7 @@ public class PCOrdersService {
         String subscribeId = jsonNode.path("app_subscription").path("admin_graphql_api_id").asText(null);
         String createdAt = jsonNode.path("app_subscription").path("created_at").asText(null);
         if (!"ACTIVE".equals(status) || subscribeId == null || createdAt == null) {
-            CaseSensitiveUtils.appInsights.trackTrace("status : " + status + " subscribeId : " + subscribeId + " createdAt : " + createdAt);
+            AppInsightsUtils.trackTrace("status : " + status + " subscribeId : " + subscribeId + " createdAt : " + createdAt);
             return new BaseResponse<>().CreateErrorResponse("subscribe status is not Active");
         }
 
@@ -115,7 +115,7 @@ public class PCOrdersService {
         // 解析一次性购买数据， 如果是Active，发送邮件，反之不发送
         JsonNode jsonNode = JsonUtils.readTree(oneTimePurchaseData);
         if (jsonNode == null) {
-            CaseSensitiveUtils.appInsights.trackTrace("FatalException sendOneTimeBuySuccessEmail jsonNode is null : " + oneTimePurchaseData);
+            AppInsightsUtils.trackTrace("FatalException sendOneTimeBuySuccessEmail jsonNode is null : " + oneTimePurchaseData);
             return new BaseResponse<>().CreateErrorResponse("subscribe data is null");
         }
 

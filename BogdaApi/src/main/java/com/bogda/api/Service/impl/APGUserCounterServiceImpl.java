@@ -5,9 +5,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.api.Service.IAPGUserCounterService;
 import com.bogda.api.entity.DO.APGUserCounterDO;
 import com.bogda.api.mapper.APGUserCounterMapper;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+
 
 @Service
 public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper, APGUserCounterDO> implements IAPGUserCounterService {
@@ -47,11 +48,11 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
                     return true;
                 } else {
                     retryCount++;
-                    appInsights.trackTrace("FatalException updateUserUsedCount 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + userId);
+                    AppInsightsUtils.trackTrace("FatalException updateUserUsedCount 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + userId);
                 }
             } catch (Exception e) {
                 retryCount++;
-                appInsights.trackTrace("FatalException updateUserUsedCount 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + userId + ", 错误=" + e);
+                AppInsightsUtils.trackTrace("FatalException updateUserUsedCount 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + userId + ", 错误=" + e);
             }
 
             try {
@@ -62,7 +63,7 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
             }
         }
 
-        appInsights.trackTrace("updateUserUsedCount 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + userId);
+        AppInsightsUtils.trackTrace("updateUserUsedCount 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + userId);
         return false;
 
     }

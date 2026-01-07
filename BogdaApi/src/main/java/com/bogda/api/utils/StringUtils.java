@@ -1,6 +1,7 @@
 package com.bogda.api.utils;
 
 import com.bogda.api.entity.DTO.SimpleMultipartFileDTO;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.core.dependencies.apachecommons.io.FilenameUtils;
@@ -14,8 +15,6 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 public class StringUtils {
     // 正则表达式：只包含字母、数字和标点符号
@@ -154,8 +153,8 @@ public class StringUtils {
                     outputStream.toByteArray()
             );
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException convertUrlToMultipartFile error: " + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException convertUrlToMultipartFile error: " + e.getMessage());
         }
         return null;
     }

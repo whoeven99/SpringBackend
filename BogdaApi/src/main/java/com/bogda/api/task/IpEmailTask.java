@@ -7,6 +7,7 @@ import com.bogda.api.logic.UserIpService;
 import com.bogda.api.repository.entity.UserIPCountDO;
 import com.bogda.api.repository.repo.UserIPCountRepo;
 import com.bogda.api.utils.ModuleCodeUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,8 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 @EnableScheduling
@@ -34,7 +33,7 @@ public class IpEmailTask {
     public void sendEmailTask() {
         List<WidgetConfigurationsDO> allIpOpenByTrue = iWidgetConfigurationsService.getAllIpOpenByTrue();
         if (allIpOpenByTrue == null || allIpOpenByTrue.isEmpty()) {
-            appInsights.trackTrace("sendEmailTask 没有要发送的ip上报邮件");
+            AppInsightsUtils.trackTrace("sendEmailTask 没有要发送的ip上报邮件");
             return;
         }
 

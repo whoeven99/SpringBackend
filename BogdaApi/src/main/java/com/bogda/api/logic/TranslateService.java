@@ -10,6 +10,7 @@ import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.AidgeIntegration;
 import com.bogda.api.logic.redis.RedisStoppedRepository;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,8 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 @EnableAsync
@@ -53,7 +52,7 @@ public class TranslateService {
     public String stopTranslationManually(String shopName) {
 //         v2, 后面的以后删掉
         redisStoppedRepository.manuallyStopped(shopName);
-        appInsights.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");
+        AppInsightsUtils.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");
 
         // 将翻译状态改为“部分翻译” shopName, status=3
         translatesService.updateStatusByShopNameAnd2(shopName);
@@ -95,8 +94,8 @@ public class TranslateService {
             shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
             root = JsonUtils.readTree(shopifyData);
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
             return;
         }
 
@@ -108,7 +107,7 @@ public class TranslateService {
         JsonNode shopLocales = root.path("shopLocales");
 
         if (!shopLocales.isArray()) {
-            appInsights.trackTrace("syncShopifyAndDatabase: shopLocales is not an array.");
+            AppInsightsUtils.trackTrace("syncShopifyAndDatabase: shopLocales is not an array.");
             return;
         }
 
@@ -131,7 +130,7 @@ public class TranslateService {
     }
 
     public String imageTranslate(String sourceCode, String targetCode, String imageUrl, String shopName, String accessToken) {
-        appInsights.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + sourceCode + " targetCode " + targetCode + " imageUrl " + imageUrl + " accessToken " + accessToken);
+        AppInsightsUtils.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + sourceCode + " targetCode " + targetCode + " imageUrl " + imageUrl + " accessToken " + accessToken);
 
         // 获取用户token，判断是否和数据库中一致再选择是否调用
         UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));

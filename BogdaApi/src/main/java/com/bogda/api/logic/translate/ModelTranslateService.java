@@ -3,8 +3,8 @@ package com.bogda.api.logic.translate;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.ChatGptIntegration;
 import com.bogda.api.integration.GeminiIntegration;
-import com.bogda.common.utils.CaseSensitiveUtils;
 import com.bogda.api.integration.GoogleMachineIntegration;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +44,7 @@ public class ModelTranslateService {
         }
 
         // 做一个保底处理，当pair为null的时候，用google再翻译一次，如果再为null，就直接返回.
-        CaseSensitiveUtils.appInsights.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
+        AppInsightsUtils.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
         return googleMachineIntegration.googleTranslateWithSDK(sourceText, target);
     }
 
@@ -56,7 +56,7 @@ public class ModelTranslateService {
         }
 
         // json批量翻译不行，翻译值会少数据，目前只能循环批量翻译
-        CaseSensitiveUtils.appInsights.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceMap);
+        AppInsightsUtils.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceMap);
 
         // 将文本转为Map<Integer, String>, 循环翻译
         if (sourceMap == null || sourceMap.isEmpty()) {
@@ -86,8 +86,8 @@ public class ModelTranslateService {
                     resultMap.put(key, value);
                 }
             } catch (Exception e) {
-                CaseSensitiveUtils.appInsights.trackException(e);
-                CaseSensitiveUtils.appInsights.trackTrace("FatalException google机器翻译失败：" + value + " key: " + key);
+                AppInsightsUtils.trackException(e);
+                AppInsightsUtils.trackTrace("FatalException google机器翻译失败：" + value + " key: " + key);
                 resultMap.put(key, value);
             }
         }

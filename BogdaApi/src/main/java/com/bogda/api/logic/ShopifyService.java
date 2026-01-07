@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.api.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.common.utils.JsonUtils.isJson;
 import static com.bogda.common.utils.JudgeTranslateUtils.*;
 import static com.bogda.api.utils.StringUtils.isValueBlank;
@@ -201,7 +200,7 @@ public class ShopifyService {
             JsonNode root = JsonUtils.readTree(shopifyData);
 
             if (root == null || !root.has("shopLocales")) {
-                appInsights.trackTrace("Shopify response is empty or missing 'shopLocales' field for shop: " + shopName);
+                AppInsightsUtils.trackTrace("Shopify response is empty or missing 'shopLocales' field for shop: " + shopName);
                 return Collections.emptyList();
             }
 
@@ -215,7 +214,7 @@ public class ShopifyService {
             }
 
             if (shopLanguageList.isEmpty()) {
-                appInsights.trackTrace("No locales found for shop: " + shopName);
+                AppInsightsUtils.trackTrace("No locales found for shop: " + shopName);
                 return Collections.emptyList();
             }
 
@@ -233,8 +232,8 @@ public class ShopifyService {
                     .toList();
 
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException Failed to sync Shopify languages for shop: " + shopName + " - " + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException Failed to sync Shopify languages for shop: " + shopName + " - " + e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -296,8 +295,8 @@ public class ShopifyService {
         try {
             rootNode = JsonUtils.OBJECT_MAPPER.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("解析JSON数据失败 errors： " + translateResource);
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("解析JSON数据失败 errors： " + translateResource);
         }
         return rootNode;
     }
@@ -440,8 +439,8 @@ public class ShopifyService {
                 }
             }
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
         }
         return doubleTranslateTextDTOSet;
     }
@@ -523,7 +522,7 @@ public class ShopifyService {
             infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
         } catch (Exception e) {
             // 如果出现异常，则跳过, 翻译其他的内容
-            appInsights.trackTrace("FatalException fetchNextPage errors : " + e.getMessage());
+            AppInsightsUtils.trackTrace("FatalException fetchNextPage errors : " + e.getMessage());
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
@@ -623,9 +622,9 @@ public class ShopifyService {
      * 修改shopify本地单条数据
      */
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        appInsights.trackTrace("updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 传入的值： " + registerTransactionRequest);
+        AppInsightsUtils.trackTrace("updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 传入的值： " + registerTransactionRequest);
         String string = updateShopifySingleData(registerTransactionRequest);
-        appInsights.trackTrace("updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 返回的值： " + string);
+        AppInsightsUtils.trackTrace("updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 返回的值： " + string);
         if (string.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
@@ -646,11 +645,11 @@ public class ShopifyService {
                     .path("message");
 
             if (!messageNode.isMissingNode()) {
-                appInsights.trackTrace("updateShopifyDataByTranslateTextRequest Message: " + messageNode.asText());
+                AppInsightsUtils.trackTrace("updateShopifyDataByTranslateTextRequest Message: " + messageNode.asText());
                 message = messageNode.asText();
             } else {
                 message = json;
-                appInsights.trackTrace("updateShopifyDataByTranslateTextRequest   Message not found");
+                AppInsightsUtils.trackTrace("updateShopifyDataByTranslateTextRequest   Message not found");
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -666,7 +665,7 @@ public class ShopifyService {
                 Field field = LanguageFlagConfig.class.getField(string.toUpperCase());
                 imageInfo.put(string, field.get(null));
             } catch (NoSuchFieldException | IllegalAccessException e) {
-                appInsights.trackException(e);
+                AppInsightsUtils.trackException(e);
                 throw new RuntimeException(e);
             }
         }
@@ -698,7 +697,7 @@ public class ShopifyService {
                     infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
-                    appInsights.trackTrace("FatalException getTranslationItemsInfo errors : " + e.getMessage());
+                    AppInsightsUtils.trackTrace("FatalException getTranslationItemsInfo errors : " + e.getMessage());
                     continue;
                 }
                 if (infoByShopify == null || infoByShopify.isEmpty()) {
@@ -722,7 +721,7 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException getTranslationItemsInfoAll errors : 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
+            AppInsightsUtils.trackTrace("FatalException getTranslationItemsInfoAll errors : 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
         }
         return result;
     }
@@ -805,7 +804,7 @@ public class ShopifyService {
         if (translationsNode != null) {
             // 遍历翻译内容节点，增加已翻译的字符数
             for (JsonNode contentItem : translationsNode) {
-//                appInsights.trackTrace("translated: " + contentItem);
+//                AppInsightsUtils.trackTrace("translated: " + contentItem);
                 ObjectNode contentItemNode = (ObjectNode) contentItem;
                 if (contentItemNode != null) {
                     translatedCounter.addChars(1);
@@ -849,7 +848,7 @@ public class ShopifyService {
                         continue;
                     }
                 } catch (Exception e) {
-                    appInsights.trackTrace("FatalException 失败的原因： " + e.getMessage());
+                    AppInsightsUtils.trackTrace("FatalException 失败的原因： " + e.getMessage());
                     translatedCounter.addChars(1);
                     continue;
                 }
@@ -889,7 +888,7 @@ public class ShopifyService {
 
     //计数非 ONLINE_STORE_THEME 类型的资源数据。
     private void countNonThemeData(JsonNode translationsNode, JsonNode translatableContentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter) {
-//        appInsights.trackTrace("translatableContentNode: " + translatableContentNode);
+//        AppInsightsUtils.trackTrace("translatableContentNode: " + translatableContentNode);
         if (!translatableContentNode.isEmpty()) {
             counter.addChars(1);
         } else {

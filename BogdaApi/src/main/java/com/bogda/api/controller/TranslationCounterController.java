@@ -11,11 +11,10 @@ import com.bogda.api.logic.TranslationCounterService;
 import com.bogda.api.logic.redis.OrdersRedisService;
 import com.bogda.api.model.controller.request.TranslationCounterRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import static com.bogda.common.enums.ErrorEnum.*;
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/translationCounter")
@@ -68,13 +67,13 @@ public class TranslationCounterController {
         // 判断是否有订单标识 有的话 就直接返回true
         String orderId = ordersRedisService.getOrderId(shopName, addCharsVO.getGid());
         if (!"null".equals(orderId)) {
-            appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
+            AppInsightsUtils.trackTrace("addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateErrorResponse(false);
         }
 
         // 获取用户accessToken
         if (translationCounterService.updateOnceCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars())){
-            appInsights.trackTrace("addCharsByShopName 用户 " + shopName + " id: " + addCharsVO.getGid());
+            AppInsightsUtils.trackTrace("addCharsByShopName 用户 " + shopName + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);

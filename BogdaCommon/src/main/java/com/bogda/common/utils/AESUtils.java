@@ -6,8 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
-
 public class AESUtils {
     // 密钥（长度必须为 16、24 或 32 字节）
     private static final String SECRET_KEY = "975318642mnbvcxz"; // 16字节 = 128位
@@ -35,7 +33,7 @@ public class AESUtils {
             }
             return hexString.toString();
         } catch (Exception e) {
-            appInsights.trackException(e);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }

@@ -8,10 +8,11 @@ import com.bogda.api.entity.DO.UserPrivateDO;
 import com.bogda.api.model.controller.request.UserPrivateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+
 import static com.bogda.api.utils.StringUtils.replaceDot;
 
 @Component
@@ -61,8 +62,8 @@ public class UserPrivateService {
 
             }
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException saveOrUpdateUserData " + userPrivateRequest.getShopName() + " 保存用户数据失败：" + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException saveOrUpdateUserData " + userPrivateRequest.getShopName() + " 保存用户数据失败：" + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse("保存用户数据失败");
         }
 
@@ -95,7 +96,7 @@ public class UserPrivateService {
             } catch (Exception e) {
                 retries--;
                 if (retries == 0) {
-                    appInsights.trackTrace("getUserData " + userPrivateRequest.getShopName() + " failed: " + e.getMessage());
+                    AppInsightsUtils.trackTrace("getUserData " + userPrivateRequest.getShopName() + " failed: " + e.getMessage());
                 } else {
                     try {
                         Thread.sleep(delay);  // 延迟重试
@@ -122,7 +123,7 @@ public class UserPrivateService {
         //只删除 amount 和 key数据
         UserPrivateDO user = userPrivateService.selectOneByShopName(shopName);
         if (user == null) {
-            appInsights.trackTrace("deleteUserData " + shopName + " 用户不存在");
+            AppInsightsUtils.trackTrace("deleteUserData " + shopName + " 用户不存在");
             return false;
         }
         //删除用户在keyVault里面的数据
@@ -130,8 +131,8 @@ public class UserPrivateService {
             shopName = replaceDot(shopName);
             secretClient.getDeletedSecret(shopName + "-" + "google");
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("deleteUserData " + shopName + " 删除用户在keyVault里面的数据失败：" + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("deleteUserData " + shopName + " 删除用户在keyVault里面的数据失败：" + e.getMessage());
         }
 
         //将数据库中的数据的amount和key清空

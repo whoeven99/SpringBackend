@@ -8,6 +8,7 @@ import com.bogda.api.entity.DO.*;
 import com.bogda.api.entity.VO.TranslationCharsVO;
 import com.bogda.api.logic.redis.OrdersRedisService;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
 
 @Component
@@ -49,7 +49,7 @@ public class TranslationCounterService {
         ordersRedisService.setOrderId(shopName, gid);
 
         //根据gid，判断是否符合添加额度的条件
-        appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars + " accessToken: " + accessToken);
+        AppInsightsUtils.trackTrace("updateCharsByShopName 用户： " + shopName + " gid: " + gid + " chars: " + chars + " accessToken: " + accessToken);
 
         return iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).setSql("chars = chars + " + chars));
     }
@@ -61,7 +61,7 @@ public class TranslationCounterService {
         //根据传来的gid获取，相关订阅信息
         String subscriptionQuery = ShopifyRequestUtils.getSubscriptionQuery(translationCharsVO.getSubGid());
         String shopifyByQuery = shopifyService.getShopifyData(shopName, userByName.getAccessToken(), TranslateConstants.API_VERSION_LAST, subscriptionQuery);
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
+        AppInsightsUtils.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
         //判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
@@ -70,14 +70,14 @@ public class TranslationCounterService {
 
         //获取用户订阅计划表的相关数据，与下面数据进行判断
         CharsOrdersDO charsOrdersDO = iCharsOrdersService.getOne(new LambdaQueryWrapper<CharsOrdersDO>().eq(CharsOrdersDO::getId, translationCharsVO.getSubGid()));
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅计划表 ：" + charsOrdersDO.toString());
+        AppInsightsUtils.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅计划表 ：" + charsOrdersDO.toString());
         String name = queryValid.getString("name");
         String status = queryValid.getString("status");
         Integer trialDays = queryValid.getInteger("trialDays");
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays + " name: " + name + " status: " + status);
+        AppInsightsUtils.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays + " name: " + name + " status: " + status);
         Integer charsByPlanName = iSubscriptionPlansService.getCharsByPlanName(name);
         if (name.equals(charsOrdersDO.getName()) && status.equals(charsOrdersDO.getStatus()) && trialDays > 0) {
-            appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
+            AppInsightsUtils.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
             String currentPeriodEnd = queryValid.getString("currentPeriodEnd");
             //修改用户过期时间  和  费用类型
             //订阅结束时间
@@ -113,7 +113,7 @@ public class TranslationCounterService {
 
                 // 将ip额度清零
                 iUserIpService.clearIP(shopName);
-                appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用额度添加 ：" + charsByPlan + " 是否成功： " + update);
+                AppInsightsUtils.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用额度添加 ：" + charsByPlan + " 是否成功： " + update);
                 return update;
             }
         } else {
@@ -121,7 +121,7 @@ public class TranslationCounterService {
         }
 
         //添加额度
-        appInsights.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 计划名 ：" + charsOrdersDO.getName() + " name: " + name + " status: " + status);
+        AppInsightsUtils.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 计划名 ：" + charsOrdersDO.getName() + " name: " + name + " status: " + status);
         if (name.equals(charsOrdersDO.getName()) && status.equals(ACTIVE)) {
             //根据用户的计划添加对应的额度
             return iTranslationCounterService.updateCharsByShopName(shopName, translationCharsVO.getAccessToken(), translationCharsVO.getSubGid(), charsByPlanName);

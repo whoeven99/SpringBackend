@@ -9,7 +9,7 @@ import com.bogda.api.model.controller.request.TencentSendEmailRequest;
 import com.bogda.api.repository.entity.InitialTaskV2DO;
 import com.bogda.api.utils.ModuleCodeUtils;
 import com.bogda.common.contants.MailChimpConstants;
-import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.parseShopName;
 
 @Component
@@ -88,7 +87,7 @@ public class TencentEmailService {
 
         // 都continue了
         if (divBuilder.toString().isEmpty()) {
-            appInsights.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
+            AppInsightsUtils.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
             return true;
         }
         templateData.put("html_data", String.valueOf(divBuilder));
@@ -256,7 +255,7 @@ public class TencentEmailService {
                                   List<Map<String, Integer>> languageEmailData, List<Map<String, Integer>> currencyEmailData) {
         UsersDO user = usersService.getUserByName(shopName);
         if (user == null) {
-            appInsights.trackTrace("FatalException sendIpReportEmail user is null " + shopName);
+            AppInsightsUtils.trackTrace("FatalException sendIpReportEmail user is null " + shopName);
             return;
         }
 
@@ -278,7 +277,7 @@ public class TencentEmailService {
         // 发送邮件（如果需要）
         boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
                 templateData, MailChimpConstants.IP_REPORT_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, user.getEmail()));
-        appInsights.trackTrace("sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
+        AppInsightsUtils.trackTrace("sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
     }
 
     /**
@@ -399,7 +398,7 @@ public class TencentEmailService {
 
         // 都continue了
         if (divBuilder.toString().isEmpty()) {
-            CaseSensitiveUtils.appInsights.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
+            AppInsightsUtils.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
             return true;
         }
         templateData.put("language_progress_rows", String.valueOf(divBuilder));

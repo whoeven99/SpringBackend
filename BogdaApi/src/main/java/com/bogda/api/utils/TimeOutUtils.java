@@ -4,10 +4,9 @@ import com.bogda.api.exception.FatalException;
 
 import java.util.concurrent.*;
 import java.util.function.Supplier;
+
+import com.bogda.common.utils.AppInsightsUtils;
 import com.google.common.util.concurrent.RateLimiter;
-
-import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
-
 public class TimeOutUtils {
     public static final int DEFAULT_TIMEOUT = 5;
     public static final TimeUnit DEFAULT_UNIT = TimeUnit.MINUTES;
@@ -32,13 +31,13 @@ public class TimeOutUtils {
             } catch (TimeoutException e) {
                 future.cancel(true);
                 lastException = e;
-                appInsights.trackTrace("FatalException task 调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
-                appInsights.trackException(e);
+                AppInsightsUtils.trackTrace("FatalException task 调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
+                AppInsightsUtils.trackException(e);
             } catch (Exception e) {
                 future.cancel(true);
                 lastException = e;
-                appInsights.trackTrace("FatalException 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
-                appInsights.trackException(e);
+                AppInsightsUtils.trackTrace("FatalException 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
+                AppInsightsUtils.trackException(e);
             } finally {
                 executor.shutdownNow(); // 确保线程被回收
             }
@@ -63,13 +62,13 @@ public class TimeOutUtils {
             } catch (TimeoutException e) {
                 future.cancel(true);
                 lastException = e;
-                appInsights.trackTrace("FatalException task 调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
-                appInsights.trackException(e);
+                AppInsightsUtils.trackTrace("FatalException task 调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
+                AppInsightsUtils.trackException(e);
             } catch (Exception e) {
                 future.cancel(true);
                 lastException = e;
-                appInsights.trackTrace("FatalException 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
-                appInsights.trackException(e);
+                AppInsightsUtils.trackTrace("FatalException 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
+                AppInsightsUtils.trackException(e);
             } finally {
                 executor.shutdownNow(); // 确保线程被回收
             }
