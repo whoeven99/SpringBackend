@@ -6,7 +6,8 @@ import com.bogda.api.entity.DO.UserPicturesDO;
 import com.bogda.api.integration.HunYuanBucketIntegration;
 import com.bogda.api.logic.PCApp.PCUserPicturesService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+
 import static com.bogda.api.utils.StringUtils.convertUrlToMultipartFile;
 
 @RestController
@@ -42,7 +43,7 @@ public class UserPicturesController {
         try {
             userPicturesDO = JsonUtils.OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
+            AppInsightsUtils.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }
         //先判断是否有图片,有图片做上传和插入更新数据;没有图片,做插入和更新数据
         if (!file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {
@@ -130,8 +131,8 @@ public class UserPicturesController {
         try {
             userPicturesDO = JsonUtils.OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("saveImageToCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("saveImageToCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }
         if (userPicturesDO == null) {
             return new BaseResponse<>().CreateSuccessResponse(false);

@@ -1,4 +1,4 @@
-package com.bogda.api.constants;
+package com.bogda.common.contants;
 
 public class MailChimpConstants {
     public static final String FIRST_INSTALL_SUBJECT = "Welcome to Ciwi-Translator! Unlock a New Language Translation Experience";

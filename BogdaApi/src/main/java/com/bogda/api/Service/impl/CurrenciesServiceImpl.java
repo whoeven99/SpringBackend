@@ -8,6 +8,7 @@ import com.bogda.api.mapper.CurrenciesMapper;
 import com.bogda.api.model.controller.request.CurrencyRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.utils.ShopifyUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,8 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogda.api.enums.ErrorEnum.*;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.enums.ErrorEnum.*;
+
 
 @Service
 @Transactional
@@ -61,7 +62,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
         CurrenciesDO[] list = baseMapper.getCurrencyByShopName(shopName);
         List<Map<String, Object>> mapList = new ArrayList<>();
         if (list.length == 0){
-            appInsights.trackTrace("getCurrencyByShopName No currency found for shopName: " + shopName);
+            AppInsightsUtils.trackTrace("getCurrencyByShopName No currency found for shopName: " + shopName);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
         for (CurrenciesDO currenciesDO : list) {
@@ -75,7 +76,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     public Map<String, Object> getCurrencyWithSymbol(CurrenciesDO request) {
         CurrenciesDO currencyByShopNameAndCurrencyCode = baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode());
         if (currencyByShopNameAndCurrencyCode == null) {
-            appInsights.trackTrace("getCurrencyWithSymbol No currency found for shopName: " + request.getShopName() + " and currencyCode: " + request.getCurrencyCode());
+            AppInsightsUtils.trackTrace("getCurrencyWithSymbol No currency found for shopName: " + request.getShopName() + " and currencyCode: " + request.getCurrencyCode());
             return null;
         }
         return new java.util.HashMap<>(ShopifyUtils.getCurrencyDOS(currencyByShopNameAndCurrencyCode));

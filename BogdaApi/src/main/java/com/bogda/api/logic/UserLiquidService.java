@@ -3,7 +3,7 @@ package com.bogda.api.logic;
 import com.bogda.api.Service.IUserLiquidService;
 import com.bogda.api.entity.DO.UserLiquidDO;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

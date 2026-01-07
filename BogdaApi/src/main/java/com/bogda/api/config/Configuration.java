@@ -1,6 +1,6 @@
 package com.bogda.api.config;
 
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.utils.ConfigUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 

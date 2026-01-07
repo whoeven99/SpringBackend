@@ -16,21 +16,20 @@ import com.bogda.api.entity.VO.APGAnalyzeDataVO;
 import com.bogda.api.entity.VO.GenerateDescriptionVO;
 import com.bogda.api.exception.ClientException;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
-import com.bogda.api.utils.CharacterCountUtils;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.CharacterCountUtils;
+import com.bogda.common.utils.JsonUtils;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
 
-import static com.bogda.api.constants.TranslateConstants.APIVERSION;
-import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
 import static com.bogda.api.logic.APGUserGeneratedTaskService.*;
-import static com.bogda.api.utils.ShopifyRequestUtils.getProductDataQuery;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.PlaceholderUtils.buildDescriptionPrompt;
+import static com.bogda.common.utils.PlaceholderUtils.buildDescriptionPrompt;
 import static com.bogda.api.utils.StringUtils.countWords;
 import static com.bogda.api.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
 import static com.bogda.api.utils.TypeConversionUtils.userTemplateToTemplateDTO;
@@ -62,7 +61,7 @@ public class GenerateDescriptionService {
         //判断额度是否足够，然后决定是否继续调用
         APGUserCounterDO counterDO = iapgUserCounterService.getOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", usersDO.getId()));
         if (counterDO.getUserToken() >= userMaxLimit) {
-            throw new ClientException(CHARACTER_LIMIT);
+            throw new ClientException(TranslateConstants.CHARACTER_LIMIT);
         }
         // 根据产品id获取相关数据，为生成做铺垫
         GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
@@ -73,7 +72,7 @@ public class GenerateDescriptionService {
         counter.addChars(counterDO.getUserToken());
         //生成提示词
         String prompt = buildDescriptionPrompt(product.getProductTitle(), product.getProductType(), product.getProductDescription(), generateDescriptionVO.getSeoKeywords(), product.getImageUrl(), product.getImageAltText(), generateDescriptionVO.getTextTone(), templateById.getTemplateType(), generateDescriptionVO.getBrandTone(), templateById.getTemplateData(), generateDescriptionVO.getLanguage(), generateDescriptionVO.getContentType(), generateDescriptionVO.getBrandWord(), generateDescriptionVO.getBrandSlogan());
-        appInsights.trackTrace(usersDO.getShopName() + " 用户 " + product.getId() + " 的提示词为 ： " + prompt);
+        AppInsightsUtils.trackTrace(usersDO.getShopName() + " 用户 " + product.getId() + " 的提示词为 ： " + prompt);
         //调用大模型翻译
         //如果产品图片为空，换模型生成
         String des;
@@ -96,8 +95,8 @@ public class GenerateDescriptionService {
      * 根据产品id获取相关数据，为翻译做铺垫
      * */
     public ProductDTO getProductsQueryByProductId(String productId, String shopName, String accessToken) {
-        String productDataQuery = getProductDataQuery(productId);
-        String productData = shopifyService.getShopifyData(shopName, accessToken, APIVERSION, productDataQuery);
+        String productDataQuery = ShopifyRequestUtils.getProductDataQuery(productId);
+        String productData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, productDataQuery);
         ProductDTO productDTO = new ProductDTO();
         // 对productData进行解析，输出productDTO类型数据
         try {
@@ -110,8 +109,8 @@ public class GenerateDescriptionService {
             productDTO.setProductTitle(root.at("/product/title").asText(null));
             return productDTO;
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException getProductsQueryByProductId errors : " + e);
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException getProductsQueryByProductId errors : " + e);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }

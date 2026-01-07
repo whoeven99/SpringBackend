@@ -2,14 +2,14 @@ package com.bogda.api.logic;
 
 import com.bogda.api.Service.*;
 import com.bogda.api.config.CurrencyConfig;
-import com.bogda.api.constants.MailChimpConstants;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.integration.EmailIntegration;
 import com.bogda.api.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
 import com.bogda.api.repository.entity.InitialTaskV2DO;
 import com.bogda.api.utils.ModuleCodeUtils;
-import com.bogda.api.utils.CaseSensitiveUtils;
+import com.bogda.common.contants.MailChimpConstants;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
@@ -20,8 +20,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import static com.bogda.api.constants.MailChimpConstants.*;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.parseShopName;
 
 @Component
@@ -49,7 +47,7 @@ public class TencentEmailService {
         templateData.put("user", userByName.getFirstName());
         templateData.put("shop_name", name);
         return emailIntegration.sendEmailByTencent(
-                new TencentSendEmailRequest(141470L, templateData, EMAIL_IP_RUNNING_OUT, TENCENT_FROM_EMAIL, userByName.getEmail()));
+                new TencentSendEmailRequest(141470L, templateData, MailChimpConstants.EMAIL_IP_RUNNING_OUT, MailChimpConstants.TENCENT_FROM_EMAIL, userByName.getEmail()));
     }
 
     /**
@@ -62,7 +60,7 @@ public class TencentEmailService {
         templateData.put("user", userByName.getFirstName());
         templateData.put("shop_name", name);
         return emailIntegration.sendEmailByTencent(
-                new TencentSendEmailRequest(141471L, templateData, EMAIL_IP_OUT, TENCENT_FROM_EMAIL, userByName.getEmail()));
+                new TencentSendEmailRequest(141471L, templateData, MailChimpConstants.EMAIL_IP_OUT, MailChimpConstants.TENCENT_FROM_EMAIL, userByName.getEmail()));
     }
 
     public boolean sendAutoTranslateEmail(String shopName, List<InitialTaskV2DO> shopTasks) {
@@ -89,11 +87,12 @@ public class TencentEmailService {
 
         // 都continue了
         if (divBuilder.toString().isEmpty()) {
-            appInsights.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
+            AppInsightsUtils.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
             return true;
         }
         templateData.put("html_data", String.valueOf(divBuilder));
-        return emailIntegration.sendEmailByTencent(140352L, SUCCESSFUL_AUTO_TRANSLATION_SUBJECT, templateData, TENCENT_FROM_EMAIL, usersDO.getEmail());
+        return emailIntegration.sendEmailByTencent(140352L, MailChimpConstants.SUCCESSFUL_AUTO_TRANSLATION_SUBJECT,
+                templateData, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
     }
 
     public boolean sendSuccessEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, Integer usedToken, Integer totalToken) {
@@ -107,7 +106,8 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         templateData.put("remaining_credits", totalToken < usedToken ? "0" : formatter.format(totalToken - usedToken));
 
-        return emailIntegration.sendEmailByTencent(137353L, SUCCESSFUL_TRANSLATION_SUBJECT, templateData, TENCENT_FROM_EMAIL, usersDO.getEmail());
+        return emailIntegration.sendEmailByTencent(137353L, MailChimpConstants.SUCCESSFUL_TRANSLATION_SUBJECT,
+                templateData, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
     }
 
     public boolean sendFailedEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, String translatedModules, String unTranslatedModules) {
@@ -122,7 +122,8 @@ public class TencentEmailService {
         templateData.put("translated_content", translatedModules);
         templateData.put("remaining_content", unTranslatedModules);
 
-        return emailIntegration.sendEmailByTencent(137317L, TRANSLATION_FAILED_SUBJECT, templateData, TENCENT_FROM_EMAIL, usersDO.getEmail());
+        return emailIntegration.sendEmailByTencent(137317L, MailChimpConstants.TRANSLATION_FAILED_SUBJECT,
+                templateData, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
     }
 
     public void setCommonTemplate(Map<String, String> templateData, String shopName, String target, Integer translateTime, Integer usedTokenByTask) {
@@ -141,11 +142,13 @@ public class TencentEmailService {
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
+
         // 定义要移除的后缀
         String suffix = ".myshopify.com";
         String targetShop;
         targetShop = shopName.substring(0, shopName.length() - suffix.length());
         templateData.put("shop_name", targetShop);
+
         // 获得用户总的token数
         TranslationCounterDO translationCounterDO = translationCounterService.readCharsByShopName(shopName);
         Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
@@ -153,12 +156,14 @@ public class TencentEmailService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
         templateData.put("number_of_credits", formatter.format(numberOfCredits));
         templateData.put("total_credits_count", formatter.format(totalCreditsCount));
-        //共消耗的字符数
-//        appInsights.trackTrace("templateData" + templateData);
-        //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(143058L, templateData, SUBSCRIBE_SUCCESSFUL_SUBJECT, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        //存入数据库中
-        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), SUBSCRIBE_SUCCESSFUL_SUBJECT, b ? 1 : 0));
+
+        // 由腾讯发送邮件
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(143058L, templateData,
+                MailChimpConstants.SUBSCRIBE_SUCCESSFUL_SUBJECT, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
+
+        // 存入数据库中
+        emailService.saveEmail(new EmailDO(0, shopName, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail(),
+                MailChimpConstants.SUBSCRIBE_SUCCESSFUL_SUBJECT, b ? 1 : 0));
     }
 
     /**
@@ -169,9 +174,11 @@ public class TencentEmailService {
      */
     public void sendApgInitEmail(String email, Long userId) {
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144208L, null, APG_INIT_EMAIL, TENCENT_FROM_EMAIL, email));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144208L, null,
+                MailChimpConstants.APG_INIT_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, email));
         //存入数据库中
-        iapgEmailService.saveEmail(new APGEmailDO(null, userId, TENCENT_FROM_EMAIL, email, APG_INIT_EMAIL, b));
+        iapgEmailService.saveEmail(new APGEmailDO(null, userId, MailChimpConstants.TENCENT_FROM_EMAIL, email,
+                MailChimpConstants.APG_INIT_EMAIL, b));
     }
 
     /**
@@ -196,9 +203,11 @@ public class TencentEmailService {
         templateData.put("credit_used", formatter.format(totalToken));
         templateData.put("credit_remaining", formatter.format(remaining));
         //设置参数
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144209L, templateData, APG_GENERATE_SUCCESS, TENCENT_FROM_EMAIL, email));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144209L, templateData,
+                MailChimpConstants.APG_GENERATE_SUCCESS, MailChimpConstants.TENCENT_FROM_EMAIL, email));
         //存入数据库中
-        iapgEmailService.saveEmail(new APGEmailDO(null, userId, TENCENT_FROM_EMAIL, email, APG_GENERATE_SUCCESS, b));
+        iapgEmailService.saveEmail(new APGEmailDO(null, userId, MailChimpConstants.TENCENT_FROM_EMAIL, email,
+                MailChimpConstants.APG_GENERATE_SUCCESS, b));
     }
 
     /**
@@ -213,9 +222,11 @@ public class TencentEmailService {
         templateData.put("credit_amount", formatter.format(creditAmount));
         templateData.put("credit_balance", formatter.format(creditBalance));
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144922L, templateData, APG_PURCHASE_EMAIL, TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144922L, templateData,
+                MailChimpConstants.APG_PURCHASE_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
         //存入数据库中
-        return iapgEmailService.saveEmail(new APGEmailDO(null, apgUsersDO.getId(), TENCENT_FROM_EMAIL, apgUsersDO.getEmail(), APG_PURCHASE_EMAIL, b)) ? 1 : 0;
+        return iapgEmailService.saveEmail(new APGEmailDO(null, apgUsersDO.getId(), MailChimpConstants.TENCENT_FROM_EMAIL,
+                apgUsersDO.getEmail(), MailChimpConstants.APG_PURCHASE_EMAIL, b)) ? 1 : 0;
     }
 
     /**
@@ -230,9 +241,11 @@ public class TencentEmailService {
         templateData.put("completed_count", String.valueOf(completedCount));
         templateData.put("remaining_count", String.valueOf(remainingCount));
         //由腾讯发送邮件
-        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144923L, templateData, APG_TASK_INTERRUPT_EMAIL, TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
+        Boolean b = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(144923L, templateData,
+                MailChimpConstants.APG_TASK_INTERRUPT_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, apgUsersDO.getEmail()));
         //存入数据库中
-        iapgEmailService.saveEmail(new APGEmailDO(null, apgUsersDO.getId(), TENCENT_FROM_EMAIL, apgUsersDO.getEmail(), APG_TASK_INTERRUPT_EMAIL, b));
+        iapgEmailService.saveEmail(new APGEmailDO(null, apgUsersDO.getId(), MailChimpConstants.TENCENT_FROM_EMAIL,
+                apgUsersDO.getEmail(), MailChimpConstants.APG_TASK_INTERRUPT_EMAIL, b));
     }
 
     /**
@@ -242,7 +255,7 @@ public class TencentEmailService {
                                   List<Map<String, Integer>> languageEmailData, List<Map<String, Integer>> currencyEmailData) {
         UsersDO user = usersService.getUserByName(shopName);
         if (user == null) {
-            appInsights.trackTrace("FatalException sendIpReportEmail user is null " + shopName);
+            AppInsightsUtils.trackTrace("FatalException sendIpReportEmail user is null " + shopName);
             return;
         }
 
@@ -263,8 +276,8 @@ public class TencentEmailService {
                 buildHtmlList(currencyEmailData, CurrencyConfig::getCurrentName));
         // 发送邮件（如果需要）
         boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
-                templateData, MailChimpConstants.IP_REPORT_EMAIL, TENCENT_FROM_EMAIL, user.getEmail()));
-        appInsights.trackTrace("sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
+                templateData, MailChimpConstants.IP_REPORT_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, user.getEmail()));
+        AppInsightsUtils.trackTrace("sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
     }
 
     /**
@@ -312,8 +325,9 @@ public class TencentEmailService {
         String name = parseShopName(shopName);
         templateData.put("admin", name);
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159294L,
-                templateData, MailChimpConstants.USER_THEME_EMAIL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_THEME_EMAIL, flag ? 1 : 0));
+                templateData, MailChimpConstants.USER_THEME_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        emailService.saveEmail(new EmailDO(0, shopName, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail(),
+                MailChimpConstants.USER_THEME_EMAIL, flag ? 1 : 0));
     }
 
     public void sendDefaultLanguageEmail(String shopName) {
@@ -325,8 +339,9 @@ public class TencentEmailService {
         String name = parseShopName(shopName);
         templateData.put("admin", name);
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159295L,
-                templateData, MailChimpConstants.USER_LANGUAGE_EMAIL, TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_LANGUAGE_EMAIL, flag ? 1 : 0));
+                templateData, MailChimpConstants.USER_LANGUAGE_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
+        emailService.saveEmail(new EmailDO(0, shopName, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail(),
+                MailChimpConstants.USER_LANGUAGE_EMAIL, flag ? 1 : 0));
     }
 
     // 这个switch的邮件是要的，不是无用代码
@@ -339,8 +354,9 @@ public class TencentEmailService {
         String name = parseShopName(shopName);
         templateData.put("admin", name);
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159296L,
-                templateData, MailChimpConstants.USER_SWITCH_EMAIL, TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
-        emailService.saveEmail(new EmailDO(0, shopName, TENCENT_FROM_EMAIL, usersDO.getEmail(), MailChimpConstants.USER_SWITCH_EMAIL, flag ? 1 : 0));
+                templateData, MailChimpConstants.USER_SWITCH_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
+        emailService.saveEmail(new EmailDO(0, shopName, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail(),
+                MailChimpConstants.USER_SWITCH_EMAIL, flag ? 1 : 0));
     }
 
     public boolean sendAutoTranslatePartialEmail(String shopName, List<InitialTaskV2DO> partialTasks) {
@@ -382,10 +398,11 @@ public class TencentEmailService {
 
         // 都continue了
         if (divBuilder.toString().isEmpty()) {
-            CaseSensitiveUtils.appInsights.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
+            AppInsightsUtils.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
             return true;
         }
         templateData.put("language_progress_rows", String.valueOf(divBuilder));
-        return emailIntegration.sendEmailByTencent(159297L, AUTO_FAILED_EMAIL, templateData, TENCENT_FROM_EMAIL, CC_EMAIL);
+        return emailIntegration.sendEmailByTencent(159297L, MailChimpConstants.AUTO_FAILED_EMAIL, templateData,
+                MailChimpConstants.TENCENT_FROM_EMAIL, MailChimpConstants.CC_EMAIL);
     }
 }

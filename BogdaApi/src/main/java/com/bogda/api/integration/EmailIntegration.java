@@ -1,9 +1,10 @@
 package com.bogda.api.integration;
 
-import com.bogda.api.constants.MailChimpConstants;
 import com.bogda.api.model.controller.request.TencentSendEmailRequest;
-import com.bogda.api.utils.ConfigUtils;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.MailChimpConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.ConfigUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.tencentcloudapi.common.AbstractModel;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -13,11 +14,7 @@ import com.tencentcloudapi.ses.v20201002.models.SendEmailRequest;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailResponse;
 import com.tencentcloudapi.ses.v20201002.models.Template;
 import org.springframework.stereotype.Component;
-
 import java.util.Map;
-
-import static com.bogda.api.constants.MailChimpConstants.CC_EMAIL;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
@@ -49,16 +46,16 @@ public class EmailIntegration {
         try {
             SendEmailResponse resp = sesClient.SendEmail(tencentRequest);
             if (resp == null || resp.getRequestId() == null) {
-                appInsights.trackTrace("FatalException 腾讯邮件报错信息 errors ： response is null or RequestId is null, res: " + JsonUtils.objectToJson(resp)
+                AppInsightsUtils.trackTrace("FatalException 腾讯邮件报错信息 errors ： response is null or RequestId is null, res: " + JsonUtils.objectToJson(resp)
                         + " templateId : " + templateId + " from: " + from + " to: " + to);
                 return false;
             }
 
-            appInsights.trackTrace("腾讯邮件信息 ： response is : " + JsonUtils.objectToJson(resp) + " templateId : " + templateId + " from: " + from + " to: " + to + " templateData : " + JsonUtils.objectToJson(templateData));
+            AppInsightsUtils.trackTrace("腾讯邮件信息 ： response is : " + JsonUtils.objectToJson(resp) + " templateId : " + templateId + " from: " + from + " to: " + to + " templateData : " + JsonUtils.objectToJson(templateData));
             return true;
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + template + " from: " + from + " to: " + to);
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + template + " from: " + from + " to: " + to);
             return false;
         }
     }
@@ -93,15 +90,15 @@ public class EmailIntegration {
             template1.setTemplateID(tencentSendEmailRequest.getTemplateId());
             template1.setTemplateData(templateDataJson);
             req.setTemplate(template1);
-            String [] cc1 = {CC_EMAIL};
+            String [] cc1 = {MailChimpConstants.CC_EMAIL};
             req.setCc(cc1);
             // 返回的resp是一个SendEmailResponse的实例，与请求对象对应
             SendEmailResponse resp = callWithTimeoutAndRetry(() -> {
                         try {
                             return client.SendEmail(req);
                         } catch (Exception e) {
-                            appInsights.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
-                            appInsights.trackException(e);
+                            AppInsightsUtils.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+                            AppInsightsUtils.trackException(e);
                             return null;
                         }
                     },
@@ -109,16 +106,16 @@ public class EmailIntegration {
                     DEFAULT_MAX_RETRIES                // 最多重试3次
             );
             if (resp == null) {
-                appInsights.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+                AppInsightsUtils.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
                 return false;
             }
 
             // 输出json格式的字符串回包
             jsonString = AbstractModel.toJsonString(resp);
-            appInsights.trackTrace("sendEmailByTencent 腾讯邮件信息 jsonString : " + jsonString + " data: " + tencentSendEmailRequest.getTemplateData());
+            AppInsightsUtils.trackTrace("sendEmailByTencent 腾讯邮件信息 jsonString : " + jsonString + " data: " + tencentSendEmailRequest.getTemplateData());
         } catch (Exception e1){
-            appInsights.trackException(e1);
-            appInsights.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+            AppInsightsUtils.trackException(e1);
+            AppInsightsUtils.trackTrace("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
         }
         //判断服务的返回值是否含有RequestId
         if (jsonString == null) {

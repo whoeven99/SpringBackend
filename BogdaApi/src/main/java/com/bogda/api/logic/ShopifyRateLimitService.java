@@ -1,10 +1,9 @@
 package com.bogda.api.logic;
 
 import com.bogda.api.integration.model.ShopifyExtensions;
-import com.bogda.api.utils.AppInsightsUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.google.common.util.concurrent.RateLimiter;
 import org.springframework.stereotype.Service;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

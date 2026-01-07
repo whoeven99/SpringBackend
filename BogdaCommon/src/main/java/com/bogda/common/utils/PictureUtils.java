@@ -1,4 +1,4 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;

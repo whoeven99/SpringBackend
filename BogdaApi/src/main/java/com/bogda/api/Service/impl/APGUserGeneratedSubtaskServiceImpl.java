@@ -4,9 +4,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.api.Service.IAPGUserGeneratedSubtaskService;
 import com.bogda.api.entity.DO.APGUserGeneratedSubtaskDO;
 import com.bogda.api.mapper.APGUserGeneratedSubtaskMapper;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+
 
 @Service
 public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGeneratedSubtaskMapper, APGUserGeneratedSubtaskDO> implements IAPGUserGeneratedSubtaskService {
@@ -23,11 +24,11 @@ public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGener
                     return true;
                 } else {
                     retryCount++;
-                    appInsights.trackTrace("FatalException updateStatusById 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + subtaskId);
+                    AppInsightsUtils.trackTrace("FatalException updateStatusById 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + subtaskId);
                 }
             } catch (Exception e) {
                 retryCount++;
-                appInsights.trackTrace("FatalException updateStatusById 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + subtaskId + ", 错误=" + e);
+                AppInsightsUtils.trackTrace("FatalException updateStatusById 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + subtaskId + ", 错误=" + e);
             }
 
             try {
@@ -38,7 +39,7 @@ public class APGUserGeneratedSubtaskServiceImpl extends ServiceImpl<APGUserGener
             }
         }
 
-        appInsights.trackTrace("updateStatusById 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + subtaskId);
+        AppInsightsUtils.trackTrace("updateStatusById 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + subtaskId);
         return false;
     }
 

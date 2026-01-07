@@ -1,7 +1,7 @@
 package com.bogda.api.logic.redis;
 
 import com.bogda.api.integration.RedisIntegration;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

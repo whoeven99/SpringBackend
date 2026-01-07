@@ -1,13 +1,9 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
-import com.bogda.api.exception.ClientException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static com.bogda.api.enums.ErrorEnum.JSON_PARSE_ERROR;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 public class JsonUtils {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -15,7 +11,7 @@ public class JsonUtils {
         try {
             return OBJECT_MAPPER.readTree(str);
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }
@@ -25,7 +21,7 @@ public class JsonUtils {
         try {
             return obj != null ? OBJECT_MAPPER.writeValueAsString(obj) : null;
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }
@@ -35,8 +31,8 @@ public class JsonUtils {
         try {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, clazz) : null;
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
-            throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            return null;
         }
     }
 
@@ -44,7 +40,7 @@ public class JsonUtils {
         try {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, clazz) : null;
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }
@@ -53,7 +49,7 @@ public class JsonUtils {
         try {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, typeRef) : null;
         } catch (Exception e) {
-            appInsights.trackException(e);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }
@@ -62,8 +58,8 @@ public class JsonUtils {
         try {
             return json != null && !json.isEmpty() ? OBJECT_MAPPER.readValue(json, typeRef) : null;
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
-            throw new ClientException(JSON_PARSE_ERROR.getErrMsg() + "   " + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            return null;
         }
     }
 
@@ -87,7 +83,7 @@ public class JsonUtils {
         try {
             return OBJECT_MAPPER.readTree(str);
         }catch (Exception e) {
-            appInsights.trackTrace("FatalException clickTranslation String to Json errors: " + e);
+            AppInsightsUtils.trackTrace("FatalException clickTranslation String to Json errors: " + e);
             throw new RuntimeException(e);
         }
     }

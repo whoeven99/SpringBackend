@@ -8,6 +8,7 @@ import com.bogda.api.Service.IUserTrialsService;
 import com.bogda.api.entity.DO.CharsOrdersDO;
 import com.bogda.api.entity.DO.UserTrialsDO;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+
 
 @Service
 public class UserTrialsService {
@@ -41,7 +42,7 @@ public class UserTrialsService {
                 .eq("status", "ACTIVE"))
                 .stream().filter(data -> data.getShopName() != null && data.getId().contains("AppSubscription")).toList();
         if (!charsOrdersDOList.isEmpty()) {
-            appInsights.trackTrace("queryUserTrialByShopName " + shopName + " 返回的charsOrdersDOList 值为 ： " + charsOrdersDOList);
+            AppInsightsUtils.trackTrace("queryUserTrialByShopName " + shopName + " 返回的charsOrdersDOList 值为 ： " + charsOrdersDOList);
             return new BaseResponse<>().CreateErrorResponse(charsOrdersDOList);
         }
         Boolean flag = iUserTrialsService.queryUserTrialByShopName(shopName);

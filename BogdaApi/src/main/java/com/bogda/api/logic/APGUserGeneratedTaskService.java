@@ -12,7 +12,9 @@ import com.bogda.api.entity.VO.GenerateDescriptionVO;
 import com.bogda.api.entity.VO.GenerateDescriptionsVO;
 import com.bogda.api.entity.VO.GenerateEmailVO;
 import com.bogda.api.entity.VO.GenerateProgressBarVO;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -21,9 +23,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.bogda.api.constants.TranslateConstants.EMAIL;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
 import static com.bogda.api.utils.TypeConversionUtils.generateDescriptionsVOToGenerateDescriptionVO;
 
@@ -89,8 +89,8 @@ public class APGUserGeneratedTaskService {
             //获取产品标题
             return generateProgressBarVO;
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException " + shopName + " 用户 " + userDO.getId() + " 的taskData有问题 errors ： " + e);
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException " + shopName + " 用户 " + userDO.getId() + " 的taskData有问题 errors ： " + e);
+            AppInsightsUtils.trackException(e);
         }
         //获取
         return generateProgressBarVO;
@@ -108,22 +108,22 @@ public class APGUserGeneratedTaskService {
                 //将json 存到APG_User_Generated_Subtask中
                 iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, json, usersDO.getId(), null));
             } catch (Exception e) {
-                appInsights.trackTrace("FatalException " + shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
-//                appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
-                appInsights.trackException(e);
+                AppInsightsUtils.trackTrace("FatalException " + shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
+//                AppInsightsUtils.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
+                AppInsightsUtils.trackException(e);
             }
         }
 
         // 发完所有productId后，插入一条发送邮件的任务
         GenerateEmailVO generateEmailVO = null;
         try {
-            generateEmailVO = new GenerateEmailVO(EMAIL, generateDescriptionsVO.getProductIds());
+            generateEmailVO = new GenerateEmailVO(TranslateConstants.EMAIL, generateDescriptionsVO.getProductIds());
             String email = JsonUtils.OBJECT_MAPPER.writeValueAsString(generateEmailVO);
             iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, email, usersDO.getId(), null));
         } catch (JsonProcessingException e) {
-            appInsights.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
-            appInsights.trackException(e);
-//            appInsights.trackTrace("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
+            AppInsightsUtils.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
+            AppInsightsUtils.trackException(e);
+//            AppInsightsUtils.trackTrace("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
         }
     }
 

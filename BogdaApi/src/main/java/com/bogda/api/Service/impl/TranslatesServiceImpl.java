@@ -11,15 +11,13 @@ import com.bogda.api.mapper.TranslatesMapper;
 import com.bogda.api.model.controller.request.AutoTranslateRequest;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 @Transactional
@@ -97,14 +95,14 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                                 .set(TranslatesDO::getStatus, 6)
                 );
 
-                CaseSensitiveUtils.appInsights.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
+                AppInsightsUtils.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
 
                 // 正常结束，无需再重试
                 return true;
             } catch (Exception e) {
-                CaseSensitiveUtils.appInsights.trackException(e);
+                AppInsightsUtils.trackException(e);
                 if (attempt >= maxRetries) {
-                    CaseSensitiveUtils.appInsights.trackTrace("FatalException updateStatus3To6: " + shopName + " 最终失败");
+                    AppInsightsUtils.trackTrace("FatalException updateStatus3To6: " + shopName + " 最终失败");
                 }
             }
         }

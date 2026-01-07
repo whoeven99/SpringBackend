@@ -1,4 +1,4 @@
-package com.bogda.api.utils;
+package com.bogda.common.utils;
 
 public class RedisKeyUtils {
     // 模板字符串，所有 key 统一放在这里

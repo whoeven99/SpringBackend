@@ -9,7 +9,10 @@ import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.VO.SingleReturnVO;
 import com.bogda.api.entity.VO.SingleTranslateVO;
-import com.bogda.api.enums.ErrorEnum;
+import com.bogda.api.utils.ModelTranslateUtils;
+import com.bogda.api.utils.ModuleCodeUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.model.ShopifyCheckMetafieldResponse;
@@ -32,8 +35,8 @@ import com.bogda.api.repository.entity.InitialTaskV2DO;
 import com.bogda.api.repository.entity.TranslateTaskV2DO;
 import com.bogda.api.repository.repo.InitialTaskV2Repo;
 import com.bogda.api.repository.repo.TranslateTaskV2Repo;
-import com.bogda.api.utils.*;
 import com.bogda.common.utils.JsoupUtils;
+import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import kotlin.Pair;
@@ -51,10 +54,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.bogda.api.constants.TranslateConstants.*;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 import static com.bogda.api.logic.TaskService.AUTO_TRANSLATE_MAP;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class TranslateV2Service {
@@ -133,10 +134,13 @@ public class TranslateV2Service {
             String jsonStr = String.valueOf(map.getOrDefault("json", "{}"));
             Map<Integer, String> languageMap = JsonUtils.jsonToObject(jsonStr, new TypeReference<Map<Integer, String>>() {
             });
+            if (CollectionUtils.isEmpty(languageMap)) {
+                return defaultNullMap();
+            }
             prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", languageMap.toString())
                     .replace("{{TARGET_LANGUAGE}}", target);
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException testTranslate JSON parsing failed: " + e.getMessage());
+            AppInsightsUtils.trackTrace("FatalException testTranslate JSON parsing failed: " + e.getMessage());
             return defaultNullMap();
         }
 
@@ -148,8 +152,8 @@ public class TranslateV2Service {
                 return handleGemini(model, prompt, picUrl);
             }
         } catch (Exception e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException in testTranslate: " + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException in testTranslate: " + e.getMessage());
         }
 
         return defaultNullMap();
@@ -220,7 +224,7 @@ public class TranslateV2Service {
     // 翻译 step 1, 用户 -> initial任务创建
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
         String shopName = request.getShopName();
-        appInsights.trackTrace("createInitialTask : " + " shopName : " + shopName + " " + request);
+        AppInsightsUtils.trackTrace("createInitialTask : " + " shopName : " + shopName + " " + request);
         String[] targets = request.getTarget();
         List<String> moduleList = request.getTranslateSettings3();
         String translateSettings1 = request.getTranslateSettings1();
@@ -271,7 +275,7 @@ public class TranslateV2Service {
                 .flatMap(module -> {
                     List<TranslateResourceDTO> list = TranslateResourceDTO.TOKEN_MAP.get(module);
                     if (list == null) {
-                        appInsights.trackTrace("FatalException createInitialTask Warning: Unknown module: " + module);
+                        AppInsightsUtils.trackTrace("FatalException createInitialTask Warning: Unknown module: " + module);
                         return Stream.empty();
                     }
                     return list.stream();
@@ -310,7 +314,7 @@ public class TranslateV2Service {
         }
 
         // 3. 获取 Shopify 语言数据
-        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestUtils.getLanguagesQuery());
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getLanguagesQuery());
         JsonNode root = JsonUtils.readTree(shopifyData);
 
         if (root == null) {
@@ -319,7 +323,7 @@ public class TranslateV2Service {
 
         JsonNode shopLocales = root.path("shopLocales");
         if (!shopLocales.isArray()) {
-            appInsights.trackTrace("syncShopifyAndDatabase: shopLocales is not an array.");
+            AppInsightsUtils.trackTrace("syncShopifyAndDatabase: shopLocales is not an array.");
             return;
         }
 
@@ -370,6 +374,7 @@ public class TranslateV2Service {
         initialTask.setModuleList(JsonUtils.objectToJson(AUTO_TRANSLATE_MAP));
         initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
         initialTask.setTaskType("auto");
+        initialTask.setAiModel(GeminiIntegration.GEMINI_3_FLASH);
         initialTaskV2Repo.insert(initialTask);
 
         translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, GeminiIntegration.GEMINI_3_FLASH);
@@ -521,7 +526,7 @@ public class TranslateV2Service {
                     (node -> {
                         if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
                             translateTaskV2DO.setResourceId(node.getResourceId());
-                            appInsights.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
+                            AppInsightsUtils.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
                                     " resourceId: " + node.getResourceId());
 
 //                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
@@ -539,8 +544,8 @@ public class TranslateV2Service {
                                         translateTaskV2Repo.insert(translateTaskV2DO);
                                         translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
                                     } catch (Exception e) {
-                                        appInsights.trackException(e);
-                                        appInsights.trackTrace("FatalException initialToTranslateTask insert error " + e.getMessage());
+                                        AppInsightsUtils.trackException(e);
+                                        AppInsightsUtils.trackTrace("FatalException initialToTranslateTask insert error " + e.getMessage());
                                     }
                                 }
                             });
@@ -551,11 +556,11 @@ public class TranslateV2Service {
             translateTaskMonitorV2RedisService.addFinishedModule(initialTaskV2DO.getId(), module);
             // 清空afterEndCursor
             translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), "");
-            appInsights.trackTrace("TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
+            AppInsightsUtils.trackTrace("TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
         }
 
         // 更新数据库并记录初始化时间
-        appInsights.trackTrace("TranslateTaskV2 initialToTranslateTask done: " + shopName);
+        AppInsightsUtils.trackTrace("TranslateTaskV2 initialToTranslateTask done: " + shopName);
 
         long initTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
         initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.status);
@@ -580,7 +585,7 @@ public class TranslateV2Service {
 
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
         while (randomDo != null) {
-            appInsights.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
+            AppInsightsUtils.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
 
             // 用于中断之后的邮件描述
             initialTaskV2DO.setTransModelType(randomDo.getModule());
@@ -646,7 +651,7 @@ public class TranslateV2Service {
 
                     // 3.3 回写数据库 todo 批量
                     if (targetValue == null) {
-                        CaseSensitiveUtils.appInsights.trackTrace("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
+                        AppInsightsUtils.trackTrace("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         continue;
                     }
                     translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
@@ -659,7 +664,7 @@ public class TranslateV2Service {
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
         }
-        appInsights.trackTrace("TranslateTaskV2 translating done: " + shopName);
+        AppInsightsUtils.trackTrace("TranslateTaskV2 translating done: " + shopName);
 
         // 判断是手动中断 还是limit中断，切换不同的状态
         if (redisStoppedRepository.isTaskStopped(shopName)) {
@@ -701,7 +706,7 @@ public class TranslateV2Service {
 
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
         while (randomDo != null) {
-            appInsights.trackTrace("TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
+            AppInsightsUtils.trackTrace("TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
             List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
 
@@ -721,7 +726,7 @@ public class TranslateV2Service {
             node.setResourceId(resourceId);
             String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
             if (strResponse != null) {
-                appInsights.trackTrace("TranslateTaskV2 saving success: " + shopName +
+                AppInsightsUtils.trackTrace("TranslateTaskV2 saving success: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
                 // 回写数据库，标记已写入 TODO 批量
                 // 需要data.translationsRegister.translations[]不为空，并且有key，才是最严格的
@@ -731,11 +736,11 @@ public class TranslateV2Service {
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             } else {
                 // 写入失败 fatalException
-                CaseSensitiveUtils.appInsights.trackTrace("FatalException TranslateTaskV2 saving failed: " + shopName +
+                AppInsightsUtils.trackTrace("FatalException TranslateTaskV2 saving failed: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
-            appInsights.trackTrace("TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
+            AppInsightsUtils.trackTrace("TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
         }
 
         long savingShopifyTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -760,7 +765,7 @@ public class TranslateV2Service {
 
         // 手动翻译 正常结束，发送邮件
         if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
-            CaseSensitiveUtils.appInsights.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
+            AppInsightsUtils.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
                     " Total time (minutes): " + usingTimeMinutes +
                     " Total tokens used: " + usedTokenByTask);
 
@@ -797,7 +802,7 @@ public class TranslateV2Service {
         //修改模块的排序
         List<TranslateResourceDTO> translateResourceDTOList = new ArrayList<>();
         for (String s : list) {
-            translateResourceDTOList.add(new TranslateResourceDTO(s, MAX_LENGTH, "", ""));
+            translateResourceDTOList.add(new TranslateResourceDTO(s, TranslateConstants.MAX_LENGTH, "", ""));
         }
         return translateResourceDTOList;
     }
@@ -821,7 +826,7 @@ public class TranslateV2Service {
             for (InitialTaskV2DO initialTaskV2DO : list) {
                 initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
                 boolean updateFlag = initialTaskV2Repo.updateStatusById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId());
-                appInsights.trackTrace("continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
+                AppInsightsUtils.trackTrace("continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
             }
         }
     }
@@ -830,52 +835,52 @@ public class TranslateV2Service {
     public boolean autoTranslateV2(String shopName, String source, String target) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         if (usersDO == null) {
-            appInsights.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
+            AppInsightsUtils.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
             return false;
         }
 
         if (usersDO.getUninstallTime() != null) {
             if (usersDO.getLoginTime() == null) {
-                appInsights.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
+                AppInsightsUtils.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
                 return false;
             } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
-                appInsights.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
+                AppInsightsUtils.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
                 return false;
             }
         }
 
         // 判断注册时间
         if (usersDO.getLoginTime() == null) {
-            appInsights.trackTrace("autoTranslateV2 用户未登录 或 登录时间为空: " + shopName);
+            AppInsightsUtils.trackTrace("autoTranslateV2 用户未登录 或 登录时间为空: " + shopName);
             return false;
         }
 
         // 将登录时间与当前时间都按 UTC 时区比较小时
         int loginHour = usersDO.getCreateAt().toInstant().atZone(ZoneOffset.UTC).getHour();
         int currentHour = Instant.now().atZone(ZoneOffset.UTC).getHour();
-        appInsights.trackTrace("autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
+        AppInsightsUtils.trackTrace("autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
 
         // 只有当登录小时与当前小时一致时才继续执行，其他情况按分片逻辑跳过
         if (loginHour != currentHour) {
-            appInsights.trackTrace("autoTranslateV2 非当前小时，不执行自动翻译 shop: " + shopName);
+            AppInsightsUtils.trackTrace("autoTranslateV2 非当前小时，不执行自动翻译 shop: " + shopName);
             return false;
         }
 
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
-        appInsights.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
+        AppInsightsUtils.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
         // 如果字符超限，则直接返回字符超限
         if (usedToken >= maxToken) {
-            appInsights.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
+            AppInsightsUtils.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
             return false;
         }
 
         // 判断这条语言是否在用户本地存在
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
-                API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
-        appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
+                TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
+        AppInsightsUtils.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
         if (shopifyByQuery == null) {
-            appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
+            AppInsightsUtils.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
             return false;
         }
 
@@ -883,21 +888,21 @@ public class TranslateV2Service {
         if (!shopifyByQuery.contains(userCode)) {
             // 将用户的自动翻译标识改为false
             translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
-            appInsights.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
+            AppInsightsUtils.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
             return false;
         }
 
-        appInsights.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
+        AppInsightsUtils.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
         createAutoTask(shopName, source, target);
-        appInsights.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
+        AppInsightsUtils.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
         return true;
     }
 
     public void cleanTask(InitialTaskV2DO initialTaskV2DO) {
-        appInsights.trackTrace("TranslateTaskV2 cleanTask start clean task: " + initialTaskV2DO.getId());
+        AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
             int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
-            appInsights.trackTrace("TranslateTaskV2 cleanTask delete: " + deleted);
+            AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask delete: " + deleted);
             if (deleted <= 0) {
                 break;
             }
@@ -943,7 +948,7 @@ public class TranslateV2Service {
 
         // 如果没找到目标 type，返回空集合并打印错误信息
         if (index == -1) {
-            appInsights.trackTrace("errors 错误：未找到 type 为 '" + targetType + "' 的资源");
+            AppInsightsUtils.trackTrace("errors 错误：未找到 type 为 '" + targetType + "' 的资源");
             after = resourceList;
             for (TranslateResourceDTO resource : after) {
                 afterSet.add(EMAIL_MAP.get(resource.getResourceType()));
@@ -1018,7 +1023,7 @@ public class TranslateV2Service {
         }
 
         //如果handleFlag为false，则跳过
-        if (type.equals(URI) && "handle".equals(key)) {
+        if (type.equals(TranslateConstants.URI) && "handle".equals(key)) {
             // 自动翻译的handle默认为false, 手动的记得添加
             return isHandle;
         }
@@ -1062,7 +1067,7 @@ public class TranslateV2Service {
         }
 
         //对METAFIELD字段翻译
-        if (METAFIELD.equals(module)) {
+        if (TranslateConstants.METAFIELD.equals(module)) {
             //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。 10位 字母和数字不翻译
             if (JudgeTranslateUtils.SUSPICIOUS_PATTERN.matcher(value).matches() ||
                     JudgeTranslateUtils.SUSPICIOUS2_PATTERN.matcher(value).matches()) {
@@ -1082,7 +1087,7 @@ public class TranslateV2Service {
 
             if (JsonUtils.isJson(value) && value.contains(JSON_JUDGE) && "RICH_TEXT_FIELD".equals(type)) {
                 // 判断是否与product相关联
-                String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST,
+                String shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST,
                         ShopifyRequestUtils.getQueryForCheckMetafieldId(resourceId));
                 ShopifyCheckMetafieldResponse shopifyCheckMetafieldResponse = JsonUtils.jsonToObject(shopifyData,
                         ShopifyCheckMetafieldResponse.class);

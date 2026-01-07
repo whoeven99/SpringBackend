@@ -1,31 +1,15 @@
 package com.bogda.api.integration;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.utils.*;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.ConfigUtils;
+import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
 import kotlin.Pair;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class GoogleMachineIntegration {
@@ -64,11 +48,11 @@ public class GoogleMachineIntegration {
             // 将translatedText反转义下， 用json翻译返回是&quot;1&quot;:&quot;的数据
             translatedText = LiquidHtmlTranslatorUtils.isHtmlEntity(translatedText);
             int totalToken = content.length() * GOOGLE_MACHINE_COEFFICIENT;
-            CaseSensitiveUtils.appInsights.trackTrace("googleTranslateWithSDK 翻译文本: " + translatedText + " all：" + totalToken);
+            AppInsightsUtils.trackTrace("googleTranslateWithSDK 翻译文本: " + translatedText + " all：" + totalToken);
             return new Pair<>(translatedText, totalToken);
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException Google Translate SDK 翻译错误：" + e.getMessage());
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException Google Translate SDK 翻译错误：" + e.getMessage());
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }

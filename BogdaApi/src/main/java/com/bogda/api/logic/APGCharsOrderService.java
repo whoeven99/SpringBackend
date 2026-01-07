@@ -7,10 +7,9 @@ import com.bogda.api.Service.IAPGUsersService;
 import com.bogda.api.entity.DO.APGCharsOrderDO;
 import com.bogda.api.entity.DO.APGUserCounterDO;
 import com.bogda.api.entity.DO.APGUsersDO;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class APGCharsOrderService {
@@ -34,7 +33,7 @@ public class APGCharsOrderService {
         APGUsersDO usersDO = usersService.getUserByShopName(shopName);
 
         if (usersDO == null) {
-            appInsights.trackTrace("APGCharsOrderService 用户 " + shopName + " usersDO is null ");
+            AppInsightsUtils.trackTrace("APGCharsOrderService 用户 " + shopName + " usersDO is null ");
             return false;
         }
 

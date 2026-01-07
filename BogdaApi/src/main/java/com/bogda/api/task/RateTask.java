@@ -1,7 +1,7 @@
 package com.bogda.api.task;
 
 import com.bogda.api.integration.RateHttpIntegration;
-import com.bogda.api.utils.AppInsightsUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;

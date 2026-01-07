@@ -2,7 +2,8 @@ package com.bogda.api.logic;
 
 import com.bogda.api.entity.VO.UserDataReportVO;
 import com.bogda.api.integration.RedisIntegration;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.RedisKeyUtils.*;
+import static com.bogda.common.utils.RedisKeyUtils.*;
 import static com.mysql.cj.util.TimeUtil.DATE_FORMATTER;
 
 @Service
@@ -63,7 +62,7 @@ public class RedisDataReportService {
         Set<String> redisIntegrationSet = redisIntegration.getSet(setKeys);
 
         if (redisIntegrationSet == null || redisIntegrationSet.isEmpty()) {
-            appInsights.trackTrace("getUserDataReport 没有找到 key, shopName=" + shopName);
+            AppInsightsUtils.trackTrace("getUserDataReport 没有找到 key, shopName=" + shopName);
             return null;
         }
 
@@ -91,8 +90,8 @@ public class RedisDataReportService {
         try {
             return JsonUtils.OBJECT_MAPPER.writeValueAsString(allMap);
         } catch (JsonProcessingException e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("getUserDataReport JSON序列化失败, shopName=" + shopName);
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("getUserDataReport JSON序列化失败, shopName=" + shopName);
             return null;
         }
     }

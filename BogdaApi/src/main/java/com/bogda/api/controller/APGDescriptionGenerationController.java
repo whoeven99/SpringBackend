@@ -10,12 +10,11 @@ import com.bogda.api.entity.VO.GenerateDescriptionVO;
 import com.bogda.api.exception.ClientException;
 import com.bogda.api.logic.GenerateDescriptionService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.CharacterCountUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import static com.bogda.api.constants.TranslateConstants.CHARACTER_LIMIT;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @RestController
 @RequestMapping("/apg/descriptionGeneration")
@@ -43,13 +42,13 @@ public class APGDescriptionGenerationController {
         try {
             product = generateDescriptionService.getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
             description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit, product);
-            appInsights.trackTrace("generateDescription" + shopName + " generateDescription: " + description);
+            AppInsightsUtils.trackTrace("generateDescription" + shopName + " generateDescription: " + description);
             if (description == null) {
                 return new BaseResponse<>().CreateErrorResponse(false);
             }
         } catch (ClientException e) {
-            appInsights.trackTrace("generateDescription shopName : " + shopName + " generateDescription errors : " + e.getMessage());
-            return new BaseResponse<>().CreateErrorResponse(CHARACTER_LIMIT);
+            AppInsightsUtils.trackTrace("generateDescription shopName : " + shopName + " generateDescription errors : " + e.getMessage());
+            return new BaseResponse<>().CreateErrorResponse(TranslateConstants.CHARACTER_LIMIT);
         }
         //计算相关生成数据
         APGAnalyzeDataVO apgAnalyzeDataVO = generateDescriptionService.analyzeDescriptionData(description, product.getProductDescription(), generateDescriptionVO.getSeoKeywords());

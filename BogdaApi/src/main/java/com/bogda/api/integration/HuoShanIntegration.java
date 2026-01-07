@@ -5,7 +5,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.utils.ModuleCodeUtils;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.volcengine.model.request.translate.TranslateImageRequest;
 import com.volcengine.model.request.translate.TranslateTextRequest;
 import com.volcengine.model.response.translate.TranslateImageResponse;
@@ -20,7 +21,7 @@ import java.net.URLConnection;
 import java.util.Base64;
 import java.util.List;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+
 
 @Component
 public class HuoShanIntegration {
@@ -34,7 +35,7 @@ public class HuoShanIntegration {
 
         //对火山翻译API的语言进行处理
         String huoShanTarget = ModuleCodeUtils.huoShanTransformCode(request.getTarget());
-//        appInsights.trackTrace("huoShanTarget: " + huoShanTarget);
+//        AppInsightsUtils.trackTrace("huoShanTarget: " + huoShanTarget);
         // translate text
         TranslateTextResponse translateText = null;
         String translation = null;
@@ -47,7 +48,7 @@ public class HuoShanIntegration {
             translateText = translateService.translateText(translateTextRequest);
             // 将JSON字符串解析为JSONObject对象
             String jsonString = JSON.toJSONString(translateText);
-//            appInsights.trackTrace("translateText: " + jsonString);
+//            AppInsightsUtils.trackTrace("translateText: " + jsonString);
             JSONObject jsonResponse = JSON.parseObject(jsonString);
 
             // 直接从jsonResponse中获取TranslationList的第一个元素
@@ -56,10 +57,10 @@ public class HuoShanIntegration {
                 JSONObject firstTranslationItem = translationList.getJSONObject(0);
                 translation = firstTranslationItem.getString("Translation");
             } else {
-                appInsights.trackTrace("Translation list is empty or not present.");
+                AppInsightsUtils.trackTrace("Translation list is empty or not present.");
             }
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException huoShanTranslate " + e.getMessage());
+            AppInsightsUtils.trackTrace("FatalException huoShanTranslate " + e.getMessage());
         }
         return translation;
     }
@@ -71,7 +72,7 @@ public class HuoShanIntegration {
         translateService.setAccessKey(ConfigUtils.getConfig("HUOSHAN_API_KEY"));
         translateService.setSecretKey(ConfigUtils.getConfig("HUOSHAN_API_SECRET"));
 
-        appInsights.trackTrace("huoShanImageTranslate imageUrl : " + imageUrl + " targetLanguage: " + targetLanguage);
+        AppInsightsUtils.trackTrace("huoShanImageTranslate imageUrl : " + imageUrl + " targetLanguage: " + targetLanguage);
         try {
             URL url = new URL(imageUrl);
             URLConnection connection = url.openConnection();
@@ -88,11 +89,11 @@ public class HuoShanIntegration {
             translateImageRequest.setImage(base64Image);
 
             TranslateImageResponse translateImageResponse = translateService.translateImage(translateImageRequest);
-            appInsights.trackTrace("huoShanImageTranslate 返回的数据 ： " + JSON.toJSONString(translateImageResponse.getResponseMetadata()));
+            AppInsightsUtils.trackTrace("huoShanImageTranslate 返回的数据 ： " + JSON.toJSONString(translateImageResponse.getResponseMetadata()));
             return Base64.getDecoder().decode(translateImageResponse.getImage());
 
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException huoShanImageTranslate " + e.getMessage());
+            AppInsightsUtils.trackTrace("FatalException huoShanImageTranslate " + e.getMessage());
         }
         return null;
     }
