@@ -9,6 +9,10 @@ public class AppInsightsUtils {
         AppInsightsUtils.trackTrace(String.format(message, args));
     }
 
+    public static void trackTrace(String message) {
+        AppInsightsUtils.trackTrace(message);
+    }
+
     public static void trackException(Exception e) {
         AppInsightsUtils.trackException(e);
     }
