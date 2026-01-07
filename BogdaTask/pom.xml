@@ -29,6 +29,12 @@
             <artifactId>BogdaRepository</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+
+        <!-- Spring Boot Starter Web (includes Spring Boot core, web, scheduling, and logging) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
