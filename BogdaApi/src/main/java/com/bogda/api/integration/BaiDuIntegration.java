@@ -14,7 +14,7 @@ public class BaiDuIntegration {
 //    public String baiDuTranslate(TranslateRequest request) {
 //        //创建URL
 //        String encodedQuery = URLEncoder.encode(request.getContent(), StandardCharsets.UTF_8);
-////        appInsights.trackTrace("encodedQuery: " + encodedQuery);
+////        AppInsightsUtils.trackTrace("encodedQuery: " + encodedQuery);
 //        Random random = new Random();
 //        String salt = String.valueOf(random.nextInt(10000));
 //        String sign = DigestUtils.md5DigestAsHex((apiUrl + request.getContent() + salt + secret).getBytes());

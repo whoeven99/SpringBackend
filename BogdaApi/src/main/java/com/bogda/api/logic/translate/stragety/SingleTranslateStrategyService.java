@@ -5,8 +5,10 @@ import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.logic.translate.ModelTranslateService;
-import com.bogda.api.utils.PlaceholderUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.PlaceholderUtils;
 import com.bogda.api.utils.PromptUtils;
+import com.bogda.api.utils.StringUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -14,7 +16,6 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.URI;
 
 @Component
 public class SingleTranslateStrategyService implements ITranslateStrategyService {
@@ -33,10 +34,10 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         String value = ctx.getContent();
         String target = ctx.getTargetLanguage();
 
-        if (URI.equals(ctx.getShopifyTextType())
+        if (TranslateConstants.URI.equals(ctx.getShopifyTextType())
                 && "handle".equals(ctx.getShopifyTextKey())) {
             String prompt;
-            String fixContent = com.bogda.api.utils.StringUtils.replaceHyphensWithSpaces(value);
+            String fixContent = StringUtils.replaceHyphensWithSpaces(value);
             prompt = PlaceholderUtils.getHandlePrompt(target);
             prompt += "The text is: " + fixContent;
             ctx.setStrategy("Handle 长文本翻译");

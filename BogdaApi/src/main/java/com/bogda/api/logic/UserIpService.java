@@ -16,6 +16,7 @@ import com.bogda.api.repository.entity.UserIPCountDO;
 import com.bogda.api.repository.entity.UserIPRedirectionDO;
 import com.bogda.api.repository.repo.UserIPCountRepo;
 import com.bogda.api.repository.repo.UserIPRedirectionRepo;
+import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -24,7 +25,6 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Service
 public class UserIpService {
@@ -73,7 +73,7 @@ public class UserIpService {
         if (userIpDO == null) {
             return false;
         }
-        appInsights.trackTrace("checkUserIp userIpDO = " + userIpDO);
+        AppInsightsUtils.trackTrace("checkUserIp userIpDO = " + userIpDO);
 
         long currentTimes = userIpDO.getTimes();
 
@@ -127,7 +127,7 @@ public class UserIpService {
     }
 
     public BaseResponse<Object> noCrawlerPrintLog(String shopName, NoCrawlerVO noCrawlerVO) {
-        appInsights.trackTrace("状态码：" + noCrawlerVO.getStatus() + " , " + shopName + " 客户ip定位： " + noCrawlerVO.getUserIp()
+        AppInsightsUtils.trackTrace("状态码：" + noCrawlerVO.getStatus() + " , " + shopName + " 客户ip定位： " + noCrawlerVO.getUserIp()
                 + " , 语言代码： " + noCrawlerVO.getLanguageCode() + " , 是否包含该语言： " + noCrawlerVO.getLanguageCodeStatus()
                 + " , 货币代码： " + noCrawlerVO.getCurrencyCode() + " , 国家代码： " + noCrawlerVO.getCountryCode() + " , 是否包含该市场： "
                 + noCrawlerVO.getCurrencyCodeStatus() + " , checkUserIp接口花费时间： " + noCrawlerVO.getCostTime() + " , ipApi接口花费时间： " + noCrawlerVO.getIpApiCostTime()
@@ -202,7 +202,7 @@ public class UserIpService {
     }
 
     public BaseResponse<Object> includeCrawlerPrintLog(String shopName, IncludeCrawlerVO includeCrawlerVO) {
-        appInsights.trackTrace(shopName + " " + includeCrawlerVO.getUaInformation() + " 原因 " + includeCrawlerVO.getUaReason());
+        AppInsightsUtils.trackTrace(shopName + " " + includeCrawlerVO.getUaInformation() + " 原因 " + includeCrawlerVO.getUaReason());
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 

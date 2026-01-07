@@ -1,7 +1,7 @@
 package com.bogda.api.logic.translate.stragety;
 
 import com.bogda.api.context.TranslateContext;
-import com.bogda.api.utils.JsonUtils;
+import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;

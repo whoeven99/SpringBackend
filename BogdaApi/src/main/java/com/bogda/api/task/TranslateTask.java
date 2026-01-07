@@ -39,7 +39,7 @@ public class TranslateTask {
     private final Set<String> savingShops = new HashSet<>();
     private final Set<Integer> translatingInitialIds = new HashSet<>();
 
-    public static TelemetryClient appInsights = new TelemetryClient();
+    public static TelemetryClient AppInsightsUtils = new TelemetryClient();
 
     private <T> void process(int status,
                              Function<InitialTaskV2DO, T> groupByFunc,
@@ -70,16 +70,16 @@ public class TranslateTask {
             executorService.submit(() -> {
                 shopsSet.add(groupKey);
                 List<InitialTaskV2DO> groupTasks = entry.getValue();
-                appInsights.trackTrace("TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
+                AppInsightsUtils.trackTrace("TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
 
                 try {
                     for (InitialTaskV2DO initialTaskV2DO : groupTasks) {
                         taskConsumer.accept(initialTaskV2DO);
-                        appInsights.trackTrace("TranslateTaskV2 " + taskName + " success for group: " + groupKey + ", initialTaskId: " + initialTaskV2DO.getId());
+                        AppInsightsUtils.trackTrace("TranslateTaskV2 " + taskName + " success for group: " + groupKey + ", initialTaskId: " + initialTaskV2DO.getId());
                     }
                 } catch (Exception e) {
-                    appInsights.trackTrace("FatalException TaskRunFailed " + taskName + " " + e.getMessage());
-                    appInsights.trackException(e);
+                    AppInsightsUtils.trackTrace("FatalException TaskRunFailed " + taskName + " " + e.getMessage());
+                    AppInsightsUtils.trackException(e);
                 } finally {
                     shopsSet.remove(groupKey);
                 }
@@ -204,7 +204,7 @@ public class TranslateTask {
             return;
         }
 
-        appInsights.trackTrace("TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
+        AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
         translateV2Service.cleanTask(cleanTask.get(0));
     }
 }

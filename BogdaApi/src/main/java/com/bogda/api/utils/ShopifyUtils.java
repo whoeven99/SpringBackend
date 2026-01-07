@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.config.CurrencyConfig;
 import com.bogda.api.entity.DO.CurrenciesDO;
+import com.bogda.common.utils.AppInsightsUtils;
 
 import java.lang.reflect.Field;
 import java.text.NumberFormat;
@@ -11,7 +12,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 public class ShopifyUtils {
 
@@ -49,11 +49,11 @@ public class ShopifyUtils {
                 map.put("symbol", currencyInfo.get("symbol"));
             } else {
                 map.put("symbol", "-");
-                appInsights.trackTrace("符号错误 ： " + currenciesDO.getShopName());
+                AppInsightsUtils.trackTrace("符号错误 ： " + currenciesDO.getShopName());
             }
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            appInsights.trackTrace("FatalException : " + currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
+            AppInsightsUtils.trackTrace("FatalException : " + currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
         }
         return map;
     }

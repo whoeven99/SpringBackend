@@ -1,9 +1,10 @@
 package com.bogda.api.integration;
 
 import com.bogda.api.logic.token.UserTokenService;
-import com.bogda.api.utils.AppInsightsUtils;
-import com.bogda.api.utils.CharacterCountUtils;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.CharacterCountUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.TextResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +13,12 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.DEEPL_API_KEY;
-import static com.bogda.api.constants.TranslateConstants.DEEPL_MAGNIFICATION;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
 public class DeepLIntegration {
-    private static final String API_KEY = ConfigUtils.getConfig(DEEPL_API_KEY);
+    private static final String API_KEY = ConfigUtils.getConfig(TranslateConstants.DEEPL_API_KEY);
     @Autowired
     private UserTokenService userTokenService;
 
@@ -39,8 +38,8 @@ public class DeepLIntegration {
                         try {
                             return client.translateText(sourceText, null, target);
                         } catch (Exception e) {
-                            appInsights.trackTrace("FatalException 每日须看 translateByDeepL deepL翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
-                            appInsights.trackException(e);
+                            AppInsightsUtils.trackTrace("FatalException 每日须看 translateByDeepL deepL翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
+                            AppInsightsUtils.trackException(e);
                             return null;
                         }
                     },
@@ -50,11 +49,11 @@ public class DeepLIntegration {
             if (result == null) {
                 return sourceText;
             }
-            appInsights.trackTrace("result: " + result);
+            AppInsightsUtils.trackTrace("result: " + result);
             String targetText = result.getText();
-            int totalToken = result.getBilledCharacters() * DEEPL_MAGNIFICATION;
+            int totalToken = result.getBilledCharacters() * TranslateConstants.DEEPL_MAGNIFICATION;
             AppInsightsUtils.printTranslateCost(totalToken, totalToken, totalToken);
-            appInsights.trackTrace("clickTranslation translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
+            AppInsightsUtils.trackTrace("clickTranslation translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
             if (isSingleFlag) {
                 userTokenService.addUsedToken(shopName, totalToken);
             } else {
@@ -64,8 +63,8 @@ public class DeepLIntegration {
             counter.addChars(totalToken);
             return targetText;
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException clickTranslation translateByDeepL deepL翻译报错信息 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException clickTranslation translateByDeepL deepL翻译报错信息 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
+            AppInsightsUtils.trackException(e);
         }
         return sourceText;
     }

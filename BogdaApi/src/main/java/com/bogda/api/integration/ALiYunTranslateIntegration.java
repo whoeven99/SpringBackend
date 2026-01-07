@@ -15,9 +15,10 @@ import com.alibaba.dashscope.exception.UnSupportedSpecialTokenMode;
 import com.alibaba.dashscope.tokenizers.Tokenizer;
 import com.alibaba.dashscope.tokenizers.TokenizerFactory;
 import com.bogda.api.Service.IAPGUserCounterService;
-import com.bogda.api.utils.AppInsightsUtils;
-import com.bogda.api.utils.CharacterCountUtils;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.CharacterCountUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.bogda.api.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.bogda.api.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogda.api.constants.TranslateConstants.QWEN_VL_LAST;
-import static com.bogda.api.utils.AppInsightsUtils.printTranslateCost;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+import static com.bogda.common.utils.AppInsightsUtils.printTranslateCost;
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
@@ -51,8 +49,8 @@ public class ALiYunTranslateIntegration {
         try {
             return tokenizer.encode(text, "all").size();
         } catch (NoSpecialTokenExists | UnSupportedSpecialTokenMode e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("calculateBaiLianToken " + e.getMessage() + " 计数失败 text : " + text);
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("calculateBaiLianToken " + e.getMessage() + " 计数失败 text : " + text);
             return text.length();
         }
     }
@@ -87,9 +85,9 @@ public class ALiYunTranslateIntegration {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
-                            appInsights.trackTrace("FatalException userTranslate call errors ： " + e.getMessage() +
+                            AppInsightsUtils.trackTrace("FatalException userTranslate call errors ： " + e.getMessage() +
                                     " translateText : " + prompt);
-                            appInsights.trackException(e);
+                            AppInsightsUtils.trackException(e);
                             return null;
                         }
                     },
@@ -101,15 +99,15 @@ public class ALiYunTranslateIntegration {
             }
             String content = call.getOutput().getChoices().get(0).getMessage().getContent();
 
-            int totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            int totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +
+            AppInsightsUtils.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +
                     " token ali  all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             return new Pair<>(content, totalToken);
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }
@@ -127,7 +125,7 @@ public class ALiYunTranslateIntegration {
 
         MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model(QWEN_VL_LAST)
+                .model(TranslateConstants.QWEN_VL_LAST)
                 .message(userMessage)
                 .build();
         MultiModalConversationResult result;
@@ -136,8 +134,8 @@ public class ALiYunTranslateIntegration {
                         try {
                             return conv.call(param);
                         } catch (Exception e) {
-                            appInsights.trackTrace("FatalException 每日须看 callWithPicMess 百炼翻译报错信息 errors ： " + e.getMessage() + " picUrl : " + picUrl + " 用户：" + userId);
-                            appInsights.trackException(e);
+                            AppInsightsUtils.trackTrace("FatalException 每日须看 callWithPicMess 百炼翻译报错信息 errors ： " + e.getMessage() + " picUrl : " + picUrl + " 用户：" + userId);
+                            AppInsightsUtils.trackException(e);
                             return null;
                         }
                     },
@@ -150,17 +148,17 @@ public class ALiYunTranslateIntegration {
             List<Map<String, Object>> content = result.getOutput().getChoices().get(0).getMessage().getContent();
             Integer inputTokens = result.getUsage().getInputTokens();
             Integer outputTokens = result.getUsage().getOutputTokens();
-            int totalToken = (int) ((inputTokens + outputTokens) * MAGNIFICATION);
+            int totalToken = (int) ((inputTokens + outputTokens) * TranslateConstants.MAGNIFICATION);
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
-            appInsights.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            AppInsightsUtils.trackTrace("callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             //更新用户token计数和对应
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
             //更新用户产品计数
             counter.addChars(totalToken);
             return (String) content.get(0).get("text");
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException callWithPicMess 用户 " + userId + " 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException callWithPicMess 用户 " + userId + " 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }
@@ -188,8 +186,8 @@ public class ALiYunTranslateIntegration {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
-                            appInsights.trackTrace("FatalException 每日须看 callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt : " + prompt + " 用户：" + userId);
-                            appInsights.trackException(e);
+                            AppInsightsUtils.trackTrace("FatalException 每日须看 callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt : " + prompt + " 用户：" + userId);
+                            AppInsightsUtils.trackException(e);
                             return null;
                         }
                     },
@@ -200,15 +198,15 @@ public class ALiYunTranslateIntegration {
                 return null;
             }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             AppInsightsUtils.printTranslateCost(totalToken, inputTokens, outputTokens);
             iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
-            appInsights.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            AppInsightsUtils.trackTrace("用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             countUtils.addChars(totalToken);
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
+            AppInsightsUtils.trackTrace("FatalException callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
             return null;
         }
         return content;
@@ -241,8 +239,8 @@ public class ALiYunTranslateIntegration {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
-                            appInsights.trackTrace("FatalException 每日须看 textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text + " 用户：" + shopName);
-                            appInsights.trackException(e);
+                            AppInsightsUtils.trackTrace("FatalException 每日须看 textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text + " 用户：" + shopName);
+                            AppInsightsUtils.trackException(e);
                             return null;
                         }
                     },
@@ -253,16 +251,16 @@ public class ALiYunTranslateIntegration {
                 return null;
             }
             content = call.getOutput().getChoices().get(0).getMessage().getContent();
-            totalToken = (int) (call.getUsage().getTotalTokens() * MAGNIFICATION);
+            totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            appInsights.trackTrace("textTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            AppInsightsUtils.trackTrace("textTranslate " + shopName + " 用户 原文本：" + text + " 翻译成： " + content + " token ali: " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             printTranslateCost(totalToken, inputTokens, outputTokens);
 //            pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_ALT_FEE);
 
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
-            appInsights.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text);
+            AppInsightsUtils.trackException(e);
             return null;
         }
         return content;

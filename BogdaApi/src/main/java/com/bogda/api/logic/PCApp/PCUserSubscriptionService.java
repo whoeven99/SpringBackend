@@ -10,12 +10,11 @@ import com.bogda.api.repository.entity.PCSubscriptionsDO;
 import com.bogda.api.repository.entity.PCUserSubscriptionsDO;
 import com.bogda.api.repository.entity.PCUserTrialsDO;
 import com.bogda.api.repository.repo.*;
-import com.bogda.api.utils.CaseSensitiveUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
-import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.api.utils.StringUtils.parsePlanName;
 
 @Component
@@ -43,7 +42,7 @@ public class PCUserSubscriptionService {
         PCUserSubscriptionsDO pcUserSubscriptionsByShopName = pcUserSubscriptionsRepo.getPcUserSubscriptionsByShopName(shopName);
 
         if (pcUserSubscriptionsByShopName == null) {
-            CaseSensitiveUtils.appInsights.trackTrace("PC getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
+            AppInsightsUtils.trackTrace("PC getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("pcUserSubscriptionsByShopName is null");
         }
 
@@ -91,8 +90,8 @@ public class PCUserSubscriptionService {
 
         // 通过charsOrdersDO的id，获取信息
         // 根据新的集合获取这个订阅计划的信息
-        String query = getSubscriptionQuery(latestActiveSubscribeId);
-        String infoByShopify = shopifyService.getShopifyData(shopName, pcUser.getAccessToken(), API_VERSION_LAST, query);
+        String query = ShopifyRequestUtils.getSubscriptionQuery(latestActiveSubscribeId);
+        String infoByShopify = shopifyService.getShopifyData(shopName, pcUser.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
 
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             subscriptionVO.setFeeType(0);

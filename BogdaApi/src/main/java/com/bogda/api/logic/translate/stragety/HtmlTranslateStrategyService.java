@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.bogda.api.utils.LiquidHtmlTranslatorUtils.*;
+import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.*;
 
 @Component
 public class HtmlTranslateStrategyService implements ITranslateStrategyService {

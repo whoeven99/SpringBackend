@@ -1,9 +1,10 @@
 package com.bogda.api.integration;
 
 import com.bogda.api.logic.token.UserTokenService;
-import com.bogda.api.utils.AppInsightsUtils;
-import com.bogda.api.utils.CharacterCountUtils;
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.CharacterCountUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -14,8 +15,7 @@ import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static com.bogda.api.constants.TranslateConstants.MAGNIFICATION;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
@@ -73,8 +73,8 @@ public class HunYuanIntegration {
                         try {
                             return CLIENT.ChatCompletions(req);
                         } catch (Exception e) {
-                            appInsights.trackTrace("FatalException 每日须看 hunYuanTranslate 混元报错信息 errors ： " + e.getMessage() + " sourceText : " + sourceText + " 用户：" + shopName);
-                            appInsights.trackException(e);
+                            AppInsightsUtils.trackTrace("FatalException 每日须看 hunYuanTranslate 混元报错信息 errors ： " + e.getMessage() + " sourceText : " + sourceText + " 用户：" + shopName);
+                            AppInsightsUtils.trackException(e);
                             return null;
                         }
                     },
@@ -91,11 +91,11 @@ public class HunYuanIntegration {
                 if (resp.getUsage() != null && resp.getUsage().getTotalTokens() != null) {
                     countUtils.addChars(resp.getUsage().getTotalTokens().intValue());
                 }
-                int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * MAGNIFICATION);
+                int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * TranslateConstants.MAGNIFICATION);
                 long completionTokens = resp.getUsage().getCompletionTokens();
                 long promptTokens = resp.getUsage().getPromptTokens();
                 AppInsightsUtils.printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
-                appInsights.trackTrace("hunYuanTranslate 混元信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                AppInsightsUtils.trackTrace("hunYuanTranslate 混元信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
                 if (isSingleFlag) {
                     userTokenService.addUsedToken(shopName, totalToken);
                 } else {
@@ -108,11 +108,11 @@ public class HunYuanIntegration {
                 return null;
             }
         } catch (TencentCloudSDKException e) {
-            appInsights.trackException(e);
-            appInsights.trackTrace("FatalException hunYuanTranslate 混元报错信息 errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException hunYuanTranslate 混元报错信息 errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
             return null;
         } catch (Exception e) {
-            appInsights.trackException(e);
+            AppInsightsUtils.trackException(e);
             return null;
         }
     }

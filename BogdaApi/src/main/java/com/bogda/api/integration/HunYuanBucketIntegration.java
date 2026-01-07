@@ -1,6 +1,7 @@
 package com.bogda.api.integration;
 
-import com.bogda.api.utils.ConfigUtils;
+import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.bogda.api.utils.StringUtils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
@@ -20,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
+
 import static com.bogda.api.utils.TimeOutUtils.*;
 
 @Component
@@ -56,7 +57,7 @@ public class HunYuanBucketIntegration {
      * 进度条展示
      * */
     private static void showTransferProgress(Transfer transfer) {
-        appInsights.trackTrace(transfer.getDescription());
+        AppInsightsUtils.trackTrace(transfer.getDescription());
         do {
             try {
                 Thread.sleep(2000);
@@ -67,9 +68,9 @@ public class HunYuanBucketIntegration {
             long soFar = progress.getBytesTransferred();
             long total = progress.getTotalBytesToTransfer();
             double pct = progress.getPercentTransferred();
-            appInsights.trackTrace("[" + soFar + " / " + total + "] = " + pct);
+            AppInsightsUtils.trackTrace("[" + soFar + " / " + total + "] = " + pct);
         } while (transfer.isDone() == false);
-        appInsights.trackTrace(String.valueOf(transfer.getState()));
+        AppInsightsUtils.trackTrace(String.valueOf(transfer.getState()));
     }
 
     /**
@@ -99,8 +100,8 @@ public class HunYuanBucketIntegration {
                             try {
                                 return new PutObjectRequest(BUCKET_NAME, key, file.getInputStream(), metadata);
                             } catch (Exception e) {
-                                appInsights.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " imageId : " + imageId + " 用户：" + shopName);
-                                appInsights.trackException(e);
+                                AppInsightsUtils.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " imageId : " + imageId + " 用户：" + shopName);
+                                AppInsightsUtils.trackException(e);
                                 return null;
                             }
                         },
@@ -115,11 +116,11 @@ public class HunYuanBucketIntegration {
                 showTransferProgress(upload);
                 UploadResult uploadResult = upload.waitForUploadResult();
 //                long endTime = System.currentTimeMillis();
-//                appInsights.trackTrace("used time: " + (endTime - startTime) / 1000);
+//                AppInsightsUtils.trackTrace("used time: " + (endTime - startTime) / 1000);
                 transferManager.shutdownNow();
                 return afterUrl; // 上传成功直接返回true
             } catch (Exception e) {
-                appInsights.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", shopName: " + shopName + " imageId: " + imageId);
+                AppInsightsUtils.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", shopName: " + shopName + " imageId: " + imageId);
             } finally {
                 transferManager.shutdownNow();
             }
@@ -143,8 +144,8 @@ public class HunYuanBucketIntegration {
                         try {
                             return new PutObjectRequest(BUCKET_NAME, key, inputStream, metadata);
                         } catch (Exception e) {
-                            appInsights.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " key : " + key );
-                            appInsights.trackException(e);
+                            AppInsightsUtils.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " key : " + key );
+                            AppInsightsUtils.trackException(e);
                             return null;
                         }
                     },
@@ -164,7 +165,7 @@ public class HunYuanBucketIntegration {
             transferManager.shutdownNow();
             return HTTP + key; // 上传成功直接返回true
         } catch (Exception e) {
-            appInsights.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", key : " + key );
+            AppInsightsUtils.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", key : " + key );
         } finally {
             transferManager.shutdownNow();
         }

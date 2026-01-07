@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.bogda.api.task.TranslateTask.appInsights;
+import static com.bogda.api.task.TranslateTask.AppInsightsUtils;
 
 @Service
 public class UserPageFlyService {
@@ -46,7 +46,7 @@ public class UserPageFlyService {
                 try {
                     success = iUserPageFlyService.insertUserPageFlysData(item);
                 } catch (Exception e) {
-                    appInsights.trackTrace("FatalException editTranslatedData " + e.getMessage());
+                    AppInsightsUtils.trackTrace("FatalException editTranslatedData " + e.getMessage());
                 }
 
                 if (success) {
