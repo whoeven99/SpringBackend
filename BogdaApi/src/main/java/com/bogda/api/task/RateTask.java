@@ -17,7 +17,7 @@ public class RateTask {
     @Autowired
     private RateHttpIntegration rateHttpIntegration;
 
-//    @PostConstruct
+    @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")
     public void getRateEveryHour() {
         //改为存储在缓存中（后面存储到redis中）
