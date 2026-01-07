@@ -7,6 +7,7 @@ import com.bogda.api.Service.IUsersService;
 import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.VO.*;
+import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.logic.TranslateService;
 import com.bogda.api.logic.UserTypeTokenService;
 import com.bogda.api.logic.redis.RedisStoppedRepository;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import static com.bogda.api.enums.ErrorEnum.*;
-import static com.bogda.api.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
@@ -43,6 +43,8 @@ public class TranslateController {
     private IUsersService iUsersService;
     @Autowired
     private TranslateV2Service translateV2Service;
+    @Autowired
+    private ShopifyHttpIntegration shopifyHttpIntegration;
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
@@ -194,7 +196,7 @@ public class TranslateController {
         request.setAccessToken(cloudServiceRequest.getAccessToken());
         request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
-        String s = registerTransaction(request, body);
+        String s = shopifyHttpIntegration.registerTransaction(request, body);
         appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
     }
 

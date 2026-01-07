@@ -20,19 +20,20 @@ import static com.bogda.api.utils.TimeOutUtils.*;
 @Component
 public class BaseHttpIntegration {
     private final CloseableHttpClient httpClient;
+
     public BaseHttpIntegration() {
         this.httpClient = HttpClients.createDefault();
     }
 
-    public String httpPost(String url, String requestBodyString) {
+    public String httpPost(String url, String body) {
         HttpPost http = new HttpPost(url);
-        http.setEntity(new StringEntity(requestBodyString, "UTF-8"));
+        http.setEntity(new StringEntity(body, "UTF-8"));
         return sendHttp(http, new HashMap<>());
     }
 
-    public String httpPost(String url, String requestBodyString, Map<String, String> headers) {
+    public String httpPost(String url, String body, Map<String, String> headers) {
         HttpPost http = new HttpPost(url);
-        http.setEntity(new StringEntity(requestBodyString, "UTF-8"));
+        http.setEntity(new StringEntity(body, "UTF-8"));
         return sendHttp(http, headers);
     }
 

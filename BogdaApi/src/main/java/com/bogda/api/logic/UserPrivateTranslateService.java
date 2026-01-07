@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.UserPrivateUtils.getApiKey;
 
 @Service
 public class UserPrivateTranslateService {
@@ -49,6 +48,11 @@ public class UserPrivateTranslateService {
         return keyVaultSecret != null && save;
     }
 
+    private static String getApiKey(String userName, Integer apiName) {
+        //修改userName，将.号处理掉
+        userName = userName.replace(".", "");
+        return userName + "-" + apiName;
+    }
 
     public UserPrivateTranslateDO getUserPrivateData(String shopName, Integer apiName) {
         // 从数据中获取相关数据

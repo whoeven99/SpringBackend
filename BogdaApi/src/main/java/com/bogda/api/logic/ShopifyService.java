@@ -19,7 +19,6 @@ import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.TranslateTaskV2DO;
 import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.*;
 import com.bogda.common.utils.JsoupUtils;
@@ -44,7 +43,6 @@ import static com.bogda.api.constants.TranslateConstants.*;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.api.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
-import static com.bogda.api.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogda.api.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.JsonUtils.isJson;
@@ -106,10 +104,7 @@ public class ShopifyService {
         }
     }
 
-    /**
-     * 获取 Shopify 数据（带速率限制，返回完整响应包括 extensions）
-     * @return 完整的响应字符串（包含 data 和 extensions），但只返回 data 部分以保持向后兼容
-     */
+    // 获取 Shopify 数据（带速率限制，返回完整响应包括 extensions）
     private ShopifyGraphResponse getShopifyDataWithRateLimit(String shopName, String accessToken, String query) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
         rateLimiter.acquire();
@@ -125,6 +120,7 @@ public class ShopifyService {
         return shopifyResponse.getData();
     }
 
+    // 保存 Shopify 数据（带速率限制，返回完整响应包括 extensions）
     public String saveDataWithRateLimit(String shopName, String token, ShopifyGraphResponse.TranslatableResources.Node node) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
         rateLimiter.acquire();
@@ -151,18 +147,12 @@ public class ShopifyService {
         return response;
     }
 
-    //封装调用云服务器实现获取shopify数据的方法
-    public static String getShopifyDataByCloud(CloudServiceRequest cloudServiceRequest) {
-        String requestBody = JsonUtils.objectToJson(cloudServiceRequest);
-        return TestingEnvironmentIntegration.sendShopifyPost("test123", requestBody);
-    }
-
     public String getShopifyData(String shopName, String accessToken, String apiVersion, String query) {
         if (!ConfigUtils.isLocalEnv()) {
             return shopifyHttpIntegration.getInfoByShopify(shopName, accessToken, apiVersion, query);
         } else {
             // 本地调用shopify
-            return testingEnvironmentIntegration.sendShopifyPost("test123", shopName, accessToken, apiVersion, query);
+            return testingEnvironmentIntegration.sendApiByTestCloud("test123", shopName, accessToken, apiVersion, query);
         }
     }
 
@@ -549,14 +539,14 @@ public class ShopifyService {
         shopifyRequest.setAccessToken(registerTransactionRequest.getAccessToken());
         shopifyRequest.setTarget(registerTransactionRequest.getTarget());
         Map<String, Object> variables = getVariables(registerTransactionRequest);
-        return registerTransaction(shopifyRequest, variables);
+        return shopifyHttpIntegration.registerTransaction(shopifyRequest, variables);
     }
 
     //修改多个文本数据
     public String updateShopifyManyData(ShopifyRequest shopifyRequest, List<RegisterTransactionRequest> registerTransactionRequests) {
         // 将List<RegisterTransactionRequest>处理成variables数据
         Map<String, Object> variables = toVariables(registerTransactionRequests);
-        return registerTransaction(shopifyRequest, variables);
+        return shopifyHttpIntegration.registerTransaction(shopifyRequest, variables);
     }
 
     //一次修改多条shopify本地数据
