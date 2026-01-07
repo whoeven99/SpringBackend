@@ -12,7 +12,6 @@ import com.bogda.api.logic.RedisDataReportService;
 import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.logic.translate.TranslateV2Service;
 import com.bogda.api.model.controller.request.CloudServiceRequest;
-import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.task.IpEmailTask;
@@ -99,12 +98,8 @@ public class TestController {
     // 通过测试环境调shopify的API
     @PostMapping("/test123")
     public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
-        JSONObject infoByShopify = shopifyHttpIntegration.getInfoByShopify(request, body);
+        JSONObject infoByShopify = shopifyHttpIntegration.getInfoByShopify(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }
