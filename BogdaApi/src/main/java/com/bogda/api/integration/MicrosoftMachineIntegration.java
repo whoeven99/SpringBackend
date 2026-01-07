@@ -4,8 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.model.controller.request.TranslateRequest;
-import com.bogda.api.utils.ConfigUtils;
 import com.bogda.api.utils.ModuleCodeUtils;
+import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.ConfigUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -18,8 +19,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component
 public class MicrosoftMachineIntegration {
@@ -53,7 +52,7 @@ public class MicrosoftMachineIntegration {
             HttpEntity responseEntity = response.getEntity();
             responseContent = EntityUtils.toString(responseEntity, StandardCharsets.UTF_8);
             // 获取翻译结果
-            appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
+            CaseSensitiveUtils.appInsights.trackTrace("翻译错误信息：" + JSON.parseArray(responseContent));
 //            appInsights.trackTrace("翻译错误信息：" + responseContent);
             JSONArray jsonArray = JSON.parseArray(responseContent);
             for (int i = 0; i < jsonArray.size(); i++) {
