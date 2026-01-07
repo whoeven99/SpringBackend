@@ -2,43 +2,42 @@ package com.bogda.api.utils;
 
 public class ShopifyRequestUtils {
     public static String getQuery(String resourceType, String first, String target) {
-        return "query MyQuery {\n" +
-                "  translatableResources(resourceType: " + resourceType + ", first: " + first + ") {\n" +
-                query.replace("%target%", target);
+        return getQuery(resourceType, first, target, null);
     }
 
     public static String getQuery(String resourceType, String first, String target, String after) {
-        if (after == null || after.isEmpty()) {
-            return getQuery(resourceType, first, target);
-        }
-        return "query MyQuery {\n" +
-                "  translatableResources(resourceType: " + resourceType + ", first: " + first + ", after: " + "\"" + after + "\"" + ") {\n" +
-                query.replace("%target%", target);
+        String afterClause = (after == null || after.isEmpty())
+                ? ""
+                : ", after: \"%s\"".formatted(after);
+
+        return query.formatted(resourceType, first, afterClause, target);
     }
 
-    public static String query = """
-                nodes {
-                  resourceId
-                  translations(locale: "%target%") {
-                    locale
-                    value
-                    key
-                    outdated
-                  }
-                  translatableContent {
-                    type
-                    locale
-                    key
-                    value
-                    digest
+    public static final String query = """
+                query MyQuery {
+                  translatableResources(resourceType: %s, first: %s%s) {
+                    nodes {
+                      resourceId
+                      translations(locale: "%s") {
+                        locale
+                        value
+                        key
+                        outdated
+                      }
+                      translatableContent {
+                        type
+                        locale
+                        key
+                        value
+                        digest
+                      }
+                    }
+                    pageInfo {
+                      endCursor
+                      hasNextPage
+                    }
                   }
                 }
-                pageInfo {
-                  endCursor
-                  hasNextPage
-                }
-              }
-             }
             """;
 
     public static String registerTransactionQuery() {
@@ -58,7 +57,7 @@ public class ShopifyRequestUtils {
                 """;
     }
 
-    public static String getLanguagesQuery() {
+    public static String getShopLanguageQuery() {
         return """
                   query MyQuery {
                    shopLocales(published: false) {
@@ -69,6 +68,19 @@ public class ShopifyRequestUtils {
                          }
                 }
                 """;
+    }
+
+    public static String getLanguagesQuery() {
+        return """
+                  query MyQuery {
+                    shopLocales {
+                      locale
+                      name
+                      primary
+                      published
+                    }
+                  }
+                  """;
     }
 
     /**

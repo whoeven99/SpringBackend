@@ -1,65 +1,6 @@
 package com.bogda.api.requestBody;
 
-import com.bogda.api.entity.DO.TranslateResourceDTO;
-
 public class ShopifyRequestBody {
-
-    // TODO move to ShopifyRequestUtils
-    public String getFirstQuery(TranslateResourceDTO translateResourceDTO) {
-        return "{\n" +
-                "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ") {\n" +
-                "    nodes {\n" +
-                "      resourceId\n" +
-                "      translations(locale: \"" + translateResourceDTO.getTarget() + "\") {\n" +
-                "        locale\n" +
-                "        value\n" +
-                "        key\n" +
-                "        outdated\n" +
-                "      }\n" +
-                "      translatableContent {\n" +
-                "        type\n" +
-                "        locale\n" +
-                "        key\n" +
-                "        value\n" +
-                "        digest\n" +
-                "      }\n" +
-                "    }\n" +
-                "    pageInfo {\n" +
-                "      endCursor\n" +
-                "      hasNextPage\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
-    }
-
-    // TODO move to ShopifyRequestUtils
-    public String getAfterQuery(TranslateResourceDTO translateResourceDTO) {
-        return "{\n" +
-                "  translatableResources(resourceType: " + translateResourceDTO.getResourceType() + ", first: " + translateResourceDTO.getFirst() + ", after: " + "\"" + translateResourceDTO.getAfter() + "\"" + ") {\n" +
-                "    nodes {\n" +
-                "      resourceId" +
-                "      translations(locale: \"" + translateResourceDTO.getTarget() + "\") {\n" +
-                "        locale\n" +
-                "        value\n" +
-                "        key\n" +
-                "        outdated\n" +
-                "      }\n" +
-                "      translatableContent {\n" +
-                "        digest\n" +
-                "        key\n" +
-                "        type\n" +
-                "        locale\n" +
-                "        value\n" +
-                "      }\n" +
-                "    }\n" +
-                "    pageInfo {\n" +
-                "      endCursor\n" +
-                "      hasNextPage\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
-    }
-
     //根据用户付费订单id获取订单信息
     public static String getSubscriptionQuery(String subscriptionId) {
         return "query GetSubscriptionDetails {\n" +
@@ -111,20 +52,6 @@ public class ShopifyRequestBody {
     }
 
     /**
-     * 根据查询语句获取用户所有语言代码
-     */
-    public static String getLanguagesQuery() {
-        return "query MyQuery {\n" +
-                "  shopLocales {\n" +
-                "    locale\n" +
-                "    name\n" +
-                "    primary\n" +
-                "    published\n" +
-                "  }\n" +
-                "}";
-    }
-
-    /**
      * 根据产品id获取对应信息
      */
     public static String getProductDataQuery(String productId) {
@@ -148,21 +75,5 @@ public class ShopifyRequestBody {
                 "    title\n" +
                 "  }\n" +
                 "}";
-    }
-
-    /**
-     * 获取用户商店开启的语言和未开启的语言
-     */
-    public static String getShopLanguageQuery() {
-        return """
-                query MyQuery {
-                   shopLocales(published: false) {
-                         locale
-                         name
-                         primary
-                         published
-                         }
-                }
-                """;
     }
 }

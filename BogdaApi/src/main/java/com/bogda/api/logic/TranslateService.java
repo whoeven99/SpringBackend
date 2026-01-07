@@ -9,20 +9,21 @@ import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.AidgeIntegration;
 import com.bogda.api.logic.redis.RedisStoppedRepository;
-import com.bogda.api.model.controller.request.TranslateRequest;
-import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.JsonUtils;
+import com.bogda.api.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import static com.bogda.api.constants.TranslateConstants.*;
+
+import static com.bogda.api.constants.TranslateConstants.API_VERSION_LAST;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -87,7 +88,7 @@ public class TranslateService {
      * 用户shopify和数据库同步的方法
      */
     public void syncShopifyAndDatabase(String shopName, String accessToken, String source) {
-        String query = ShopifyRequestBody.getLanguagesQuery();
+        String query = ShopifyRequestUtils.getLanguagesQuery();
         String shopifyData;
         JsonNode root;
         try {

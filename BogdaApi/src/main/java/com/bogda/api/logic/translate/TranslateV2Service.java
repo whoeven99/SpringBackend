@@ -32,7 +32,6 @@ import com.bogda.api.repository.entity.InitialTaskV2DO;
 import com.bogda.api.repository.entity.TranslateTaskV2DO;
 import com.bogda.api.repository.repo.InitialTaskV2Repo;
 import com.bogda.api.repository.repo.TranslateTaskV2Repo;
-import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.*;
 import com.bogda.common.utils.JsoupUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -55,7 +54,6 @@ import java.util.stream.Stream;
 import static com.bogda.api.constants.TranslateConstants.*;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 import static com.bogda.api.logic.TaskService.AUTO_TRANSLATE_MAP;
-import static com.bogda.api.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
 
 @Component
@@ -312,7 +310,7 @@ public class TranslateV2Service {
         }
 
         // 3. 获取 Shopify 语言数据
-        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestBody.getLanguagesQuery());
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, API_VERSION_LAST, ShopifyRequestUtils.getLanguagesQuery());
         JsonNode root = JsonUtils.readTree(shopifyData);
 
         if (root == null) {
@@ -874,7 +872,7 @@ public class TranslateV2Service {
 
         // 判断这条语言是否在用户本地存在
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
-                API_VERSION_LAST, getShopLanguageQuery());
+                API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         appInsights.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
         if (shopifyByQuery == null) {
             appInsights.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
