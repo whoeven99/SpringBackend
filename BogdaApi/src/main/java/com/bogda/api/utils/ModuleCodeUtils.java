@@ -17,6 +17,12 @@ public class ModuleCodeUtils {
         };
     }
 
+    // 定义google翻译不了的语言代码集合
+    public static final Set<String> LANGUAGE_CODES = new HashSet<>(Arrays.asList(
+            "ce", "kw", "fo", "ia", "kl", "ks", "ki", "lu", "gv", "nd", "pt",
+            "se", "nb", "nn", "os", "rm", "sc", "ii", "bo", "to", "wo", "ar-EG"
+    ));
+
     //微软代码处理
     public static String microsoftTransformCode(String code) {
         return switch (code) {
