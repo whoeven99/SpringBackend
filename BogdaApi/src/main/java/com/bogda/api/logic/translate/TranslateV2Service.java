@@ -111,7 +111,7 @@ public class TranslateV2Service {
             return BaseResponse.FailedResponse("Token limit reached");
         }
         TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
-                request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()), ALiYunTranslateIntegration.QWEN_MAX);
+                request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()), GeminiIntegration.GEMINI_3_FLASH);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
         service.finishAndGetJsonRecord(context);
@@ -378,7 +378,7 @@ public class TranslateV2Service {
         initialTask.setTaskType("auto");
         initialTaskV2Repo.insert(initialTask);
 
-        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, ALiYunTranslateIntegration.QWEN_MAX);
+        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, GeminiIntegration.GEMINI_3_FLASH);
     }
 
     /**

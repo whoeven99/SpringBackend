@@ -1,8 +1,18 @@
 package com.bogda.common.utils;
 
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
+import com.microsoft.applicationinsights.TelemetryClient;
 
 public class AppInsightsUtils {
+    public static TelemetryClient appInsights = new TelemetryClient();
+
+    public static void trackTrace(String message, Object... args) {
+        appInsights.trackTrace(String.format(message, args));
+    }
+
+    public static void trackException(Exception e) {
+        appInsights.trackException(e);
+    }
 
     /**
      * 翻译消耗相关打印

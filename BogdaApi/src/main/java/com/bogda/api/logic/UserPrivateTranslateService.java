@@ -49,6 +49,11 @@ public class UserPrivateTranslateService {
         return keyVaultSecret != null && save;
     }
 
+    private static String getApiKey(String userName, Integer apiName) {
+        //修改userName，将.号处理掉
+        userName = userName.replace(".", "");
+        return userName + "-" + apiName;
+    }
 
     public UserPrivateTranslateDO getUserPrivateData(String shopName, Integer apiName) {
         // 从数据中获取相关数据

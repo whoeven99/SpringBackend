@@ -7,6 +7,7 @@ import com.bogda.api.Service.IUsersService;
 import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.VO.*;
+import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.logic.TranslateService;
 import com.bogda.api.logic.UserTypeTokenService;
 import com.bogda.api.logic.redis.RedisStoppedRepository;
@@ -42,6 +43,8 @@ public class TranslateController {
     private IUsersService iUsersService;
     @Autowired
     private TranslateV2Service translateV2Service;
+    @Autowired
+    private ShopifyHttpIntegration shopifyHttpIntegration;
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
@@ -74,6 +77,20 @@ public class TranslateController {
             future.cancel(true);
         }
         return new BaseResponse<>().CreateSuccessResponse(true);
+//        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
+//        if (!stopFlag) {
+//            return new BaseResponse<>().CreateErrorResponse("already stopped");
+//        }
+//
+//        // 将所有状态2的任务改成7
+//        translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
+//
+//        // 将所有状态为0和2的task任务，改为7
+//        Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
+//        if (flag) {
+//            return new BaseResponse<>().CreateSuccessResponse(true);
+//        }
+//        return new BaseResponse<>().CreateErrorResponse(false);
     }
 
     // 用户手动点击继续翻译
@@ -168,6 +185,17 @@ public class TranslateController {
         String shopName = request.getShopName();
         redisStoppedRepository.removeStoppedFlag(shopName);
     }
+
+    /**
+     * 将一条数据存shopify本地
+     */
+    @PostMapping("/insertTranslatedText")
+    public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
+        Map<String, Object> body = cloudServiceRequest.getBody();
+        String s = shopifyHttpIntegration.registerTransaction(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
+        appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
+    }
+
 
     //删除翻译状态的语言
     @PostMapping("/deleteFromTranslates")

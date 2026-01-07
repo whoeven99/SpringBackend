@@ -7,11 +7,11 @@ import com.bogda.api.entity.VO.GptVO;
 import com.bogda.api.entity.VO.UserDataReportVO;
 import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.GoogleMachineIntegration;
+import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.logic.RedisDataReportService;
 import com.bogda.api.logic.RedisProcessService;
 import com.bogda.api.logic.translate.TranslateV2Service;
 import com.bogda.api.model.controller.request.CloudServiceRequest;
-import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.api.model.controller.request.TranslateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.task.IpEmailTask;
@@ -49,6 +49,8 @@ public class TestController {
     private ITranslatesService iTranslatesService;
     @Autowired
     private GoogleMachineIntegration googleMachineIntegration;
+    @Autowired
+    private ShopifyHttpIntegration shopifyHttpIntegration;
 
     @PostMapping("/test")
     public Pair<String, Integer> test(@RequestBody TranslateRequest request) {
@@ -97,12 +99,8 @@ public class TestController {
     // 通过测试环境调shopify的API
     @PostMapping("/test123")
     public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
-        JSONObject infoByShopify = getInfoByShopify(request, body);
+        JSONObject infoByShopify = shopifyHttpIntegration.getInfoByShopify(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
         }
