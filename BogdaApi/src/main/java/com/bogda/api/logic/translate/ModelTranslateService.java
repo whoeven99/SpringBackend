@@ -32,7 +32,7 @@ public class ModelTranslateService {
         } else if (ChatGptIntegration.GPT_4.equals(aiModel)) {
             pair = chatGptIntegration.chatWithGpt(prompt, target);
         } else if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)) {
-            pair = geminiIntegration.generateText(prompt, target);
+            pair = geminiIntegration.generateText(aiModel, prompt);
         }
         return pair;
     }
