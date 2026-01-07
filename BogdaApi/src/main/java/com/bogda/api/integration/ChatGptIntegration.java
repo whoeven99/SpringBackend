@@ -11,7 +11,6 @@ import com.bogda.api.utils.ConfigUtils;
 import com.bogda.api.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

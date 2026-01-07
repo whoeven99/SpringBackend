@@ -1,7 +1,7 @@
 package com.bogda.api.task;
 
 import com.bogda.api.integration.RateHttpIntegration;
-import com.bogda.api.utils.CaseSensitiveUtils;
+import com.bogda.api.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,9 +21,9 @@ public class RateTask {
         //改为存储在缓存中（后面存储到redis中）
         try {
             rateHttpIntegration.getFixerRate();
+            AppInsightsUtils.trackTrace("rateMap: %s", rateMap.toString());
         } catch (Exception e) {
-            CaseSensitiveUtils.appInsights.trackTrace("FatalException 获取汇率失败: " + e.getMessage());
+            AppInsightsUtils.trackTrace("FatalException 获取汇率失败: %s", e.getMessage());
         }
-        CaseSensitiveUtils.appInsights.trackTrace("rateMap: " + rateMap.toString());
     }
 }
