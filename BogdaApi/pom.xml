@@ -4,19 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.example</groupId>
-        <artifactId>spring-backend</artifactId>
+        <groupId>com.bogda</groupId>
+        <artifactId>translationBE</artifactId>
         <version>0.0.2</version>
     </parent>
 
     <groupId>com.bogda</groupId>
     <artifactId>BogdaApi</artifactId>
-
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -287,6 +281,18 @@
             <version>1.0.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/aidge.jar</systemPath>
+        </dependency>
+        <!-- google Gemini相关 -->
+        <dependency>
+            <groupId>com.google.genai</groupId>
+            <artifactId>google-genai</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- google机器翻译 -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-translate</artifactId>
+            <version>2.81.0</version>
         </dependency>
     </dependencies>
 
