@@ -584,7 +584,7 @@ public class ShopifyService {
     }
 
     //将多条数据所需要的数据封装成Map格式
-    static Map<String, Object> toVariables(List<RegisterTransactionRequest> registerTransactionRequest) {
+    private static Map<String, Object> toVariables(List<RegisterTransactionRequest> registerTransactionRequest) {
         Map<String, Object> variables = new HashMap<>();
         List<Map<String, Object>> translations = new ArrayList<>();
         for (RegisterTransactionRequest request : registerTransactionRequest) {

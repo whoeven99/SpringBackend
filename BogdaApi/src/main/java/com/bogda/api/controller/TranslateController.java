@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import static com.bogda.common.enums.ErrorEnum.*;
-import static com.bogda.api.integration.ShopifyHttpIntegration.registerTransaction;
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
@@ -75,20 +74,6 @@ public class TranslateController {
             future.cancel(true);
         }
         return new BaseResponse<>().CreateSuccessResponse(true);
-//        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
-//        if (!stopFlag) {
-//            return new BaseResponse<>().CreateErrorResponse("already stopped");
-//        }
-//
-//        // 将所有状态2的任务改成7
-//        translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
-//
-//        // 将所有状态为0和2的task任务，改为7
-//        Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
-//        if (flag) {
-//            return new BaseResponse<>().CreateSuccessResponse(true);
-//        }
-//        return new BaseResponse<>().CreateErrorResponse(false);
     }
 
     // 用户手动点击继续翻译
@@ -183,21 +168,6 @@ public class TranslateController {
         String shopName = request.getShopName();
         redisStoppedRepository.removeStoppedFlag(shopName);
     }
-
-    /**
-     * 将一条数据存shopify本地
-     */
-    @PostMapping("/insertTranslatedText")
-    public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
-        Map<String, Object> body = cloudServiceRequest.getBody();
-        String s = registerTransaction(request, body);
-        appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
-    }
-
 
     //删除翻译状态的语言
     @PostMapping("/deleteFromTranslates")

@@ -300,12 +300,6 @@ public class ShopifyController {
         return shopifyService.getItemsByShopName(request);
     }
 
-    //修改单行文本
-    @PostMapping("/updateItem")
-    public String updateItem(@RequestBody RegisterTransactionRequest registerTransactionRequest) {
-        return shopifyService.updateShopifySingleData(registerTransactionRequest);
-    }
-
     //修改多条文本
     @PostMapping("/updateItems")
     public BaseResponse<Object> updateItems(@RequestBody List<RegisterTransactionRequest> registerTransactionRequest) {
