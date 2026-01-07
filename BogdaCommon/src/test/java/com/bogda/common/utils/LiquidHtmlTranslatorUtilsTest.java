@@ -1,6 +1,5 @@
-package com.bogdatech.utils;
+package com.bogda.common.utils;
 
-import com.bogda.api.utils.LiquidHtmlTranslatorUtils;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.Test;
 

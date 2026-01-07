@@ -1,4 +1,4 @@
-package com.bogdatech.utils;
+package com.bogda.api;
 
 import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.logic.GlossaryService;

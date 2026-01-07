@@ -1,6 +1,5 @@
-package com.bogdatech.utils;
+package com.bogda.common.utils;
 
-import com.bogda.api.utils.JsoupUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

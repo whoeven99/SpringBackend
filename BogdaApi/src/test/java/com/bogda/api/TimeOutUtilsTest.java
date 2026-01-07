@@ -1,4 +1,4 @@
-package com.bogdatech.utils;
+package com.bogda.api;
 
 import com.bogda.api.utils.TimeOutUtils;
 import org.junit.jupiter.api.Test;

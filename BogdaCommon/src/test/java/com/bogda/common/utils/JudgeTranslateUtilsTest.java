@@ -1,12 +1,12 @@
-package com.bogdatech.utils;
+package com.bogda.common.utils;
 
-import com.bogda.api.enums.RejectRuleEnum;
+import com.bogda.common.enums.RejectRuleEnum;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static com.bogda.api.utils.JudgeTranslateUtils.translationRuleJudgment;
+import static com.bogda.common.utils.JudgeTranslateUtils.translationRuleJudgment;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
