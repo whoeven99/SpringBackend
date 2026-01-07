@@ -1,13 +1,13 @@
 package com.bogda.api.logic.PCApp;
 
-import com.bogda.api.entity.DO.PCUsersDO;
+import com.bogda.repository.entity.PCUsersDO;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.PCOrdersDO;
-import com.bogda.api.repository.entity.PCUserSubscriptionsDO;
-import com.bogda.api.repository.repo.PCOrdersRepo;
-import com.bogda.api.repository.repo.PCSubscriptionsRepo;
-import com.bogda.api.repository.repo.PCUserSubscriptionsRepo;
-import com.bogda.api.repository.repo.PCUsersRepo;
+import com.bogda.repository.entity.PCOrdersDO;
+import com.bogda.repository.entity.PCUserSubscriptionsDO;
+import com.bogda.repository.repo.PCOrdersRepo;
+import com.bogda.repository.repo.PCSubscriptionsRepo;
+import com.bogda.repository.repo.PCUserSubscriptionsRepo;
+import com.bogda.repository.repo.PCUsersRepo;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.api.utils.ShopifyUtils;

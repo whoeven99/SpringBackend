@@ -1,6 +1,6 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.PCUsersDO;
+import com.bogda.repository.entity.PCUsersDO;
 import com.bogda.api.entity.VO.AddCharsVO;
 import com.bogda.api.entity.VO.TranslationCharsVO;
 import com.bogda.api.logic.PCApp.PCUsersService;

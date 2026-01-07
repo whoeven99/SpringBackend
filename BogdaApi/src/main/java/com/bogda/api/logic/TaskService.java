@@ -10,13 +10,14 @@ import com.bogda.api.Service.*;
 import com.bogda.api.entity.DO.*;
 import com.bogda.api.logic.PCApp.PCEmailService;
 import com.bogda.api.model.controller.request.UserPriceRequest;
-import com.bogda.api.repository.entity.PCOrdersDO;
-import com.bogda.api.repository.entity.PCSubscriptionQuotaRecordDO;
-import com.bogda.api.repository.entity.PCUserTrialsDO;
-import com.bogda.api.repository.repo.*;
+import com.bogda.repository.entity.PCOrdersDO;
+import com.bogda.repository.entity.PCSubscriptionQuotaRecordDO;
+import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
+import com.bogda.repository.entity.PCUsersDO;
+import com.bogda.repository.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

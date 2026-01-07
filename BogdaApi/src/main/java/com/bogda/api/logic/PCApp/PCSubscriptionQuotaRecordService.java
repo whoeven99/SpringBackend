@@ -1,8 +1,8 @@
 package com.bogda.api.logic.PCApp;
 
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.PCSubscriptionQuotaRecordDO;
-import com.bogda.api.repository.repo.PCSubscriptionQuotaRecordRepo;
+import com.bogda.repository.entity.PCSubscriptionQuotaRecordDO;
+import com.bogda.repository.repo.PCSubscriptionQuotaRecordRepo;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

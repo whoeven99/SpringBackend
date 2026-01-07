@@ -1,7 +1,7 @@
 package com.bogda.api.controller;
 
 
-import com.bogda.api.entity.DO.PCUserPicturesDO;
+import com.bogda.repository.entity.PCUserPicturesDO;
 import com.bogda.api.entity.VO.AltTranslateVO;
 import com.bogda.api.entity.VO.ImageTranslateVO;
 import com.bogda.api.logic.PCApp.PCUserPicturesService;
