@@ -5,7 +5,6 @@ import com.bogda.api.constants.TranslateConstants;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.model.controller.request.ShopifyRequest;
-import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.JsonUtils;
 import com.bogda.api.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,19 +58,18 @@ public class ShopifyHttpIntegration {
         request.setShopName(shopName);
         request.setAccessToken(accessToken);
         request.setApiVersion(apiVersion);
-        return String.valueOf(getInfoByShopify(request, query));
+        return String.valueOf(getInfoByShopify(shopName, accessToken, query));
     }
 
-    public JSONObject getInfoByShopify(ShopifyRequest shopifyRequest, String query) {
-        String response = sendShopifyPost(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), query, null);
+    public JSONObject getInfoByShopify(String shopName, String accessToken, String query) {
+        String response = sendShopifyPost(shopName, accessToken, query, null);
         JSONObject jsonObject = JSONObject.parseObject(response);
         return jsonObject.getJSONObject("data");
     }
 
     //一次存储shopify数据
-    public String registerTransaction(ShopifyRequest request, Map<String, Object> variables) {
-        ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
-        String responseString = sendShopifyPost(request.getShopName(), request.getAccessToken(), shopifyRequestBody.registerTransactionQuery(), variables);
+    public String registerTransaction(String shopName, String accessToken, Map<String, Object> variables) {
+        String responseString = sendShopifyPost(shopName, accessToken, ShopifyRequestUtils.registerTransactionQuery(), variables);
         if (responseString == null){
             return null;
         }
@@ -82,5 +80,3 @@ public class ShopifyHttpIntegration {
         return null;
     }
 }
-
-

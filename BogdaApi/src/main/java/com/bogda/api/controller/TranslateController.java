@@ -191,12 +191,8 @@ public class TranslateController {
      */
     @PostMapping("/insertTranslatedText")
     public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
         Map<String, Object> body = cloudServiceRequest.getBody();
-        String s = shopifyHttpIntegration.registerTransaction(request, body);
+        String s = shopifyHttpIntegration.registerTransaction(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
         appInsights.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
     }
 

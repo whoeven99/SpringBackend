@@ -8,12 +8,15 @@ import com.bogda.api.Service.ITranslatesService;
 import com.bogda.api.Service.IUserSubscriptionsService;
 import com.bogda.api.Service.IUserTypeTokenService;
 import com.bogda.api.config.LanguageFlagConfig;
-import com.bogda.api.entity.DO.*;
+import com.bogda.api.entity.DO.ItemsDO;
+import com.bogda.api.entity.DO.TranslateResourceDTO;
+import com.bogda.api.entity.DO.TranslatesDO;
+import com.bogda.api.entity.DO.UserTypeTokenDO;
 import com.bogda.api.entity.DTO.TranslateTextDTO;
 import com.bogda.api.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
+import com.bogda.api.integration.BaseHttpIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
-import com.bogda.api.integration.TestingEnvironmentIntegration;
 import com.bogda.api.integration.model.ShopifyExtensions;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.integration.model.ShopifyResponse;
@@ -63,9 +66,9 @@ public class ShopifyService {
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
-    private TestingEnvironmentIntegration testingEnvironmentIntegration;
-    @Autowired
     private ShopifyRateLimitService shopifyRateLimitService;
+    @Autowired
+    private BaseHttpIntegration baseHttpIntegration;
 
     ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
 
@@ -151,8 +154,17 @@ public class ShopifyService {
         if (!ConfigUtils.isLocalEnv()) {
             return shopifyHttpIntegration.getInfoByShopify(shopName, accessToken, apiVersion, query);
         } else {
-            // 本地调用shopify
-            return testingEnvironmentIntegration.sendApiByTestCloud("test123", shopName, accessToken, apiVersion, query);
+            // 本地调用test cloud做个转发
+            CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
+            cloudServiceRequest.setShopName(shopName);
+            cloudServiceRequest.setAccessToken(accessToken);
+            cloudServiceRequest.setTarget(apiVersion);
+            cloudServiceRequest.setBody(query);
+
+            String body = JsonUtils.objectToJson(cloudServiceRequest);
+            return baseHttpIntegration.httpPost(
+                    "https://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/" + "test123",
+                    body);
         }
     }
 
@@ -505,14 +517,8 @@ public class ShopifyService {
 
     // 修改getTestQuery里面的testQuery，用获取后的的查询语句进行查询
     public JsonNode fetchNextPage(TranslateResourceDTO translateResource, ShopifyRequest request) {
-        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
-        cloudServiceRequest.setShopName(request.getShopName());
-        cloudServiceRequest.setAccessToken(request.getAccessToken());
-        cloudServiceRequest.setTarget(request.getTarget());
-
         ShopifyRequestBody shopifyRequestBody = new ShopifyRequestBody();
         String query = shopifyRequestBody.getAfterQuery(translateResource);
-        cloudServiceRequest.setBody(query);
         String infoByShopify = null;
         try {
             infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), API_VERSION_LAST, query);
@@ -534,19 +540,15 @@ public class ShopifyService {
 
     //修改单个文本数据
     public String updateShopifySingleData(RegisterTransactionRequest registerTransactionRequest) {
-        ShopifyRequest shopifyRequest = new ShopifyRequest();
-        shopifyRequest.setShopName(registerTransactionRequest.getShopName());
-        shopifyRequest.setAccessToken(registerTransactionRequest.getAccessToken());
-        shopifyRequest.setTarget(registerTransactionRequest.getTarget());
         Map<String, Object> variables = getVariables(registerTransactionRequest);
-        return shopifyHttpIntegration.registerTransaction(shopifyRequest, variables);
+        return shopifyHttpIntegration.registerTransaction(registerTransactionRequest.getShopName(), registerTransactionRequest.getAccessToken(), variables);
     }
 
     //修改多个文本数据
     public String updateShopifyManyData(ShopifyRequest shopifyRequest, List<RegisterTransactionRequest> registerTransactionRequests) {
         // 将List<RegisterTransactionRequest>处理成variables数据
         Map<String, Object> variables = toVariables(registerTransactionRequests);
-        return shopifyHttpIntegration.registerTransaction(shopifyRequest, variables);
+        return shopifyHttpIntegration.registerTransaction(shopifyRequest.getShopName(), shopifyRequest.getAccessToken(), variables);
     }
 
     //一次修改多条shopify本地数据

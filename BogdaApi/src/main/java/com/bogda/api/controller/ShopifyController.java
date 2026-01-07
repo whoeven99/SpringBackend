@@ -50,17 +50,13 @@ public class ShopifyController {
     //通过测试环境调shopify的API
     @PostMapping("/test123")
     public String test(@RequestBody CloudServiceRequest cloudServiceRequest) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(cloudServiceRequest.getShopName());
-        request.setAccessToken(cloudServiceRequest.getAccessToken());
-        request.setTarget(cloudServiceRequest.getTarget());
         String body = cloudServiceRequest.getBody();
         JSONObject infoByShopify = null;
         try {
-            infoByShopify = shopifyHttpIntegration.getInfoByShopify(request, body);
+            infoByShopify = shopifyHttpIntegration.getInfoByShopify(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
         } catch (Exception e) {
             appInsights.trackException(e);
-            appInsights.trackTrace("FatalException test123 " + request.getShopName() + " 无法获取shopify数据");
+            appInsights.trackTrace("FatalException test123 " + cloudServiceRequest.getShopName() + " 无法获取shopify数据");
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
