@@ -652,7 +652,7 @@ public class TranslateV2Service {
 
                     // 3.3 回写数据库 todo 批量
                     if (targetValue == null) {
-                        CaseSensitiveUtils.appInsights.trackTrace("targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
+                        CaseSensitiveUtils.appInsights.trackTrace("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         continue;
                     }
                     translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
@@ -1018,7 +1018,8 @@ public class TranslateV2Service {
         // 如果是特定类型，也从集合中移除
         if ("FILE_REFERENCE".equals(type) || "LINK".equals(type) || "URL".equals(type)
                 || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                || "LIST_URL".equals(type)) {
+                || "LIST_URL".equals(type)|| "JSON".equals(type)
+                || "JSON_STRING".equals(type)) {
             return false;
         }
 
@@ -1081,11 +1082,11 @@ public class TranslateV2Service {
                 return false;
             }
 
-            if (JsonUtils.isJson(value) && !value.contains(JSON_JUDGE)) {
+            if (JsonUtils.isJson(value) && (!value.contains(JSON_JUDGE) || !"RICH_TEXT_FIELD".equals(type))) {
                 return false;
             }
 
-            if (JsonUtils.isJson(value) && value.contains(JSON_JUDGE)) {
+            if (JsonUtils.isJson(value) && value.contains(JSON_JUDGE) && "RICH_TEXT_FIELD".equals(type)) {
                 // 判断是否与product相关联
                 String shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST,
                         ShopifyRequestUtils.getQueryForCheckMetafieldId(resourceId));

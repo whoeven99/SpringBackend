@@ -17,7 +17,8 @@ public class GeminiIntegration {
     @Autowired
     private Client client;
 
-    public static String GEMINI_3_FLASH = "gemini-3-flash-preview";
+    public static String Gemini_3_FLASH = "gemini-3-flash-preview";
+    private static final int GEMINI_COEFFICIENT = 2;
     /**
      * gemini 文本调用
      */
@@ -50,7 +51,7 @@ public class GeminiIntegration {
             var usage = response.usageMetadata().orElse(null);
             int inputToken = (usage != null) ? usage.promptTokenCount().orElse(0) : 0;
             int outputToken = (usage != null) ? usage.candidatesTokenCount().orElse(0) : 0;
-            Integer allToken = (usage != null) ? usage.totalTokenCount().orElse(0) : 0;
+            int allToken = (usage != null) ? usage.totalTokenCount().orElse(0) * GEMINI_COEFFICIENT : 0;
 
             appInsights.trackTrace("Gemini 提示词： " + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
             return new Pair<>(text, allToken);
@@ -109,7 +110,7 @@ public class GeminiIntegration {
             var usage = response.usageMetadata().orElse(null);
             int inputToken = (usage != null) ? usage.promptTokenCount().orElse(0) : 0;
             int outputToken = (usage != null) ? usage.candidatesTokenCount().orElse(0) : 0;
-            Integer allToken = (usage != null) ? usage.totalTokenCount().orElse(0) : 0;
+            Integer allToken = (usage != null) ? usage.totalTokenCount().orElse(0) * GEMINI_COEFFICIENT: 0;
 
             appInsights.trackTrace("Gemini 提示词： " + prompt + " 生成文本： " + Base64.getEncoder().encodeToString(translatedBytes) + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
             return new Pair<>(Base64.getEncoder().encodeToString(translatedBytes), allToken);

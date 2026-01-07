@@ -69,7 +69,8 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             }
         }
 
-        Pair<String, Integer> pair = modelTranslateService.modelTranslate(ctx.getAiModel(), ctx.getPrompt(), ctx.getTargetLanguage());
+        Pair<String, Integer> pair = modelTranslateService.modelTranslate(ctx.getAiModel(), ctx.getPrompt()
+                , ctx.getTargetLanguage(), value);
 
         if (pair == null) {
             return;

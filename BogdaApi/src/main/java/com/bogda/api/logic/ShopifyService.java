@@ -329,7 +329,8 @@ public class ShopifyService {
             // 如果是特定类型，也从集合中移除
             if ("FILE_REFERENCE".equals(type) || "LINK".equals(type)
                     || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                    || "LIST_URL".equals(type)) {
+                    || "LIST_URL".equals(type)|| "JSON".equals(type)
+                    || "JSON_STRING".equals(type)) {
                 continue;
             }
 
