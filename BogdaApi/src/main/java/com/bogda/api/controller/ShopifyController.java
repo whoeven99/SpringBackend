@@ -12,6 +12,7 @@ import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,9 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogda.common.enums.ErrorEnum.SQL_SELECT_ERROR;
-import static com.bogda.api.integration.ShopifyHttpIntegration.getInfoByShopify;
-import static com.bogda.api.logic.ShopifyService.getShopifyDataByCloud;
-import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.StringUtils.parsePlanName;
 
@@ -242,7 +240,7 @@ public class ShopifyController {
 
         // 通过charsOrdersDO的id，获取信息
         // 根据新的集合获取这个订阅计划的信息
-        String query = getSubscriptionQuery(charsOrdersDO.getId());
+        String query = ShopifyRequestUtils.getSubscriptionQuery(charsOrdersDO.getId());
         String infoByShopify = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
 
         if (infoByShopify == null || infoByShopify.isEmpty()) {

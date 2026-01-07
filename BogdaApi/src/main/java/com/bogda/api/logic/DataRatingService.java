@@ -12,14 +12,13 @@ import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.DO.WidgetConfigurationsDO;
-import com.bogda.api.utils.ShopifyRequestUtils;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.bogda.api.requestBody.ShopifyRequestBody.getShopLanguageQuery;
 import static com.bogda.api.utils.ModuleCodeUtils.getLanguageName;
 
 @Service
@@ -78,8 +77,7 @@ public class DataRatingService {
         List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
 
         // 2，从shopify中获取所有的语言状态数据
-        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, getShopLanguageQuery());
-        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
+        String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         if (shopifyByQuery == null) {
             return null;
         }

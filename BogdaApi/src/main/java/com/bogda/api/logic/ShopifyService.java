@@ -25,9 +25,7 @@ import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.*;
 import com.bogda.common.utils.JsoupUtils;
-import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -49,10 +47,6 @@ import java.util.stream.Collectors;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.RESOURCE_MAP;
 import static com.bogda.api.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.api.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
-import static com.bogda.api.utils.CaseSensitiveUtils.appInsights;
-import static com.bogda.api.utils.JsonUtils.isJson;
-import static com.bogda.api.utils.JudgeTranslateUtils.*;
-import static com.bogda.api.requestBody.ShopifyRequestBody.getLanguagesQuery;
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.common.utils.JsonUtils.isJson;
 import static com.bogda.common.utils.JudgeTranslateUtils.*;
@@ -203,7 +197,7 @@ public class ShopifyService {
         try {
             // Step 1: 获取 Shopify 数据
             String query = ShopifyRequestUtils.getLanguagesQuery();
-            String shopifyData = getShopifyData(shopName, accessToken, API_VERSION_LAST, query);
+            String shopifyData = getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
             JsonNode root = JsonUtils.readTree(shopifyData);
 
             if (root == null || !root.has("shopLocales")) {

@@ -15,6 +15,7 @@ import com.bogda.api.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogda.api.repository.entity.PCUserTrialsDO;
 import com.bogda.api.repository.repo.*;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +27,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
 
@@ -160,7 +160,7 @@ public class TaskService {
 
     // 根据用户accessToken和订单id分析数据，获取数据
     public JSONObject analyzeOrderData(String subscriptionId, String accessToken, String shopName) {
-        String query = getSubscriptionQuery(subscriptionId);
+        String query = ShopifyRequestUtils.getSubscriptionQuery(subscriptionId);
         String infoByShopify;
 
         // 根据新的集合获取这个订阅计划的信息
@@ -290,7 +290,7 @@ public class TaskService {
                 UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
 
                 // 如果订单存在，并且支付成功，添加相关计划额度；如果订单不存在，说明他未支付，修改免费试用计划表
-                String subscriptionQuery = getSubscriptionQuery(latestActiveSubscribeId);
+                String subscriptionQuery = ShopifyRequestUtils.getSubscriptionQuery(latestActiveSubscribeId);
                 String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, subscriptionQuery);
 
                 // 判断和解析相关数据
@@ -456,7 +456,7 @@ public class TaskService {
                 PCUsersDO usersDO = pcUsersRepo.getUserByShopName(shopName);
 
                 // 如果订单存在，并且支付成功，添加相关计划额度；如果订单不存在，说明他未支付，修改免费试用计划表
-                String subscriptionQuery = getSubscriptionQuery(latestActiveSubscribeId);
+                String subscriptionQuery = ShopifyRequestUtils.getSubscriptionQuery(latestActiveSubscribeId);
                 String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, subscriptionQuery);
 
                 // 判断和解析相关数据

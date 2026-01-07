@@ -12,12 +12,11 @@ import com.bogda.api.logic.redis.OrdersRedisService;
 import com.bogda.api.mapper.TranslationCounterMapper;
 import com.bogda.api.model.controller.request.TranslationCounterRequest;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.bogda.api.requestBody.ShopifyRequestBody.getSingleQuery;
-import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
 
@@ -62,10 +61,10 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         String query;
         if (gid.contains("AppPurchaseOneTime")){
             appInsights.trackTrace("一次性购买 用户： " + shopName);
-            query = getSingleQuery(gid);
+            query = ShopifyRequestUtils.getSingleQuery(gid);
         }else {
             appInsights.trackTrace("计划购买 用户： " + shopName);
-            query = getSubscriptionQuery(gid);
+            query = ShopifyRequestUtils.getSubscriptionQuery(gid);
         }
         appInsights.trackTrace("updateCharsByShopName 用户： " + shopName + " query: " + query);
 

@@ -9,14 +9,13 @@ import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.logic.redis.OrdersRedisService;
 import com.bogda.api.repository.mapper.PCUsersMapper;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 
-import static com.bogda.api.requestBody.ShopifyRequestBody.getSingleQuery;
-import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.api.utils.ShopifyUtils.isQueryValid;
 
@@ -50,9 +49,9 @@ public class PCUsersRepo extends ServiceImpl<PCUsersMapper, PCUsersDO> {
         // 根据传来的gid获取， 判断调用那个方法，查询相关订阅信息
         String query;
         if (orderId.contains("AppPurchaseOneTime")) {
-            query = getSingleQuery(orderId);
+            query = ShopifyRequestUtils.getSingleQuery(orderId);
         } else {
-            query = getSubscriptionQuery(orderId);
+            query = ShopifyRequestUtils.getSubscriptionQuery(orderId);
         }
 
         String shopifyByQuery = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);

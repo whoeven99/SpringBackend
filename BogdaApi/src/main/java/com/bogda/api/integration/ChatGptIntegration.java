@@ -35,10 +35,6 @@ public class ChatGptIntegration {
 
     // content - allToken
     public Pair<String, Integer> chatWithGpt(String prompt, String target) {
-//        OpenAIClient client = new OpenAIClientBuilder()
-//                .endpoint(endpoint)
-//                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
-//                .buildClient();
         ChatMessage userMessage = new ChatMessage(ChatRole.USER);
         userMessage.setContent(prompt);
 

@@ -13,6 +13,7 @@ import com.bogda.api.repository.repo.*;
 import com.bogda.api.requestBody.ShopifyRequestBody;
 import com.bogda.api.utils.ShopifyUtils;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -133,7 +134,7 @@ public class PCUsersService {
         }
 
         // 根据传来的gid获取，相关订阅信息
-        String subscriptionQuery = ShopifyRequestBody.getSubscriptionQuery(translationCharsVO.getSubGid());
+        String subscriptionQuery = ShopifyRequestUtils.getSubscriptionQuery(translationCharsVO.getSubGid());
         String shopifyByQuery = shopifyService.getShopifyData(shopName, userByName.getAccessToken(), TranslateConstants.API_VERSION_LAST, subscriptionQuery);
         appInsights.trackTrace("PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
 

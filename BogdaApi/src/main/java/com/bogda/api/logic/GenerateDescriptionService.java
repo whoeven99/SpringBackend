@@ -19,6 +19,7 @@ import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.JsonUtils;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Service;
 import java.util.Random;
 
 import static com.bogda.api.logic.APGUserGeneratedTaskService.*;
-import static com.bogda.api.utils.ShopifyRequestUtils.getProductDataQuery;
 import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogda.common.utils.CaseSensitiveUtils.appInsights;
 import static com.bogda.common.utils.PlaceholderUtils.buildDescriptionPrompt;
@@ -95,7 +95,7 @@ public class GenerateDescriptionService {
      * 根据产品id获取相关数据，为翻译做铺垫
      * */
     public ProductDTO getProductsQueryByProductId(String productId, String shopName, String accessToken) {
-        String productDataQuery = getProductDataQuery(productId);
+        String productDataQuery = ShopifyRequestUtils.getProductDataQuery(productId);
         String productData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, productDataQuery);
         ProductDTO productDTO = new ProductDTO();
         // 对productData进行解析，输出productDTO类型数据

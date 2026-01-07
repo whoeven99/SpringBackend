@@ -12,10 +12,9 @@ import com.bogda.api.repository.entity.PCUserTrialsDO;
 import com.bogda.api.repository.repo.*;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.CaseSensitiveUtils;
+import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import static com.bogda.api.requestBody.ShopifyRequestBody.getSubscriptionQuery;
 import static com.bogda.api.utils.StringUtils.parsePlanName;
 
 @Component
@@ -91,7 +90,7 @@ public class PCUserSubscriptionService {
 
         // 通过charsOrdersDO的id，获取信息
         // 根据新的集合获取这个订阅计划的信息
-        String query = getSubscriptionQuery(latestActiveSubscribeId);
+        String query = ShopifyRequestUtils.getSubscriptionQuery(latestActiveSubscribeId);
         String infoByShopify = shopifyService.getShopifyData(shopName, pcUser.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
 
         if (infoByShopify == null || infoByShopify.isEmpty()) {
