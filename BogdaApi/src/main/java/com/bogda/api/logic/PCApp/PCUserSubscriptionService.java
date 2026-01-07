@@ -2,7 +2,8 @@ package com.bogda.api.logic.PCApp;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.bogda.repository.entity.PCUsersDO;
+import com.bogda.api.PCUsersRepo;
+import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.entity.VO.SubscriptionVO;
 import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.model.controller.response.BaseResponse;

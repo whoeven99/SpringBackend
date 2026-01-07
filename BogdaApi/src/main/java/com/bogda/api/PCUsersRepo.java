@@ -1,4 +1,4 @@
-package com.bogda.repository.repo;
+package com.bogda.api;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;

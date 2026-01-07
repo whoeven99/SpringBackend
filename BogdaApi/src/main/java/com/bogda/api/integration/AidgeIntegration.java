@@ -6,7 +6,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.bogda.api.logic.PCApp.PCUserPicturesService;
 import com.bogda.api.logic.token.UserTokenService;
 import com.bogda.api.model.controller.response.SignResponse;
-import com.bogda.repository.repo.PCUsersRepo;
+import com.bogda.api.PCUsersRepo;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;

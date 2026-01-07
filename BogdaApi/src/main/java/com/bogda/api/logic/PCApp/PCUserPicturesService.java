@@ -1,8 +1,8 @@
 package com.bogda.api.logic.PCApp;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.repository.entity.PCUserPicturesDO;
-import com.bogda.repository.entity.PCUsersDO;
+import com.bogda.api.entity.DO.PCUserPicturesDO;
+import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.entity.VO.AltTranslateVO;
 import com.bogda.api.entity.VO.ImageTranslateVO;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
@@ -11,8 +11,8 @@ import com.bogda.api.integration.HunYuanBucketIntegration;
 import com.bogda.api.integration.HuoShanIntegration;
 import com.bogda.api.logic.token.UserTokenService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.repository.repo.PCUserPicturesRepo;
-import com.bogda.repository.repo.PCUsersRepo;
+import com.bogda.api.PCUserPicturesRepo;
+import com.bogda.api.PCUsersRepo;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
