@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.logic.redis.OrdersRedisService;
-import com.bogda.repository.mapper.PCUsersMapper;
+import com.bogda.api.mapper.PCUsersMapper;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;

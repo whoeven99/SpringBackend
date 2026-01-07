@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.api.entity.DO.PCUserPicturesDO;
-import com.bogda.repository.mapper.PCUserPicturesMapper;
+import com.bogda.api.mapper.PCUserPicturesMapper;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
