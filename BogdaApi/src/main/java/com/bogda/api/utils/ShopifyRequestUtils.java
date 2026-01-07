@@ -40,6 +40,34 @@ public class ShopifyRequestUtils {
                 }
             """;
 
+    /**
+     * 根据产品id获取对应信息
+     */
+    public static String getProductDataQuery(String productId) {
+        return """
+                {
+                  product(id: "%s") {
+                    descriptionHtml
+                    id
+                    media(first: 1) {
+                      edges {
+                        node {
+                          ... on MediaImage {
+                            image {
+                              url
+                              altText
+                            }
+                          }
+                        }
+                      }
+                    }
+                    productType
+                    title
+                  }
+                }
+                """.formatted(productId);
+    }
+
     public static String registerTransactionQuery() {
         return """
                     mutation translationsRegister($resourceId: ID!, $translations: [TranslationInput!]!) {
@@ -87,25 +115,21 @@ public class ShopifyRequestUtils {
      * 判断元字段id 是否关联到product
      */
     public static String getQueryForCheckMetafieldId(String metafieldId) {
-        return queryMetafieldId().replace("%metafieldId%", metafieldId);
-    }
-
-    public static String queryMetafieldId() {
         return """
-                query MyQuery {
-                  node(id: "%metafieldId%") {
-                    ... on Metafield {
+            query MyQuery {
+              node(id: "%s") {
+                ... on Metafield {
+                  id
+                  owner {
+                    ... on Product {
                       id
-                      owner {
-                        ... on Product {
-                          id
-                          title
-                        }
-                      }
-                      type
+                      title
                     }
                   }
+                  type
                 }
-                """;
+              }
+            }
+            """.formatted(metafieldId);
     }
 }
