@@ -51,6 +51,11 @@ public class TestController {
         return stringIntegerPair;
     }
 
+    @GetMapping("/getNow")
+    public String getNow() {
+        return "Now is " + System.currentTimeMillis();
+    }
+
     @GetMapping("/ping")
     public String ping() {
         AppInsightsUtils.trackTrace("SpringBackend Ping Successful");
