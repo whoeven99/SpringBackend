@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.api.Service.IUsersService;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.mapper.UsersMapper;
-import com.bogda.api.model.controller.request.LoginAndUninstallRequest;
 import org.springframework.stereotype.Service;
 
 @Service
