@@ -96,7 +96,7 @@ public class TranslateResourceDTO {
     public static final Map<String, List<TranslateResourceDTO>> RESOURCE_MAP = new HashMap<>();
 
     static {
-        RESOURCE_MAP.put("TranslateConstants.COLLECTION", List.of(new TranslateResourceDTO(TranslateConstants.COLLECTION, TranslateConstants.MAX_LENGTH, "", "")));
+        RESOURCE_MAP.put("Collection", List.of(new TranslateResourceDTO(TranslateConstants.COLLECTION, TranslateConstants.MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Notifications", List.of(new TranslateResourceDTO(TranslateConstants.EMAIL_TEMPLATE, TranslateConstants.MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Theme", List.of(new TranslateResourceDTO(TranslateConstants.ONLINE_STORE_THEME, TranslateConstants.MAX_LENGTH, "", "")));
         RESOURCE_MAP.put("Article", List.of(new TranslateResourceDTO(TranslateConstants.ARTICLE, TranslateConstants.MAX_LENGTH, "", "")));
@@ -115,7 +115,7 @@ public class TranslateResourceDTO {
         RESOURCE_MAP.put("Store metadata", List.of(
                 new TranslateResourceDTO(TranslateConstants.METAFIELD, TranslateConstants.MIDDLE_LENGTH, "", "")
         ));
-        RESOURCE_MAP.put("TranslateConstants.SHOP", List.of(
+        RESOURCE_MAP.put("Shop", List.of(
                 new TranslateResourceDTO(TranslateConstants.SHOP, TranslateConstants.MAX_LENGTH, "", "")
         ));
         RESOURCE_MAP.put("Shipping", List.of(
