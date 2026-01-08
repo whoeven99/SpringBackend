@@ -1,7 +1,5 @@
 package com.bogda.common.utils;
 
-import com.microsoft.applicationinsights.core.dependencies.google.common.hash.Hashing;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -40,11 +38,4 @@ public class AESUtils {
         }
     }
 
-    // MurmurHash 加密
-    public static String hashEncrypt(String text) {
-        long hash = Hashing.murmur3_128()
-                .hashString(text, StandardCharsets.UTF_8)
-                .asLong();              // 64 bit
-        return Long.toUnsignedString(hash, 36); // base36，变短
-    }
 }

@@ -183,9 +183,4 @@ public class MonitorController {
         return responseMap;
     }
 
-    // 根据传入target，获取对应的缓存命中次数
-    @PostMapping("/monitorv2Cache")
-    public CachePageResponse<CacheDataDTO> monitorv2Cache(@RequestParam Integer pageNo, @RequestParam Integer pageSize) {
-        return translateTaskMonitorV2RedisService.cachePageQuery(pageNo, pageSize);
-    }
 }
