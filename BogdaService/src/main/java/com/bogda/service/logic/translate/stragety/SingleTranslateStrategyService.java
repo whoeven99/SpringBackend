@@ -4,6 +4,7 @@ import com.bogda.service.context.TranslateContext;
 import com.bogda.service.entity.DO.GlossaryDO;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
+import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.ModelTranslateService;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.PlaceholderUtils;
@@ -23,6 +24,8 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
     private ModelTranslateService modelTranslateService;
     @Autowired
     private RedisProcessService redisProcessService;
+    @Autowired
+    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
 
     @Override
     public String getType() {
@@ -45,7 +48,17 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
 //            return;
         }
 
-        // check glossary
+        // 1. 先检查缓存（无论是否有词汇表）
+        String cachedValue = redisProcessService.getCacheData(target, value);
+        if (cachedValue != null) {
+            translateTaskMonitorV2RedisService.addCacheCount(value);
+            ctx.setCached(true);
+            ctx.setStrategy("单条文本翻译-缓存命中");
+            ctx.setTranslatedContent(cachedValue);
+            return;
+        }
+
+        // 2. 缓存未命中，再检查词汇表
         Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
         if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
             String glossaryMappingText = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(), value);
@@ -53,14 +66,6 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             ctx.setStrategy("语法表单条翻译");
             ctx.setPrompt(prompt);
         } else {
-            String cachedValue = redisProcessService.getCacheData(target, value);
-            if (cachedValue != null) {
-                ctx.setCached(true);
-                ctx.setStrategy("普通单条文本翻译-缓存命中");
-                ctx.setTranslatedContent(cachedValue);
-                return;
-            }
-
             // 普通 prompt（仅当前面没设置）
             if (ctx.getPrompt() == null) {
                 String prompt = PromptUtils.SinglePrompt(target, value);

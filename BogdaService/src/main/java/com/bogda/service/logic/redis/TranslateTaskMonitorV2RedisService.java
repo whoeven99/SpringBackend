@@ -1,6 +1,8 @@
 package com.bogda.service.logic.redis;
 
 import com.bogda.service.integration.RedisIntegration;
+import com.bogda.common.utils.AESUtils;
+import com.bogda.common.utils.RedisKeyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -91,4 +93,15 @@ public class TranslateTaskMonitorV2RedisService {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.setHash(key, "savingShopifyEndTime", String.valueOf(System.currentTimeMillis()));
     }
+
+    private final String MONITOR_CACHE_KEY = "translate_monitor_v2:cache:";
+
+    public void addCacheCount(String content){
+        String encryptData = AESUtils.encryptMD5(content);
+        String key = MONITOR_CACHE_KEY + encryptData;
+        redisIntegration.setHashValueIfAbsent(key, "text", content);
+        redisIntegration.incrementHash(key, "count", 1L);
+        redisIntegration.expire(key, RedisKeyUtils.DAY_14);
+    }
+
 }

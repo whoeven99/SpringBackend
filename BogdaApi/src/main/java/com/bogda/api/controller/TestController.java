@@ -18,13 +18,7 @@ import com.bogda.service.utils.ModuleCodeUtils;
 import com.bogda.common.utils.AppInsightsUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.BufferedInputStream;
-import java.net.URL;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +29,6 @@ public class TestController {
     private RedisProcessService redisProcessService;
     @Autowired
     private RedisDataReportService redisDataReportService;
-    @Autowired
-    private GeminiIntegration geminiIntegration;
     @Autowired
     private IpEmailTask ipEmailTask;
     @Autowired
@@ -57,26 +49,6 @@ public class TestController {
         }
 
         return stringIntegerPair;
-    }
-
-    @PostMapping("/testPic")
-    public ResponseEntity<byte[]> testPic(@RequestParam String model, @RequestParam String picUrl, @RequestParam String prompt) {
-//        String picUrl = "https://cdn.shopify.com/s/files/1/0892/3437/5004/files/ChatGPT_Image_Jun_25_2025_10_33_50_AM_ac0e4bff-73f3-4065-80dc-9801cb862bc3.png?v=1750856533";
-//        String prompt = "翻译图片里面的文本为简体中文";
-        byte[] imageBytes;
-        try (BufferedInputStream in = new BufferedInputStream(new URL(picUrl).openStream())) {
-            imageBytes = in.readAllBytes();
-            Pair<String, Integer> stringIntegerPair = geminiIntegration.generateImage(model, prompt, imageBytes, "image/png");
-
-            String first = stringIntegerPair.getFirst();
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_PNG) // 或 IMAGE_JPEG
-                    .body(Base64.getDecoder().decode(first));
-        } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
-            e.printStackTrace();
-        }
-        return null;
     }
 
     @GetMapping("/ping")
