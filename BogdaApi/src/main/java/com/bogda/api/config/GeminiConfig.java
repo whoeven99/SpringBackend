@@ -1,4 +1,4 @@
-package com.bogda.service.config;
+package com.bogda.api.config;
 
 import com.bogda.common.utils.ConfigUtils;
 import com.google.genai.Client;

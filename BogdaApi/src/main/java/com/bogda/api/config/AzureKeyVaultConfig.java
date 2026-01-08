@@ -1,4 +1,4 @@
-package com.bogda.service.config;
+package com.bogda.api.config;
 
 import com.azure.identity.DefaultAzureCredential;
 import com.azure.identity.DefaultAzureCredentialBuilder;

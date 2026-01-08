@@ -25,7 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.bogda.api.controller.UserPicturesController.allowedMimeTypes;
 import static com.bogda.service.utils.ModuleCodeUtils.getLanguageName;
 
 
@@ -47,6 +46,15 @@ public class PCUserPicturesService {
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
     public static int APP_PIC_FEE = 2000;  // alt和pic翻译一块扣除
+
+    public static List<String> allowedMimeTypes = List.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/heic",
+            "image/gif",
+            "image/jpg"
+    );
 
     public BaseResponse<Object> insertPicToDbAndCloud(MultipartFile file, String shopName, String pcUserPicturesDoJson) {
         //解析userPicturesDO

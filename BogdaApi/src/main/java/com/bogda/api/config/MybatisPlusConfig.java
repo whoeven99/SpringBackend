@@ -1,4 +1,4 @@
-package com.bogda.service.config;
+package com.bogda.api.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
