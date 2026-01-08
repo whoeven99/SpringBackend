@@ -5,6 +5,7 @@ import com.bogda.api.entity.DO.GlossaryDO;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.RedisProcessService;
+import com.bogda.api.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.api.logic.translate.ModelTranslateService;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.api.utils.PromptUtils;
@@ -22,6 +23,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     private RedisProcessService redisProcessService;
     @Autowired
     private ModelTranslateService modelTranslateService;
+    @Autowired
+    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
 
     @Override
     public String getType() {
@@ -35,21 +38,23 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         Map<Integer, String> originalTextMap = ctx.getOriginalTextMap();
         Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
 
-        // Glossary + Cache
+        // Cache + Glossary
         originalTextMap.forEach((key, value) -> {
-            String glossaryed = GlossaryService.match(value, glossaryMap);
-            if (glossaryed != null) {
-                ctx.incrementGlossaryCount();
-                ctx.getTranslatedTextMap().put(key, glossaryed);
-            } else if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
-                ctx.getGlossaryTextMap().put(key, value);
-                ctx.incrementGlossaryCount();
+            // 1. 先检查缓存
+            String cachedValue = redisProcessService.getCacheData(target, value);
+            if (cachedValue != null) {
+                translateTaskMonitorV2RedisService.addCacheCount(cachedValue);
+                ctx.getTranslatedTextMap().put(key, cachedValue);
+                ctx.incrementCachedCount();
             } else {
-                // 2. 再过缓存
-                String cachedValue = redisProcessService.getCacheData(target, value);
-                if (cachedValue != null) {
-                    ctx.getTranslatedTextMap().put(key, cachedValue);
-                    ctx.incrementCachedCount();
+                // 2. 再检查词汇表匹配
+                String glossaryed = GlossaryService.match(value, glossaryMap);
+                if (glossaryed != null) {
+                    ctx.incrementGlossaryCount();
+                    ctx.getTranslatedTextMap().put(key, glossaryed);
+                } else if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
+                    ctx.getGlossaryTextMap().put(key, value);
+                    ctx.incrementGlossaryCount();
                 } else {
                     ctx.getUncachedTextMap().put(key, value);
                 }
@@ -69,6 +74,11 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             }
             ctx.incrementUsedTokenCount(pair.getSecond());
             ctx.getTranslatedTextMap().putAll(pair.getFirst());
+
+            // 将词汇表翻译的结果存入缓存
+            pair.getFirst().forEach((key, value) -> {
+                redisProcessService.setCacheData(target, value, ctx.getGlossaryTextMap().get(key));
+            });
         }
 
         // 翻译普通json

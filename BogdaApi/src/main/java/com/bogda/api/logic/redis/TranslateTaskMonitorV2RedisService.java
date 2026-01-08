@@ -91,4 +91,9 @@ public class TranslateTaskMonitorV2RedisService {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.setHash(key, "savingShopifyEndTime", String.valueOf(System.currentTimeMillis()));
     }
+
+    public void addCacheCount(String content){
+        String key = MONITOR_KEY_PREFIX + "cache";
+        redisIntegration.incrementHash(key, content, 1L);
+    }
 }
