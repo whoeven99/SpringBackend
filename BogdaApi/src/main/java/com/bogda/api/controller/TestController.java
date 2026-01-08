@@ -3,7 +3,6 @@ package com.bogda.api.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.Service.ITranslatesService;
 import com.bogda.api.entity.DO.TranslatesDO;
-import com.bogda.api.entity.VO.GptVO;
 import com.bogda.api.entity.VO.UserDataReportVO;
 import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.GoogleMachineIntegration;
@@ -17,7 +16,6 @@ import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.task.IpEmailTask;
 import com.bogda.api.utils.ModuleCodeUtils;
 import com.bogda.common.utils.AppInsightsUtils;
-import com.microsoft.applicationinsights.TelemetryClient;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -88,7 +86,7 @@ public class TestController {
     }
 
     @PostMapping("/gpt")
-    public String chat(@RequestBody GptVO gptVO) {
+    public String chat() {
 //        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), "ciwishop.myshopify.com", null, new CharacterCountUtils(), 2000000, false);
         return "";
     }
