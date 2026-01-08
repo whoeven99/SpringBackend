@@ -14,7 +14,7 @@ import com.bogda.api.entity.DTO.ProductDTO;
 import com.bogda.api.entity.DTO.TemplateDTO;
 import com.bogda.api.entity.VO.APGAnalyzeDataVO;
 import com.bogda.api.entity.VO.GenerateDescriptionVO;
-import com.bogda.api.exception.ClientException;
+import com.bogda.common.exception.ClientException;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;

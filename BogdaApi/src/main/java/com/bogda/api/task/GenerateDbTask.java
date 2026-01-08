@@ -10,7 +10,7 @@ import com.bogda.api.entity.DTO.ProductDTO;
 import com.bogda.api.entity.VO.GenerateDescriptionVO;
 import com.bogda.api.entity.VO.GenerateDescriptionsVO;
 import com.bogda.api.entity.VO.GenerateEmailVO;
-import com.bogda.api.exception.ClientException;
+import com.bogda.common.exception.ClientException;
 import com.bogda.api.logic.GenerateDescriptionService;
 import com.bogda.api.logic.TencentEmailService;
 import com.bogda.common.contants.TranslateConstants;

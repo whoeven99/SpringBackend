@@ -11,7 +11,7 @@ import com.bogda.api.entity.DO.APGUserGeneratedTaskDO;
 import com.bogda.api.entity.DO.APGUsersDO;
 import com.bogda.api.entity.VO.GenerateDescriptionsVO;
 import com.bogda.api.entity.VO.GenerateProgressBarVO;
-import com.bogda.api.exception.ClientException;
+import com.bogda.common.exception.ClientException;
 import com.bogda.api.logic.APGUserGeneratedTaskService;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;

@@ -1,6 +1,6 @@
 package com.bogda.api.utils;
 
-import com.bogda.api.exception.FatalException;
+import com.bogda.common.exception.FatalException;
 
 import java.util.concurrent.*;
 import java.util.function.Supplier;
