@@ -301,7 +301,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <skip>false</skip>
+                    <skip>true</skip>
                     <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
                 </configuration>
             </plugin>
