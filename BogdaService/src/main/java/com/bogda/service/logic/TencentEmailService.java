@@ -1,7 +1,7 @@
 package com.bogda.service.logic;
 
 import com.bogda.service.Service.*;
-import com.bogda.service.config.CurrencyConfig;
+import com.bogda.service.utils.CurrencyConfig;
 import com.bogda.service.entity.DO.*;
 import com.bogda.service.integration.EmailIntegration;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;

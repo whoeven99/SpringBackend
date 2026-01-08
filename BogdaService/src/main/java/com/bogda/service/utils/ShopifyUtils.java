@@ -2,7 +2,6 @@ package com.bogda.service.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.bogda.service.config.CurrencyConfig;
 import com.bogda.service.entity.DO.CurrenciesDO;
 import com.bogda.common.utils.AppInsightsUtils;
 

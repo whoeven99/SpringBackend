@@ -1,4 +1,4 @@
-package com.bogda.api.config;
+package com.bogda.service.utils;
 
 import org.springframework.context.annotation.Configuration;
 

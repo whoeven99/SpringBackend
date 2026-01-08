@@ -7,7 +7,7 @@ import com.bogda.service.Service.IItemsService;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUserSubscriptionsService;
 import com.bogda.service.Service.IUserTypeTokenService;
-import com.bogda.service.config.LanguageFlagConfig;
+import com.bogda.service.utils.LanguageFlagConfig;
 import com.bogda.service.entity.DO.ItemsDO;
 import com.bogda.service.entity.DO.TranslateResourceDTO;
 import com.bogda.service.entity.DO.TranslatesDO;
