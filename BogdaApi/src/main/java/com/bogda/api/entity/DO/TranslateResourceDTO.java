@@ -128,7 +128,7 @@ public class TranslateResourceDTO {
 
     public static final Map<String, List<TranslateResourceDTO>> TOKEN_MAP = new HashMap<>();
     static {
-        TOKEN_MAP.put("TranslateConstants.COLLECTION", List.of(new TranslateResourceDTO(TranslateConstants.COLLECTION, TranslateConstants.MAX_LENGTH, "", "")));
+        TOKEN_MAP.put("collection", List.of(new TranslateResourceDTO(TranslateConstants.COLLECTION, TranslateConstants.MAX_LENGTH, "", "")));
         TOKEN_MAP.put("notifications", List.of(new TranslateResourceDTO(TranslateConstants.EMAIL_TEMPLATE, TranslateConstants.MAX_LENGTH, "", "")));
         TOKEN_MAP.put("theme", Arrays.asList(
 //                new TranslateResourceDTO(TranslateConstants.ONLINE_STORE_THEME, TranslateConstants.MAX_LENGTH, "", "")
@@ -158,7 +158,7 @@ public class TranslateResourceDTO {
                 new TranslateResourceDTO(TranslateConstants.LINK, TranslateConstants.MAX_LENGTH, "", "")
         ));
 
-        TOKEN_MAP.put("TranslateConstants.SHOP", List.of(
+        TOKEN_MAP.put("shop", List.of(
                 new TranslateResourceDTO(TranslateConstants.SHOP, TranslateConstants.MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(TranslateConstants.PAYMENT_GATEWAY, TranslateConstants.MAX_LENGTH, "", ""),
                 new TranslateResourceDTO(TranslateConstants.SELLING_PLAN, TranslateConstants.MAX_LENGTH, "", ""),
