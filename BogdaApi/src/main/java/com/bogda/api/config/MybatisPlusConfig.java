@@ -13,7 +13,7 @@ import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
-@MapperScan({"com.bogda.api.mapper", "com.bogda.api.repository.mapper"})  // 替换为你的Mapper接口所在的包路径
+@MapperScan({"com.bogda.api.mapper", "com.bogda.repository.mapper"})  // 替换为你的Mapper接口所在的包路径
 public class MybatisPlusConfig {
     @Bean
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {

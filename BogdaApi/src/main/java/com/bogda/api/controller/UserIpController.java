@@ -5,7 +5,7 @@ import com.bogda.api.entity.VO.IncludeCrawlerVO;
 import com.bogda.api.entity.VO.NoCrawlerVO;
 import com.bogda.api.logic.UserIpService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.UserIPRedirectionDO;
+import com.bogda.repository.entity.UserIPRedirectionDO;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

@@ -722,6 +722,7 @@ public class ShopifyService {
             }
         } catch (Exception e) {
             AppInsightsUtils.trackTrace("FatalException getTranslationItemsInfoAll errors : 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
+            AppInsightsUtils.trackException(e);
         }
         return result;
     }

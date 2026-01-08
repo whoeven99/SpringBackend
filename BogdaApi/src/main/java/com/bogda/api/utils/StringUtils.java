@@ -2,8 +2,6 @@ package com.bogda.api.utils;
 
 import com.bogda.api.entity.DTO.SimpleMultipartFileDTO;
 import com.bogda.common.utils.AppInsightsUtils;
-import com.bogda.common.utils.JsonUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.microsoft.applicationinsights.core.dependencies.apachecommons.io.FilenameUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,7 +9,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,16 +32,6 @@ public class StringUtils {
         return caseSensitive ? str1.equals(str2) : str1.equalsIgnoreCase(str2);
     }
 
-    /**
-     * 将字符串中的空格替换为指定字符。
-     */
-    public static String replaceSpaces(String input, String replacement) {
-        if (input == null) {
-            return null;
-        }
-        return input.replaceAll("\\s+", replacement);
-    }
-
     // 计算一段文本中的单词数
     public static int countWords(String text) {
         if (text == null || text.trim().isEmpty()) {
@@ -60,16 +47,6 @@ public class StringUtils {
         return text.replace(".", "-");
     }
 
-
-    // 判断字符串是否为纯数字,小数或负数
-    public static boolean isNumber(String value) {
-        if (value == null) {
-            return false;
-        }
-        // 正则表达式支持：正整数、负整数、零、正小数、负小数
-        return value.matches("-?\\d+(\\.\\d+)?");
-    }
-
     /**
      * 解析shopName的数据，去掉后缀
      */
@@ -77,22 +54,6 @@ public class StringUtils {
         // 定义要移除的后缀
         String suffix = ".myshopify.com";
         return shopName.substring(0, shopName.length() - suffix.length());
-    }
-
-    /**
-     * 将string类型数据的换行符等改为空格
-     */
-    public static String normalizeHtml(String html) {
-        if (html == null) {
-            return null;
-        }
-        // 1. 替换换行符为空格
-        html = html.replaceAll("\\r?\\n", " ");
-
-        // 2. 将多个连续空格替换为单个空格
-        html = html.replaceAll("\\s{2,}", " ");
-
-        return html.trim();
     }
 
     /**
@@ -220,28 +181,6 @@ public class StringUtils {
         // 第二步：统计标点符号数量
         long punctCount = PUNCT_PATTERN.matcher(input).results().count();
         return punctCount >= 2;
-    }
-
-    // 新版提示词，返回结果的解析
-    public static LinkedHashMap<String, String> parseOutputTransaction(String input) {
-        // 预处理 - 提取 JSON 部分
-        String jsonPart = extractJsonBlock(input);
-
-        if (jsonPart == null) {
-            return null;
-        }
-
-        // 解析为 Map
-        LinkedHashMap<String, String> map = JsonUtils.jsonToObjectWithNull(jsonPart, new TypeReference<LinkedHashMap<String, String>>() {
-        });
-
-        if (map == null) {
-            return null;
-        }
-
-        // 过滤空值
-        map.entrySet().removeIf(e -> e.getValue() == null || e.getValue().trim().isEmpty());
-        return map;
     }
 
     /**

@@ -1,20 +1,20 @@
 package com.bogda.api.logic.PCApp;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogda.api.PCUsersRepo;
 import com.bogda.api.entity.DO.PCUsersDO;
 import com.bogda.api.entity.VO.PCUserPointsVO;
 import com.bogda.api.entity.VO.TranslationCharsVO;
 import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.logic.redis.OrdersRedisService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.PCOrdersDO;
-import com.bogda.api.repository.entity.PCUserTrialsDO;
-import com.bogda.api.repository.repo.*;
-import com.bogda.api.requestBody.ShopifyRequestBody;
+import com.bogda.repository.entity.PCOrdersDO;
+import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.api.utils.ShopifyUtils;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
+import com.bogda.repository.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
