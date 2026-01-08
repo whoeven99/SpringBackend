@@ -1,18 +1,12 @@
 package com.bogda.api.logic.redis;
 
-import com.bogda.api.entity.DTO.CacheDataDTO;
 import com.bogda.api.integration.RedisIntegration;
-import com.bogda.api.logic.redis.model.CachePageResponse;
 import com.bogda.common.utils.AESUtils;
 import com.bogda.common.utils.RedisKeyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Component
 public class TranslateTaskMonitorV2RedisService {
