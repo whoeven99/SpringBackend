@@ -24,6 +24,19 @@ public class RedisIntegration {
     }
 
     /**
+     * Hash key 不存在的时候才set
+     */
+    public boolean setHashValueIfAbsent(String key, String field, String value) {
+        try {
+            Boolean result = redisTemplate.opsForHash().putIfAbsent(key, field, value);
+            return Boolean.TRUE.equals(result);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException setHashValueIfAbsent " + key + " " + value + " " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
      * 设置缓存
      */
     public void set(String key, String value, long timeout) {
