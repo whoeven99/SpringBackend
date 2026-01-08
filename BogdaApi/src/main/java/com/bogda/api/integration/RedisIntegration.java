@@ -3,6 +3,7 @@ package com.bogda.api.integration;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -21,6 +22,67 @@ public class RedisIntegration {
         Boolean result = redisTemplate.opsForValue()
                 .setIfAbsent(key, value);
         return Boolean.TRUE.equals(result);
+    }
+
+    /**
+     * Hash key 不存在的时候才set
+     */
+    public boolean setHashValueIfAbsent(String key, String field, String value) {
+        try {
+            Boolean result = redisTemplate.opsForHash().putIfAbsent(key, field, value);
+            return Boolean.TRUE.equals(result);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException setHashValueIfAbsent " + key + " " + value + " " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * incrementZSet
+     */
+    public boolean incrementZSet(String zsetKey, String member, long delta) {
+        try {
+            Double score = redisTemplate.opsForZSet().incrementScore(zsetKey, member, delta);
+            return score != null;
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException incrementZSet " + zsetKey + " " + member + " " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 从大到小获取ZSet下标范围的数据
+     */
+    public Set<ZSetOperations.TypedTuple<String>> reverseRangeWithScores(String zSetKey, long start, long end) {
+        try {
+            Set<ZSetOperations.TypedTuple<String>> typedTuples = redisTemplate.opsForZSet().reverseRangeWithScores(zSetKey, start, end);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException reverseRangeWithScores " + zSetKey + " " + start + " " + end + " " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 清理 ZSet
+     * */
+    public void zRemove(String zSetKey, String key) {
+        try {
+            redisTemplate.opsForZSet().remove(zSetKey, key);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException zRemove " + zSetKey + " " + key + " " + e.getMessage());
+        }
+    }
+
+    /**
+     * ZSet 获取成员数量
+     */
+    public Long zCard(String zSetKey) {
+        try {
+            Long l = redisTemplate.opsForZSet().zCard(zSetKey);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException zCard " + zSetKey + " " + e.getMessage());
+        }
+        return 0L;
     }
 
     /**

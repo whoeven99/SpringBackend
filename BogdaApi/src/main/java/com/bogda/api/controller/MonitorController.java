@@ -7,9 +7,11 @@ import com.bogda.api.Service.impl.TranslationCounterServiceImpl;
 import com.bogda.api.entity.DO.CharsOrdersDO;
 import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.TranslationCounterDO;
+import com.bogda.api.entity.DTO.CacheDataDTO;
 import com.bogda.api.logic.redis.ConfigRedisRepo;
 import com.bogda.api.logic.redis.RedisStoppedRepository;
 import com.bogda.api.logic.redis.TranslateTaskMonitorV2RedisService;
+import com.bogda.api.logic.redis.model.CachePageResponse;
 import com.bogda.api.logic.translate.TranslateV2Service;
 import com.bogda.api.logic.translate.stragety.HtmlTranslateStrategyService;
 import com.bogda.api.model.controller.response.ProgressResponse;
@@ -181,4 +183,9 @@ public class MonitorController {
         return responseMap;
     }
 
+    // 根据传入target，获取对应的缓存命中次数
+    @PostMapping("/monitorv2Cache")
+    public CachePageResponse<CacheDataDTO> monitorv2Cache(@RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+        return translateTaskMonitorV2RedisService.cachePageQuery(pageNo, pageSize);
+    }
 }

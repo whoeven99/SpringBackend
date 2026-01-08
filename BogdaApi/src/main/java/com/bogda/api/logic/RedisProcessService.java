@@ -20,7 +20,7 @@ public class RedisProcessService {
         }
         String key = RedisKeyUtils.TRANSLATE_CACHE_KEY_TEMPLATE.replace("{targetCode}", targetCode)
                 .replace("{source}", encryptedSource);
-        redisIntegration.set(key, targetValue, DAY_14);
+        redisIntegration.set(key, targetValue, RedisKeyUtils.DAY_14);
     }
 
     public String getCacheData(String targetCode, String sourceValue){
@@ -32,7 +32,7 @@ public class RedisProcessService {
                 .replace("{source}", encryptedSource);
         String text = redisIntegration.get(key);
         if (text != null && !"null".equals(text)){
-            redisIntegration.expire(key, DAY_14);
+            redisIntegration.expire(key, RedisKeyUtils.DAY_14);
             return text;
         }
         return null;

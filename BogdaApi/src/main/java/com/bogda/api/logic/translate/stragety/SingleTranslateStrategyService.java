@@ -51,7 +51,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         // 1. 先检查缓存（无论是否有词汇表）
         String cachedValue = redisProcessService.getCacheData(target, value);
         if (cachedValue != null) {
-            translateTaskMonitorV2RedisService.addCacheCount(cachedValue);
+            translateTaskMonitorV2RedisService.addCacheCount(value);
             ctx.setCached(true);
             ctx.setStrategy("单条文本翻译-缓存命中");
             ctx.setTranslatedContent(cachedValue);

@@ -43,7 +43,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             // 1. 先检查缓存
             String cachedValue = redisProcessService.getCacheData(target, value);
             if (cachedValue != null) {
-                translateTaskMonitorV2RedisService.addCacheCount(cachedValue);
+                translateTaskMonitorV2RedisService.addCacheCount(value);
                 ctx.getTranslatedTextMap().put(key, cachedValue);
                 ctx.incrementCachedCount();
             } else {
