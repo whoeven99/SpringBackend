@@ -6,7 +6,10 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
+@SpringBootApplication(
+    exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class},
+    scanBasePackages = {"com.bogda.task", "com.bogda.repository", "com.bogda.api", "com.bogda.common", "com.bogda.integration"}
+)
 @EnableScheduling
 public class TaskApplication {
     public static void main(String[] args) {

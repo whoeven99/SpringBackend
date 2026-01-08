@@ -2,10 +2,10 @@ package com.bogda.api.logic.PCApp;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.PCOrdersDO;
-import com.bogda.api.repository.entity.PCUserTrialsDO;
-import com.bogda.api.repository.repo.PCOrdersRepo;
-import com.bogda.api.repository.repo.PCUserTrialsRepo;
+import com.bogda.repository.entity.PCOrdersDO;
+import com.bogda.repository.entity.PCUserTrialsDO;
+import com.bogda.repository.repo.PCOrdersRepo;
+import com.bogda.repository.repo.PCUserTrialsRepo;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

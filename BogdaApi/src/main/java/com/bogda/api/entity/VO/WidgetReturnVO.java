@@ -1,6 +1,6 @@
 package com.bogda.api.entity.VO;
 
-import com.bogda.api.repository.entity.UserIPRedirectionDO;
+import com.bogda.repository.entity.UserIPRedirectionDO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

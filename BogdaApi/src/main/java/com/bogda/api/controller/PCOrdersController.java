@@ -4,7 +4,7 @@ package com.bogda.api.controller;
 import com.bogda.api.entity.VO.PCEmailVO;
 import com.bogda.api.logic.PCApp.PCOrdersService;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.repository.entity.PCOrdersDO;
+import com.bogda.repository.entity.PCOrdersDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
