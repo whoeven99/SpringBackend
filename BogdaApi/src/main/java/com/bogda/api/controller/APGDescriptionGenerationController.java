@@ -7,7 +7,7 @@ import com.bogda.api.entity.DO.APGUsersDO;
 import com.bogda.api.entity.DTO.ProductDTO;
 import com.bogda.api.entity.VO.APGAnalyzeDataVO;
 import com.bogda.api.entity.VO.GenerateDescriptionVO;
-import com.bogda.api.exception.ClientException;
+import com.bogda.common.exception.ClientException;
 import com.bogda.api.logic.GenerateDescriptionService;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;

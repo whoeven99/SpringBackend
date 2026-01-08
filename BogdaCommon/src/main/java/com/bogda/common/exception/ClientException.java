@@ -1,4 +1,4 @@
-package com.bogda.api.exception;
+package com.bogda.common.exception;
 
 import lombok.Data;
 

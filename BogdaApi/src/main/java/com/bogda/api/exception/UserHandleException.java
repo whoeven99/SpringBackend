@@ -1,6 +1,7 @@
 package com.bogda.api.exception;
 
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.common.exception.ClientException;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
