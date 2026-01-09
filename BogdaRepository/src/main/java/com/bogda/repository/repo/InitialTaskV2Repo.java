@@ -175,11 +175,11 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
 
     }
 
-    public boolean updateStatusById(Integer status, Integer id) {
+    public boolean updateStatusAndSendEmailById(Integer status, Integer id, boolean isSendEmail) {
         return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().set(InitialTaskV2DO::getStatus, status)
+                .set(InitialTaskV2DO::isSendEmail, isSendEmail)
                 .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
                 .eq(InitialTaskV2DO::getId, id)) > 0;
-
     }
 
     public boolean updateStatusSavingShopifyMinutesById(Integer status, Integer savingShopifyMinutes, Integer id) {

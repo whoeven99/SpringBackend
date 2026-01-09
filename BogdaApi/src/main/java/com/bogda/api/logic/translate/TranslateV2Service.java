@@ -836,7 +836,7 @@ public class TranslateV2Service {
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
         if (initialTaskV2DO != null) {
-            initialTaskV2Repo.updateStatusById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId());
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false);
             redisStoppedRepository.removeStoppedFlag(shopName);
             translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         }
@@ -851,7 +851,7 @@ public class TranslateV2Service {
             redisStoppedRepository.removeStoppedFlag(shopName);
             for (InitialTaskV2DO initialTaskV2DO : list) {
                 initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                boolean updateFlag = initialTaskV2Repo.updateStatusById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId());
+                boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false);
                 AppInsightsUtils.trackTrace("continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
             }
         }
