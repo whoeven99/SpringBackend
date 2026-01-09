@@ -26,9 +26,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: |
-            BogdaApi/target/*.jar
-            BogdaService/libs/aidge.jar
+          path: 'BogdaApi/target/*.jar'
 
   deploy:
     runs-on: ubuntu-latest
