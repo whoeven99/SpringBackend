@@ -57,7 +57,7 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getStatus, 5)
                 .eq(InitialTaskV2DO::getSavingShopifyMinutes, 0)
-                .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24))
+                .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(48))
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
@@ -84,6 +84,15 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
 
     public List<InitialTaskV2DO> selectByStoppedAndNotEmail(String taskType) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getStatus, 5)
+                .eq(InitialTaskV2DO::isSendEmail, false)
+                .eq(InitialTaskV2DO::getTaskType, taskType)
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
+    public List<InitialTaskV2DO> selectByShopNameStoppedAndNotEmail(String shopName, String taskType) {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
                 .eq(InitialTaskV2DO::getStatus, 5)
                 .eq(InitialTaskV2DO::isSendEmail, false)
                 .eq(InitialTaskV2DO::getTaskType, taskType)

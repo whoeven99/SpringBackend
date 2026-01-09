@@ -753,7 +753,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateStatusSavingShopifyMinutesById(initialTaskV2DO.getStatus(), initialTaskV2DO.getSavingShopifyMinutes()
-        , initialTaskV2DO.getId());
+                , initialTaskV2DO.getId());
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
@@ -780,20 +780,43 @@ public class TranslateV2Service {
 
         // 中断，部分翻译发送邮件
         if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
-            // 中断翻译的话 token limit才发邮件
-            if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
-                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
-                });
-                assert moduleList != null;
-                moduleList = ModelTranslateUtils.sortTranslateData(moduleList);
-                List<TranslateResourceDTO> resourceList = convertALL(moduleList);
-                TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
-                TypeSplitResponse typeSplitResponse = splitByType(translateTaskV2DO != null ? translateTaskV2DO.getModule() : null, resourceList);
+            // 判断是不是手动中断, 是的话 立即中断, 将邮件设置为已发送
+            boolean stoppedByManual = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName());
+            if (stoppedByManual) {
+                initialTaskV2Repo.updateSendEmailById(initialTaskV2DO.getId(), true);
+                return;
+            }
 
-                tencentEmailService.sendFailedEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
-                        typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString());
+            // 判断现在的时间和db的更新时间是否相差10分钟 (可调整)  如果不相差10分钟,跳过
+            if ((System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) < 60 * 10000) {
+                return;
+            }
 
-                initialTaskV2Repo.updateSendEmailAndStatusById(true, InitialTaskStatus.STOPPED.status, initialTaskV2DO.getId());
+            // 相差10分钟, 获取该用户所有状态为5、是部分翻译、未发送邮件、未逻辑删除的手动翻译任务, 发送邮件
+            List<InitialTaskV2DO> stoppedTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual");
+
+            if (CollectionUtils.isEmpty(stoppedTasks)) {
+                return;
+            }
+
+            // 判断是否是部分翻译, 然后存到部分翻译的list集合里面; 如果是手动中断,存到手动中断的map集合里面
+            List<InitialTaskV2DO> partialTranslation = new ArrayList<>();
+
+            for (InitialTaskV2DO task : stoppedTasks) {
+                boolean stoppedByTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(task.getShopName());
+                if (stoppedByTokenLimit) {
+                    partialTranslation.add(task);
+                }
+            }
+
+            // 根据部分翻译list的集合,发送批量失败的邮件
+            if (!partialTranslation.isEmpty()) {
+                tencentEmailService.sendTranslatePartialEmail(shopName, partialTranslation, "auto translation");
+            }
+
+            // 将任务改为已发送
+            for (InitialTaskV2DO task : partialTranslation) {
+                initialTaskV2Repo.updateSendEmailById(task.getId(), true);
             }
         }
     }
@@ -1017,7 +1040,7 @@ public class TranslateV2Service {
         // 如果是特定类型，也从集合中移除
         if ("FILE_REFERENCE".equals(type) || "LINK".equals(type) || "URL".equals(type)
                 || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                || "LIST_URL".equals(type)|| "JSON".equals(type)
+                || "LIST_URL".equals(type) || "JSON".equals(type)
                 || "JSON_STRING".equals(type)) {
             return false;
         }
