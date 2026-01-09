@@ -1,8 +1,8 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.api.Service.ISubscriptionQuotaRecordService;
-import com.bogda.api.entity.DO.SubscriptionQuotaRecordDO;
+import com.bogda.service.Service.ISubscriptionQuotaRecordService;
+import com.bogda.service.entity.DO.SubscriptionQuotaRecordDO;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PutMapping;

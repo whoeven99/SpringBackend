@@ -1,8 +1,8 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.UserPageFlyDO;
-import com.bogda.api.logic.UserPageFlyService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.entity.DO.UserPageFlyDO;
+import com.bogda.service.logic.UserPageFlyService;
+import com.bogda.service.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,21 +1,21 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.api.Service.ITranslatesService;
-import com.bogda.api.Service.IUserTypeTokenService;
-import com.bogda.api.Service.IUsersService;
-import com.bogda.api.entity.DO.TranslatesDO;
-import com.bogda.api.entity.DO.UsersDO;
-import com.bogda.api.entity.VO.*;
-import com.bogda.api.integration.ShopifyHttpIntegration;
-import com.bogda.api.logic.TranslateService;
-import com.bogda.api.logic.UserTypeTokenService;
-import com.bogda.api.logic.redis.RedisStoppedRepository;
-import com.bogda.api.logic.redis.TranslationParametersRedisService;
-import com.bogda.api.logic.translate.TranslateV2Service;
-import com.bogda.api.model.controller.request.*;
-import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.model.controller.response.ProgressResponse;
+import com.bogda.service.Service.ITranslatesService;
+import com.bogda.service.Service.IUserTypeTokenService;
+import com.bogda.service.Service.IUsersService;
+import com.bogda.service.entity.DO.TranslatesDO;
+import com.bogda.service.entity.DO.UsersDO;
+import com.bogda.service.entity.VO.*;
+import com.bogda.service.integration.ShopifyHttpIntegration;
+import com.bogda.service.logic.TranslateService;
+import com.bogda.service.logic.UserTypeTokenService;
+import com.bogda.service.logic.redis.RedisStoppedRepository;
+import com.bogda.service.logic.redis.TranslationParametersRedisService;
+import com.bogda.service.logic.translate.TranslateV2Service;
+import com.bogda.service.controller.request.*;
+import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.service.controller.response.ProgressResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import static com.bogda.common.enums.ErrorEnum.*;
-import static com.bogda.api.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
+import static com.bogda.service.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
 @RestController
 @RequestMapping("/translate")

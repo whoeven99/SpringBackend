@@ -1,14 +1,14 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.logic.RateDataService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.logic.RateDataService;
+import com.bogda.service.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.bogda.api.logic.RateDataService.getRateByRateMap;
+import static com.bogda.service.logic.RateDataService.getRateByRateMap;
 
 @RestController
 @RequestMapping("/rate")

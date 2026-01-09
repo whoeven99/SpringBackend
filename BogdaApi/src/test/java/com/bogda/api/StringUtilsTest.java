@@ -1,8 +1,8 @@
 package com.bogda.api;
 
-import com.bogda.api.entity.DO.GlossaryDO;
-import com.bogda.api.logic.GlossaryService;
-import com.bogda.api.utils.StringUtils;
+import com.bogda.service.entity.DO.GlossaryDO;
+import com.bogda.service.logic.GlossaryService;
+import com.bogda.service.utils.StringUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;

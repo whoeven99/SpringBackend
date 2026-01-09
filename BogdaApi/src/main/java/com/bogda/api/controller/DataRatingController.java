@@ -1,7 +1,7 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.logic.DataRatingService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.logic.DataRatingService;
+import com.bogda.service.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-import static com.bogda.api.utils.ModuleCodeUtils.getLanguageName;
+import static com.bogda.service.utils.ModuleCodeUtils.getLanguageName;
 
 @RestController
 @RequestMapping("/rating")

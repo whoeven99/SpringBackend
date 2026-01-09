@@ -1,0 +1,12 @@
+package com.bogda.service.Service;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.bogda.service.entity.DO.AILanguagePacksDO;
+
+public interface IAILanguagePacksService extends IService<AILanguagePacksDO> {
+
+
+    void addDefaultLanguagePack(String shopName);
+
+    Integer getPackIdByShopName(String shopName);
+}

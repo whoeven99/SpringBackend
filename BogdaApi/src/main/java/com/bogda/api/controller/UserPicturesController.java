@@ -1,11 +1,11 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.api.Service.IUserPicturesService;
-import com.bogda.api.entity.DO.UserPicturesDO;
-import com.bogda.api.integration.HunYuanBucketIntegration;
-import com.bogda.api.logic.PCApp.PCUserPicturesService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.Service.IUserPicturesService;
+import com.bogda.service.entity.DO.UserPicturesDO;
+import com.bogda.service.integration.HunYuanBucketIntegration;
+import com.bogda.service.logic.PCApp.PCUserPicturesService;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 
-import static com.bogda.api.utils.StringUtils.convertUrlToMultipartFile;
+import static com.bogda.service.utils.StringUtils.convertUrlToMultipartFile;
 
 @RestController
 @RequestMapping("/picture")

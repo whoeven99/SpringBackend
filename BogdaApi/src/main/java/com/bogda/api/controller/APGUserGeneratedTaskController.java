@@ -2,18 +2,18 @@ package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.api.Service.IAPGUserCounterService;
-import com.bogda.api.Service.IAPGUserGeneratedSubtaskService;
-import com.bogda.api.Service.IAPGUserPlanService;
-import com.bogda.api.Service.IAPGUsersService;
-import com.bogda.api.entity.DO.APGUserCounterDO;
-import com.bogda.api.entity.DO.APGUserGeneratedTaskDO;
-import com.bogda.api.entity.DO.APGUsersDO;
-import com.bogda.api.entity.VO.GenerateDescriptionsVO;
-import com.bogda.api.entity.VO.GenerateProgressBarVO;
+import com.bogda.service.Service.IAPGUserCounterService;
+import com.bogda.service.Service.IAPGUserGeneratedSubtaskService;
+import com.bogda.service.Service.IAPGUserPlanService;
+import com.bogda.service.Service.IAPGUsersService;
+import com.bogda.service.entity.DO.APGUserCounterDO;
+import com.bogda.service.entity.DO.APGUserGeneratedTaskDO;
+import com.bogda.service.entity.DO.APGUsersDO;
+import com.bogda.service.entity.VO.GenerateDescriptionsVO;
+import com.bogda.service.entity.VO.GenerateProgressBarVO;
 import com.bogda.common.exception.ClientException;
-import com.bogda.api.logic.APGUserGeneratedTaskService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.logic.APGUserGeneratedTaskService;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
@@ -22,8 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP;
-import static com.bogda.api.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
+import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP;
+import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
 
 @RestController
 @RequestMapping("/apg/userGeneratedTask")

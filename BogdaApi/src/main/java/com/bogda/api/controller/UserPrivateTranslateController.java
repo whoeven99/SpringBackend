@@ -1,8 +1,8 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.UserPrivateTranslateDO;
-import com.bogda.api.logic.UserPrivateTranslateService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.entity.DO.UserPrivateTranslateDO;
+import com.bogda.service.logic.UserPrivateTranslateService;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
