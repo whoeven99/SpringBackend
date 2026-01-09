@@ -159,7 +159,6 @@ public class AidgeIntegration {
         }
 
         // FAQ(中文/Simple Chinese):https://aidge.yuque.com/org-wiki-aidge-bzb63a/brbggt/ny2tgih89utg1aha
-        System.out.println("result: " + result);
         return result;
     }
 
