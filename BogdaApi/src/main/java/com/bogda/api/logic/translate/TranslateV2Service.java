@@ -681,6 +681,7 @@ public class TranslateV2Service {
             initialTaskV2Repo.updateStatusUsedTokenTranslationMinutesModuleById(initialTaskV2DO.getStatus(),
                     initialTaskV2DO.getUsedToken(), initialTaskV2DO.getTranslationMinutes()
                     , initialTaskV2DO.getTransModelType(), initialTaskV2DO.getId());
+            translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
             return;
         }
 
