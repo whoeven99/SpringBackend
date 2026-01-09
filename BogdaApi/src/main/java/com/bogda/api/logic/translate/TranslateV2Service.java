@@ -39,6 +39,7 @@ import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.volcengine.model.imagex.data.App;
 import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
@@ -781,8 +782,8 @@ public class TranslateV2Service {
         // 中断，部分翻译发送邮件
         if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
             // 判断是不是手动中断, 是的话 立即中断, 将邮件设置为已发送
-            boolean stoppedByManual = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName());
-            if (stoppedByManual) {
+            boolean stoppedByLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName());
+            if (!stoppedByLimit) {
                 initialTaskV2Repo.updateSendEmailById(initialTaskV2DO.getId(), true);
                 return;
             }
@@ -811,6 +812,7 @@ public class TranslateV2Service {
 
             // 根据部分翻译list的集合,发送批量失败的邮件
             if (!partialTranslation.isEmpty()) {
+                AppInsightsUtils.trackTrace("sendManualEmail 手动翻译批量失败邮件 : " + shopName);
                 tencentEmailService.sendTranslatePartialEmail(shopName, partialTranslation, "manual translation");
             }
 
