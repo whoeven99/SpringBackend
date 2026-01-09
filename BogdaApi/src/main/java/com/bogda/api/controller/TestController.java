@@ -2,9 +2,7 @@ package com.bogda.api.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.Service.ITranslatesService;
-import com.bogda.api.Service.IUsersService;
 import com.bogda.api.entity.DO.TranslatesDO;
-import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.VO.UserDataReportVO;
 import com.bogda.api.integration.GoogleMachineIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
@@ -17,7 +15,6 @@ import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.task.IpEmailTask;
 import com.bogda.api.utils.ModuleCodeUtils;
 import com.bogda.common.utils.AppInsightsUtils;
-import com.bogda.common.utils.ShopifyRequestUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -41,8 +38,6 @@ public class TestController {
     private GoogleMachineIntegration googleMachineIntegration;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
-    @Autowired
-    private IUsersService usersService;
 
     @PostMapping("/test")
     public Pair<String, Integer> test(@RequestBody TranslateRequest request) {
@@ -53,14 +48,6 @@ public class TestController {
         }
 
         return stringIntegerPair;
-    }
-
-    // 测试为什么调用shopify数据 长时间不返回
-    @GetMapping("/testShopify")
-    public String testShopify(@RequestParam String shopName) {
-        UsersDO userByName = usersService.getUserByName(shopName);
-        String query = ShopifyRequestUtils.getShopLanguageQuery();
-        return shopifyHttpIntegration.sendShopifyPost(shopName, userByName.getAccessToken(), query, null);
     }
 
     @GetMapping("/ping")
