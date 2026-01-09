@@ -359,13 +359,13 @@ public class TencentEmailService {
                 MailChimpConstants.USER_SWITCH_EMAIL, flag ? 1 : 0));
     }
 
-    public boolean sendAutoTranslatePartialEmail(String shopName, List<InitialTaskV2DO> partialTasks) {
+    public boolean sendTranslatePartialEmail(String shopName, List<InitialTaskV2DO> partialTasks, String translateType) {
         String name = parseShopName(shopName);
 
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
         templateData.put("username", usersDO.getFirstName());
-        templateData.put("translation", "auto translation");
+        templateData.put("translation", translateType);
         templateData.put("admin", name);
 
         StringBuilder divBuilder = new StringBuilder();
@@ -402,7 +402,7 @@ public class TencentEmailService {
             return true;
         }
         templateData.put("language_progress_rows", String.valueOf(divBuilder));
-        return emailIntegration.sendEmailByTencent(159297L, MailChimpConstants.AUTO_FAILED_EMAIL, templateData,
-                MailChimpConstants.TENCENT_FROM_EMAIL, MailChimpConstants.CC_EMAIL);
+        return emailIntegration.sendEmailByTencent(159297L, MailChimpConstants.BATCH_FAILED_EMAIL, templateData,
+                MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
     }
 }

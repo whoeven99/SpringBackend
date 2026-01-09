@@ -39,6 +39,7 @@ import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.volcengine.model.imagex.data.App;
 import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
@@ -680,6 +681,7 @@ public class TranslateV2Service {
             initialTaskV2Repo.updateStatusUsedTokenTranslationMinutesModuleById(initialTaskV2DO.getStatus(),
                     initialTaskV2DO.getUsedToken(), initialTaskV2DO.getTranslationMinutes()
                     , initialTaskV2DO.getTransModelType(), initialTaskV2DO.getId());
+            translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskId);
             return;
         }
 
@@ -753,7 +755,7 @@ public class TranslateV2Service {
         initialTaskV2DO.setSavingShopifyMinutes((int) savingShopifyTimeInMinutes);
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateStatusSavingShopifyMinutesById(initialTaskV2DO.getStatus(), initialTaskV2DO.getSavingShopifyMinutes()
-        , initialTaskV2DO.getId());
+                , initialTaskV2DO.getId());
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
@@ -780,20 +782,44 @@ public class TranslateV2Service {
 
         // 中断，部分翻译发送邮件
         if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
-            // 中断翻译的话 token limit才发邮件
-            if (redisStoppedRepository.isStoppedByTokenLimit(shopName)) {
-                List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
-                });
-                assert moduleList != null;
-                moduleList = ModelTranslateUtils.sortTranslateData(moduleList);
-                List<TranslateResourceDTO> resourceList = convertALL(moduleList);
-                TranslateTaskV2DO translateTaskV2DO = translateTaskV2Repo.selectLastTranslateOne(initialTaskV2DO.getId());
-                TypeSplitResponse typeSplitResponse = splitByType(translateTaskV2DO != null ? translateTaskV2DO.getModule() : null, resourceList);
+            // 判断是不是手动中断, 是的话 立即中断, 将邮件设置为已发送
+            boolean stoppedByLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName());
+            if (!stoppedByLimit) {
+                initialTaskV2Repo.updateSendEmailById(initialTaskV2DO.getId(), true);
+                return;
+            }
 
-                tencentEmailService.sendFailedEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
-                        typeSplitResponse.getBefore().toString(), typeSplitResponse.getAfter().toString());
+            // 判断现在的时间和db的更新时间是否相差10分钟 (可调整)  如果不相差10分钟,跳过
+            long translateEndTime = Long.parseLong(translateTaskMonitorV2RedisService.getTranslateEndTime(initialTaskV2DO.getId()));
+            if ((System.currentTimeMillis() - translateEndTime) < 60 * 10000) {
+                return;
+            }
 
-                initialTaskV2Repo.updateSendEmailAndStatusById(true, InitialTaskStatus.STOPPED.status, initialTaskV2DO.getId());
+            // 相差10分钟, 获取该用户所有状态为5、是部分翻译、未发送邮件、未逻辑删除的手动翻译任务, 发送邮件
+            List<InitialTaskV2DO> stoppedTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual");
+            if (CollectionUtils.isEmpty(stoppedTasks)) {
+                return;
+            }
+
+            // 判断是否是部分翻译, 然后存到部分翻译的list集合里面; 如果是手动中断,存到手动中断的map集合里面
+            List<InitialTaskV2DO> partialTranslation = new ArrayList<>();
+
+            for (InitialTaskV2DO task : stoppedTasks) {
+                boolean stoppedByTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(task.getShopName());
+                if (stoppedByTokenLimit) {
+                    partialTranslation.add(task);
+                }
+            }
+
+            // 根据部分翻译list的集合,发送批量失败的邮件
+            if (!partialTranslation.isEmpty()) {
+                AppInsightsUtils.trackTrace("sendManualEmail 手动翻译批量失败邮件 : " + shopName);
+                tencentEmailService.sendTranslatePartialEmail(shopName, partialTranslation, "manual translation");
+            }
+
+            // 将任务改为已发送
+            for (InitialTaskV2DO task : partialTranslation) {
+                initialTaskV2Repo.updateSendEmailById(task.getId(), true);
             }
         }
     }
@@ -810,7 +836,7 @@ public class TranslateV2Service {
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
         if (initialTaskV2DO != null) {
-            initialTaskV2Repo.updateStatusById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId());
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false);
             redisStoppedRepository.removeStoppedFlag(shopName);
             translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         }
@@ -825,7 +851,7 @@ public class TranslateV2Service {
             redisStoppedRepository.removeStoppedFlag(shopName);
             for (InitialTaskV2DO initialTaskV2DO : list) {
                 initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                boolean updateFlag = initialTaskV2Repo.updateStatusById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId());
+                boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false);
                 AppInsightsUtils.trackTrace("continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
             }
         }
@@ -1017,7 +1043,7 @@ public class TranslateV2Service {
         // 如果是特定类型，也从集合中移除
         if ("FILE_REFERENCE".equals(type) || "LINK".equals(type) || "URL".equals(type)
                 || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                || "LIST_URL".equals(type)|| "JSON".equals(type)
+                || "LIST_URL".equals(type) || "JSON".equals(type)
                 || "JSON_STRING".equals(type)) {
             return false;
         }

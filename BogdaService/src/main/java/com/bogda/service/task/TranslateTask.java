@@ -156,7 +156,7 @@ public class TranslateTask {
 
                 // 4. 部分翻译（额度不足）→ 发送部分翻译邮件
                 if (!partialTasks.isEmpty()) {
-                    tencentEmailService.sendAutoTranslatePartialEmail(shopName, partialTasks);
+                    tencentEmailService.sendTranslatePartialEmail(shopName, partialTasks, "auto translation");
                 }
 
                 // 5. 更新发送邮件状态 & 最终状态

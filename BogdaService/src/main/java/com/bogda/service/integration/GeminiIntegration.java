@@ -25,7 +25,7 @@ public class GeminiIntegration {
     public Pair<String, Integer> generateText(String model, String prompt) {
         // 发送对话请求
         try {
-            AppInsightsUtils.trackTrace("model : " + model + " translateText : " + prompt);
+//            AppInsightsUtils.trackTrace("model : " + model + " translateText : " + prompt);
             GenerateContentResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
                         try {
                             return client.models.generateContent(
@@ -53,7 +53,7 @@ public class GeminiIntegration {
             int outputToken = (usage != null) ? usage.candidatesTokenCount().orElse(0) : 0;
             int allToken = (usage != null) ? usage.totalTokenCount().orElse(0) * GEMINI_COEFFICIENT : 0;
 
-            AppInsightsUtils.trackTrace("Gemini 提示词： " + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
+            AppInsightsUtils.trackTrace("Gemini  model : " + model + " 提示词：" + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
             return new Pair<>(text, allToken);
         } catch (Exception e) {
             AppInsightsUtils.trackTrace("FatalException generateText errors ： " + e.getMessage() + " translateText : " + prompt);

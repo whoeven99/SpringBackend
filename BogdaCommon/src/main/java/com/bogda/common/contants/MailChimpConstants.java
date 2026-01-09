@@ -31,7 +31,7 @@ public class MailChimpConstants {
     public static final String USER_THEME_EMAIL = "Theme Change Detected — Some Content May Need Translation｜Ciwi Translator";
     public static final String USER_LANGUAGE_EMAIL = "Store Default Language Changed — Translation Update Required ｜Ciwi Translator";
     public static final String USER_SWITCH_EMAIL = "Theme Change Detected — Ciwi Language Switcher Update Required";
-    public static final String AUTO_FAILED_EMAIL = "Translation Paused — Credits Required to Continue｜ Ciwi Translator";
+    public static final String BATCH_FAILED_EMAIL = "Translation Paused — Credits Required to Continue｜ Ciwi Translator";
 
     // from_email
     public static final String CC_EMAIL = "feynman@ciwi.ai";
