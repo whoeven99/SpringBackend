@@ -403,6 +403,6 @@ public class TencentEmailService {
         }
         templateData.put("language_progress_rows", String.valueOf(divBuilder));
         return emailIntegration.sendEmailByTencent(159297L, MailChimpConstants.BATCH_FAILED_EMAIL, templateData,
-                MailChimpConstants.TENCENT_FROM_EMAIL, MailChimpConstants.CC_EMAIL);
+                MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
     }
 }

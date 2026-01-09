@@ -811,7 +811,7 @@ public class TranslateV2Service {
 
             // 根据部分翻译list的集合,发送批量失败的邮件
             if (!partialTranslation.isEmpty()) {
-                tencentEmailService.sendTranslatePartialEmail(shopName, partialTranslation, "auto translation");
+                tencentEmailService.sendTranslatePartialEmail(shopName, partialTranslation, "manual translation");
             }
 
             // 将任务改为已发送
