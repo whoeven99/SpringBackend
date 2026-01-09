@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.Service.ITranslatesService;
 import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.VO.UserDataReportVO;
-import com.bogda.api.integration.GeminiIntegration;
 import com.bogda.api.integration.GoogleMachineIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
 import com.bogda.api.logic.RedisDataReportService;
