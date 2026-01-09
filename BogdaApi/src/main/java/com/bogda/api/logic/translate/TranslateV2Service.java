@@ -789,7 +789,8 @@ public class TranslateV2Service {
             }
 
             // 判断现在的时间和db的更新时间是否相差10分钟 (可调整)  如果不相差10分钟,跳过
-            if ((System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) < 60 * 10000) {
+            long translateEndTime = Long.parseLong(translateTaskMonitorV2RedisService.getTranslateEndTime(initialTaskV2DO.getId()));
+            if ((translateEndTime - initialTaskV2DO.getUpdatedAt().getTime()) < 60 * 10000) {
                 return;
             }
 

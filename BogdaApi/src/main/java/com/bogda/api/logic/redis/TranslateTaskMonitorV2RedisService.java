@@ -83,6 +83,11 @@ public class TranslateTaskMonitorV2RedisService {
         redisIntegration.setHash(key, "translateEndTime", String.valueOf(System.currentTimeMillis()));
     }
 
+    public String getTranslateEndTime(Integer initialTaskId) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        return redisIntegration.getHash(key, "translateEndTime");
+    }
+
     public void addSavedCount(Integer initialTaskId, int count) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.incrementHash(key, "savedCount", count);
