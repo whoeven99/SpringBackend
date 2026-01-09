@@ -791,13 +791,12 @@ public class TranslateV2Service {
 
             // 判断现在的时间和db的更新时间是否相差10分钟 (可调整)  如果不相差10分钟,跳过
             long translateEndTime = Long.parseLong(translateTaskMonitorV2RedisService.getTranslateEndTime(initialTaskV2DO.getId()));
-            if ((translateEndTime - initialTaskV2DO.getUpdatedAt().getTime()) < 60 * 10000) {
+            if ((System.currentTimeMillis() - translateEndTime) < 60 * 10000) {
                 return;
             }
 
             // 相差10分钟, 获取该用户所有状态为5、是部分翻译、未发送邮件、未逻辑删除的手动翻译任务, 发送邮件
             List<InitialTaskV2DO> stoppedTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual");
-
             if (CollectionUtils.isEmpty(stoppedTasks)) {
                 return;
             }
