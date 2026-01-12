@@ -187,19 +187,6 @@ public class TranslateController {
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
 
-    // 恢复翻译任务
-    @PostMapping("/revertStop")
-    public void continueTranslation(@RequestBody TranslateRequest request) {
-        String shopName = request.getShopName();
-        redisStoppedRepository.removeStoppedFlag(shopName);
-    }
-
-    // 单条恢复翻译任务
-    @PostMapping("/revertStopV2")
-    public void continueTranslationV2(@RequestParam String shopName, @RequestParam Integer taskId) {
-        redisStoppedRepository.removeStoppedFlag(shopName, taskId);
-    }
-
     /**
      * 将一条数据存shopify本地
      */
