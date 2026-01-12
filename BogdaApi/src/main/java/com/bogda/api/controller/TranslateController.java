@@ -77,20 +77,12 @@ public class TranslateController {
             future.cancel(true);
         }
         return new BaseResponse<>().CreateSuccessResponse(true);
-//        Boolean stopFlag = translationParametersRedisService.setStopTranslationKey(shopName);
-//        if (!stopFlag) {
-//            return new BaseResponse<>().CreateErrorResponse("already stopped");
-//        }
-//
-//        // 将所有状态2的任务改成7
-//        translatesService.updateStopStatus(shopName, translatingStopVO.getSource());
-//
-//        // 将所有状态为0和2的task任务，改为7
-//        Boolean flag = iTranslateTasksService.updateStatus0And2To7(shopName);
-//        if (flag) {
-//            return new BaseResponse<>().CreateSuccessResponse(true);
-//        }
-//        return new BaseResponse<>().CreateErrorResponse(false);
+    }
+
+    // 用户手动点击停止翻译V2
+    @PostMapping("/stopTranslatingTaskV2")
+    public BaseResponse<Object> stopTranslatingTaskV2(@RequestParam String shopName, @RequestParam Integer taskId) {
+        return translateService.stopTranslatingTaskV2(shopName, taskId);
     }
 
     // 用户手动点击继续翻译
@@ -99,12 +91,28 @@ public class TranslateController {
         return translateV2Service.continueTranslating(shopName, taskId);
     }
 
+    // 用户手动点击继续翻译V2
+    @PostMapping("/continueTranslatingV2")
+    public BaseResponse<Object> continueTranslatingV2(@RequestParam String shopName, @RequestParam Integer taskId) {
+        return translateV2Service.continueTranslatingV2(shopName, taskId);
+    }
+
     // 当支付成功后，调用该方法，将该用户的状态3，改为状态6
     // 支付之后，前端调用api，停止状态改为继续翻译
     @PostMapping("/updateStatus")
     public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
         if (translatesService.updateStatus3To6(request.getShopName())) {
             translateV2Service.continueTranslating(request.getShopName());
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        } else {
+            return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
+        }
+    }
+
+    @PostMapping("/updateStatusV2")
+    public BaseResponse<Object> updateStatus3To6V2(@RequestParam String shopName) {
+        if (translatesService.updateStatus3To6(shopName)) {
+            translateV2Service.continueTranslatingByShopName(shopName);
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
             return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
@@ -184,6 +192,12 @@ public class TranslateController {
     public void continueTranslation(@RequestBody TranslateRequest request) {
         String shopName = request.getShopName();
         redisStoppedRepository.removeStoppedFlag(shopName);
+    }
+
+    // 单条恢复翻译任务
+    @PostMapping("/revertStopV2")
+    public void continueTranslationV2(@RequestParam String shopName, @RequestParam Integer taskId) {
+        redisStoppedRepository.removeStoppedFlag(shopName, taskId);
     }
 
     /**

@@ -13,6 +13,35 @@ public class RedisStoppedRepository {
     private static final String MANUAL = "1";
     private static final String TOKEN_LIMIT = "2";
 
+    // 单条停止逻辑
+    public void manuallyStopped(String shopName, Integer initialId) {
+        String key = RedisKeyUtils.STOPPED_FLAG_SINGLE.replace("{shopName}", shopName).replace("{initialId}", String.valueOf(initialId));
+        redisIntegration.set(key, MANUAL, RedisKeyUtils.DAY_14);
+    }
+
+    public void tokenLimitStopped(String shopName, Integer initialId) {
+        String key = RedisKeyUtils.STOPPED_FLAG_SINGLE.replace("{shopName}", shopName).replace("{initialId}", String.valueOf(initialId));
+        redisIntegration.set(key, TOKEN_LIMIT, RedisKeyUtils.DAY_14);
+    }
+
+    public boolean isTaskStopped(String shopName, Integer initialId) {
+        String key = RedisKeyUtils.STOPPED_FLAG_SINGLE.replace("{shopName}", shopName).replace("{initialId}", String.valueOf(initialId));
+        String value = redisIntegration.get(key);
+        return MANUAL.equals(value) || TOKEN_LIMIT.equals(value);
+    }
+
+    public boolean isStoppedByTokenLimit(String shopName, Integer initialId) {
+        String key = RedisKeyUtils.STOPPED_FLAG_SINGLE.replace("{shopName}", shopName).replace("{initialId}", String.valueOf(initialId));
+        String value = redisIntegration.get(key);
+        return TOKEN_LIMIT.equals(value);
+    }
+
+    public boolean removeStoppedFlag(String shopName, Integer initialId) {
+        String key = RedisKeyUtils.STOPPED_FLAG_SINGLE.replace("{shopName}", shopName).replace("{initialId}", String.valueOf(initialId));
+        return redisIntegration.delete(key);
+    }
+
+    // 多条停止逻辑
     public void manuallyStopped(String shopName) {
         String key = RedisKeyUtils.STOPPED_FLAG.replace("{shopName}", shopName);
         redisIntegration.set(key, MANUAL, RedisKeyUtils.DAY_14);

@@ -189,4 +189,10 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
                 .eq(InitialTaskV2DO::getId, id)) > 0;
     }
+
+    public List<InitialTaskV2DO> selectByShopNameAndNotDeleted(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
 }
