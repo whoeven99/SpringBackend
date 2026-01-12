@@ -1025,6 +1025,19 @@ public class TranslateV2Service {
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
         if (StringUtils.isEmpty(value)) {
+            // 判断原文是否为空,译文是否有内容,需要删掉译文
+            if(JudgeTranslateUtils.TRANSLATABLE_RESOURCE_TYPES.contains(module)) {
+                // 判断是否有翻译
+                for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
+                    if (translatableContent.getKey().equals(translation.getKey())) {
+                        if (!translation.getValue().isEmpty()){
+                            // 将数据插入集合中
+                            //TODO： 存入集合
+                        }
+                    }
+                }
+            }
+
             return false;
         }
 
