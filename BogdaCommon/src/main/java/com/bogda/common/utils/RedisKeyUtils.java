@@ -12,4 +12,6 @@ public class RedisKeyUtils {
     // 对clientId去重 set
     public static final String CLIENT_ID_SET = "ci:{shopName}:{language}:{yyyyMMdd}:{eventName}";
     public static final String STOPPED_FLAG = "tsk:stp:{shopName}";
+    // 单条停止标识
+    public static final String STOPPED_FLAG_SINGLE = "tsk:stp:{shopName}:{InitialId}";
 }
