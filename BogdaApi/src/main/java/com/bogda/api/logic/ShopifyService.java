@@ -13,7 +13,7 @@ import com.bogda.api.entity.DO.TranslateResourceDTO;
 import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UserTypeTokenDO;
 import com.bogda.api.entity.DTO.TranslateTextDTO;
-import com.bogda.api.integration.model.ShopifyTranslationsRemove;
+import com.bogda.api.integration.model.*;
 import com.bogda.api.utils.StringUtils;
 import com.bogda.api.utils.TypeConversionUtils;
 import com.bogda.common.contants.TranslateConstants;
@@ -21,9 +21,6 @@ import com.bogda.common.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.BaseHttpIntegration;
 import com.bogda.api.integration.ShopifyHttpIntegration;
-import com.bogda.api.integration.model.ShopifyExtensions;
-import com.bogda.api.integration.model.ShopifyGraphResponse;
-import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.model.controller.request.*;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.common.utils.JsoupUtils;
@@ -106,12 +103,12 @@ public class ShopifyService {
     }
 
     // 删除 shopify 数据（带速率限制，返回完整响应包括 extensions）
-    public ShopifyGraphResponse deleteShopifyDataWithRateLimit(String shopName, String accessToken,
-                                                               List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList) {
+    public ShopifyGraphRemoveResponse deleteShopifyDataWithRateLimit(String shopName, String accessToken,
+                                                                List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
         rateLimiter.acquire();
 
-        ShopifyResponse shopifyResponse = shopifyHttpIntegration.deleteShopifyData(shopName, accessToken, shopifyTranslationsRemoveList.get(0));
+        ShopifyRemoveResponse shopifyResponse = shopifyHttpIntegration.deleteShopifyData(shopName, accessToken, shopifyTranslationsRemoveList.get(0));
         if (shopifyResponse == null) {
             return null;
         }

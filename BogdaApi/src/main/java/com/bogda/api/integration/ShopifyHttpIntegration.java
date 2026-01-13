@@ -2,6 +2,7 @@ package com.bogda.api.integration;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
+import com.bogda.api.integration.model.ShopifyRemoveResponse;
 import com.bogda.api.integration.model.ShopifyResponse;
 import com.bogda.api.integration.model.ShopifyTranslationsRemove;
 import com.bogda.api.model.controller.request.ShopifyRequest;
@@ -42,7 +43,7 @@ public class ShopifyHttpIntegration {
         return baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken));
     }
 
-    public ShopifyResponse deleteShopifyData(String shopName, String accessToken, ShopifyTranslationsRemove shopifyTranslationsRemove){
+    public ShopifyRemoveResponse deleteShopifyData(String shopName, String accessToken, ShopifyTranslationsRemove shopifyTranslationsRemove){
         String url = "https://" + shopName + "/admin/api/" + TranslateConstants.API_VERSION_LAST + "/graphql.json";
 
         JSONObject queryMap = new JSONObject();
@@ -53,7 +54,7 @@ public class ShopifyHttpIntegration {
         if (httpRes == null) {
             return null;
         }
-        return JsonUtils.jsonToObjectWithNull(httpRes, ShopifyResponse.class);
+        return JsonUtils.jsonToObjectWithNull(httpRes, ShopifyRemoveResponse.class);
     }
 
 

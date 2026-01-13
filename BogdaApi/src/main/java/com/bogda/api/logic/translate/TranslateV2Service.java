@@ -531,7 +531,6 @@ public class TranslateV2Service {
                             AppInsightsUtils.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
                                     " resourceId: " + node.getResourceId());
 
-
                             // 每个node有几个translatableContent
                             node.getTranslatableContent().forEach(translatableContent -> {
                                 if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover()
@@ -1042,10 +1041,10 @@ public class TranslateV2Service {
                         .findFirst()
                         .orElse(null);
 
-        if (StringUtils.isEmpty(value)) {
+        if (value == null || StringUtils.isBlank(value)) {
             // 判断原文是否为空,译文是否有内容,需要删掉译文
             if (JudgeTranslateUtils.TRANSLATABLE_RESOURCE_TYPES.contains(module) && keyTranslation != null &&
-                    !keyTranslation.getValue().isEmpty()) {
+                    !StringUtils.isBlank(keyTranslation.getValue())) {
                 // 判断是否有翻译
                 // 将数据插入集合中
                 ShopifyTranslationsRemove remove;

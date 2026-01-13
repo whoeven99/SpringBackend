@@ -14,10 +14,12 @@ public class ShopifyTranslationsRemove {
     private String[] locales;
     private String[] translationKeys;
 
-    public ShopifyTranslationsRemove(String resourceId) {
-        this.resourceId = resourceId;
-    }
     public void add(String locale, String translationKey) {
+        // 如果 locales 已存在该 locale，直接返回（不追加）
+        if (this.locales != null && contains(this.locales, locale)) {
+            return;
+        }
+
         // 初始化 locales
         if (this.locales == null) {
             this.locales = new String[]{locale};
@@ -37,5 +39,14 @@ public class ShopifyTranslationsRemove {
         String[] newArray = Arrays.copyOf(array, array.length + 1);
         newArray[array.length] = value;
         return newArray;
+    }
+
+    private boolean contains(String[] array, String value) {
+        for (String s : array) {
+            if (s.equals(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
