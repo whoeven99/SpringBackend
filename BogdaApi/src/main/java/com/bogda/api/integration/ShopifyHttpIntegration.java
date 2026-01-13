@@ -3,6 +3,7 @@ package com.bogda.api.integration;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.integration.model.ShopifyResponse;
+import com.bogda.api.integration.model.ShopifyTranslationsRemove;
 import com.bogda.api.model.controller.request.ShopifyRequest;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.JsonUtils;
@@ -40,6 +41,21 @@ public class ShopifyHttpIntegration {
 
         return baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken));
     }
+
+    public ShopifyResponse deleteShopifyData(String shopName, String accessToken, ShopifyTranslationsRemove shopifyTranslationsRemove){
+        String url = "https://" + shopName + "/admin/api/" + TranslateConstants.API_VERSION_LAST + "/graphql.json";
+
+        JSONObject queryMap = new JSONObject();
+        queryMap.put("query", ShopifyRequestUtils.deleteQuery());
+        queryMap.put("variables", shopifyTranslationsRemove);
+
+        String httpRes = baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken));
+        if (httpRes == null) {
+            return null;
+        }
+        return JsonUtils.jsonToObjectWithNull(httpRes, ShopifyResponse.class);
+    }
+
 
     public String sendShopifyPost(String shopName, String accessToken, String stringQuery, Map<String, Object> variables) {
         String url = "https://" + shopName + "/admin/api/" + TranslateConstants.API_VERSION_LAST + "/graphql.json";

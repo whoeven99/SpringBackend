@@ -9,6 +9,7 @@ import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.VO.SingleReturnVO;
 import com.bogda.api.entity.VO.SingleTranslateVO;
+import com.bogda.api.integration.model.ShopifyTranslationsRemove;
 import com.bogda.api.utils.ModelTranslateUtils;
 import com.bogda.api.utils.ModuleCodeUtils;
 import com.bogda.common.contants.TranslateConstants;
@@ -39,7 +40,6 @@ import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.volcengine.model.imagex.data.App;
 import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
@@ -515,6 +515,7 @@ public class TranslateV2Service {
 
         String finishedModules = translateTaskMonitorV2RedisService.getFinishedModules(initialTaskV2DO.getId());
         String afterEndCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId());
+        List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList = new ArrayList<>();
         for (String module : moduleList) {
             if (containsModule(finishedModules, module)) {
                 continue;
@@ -530,11 +531,12 @@ public class TranslateV2Service {
                             AppInsightsUtils.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
                                     " resourceId: " + node.getResourceId());
 
-//                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
+
                             // 每个node有几个translatableContent
                             node.getTranslatableContent().forEach(translatableContent -> {
                                 if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover()
-                                        , initialTaskV2DO.isHandle(), shopName, userDO.getAccessToken(), node.getResourceId())) {
+                                        , initialTaskV2DO.isHandle(), shopName, userDO.getAccessToken(), node.getResourceId()
+                                        , shopifyTranslationsRemoveList)) {
                                     translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                     translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                     translateTaskV2DO.setType(translatableContent.getType());
@@ -550,6 +552,15 @@ public class TranslateV2Service {
                                     }
                                 }
                             });
+
+                            // 将shopifyTranslationsRemoveList里面的数据删除掉
+                            if (!shopifyTranslationsRemoveList.isEmpty()) {
+                                // 生成查询语句
+                                shopifyService.deleteShopifyDataWithRateLimit(shopName, userDO.getAccessToken(),
+                                        shopifyTranslationsRemoveList);
+                                shopifyTranslationsRemoveList.clear();
+                            }
+
                         }
                     }),
                     (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), after)));
@@ -1020,22 +1031,34 @@ public class TranslateV2Service {
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
                                   String module, boolean isCover, boolean isHandle, String shopName, String accessToken
-            , String resourceId) {
+            , String resourceId, List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList) {
         String value = translatableContent.getValue();
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
+
+        ShopifyGraphResponse.TranslatableResources.Node.Translation keyTranslation =
+                translations.stream()
+                        .filter(t -> key.equals(t.getKey()))
+                        .findFirst()
+                        .orElse(null);
+
         if (StringUtils.isEmpty(value)) {
             // 判断原文是否为空,译文是否有内容,需要删掉译文
-            if(JudgeTranslateUtils.TRANSLATABLE_RESOURCE_TYPES.contains(module)) {
+            if (JudgeTranslateUtils.TRANSLATABLE_RESOURCE_TYPES.contains(module) && keyTranslation != null &&
+                    !keyTranslation.getValue().isEmpty()) {
                 // 判断是否有翻译
-                for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
-                    if (translatableContent.getKey().equals(translation.getKey())) {
-                        if (!translation.getValue().isEmpty()){
-                            // 将数据插入集合中
-                            //TODO： 存入集合
-                        }
-                    }
+                // 将数据插入集合中
+                ShopifyTranslationsRemove remove;
+
+                if (shopifyTranslationsRemoveList.isEmpty()) {
+                    remove = new ShopifyTranslationsRemove();
+                    remove.setResourceId(resourceId);
+                    shopifyTranslationsRemoveList.add(remove);
+                } else {
+                    remove = shopifyTranslationsRemoveList.get(0);
                 }
+
+                remove.add(keyTranslation.getLocale(), key);
             }
 
             return false;
@@ -1043,12 +1066,8 @@ public class TranslateV2Service {
 
         // 先看outdate = false
         if (!isCover) {
-            for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
-                if (translatableContent.getKey().equals(translation.getKey())) {
-                    if (!translation.getOutdated()) {
-                        return false;
-                    }
-                }
+            if (keyTranslation != null && !keyTranslation.getOutdated()) {
+                return false;
             }
         }
 
