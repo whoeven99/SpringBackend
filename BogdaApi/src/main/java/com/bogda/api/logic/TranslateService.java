@@ -152,7 +152,7 @@ public class TranslateService {
         }
         // 如果不存在，则走最新的停止逻辑
         redisStoppedRepository.manuallyStopped(shopName, taskId);
-        return new BaseResponse<>().CreateSuccessResponse(true);
+        return new BaseResponse<>().CreateSuccessResponse(taskId);
     }
 }
 
