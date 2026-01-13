@@ -340,6 +340,7 @@ public class TranslateV2Service {
     private void createManualTask(String shopName, String source, Set<String> targets,
                                   List<String> moduleList, Boolean isCover, Boolean hasHandle, String aiModel) {
         initialTaskV2Repo.deleteByShopNameSourceAndType(shopName, source, "manual");
+        redisStoppedRepository.removeStoppedFlag(shopName);
 
         for (String target : targets) {
             InitialTaskV2DO initialTask = new InitialTaskV2DO();
@@ -591,7 +592,6 @@ public class TranslateV2Service {
             if (usedToken >= maxToken) {
                 // 记录是因为token limit中断的
                 redisStoppedRepository.tokenLimitStopped(shopName, initialTaskId);
-                redisStoppedRepository.tokenLimitStopped(shopName);
             }
 
             // 还可能是手动中断
