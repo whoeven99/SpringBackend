@@ -95,4 +95,11 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
                 .eq("initial_task_id", initialTaskId);
         return baseMapper.delete(wrapper);
     }
+
+    public int deleteDeleteDataByInitialTaskId(Integer initialTaskId) {
+        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+        wrapper.select("TOP " + 20 + " *")
+                .eq("initial_task_id", initialTaskId);
+        return baseMapper.delete(wrapper);
+    }
 }

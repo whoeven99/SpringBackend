@@ -217,5 +217,6 @@ public class TranslateTask {
 
         AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
         translateV2Service.cleanTask(cleanTask.get(0));
+        translateV2Service.cleanDeleteTask(cleanTask.get(0));
     }
 }

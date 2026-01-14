@@ -30,6 +30,7 @@ public class DeleteTasksRepo extends ServiceImpl<DeleteTasksMapper, DeleteTasksD
 
     public boolean updateDeletedToShopify(Integer id) {
         return baseMapper.update(new LambdaUpdateWrapper<DeleteTasksDO>().eq(DeleteTasksDO::getId, id)
+                .set(DeleteTasksDO::getIsDeleted, true)
                 .set(DeleteTasksDO::getDeletedToShopify, true)) > 0;
     }
 }
