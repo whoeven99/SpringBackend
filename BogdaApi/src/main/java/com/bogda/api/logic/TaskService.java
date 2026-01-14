@@ -168,7 +168,7 @@ public class TaskService {
         infoByShopify = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
-            AppInsightsUtils.trackTrace("FatalException " + shopName + " 定时任务根据订单id: " + subscriptionId + "获取数据失败" + " token: " + accessToken);
+            AppInsightsUtils.trackTrace("FatalException " + shopName + " 定时任务根据订单id: " + subscriptionId + " 获取数据失败" + " token: " + accessToken);
             return null;
         }
         JSONObject node = root.getJSONObject("node");
@@ -185,7 +185,7 @@ public class TaskService {
         // 根据新的集合获取这个订阅计划的信息
         JSONObject node = analyzeOrderData(userPriceRequest.getSubscriptionId(), userPriceRequest.getAccessToken(), userPriceRequest.getShopName());
         if (node == null) {
-            AppInsightsUtils.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 获取不到计划的相关数据，获取为null " + userPriceRequest);
+            AppInsightsUtils.trackTrace("FatalException addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 获取不到计划的相关数据，获取为null " + userPriceRequest);
             return;
         }
         String name = node.getString("name");

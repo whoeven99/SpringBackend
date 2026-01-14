@@ -11,4 +11,6 @@ public interface IWidgetConfigurationsService extends IService<WidgetConfigurati
     WidgetConfigurationsDO getData(String shopName);
 
     List<WidgetConfigurationsDO> getAllIpOpenByTrue();
+
+    boolean updateIpOpenByShopName(String shopName, boolean b);
 }
