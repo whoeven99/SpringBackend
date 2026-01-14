@@ -107,23 +107,24 @@ public class TranslateTask {
     public void saveToShopify() {
         process(2,
                 InitialTaskV2DO::getShopName,
-                savingShops, "SAVE SHOPIFY",
-                translateV2Service::saveToShopify);
+                savingShops, "DELETE SHOPIFY",
+                translateV2Service::deleteToShopify);
 
         process(5,
                 InitialTaskV2DO::getShopName,
-                savingShops, "SAVE SHOPIFY",
-                translateV2Service::saveToShopify);
+                savingShops, "DELETE SHOPIFY",
+                translateV2Service::deleteToShopify);
 
         process(2,
                 InitialTaskV2DO::getShopName,
-                savingShops, "DELETE SHOPIFY",
-                translateV2Service::deleteToShopify);
+                savingShops, "SAVE SHOPIFY",
+                translateV2Service::saveToShopify);
 
         process(5,
                 InitialTaskV2DO::getShopName,
-                savingShops, "DELETE SHOPIFY",
-                translateV2Service::deleteToShopify);
+                savingShops, "SAVE SHOPIFY",
+                translateV2Service::saveToShopify);
+
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
