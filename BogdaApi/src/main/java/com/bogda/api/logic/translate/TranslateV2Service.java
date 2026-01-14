@@ -9,15 +9,13 @@ import com.bogda.api.entity.DO.TranslatesDO;
 import com.bogda.api.entity.DO.UsersDO;
 import com.bogda.api.entity.VO.SingleReturnVO;
 import com.bogda.api.entity.VO.SingleTranslateVO;
-import com.bogda.api.integration.model.ShopifyTranslationsRemove;
+import com.bogda.api.integration.model.*;
 import com.bogda.api.utils.ModelTranslateUtils;
 import com.bogda.api.utils.ModuleCodeUtils;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.enums.ErrorEnum;
 import com.bogda.api.integration.ALiYunTranslateIntegration;
 import com.bogda.api.integration.GeminiIntegration;
-import com.bogda.api.integration.model.ShopifyCheckMetafieldResponse;
-import com.bogda.api.integration.model.ShopifyGraphResponse;
 import com.bogda.api.logic.GlossaryService;
 import com.bogda.api.logic.ShopifyService;
 import com.bogda.api.logic.TaskService;
@@ -32,8 +30,10 @@ import com.bogda.api.model.controller.request.ClickTranslateRequest;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.api.model.controller.response.ProgressResponse;
 import com.bogda.api.model.controller.response.TypeSplitResponse;
+import com.bogda.repository.entity.DeleteTasksDO;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.entity.TranslateTaskV2DO;
+import com.bogda.repository.repo.DeleteTasksRepo;
 import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.bogda.repository.repo.TranslateTaskV2Repo;
 import com.bogda.common.utils.JsoupUtils;
@@ -92,6 +92,8 @@ public class TranslateV2Service {
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
     private GeminiIntegration geminiIntegration;
+    @Autowired
+    private DeleteTasksRepo deleteTasksRepo;
 
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选
 
@@ -552,11 +554,13 @@ public class TranslateV2Service {
                                 }
                             });
 
-                            // 将shopifyTranslationsRemoveList里面的数据删除掉
+                            // 将shopifyTranslationsRemoveList里面的数据批量存储数据库中
                             if (!shopifyTranslationsRemoveList.isEmpty()) {
-                                // 生成查询语句
-                                shopifyService.deleteShopifyDataWithRateLimit(shopName, userDO.getAccessToken(),
-                                        shopifyTranslationsRemoveList);
+                                ShopifyTranslationsRemove remove = shopifyTranslationsRemoveList.get(0);
+                                for (String key: remove.getTranslationKeys()
+                                     ) {
+                                    deleteTasksRepo.saveSingleData(initialTaskV2DO.getId(), remove.getResourceId(), key);
+                                }
                                 shopifyTranslationsRemoveList.clear();
                             }
 
@@ -1157,6 +1161,52 @@ public class TranslateV2Service {
         }
 
         return true;
+    }
+
+    public void deleteToShopify(InitialTaskV2DO initialTaskV2DO) {
+        Integer initialTaskId = initialTaskV2DO.getId();
+        String shopName = initialTaskV2DO.getShopName();
+        UsersDO userDO = iUsersService.getUserByName(shopName);
+        String token = userDO.getAccessToken();
+        String target = initialTaskV2DO.getTarget();
+
+        DeleteTasksDO randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskId);
+
+        while (randomDo != null) {
+            AppInsightsUtils.trackTrace("DeleteTasks deleted shopify shop: " + shopName + " randomDo: " + randomDo.getId());
+            String resourceId = randomDo.getResourceId();
+            List<DeleteTasksDO> taskList = deleteTasksRepo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
+
+            // 删除shopify
+            ShopifyTranslationsRemove remove = new ShopifyTranslationsRemove();
+            remove.setResourceId(resourceId);
+            remove.setLocales(new String[]{target});
+
+            // 循环存key值
+            String[] keys = taskList.stream()
+                    .map(DeleteTasksDO::getNodeKey)
+                    .toArray(String[]::new);
+            remove.setTranslationKeys(keys);
+
+            ShopifyGraphRemoveResponse shopifyGraphRemoveResponse = shopifyService.deleteShopifyDataWithRateLimit(
+                    shopName, token, remove);
+            if (shopifyGraphRemoveResponse != null) {
+                AppInsightsUtils.trackTrace("DeleteTasks deleting success: " + shopName +
+                        " randomDo: " + randomDo.getId() + " response: " + shopifyGraphRemoveResponse);
+                // 回写数据库，标记已删除
+                for (DeleteTasksDO taskDO : taskList) {
+                    deleteTasksRepo.updateDeletedToShopify(taskDO.getId());
+                }
+            } else {
+                // 删除失败 fatalException
+                AppInsightsUtils.trackTrace("FatalException DeleteTasks deleting failed: " + shopName +
+                        " randomDo: " + randomDo.getId());
+            }
+
+
+            randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskId);
+            AppInsightsUtils.trackTrace("TranslateTaskV2 delete SHOPIFY: " + shopName + " size: " + taskList.size());
+        }
     }
 
     @Getter

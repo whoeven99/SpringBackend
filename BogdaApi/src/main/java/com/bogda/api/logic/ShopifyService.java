@@ -104,11 +104,11 @@ public class ShopifyService {
 
     // 删除 shopify 数据（带速率限制，返回完整响应包括 extensions）
     public ShopifyGraphRemoveResponse deleteShopifyDataWithRateLimit(String shopName, String accessToken,
-                                                                List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList) {
+                                                                     ShopifyTranslationsRemove remove) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
         rateLimiter.acquire();
 
-        ShopifyRemoveResponse shopifyResponse = shopifyHttpIntegration.deleteShopifyData(shopName, accessToken, shopifyTranslationsRemoveList.get(0));
+        ShopifyRemoveResponse shopifyResponse = shopifyHttpIntegration.deleteShopifyData(shopName, accessToken, remove);
         if (shopifyResponse == null) {
             return null;
         }
