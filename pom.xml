@@ -20,6 +20,7 @@
         <module>BogdaCommon</module>
         <module>BogdaIntegration</module>
         <module>BogdaRepository</module>
+        <module>BogdaWeb</module>
     </modules>
     <properties>
 		<java.version>17</java.version>

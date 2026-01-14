@@ -2,19 +2,23 @@ package com.bogda.api.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
-import com.bogda.api.ApiApplication;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
 import javax.sql.DataSource;
-import java.util.Properties;
 
 @Configuration
 @MapperScan({"com.bogda.api.mapper", "com.bogda.repository.mapper"})  // 替换为你的Mapper接口所在的包路径
 public class MybatisPlusConfig {
+
+    @Autowired
+    private Environment env;
+
     @Bean
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
         MybatisSqlSessionFactoryBean factory = new MybatisSqlSessionFactoryBean();
@@ -23,21 +27,19 @@ public class MybatisPlusConfig {
     }
 
     @Bean
-    public DataSource dataSource() throws Exception {
+    public DataSource dataSource() {
         DruidDataSource dataSource = new DruidDataSource();
-        String env = System.getenv("ApplicationEnv");
-        Properties properties = new Properties();
-        properties.load(ApiApplication.class.getClassLoader().getResourceAsStream("application.properties"));
-        if ("prod".equals(env)) {
-            dataSource.setUrl(properties.getProperty("spring.datasource.master.url"));
-            dataSource.setUsername(properties.getProperty("spring.datasource.master.username"));
-            dataSource.setPassword(properties.getProperty("spring.datasource.master.password"));
-            dataSource.setDriverClassName(properties.getProperty("spring.datasource.master.driver-class-name"));
+        String appEnv = System.getenv("ApplicationEnv");
+        if ("prod".equals(appEnv)) {
+            dataSource.setUrl(env.getProperty("spring.datasource.master.url"));
+            dataSource.setUsername(env.getProperty("spring.datasource.master.username"));
+            dataSource.setPassword(env.getProperty("spring.datasource.master.password"));
+            dataSource.setDriverClassName(env.getProperty("spring.datasource.master.driver-class-name"));
         } else {
-            dataSource.setUrl(properties.getProperty("spring.datasource.url"));
-            dataSource.setUsername(properties.getProperty("spring.datasource.username"));
-            dataSource.setPassword(properties.getProperty("spring.datasource.password"));
-            dataSource.setDriverClassName(properties.getProperty("spring.datasource.driver-class-name"));
+            dataSource.setUrl(env.getProperty("spring.datasource.url"));
+            dataSource.setUsername(env.getProperty("spring.datasource.username"));
+            dataSource.setPassword(env.getProperty("spring.datasource.password"));
+            dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
         }
         return dataSource;
     }

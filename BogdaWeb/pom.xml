@@ -9,11 +9,15 @@
         <version>0.0.2</version>
     </parent>
 
-    <groupId>com.bogda.api</groupId>
-    <artifactId>BogdaApi</artifactId>
-    <packaging>jar</packaging>
+    <groupId>com.bogda</groupId>
+    <artifactId>BogdaWeb</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>com.bogda.api</groupId>
+            <artifactId>BogdaApi</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.bogda.common</groupId>
             <artifactId>BogdaCommon</artifactId>
@@ -298,16 +302,17 @@
     </dependencies>
 
     <build>
-<!--        <plugins>-->
-<!--            <plugin>-->
-<!--                <groupId>org.springframework.boot</groupId>-->
-<!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
-<!--                <configuration>-->
-<!--                    <skip>false</skip>-->
-<!--                    <includeSystemScope>true</includeSystemScope> &lt;!&ndash; 关键配置：包含系统依赖 &ndash;&gt;-->
-<!--                </configuration>-->
-<!--            </plugin>-->
-<!--        </plugins>-->
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>false</skip>
+                    <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 </project>
+
