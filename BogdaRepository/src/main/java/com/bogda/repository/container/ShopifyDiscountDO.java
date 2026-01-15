@@ -222,7 +222,7 @@ public class ShopifyDiscountDO {
             public static class Schedule {
                 private String startsAt;
                 private String endsAt;
-                private Boolean endAt;
+                private Boolean hideAfterExpiration;
             }
 
             @Data
