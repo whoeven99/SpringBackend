@@ -7,6 +7,8 @@ create table Bundle_Users
     user_tag     nvarchar(255),
     first_name   nvarchar(255),
     last_name    nvarchar(255),
+    login_at    DATETIME DEFAULT GETUTCDATE(),
+    uninstall_at DATETIME DEFAULT GETUTCDATE(),
     is_deleted   BIT      DEFAULT 0 NOT NULL,
     updated_at   DATETIME DEFAULT GETUTCDATE(),
     created_at   DATETIME DEFAULT GETUTCDATE()
