@@ -3,10 +3,10 @@ package com.bogda.api.logic.BundleApp;
 import com.azure.cosmos.models.SqlParameter;
 import com.bogda.api.entity.DTO.DiscountBasicDTO;
 import com.bogda.api.model.controller.response.BaseResponse;
-import com.bogda.api.utils.StringUtils;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.repo.cosmos.ShopifyDiscountRepo;
 import kotlin.Pair;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ public class BundleDiscountService {
     private static final String DISCOUNT_ID = "gid://shopify/DiscountAutomaticNode/";
 
     public BaseResponse<Object> saveUserDiscount(String shopName, ShopifyDiscountDO shopifyDiscountDO) {
-        if (shopName == null || shopifyDiscountDO == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(shopifyDiscountDO.getDiscountGid())) {
+        if (shopName == null || shopifyDiscountDO == null || StringUtils.isBlank(shopName) || StringUtils.isBlank(shopifyDiscountDO.getDiscountGid())) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or shopifyDiscountDO is null");
         }
 
@@ -32,7 +32,7 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> getUserDiscount(String shopName, String discountGid) {
-        if (shopName == null || discountGid == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(discountGid)) {
+        if (shopName == null || discountGid == null || StringUtils.isBlank(shopName) || StringUtils.isBlank(discountGid)) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName is null");
         }
         discountGid = discountGid.replace(DISCOUNT_ID, "");
@@ -44,7 +44,7 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> deleteUserDiscount(String shopName, String discountGid) {
-        if (shopName == null || discountGid == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(discountGid)) {
+        if (shopName == null || discountGid == null || StringUtils.isBlank(shopName) || StringUtils.isBlank(discountGid)) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or discountGid is null");
         }
         discountGid = discountGid.replace(DISCOUNT_ID, "");
@@ -55,7 +55,9 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> batchQueryUserDiscount(String shopName) {
-        if (shopName == null || StringUtils.isValueBlank(shopName)) {
+        System.out.println("shopName: " + shopName);
+        if (shopName == null || StringUtils.isBlank(shopName)) {
+            System.out.println("test: " + StringUtils.isBlank(shopName));
             return new BaseResponse<>().CreateErrorResponse("Error: shopName is null");
         }
 
@@ -75,7 +77,7 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> updateUserDiscount(String shopName, ShopifyDiscountDO shopifyDiscountDO) {
-        if (shopName == null || shopifyDiscountDO == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(shopifyDiscountDO.getDiscountGid())) {
+        if (shopName == null || shopifyDiscountDO == null || StringUtils.isBlank(shopName) || StringUtils.isBlank(shopifyDiscountDO.getDiscountGid())) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or shopifyDiscountDO is null");
         }
 
@@ -88,7 +90,7 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> updateUserDiscountStatus(String shopName, String discountGid, String status) {
-        if (shopName == null || discountGid == null || status == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(discountGid)) {
+        if (shopName == null || discountGid == null || status == null || StringUtils.isBlank(shopName) || StringUtils.isBlank(discountGid)) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or discountGid or status is null");
         }
 
