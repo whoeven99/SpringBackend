@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 public class DiscountBasicDTO {
     private String shopName;
     private String discountGid;
-    private boolean status;
+    private String status;
     private Object metafields;
     @JsonProperty("basic_information")
     private Object basicInformation;
