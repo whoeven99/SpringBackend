@@ -1,8 +1,10 @@
 package com.bogda.repository.repo.cosmos;
 
 import com.azure.cosmos.CosmosContainer;
+import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.models.*;
 import com.azure.cosmos.util.CosmosPagedIterable;
+import com.azure.cosmos.models.CosmosPatchItemRequestOptions;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ShopifyDiscountRepo {
@@ -101,6 +104,19 @@ public class ShopifyDiscountRepo {
             AppInsightsUtils.trackTrace("FatalException queryBySql 查询discount数据失败 " + " sql: " + sql +
                     " partitionKey: " + partitionKey + " 原因： " + e);
             return null;
+        }
+    }
+
+    public boolean updateDiscount(String id, String shopName, ShopifyDiscountDO.DiscountData newDiscountData) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create().replace("/discountData", newDiscountData)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException updateDiscount 更新discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
+           return false;
         }
     }
 }
