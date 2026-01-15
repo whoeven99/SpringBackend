@@ -12,6 +12,20 @@
     <groupId>com.bogda</groupId>
     <artifactId>BogdaWeb</artifactId>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- 强制 Netty 版本对齐 -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>4.2.9.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>com.bogda.api</groupId>
@@ -34,6 +48,14 @@
             <groupId>com.bogda.repository</groupId>
             <artifactId>BogdaRepository</artifactId>
             <version>${project.parent.version}</version>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/com.azure/azure-cosmos -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-cosmos</artifactId>
+            <version>4.76.0</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -299,6 +321,7 @@
             <artifactId>google-cloud-translate</artifactId>
             <version>2.81.0</version>
         </dependency>
+
     </dependencies>
 
     <build>
