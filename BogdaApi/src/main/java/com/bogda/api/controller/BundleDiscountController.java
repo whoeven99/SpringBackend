@@ -41,4 +41,10 @@ public class BundleDiscountController {
     public BaseResponse<Object> updateUserDiscount(@RequestParam String shopName, @RequestBody ShopifyDiscountDO shopifyDiscountDO) {
         return bundleDiscountService.updateUserDiscount(shopName, shopifyDiscountDO);
     }
+
+    // 单独修改用户状态接口
+    @PostMapping("/updateUserDiscountStatus")
+    public BaseResponse<Object> updateUserDiscountStatus(@RequestParam String shopName, @RequestParam String discountGid, @RequestParam String status) {
+        return bundleDiscountService.updateUserDiscountStatus(shopName, discountGid, status);
+    }
 }

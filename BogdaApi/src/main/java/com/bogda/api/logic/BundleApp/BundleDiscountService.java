@@ -5,6 +5,7 @@ import com.bogda.api.entity.DTO.DiscountBasicDTO;
 import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.repo.cosmos.ShopifyDiscountRepo;
+import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +46,7 @@ public class BundleDiscountService {
         }
 
         if (shopifyDiscountRepo.deleteByIdAndShopName(discountGid, shopName)){
-            return new BaseResponse<>().CreateSuccessResponse(true);
+            return new BaseResponse<>().CreateSuccessResponse(discountGid);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to delete discount");
     }
@@ -79,5 +80,16 @@ public class BundleDiscountService {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount");
+    }
+
+    public BaseResponse<Object> updateUserDiscountStatus(String shopName, String discountGid, String status) {
+        if (shopName == null || discountGid == null || status == null) {
+            return new BaseResponse<>().CreateErrorResponse("Error: shopName or discountGid or status is null");
+        }
+
+        if (shopifyDiscountRepo.updateDiscountStatus(discountGid, shopName, status)) {
+            return new BaseResponse<>().CreateSuccessResponse(new Pair<String, String>(discountGid, status));
+        }
+        return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount status");
     }
 }
