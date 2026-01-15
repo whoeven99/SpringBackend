@@ -19,7 +19,12 @@ public class CosmosConfig {
 
     @Bean
     public CosmosContainer discountContainer(CosmosClient client) {
-        // TODO 根据环境配置选择不同的数据库，目前暂定测试环境
+        // 根据环境配置选择不同的数据库
+        String appEnv = System.getenv("ApplicationEnv");
+        if ("prod".equals(appEnv)) {
+            // TODO 正式环境的cosmos还没有创建
+            return client.getDatabase("bogdatechprod").getContainer("discount");
+        }
         return client.getDatabase("bogdatechtest").getContainer("discount");
     }
 }
