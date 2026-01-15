@@ -47,8 +47,8 @@ public class BundleDiscountService {
         if (shopName == null || discountGid == null || StringUtils.isBlank(shopName) || StringUtils.isBlank(discountGid)) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or discountGid is null");
         }
-        discountGid = discountGid.replace(DISCOUNT_ID, "");
-        if (shopifyDiscountRepo.deleteByIdAndShopName(discountGid, shopName)){
+        String updateDiscountGid = discountGid.replace(DISCOUNT_ID, "");
+        if (shopifyDiscountRepo.deleteByIdAndShopName(updateDiscountGid, shopName)){
             return new BaseResponse<>().CreateSuccessResponse(discountGid);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to delete discount");
@@ -92,8 +92,8 @@ public class BundleDiscountService {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or discountGid or status is null");
         }
 
-        discountGid = discountGid.replace(DISCOUNT_ID, "");
-        if (shopifyDiscountRepo.updateDiscountStatus(discountGid, shopName, status)) {
+        String updateDiscountGid = discountGid.replace(DISCOUNT_ID, "");
+        if (shopifyDiscountRepo.updateDiscountStatus(updateDiscountGid, shopName, status)) {
             return new BaseResponse<>().CreateSuccessResponse(new Pair<String, String>(discountGid, status));
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount status");
