@@ -1,10 +1,8 @@
-package com.bogda.repository.repo.cosmos;
+package com.bogda.repository.repo.bundle;
 
 import com.azure.cosmos.CosmosContainer;
-import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.models.*;
 import com.azure.cosmos.util.CosmosPagedIterable;
-import com.azure.cosmos.models.CosmosPatchItemRequestOptions;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import org.springframework.beans.factory.annotation.Autowired;
