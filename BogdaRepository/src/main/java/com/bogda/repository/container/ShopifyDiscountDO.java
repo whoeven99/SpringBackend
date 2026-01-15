@@ -64,7 +64,7 @@ public class ShopifyDiscountDO {
 
         @Data
         public static class DiscountRule {
-            private Integer id;
+            private String id;
             private Boolean enabled;
             private Boolean isExpanded;
             private String title;
