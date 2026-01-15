@@ -20,7 +20,7 @@ public class ShopifyDiscountDO {
     @PartitionKey
     private String shopName;
     private String discountGid;
-    private boolean status;
+    private String status;
     private DiscountData discountData;
     private String createdAt;
     private String updatedAt;
