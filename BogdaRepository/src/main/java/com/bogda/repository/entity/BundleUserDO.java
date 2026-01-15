@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @TableName("Bundle_Users")
 public class BundleUserDO extends BaseDO{
     private String shopName;
-    @TableField("resource_id")
+    @TableField("access_token")
     private String accessToken;
     private String email;
     @TableField("user_tag")
@@ -21,5 +21,8 @@ public class BundleUserDO extends BaseDO{
     private String firstName;
     @TableField("last_name")
     private String lastName;
-
+    @TableField("login_at")
+    private String loginAt;
+    @TableField("uninstall_at")
+    private String uninstallAt;
 }

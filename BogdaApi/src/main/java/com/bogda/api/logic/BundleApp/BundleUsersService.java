@@ -15,8 +15,18 @@ public class BundleUsersService {
         if (StringUtils.isBlank(shopName) || bundleUserDO == null) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or bundleUserDO is null");
         }
-
+        bundleUserDO.setShopName(shopName);
         // 获取用户是否存在，存在更新登陆时间， 不存在创建用户
-        return null;
+        BundleUserDO userByShopName = bundleUsersRepo.getUserByShopName(shopName);
+        if (userByShopName != null) {
+            bundleUsersRepo.updateUserLoginTime(shopName);
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }else {
+            boolean flag = bundleUsersRepo.saveUser(bundleUserDO);
+            if (flag) {
+                return new BaseResponse<>().CreateSuccessResponse(true);
+            }
+        }
+        return new BaseResponse<>().CreateErrorResponse("Error: save user failed");
     }
 }
