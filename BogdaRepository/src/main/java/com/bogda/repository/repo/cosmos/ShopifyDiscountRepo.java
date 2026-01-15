@@ -25,7 +25,7 @@ public class ShopifyDiscountRepo {
      */
     public boolean saveDiscount(ShopifyDiscountDO data) {
         try {
-            data.setId(data.getDiscountGid());
+            data.setId(data.getId());
             data.setCreatedAt(String.valueOf(Instant.now()));
             data.setUpdatedAt(String.valueOf(Instant.now()));
             CosmosItemRequestOptions options = new CosmosItemRequestOptions().setContentResponseOnWriteEnabled(false);

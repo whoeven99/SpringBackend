@@ -55,9 +55,7 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> batchQueryUserDiscount(String shopName) {
-        System.out.println("shopName: " + shopName);
         if (shopName == null || StringUtils.isBlank(shopName)) {
-            System.out.println("test: " + StringUtils.isBlank(shopName));
             return new BaseResponse<>().CreateErrorResponse("Error: shopName is null");
         }
 
