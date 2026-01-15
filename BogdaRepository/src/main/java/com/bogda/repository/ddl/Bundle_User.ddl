@@ -15,3 +15,4 @@ go
 
 ALTER TABLE Bundle_Users
     ADD CONSTRAINT UQ_Bundle_Users_shop_name UNIQUE (shop_name);
+go
