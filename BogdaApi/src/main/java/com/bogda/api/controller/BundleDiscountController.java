@@ -35,4 +35,10 @@ public class BundleDiscountController {
     public BaseResponse<Object> batchQueryUserDiscount(@RequestParam String shopName) {
         return bundleDiscountService.batchQueryUserDiscount(shopName);
     }
+
+    // 修改用户折扣信息
+    @PostMapping("/updateUserDiscount")
+    public BaseResponse<Object> updateUserDiscount(@RequestParam String shopName, @RequestBody ShopifyDiscountDO shopifyDiscountDO) {
+        return bundleDiscountService.updateUserDiscount(shopName, shopifyDiscountDO);
+    }
 }

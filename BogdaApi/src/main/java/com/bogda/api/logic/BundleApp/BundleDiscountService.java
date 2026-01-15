@@ -69,4 +69,15 @@ public class BundleDiscountService {
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to get discount");
     }
+
+    public BaseResponse<Object> updateUserDiscount(String shopName, ShopifyDiscountDO shopifyDiscountDO) {
+        if (shopName == null || shopifyDiscountDO == null) {
+            return new BaseResponse<>().CreateErrorResponse("Error: shopName or shopifyDiscountDO is null");
+        }
+
+        if (shopifyDiscountRepo.updateDiscount(shopifyDiscountDO.getDiscountGid(), shopName, shopifyDiscountDO.getDiscountData())) {
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount");
+    }
 }
