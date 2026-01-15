@@ -119,4 +119,17 @@ public class ShopifyDiscountRepo {
            return false;
         }
     }
+
+    public boolean updateDiscountStatus(String id, String shopName, String status) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create().replace("/status", status)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException updateDiscount 更新discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            return false;
+        }
+    }
 }
