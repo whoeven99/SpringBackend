@@ -3,6 +3,7 @@ package com.bogda.api.logic.BundleApp;
 import com.azure.cosmos.models.SqlParameter;
 import com.bogda.api.entity.DTO.DiscountBasicDTO;
 import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.api.utils.StringUtils;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.repo.cosmos.ShopifyDiscountRepo;
 import kotlin.Pair;
@@ -15,13 +16,15 @@ import java.util.List;
 public class BundleDiscountService {
     @Autowired
     private ShopifyDiscountRepo shopifyDiscountRepo;
+    private static final String DISCOUNT_ID = "gid://shopify/DiscountAutomaticNode/";
 
     public BaseResponse<Object> saveUserDiscount(String shopName, ShopifyDiscountDO shopifyDiscountDO) {
-        if (shopName == null || shopifyDiscountDO == null) {
+        if (shopName == null || shopifyDiscountDO == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(shopifyDiscountDO.getDiscountGid())) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or shopifyDiscountDO is null");
         }
 
         shopifyDiscountDO.setShopName(shopName);
+        shopifyDiscountDO.setId(shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, ""));
         if (shopifyDiscountRepo.saveDiscount(shopifyDiscountDO)) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
@@ -29,10 +32,10 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> getUserDiscount(String shopName, String discountGid) {
-        if (shopName == null || discountGid == null) {
+        if (shopName == null || discountGid == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(discountGid)) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName is null");
         }
-
+        discountGid = discountGid.replace(DISCOUNT_ID, "");
         ShopifyDiscountDO shopifyDiscountDO = shopifyDiscountRepo.getDiscountByIdAndShopName(discountGid, shopName);
         if (shopifyDiscountDO != null) {
             return new BaseResponse<>().CreateSuccessResponse(shopifyDiscountDO);
@@ -41,10 +44,10 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> deleteUserDiscount(String shopName, String discountGid) {
-        if (shopName == null || discountGid == null) {
+        if (shopName == null || discountGid == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(discountGid)) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or discountGid is null");
         }
-
+        discountGid = discountGid.replace(DISCOUNT_ID, "");
         if (shopifyDiscountRepo.deleteByIdAndShopName(discountGid, shopName)){
             return new BaseResponse<>().CreateSuccessResponse(discountGid);
         }
@@ -52,7 +55,7 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> batchQueryUserDiscount(String shopName) {
-        if (shopName == null) {
+        if (shopName == null || StringUtils.isValueBlank(shopName)) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName is null");
         }
 
@@ -72,10 +75,12 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> updateUserDiscount(String shopName, ShopifyDiscountDO shopifyDiscountDO) {
-        if (shopName == null || shopifyDiscountDO == null) {
+        if (shopName == null || shopifyDiscountDO == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(shopifyDiscountDO.getDiscountGid())) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or shopifyDiscountDO is null");
         }
 
+        shopifyDiscountDO.setShopName(shopName);
+        shopifyDiscountDO.setId(shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, ""));
         if (shopifyDiscountRepo.updateDiscount(shopifyDiscountDO.getDiscountGid(), shopName, shopifyDiscountDO.getDiscountData())) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
@@ -83,10 +88,11 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> updateUserDiscountStatus(String shopName, String discountGid, String status) {
-        if (shopName == null || discountGid == null || status == null) {
+        if (shopName == null || discountGid == null || status == null || StringUtils.isValueBlank(shopName) || StringUtils.isValueBlank(discountGid)) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or discountGid or status is null");
         }
 
+        discountGid = discountGid.replace(DISCOUNT_ID, "");
         if (shopifyDiscountRepo.updateDiscountStatus(discountGid, shopName, status)) {
             return new BaseResponse<>().CreateSuccessResponse(new Pair<String, String>(discountGid, status));
         }
