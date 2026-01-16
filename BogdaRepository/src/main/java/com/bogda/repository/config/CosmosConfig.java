@@ -1,4 +1,4 @@
-package com.bogda.api.config;
+package com.bogda.repository.config;
 
 import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosClientBuilder;

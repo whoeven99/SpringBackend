@@ -1,10 +1,10 @@
-package com.bogda.api.logic.BundleApp;
+package com.bogda.service.logic.BundleApp;
 
 import com.azure.cosmos.models.SqlParameter;
 import com.bogda.api.entity.DTO.DiscountBasicDTO;
-import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.repository.container.ShopifyDiscountDO;
-import com.bogda.repository.repo.bundle.ShopifyDiscountRepo;
+import com.bogda.repository.repo.bundle.ShopifyDiscountCosmos;
+import com.bogda.service.controller.response.BaseResponse;
 import kotlin.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import java.util.List;
 @Component
 public class BundleDiscountService {
     @Autowired
-    private ShopifyDiscountRepo shopifyDiscountRepo;
+    private ShopifyDiscountCosmos shopifyDiscountCosmos;
     private static final String DISCOUNT_ID = "gid://shopify/DiscountAutomaticNode/";
 
     public BaseResponse<Object> saveUserDiscount(String shopName, ShopifyDiscountDO shopifyDiscountDO) {
@@ -25,7 +25,7 @@ public class BundleDiscountService {
 
         shopifyDiscountDO.setShopName(shopName);
         shopifyDiscountDO.setId(shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, ""));
-        if (shopifyDiscountRepo.saveDiscount(shopifyDiscountDO)) {
+        if (shopifyDiscountCosmos.saveDiscount(shopifyDiscountDO)) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to save discount");
@@ -36,7 +36,7 @@ public class BundleDiscountService {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName is null");
         }
         discountGid = discountGid.replace(DISCOUNT_ID, "");
-        ShopifyDiscountDO shopifyDiscountDO = shopifyDiscountRepo.getDiscountByIdAndShopName(discountGid, shopName);
+        ShopifyDiscountDO shopifyDiscountDO = shopifyDiscountCosmos.getDiscountByIdAndShopName(discountGid, shopName);
         if (shopifyDiscountDO != null) {
             return new BaseResponse<>().CreateSuccessResponse(shopifyDiscountDO);
         }
@@ -48,7 +48,7 @@ public class BundleDiscountService {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or discountGid is null");
         }
         String updateDiscountGid = discountGid.replace(DISCOUNT_ID, "");
-        if (shopifyDiscountRepo.deleteByIdAndShopName(updateDiscountGid, shopName)){
+        if (shopifyDiscountCosmos.deleteByIdAndShopName(updateDiscountGid, shopName)){
             return new BaseResponse<>().CreateSuccessResponse(discountGid);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to delete discount");
@@ -65,7 +65,7 @@ public class BundleDiscountService {
                 """;
 
         List<SqlParameter> parameters = List.of(new SqlParameter("@shopName", shopName));
-        List<DiscountBasicDTO> data = shopifyDiscountRepo.queryBySql(sql, parameters, shopName, DiscountBasicDTO.class);
+        List<DiscountBasicDTO> data = shopifyDiscountCosmos.queryBySql(sql, parameters, shopName, DiscountBasicDTO.class);
         if (data != null) {
             // 将shopName存入data中
             data.forEach(discountBasicDTO -> discountBasicDTO.setShopName(shopName));
@@ -81,7 +81,7 @@ public class BundleDiscountService {
 
         shopifyDiscountDO.setShopName(shopName);
         String updateDiscountGid = shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, "");
-        if (shopifyDiscountRepo.updateDiscount(updateDiscountGid, shopName, shopifyDiscountDO.getDiscountData())) {
+        if (shopifyDiscountCosmos.updateDiscount(updateDiscountGid, shopName, shopifyDiscountDO.getDiscountData())) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount");
@@ -93,7 +93,7 @@ public class BundleDiscountService {
         }
 
         String updateDiscountGid = discountGid.replace(DISCOUNT_ID, "");
-        if (shopifyDiscountRepo.updateDiscountStatus(updateDiscountGid, shopName, status)) {
+        if (shopifyDiscountCosmos.updateDiscountStatus(updateDiscountGid, shopName, status)) {
             return new BaseResponse<>().CreateSuccessResponse(new Pair<String, String>(discountGid, status));
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount status");

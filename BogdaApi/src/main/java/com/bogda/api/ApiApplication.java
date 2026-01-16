@@ -1,4 +1,4 @@
-package com.bogda.web;
+package com.bogda.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,13 +8,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication(
     exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class},
-    scanBasePackages = {"com.bogda.web", "com.bogda.api", "com.bogda.repository", "com.bogda.common"
+    scanBasePackages = {"com.bogda.api", "com.bogda.repository", "com.bogda.common"
             , "com.bogda.integration", "com.bogda.service"}
 )
 @EnableAsync
-public class WebApplication {
+public class ApiApplication {
     public static void main(String[] args) {
-        SpringApplication.run(WebApplication.class, args);
+        SpringApplication.run(ApiApplication.class, args);
     }
 }
 

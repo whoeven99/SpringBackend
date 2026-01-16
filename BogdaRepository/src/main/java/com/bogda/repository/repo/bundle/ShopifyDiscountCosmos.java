@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-public class ShopifyDiscountRepo {
+public class ShopifyDiscountCosmos {
     @Autowired
     private CosmosContainer discountContainer;
 
@@ -90,8 +90,8 @@ public class ShopifyDiscountRepo {
             SqlQuerySpec querySpec = new SqlQuerySpec(sql, parameters);
 
             CosmosQueryRequestOptions options = new CosmosQueryRequestOptions()
-                            .setPartitionKey(new PartitionKey(partitionKey))
-                            .setMaxDegreeOfParallelism(1);
+                    .setPartitionKey(new PartitionKey(partitionKey))
+                    .setMaxDegreeOfParallelism(1);
 
             List<T> result = new ArrayList<>();
 
@@ -114,7 +114,7 @@ public class ShopifyDiscountRepo {
 
         } catch (Exception e) {
             AppInsightsUtils.trackTrace("FatalException updateDiscount 更新discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
-           return false;
+            return false;
         }
     }
 
