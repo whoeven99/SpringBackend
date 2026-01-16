@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.repository.entity.DeleteTasksDO;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
 import com.bogda.service.context.TranslateContext;
@@ -9,6 +10,8 @@ import com.bogda.service.entity.DO.TranslatesDO;
 import com.bogda.service.entity.DO.UsersDO;
 import com.bogda.service.entity.VO.SingleReturnVO;
 import com.bogda.service.entity.VO.SingleTranslateVO;
+import com.bogda.service.integration.model.ShopifyGraphRemoveResponse;
+import com.bogda.service.integration.model.ShopifyTranslationsRemove;
 import com.bogda.service.utils.ModelTranslateUtils;
 import com.bogda.service.utils.ModuleCodeUtils;
 import com.bogda.common.contants.TranslateConstants;
@@ -33,13 +36,13 @@ import com.bogda.service.controller.response.ProgressResponse;
 import com.bogda.service.controller.response.TypeSplitResponse;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.entity.TranslateTaskV2DO;
+import com.bogda.repository.repo.DeleteTasksRepo;
 import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.bogda.repository.repo.TranslateTaskV2Repo;
 import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.volcengine.model.imagex.data.App;
 import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
@@ -92,6 +95,8 @@ public class TranslateV2Service {
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
     private GeminiIntegration geminiIntegration;
+    @Autowired
+    private DeleteTasksRepo deleteTasksRepo;
 
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选
 
@@ -514,6 +519,7 @@ public class TranslateV2Service {
 
         String finishedModules = translateTaskMonitorV2RedisService.getFinishedModules(initialTaskV2DO.getId());
         String afterEndCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId());
+        List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList = new ArrayList<>();
         for (String module : moduleList) {
             if (containsModule(finishedModules, module)) {
                 continue;
@@ -529,11 +535,11 @@ public class TranslateV2Service {
                             AppInsightsUtils.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
                                     " resourceId: " + node.getResourceId());
 
-//                        List<TranslateTaskV2DO> existingTasks = translateTaskV2Repo.selectByResourceId(node.getResourceId());
                             // 每个node有几个translatableContent
                             node.getTranslatableContent().forEach(translatableContent -> {
                                 if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover()
-                                        , initialTaskV2DO.isHandle(), shopName, userDO.getAccessToken(), node.getResourceId())) {
+                                        , initialTaskV2DO.isHandle(), shopName, userDO.getAccessToken(), node.getResourceId()
+                                        , shopifyTranslationsRemoveList)) {
                                     translateTaskV2DO.setSourceValue(translatableContent.getValue());
                                     translateTaskV2DO.setNodeKey(translatableContent.getKey());
                                     translateTaskV2DO.setType(translatableContent.getType());
@@ -549,6 +555,17 @@ public class TranslateV2Service {
                                     }
                                 }
                             });
+
+                            // 将shopifyTranslationsRemoveList里面的数据批量存储数据库中
+                            if (!shopifyTranslationsRemoveList.isEmpty()) {
+                                ShopifyTranslationsRemove remove = shopifyTranslationsRemoveList.get(0);
+                                for (String key: remove.getTranslationKeys()
+                                     ) {
+                                    deleteTasksRepo.saveSingleData(initialTaskV2DO.getId(), remove.getResourceId(), key);
+                                }
+                                shopifyTranslationsRemoveList.clear();
+                            }
+
                         }
                     }),
                     (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), after)));
@@ -1023,22 +1040,43 @@ public class TranslateV2Service {
     private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
                                   List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
                                   String module, boolean isCover, boolean isHandle, String shopName, String accessToken
-            , String resourceId) {
+            , String resourceId, List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList) {
         String value = translatableContent.getValue();
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
-        if (StringUtils.isEmpty(value)) {
+
+        ShopifyGraphResponse.TranslatableResources.Node.Translation keyTranslation =
+                translations.stream()
+                        .filter(t -> key.equals(t.getKey()))
+                        .findFirst()
+                        .orElse(null);
+
+        if (value == null || StringUtils.isBlank(value)) {
+            // 判断原文是否为空,译文是否有内容,需要删掉译文
+            if (JudgeTranslateUtils.TRANSLATABLE_RESOURCE_TYPES.contains(module) && keyTranslation != null &&
+                    !StringUtils.isBlank(keyTranslation.getValue())) {
+                // 判断是否有翻译
+                // 将数据插入集合中
+                ShopifyTranslationsRemove remove;
+
+                if (shopifyTranslationsRemoveList.isEmpty()) {
+                    remove = new ShopifyTranslationsRemove();
+                    remove.setResourceId(resourceId);
+                    shopifyTranslationsRemoveList.add(remove);
+                } else {
+                    remove = shopifyTranslationsRemoveList.get(0);
+                }
+
+                remove.add(keyTranslation.getLocale(), key);
+            }
+
             return false;
         }
 
         // 先看outdate = false
         if (!isCover) {
-            for (ShopifyGraphResponse.TranslatableResources.Node.Translation translation : translations) {
-                if (translatableContent.getKey().equals(translation.getKey())) {
-                    if (!translation.getOutdated()) {
-                        return false;
-                    }
-                }
+            if (keyTranslation != null && !keyTranslation.getOutdated()) {
+                return false;
             }
         }
 
@@ -1135,6 +1173,64 @@ public class TranslateV2Service {
         }
 
         return true;
+    }
+
+    public void deleteToShopify(InitialTaskV2DO initialTaskV2DO) {
+        Integer initialTaskId = initialTaskV2DO.getId();
+        String shopName = initialTaskV2DO.getShopName();
+        UsersDO userDO = iUsersService.getUserByName(shopName);
+        String token = userDO.getAccessToken();
+        String target = initialTaskV2DO.getTarget();
+
+        DeleteTasksDO randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskId);
+
+        while (randomDo != null) {
+            AppInsightsUtils.trackTrace("DeleteTasks deleted shopify shop: " + shopName + " randomDo: " + randomDo.getId());
+            String resourceId = randomDo.getResourceId();
+            List<DeleteTasksDO> taskList = deleteTasksRepo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
+
+            // 删除shopify
+            ShopifyTranslationsRemove remove = new ShopifyTranslationsRemove();
+            remove.setResourceId(resourceId);
+            remove.setLocales(new String[]{target});
+
+            // 循环存key值
+            String[] keys = taskList.stream()
+                    .map(DeleteTasksDO::getNodeKey)
+                    .toArray(String[]::new);
+            remove.setTranslationKeys(keys);
+
+            ShopifyGraphRemoveResponse shopifyGraphRemoveResponse = shopifyService.deleteShopifyDataWithRateLimit(
+                    shopName, token, remove);
+            if (shopifyGraphRemoveResponse != null) {
+                AppInsightsUtils.trackTrace("DeleteTasks deleting success: " + shopName +
+                        " randomDo: " + randomDo.getId() + " response: " + shopifyGraphRemoveResponse);
+                // 回写数据库，标记已删除
+                for (DeleteTasksDO taskDO : taskList) {
+                    deleteTasksRepo.updateDeletedToShopify(taskDO.getId());
+                }
+            } else {
+                // 删除失败 fatalException
+                AppInsightsUtils.trackTrace("FatalException DeleteTasks deleting failed: " + shopName +
+                        " randomDo: " + randomDo.getId());
+            }
+
+
+            randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskId);
+            AppInsightsUtils.trackTrace("TranslateTaskV2 delete SHOPIFY: " + shopName + " size: " + taskList.size());
+        }
+    }
+
+    public void cleanDeleteTask(InitialTaskV2DO initialTaskV2DO) {
+        AppInsightsUtils.trackTrace("TranslateTaskV2 cleanDeleteTask start clean task: " + initialTaskV2DO.getId());
+        while (true) {
+            int deleted = translateTaskV2Repo.deleteDeleteDataByInitialTaskId(initialTaskV2DO.getId());
+            AppInsightsUtils.trackTrace("TranslateTaskV2 cleanDeleteTask delete: " + deleted);
+            if (deleted <= 0) {
+                break;
+            }
+        }
+        initialTaskV2Repo.deleteById(initialTaskV2DO.getId());
     }
 
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
