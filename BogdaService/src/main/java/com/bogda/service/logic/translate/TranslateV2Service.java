@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.repository.entity.DeleteTasksDO;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
 import com.bogda.service.context.TranslateContext;
@@ -9,6 +10,8 @@ import com.bogda.service.entity.DO.TranslatesDO;
 import com.bogda.service.entity.DO.UsersDO;
 import com.bogda.service.entity.VO.SingleReturnVO;
 import com.bogda.service.entity.VO.SingleTranslateVO;
+import com.bogda.service.integration.model.ShopifyGraphRemoveResponse;
+import com.bogda.service.integration.model.ShopifyTranslationsRemove;
 import com.bogda.service.utils.ModelTranslateUtils;
 import com.bogda.service.utils.ModuleCodeUtils;
 import com.bogda.common.contants.TranslateConstants;

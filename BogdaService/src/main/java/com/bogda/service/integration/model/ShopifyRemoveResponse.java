@@ -1,4 +1,4 @@
-package com.bogda.api.integration.model;
+package com.bogda.service.integration.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

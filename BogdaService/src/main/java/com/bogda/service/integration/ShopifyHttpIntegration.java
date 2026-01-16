@@ -2,11 +2,13 @@ package com.bogda.service.integration;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.service.integration.model.ShopifyGraphResponse;
+import com.bogda.service.integration.model.ShopifyRemoveResponse;
 import com.bogda.service.integration.model.ShopifyResponse;
 import com.bogda.service.controller.request.ShopifyRequest;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
+import com.bogda.service.integration.model.ShopifyTranslationsRemove;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

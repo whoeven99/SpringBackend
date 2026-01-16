@@ -7,6 +7,7 @@ import com.bogda.service.Service.IItemsService;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUserSubscriptionsService;
 import com.bogda.service.Service.IUserTypeTokenService;
+import com.bogda.service.integration.model.*;
 import com.bogda.service.utils.LanguageFlagConfig;
 import com.bogda.service.entity.DO.ItemsDO;
 import com.bogda.service.entity.DO.TranslateResourceDTO;
@@ -20,9 +21,6 @@ import com.bogda.common.enums.ErrorEnum;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.integration.BaseHttpIntegration;
 import com.bogda.service.integration.ShopifyHttpIntegration;
-import com.bogda.service.integration.model.ShopifyExtensions;
-import com.bogda.service.integration.model.ShopifyGraphResponse;
-import com.bogda.service.integration.model.ShopifyResponse;
 import com.bogda.service.controller.request.*;
 import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.utils.JsoupUtils;
@@ -106,7 +104,7 @@ public class ShopifyService {
 
     // 删除 shopify 数据（带速率限制，返回完整响应包括 extensions）
     public ShopifyGraphRemoveResponse deleteShopifyDataWithRateLimit(String shopName, String accessToken,
-                                                                     ShopifyTranslationsRemove remove) {
+                                                                    ShopifyTranslationsRemove remove) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
         rateLimiter.acquire();
 
