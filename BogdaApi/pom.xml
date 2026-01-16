@@ -74,35 +74,6 @@
             <version>8.0.30</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>4.5.6</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>2.0.57</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-ai-openai</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.azure</groupId>
-                    <artifactId>azure-core</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>1.0.0-beta.1</version>
-        </dependency>
         <!--Azure 存放key value-->
         <dependency>
             <groupId>com.azure.spring</groupId>
@@ -114,11 +85,6 @@
                 </exclusion>
             </exclusions>
             <version>5.16.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.30</version>
         </dependency>
 
         <dependency>
@@ -132,6 +98,7 @@
             </exclusions>
             <version>2.6.1</version>
         </dependency>
+
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>applicationinsights-web</artifactId>
@@ -144,70 +111,11 @@
             <version>2.6.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.15.3</version>
-        </dependency>
-
         <!--		 MyBatis-Plus-->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>3.5.5</version>
-        </dependency>
-        <!--		阿里云翻译-->
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>alimt20181012</artifactId>
-            <version>1.5.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>tea-openapi</artifactId>
-            <version>0.2.5</version>
-        </dependency>
-        <!-- deepSeek-->
-        <!-- https://mvnrepository.com/artifact/com.alibaba/dashscope-sdk-java -->
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>dashscope-sdk-java</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>2.21.2</version>
-        </dependency>
-        <!-- openai-->
-        <dependency>
-            <groupId>com.openai</groupId>
-            <artifactId>openai-java</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>1.6.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.volcengine/volc-sdk-java -->
-        <dependency>
-            <groupId>com.volcengine</groupId>
-            <artifactId>volc-sdk-java</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>1.0.160</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>1.3.2</version>
         </dependency>
 
         <dependency>
@@ -215,79 +123,13 @@
             <artifactId>jedis</artifactId>
             <version>5.2.0</version>
         </dependency>
+
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid-spring-boot-3-starter</artifactId>
             <version>1.2.24</version>
         </dependency>
 
-        <!-- 计算token -->
-        <dependency>
-            <groupId>com.knuddels</groupId>
-            <artifactId>jtokkit</artifactId>
-            <version>1.1.0</version>
-        </dependency>
-
-        <!-- 腾讯邮件 -->
-        <dependency>
-            <groupId>com.tencentcloudapi</groupId>
-            <artifactId>tencentcloud-sdk-java-ses</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>3.1.1129</version>
-        </dependency>
-        <!-- csv 数据处理-->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>1.10.0</version>
-        </dependency>
-        <!-- csv 数据处理-->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>1.10.0</version>
-        </dependency>
-        <!-- 火山模型sdk-->
-        <dependency>
-            <groupId>com.volcengine</groupId>
-            <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
-            <version>0.2.1</version>
-        </dependency>
-        <!-- 腾讯混元模型sdk -->
-        <dependency>
-            <groupId>com.tencentcloudapi</groupId>
-            <artifactId>tencentcloud-sdk-java-hunyuan</artifactId>
-            <version>3.1.1229</version>
-        </dependency>
-        <!-- deepL翻译模型sdk -->
-        <dependency>
-            <groupId>com.deepl.api</groupId>
-            <artifactId>deepl-java</artifactId>
-            <version>1.10.1</version>
-        </dependency>
-        <!--腾讯云存储sdk -->
-        <dependency>
-            <groupId>com.qcloud</groupId>
-            <artifactId>cos_api</artifactId>
-            <version>5.6.227</version>
-        </dependency>
         <!-- JUnit5 + Mockito -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -295,24 +137,21 @@
             <version>5.13.4</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>5.18.0</version>
             <scope>test</scope>
         </dependency>
+
         <!-- google Gemini相关 -->
         <dependency>
             <groupId>com.google.genai</groupId>
             <artifactId>google-genai</artifactId>
             <version>1.0.0</version>
         </dependency>
-        <!-- google机器翻译 -->
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-translate</artifactId>
-            <version>2.81.0</version>
-        </dependency>
+
     </dependencies>
 
     <build>
