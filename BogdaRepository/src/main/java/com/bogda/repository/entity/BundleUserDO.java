@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,7 +24,7 @@ public class BundleUserDO extends BaseDO{
     @TableField("last_name")
     private String lastName;
     @TableField("login_at")
-    private String loginAt;
+    private Timestamp loginAt;
     @TableField("uninstall_at")
-    private String uninstallAt;
+    private Timestamp uninstallAt;
 }

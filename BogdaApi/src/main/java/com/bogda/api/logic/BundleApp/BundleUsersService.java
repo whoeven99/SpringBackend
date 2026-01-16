@@ -7,6 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+
 @Component
 public class BundleUsersService {
     @Autowired
@@ -19,7 +22,9 @@ public class BundleUsersService {
         // 获取用户是否存在，存在更新登陆时间， 不存在创建用户
         BundleUserDO userByShopName = bundleUsersRepo.getUserByShopName(shopName);
         if (userByShopName != null) {
-            bundleUsersRepo.updateUserLoginTime(shopName);
+            bundleUserDO.setUpdatedAt(Timestamp.from(Instant.now()));
+            bundleUserDO.setLoginAt(Timestamp.from(Instant.now()));
+            bundleUsersRepo.updateUserByShopName(shopName, bundleUserDO);
             return new BaseResponse<>().CreateSuccessResponse(true);
         }else {
             boolean flag = bundleUsersRepo.saveUser(bundleUserDO);
