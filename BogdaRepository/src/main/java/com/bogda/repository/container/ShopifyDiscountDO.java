@@ -206,7 +206,7 @@ public class ShopifyDiscountDO {
 
             @Data
             public static class VisibilityConstraints {
-                private Integer maxDiscountAmount;
+                private Double maxDiscountAmount;
                 private Integer maxUsageCount;
             }
 
@@ -227,8 +227,8 @@ public class ShopifyDiscountDO {
 
             @Data
             public static class Budget {
-                private Integer totalBudget;
-                private Integer dailyBudget;
+                private Double totalBudget;
+                private Double dailyBudget;
             }
 
         }
