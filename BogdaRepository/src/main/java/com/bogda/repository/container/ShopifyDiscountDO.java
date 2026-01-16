@@ -112,14 +112,14 @@ public class ShopifyDiscountDO {
             @Data
             public static class Discount {
                 private String type;
-                private Integer value;
-                private String maxDiscount;
+                private Double value;
+                private Double maxDiscount;
             }
 
             @Data
             public static class DiscountReward {
                 @JsonProperty("reward_item")
-                private String reward_item;
+                private String rewardItem;
                 @JsonProperty("reward_discount")
                 private RewardDiscount rewardDiscount;
 
