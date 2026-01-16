@@ -1,13 +1,13 @@
 package com.bogda.api.controller;
 
 
-import com.bogda.api.entity.DO.UsersDO;
-import com.bogda.api.entity.VO.ThemeAndLanguageVO;
-import com.bogda.api.entity.VO.UserInitialVO;
-import com.bogda.api.logic.TranslateService;
-import com.bogda.api.logic.UserService;
-import com.bogda.api.model.controller.request.UserSubscriptionsRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.entity.DO.UsersDO;
+import com.bogda.service.entity.VO.ThemeAndLanguageVO;
+import com.bogda.service.entity.VO.UserInitialVO;
+import com.bogda.service.logic.TranslateService;
+import com.bogda.service.logic.UserService;
+import com.bogda.service.controller.request.UserSubscriptionsRequest;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

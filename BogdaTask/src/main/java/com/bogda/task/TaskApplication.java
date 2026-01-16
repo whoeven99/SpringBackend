@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(
     exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class},
-    scanBasePackages = {"com.bogda.task", "com.bogda.repository", "com.bogda.api", "com.bogda.common", "com.bogda.integration"}
+    scanBasePackages = {"com.bogda.task", "com.bogda.repository", "com.bogda.service", "com.bogda.integration"}
 )
 @EnableScheduling
 public class TaskApplication {

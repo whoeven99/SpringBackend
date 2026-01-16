@@ -1,16 +1,16 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.api.Service.ITranslationCounterService;
-import com.bogda.api.Service.IUsersService;
-import com.bogda.api.entity.DO.TranslationCounterDO;
-import com.bogda.api.entity.DO.UsersDO;
-import com.bogda.api.entity.VO.AddCharsVO;
-import com.bogda.api.entity.VO.TranslationCharsVO;
-import com.bogda.api.logic.TranslationCounterService;
-import com.bogda.api.logic.redis.OrdersRedisService;
-import com.bogda.api.model.controller.request.TranslationCounterRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.Service.ITranslationCounterService;
+import com.bogda.service.Service.IUsersService;
+import com.bogda.service.entity.DO.TranslationCounterDO;
+import com.bogda.service.entity.DO.UsersDO;
+import com.bogda.service.entity.VO.AddCharsVO;
+import com.bogda.service.entity.VO.TranslationCharsVO;
+import com.bogda.service.logic.TranslationCounterService;
+import com.bogda.service.logic.redis.OrdersRedisService;
+import com.bogda.service.controller.request.TranslationCounterRequest;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

@@ -1,15 +1,15 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.api.Service.IAPGUserPlanService;
-import com.bogda.api.Service.IAPGUsersService;
-import com.bogda.api.entity.DO.APGUsersDO;
-import com.bogda.api.entity.DTO.ProductDTO;
-import com.bogda.api.entity.VO.APGAnalyzeDataVO;
-import com.bogda.api.entity.VO.GenerateDescriptionVO;
+import com.bogda.service.Service.IAPGUserPlanService;
+import com.bogda.service.Service.IAPGUsersService;
+import com.bogda.service.entity.DO.APGUsersDO;
+import com.bogda.service.entity.DTO.ProductDTO;
+import com.bogda.service.entity.VO.APGAnalyzeDataVO;
+import com.bogda.service.entity.VO.GenerateDescriptionVO;
 import com.bogda.common.exception.ClientException;
-import com.bogda.api.logic.GenerateDescriptionService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.logic.GenerateDescriptionService;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.CharacterCountUtils;

@@ -1,8 +1,8 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.Service.IAILanguagePacksService;
-import com.bogda.api.model.controller.request.UserLanguageRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.Service.IAILanguagePacksService;
+import com.bogda.service.controller.request.UserLanguageRequest;
+import com.bogda.service.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
