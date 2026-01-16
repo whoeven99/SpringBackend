@@ -1,6 +1,6 @@
 package com.bogda.service.integration;
 
-import com.bogda.service.utils.TimeOutUtils;
+import com.bogda.common.utils.TimeOutUtils;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import com.google.genai.types.*;
 import java.util.Base64;
 import java.util.List;
-import static com.bogda.service.utils.TimeOutUtils.*;
+import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class GeminiIntegration {

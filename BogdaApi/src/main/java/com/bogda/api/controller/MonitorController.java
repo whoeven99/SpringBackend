@@ -20,6 +20,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +48,17 @@ public class MonitorController {
     private RedisStoppedRepository redisStoppedRepository;
     @Autowired
     private TranslationCounterServiceImpl translationCounterServiceRepo;
+
+    private static final String SERVER_START_TIME = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+    @GetMapping("/version")
+    public Map<String, String> getVersion() {
+        Map<String, String> info = new HashMap<>();
+        info.put("startTime", SERVER_START_TIME);
+        info.put("currentTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        info.put("status", "UP");
+        return info;
+    }
 
     @GetMapping("/getTable")
     public Map<String, Object> getTable(@RequestParam String shopName) {

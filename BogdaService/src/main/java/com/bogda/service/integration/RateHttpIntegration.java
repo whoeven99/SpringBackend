@@ -3,6 +3,7 @@ package com.bogda.service.integration;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
+import com.bogda.integration.http.BaseHttpIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

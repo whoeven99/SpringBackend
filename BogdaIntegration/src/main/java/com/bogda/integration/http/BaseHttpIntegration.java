@@ -1,7 +1,7 @@
-package com.bogda.service.integration;
+package com.bogda.integration.http;
 
-import com.bogda.service.utils.TimeOutUtils;
 import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.TimeOutUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;

@@ -1,6 +1,6 @@
 package com.bogda.service.integration;
 
-import com.bogda.service.utils.*;
+import com.bogda.common.utils.TimeOutUtils;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
@@ -42,7 +42,7 @@ public class GoogleMachineIntegration {
             // 执行翻译
             Translation translation = TimeOutUtils.callWithTimeoutAndRetry(() ->
                     translate.translate(content, Translate.TranslateOption.targetLanguage(target),
-                            Translate.TranslateOption.model("base")), TimeOutUtils.rateLimiter1);
+                            Translate.TranslateOption.model("base")));
             String translatedText = translation.getTranslatedText();
 
             // 将translatedText反转义下， 用json翻译返回是&quot;1&quot;:&quot;的数据

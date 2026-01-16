@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
-import static com.bogda.service.utils.TimeOutUtils.*;
+import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class HunYuanIntegration {

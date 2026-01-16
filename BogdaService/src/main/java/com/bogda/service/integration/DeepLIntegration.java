@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-import static com.bogda.service.utils.TimeOutUtils.*;
+import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class DeepLIntegration {

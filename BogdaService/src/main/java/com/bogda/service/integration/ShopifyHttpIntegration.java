@@ -1,6 +1,7 @@
 package com.bogda.service.integration;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogda.integration.http.BaseHttpIntegration;
 import com.bogda.service.integration.model.ShopifyGraphResponse;
 import com.bogda.service.integration.model.ShopifyResponse;
 import com.bogda.service.controller.request.ShopifyRequest;
