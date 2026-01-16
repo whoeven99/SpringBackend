@@ -1,10 +1,10 @@
-package com.bogda.api.logic.BundleApp;
+package com.bogda.service.logic.BundleApp;
 
 import com.azure.cosmos.models.SqlParameter;
 import com.bogda.api.entity.DTO.DiscountBasicDTO;
-import com.bogda.api.model.controller.response.BaseResponse;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.repo.bundle.ShopifyDiscountRepo;
+import com.bogda.service.controller.response.BaseResponse;
 import kotlin.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
