@@ -1,6 +1,7 @@
 package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IGlossaryService;
 import com.bogda.service.entity.DO.GlossaryDO;
@@ -34,5 +35,11 @@ public class GlossaryServiceImpl extends ServiceImpl<GlossaryMapper, GlossaryDO>
         return baseMapper.selectOne(new LambdaQueryWrapper<GlossaryDO>().eq(GlossaryDO::getShopName, shopName)
                 .eq(GlossaryDO::getRangeCode, rangeCode)
                 .apply("HASHBYTES('SHA2_256', CONVERT(VARBINARY(256), source_text)) = HASHBYTES('SHA2_256', CONVERT(VARBINARY(256), {0}))", sourceText));
+    }
+
+    @Override
+    public boolean updateStatusTo0ByShopName(String shopName) {
+        return baseMapper.update(new LambdaUpdateWrapper<GlossaryDO>().eq(GlossaryDO::getShopName, shopName)
+                .set(GlossaryDO::getStatus, 0)) > 0;
     }
 }

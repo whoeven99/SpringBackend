@@ -375,7 +375,7 @@ public class TencentEmailService {
             Map<String, String> taskMap = translateTaskMonitorV2RedisService.getAllByTaskId(taskV2DO.getId());
             String totalCount = taskMap.getOrDefault("totalCount", null);
             String translatedCount = taskMap.getOrDefault("translatedCount", null);
-            if (totalCount == null ||totalCount.isEmpty() || translatedCount == null || translatedCount.isEmpty()) {
+            if (totalCount == null || totalCount.isEmpty() || translatedCount == null || translatedCount.isEmpty()) {
                 continue;
             }
 
@@ -383,7 +383,11 @@ public class TencentEmailService {
             int translated = Integer.parseInt(translatedCount);
 
             DecimalFormat df = new DecimalFormat("0.00");
-            double percentage = translated * 100.0 / total;
+            double percentage = 0;
+            if (translated != 0) {
+                percentage = translated * 100.0 / total;
+            }
+
             String percentageStr = df.format(percentage);
 
             divBuilder.append("<tr>")

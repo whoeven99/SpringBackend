@@ -1102,8 +1102,14 @@ public class TranslateV2Service {
             if (!JudgeTranslateUtils.metaTranslate(value)) {
                 return false;
             }
-            //如果是base64编码的数据，不翻译
+
+            // 如果是base64编码的数据，不翻译
             if (JudgeTranslateUtils.BASE64_PATTERN.matcher(value).matches()) {
+                return false;
+            }
+
+            //对CC_CC-PT的数据不翻译
+            if ("CC_CC-PT".equals(value)) {
                 return false;
             }
 
