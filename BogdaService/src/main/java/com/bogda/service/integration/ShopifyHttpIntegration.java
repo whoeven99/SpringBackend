@@ -2,11 +2,13 @@ package com.bogda.service.integration;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.service.integration.model.ShopifyGraphResponse;
+import com.bogda.service.integration.model.ShopifyRemoveResponse;
 import com.bogda.service.integration.model.ShopifyResponse;
 import com.bogda.service.controller.request.ShopifyRequest;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
+import com.bogda.service.integration.model.ShopifyTranslationsRemove;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +42,21 @@ public class ShopifyHttpIntegration {
 
         return baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken));
     }
+
+    public ShopifyRemoveResponse deleteShopifyData(String shopName, String accessToken, ShopifyTranslationsRemove shopifyTranslationsRemove){
+        String url = "https://" + shopName + "/admin/api/" + TranslateConstants.API_VERSION_LAST + "/graphql.json";
+
+        JSONObject queryMap = new JSONObject();
+        queryMap.put("query", ShopifyRequestUtils.deleteQuery());
+        queryMap.put("variables", shopifyTranslationsRemove);
+
+        String httpRes = baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken));
+        if (httpRes == null) {
+            return null;
+        }
+        return JsonUtils.jsonToObjectWithNull(httpRes, ShopifyRemoveResponse.class);
+    }
+
 
     public String sendShopifyPost(String shopName, String accessToken, String stringQuery, Map<String, Object> variables) {
         String url = "https://" + shopName + "/admin/api/" + TranslateConstants.API_VERSION_LAST + "/graphql.json";
