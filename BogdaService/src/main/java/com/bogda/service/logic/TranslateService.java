@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.ITranslationCounterService;
 import com.bogda.service.Service.IUsersService;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.service.entity.DO.TranslatesDO;
 import com.bogda.service.entity.DO.UsersDO;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
