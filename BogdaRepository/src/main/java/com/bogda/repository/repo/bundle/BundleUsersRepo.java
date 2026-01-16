@@ -16,16 +16,15 @@ public class BundleUsersRepo extends ServiceImpl<BundleUsersMapper, BundleUserDO
         return baseMapper.selectOne(new LambdaQueryWrapper<BundleUserDO>().eq(BundleUserDO::getShopName, shopName));
     }
 
-    public boolean updateUserLoginTime(String shopName) {
-        return baseMapper.update(new LambdaUpdateWrapper<BundleUserDO>().set(BundleUserDO::getLoginAt, Instant.now())
-                .eq(BundleUserDO::getShopName, shopName)) > 0;
-    }
-
     public boolean saveUser(BundleUserDO bundleUserDO) {
         String appEnv = System.getenv("ApplicationEnv");
         if ("dev".equals(appEnv)) {
 
         }
         return baseMapper.insert(bundleUserDO) > 0;
+    }
+
+    public boolean updateUserByShopName(String shopName, BundleUserDO bundleUserDO) {
+        return baseMapper.update(bundleUserDO, new LambdaUpdateWrapper<BundleUserDO>().eq(BundleUserDO::getShopName, shopName)) > 0;
     }
 }

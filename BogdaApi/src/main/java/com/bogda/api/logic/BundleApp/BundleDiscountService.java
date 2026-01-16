@@ -80,8 +80,8 @@ public class BundleDiscountService {
         }
 
         shopifyDiscountDO.setShopName(shopName);
-        shopifyDiscountDO.setId(shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, ""));
-        if (shopifyDiscountRepo.updateDiscount(shopifyDiscountDO.getDiscountGid(), shopName, shopifyDiscountDO.getDiscountData())) {
+        String updateDiscountGid = shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, "");
+        if (shopifyDiscountRepo.updateDiscount(updateDiscountGid, shopName, shopifyDiscountDO.getDiscountData())) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount");
