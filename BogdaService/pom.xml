@@ -93,6 +93,19 @@
             </exclusions>
             <version>1.0.0-beta.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity-extensions</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>1.1.5</version>
+        </dependency>
+
         <!--Azure 存放key value-->
         <dependency>
             <groupId>com.azure.spring</groupId>
