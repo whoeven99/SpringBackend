@@ -1,11 +1,11 @@
 package com.bogda.api.controller;
 
 
-import com.bogda.api.entity.DO.PCUserPicturesDO;
-import com.bogda.api.entity.VO.AltTranslateVO;
-import com.bogda.api.entity.VO.ImageTranslateVO;
-import com.bogda.api.logic.PCApp.PCUserPicturesService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.entity.DO.PCUserPicturesDO;
+import com.bogda.service.entity.VO.AltTranslateVO;
+import com.bogda.service.entity.VO.ImageTranslateVO;
+import com.bogda.service.logic.PCApp.PCUserPicturesService;
+import com.bogda.service.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;

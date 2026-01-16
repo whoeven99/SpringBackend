@@ -4,13 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.api.Service.*;
-import com.bogda.api.entity.DO.*;
-import com.bogda.api.entity.VO.SubscriptionVO;
-import com.bogda.api.integration.ShopifyHttpIntegration;
-import com.bogda.api.logic.ShopifyService;
-import com.bogda.api.model.controller.request.*;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.Service.*;
+import com.bogda.service.entity.DO.*;
+import com.bogda.service.entity.VO.SubscriptionVO;
+import com.bogda.service.integration.ShopifyHttpIntegration;
+import com.bogda.service.logic.ShopifyService;
+import com.bogda.service.controller.request.*;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogda.common.enums.ErrorEnum.SQL_SELECT_ERROR;
-import static com.bogda.api.utils.StringUtils.parsePlanName;
+import static com.bogda.service.utils.StringUtils.parsePlanName;
 
 @RestController
 @RequestMapping("/shopify")

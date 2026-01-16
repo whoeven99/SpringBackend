@@ -1,7 +1,7 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.logic.PCApp.PCSubscriptionQuotaRecordService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.logic.PCApp.PCSubscriptionQuotaRecordService;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.repository.entity.PCSubscriptionQuotaRecordDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

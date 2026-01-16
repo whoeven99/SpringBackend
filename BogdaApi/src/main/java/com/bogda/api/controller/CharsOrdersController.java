@@ -1,10 +1,10 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.entity.DO.CharsOrdersDO;
-import com.bogda.api.entity.VO.TranslationCharsVO;
-import com.bogda.api.logic.OrderService;
-import com.bogda.api.model.controller.request.PurchaseSuccessRequest;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.entity.DO.CharsOrdersDO;
+import com.bogda.service.entity.VO.TranslationCharsVO;
+import com.bogda.service.logic.OrderService;
+import com.bogda.service.controller.request.PurchaseSuccessRequest;
+import com.bogda.service.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
