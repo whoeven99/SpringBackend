@@ -20,6 +20,7 @@
         <module>BogdaCommon</module>
         <module>BogdaIntegration</module>
         <module>BogdaRepository</module>
+        <module>BogdaService</module>
         <module>BogdaWeb</module>
     </modules>
     <properties>

@@ -1,9 +1,9 @@
 package com.bogda.api.controller;
 
-import com.bogda.api.Service.IWidgetConfigurationsService;
-import com.bogda.api.entity.DO.WidgetConfigurationsDO;
-import com.bogda.api.logic.UserIpService;
-import com.bogda.api.model.controller.response.BaseResponse;
+import com.bogda.service.Service.IWidgetConfigurationsService;
+import com.bogda.service.entity.DO.WidgetConfigurationsDO;
+import com.bogda.service.logic.UserIpService;
+import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;

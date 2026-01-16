@@ -19,6 +19,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.bogda.service</groupId>
+            <artifactId>BogdaService</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.bogda.integration</groupId>
             <artifactId>BogdaIntegration</artifactId>
             <version>${project.parent.version}</version>

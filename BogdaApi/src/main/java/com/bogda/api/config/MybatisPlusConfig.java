@@ -13,7 +13,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import javax.sql.DataSource;
 
 @Configuration
-@MapperScan({"com.bogda.api.mapper", "com.bogda.repository.mapper"})  // 替换为你的Mapper接口所在的包路径
+@MapperScan({"com.bogda.service.mapper", "com.bogda.repository.mapper"})  // 替换为你的Mapper接口所在的包路径
 public class MybatisPlusConfig {
 
     @Autowired
