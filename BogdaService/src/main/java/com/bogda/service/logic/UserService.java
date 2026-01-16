@@ -112,8 +112,10 @@ public class UserService {
 
                 // 将用户ip关掉
                 // 将词汇表改为0
-                iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", shopName).set("status", 0));
-                widgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", shopName).set("ip_open", false));
+                iGlossaryService.updateStatusTo0ByShopName(shopName);
+
+                widgetConfigurationsService.updateIpTo0ByShopName(shopName);
+
 
                 // 获取用户订单表里计划为Active的订单
                 // 删除对应的额度
