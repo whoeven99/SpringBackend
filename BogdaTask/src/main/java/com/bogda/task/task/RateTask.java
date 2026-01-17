@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 
 @Component
-@EnableScheduling
 public class RateTask {
     @Autowired
     private RateHttpIntegration rateHttpIntegration;
