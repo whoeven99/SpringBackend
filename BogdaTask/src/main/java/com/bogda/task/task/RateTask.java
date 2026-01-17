@@ -4,7 +4,6 @@ import com.bogda.service.integration.RateHttpIntegration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
@@ -19,8 +18,12 @@ public class RateTask {
     @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")
     public void getRate() {
-        //改为存储在缓存中（后面存储到redis中）
-        rateHttpIntegration.getFixerRate();
-        log.info("rateMap: {}", RateHttpIntegration.rateMap); // 不是app insights 要去log stream里去看
+        try {
+            //改为存储在缓存中（后面存储到redis中）
+            rateHttpIntegration.getFixerRate();
+            log.info("rateMap: {}", RateHttpIntegration.rateMap); // 不是app insights 要去log stream里去看
+        } catch (Exception e) {
+            log.info("Error fetching rates: {}", e.getMessage());
+        }
     }
 }
