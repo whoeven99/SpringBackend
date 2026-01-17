@@ -53,8 +53,7 @@ public class TimeOutUtilsTest {
 
         try {
             for (int i = 0; i < 6; i++) {
-                TimeOutUtils.callWithTimeoutAndRetry(task, 1, TimeUnit.SECONDS, 1,
-                        TimeOutUtils.rateLimiter2);
+                TimeOutUtils.callWithTimeoutAndRetry(task, 1, TimeUnit.SECONDS, 1);
             }
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
