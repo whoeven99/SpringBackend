@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogda.common.enums.ErrorEnum.SQL_SELECT_ERROR;
-import static com.bogda.service.utils.StringUtils.parsePlanName;
+import static com.bogda.common.utils.StringUtils.parsePlanName;
 
 @RestController
 @RequestMapping("/shopify")

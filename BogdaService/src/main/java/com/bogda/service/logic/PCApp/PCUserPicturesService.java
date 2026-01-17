@@ -17,7 +17,7 @@ import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.PictureUtils;
-import com.bogda.service.utils.StringUtils;
+import com.bogda.common.utils.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

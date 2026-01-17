@@ -10,7 +10,7 @@ import com.bogda.service.logic.redis.OrdersRedisService;
 import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
-import com.bogda.service.utils.ShopifyUtils;
+import com.bogda.common.utils.ShopifyUtils;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;

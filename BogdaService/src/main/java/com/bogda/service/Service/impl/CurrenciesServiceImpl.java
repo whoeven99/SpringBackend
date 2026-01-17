@@ -7,12 +7,14 @@ import com.bogda.service.entity.DO.CurrenciesDO;
 import com.bogda.service.mapper.CurrenciesMapper;
 import com.bogda.service.controller.request.CurrencyRequest;
 import com.bogda.service.controller.response.BaseResponse;
-import com.bogda.service.utils.ShopifyUtils;
+import com.bogda.service.utils.CurrencyConfig;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,10 +68,36 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
             return new BaseResponse<>().CreateErrorResponse(false);
         }
         for (CurrenciesDO currenciesDO : list) {
-            Map<String, Object> currencyDOS = new java.util.HashMap<>(ShopifyUtils.getCurrencyDOS(currenciesDO));
+            Map<String, Object> currencyDOS = new java.util.HashMap<>(getCurrencyDOS(currenciesDO));
             mapList.add(currencyDOS);
         }
         return new BaseResponse<>().CreateSuccessResponse(mapList);
+    }
+
+    private Map<String, Object> getCurrencyDOS(CurrenciesDO currenciesDO) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("currencyCode", currenciesDO.getCurrencyCode());
+        map.put("currencyName", currenciesDO.getCurrencyName());
+        map.put("shopName", currenciesDO.getShopName());
+        map.put("id", currenciesDO.getId());
+        map.put("rounding", currenciesDO.getRounding());
+        map.put("exchangeRate", currenciesDO.getExchangeRate());
+        map.put("primaryStatus", currenciesDO.getPrimaryStatus());
+
+        try {
+            Field field = CurrencyConfig.class.getField(currenciesDO.getCurrencyCode().toUpperCase());
+            Map<String, Object> currencyInfo = (Map<String, Object>) field.get(null);
+            if (currencyInfo != null) {
+                map.put("symbol", currencyInfo.get("symbol"));
+            } else {
+                map.put("symbol", "-");
+                AppInsightsUtils.trackTrace("符号错误 ： " + currenciesDO.getShopName());
+            }
+
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            AppInsightsUtils.trackTrace("FatalException : " + currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
+        }
+        return map;
     }
 
     @Override
@@ -79,7 +107,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
             AppInsightsUtils.trackTrace("getCurrencyWithSymbol No currency found for shopName: " + request.getShopName() + " and currencyCode: " + request.getCurrencyCode());
             return null;
         }
-        return new java.util.HashMap<>(ShopifyUtils.getCurrencyDOS(currencyByShopNameAndCurrencyCode));
+        return new java.util.HashMap<>(getCurrencyDOS(currencyByShopNameAndCurrencyCode));
     }
 
     @Override

@@ -16,7 +16,7 @@ import com.bogda.common.utils.ShopifyRequestUtils;
 import com.bogda.repository.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import static com.bogda.service.utils.StringUtils.parsePlanName;
+import static com.bogda.common.utils.StringUtils.parsePlanName;
 
 @Component
 public class PCUserSubscriptionService {

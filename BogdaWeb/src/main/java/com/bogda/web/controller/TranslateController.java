@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import static com.bogda.common.enums.ErrorEnum.*;
-import static com.bogda.service.utils.TypeConversionUtils.TargetListRequestToTranslateRequest;
 
 @RestController
 @RequestMapping("/translate")
@@ -231,6 +230,14 @@ public class TranslateController {
             translateRequest.setTarget("asdf");
             userTypeTokensService.getUserInitToken(translateRequest);
         }
+    }
+
+    private TranslateRequest TargetListRequestToTranslateRequest(TargetListRequest targetListRequest){
+        TranslateRequest translateRequest = new TranslateRequest();
+        translateRequest.setAccessToken(targetListRequest.getAccessToken());
+        translateRequest.setShopName(targetListRequest.getShopName());
+        translateRequest.setSource(targetListRequest.getSource());
+        return translateRequest;
     }
 
     //用户是否选择定时任务的方法

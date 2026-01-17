@@ -6,7 +6,6 @@ import com.bogda.service.Service.IUserSubscriptionsService;
 import com.bogda.service.entity.DO.UserSubscriptionsDO;
 import com.bogda.service.mapper.UserSubscriptionsMapper;
 import com.bogda.service.controller.request.UserSubscriptionsRequest;
-import com.bogda.service.utils.TypeConversionUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,8 +13,18 @@ public class UserSubscriptionsServiceImpl extends ServiceImpl<UserSubscriptionsM
 
     @Override
     public Integer addUserSubscription(UserSubscriptionsRequest request) {
-        UserSubscriptionsDO userSubscriptionsDO = TypeConversionUtils.UserSubscriptionsRequestToUserSubscriptionsDO(request);
+        UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsRequestToUserSubscriptionsDO(request);
         return baseMapper.insert(userSubscriptionsDO);
+    }
+
+    private UserSubscriptionsDO userSubscriptionsRequestToUserSubscriptionsDO(UserSubscriptionsRequest request){
+        UserSubscriptionsDO userSubscriptionsDO = new UserSubscriptionsDO();
+        userSubscriptionsDO.setShopName(request.getShopName());
+        userSubscriptionsDO.setPlanId(request.getPlanId());
+        userSubscriptionsDO.setStartDate(request.getStartDate());
+        userSubscriptionsDO.setEndDate(request.getEndDate());
+        userSubscriptionsDO.setStatus(request.getStatus());
+        return userSubscriptionsDO;
     }
 
     @Override

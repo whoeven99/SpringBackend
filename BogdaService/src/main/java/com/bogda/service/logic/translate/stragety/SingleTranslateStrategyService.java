@@ -9,7 +9,7 @@ import com.bogda.service.logic.translate.ModelTranslateService;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.PlaceholderUtils;
 import com.bogda.service.utils.PromptUtils;
-import com.bogda.service.utils.StringUtils;
+import com.bogda.common.utils.StringUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

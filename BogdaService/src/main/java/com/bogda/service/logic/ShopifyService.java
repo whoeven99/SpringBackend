@@ -13,7 +13,7 @@ import com.bogda.service.entity.DO.TranslateResourceDTO;
 import com.bogda.service.entity.DO.TranslatesDO;
 import com.bogda.service.entity.DO.UserTypeTokenDO;
 import com.bogda.service.entity.DTO.TranslateTextDTO;
-import com.bogda.service.utils.StringUtils;
+import com.bogda.common.utils.StringUtils;
 import com.bogda.service.utils.TypeConversionUtils;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.enums.ErrorEnum;
@@ -49,7 +49,7 @@ import static com.bogda.service.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.service.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogda.common.utils.JsonUtils.isJson;
 import static com.bogda.common.utils.JudgeTranslateUtils.*;
-import static com.bogda.service.utils.StringUtils.isValueBlank;
+import static com.bogda.common.utils.StringUtils.isValueBlank;
 
 @Service
 public class ShopifyService {
@@ -671,11 +671,18 @@ public class ShopifyService {
         }
         return imageInfo;
     }
+    private CloudServiceRequest shopifyToCloudServiceRequest(ShopifyRequest request) {
+        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
+        cloudServiceRequest.setShopName(request.getShopName());
+        cloudServiceRequest.setAccessToken(request.getAccessToken());
+        cloudServiceRequest.setTarget(request.getTarget());
+        return cloudServiceRequest;
+    }
 
     //计算被翻译项的总数和已翻译的个数
     public Map<String, Map<String, Object>> getTranslationItemsInfo(ResourceTypeRequest request) {
         ShopifyRequest shopifyRequest = TypeConversionUtils.resourceTypeRequestToShopifyRequest(request);
-        CloudServiceRequest cloudServiceRequest = TypeConversionUtils.shopifyToCloudServiceRequest(shopifyRequest);
+        CloudServiceRequest cloudServiceRequest = shopifyToCloudServiceRequest(shopifyRequest);
         Map<String, Map<String, Object>> result = new HashMap<>();
         // 遍历List中的每个TranslateResourceDTO对象
         CharacterCountUtils allCounter = new CharacterCountUtils();

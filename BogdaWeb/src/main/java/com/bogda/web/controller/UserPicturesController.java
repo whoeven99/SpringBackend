@@ -3,20 +3,23 @@ package com.bogda.web.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogda.service.Service.IUserPicturesService;
 import com.bogda.service.entity.DO.UserPicturesDO;
+import com.bogda.service.entity.DTO.SimpleMultipartFileDTO;
 import com.bogda.service.integration.HunYuanBucketIntegration;
 import com.bogda.service.logic.PCApp.PCUserPicturesService;
 import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.microsoft.applicationinsights.core.dependencies.apachecommons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
-
-
-import static com.bogda.service.utils.StringUtils.convertUrlToMultipartFile;
 
 @RestController
 @RequestMapping("/picture")
@@ -158,5 +161,36 @@ public class UserPicturesController {
             return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
         }
         return new BaseResponse<>().CreateSuccessResponse(false);
+    }
+
+    private MultipartFile convertUrlToMultipartFile(String imageUrl) {
+        try {
+            // 1. 打开URL连接
+            URL url = new URL(imageUrl);
+            URLConnection connection = url.openConnection();
+            String contentType = connection.getContentType(); // 尝试获取Content-Type
+            String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1); // 取URL最后一段作为文件名
+            String fileNameWithoutExt = FilenameUtils.getBaseName(fileName);
+            InputStream inputStream = connection.getInputStream();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            // 2. 创建 MultipartFile
+            return new SimpleMultipartFileDTO(
+                    "file",                // form字段名
+                    fileNameWithoutExt,              // 文件名
+                    contentType != null ? contentType : "application/octet-stream", // 如果获取不到就用通用类型
+                    outputStream.toByteArray()
+            );
+        } catch (Exception e) {
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException convertUrlToMultipartFile error: " + e.getMessage());
+        }
+        return null;
     }
 }
