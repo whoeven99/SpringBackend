@@ -30,12 +30,6 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.bogda.repository</groupId>
-            <artifactId>BogdaRepository</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
         <!-- Spring Boot Starter Web (includes Spring Boot core, web, scheduling, and logging) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
