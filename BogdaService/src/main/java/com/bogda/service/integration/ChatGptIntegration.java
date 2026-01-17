@@ -9,7 +9,7 @@ import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
-import com.bogda.service.utils.TimeOutUtils;
+import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,7 +51,7 @@ public class ChatGptIntegration {
                 .setStream(false);
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
-                    client.getChatCompletions(GPT_4, options), TimeOutUtils.rateLimiter1);
+                    client.getChatCompletions(GPT_4, options));
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
             int input = chatCompletions.getUsage().getPromptTokens();

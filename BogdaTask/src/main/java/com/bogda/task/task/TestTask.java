@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TestTask {
 
-    private static final Logger log = LoggerFactory.getLogger(TestTask.class);
+    private final Logger log = LoggerFactory.getLogger(TestTask.class);
 
     // 每5秒执行一次
     @Scheduled(fixedRate = 5000)

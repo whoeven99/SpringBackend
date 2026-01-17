@@ -19,7 +19,7 @@ import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.ConfigUtils;
-import com.bogda.service.utils.TimeOutUtils;
+import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bogda.common.utils.AppInsightsUtils.printTranslateCost;
-import static com.bogda.service.utils.TimeOutUtils.*;
+import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class ALiYunTranslateIntegration {

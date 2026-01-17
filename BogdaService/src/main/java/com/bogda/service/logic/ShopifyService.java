@@ -18,7 +18,7 @@ import com.bogda.service.utils.TypeConversionUtils;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.enums.ErrorEnum;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
-import com.bogda.service.integration.BaseHttpIntegration;
+import com.bogda.integration.http.BaseHttpIntegration;
 import com.bogda.service.integration.ShopifyHttpIntegration;
 import com.bogda.service.integration.model.ShopifyExtensions;
 import com.bogda.service.integration.model.ShopifyGraphResponse;

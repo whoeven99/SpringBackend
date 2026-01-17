@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 
 
-import static com.bogda.service.utils.TimeOutUtils.*;
+import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class HunYuanBucketIntegration {
