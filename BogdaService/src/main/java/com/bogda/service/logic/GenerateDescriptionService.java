@@ -30,7 +30,7 @@ import java.util.Random;
 import static com.bogda.service.logic.APGUserGeneratedTaskService.*;
 import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogda.common.utils.PlaceholderUtils.buildDescriptionPrompt;
-import static com.bogda.service.utils.StringUtils.countWords;
+import static com.bogda.common.utils.StringUtils.countWords;
 import static com.bogda.service.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
 import static com.bogda.service.utils.TypeConversionUtils.userTemplateToTemplateDTO;
 

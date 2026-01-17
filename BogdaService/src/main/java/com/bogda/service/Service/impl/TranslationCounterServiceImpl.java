@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import static com.bogda.service.utils.ShopifyUtils.isQueryValid;
+import static com.bogda.common.utils.ShopifyUtils.isQueryValid;
 
 @Service
 @Transactional

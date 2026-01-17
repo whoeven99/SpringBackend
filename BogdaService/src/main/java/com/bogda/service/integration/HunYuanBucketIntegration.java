@@ -2,7 +2,7 @@ package com.bogda.service.integration;
 
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
-import com.bogda.service.utils.StringUtils;
+import com.bogda.common.utils.StringUtils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;

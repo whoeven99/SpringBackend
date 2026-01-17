@@ -24,8 +24,6 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_BAR;
-import static com.bogda.service.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
-import static com.bogda.service.utils.TypeConversionUtils.generateDescriptionsVOToGenerateDescriptionVO;
 
 @Service
 public class APGUserGeneratedTaskService {
@@ -96,6 +94,18 @@ public class APGUserGeneratedTaskService {
         return generateProgressBarVO;
     }
 
+    public static GenerateProgressBarVO apgUserGeneratedTaskDOToGenerateProgressBarVO(APGUserGeneratedTaskDO apgUserGeneratedTaskDO, Integer totalCount, Integer unfinishedCount){
+        GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
+        generateProgressBarVO.setAllCount(totalCount);
+        generateProgressBarVO.setUnfinishedCount(unfinishedCount);
+        generateProgressBarVO.setTaskStatus(apgUserGeneratedTaskDO.getTaskStatus());
+        generateProgressBarVO.setTaskModel(apgUserGeneratedTaskDO.getTaskModel());
+        generateProgressBarVO.setTaskData(apgUserGeneratedTaskDO.getTaskData());
+        generateProgressBarVO.setUserId(apgUserGeneratedTaskDO.getUserId());
+        generateProgressBarVO.setId(apgUserGeneratedTaskDO.getId());
+        return generateProgressBarVO;
+    }
+
     @Async
     public void batchGenerateDescription(APGUsersDO usersDO, String shopName, GenerateDescriptionsVO generateDescriptionsVO) {
         //将任务id改为2
@@ -125,6 +135,23 @@ public class APGUserGeneratedTaskService {
             AppInsightsUtils.trackException(e);
 //            AppInsightsUtils.trackTrace("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
         }
+    }
+
+    private GenerateDescriptionVO generateDescriptionsVOToGenerateDescriptionVO(String productId,GenerateDescriptionsVO generateDescriptionsVO){
+        GenerateDescriptionVO generateDescriptionVO = new GenerateDescriptionVO();
+        generateDescriptionVO.setTemplateType(generateDescriptionsVO.getTemplateType());
+        generateDescriptionVO.setTemplateId(generateDescriptionsVO.getTemplateId());
+        generateDescriptionVO.setModel(generateDescriptionsVO.getModel());
+        generateDescriptionVO.setLanguage(generateDescriptionsVO.getLanguage());
+        generateDescriptionVO.setBrandSlogan(generateDescriptionsVO.getBrandSlogan());
+        generateDescriptionVO.setBrandTone(generateDescriptionsVO.getBrandTone());
+        generateDescriptionVO.setBrandWord(generateDescriptionsVO.getBrandWord());
+        generateDescriptionVO.setSeoKeywords(generateDescriptionsVO.getSeoKeywords());
+        generateDescriptionVO.setTextTone(generateDescriptionsVO.getTextTone());
+        generateDescriptionVO.setProductId(productId);
+        generateDescriptionVO.setContentType(generateDescriptionsVO.getContentType());
+        generateDescriptionVO.setPageType(generateDescriptionsVO.getPageType());
+        return generateDescriptionVO;
     }
 
     /**

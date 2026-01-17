@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 
-import static com.bogda.service.utils.ShopifyUtils.isQueryValid;
+import static com.bogda.common.utils.ShopifyUtils.isQueryValid;
 
 
 @Service

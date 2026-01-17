@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 
-import static com.bogda.service.utils.ShopifyUtils.isQueryValid;
+import static com.bogda.common.utils.ShopifyUtils.isQueryValid;
 
 @Component
 public class TranslationCounterService {

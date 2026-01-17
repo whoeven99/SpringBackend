@@ -35,6 +35,13 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- fastjson (for com.alibaba.fastjson.JSON/JSONObject) -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.83</version>
+        </dependency>
+
         <!-- Jsoup for HTML parsing -->
         <dependency>
             <groupId>org.jsoup</groupId>

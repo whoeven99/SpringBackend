@@ -9,7 +9,6 @@ import com.bogda.service.entity.DO.TranslatesDO;
 import com.bogda.service.entity.DO.UsersDO;
 import com.bogda.service.entity.VO.SingleReturnVO;
 import com.bogda.service.entity.VO.SingleTranslateVO;
-import com.bogda.service.utils.ModelTranslateUtils;
 import com.bogda.service.utils.ModuleCodeUtils;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.enums.ErrorEnum;
@@ -39,7 +38,6 @@ import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.volcengine.model.imagex.data.App;
 import kotlin.Pair;
 import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
@@ -284,7 +282,7 @@ public class TranslateV2Service {
                 .filter(Objects::nonNull)
                 .map(TranslateResourceDTO::getResourceType)
                 .toList();
-        resourceTypeList = ModelTranslateUtils.sortTranslateData(resourceTypeList);
+        resourceTypeList = sortTranslateData(resourceTypeList);
         this.isExistInDatabase(shopName, finalTargets.toArray(new String[0]), request.getSource(), request.getAccessToken());
         this.createManualTask(shopName, request.getSource(), finalTargets, resourceTypeList, request.getIsCover(), hasHandle, translateSettings1);
 
@@ -293,6 +291,24 @@ public class TranslateV2Service {
         request.setTarget(finalTargets.toArray(new String[0]));
         request.setAccessToken("");
         return BaseResponse.SuccessResponse(request);
+    }
+
+    public static List<String> sortTranslateData(List<String> list){
+        // 1. 提取 ALL_RESOURCES 中的顺序
+        List<String> orderList = TranslateResourceDTO.ALL_RESOURCES.stream()
+                .map(TranslateResourceDTO::getResourceType)
+                .toList();
+
+        // 2. 构造 name -> index 的 Map
+        Map<String, Integer> orderMap = new HashMap<>();
+        for (int i = 0; i < orderList.size(); i++) {
+            orderMap.put(orderList.get(i), i);
+        }
+
+        // 3. 对 targetList 排序
+        List<String> sortedList = new ArrayList<>(list);
+        sortedList.sort(Comparator.comparingInt(name -> orderMap.getOrDefault(name, Integer.MAX_VALUE)));
+        return sortedList;
     }
 
     public void isExistInDatabase(String shopName, String[] targets, String source, String accessToken) {

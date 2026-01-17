@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
-import static com.bogda.service.utils.StringUtils.replaceDot;
+import static com.bogda.common.utils.StringUtils.replaceDot;
 
 @Component
 public class UserPrivateService {

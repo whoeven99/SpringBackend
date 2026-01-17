@@ -20,7 +20,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import static com.bogda.service.utils.StringUtils.parseShopName;
+import static com.bogda.common.utils.StringUtils.parseShopName;
 
 @Component
 public class TencentEmailService {

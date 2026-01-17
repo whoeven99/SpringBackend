@@ -10,7 +10,7 @@ import com.bogda.repository.repo.PCUserSubscriptionsRepo;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
-import com.bogda.service.utils.ShopifyUtils;
+import com.bogda.common.utils.ShopifyUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

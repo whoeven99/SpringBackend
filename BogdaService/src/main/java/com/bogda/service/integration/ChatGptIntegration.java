@@ -17,8 +17,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
 @Component
 public class ChatGptIntegration {
     public static final int OPENAI_MAGNIFICATION = 3;
