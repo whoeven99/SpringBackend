@@ -9,11 +9,16 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 
 @Component
-public class RateTask {
+public class CommonTask {
     @Autowired
     private RateHttpIntegration rateHttpIntegration;
 
-    private final Logger log = LoggerFactory.getLogger(RateTask.class);
+    private final Logger log = LoggerFactory.getLogger(CommonTask.class);
+
+    @Scheduled(fixedRate = 20000)
+    public void testJob() {
+        log.info("test Job run successfully");
+    }
 
     @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")
