@@ -51,7 +51,7 @@ public class MonitorController {
 
     private static final String SERVER_START_TIME = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-    @GetMapping("/version")
+    @GetMapping("")
     public Map<String, String> getVersion() {
         Map<String, String> info = new HashMap<>();
         info.put("startTime", SERVER_START_TIME);
