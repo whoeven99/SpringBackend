@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.bogda.service.integration.RateHttpIntegration.rateMap;
+import static com.bogda.integration.aimodel.RateHttpIntegration.rateMap;
 import static com.bogda.service.logic.RateDataService.getRateByRateMap;
 
 @Component

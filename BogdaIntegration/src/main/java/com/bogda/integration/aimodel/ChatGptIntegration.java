@@ -1,4 +1,4 @@
-package com.bogda.service.integration;
+package com.bogda.integration.aimodel;
 
 import com.azure.ai.openai.OpenAIClient;
 import com.azure.ai.openai.OpenAIClientBuilder;

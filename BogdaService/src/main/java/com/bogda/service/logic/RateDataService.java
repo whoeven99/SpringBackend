@@ -1,6 +1,6 @@
 package com.bogda.service.logic;
 
-import com.bogda.service.integration.RateHttpIntegration;
+import com.bogda.integration.aimodel.RateHttpIntegration;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

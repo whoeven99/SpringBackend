@@ -32,11 +32,17 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
+        <!-- Spring Web (HunYuanBucketIntegration 使用 MultipartFile) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
         <!-- HTTP Client 依赖 -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
+            <version>4.5.6</version>
         </dependency>
 
         <!-- DeepL SDK (DeepLIntegration 使用) -->
@@ -58,6 +64,61 @@
             <groupId>com.volcengine</groupId>
             <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
             <version>0.2.1</version>
+        </dependency>
+
+        <!-- 火山引擎翻译服务 SDK (HuoShanIntegration 使用) -->
+        <dependency>
+            <groupId>com.volcengine</groupId>
+            <artifactId>volc-sdk-java</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>1.0.160</version>
+        </dependency>
+
+        <!-- FastJSON (MicrosoftMachineIntegration 使用) -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>2.0.57</version>
+        </dependency>
+
+        <!-- Google Cloud Translate SDK (GoogleMachineIntegration 使用) -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-translate</artifactId>
+            <version>2.81.0</version>
+        </dependency>
+
+        <!-- Google Genai SDK (GeminiIntegration 使用) -->
+        <dependency>
+            <groupId>com.google.genai</groupId>
+            <artifactId>google-genai</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- Azure OpenAI SDK (ChatGptIntegration 使用) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-ai-openai</artifactId>
+            <version>1.0.0-beta.1</version>
+        </dependency>
+
+        <!-- 腾讯云 COS SDK (HunYuanBucketIntegration 使用) -->
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+            <version>5.6.227</version>
+        </dependency>
+
+        <!-- Kotlin 标准库 (用于 kotlin.Pair) -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>1.9.24</version>
         </dependency>
     </dependencies>
 
