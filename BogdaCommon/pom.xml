@@ -70,6 +70,13 @@
             <version>2.6.1</version>
         </dependency>
 
+        <!-- MyBatis-Plus Core (for @TableId, @TableName annotations) -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-core</artifactId>
+            <version>3.5.5</version>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
