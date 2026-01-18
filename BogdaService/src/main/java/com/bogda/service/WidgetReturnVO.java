@@ -1,4 +1,4 @@
-package com.bogda.common.entity.VO;
+package com.bogda.service;
 
 import com.bogda.repository.entity.UserIPRedirectionDO;
 import lombok.AllArgsConstructor;

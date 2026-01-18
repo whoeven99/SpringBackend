@@ -9,7 +9,7 @@ import com.bogda.common.entity.DO.WidgetConfigurationsDO;
 import com.bogda.common.entity.VO.IncludeCrawlerVO;
 import com.bogda.common.entity.VO.IpRedirectionVO;
 import com.bogda.common.entity.VO.NoCrawlerVO;
-import com.bogda.common.entity.VO.WidgetReturnVO;
+import com.bogda.service.WidgetReturnVO;
 import com.bogda.service.logic.token.UserTokenService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.UserIPCountDO;
