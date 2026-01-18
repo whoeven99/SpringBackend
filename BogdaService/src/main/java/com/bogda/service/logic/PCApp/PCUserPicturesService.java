@@ -25,7 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.bogda.service.utils.ModuleCodeUtils.getLanguageName;
+import static com.bogda.common.utils.ModuleCodeUtils.getLanguageName;
 
 
 @Component

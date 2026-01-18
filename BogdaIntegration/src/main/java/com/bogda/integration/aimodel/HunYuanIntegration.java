@@ -1,6 +1,5 @@
-package com.bogda.service.integration;
+package com.bogda.integration.aimodel;
 
-import com.bogda.service.logic.token.UserTokenService;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.CharacterCountUtils;
@@ -12,7 +11,6 @@ import com.tencentcloudapi.hunyuan.v20230901.HunyuanClient;
 import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsRequest;
 import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
@@ -20,9 +18,6 @@ import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class HunYuanIntegration {
-    @Autowired
-    private UserTokenService userTokenService;
-
     // 静态初始化的 Credential 和 HunyuanClient
     private static final Credential CREDENTIAL;
     private static final HunyuanClient CLIENT;
@@ -96,11 +91,6 @@ public class HunYuanIntegration {
                 long promptTokens = resp.getUsage().getPromptTokens();
                 AppInsightsUtils.printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
                 AppInsightsUtils.trackTrace("hunYuanTranslate 混元信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
-                if (isSingleFlag) {
-                    userTokenService.addUsedToken(shopName, totalToken);
-                } else {
-                    userTokenService.addUsedToken(shopName, totalToken);
-                }
 
                 countUtils.addChars(totalToken);
                 return targetText;

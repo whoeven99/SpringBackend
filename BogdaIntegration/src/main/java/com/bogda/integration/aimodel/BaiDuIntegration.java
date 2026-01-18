@@ -1,4 +1,4 @@
-package com.bogda.service.integration;
+package com.bogda.integration.aimodel;
 
 import org.springframework.stereotype.Component;
 

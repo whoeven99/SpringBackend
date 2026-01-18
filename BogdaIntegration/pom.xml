@@ -38,6 +38,27 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.14</version>
         </dependency>
+
+        <!-- DeepL SDK (DeepLIntegration 使用) -->
+        <dependency>
+            <groupId>com.deepl.api</groupId>
+            <artifactId>deepl-java</artifactId>
+            <version>1.10.1</version>
+        </dependency>
+
+        <!-- 腾讯混元 SDK (HunYuanIntegration 使用) -->
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-hunyuan</artifactId>
+            <version>3.1.1229</version>
+        </dependency>
+
+        <!-- 火山引擎 SDK (HuoShanIntegration 使用) -->
+        <dependency>
+            <groupId>com.volcengine</groupId>
+            <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
+            <version>0.2.1</version>
+        </dependency>
     </dependencies>
 
 </project>

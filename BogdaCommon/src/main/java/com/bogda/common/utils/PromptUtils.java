@@ -1,6 +1,4 @@
-package com.bogda.service.utils;
-
-import com.bogda.common.utils.JsonUtils;
+package com.bogda.common.utils;
 
 import java.util.Map;
 

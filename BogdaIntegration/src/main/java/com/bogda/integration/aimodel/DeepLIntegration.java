@@ -1,26 +1,21 @@
-package com.bogda.service.integration;
+package com.bogda.integration.aimodel;
 
-import com.bogda.service.logic.token.UserTokenService;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.TextResult;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-
 
 import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class DeepLIntegration {
     private static final String API_KEY = ConfigUtils.getConfig(TranslateConstants.DEEPL_API_KEY);
-    @Autowired
-    private UserTokenService userTokenService;
 
     DeepLClient client;
 
@@ -54,11 +49,6 @@ public class DeepLIntegration {
             int totalToken = result.getBilledCharacters() * TranslateConstants.DEEPL_MAGNIFICATION;
             AppInsightsUtils.printTranslateCost(totalToken, totalToken, totalToken);
             AppInsightsUtils.trackTrace("clickTranslation translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
-            if (isSingleFlag) {
-                userTokenService.addUsedToken(shopName, totalToken);
-            } else {
-                userTokenService.addUsedToken(shopName, totalToken);
-            }
 
             counter.addChars(totalToken);
             return targetText;

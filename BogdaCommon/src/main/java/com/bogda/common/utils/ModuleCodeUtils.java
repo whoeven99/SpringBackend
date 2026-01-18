@@ -1,7 +1,4 @@
-package com.bogda.service.utils;
-
-import com.bogda.service.integration.ALiYunTranslateIntegration;
-import com.bogda.service.integration.ChatGptIntegration;
+package com.bogda.common.utils;
 
 import java.util.*;
 
@@ -12,8 +9,8 @@ public class ModuleCodeUtils {
      */
     public static String getModuleCode(String code) {
         return switch (code) {
-            case "2" -> ChatGptIntegration.GPT_4;
-            default -> ALiYunTranslateIntegration.QWEN_MAX;
+            case "2" -> "gpt-4.1"; // ChatGptIntegration.GPT_4;
+            default -> "qwen-max"; // ALiYunTranslateIntegration.QWEN_MAX;
         };
     }
 

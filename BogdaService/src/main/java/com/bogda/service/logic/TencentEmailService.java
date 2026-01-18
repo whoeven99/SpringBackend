@@ -7,7 +7,7 @@ import com.bogda.service.integration.EmailIntegration;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.controller.request.TencentSendEmailRequest;
 import com.bogda.repository.entity.InitialTaskV2DO;
-import com.bogda.service.utils.ModuleCodeUtils;
+import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.contants.MailChimpConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-import static com.bogda.service.utils.ModuleCodeUtils.getLanguageName;
+import static com.bogda.common.utils.ModuleCodeUtils.getLanguageName;
 
 @RestController
 @RequestMapping("/rating")
