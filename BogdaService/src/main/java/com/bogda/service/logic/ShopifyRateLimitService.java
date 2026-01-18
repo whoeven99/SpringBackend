@@ -1,6 +1,6 @@
 package com.bogda.service.logic;
 
-import com.bogda.service.integration.model.ShopifyExtensions;
+import com.bogda.integration.model.ShopifyExtensions;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.google.common.util.concurrent.RateLimiter;
 import org.springframework.stereotype.Service;

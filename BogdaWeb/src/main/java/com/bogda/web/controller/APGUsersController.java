@@ -1,8 +1,8 @@
 package com.bogda.web.controller;
 
-import com.bogda.service.entity.DO.APGUsersDO;
+import com.bogda.common.entity.DO.APGUsersDO;
 import com.bogda.service.logic.APGUserService;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

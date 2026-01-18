@@ -1,8 +1,8 @@
 package com.bogda.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogda.service.entity.DO.RightsAndInterestsDO;
-import com.bogda.service.entity.DO.UserRightsAndInterestsDO;
+import com.bogda.common.entity.DO.RightsAndInterestsDO;
+import com.bogda.common.entity.DO.UserRightsAndInterestsDO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;

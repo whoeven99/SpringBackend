@@ -1,6 +1,6 @@
 package com.bogda.service.logic.translate.stragety;
 
-import com.bogda.service.context.TranslateContext;
+import com.bogda.common.TranslateContext;
 
 public interface ITranslateStrategyService {
     String getType();

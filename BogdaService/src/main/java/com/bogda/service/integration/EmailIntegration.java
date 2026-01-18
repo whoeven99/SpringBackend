@@ -1,6 +1,6 @@
 package com.bogda.service.integration;
 
-import com.bogda.service.controller.request.TencentSendEmailRequest;
+import com.bogda.common.controller.request.TencentSendEmailRequest;
 import com.bogda.common.contants.MailChimpConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;

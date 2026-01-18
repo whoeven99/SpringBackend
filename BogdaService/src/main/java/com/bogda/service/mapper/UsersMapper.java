@@ -1,7 +1,7 @@
 package com.bogda.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogda.service.entity.DO.UsersDO;
+import com.bogda.common.entity.DO.UsersDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Update;
 

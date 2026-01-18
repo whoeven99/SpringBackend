@@ -2,12 +2,12 @@ package com.bogda.web.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.service.Service.IAPGUsersService;
-import com.bogda.service.entity.DO.APGUserTemplateDO;
-import com.bogda.service.entity.DO.APGUserTemplateMappingDO;
-import com.bogda.service.entity.DO.APGUsersDO;
-import com.bogda.service.entity.DTO.TemplateDTO;
+import com.bogda.common.entity.DO.APGUserTemplateDO;
+import com.bogda.common.entity.DO.APGUserTemplateMappingDO;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.entity.DTO.TemplateDTO;
 import com.bogda.service.logic.APGTemplateService;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,7 +1,7 @@
 package com.bogda.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogda.service.entity.DO.APGCharsOrderDO;
+import com.bogda.common.entity.DO.APGCharsOrderDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Update;
 

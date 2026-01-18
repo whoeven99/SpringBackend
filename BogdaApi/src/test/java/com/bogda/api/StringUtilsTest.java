@@ -1,6 +1,6 @@
 package com.bogda.api;
 
-import com.bogda.service.entity.DO.GlossaryDO;
+import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.common.utils.StringUtils;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,7 @@
 package com.bogda.service.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogda.service.entity.DO.APGUserCounterDO;
+import com.bogda.common.entity.DO.APGUserCounterDO;
 
 public interface IAPGUserCounterService extends IService<APGUserCounterDO> {
     Boolean initUserCounter(String shopName);

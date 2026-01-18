@@ -3,9 +3,9 @@ package com.bogda.service.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IUserSubscriptionsService;
-import com.bogda.service.entity.DO.UserSubscriptionsDO;
+import com.bogda.common.entity.DO.UserSubscriptionsDO;
 import com.bogda.service.mapper.UserSubscriptionsMapper;
-import com.bogda.service.controller.request.UserSubscriptionsRequest;
+import com.bogda.common.controller.request.UserSubscriptionsRequest;
 import org.springframework.stereotype.Service;
 
 @Service

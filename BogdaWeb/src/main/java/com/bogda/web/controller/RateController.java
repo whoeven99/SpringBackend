@@ -1,7 +1,7 @@
 package com.bogda.web.controller;
 
 import com.bogda.service.logic.RateDataService;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,8 +1,8 @@
 package com.bogda.web.controller;
 
 import com.bogda.service.Service.IUserIPSwitchService;
-import com.bogda.service.entity.DO.UserIPSwitchDO;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.UserIPSwitchDO;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

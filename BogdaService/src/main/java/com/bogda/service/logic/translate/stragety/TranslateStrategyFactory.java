@@ -1,6 +1,6 @@
 package com.bogda.service.logic.translate.stragety;
 
-import com.bogda.service.context.TranslateContext;
+import com.bogda.common.TranslateContext;
 import com.bogda.common.exception.FatalException;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.JsonUtils;

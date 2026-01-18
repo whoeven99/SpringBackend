@@ -3,7 +3,7 @@ package com.bogda.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogda.service.entity.DO.PCUserPicturesDO;
+import com.bogda.common.entity.DO.PCUserPicturesDO;
 import com.bogda.service.mapper.PCUserPicturesMapper;
 import org.springframework.stereotype.Service;
 

@@ -5,7 +5,7 @@ import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogda.service.Service.IUserPrivateTranslateService;
-import com.bogda.service.entity.DO.UserPrivateTranslateDO;
+import com.bogda.common.entity.DO.UserPrivateTranslateDO;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

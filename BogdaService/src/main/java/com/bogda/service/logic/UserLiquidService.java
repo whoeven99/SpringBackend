@@ -1,8 +1,8 @@
 package com.bogda.service.logic;
 
 import com.bogda.service.Service.IUserLiquidService;
-import com.bogda.service.entity.DO.UserLiquidDO;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.UserLiquidDO;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
