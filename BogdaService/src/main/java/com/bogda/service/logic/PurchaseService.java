@@ -1,7 +1,7 @@
 package com.bogda.service.logic;
 
 import com.bogda.service.Service.ICurrenciesService;
-import com.bogda.service.entity.DO.CurrenciesDO;
+import com.bogda.common.entity.DO.CurrenciesDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

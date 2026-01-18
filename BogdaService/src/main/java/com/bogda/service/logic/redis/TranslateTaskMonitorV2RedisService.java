@@ -1,6 +1,6 @@
 package com.bogda.service.logic.redis;
 
-import com.bogda.service.integration.RedisIntegration;
+import com.bogda.repository.RedisIntegration;
 import com.bogda.common.utils.AESUtils;
 import com.bogda.common.utils.RedisKeyUtils;
 import org.springframework.beans.factory.annotation.Autowired;

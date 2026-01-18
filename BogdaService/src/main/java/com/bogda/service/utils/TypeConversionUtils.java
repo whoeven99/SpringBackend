@@ -1,11 +1,11 @@
 package com.bogda.service.utils;
 
-import com.bogda.service.controller.request.ResourceTypeRequest;
-import com.bogda.service.controller.request.ShopifyRequest;
-import com.bogda.service.controller.request.TranslateRequest;
-import com.bogda.service.entity.DO.APGOfficialTemplateDO;
-import com.bogda.service.entity.DO.APGUserTemplateDO;
-import com.bogda.service.entity.DTO.TemplateDTO;
+import com.bogda.common.controller.request.ResourceTypeRequest;
+import com.bogda.common.controller.request.ShopifyRequest;
+import com.bogda.common.controller.request.TranslateRequest;
+import com.bogda.common.entity.DO.APGOfficialTemplateDO;
+import com.bogda.common.entity.DO.APGUserTemplateDO;
+import com.bogda.common.entity.DTO.TemplateDTO;
 
 public class TypeConversionUtils {
 

@@ -1,10 +1,10 @@
 package com.bogda.web.controller;
 
 import com.bogda.service.Service.IUserIpService;
-import com.bogda.service.entity.VO.IncludeCrawlerVO;
-import com.bogda.service.entity.VO.NoCrawlerVO;
+import com.bogda.common.entity.VO.IncludeCrawlerVO;
+import com.bogda.common.entity.VO.NoCrawlerVO;
 import com.bogda.service.logic.UserIpService;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.UserIPRedirectionDO;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;

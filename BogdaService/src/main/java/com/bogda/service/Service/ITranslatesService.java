@@ -1,9 +1,9 @@
 package com.bogda.service.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogda.service.entity.DO.TranslatesDO;
-import com.bogda.service.controller.request.TranslateRequest;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.TranslatesDO;
+import com.bogda.common.controller.request.TranslateRequest;
+import com.bogda.common.controller.response.BaseResponse;
 
 import java.util.List;
 

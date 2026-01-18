@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogda.service.entity.DO.PCUsersDO;
+import com.bogda.common.entity.DO.PCUsersDO;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.service.logic.redis.OrdersRedisService;
 import com.bogda.service.mapper.PCUsersMapper;

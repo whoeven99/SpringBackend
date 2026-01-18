@@ -5,11 +5,11 @@ import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.service.Service.IAPGUserGeneratedTaskService;
 import com.bogda.service.Service.IAPGUserPlanService;
 import com.bogda.service.Service.IAPGUsersService;
-import com.bogda.service.entity.DO.APGUserCounterDO;
-import com.bogda.service.entity.DO.APGUsersDO;
-import com.bogda.service.entity.VO.APGTokenVO;
+import com.bogda.common.entity.DO.APGUserCounterDO;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.entity.VO.APGTokenVO;
 import com.bogda.service.logic.APGCharsOrderService;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

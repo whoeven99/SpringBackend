@@ -2,7 +2,7 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IUserIPSwitchService;
-import com.bogda.service.entity.DO.UserIPSwitchDO;
+import com.bogda.common.entity.DO.UserIPSwitchDO;
 import com.bogda.service.mapper.UserIPSwitchMapper;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package com.bogda.service.logic.PCApp;
 
-import com.bogda.service.entity.DO.PCUsersDO;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.PCUsersDO;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCUserSubscriptionsDO;
 import com.bogda.repository.repo.PCOrdersRepo;

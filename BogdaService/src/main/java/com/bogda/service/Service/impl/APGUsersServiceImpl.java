@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGUsersService;
-import com.bogda.service.entity.DO.APGUsersDO;
+import com.bogda.common.entity.DO.APGUsersDO;
 import com.bogda.service.mapper.APGUsersMapper;
 import org.springframework.stereotype.Service;
 

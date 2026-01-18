@@ -1,7 +1,7 @@
 package com.bogda.service.logic.translate.stragety;
 
-import com.bogda.service.context.TranslateContext;
-import com.bogda.service.entity.DO.GlossaryDO;
+import com.bogda.common.TranslateContext;
+import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;

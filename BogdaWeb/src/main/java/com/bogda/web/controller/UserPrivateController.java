@@ -1,8 +1,8 @@
 package com.bogda.web.controller;
 
 import com.bogda.service.logic.UserPrivateService;
-import com.bogda.service.controller.request.UserPrivateRequest;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.request.UserPrivateRequest;
+import com.bogda.common.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

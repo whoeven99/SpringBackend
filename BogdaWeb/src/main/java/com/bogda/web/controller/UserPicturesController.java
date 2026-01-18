@@ -2,11 +2,11 @@ package com.bogda.web.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogda.service.Service.IUserPicturesService;
-import com.bogda.service.entity.DO.UserPicturesDO;
-import com.bogda.service.entity.DTO.SimpleMultipartFileDTO;
+import com.bogda.common.entity.DO.UserPicturesDO;
+import com.bogda.common.entity.DTO.SimpleMultipartFileDTO;
 import com.bogda.integration.aimodel.HunYuanBucketIntegration;
 import com.bogda.service.logic.PCApp.PCUserPicturesService;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;

@@ -1,7 +1,7 @@
 package com.bogda.service.task;
 
 import com.bogda.service.Service.ITranslatesService;
-import com.bogda.service.entity.DO.TranslatesDO;
+import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.service.logic.TencentEmailService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;

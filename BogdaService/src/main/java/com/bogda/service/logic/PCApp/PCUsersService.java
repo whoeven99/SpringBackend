@@ -2,12 +2,12 @@ package com.bogda.service.logic.PCApp;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.service.PCUsersRepo;
-import com.bogda.service.entity.DO.PCUsersDO;
-import com.bogda.service.entity.VO.PCUserPointsVO;
-import com.bogda.service.entity.VO.TranslationCharsVO;
+import com.bogda.common.entity.DO.PCUsersDO;
+import com.bogda.common.entity.VO.PCUserPointsVO;
+import com.bogda.common.entity.VO.TranslationCharsVO;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.service.logic.redis.OrdersRedisService;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.common.utils.ShopifyUtils;
