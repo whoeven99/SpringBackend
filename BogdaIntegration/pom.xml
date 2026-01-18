@@ -26,13 +26,8 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <!-- Spring 依赖 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-
         <!-- Spring Web (HunYuanBucketIntegration 使用 MultipartFile) -->
+        <!-- spring-boot-starter 已通过 spring-boot-starter-web 传递 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -79,59 +74,22 @@
             <version>1.0.160</version>
         </dependency>
 
-        <!-- FastJSON (MicrosoftMachineIntegration 使用) -->
+        <!-- FastJSON (MicrosoftMachineIntegration 使用) - 已通过 BogdaCommon 传递，但显式声明以确保版本一致 -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>2.0.57</version>
         </dependency>
 
-        <!-- Jackson for JSON processing -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-
-        <!-- Spring Context -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-        </dependency>
-
-        <!-- Jsoup for HTML parsing -->
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.15.3</version>
-        </dependency>
-
-        <!-- Apache Commons Text -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <version>1.10.0</version>
-        </dependency>
-
-        <!-- Apache Commons Lang (for StringUtils) -->
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
-        </dependency>
-
-        <!-- Application Insights -->
-        <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>applicationinsights-core</artifactId>
-            <version>2.6.1</version>
-        </dependency>
-
-        <!-- Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.30</version>
-        </dependency>
+        <!-- 以下依赖已通过 BogdaCommon 传递，无需重复声明：
+        - jackson-databind (通过 spring-web 传递)
+        - spring-context (通过 spring-boot-starter 传递)
+        - jsoup
+        - commons-text
+        - commons-lang
+        - applicationinsights-core
+        - lombok
+        -->
 
         <!-- Google Cloud Translate SDK (GoogleMachineIntegration 使用) -->
         <dependency>
