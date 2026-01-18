@@ -9,7 +9,7 @@ import com.bogda.service.entity.DO.TranslatesDO;
 import com.bogda.service.entity.DO.UsersDO;
 import com.bogda.service.entity.VO.SingleReturnVO;
 import com.bogda.service.entity.VO.SingleTranslateVO;
-import com.bogda.service.utils.ModuleCodeUtils;
+import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.enums.ErrorEnum;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
@@ -52,7 +52,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.bogda.service.entity.DO.TranslateResourceDTO.EMAIL_MAP;
 import static com.bogda.service.logic.TaskService.AUTO_TRANSLATE_MAP;
 
 @Component

@@ -8,7 +8,7 @@ import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.ModelTranslateService;
 import com.bogda.common.utils.JsonUtils;
-import com.bogda.service.utils.PromptUtils;
+import com.bogda.common.utils.PromptUtils;
 import com.bogda.common.utils.StringUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;

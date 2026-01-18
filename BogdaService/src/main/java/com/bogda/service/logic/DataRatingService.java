@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.bogda.service.utils.ModuleCodeUtils.getLanguageName;
+import static com.bogda.common.utils.ModuleCodeUtils.getLanguageName;
 
 @Service
 public class DataRatingService {

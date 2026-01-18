@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.bogda.integration.http.BaseHttpIntegration;
 import com.bogda.service.integration.model.ShopifyGraphResponse;
 import com.bogda.service.integration.model.ShopifyResponse;
-import com.bogda.service.controller.request.ShopifyRequest;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
@@ -55,10 +54,6 @@ public class ShopifyHttpIntegration {
     }
 
     public String getInfoByShopify(String shopName, String accessToken, String apiVersion, String query) {
-        ShopifyRequest request = new ShopifyRequest();
-        request.setShopName(shopName);
-        request.setAccessToken(accessToken);
-        request.setApiVersion(apiVersion);
         return String.valueOf(getInfoByShopify(shopName, accessToken, query));
     }
 
