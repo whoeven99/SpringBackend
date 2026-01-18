@@ -53,7 +53,7 @@
             <version>1.18.30</version>
         </dependency>
 
-        <!-- Fastjson (used in PCUsersRepo) -->
+        <!-- Fastjson 通过 BogdaCommon 传递，但为了明确性显式声明 -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -62,8 +62,7 @@
         <dependency>
             <groupId>com.bogda.common</groupId>
             <artifactId>BogdaCommon</artifactId>
-            <version>0.0.2</version>
-            <scope>compile</scope>
+            <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
 

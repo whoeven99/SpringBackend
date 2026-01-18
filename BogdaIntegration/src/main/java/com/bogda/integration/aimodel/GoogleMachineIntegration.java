@@ -1,4 +1,4 @@
-package com.bogda.service.integration;
+package com.bogda.integration.aimodel;
 
 import com.bogda.common.utils.TimeOutUtils;
 import com.bogda.common.utils.AppInsightsUtils;

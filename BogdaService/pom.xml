@@ -82,16 +82,20 @@
             <version>4.5.6</version>
         </dependency>
 
+        <!-- fastjson2 (for com.alibaba.fastjson2) - 部分类使用fastjson2 -->
+        <!-- 注意：fastjson2是fastjson的2.x版本，使用不同的包名 -->
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+            <version>2.0.57</version>
+        </dependency>
+
+        <!-- fastjson (for com.alibaba.fastjson) - 通过BogdaCommon传递，但为了兼容性显式声明 -->
+        <!-- 注意：BogdaService中同时使用了fastjson和fastjson2 -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>2.0.57</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-ai-openai</artifactId>
-            <version>1.0.0-beta.1</version>
         </dependency>
         <!--Azure 存放key value-->
         <dependency>
@@ -164,18 +168,8 @@
             </exclusions>
             <version>1.6.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.volcengine/volc-sdk-java -->
-        <dependency>
-            <groupId>com.volcengine</groupId>
-            <artifactId>volc-sdk-java</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>1.0.160</version>
-        </dependency>
+        <!-- volc-sdk-java 通过 BogdaIntegration 传递，但需要排除 commons-logging -->
+        <!-- 已在 BogdaIntegration 中声明，此处移除避免重复 -->
         <dependency>
             <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
@@ -236,30 +230,12 @@
             </exclusions>
             <version>1.10.0</version>
         </dependency>
-        <!-- 火山模型sdk-->
-        <dependency>
-            <groupId>com.volcengine</groupId>
-            <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
-            <version>0.2.1</version>
-        </dependency>
-        <!-- 腾讯混元模型sdk -->
-        <dependency>
-            <groupId>com.tencentcloudapi</groupId>
-            <artifactId>tencentcloud-sdk-java-hunyuan</artifactId>
-            <version>3.1.1229</version>
-        </dependency>
-        <!-- deepL翻译模型sdk -->
-        <dependency>
-            <groupId>com.deepl.api</groupId>
-            <artifactId>deepl-java</artifactId>
-            <version>1.10.1</version>
-        </dependency>
-        <!--腾讯云存储sdk -->
-        <dependency>
-            <groupId>com.qcloud</groupId>
-            <artifactId>cos_api</artifactId>
-            <version>5.6.227</version>
-        </dependency>
+        <!-- 以下依赖已通过 BogdaIntegration 传递，无需重复声明：
+        - volcengine-java-sdk-ark-runtime
+        - tencentcloud-sdk-java-hunyuan
+        - deepl-java
+        - cos_api
+        -->
         <!-- JUnit5 + Mockito -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -281,18 +257,10 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/aidge.jar</systemPath>
         </dependency>
-        <!-- google Gemini相关 -->
-        <dependency>
-            <groupId>com.google.genai</groupId>
-            <artifactId>google-genai</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <!-- google机器翻译 -->
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-translate</artifactId>
-            <version>2.81.0</version>
-        </dependency>
+        <!-- 以下依赖已通过 BogdaIntegration 传递，无需重复声明：
+        - google-genai
+        - google-cloud-translate
+        -->
     </dependencies>
 
     <build>

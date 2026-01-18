@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogda.service.Service.IUserPicturesService;
 import com.bogda.service.entity.DO.UserPicturesDO;
 import com.bogda.service.entity.DTO.SimpleMultipartFileDTO;
-import com.bogda.service.integration.HunYuanBucketIntegration;
+import com.bogda.integration.aimodel.HunYuanBucketIntegration;
 import com.bogda.service.logic.PCApp.PCUserPicturesService;
 import com.bogda.service.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
