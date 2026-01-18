@@ -77,6 +77,12 @@
             <version>3.5.5</version>
         </dependency>
 
+        <!-- Jakarta Validation API (for @NotBlank, @NotNull, etc.) -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
