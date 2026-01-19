@@ -21,9 +21,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_BAR;
 
 @Service
 public class APGUserGeneratedTaskService {
@@ -37,6 +36,9 @@ public class APGUserGeneratedTaskService {
     public static final Integer INITIALIZATION = 1;
     public static final Integer GENERATING = 2;
     public static final Integer FINISHED = 3;
+    public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
+    public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
+    public static final ConcurrentHashMap<Long, Boolean> GENERATE_SHOP_STOP_FLAG = new ConcurrentHashMap<>(); //判断用户是否停止生成描述
 
     /**
      * 初始化或更新相关数据
@@ -81,7 +83,7 @@ public class APGUserGeneratedTaskService {
                     .in(APGUserGeneratedSubtaskDO::getStatus, Arrays.asList(0, 3, 4))
                     .eq(APGUserGeneratedSubtaskDO::getUserId, userDO.getId())).size();
             generateProgressBarVO = apgUserGeneratedTaskDOToGenerateProgressBarVO(taskDO, totalCount, unfinishedCount);
-            generateProgressBarVO.setProductTitle(GENERATE_SHOP_BAR.get(userDO.getId()));
+            generateProgressBarVO.setProductTitle(APGUserGeneratedTaskService.GENERATE_SHOP_BAR.get(userDO.getId()));
             generateProgressBarVO.setStatus(GENERATE_STATE_BAR.get(userDO.getId()));
             generateProgressBarVO.setTaskTime(taskDO.getUpdateTime());//获取对应的时间
             //获取产品标题

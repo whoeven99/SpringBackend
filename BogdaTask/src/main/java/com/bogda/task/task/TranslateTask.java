@@ -1,4 +1,4 @@
-package com.bogda.service.task;
+package com.bogda.task.task;
 
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
