@@ -13,7 +13,6 @@ import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.request.CloudServiceRequest;
 import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.service.task.IpEmailTask;
 import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.utils.AppInsightsUtils;
 import kotlin.Pair;
@@ -30,8 +29,6 @@ public class TestController {
     private RedisProcessService redisProcessService;
     @Autowired
     private RedisDataReportService redisDataReportService;
-    @Autowired
-    private IpEmailTask ipEmailTask;
     @Autowired
     private TranslateV2Service translateV2Service;
     @Autowired
@@ -120,11 +117,6 @@ public class TestController {
     public Map<String, Object> monitor() {
         Map<String, Object> responseMap = new HashMap<>();
         return responseMap;
-    }
-
-    @GetMapping("/testEmail")
-    public void testEmail() {
-        ipEmailTask.sendEmailTask();
     }
 
     @GetMapping("/testAutoEmail")

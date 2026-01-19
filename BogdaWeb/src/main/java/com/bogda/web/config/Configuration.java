@@ -1,4 +1,4 @@
-package com.bogda.api.config;
+package com.bogda.web.config;
 
 import com.bogda.common.utils.ConfigUtils;
 import org.springframework.core.io.ClassPathResource;

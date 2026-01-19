@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import java.util.Random;
 
 import static com.bogda.service.logic.APGUserGeneratedTaskService.*;
-import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogda.common.utils.PlaceholderUtils.buildDescriptionPrompt;
 import static com.bogda.common.utils.StringUtils.countWords;
 import static com.bogda.service.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
@@ -64,7 +63,7 @@ public class GenerateDescriptionService {
             throw new ClientException(TranslateConstants.CHARACTER_LIMIT);
         }
         // 根据产品id获取相关数据，为生成做铺垫
-        GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
+        APGUserGeneratedTaskService.GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
         // 根据模板id获取模板数据
         TemplateDTO templateById = getTemplateById(generateDescriptionVO.getTemplateId(), usersDO.getId(), generateDescriptionVO.getTemplateType());
         // 根据 ProductDTO 和传入的 GenerateDescriptionVO进行描述生成(暂定qwen模型 图片理解)

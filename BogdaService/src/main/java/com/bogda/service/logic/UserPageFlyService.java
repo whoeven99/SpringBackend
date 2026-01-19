@@ -1,5 +1,6 @@
 package com.bogda.service.logic;
 
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.service.Service.IUserPageFlyService;
 import com.bogda.common.entity.DO.UserPageFlyDO;
 import com.bogda.common.entity.VO.PageFlyVO;
@@ -13,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import static com.bogda.service.task.TranslateTask.AppInsightsUtils;
 
 @Service
 public class UserPageFlyService {
