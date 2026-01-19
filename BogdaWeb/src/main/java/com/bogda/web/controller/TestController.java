@@ -1,6 +1,7 @@
 package com.bogda.web.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.VO.UserDataReportVO;
@@ -18,6 +19,7 @@ import com.bogda.common.utils.AppInsightsUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,8 @@ public class TestController {
     private GoogleMachineIntegration googleMachineIntegration;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
+    @Autowired
+    private RateHttpIntegration rateHttpIntegration;
 
     @PostMapping("/test")
     public Pair<String, Integer> test(@RequestBody TranslateRequest request) {
@@ -129,5 +133,11 @@ public class TestController {
         for (TranslatesDO translatesDO : translatesDOList) {
             translateV2Service.testAutoTranslate(shopName, translatesDO.getSource(), translatesDO.getTarget());
         }
+    }
+
+    // 手动获取rate
+    @GetMapping("/testRate")
+    public void testRate() {
+        rateHttpIntegration.getFixerRate();
     }
 }
