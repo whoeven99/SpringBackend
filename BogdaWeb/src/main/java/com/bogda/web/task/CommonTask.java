@@ -15,10 +15,10 @@ public class CommonTask {
 
     private final Logger log = LoggerFactory.getLogger(CommonTask.class);
 
-    @Scheduled(fixedRate = 20000)
-    public void testJob() {
-        log.info("test Job run successfully");
-    }
+//    @Scheduled(fixedRate = 20000)
+//    public void testJob() {
+//        log.info("test Job run successfully");
+//    }
 
     @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")
