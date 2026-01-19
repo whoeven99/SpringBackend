@@ -1,6 +1,6 @@
-package com.bogda.api.controller;
+package com.bogda.web.controller;
 
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.service.logic.BundleApp.BundleDiscountService;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import org.springframework.beans.factory.annotation.Autowired;

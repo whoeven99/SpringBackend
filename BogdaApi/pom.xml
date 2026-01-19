@@ -74,6 +74,7 @@
             <version>8.0.30</version>
         </dependency>
 
+        <!-- Azure Identity Extensions - 版本由 BOM 管理 -->
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-identity-extensions</artifactId>
@@ -164,6 +165,26 @@
             <version>1.0.0</version>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/com.azure/azure-cosmos -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-cosmos</artifactId>
+            <version>4.73.1</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-spring-data-cosmos</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>6.1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

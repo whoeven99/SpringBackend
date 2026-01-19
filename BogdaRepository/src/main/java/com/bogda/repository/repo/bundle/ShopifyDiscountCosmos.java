@@ -96,6 +96,7 @@ public class ShopifyDiscountCosmos {
             List<T> result = new ArrayList<>();
 
             CosmosPagedIterable<T> ts = discountContainer.queryItems(querySpec, options, resultClass);
+
             ts.forEach(result::add);
             return result;
         } catch (Exception e) {
