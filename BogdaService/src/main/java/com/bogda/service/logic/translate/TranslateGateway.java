@@ -1,7 +1,7 @@
 package com.bogda.service.logic.translate;
 
-import com.bogda.service.integration.ChatGptIntegration;
-import com.bogda.service.integration.GoogleMachineIntegration;
+import com.bogda.integration.aimodel.ChatGptIntegration;
+import com.bogda.integration.aimodel.GoogleMachineIntegration;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

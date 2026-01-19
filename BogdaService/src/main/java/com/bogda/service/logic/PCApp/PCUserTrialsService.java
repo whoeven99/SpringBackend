@@ -1,7 +1,7 @@
 package com.bogda.service.logic.PCApp;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.repository.repo.PCOrdersRepo;

@@ -1,6 +1,6 @@
 package com.bogda.service.logic.redis;
 
-import com.bogda.service.integration.RedisIntegration;
+import com.bogda.repository.RedisIntegration;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang.StringUtils;

@@ -3,7 +3,7 @@ package com.bogda.service.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IUserPageFlyService;
-import com.bogda.service.entity.DO.UserPageFlyDO;
+import com.bogda.common.entity.DO.UserPageFlyDO;
 import com.bogda.service.mapper.UserPageFlyMapper;
 import org.springframework.stereotype.Service;
 

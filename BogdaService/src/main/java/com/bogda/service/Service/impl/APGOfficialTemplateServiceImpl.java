@@ -3,7 +3,7 @@ package com.bogda.service.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGOfficialTemplateService;
-import com.bogda.service.entity.DO.APGOfficialTemplateDO;
+import com.bogda.common.entity.DO.APGOfficialTemplateDO;
 import com.bogda.service.mapper.APGOfficialTemplateMapper;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
 package com.bogda.service.logic.translate.stragety;
 
-import com.bogda.service.context.TranslateContext;
+import com.bogda.common.TranslateContext;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;

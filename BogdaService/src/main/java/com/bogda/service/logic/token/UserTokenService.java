@@ -1,7 +1,7 @@
 package com.bogda.service.logic.token;
 
 import com.bogda.service.Service.impl.TranslationCounterServiceImpl;
-import com.bogda.service.entity.DO.TranslationCounterDO;
+import com.bogda.common.entity.DO.TranslationCounterDO;
 import com.bogda.service.logic.redis.RedisTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

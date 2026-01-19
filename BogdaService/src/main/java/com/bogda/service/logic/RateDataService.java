@@ -1,18 +1,14 @@
 package com.bogda.service.logic;
 
-import com.bogda.service.integration.RateHttpIntegration;
+import com.bogda.integration.aimodel.RateHttpIntegration;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class RateDataService {
-
-    private final Map<String, LinkedHashMap<String, Object>> value = new ConcurrentHashMap<>();
-
     private static final Map<String, Object> rateRule = new ConcurrentHashMap<>();
 
     static {
@@ -27,7 +23,7 @@ public class RateDataService {
 
     public Map<String, Object> getData() {
         // 返回不可修改的Map视图以防止外部修改
-        return Collections.unmodifiableMap(value);
+        return Collections.unmodifiableMap(RateHttpIntegration.rateMap);
     }
 
     //前端传入两个货币代码，返回他们对应的汇率。获取rateMap数据，因为是以欧元为基础，所以要做处理

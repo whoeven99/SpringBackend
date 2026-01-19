@@ -2,9 +2,9 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IItemsService;
-import com.bogda.service.entity.DO.ItemsDO;
+import com.bogda.common.entity.DO.ItemsDO;
 import com.bogda.service.mapper.ItemsMapper;
-import com.bogda.service.controller.request.ShopifyRequest;
+import com.bogda.common.controller.request.ShopifyRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

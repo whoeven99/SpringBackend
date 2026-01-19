@@ -3,7 +3,7 @@ package com.bogda.service.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.ICharsOrdersService;
-import com.bogda.service.entity.DO.CharsOrdersDO;
+import com.bogda.common.entity.DO.CharsOrdersDO;
 import com.bogda.service.mapper.CharsOrdersMapper;
 import org.springframework.stereotype.Service;
 

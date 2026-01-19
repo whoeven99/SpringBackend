@@ -1,13 +1,13 @@
 package com.bogda.service.logic;
 
+import com.bogda.common.entity.DO.*;
 import com.bogda.service.Service.*;
 import com.bogda.service.utils.CurrencyConfig;
-import com.bogda.service.entity.DO.*;
 import com.bogda.service.integration.EmailIntegration;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
-import com.bogda.service.controller.request.TencentSendEmailRequest;
+import com.bogda.common.controller.request.TencentSendEmailRequest;
 import com.bogda.repository.entity.InitialTaskV2DO;
-import com.bogda.service.utils.ModuleCodeUtils;
+import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.contants.MailChimpConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import static com.bogda.service.utils.StringUtils.parseShopName;
+import static com.bogda.common.utils.StringUtils.parseShopName;
 
 @Component
 public class TencentEmailService {

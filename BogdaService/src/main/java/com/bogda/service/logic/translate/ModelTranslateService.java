@@ -1,9 +1,9 @@
 package com.bogda.service.logic.translate;
 
 import com.bogda.service.integration.ALiYunTranslateIntegration;
-import com.bogda.service.integration.ChatGptIntegration;
-import com.bogda.service.integration.GeminiIntegration;
-import com.bogda.service.integration.GoogleMachineIntegration;
+import com.bogda.integration.aimodel.ChatGptIntegration;
+import com.bogda.integration.aimodel.GeminiIntegration;
+import com.bogda.integration.aimodel.GoogleMachineIntegration;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import kotlin.Pair;

@@ -1,8 +1,8 @@
 package com.bogda.service.logic;
 
 import com.bogda.service.Service.IGlossaryService;
-import com.bogda.service.entity.DO.GlossaryDO;
-import com.bogda.service.utils.StringUtils;
+import com.bogda.common.entity.DO.GlossaryDO;
+import com.bogda.common.utils.StringUtils;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

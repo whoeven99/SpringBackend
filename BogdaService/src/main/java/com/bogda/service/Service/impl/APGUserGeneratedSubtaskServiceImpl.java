@@ -2,7 +2,7 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGUserGeneratedSubtaskService;
-import com.bogda.service.entity.DO.APGUserGeneratedSubtaskDO;
+import com.bogda.common.entity.DO.APGUserGeneratedSubtaskDO;
 import com.bogda.service.mapper.APGUserGeneratedSubtaskMapper;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;

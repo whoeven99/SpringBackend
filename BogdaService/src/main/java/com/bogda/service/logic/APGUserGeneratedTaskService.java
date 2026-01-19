@@ -5,13 +5,13 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogda.service.Service.IAPGUserGeneratedSubtaskService;
 import com.bogda.service.Service.IAPGUserGeneratedTaskService;
 import com.bogda.service.Service.IAPGUsersService;
-import com.bogda.service.entity.DO.APGUserGeneratedSubtaskDO;
-import com.bogda.service.entity.DO.APGUserGeneratedTaskDO;
-import com.bogda.service.entity.DO.APGUsersDO;
-import com.bogda.service.entity.VO.GenerateDescriptionVO;
-import com.bogda.service.entity.VO.GenerateDescriptionsVO;
-import com.bogda.service.entity.VO.GenerateEmailVO;
-import com.bogda.service.entity.VO.GenerateProgressBarVO;
+import com.bogda.common.entity.DO.APGUserGeneratedSubtaskDO;
+import com.bogda.common.entity.DO.APGUserGeneratedTaskDO;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.entity.VO.GenerateDescriptionVO;
+import com.bogda.common.entity.VO.GenerateDescriptionsVO;
+import com.bogda.common.entity.VO.GenerateEmailVO;
+import com.bogda.common.entity.VO.GenerateProgressBarVO;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
@@ -24,8 +24,6 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_BAR;
-import static com.bogda.service.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
-import static com.bogda.service.utils.TypeConversionUtils.generateDescriptionsVOToGenerateDescriptionVO;
 
 @Service
 public class APGUserGeneratedTaskService {
@@ -96,6 +94,18 @@ public class APGUserGeneratedTaskService {
         return generateProgressBarVO;
     }
 
+    public static GenerateProgressBarVO apgUserGeneratedTaskDOToGenerateProgressBarVO(APGUserGeneratedTaskDO apgUserGeneratedTaskDO, Integer totalCount, Integer unfinishedCount){
+        GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
+        generateProgressBarVO.setAllCount(totalCount);
+        generateProgressBarVO.setUnfinishedCount(unfinishedCount);
+        generateProgressBarVO.setTaskStatus(apgUserGeneratedTaskDO.getTaskStatus());
+        generateProgressBarVO.setTaskModel(apgUserGeneratedTaskDO.getTaskModel());
+        generateProgressBarVO.setTaskData(apgUserGeneratedTaskDO.getTaskData());
+        generateProgressBarVO.setUserId(apgUserGeneratedTaskDO.getUserId());
+        generateProgressBarVO.setId(apgUserGeneratedTaskDO.getId());
+        return generateProgressBarVO;
+    }
+
     @Async
     public void batchGenerateDescription(APGUsersDO usersDO, String shopName, GenerateDescriptionsVO generateDescriptionsVO) {
         //将任务id改为2
@@ -125,6 +135,23 @@ public class APGUserGeneratedTaskService {
             AppInsightsUtils.trackException(e);
 //            AppInsightsUtils.trackTrace("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
         }
+    }
+
+    private GenerateDescriptionVO generateDescriptionsVOToGenerateDescriptionVO(String productId,GenerateDescriptionsVO generateDescriptionsVO){
+        GenerateDescriptionVO generateDescriptionVO = new GenerateDescriptionVO();
+        generateDescriptionVO.setTemplateType(generateDescriptionsVO.getTemplateType());
+        generateDescriptionVO.setTemplateId(generateDescriptionsVO.getTemplateId());
+        generateDescriptionVO.setModel(generateDescriptionsVO.getModel());
+        generateDescriptionVO.setLanguage(generateDescriptionsVO.getLanguage());
+        generateDescriptionVO.setBrandSlogan(generateDescriptionsVO.getBrandSlogan());
+        generateDescriptionVO.setBrandTone(generateDescriptionsVO.getBrandTone());
+        generateDescriptionVO.setBrandWord(generateDescriptionsVO.getBrandWord());
+        generateDescriptionVO.setSeoKeywords(generateDescriptionsVO.getSeoKeywords());
+        generateDescriptionVO.setTextTone(generateDescriptionsVO.getTextTone());
+        generateDescriptionVO.setProductId(productId);
+        generateDescriptionVO.setContentType(generateDescriptionsVO.getContentType());
+        generateDescriptionVO.setPageType(generateDescriptionsVO.getPageType());
+        return generateDescriptionVO;
     }
 
     /**

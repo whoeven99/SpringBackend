@@ -1,12 +1,12 @@
 package com.bogda.service.task;
 
 import com.bogda.service.Service.IWidgetConfigurationsService;
-import com.bogda.service.entity.DO.WidgetConfigurationsDO;
+import com.bogda.common.entity.DO.WidgetConfigurationsDO;
 import com.bogda.service.logic.TencentEmailService;
 import com.bogda.service.logic.UserIpService;
 import com.bogda.repository.entity.UserIPCountDO;
 import com.bogda.repository.repo.UserIPCountRepo;
-import com.bogda.service.utils.ModuleCodeUtils;
+import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;

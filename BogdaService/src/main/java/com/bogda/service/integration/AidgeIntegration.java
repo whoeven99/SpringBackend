@@ -5,7 +5,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.bogda.service.logic.PCApp.PCUserPicturesService;
 import com.bogda.service.logic.token.UserTokenService;
-import com.bogda.service.controller.response.SignResponse;
+import com.bogda.common.controller.response.SignResponse;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;

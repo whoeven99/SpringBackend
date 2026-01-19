@@ -36,33 +36,45 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.bogda.service</groupId>
-            <artifactId>BogdaService</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
+        <!-- 以下依赖已通过 BogdaApi -> BogdaService 传递，无需重复声明：
+        - spring-boot-starter-web
+        - spring-boot-starter-actuator
+        - spring-boot-starter-data-redis
+        - spring-boot-starter-test
+        - mssql-jdbc
+        - mysql-connector-java
+        - azure-identity-extensions
+        - httpclient
+        - fastjson
+        - azure-ai-openai
+        - spring-cloud-azure-starter-keyvault
+        - lombok (通过BogdaCommon传递)
+        - applicationinsights-core (通过BogdaCommon传递)
+        - applicationinsights-web
+        - jsoup (通过BogdaCommon传递)
+        - mybatis-plus-spring-boot3-starter
+        - alimt20181012
+        - tea-openapi
+        - dashscope-sdk-java
+        - openai-java
+        - volc-sdk-java (通过BogdaIntegration传递)
+        - javax.annotation-api
+        - jedis
+        - druid-spring-boot-3-starter
+        - jtokkit
+        - tencentcloud-sdk-java-ses
+        - commons-csv
+        - commons-text (通过BogdaCommon传递)
+        - volcengine-java-sdk-ark-runtime (通过BogdaIntegration传递)
+        - tencentcloud-sdk-java-hunyuan (通过BogdaIntegration传递)
+        - deepl-java (通过BogdaIntegration传递)
+        - cos_api (通过BogdaIntegration传递)
+        - junit-jupiter
+        - mockito-core
+        - aidge
+        - google-genai (通过BogdaIntegration传递)
+        - google-cloud-translate (通过BogdaIntegration传递)
+        -->
     </dependencies>
 
     <build>

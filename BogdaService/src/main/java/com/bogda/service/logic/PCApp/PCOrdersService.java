@@ -1,7 +1,7 @@
 package com.bogda.service.logic.PCApp;
 
-import com.bogda.service.entity.DO.PCUsersDO;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.PCUsersDO;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCUserSubscriptionsDO;
 import com.bogda.repository.repo.PCOrdersRepo;
@@ -10,7 +10,7 @@ import com.bogda.repository.repo.PCUserSubscriptionsRepo;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
-import com.bogda.service.utils.ShopifyUtils;
+import com.bogda.common.utils.ShopifyUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
