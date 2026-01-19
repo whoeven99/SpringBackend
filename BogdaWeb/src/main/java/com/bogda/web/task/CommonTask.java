@@ -20,7 +20,7 @@ public class CommonTask {
 //        log.info("test Job run successfully");
 //    }
 
-    @PostConstruct
+//    @PostConstruct
     @Scheduled(cron = "0 15 1 ? * *")
     public void getRate() {
         try {
