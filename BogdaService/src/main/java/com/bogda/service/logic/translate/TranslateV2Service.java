@@ -693,7 +693,7 @@ public class TranslateV2Service {
                     translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
                 }
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
-                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, taskList.size(),
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, translatedValueMap.size(),
                         context.getUsedToken(), context.getTranslatedChars());
             }
 

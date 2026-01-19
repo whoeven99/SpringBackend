@@ -22,9 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP;
-import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_STOP_FLAG;
-
 @RestController
 @RequestMapping("/apg/userGeneratedTask")
 @EnableAsync
@@ -90,7 +87,7 @@ public class APGUserGeneratedTaskController {
             // 根据shopName获取用户数据
             APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
             //将用户暂停标志改为false
-            GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), false);
+            APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), false);
             // 获取用户最大额度限制
             Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
             //判断额度是否足够，然后决定是否继续调用
@@ -126,7 +123,7 @@ public class APGUserGeneratedTaskController {
      */
     @GetMapping("/getGenerateShop")
     public BaseResponse<Object> getGenerateShop() {
-        return new BaseResponse<>().CreateSuccessResponse(GENERATE_SHOP);
+        return new BaseResponse<>().CreateSuccessResponse(APGUserGeneratedTaskService.GENERATE_SHOP);
     }
 
     /**
@@ -136,7 +133,7 @@ public class APGUserGeneratedTaskController {
     public BaseResponse<Object> deleteGenerateShop(@RequestParam String shopName) {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
-        GENERATE_SHOP.remove(usersDO.getId());
+        APGUserGeneratedTaskService.GENERATE_SHOP.remove(usersDO.getId());
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
@@ -147,7 +144,7 @@ public class APGUserGeneratedTaskController {
     public BaseResponse<Object> stopBatchGenerateDescription(@RequestParam String shopName) {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
-        Boolean result = GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
+        Boolean result = APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
         AppInsightsUtils.trackTrace("stopBatchGenerateDescription " + shopName + " 停止翻译标识 : " + result);
         //将任务和子任务的状态改为1
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
@@ -163,6 +160,6 @@ public class APGUserGeneratedTaskController {
      */
     @GetMapping("/getStopFlag")
     public BaseResponse<Object> getStopFlag() {
-        return new BaseResponse<>().CreateSuccessResponse(GENERATE_SHOP_STOP_FLAG);
+        return new BaseResponse<>().CreateSuccessResponse(APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG);
     }
 }

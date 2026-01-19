@@ -1,4 +1,4 @@
-package com.bogda.service.task;
+package com.bogda.web.task;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.service.Service.*;
@@ -11,6 +11,7 @@ import com.bogda.common.entity.VO.GenerateDescriptionVO;
 import com.bogda.common.entity.VO.GenerateDescriptionsVO;
 import com.bogda.common.entity.VO.GenerateEmailVO;
 import com.bogda.common.exception.ClientException;
+import com.bogda.service.logic.APGUserGeneratedTaskService;
 import com.bogda.service.logic.GenerateDescriptionService;
 import com.bogda.service.logic.TencentEmailService;
 import com.bogda.common.contants.TranslateConstants;
@@ -51,9 +52,6 @@ public class GenerateDbTask {
     private IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
     @Autowired
     private TencentEmailService tencentEmailService;
-    public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
-    public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
-    public static final ConcurrentHashMap<Long, Boolean> GENERATE_SHOP_STOP_FLAG = new ConcurrentHashMap<>(); //判断用户是否停止生成描述
 
 
     // 每3秒钟检查一次是否有闲置线程
@@ -65,8 +63,8 @@ public class GenerateDbTask {
         for (APGUserGeneratedSubtaskDO subtaskDO : list
         ) {
             // 一个用户同一时间只能翻译一个
-            if (!GENERATE_SHOP.contains(subtaskDO.getUserId())) {
-                GENERATE_SHOP.add(subtaskDO.getUserId());
+            if (!APGUserGeneratedTaskService.GENERATE_SHOP.contains(subtaskDO.getUserId())) {
+                APGUserGeneratedTaskService.GENERATE_SHOP.add(subtaskDO.getUserId());
                 executorService.submit(() -> {
                     AppInsightsUtils.trackTrace("用户 " + subtaskDO.getUserId() + " 开始生成 子任务： " + subtaskDO.getSubtaskId());
                     try {
@@ -103,7 +101,7 @@ public class GenerateDbTask {
         GenerateDescriptionVO gvo;
         CharacterCountUtils counter = new CharacterCountUtils();
         try {
-            if (GENERATE_SHOP_STOP_FLAG.get(usersDO.getId())) {
+            if (APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.get(usersDO.getId())) {
                 return;
             }
             gvo = JsonUtils.OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateDescriptionVO.class);
@@ -114,7 +112,7 @@ public class GenerateDbTask {
             //将该任务状态改为4
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 4);
         } catch (ClientException e1) {
-            GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
+            APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 3);
             iapgUserGeneratedTaskService.updateStatusByUserId(usersDO.getId(), 3);
             AppInsightsUtils.trackTrace(usersDO.getShopName() + " 用户 fixGenerateSubtask errors ：" + e1);
@@ -130,7 +128,7 @@ public class GenerateDbTask {
                 iapgUserGeneratedSubtaskService.removeById(subtaskDO.getSubtaskId());
             }
             //删除限制
-            GENERATE_SHOP.remove(subtaskDO.getUserId());
+            APGUserGeneratedTaskService.GENERATE_SHOP.remove(subtaskDO.getUserId());
         }
 
 
@@ -145,7 +143,7 @@ public class GenerateDbTask {
         if (taskDO.getTaskStatus() == 3) {
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 3);
             //删除限制
-            GENERATE_SHOP.remove(subtaskDO.getUserId());
+            APGUserGeneratedTaskService.GENERATE_SHOP.remove(subtaskDO.getUserId());
             return;
         }
         //根据用户id，获取对应数据
@@ -179,7 +177,7 @@ public class GenerateDbTask {
         } catch (Exception e) {
             AppInsightsUtils.trackTrace("FatalException " + subtaskDO.getUserId() + " 用户 发送邮件接口 errors ：" + e);
             //删除限制
-            GENERATE_SHOP.remove(subtaskDO.getUserId());
+            APGUserGeneratedTaskService.GENERATE_SHOP.remove(subtaskDO.getUserId());
             // 将状态改为4
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 4);
             iapgUserGeneratedTaskService.updateStatusByUserId(subtaskDO.getUserId(), 4);
@@ -190,7 +188,7 @@ public class GenerateDbTask {
                 iapgUserGeneratedSubtaskService.removeById(subtaskDO.getSubtaskId());
             }
             //删除限制
-            GENERATE_SHOP.remove(subtaskDO.getUserId());
+            APGUserGeneratedTaskService.GENERATE_SHOP.remove(subtaskDO.getUserId());
             //将这次任务的token数清零
             iapgUserCounterService.updateCharsByUserId(usersDO.getId());
         }

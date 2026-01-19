@@ -1,4 +1,4 @@
-package com.bogda.task.task;
+package com.bogda.web.task;
 
 import com.bogda.integration.aimodel.RateHttpIntegration;
 import org.slf4j.Logger;
