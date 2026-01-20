@@ -67,6 +67,12 @@
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-identity-extensions</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
             <version>1.1.5</version>
         </dependency>
 
@@ -101,6 +107,12 @@
         <dependency>
             <groupId>com.azure.spring</groupId>
             <artifactId>spring-cloud-azure-starter-keyvault</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
             <version>5.16.0</version>
         </dependency>
         <!-- 以下依赖已通过 BogdaCommon 传递，无需重复声明：
@@ -111,6 +123,12 @@
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>applicationinsights-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
             <version>2.6.1</version>
         </dependency>
 
