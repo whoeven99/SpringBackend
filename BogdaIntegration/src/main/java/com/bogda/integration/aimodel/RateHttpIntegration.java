@@ -15,11 +15,11 @@ public class RateHttpIntegration {
     @Autowired
     private BaseHttpIntegration baseHttpIntegration;
 
-    public static Map<String, Double> rateMap = new HashMap<>();
-
-    // TODO 这里的rateMap改成privite，然后加一个getter方法
-
-    public void getFixerRate() {
+    /**
+     * 从 Fixer 拉取汇率（base=EUR），返回当次结果。
+     * 由调用方决定如何缓存（例如写入 Redis）。
+     */
+    public Map<String, Double> getFixerRate() {
         String url = "https://api.apilayer.com/fixer/latest?base=EUR" +
                 "&symbols=AFN,ALL,ARS,AOA,AMD,AWG,AUD,AZN,BDT,BSD,BHD,BBD,BIF,BYN,BZD,BMD,BTN,BAM,BRL,GBP,BOB,BWP,BND,BGN,DZD,MMK,KHR," +
                 "CAD,CVE,KYD,XAF,CLP,CNY,COP,KMF,CDF,CRC,HRK,CZK,DKK,DJF,DOP,XCD,EGP,ERN,ETB,EUR,FKP,XPF,FJD,GIP,GMD,GHS" +
@@ -30,15 +30,15 @@ public class RateHttpIntegration {
         String response = baseHttpIntegration.httpGet(url, Map.of("apikey", ConfigUtils.getConfig("Fixer_Api_Key")));
         if (response == null){
             AppInsightsUtils.trackTrace("FatalException 每日须看 getFixerRate 获取汇率失败");
-            return;
+            return new HashMap<>();
         }
         JSONObject jsonObject = JSONObject.parseObject(response);
         JSONObject json = jsonObject.getJSONObject("rates");
+        Map<String, Double> rates = new HashMap<>();
         if (json != null) {
-            //对json做遍历将每条数据存储到rateMap缓存中
-            json.forEach((key, value) -> {
-                rateMap.put(key, Double.valueOf(value.toString()));
-            });
+            // 对 json 做遍历，将每条数据存储到 Map 中
+            json.forEach((key, value) -> rates.put(key, Double.valueOf(value.toString())));
         }
+        return rates;
     }
 }
