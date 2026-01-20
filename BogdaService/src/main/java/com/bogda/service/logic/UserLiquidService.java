@@ -1,6 +1,6 @@
 package com.bogda.service.logic;
 
-import com.bogda.service.Service.IUserLiquidService;
+import com.bogda.repository.sql.IUserLiquidService;
 import com.bogda.common.entity.DO.UserLiquidDO;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.JsonUtils;

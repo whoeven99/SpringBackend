@@ -1,7 +1,7 @@
 package com.bogda.web.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bogda.service.Service.IUserPicturesService;
+import com.bogda.repository.sql.IUserPicturesService;
 import com.bogda.common.entity.DO.UserPicturesDO;
 import com.bogda.common.entity.DTO.SimpleMultipartFileDTO;
 import com.bogda.integration.aimodel.HunYuanBucketIntegration;

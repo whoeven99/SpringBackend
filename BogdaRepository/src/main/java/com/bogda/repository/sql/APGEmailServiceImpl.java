@@ -1,9 +1,7 @@
-package com.bogda.service.Service.impl;
+package com.bogda.repository.sql;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogda.service.Service.IAPGEmailService;
 import com.bogda.common.entity.DO.APGEmailDO;
-import com.bogda.service.mapper.APGEmailMapper;
 import org.springframework.stereotype.Service;
 
 @Service

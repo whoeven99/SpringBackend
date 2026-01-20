@@ -1,4 +1,4 @@
-package com.bogda.service.mapper;
+package com.bogda.repository.sql;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.bogda.common.entity.DO.UserPageFlyDO;

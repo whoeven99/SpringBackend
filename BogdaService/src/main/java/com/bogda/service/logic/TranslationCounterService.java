@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogda.common.entity.DO.*;
+import com.bogda.repository.sql.ISubscriptionPlansService;
+import com.bogda.repository.sql.IUserTrialsService;
 import com.bogda.service.Service.*;
 import com.bogda.common.entity.VO.TranslationCharsVO;
 import com.bogda.service.logic.redis.OrdersRedisService;

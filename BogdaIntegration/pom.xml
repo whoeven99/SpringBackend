@@ -54,6 +54,19 @@
             <version>3.1.1229</version>
         </dependency>
 
+        <!-- 腾讯云 SES SDK (EmailIntegration 使用) -->
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-ses</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>3.1.1129</version>
+        </dependency>
+
         <!-- 火山引擎 SDK (HuoShanIntegration 使用) -->
         <dependency>
             <groupId>com.volcengine</groupId>

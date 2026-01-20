@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogda.common.controller.request.*;
 import com.bogda.common.entity.DO.*;
+import com.bogda.repository.sql.ISubscriptionPlansService;
+import com.bogda.repository.sql.IUserTrialsService;
 import com.bogda.service.Service.*;
 import com.bogda.common.entity.VO.SubscriptionVO;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;

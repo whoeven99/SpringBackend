@@ -1,6 +1,6 @@
 package com.bogda.task.task;
 
-import com.bogda.service.Service.IWidgetConfigurationsService;
+import com.bogda.repository.sql.IWidgetConfigurationsService;
 import com.bogda.common.entity.DO.WidgetConfigurationsDO;
 import com.bogda.service.logic.TencentEmailService;
 import com.bogda.service.logic.UserIpService;

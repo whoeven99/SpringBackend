@@ -1,6 +1,6 @@
 package com.bogda.web.controller;
 
-import com.bogda.service.Service.IWidgetConfigurationsService;
+import com.bogda.repository.sql.IWidgetConfigurationsService;
 import com.bogda.common.entity.DO.WidgetConfigurationsDO;
 import com.bogda.service.logic.UserIpService;
 import com.bogda.common.controller.response.BaseResponse;

@@ -1,6 +1,7 @@
 package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bogda.repository.sql.IWidgetConfigurationsService;
 import com.bogda.service.Service.*;
 import com.bogda.common.entity.DO.CurrenciesDO;
 import com.bogda.common.entity.DO.TranslationCounterDO;

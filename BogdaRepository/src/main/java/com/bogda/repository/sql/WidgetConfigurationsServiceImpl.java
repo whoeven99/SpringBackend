@@ -1,13 +1,11 @@
-package com.bogda.service.Service.impl;
+package com.bogda.repository.sql;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogda.service.Service.IWidgetConfigurationsService;
 import com.bogda.common.entity.DO.WidgetConfigurationsDO;
-import com.bogda.service.mapper.WidgetConfigurationsMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

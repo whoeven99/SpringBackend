@@ -11,7 +11,7 @@ import com.bogda.integration.aimodel.HunYuanBucketIntegration;
 import com.bogda.integration.aimodel.HuoShanIntegration;
 import com.bogda.service.logic.token.UserTokenService;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.service.PCUserPicturesRepo;
+import com.bogda.repository.repo.PCUserPicturesRepo;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;

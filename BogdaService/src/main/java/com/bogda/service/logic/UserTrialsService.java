@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogda.service.Service.ICharsOrdersService;
-import com.bogda.service.Service.IUserTrialsService;
+import com.bogda.repository.sql.IUserTrialsService;
 import com.bogda.common.entity.DO.CharsOrdersDO;
 import com.bogda.common.entity.DO.UserTrialsDO;
 import com.bogda.common.controller.response.BaseResponse;

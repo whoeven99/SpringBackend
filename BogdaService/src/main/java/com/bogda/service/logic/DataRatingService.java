@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.service.Service.IGlossaryService;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
-import com.bogda.service.Service.IWidgetConfigurationsService;
+import com.bogda.repository.sql.IWidgetConfigurationsService;
 import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.DO.UsersDO;

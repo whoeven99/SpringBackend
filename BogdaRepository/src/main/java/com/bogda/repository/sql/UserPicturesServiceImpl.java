@@ -1,11 +1,9 @@
-package com.bogda.service.Service.impl;
+package com.bogda.repository.sql;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogda.service.Service.IUserPicturesService;
 import com.bogda.common.entity.DO.UserPicturesDO;
-import com.bogda.service.mapper.UserPicturesMapper;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -1,11 +1,9 @@
-package com.bogda.service.Service.impl;
+package com.bogda.repository.sql;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogda.service.Service.IUserLiquidService;
 import com.bogda.common.entity.DO.UserLiquidDO;
-import com.bogda.service.mapper.UserLiquidMapper;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;

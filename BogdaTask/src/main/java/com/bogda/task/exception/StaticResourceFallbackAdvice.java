@@ -1,4 +1,4 @@
-package com.bogda.service.exception;
+package com.bogda.task.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;

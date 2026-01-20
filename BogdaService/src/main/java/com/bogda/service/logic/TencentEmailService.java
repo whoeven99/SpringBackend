@@ -1,9 +1,10 @@
 package com.bogda.service.logic;
 
 import com.bogda.common.entity.DO.*;
+import com.bogda.repository.sql.IAPGEmailService;
 import com.bogda.service.Service.*;
 import com.bogda.service.utils.CurrencyConfig;
-import com.bogda.service.integration.EmailIntegration;
+import com.bogda.integration.EmailIntegration;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.common.controller.request.TencentSendEmailRequest;
 import com.bogda.repository.entity.InitialTaskV2DO;
