@@ -1,4 +1,4 @@
-package com.bogda.web.controller;
+package com.bogda.web;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.integration.aimodel.RateHttpIntegration;
@@ -12,20 +12,18 @@ import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.RateRedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.request.CloudServiceRequest;
-import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.utils.AppInsightsUtils;
-import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class TestController {
+    @Value("${test.key:default-test-key}")
+    private String testKey;
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
@@ -43,27 +41,18 @@ public class TestController {
     @Autowired
     private RateRedisService rateRedisService;
 
-    @PostMapping("/test")
-    public Pair<String, Integer> test(@RequestBody TranslateRequest request) {
-//        Pair<String, Integer> stringIntegerPair = geminiIntegration.generateText("gemini-2.5-flash", prompt);
-        Pair<String, Integer> stringIntegerPair = null;
-        if (!ModuleCodeUtils.LANGUAGE_CODES.contains(request.getTarget())) {
-            stringIntegerPair = googleMachineIntegration.googleTranslateWithSDK(request.getContent(), request.getTarget());
-        }
-
-        return stringIntegerPair;
+    @GetMapping("/test")
+    public String test() {
+        // 从当前激活 profile 对应的 application-*.properties 中读取 test.key
+        // test 环境 -> application-test.properties
+        // prod 环境 -> application-prod.properties
+        return testKey;
     }
 
     @GetMapping("/ping")
     public String ping() {
         AppInsightsUtils.trackTrace("SpringBackend Ping Successful");
         return "Ping Successful!";
-    }
-
-    @PostMapping("/gpt")
-    public String chat() {
-//        return chatGptIntegration.chatWithGpt(gptVO.getPrompt(), gptVO.getSourceText(), "ciwishop.myshopify.com", null, new CharacterCountUtils(), 2000000, false);
-        return "";
     }
 
     // 通过测试环境调shopify的API
@@ -114,12 +103,6 @@ public class TestController {
             return new BaseResponse<>().CreateSuccessResponse(userDataReport);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
-    }
-
-    @GetMapping("/monitor")
-    public Map<String, Object> monitor() {
-        Map<String, Object> responseMap = new HashMap<>();
-        return responseMap;
     }
 
     @GetMapping("/testAutoEmail")
