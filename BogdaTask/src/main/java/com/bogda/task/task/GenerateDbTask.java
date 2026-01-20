@@ -1,7 +1,7 @@
-package com.bogda.web.task;
+package com.bogda.task.task;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.service.Service.*;
+import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.entity.DO.APGUserCounterDO;
 import com.bogda.common.entity.DO.APGUserGeneratedSubtaskDO;
 import com.bogda.common.entity.DO.APGUserGeneratedTaskDO;
@@ -11,16 +11,20 @@ import com.bogda.common.entity.VO.GenerateDescriptionVO;
 import com.bogda.common.entity.VO.GenerateDescriptionsVO;
 import com.bogda.common.entity.VO.GenerateEmailVO;
 import com.bogda.common.exception.ClientException;
-import com.bogda.service.logic.APGUserGeneratedTaskService;
-import com.bogda.service.logic.GenerateDescriptionService;
-import com.bogda.service.logic.TencentEmailService;
-import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.JsonUtils;
+import com.bogda.service.Service.IAPGUserCounterService;
+import com.bogda.service.Service.IAPGUserGeneratedSubtaskService;
+import com.bogda.service.Service.IAPGUserGeneratedTaskService;
+import com.bogda.service.Service.IAPGUserPlanService;
+import com.bogda.service.Service.IAPGUsersService;
+import com.bogda.service.logic.APGUserGeneratedTaskService;
+import com.bogda.service.logic.GenerateDescriptionService;
+import com.bogda.service.logic.TencentEmailService;
+import com.bogda.service.logic.redis.GenerateRedisService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +32,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.bogda.service.logic.APGUserGeneratedTaskService.GENERATE_STATE_BAR;
@@ -36,7 +39,6 @@ import static com.bogda.service.logic.APGUserGeneratedTaskService.INITIALIZATION
 import static com.bogda.service.logic.TranslateService.executorService;
 
 @Component
-@EnableScheduling
 public class GenerateDbTask {
     @Autowired
     private IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
@@ -52,19 +54,22 @@ public class GenerateDbTask {
     private IAPGUserGeneratedTaskService iapgUserGeneratedTaskService;
     @Autowired
     private TencentEmailService tencentEmailService;
-
+    @Autowired
+    private GenerateRedisService generateRedisService;
 
     // 每3秒钟检查一次是否有闲置线程
     @Scheduled(fixedDelay = 3000)
     public void scanAndGenerateSubtask() {
         // 获取所有status为0的数据
-        List<APGUserGeneratedSubtaskDO> list = iapgUserGeneratedSubtaskService.list(new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>().eq(APGUserGeneratedSubtaskDO::getStatus, 0).orderBy(true, true, APGUserGeneratedSubtaskDO::getCreateTime));
-        // 循环异步翻译
-        for (APGUserGeneratedSubtaskDO subtaskDO : list
-        ) {
-            // 一个用户同一时间只能翻译一个
-            if (!APGUserGeneratedTaskService.GENERATE_SHOP.contains(subtaskDO.getUserId())) {
-                APGUserGeneratedTaskService.GENERATE_SHOP.add(subtaskDO.getUserId());
+        List<APGUserGeneratedSubtaskDO> list = iapgUserGeneratedSubtaskService.list(
+                new LambdaQueryWrapper<APGUserGeneratedSubtaskDO>()
+                        .eq(APGUserGeneratedSubtaskDO::getStatus, 0)
+                        .orderBy(true, true, APGUserGeneratedSubtaskDO::getCreateTime)
+        );
+        // 循环异步生成
+        for (APGUserGeneratedSubtaskDO subtaskDO : list) {
+            // 一个用户同一时间只能生成一个
+            if (generateRedisService.tryAcquireGenerateShop(subtaskDO.getUserId())) {
                 executorService.submit(() -> {
                     AppInsightsUtils.trackTrace("用户 " + subtaskDO.getUserId() + " 开始生成 子任务： " + subtaskDO.getSubtaskId());
                     try {
@@ -72,7 +77,7 @@ public class GenerateDbTask {
                         if (subtaskDO.getPayload().contains("\"email\":\"EMAIL\"")) {
                             // 调用发送邮件接口
                             sendDescriptionsEmail(subtaskDO);
-                            GENERATE_STATE_BAR.remove(subtaskDO.getUserId());
+                            APGUserGeneratedTaskService.GENERATE_STATE_BAR.remove(subtaskDO.getUserId());
                             return;
                         }
                         // 调用单条生成接口
@@ -83,7 +88,6 @@ public class GenerateDbTask {
                 });
             }
         }
-
     }
 
     /**
@@ -101,7 +105,7 @@ public class GenerateDbTask {
         GenerateDescriptionVO gvo;
         CharacterCountUtils counter = new CharacterCountUtils();
         try {
-            if (APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.get(usersDO.getId())) {
+            if (generateRedisService.getStopFlag(usersDO.getId())) {
                 return;
             }
             gvo = JsonUtils.OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateDescriptionVO.class);
@@ -112,11 +116,11 @@ public class GenerateDbTask {
             //将该任务状态改为4
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 4);
         } catch (ClientException e1) {
-            APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
+            generateRedisService.setStopFlag(usersDO.getId(), true);
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 3);
             iapgUserGeneratedTaskService.updateStatusByUserId(usersDO.getId(), 3);
             AppInsightsUtils.trackTrace(usersDO.getShopName() + " 用户 fixGenerateSubtask errors ：" + e1);
-            //发送对应翻译中断的邮件
+            //发送对应中断的邮件
             sendAPGTaskInterruptEmail(usersDO);
         } catch (Exception e2) {
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 4);
@@ -128,10 +132,8 @@ public class GenerateDbTask {
                 iapgUserGeneratedSubtaskService.removeById(subtaskDO.getSubtaskId());
             }
             //删除限制
-            APGUserGeneratedTaskService.GENERATE_SHOP.remove(subtaskDO.getUserId());
+            generateRedisService.releaseGenerateShop(subtaskDO.getUserId());
         }
-
-
     }
 
     /**
@@ -143,7 +145,7 @@ public class GenerateDbTask {
         if (taskDO.getTaskStatus() == 3) {
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 3);
             //删除限制
-            APGUserGeneratedTaskService.GENERATE_SHOP.remove(subtaskDO.getUserId());
+            generateRedisService.releaseGenerateShop(subtaskDO.getUserId());
             return;
         }
         //根据用户id，获取对应数据
@@ -153,11 +155,9 @@ public class GenerateDbTask {
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 2);
             GenerateEmailVO generateEmailVO = JsonUtils.OBJECT_MAPPER.readValue(subtaskDO.getPayload(), GenerateEmailVO.class);
 
-            //调用发送邮件接口
             //获取该用户这一次任务的所有token值
             APGUserCounterDO userCounter = iapgUserCounterService.getUserCounter(usersDO.getShopName());
 
-            //调用发送邮件接口
             //对taskDO的taskModel做处理，获取空格前的数据
             String taskModel = taskDO.getTaskModel();
             if (taskModel.contains(" ")) {
@@ -176,8 +176,6 @@ public class GenerateDbTask {
             iapgUserCounterService.updateCharsByUserId(usersDO.getId());
         } catch (Exception e) {
             AppInsightsUtils.trackTrace("FatalException " + subtaskDO.getUserId() + " 用户 发送邮件接口 errors ：" + e);
-            //删除限制
-            APGUserGeneratedTaskService.GENERATE_SHOP.remove(subtaskDO.getUserId());
             // 将状态改为4
             iapgUserGeneratedSubtaskService.updateStatusById(subtaskDO.getSubtaskId(), 4);
             iapgUserGeneratedTaskService.updateStatusByUserId(subtaskDO.getUserId(), 4);
@@ -188,7 +186,7 @@ public class GenerateDbTask {
                 iapgUserGeneratedSubtaskService.removeById(subtaskDO.getSubtaskId());
             }
             //删除限制
-            APGUserGeneratedTaskService.GENERATE_SHOP.remove(subtaskDO.getUserId());
+            generateRedisService.releaseGenerateShop(subtaskDO.getUserId());
             //将这次任务的token数清零
             iapgUserCounterService.updateCharsByUserId(usersDO.getId());
         }
@@ -197,7 +195,7 @@ public class GenerateDbTask {
     }
 
     /**
-     * 发送对应翻译中断的邮件
+     * 发送对应中断的邮件
      * 获取用户主任务的taskId，然后获取子任务所有状态3，做遍历对比，获取已完成的产品数，剩余产品数
      * 获取当前的token
      */
@@ -240,3 +238,4 @@ public class GenerateDbTask {
         }
     }
 }
+

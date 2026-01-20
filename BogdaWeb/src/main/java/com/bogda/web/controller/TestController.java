@@ -9,6 +9,7 @@ import com.bogda.integration.aimodel.GoogleMachineIntegration;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
 import com.bogda.service.logic.RedisDataReportService;
 import com.bogda.service.logic.RedisProcessService;
+import com.bogda.service.logic.redis.RateRedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.request.CloudServiceRequest;
 import com.bogda.common.controller.request.TranslateRequest;
@@ -39,6 +40,8 @@ public class TestController {
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
     private RateHttpIntegration rateHttpIntegration;
+    @Autowired
+    private RateRedisService rateRedisService;
 
     @PostMapping("/test")
     public Pair<String, Integer> test(@RequestBody TranslateRequest request) {
@@ -130,6 +133,7 @@ public class TestController {
     // 手动获取rate
     @GetMapping("/testRate")
     public void testRate() {
-        rateHttpIntegration.getFixerRate();
+        var rates = rateHttpIntegration.getFixerRate();
+        rateRedisService.refreshRates(rates);
     }
 }
