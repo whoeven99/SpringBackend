@@ -1,9 +1,10 @@
 package com.bogda.service.logic;
 
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.service.Service.IUserPageFlyService;
-import com.bogda.service.entity.DO.UserPageFlyDO;
-import com.bogda.service.entity.VO.PageFlyVO;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.entity.DO.UserPageFlyDO;
+import com.bogda.common.entity.VO.PageFlyVO;
+import com.bogda.common.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import static com.bogda.service.task.TranslateTask.AppInsightsUtils;
 
 @Service
 public class UserPageFlyService {

@@ -6,18 +6,17 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bogda.common.entity.DO.*;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.service.Service.*;
-import com.bogda.service.entity.DO.*;
 import com.bogda.service.logic.PCApp.PCEmailService;
-import com.bogda.service.controller.request.UserPriceRequest;
+import com.bogda.common.controller.request.UserPriceRequest;
 import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
-import com.bogda.service.entity.DO.PCUsersDO;
 import com.bogda.repository.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,7 +28,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import static com.bogda.service.utils.ShopifyUtils.isQueryValid;
+import static com.bogda.common.utils.ShopifyUtils.isQueryValid;
 
 @Component
 public class TaskService {

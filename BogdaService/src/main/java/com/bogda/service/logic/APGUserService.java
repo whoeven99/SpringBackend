@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.service.Service.IAPGUserPlanService;
 import com.bogda.service.Service.IAPGUsersService;
-import com.bogda.service.entity.DO.APGUsersDO;
+import com.bogda.common.entity.DO.APGUsersDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

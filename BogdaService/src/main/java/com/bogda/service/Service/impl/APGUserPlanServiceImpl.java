@@ -2,7 +2,7 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGUserPlanService;
-import com.bogda.service.entity.DO.APGUserPlanDO;
+import com.bogda.common.entity.DO.APGUserPlanDO;
 import com.bogda.service.mapper.APGUserPlanMapper;
 import org.springframework.stereotype.Service;
 

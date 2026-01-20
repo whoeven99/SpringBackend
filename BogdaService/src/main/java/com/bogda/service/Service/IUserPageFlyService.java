@@ -1,6 +1,6 @@
 package com.bogda.service.Service;
 
-import com.bogda.service.entity.DO.UserPageFlyDO;
+import com.bogda.common.entity.DO.UserPageFlyDO;
 
 import java.util.List;
 

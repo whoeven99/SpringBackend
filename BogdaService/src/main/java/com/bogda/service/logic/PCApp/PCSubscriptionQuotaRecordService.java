@@ -1,6 +1,6 @@
 package com.bogda.service.logic.PCApp;
 
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogda.repository.repo.PCSubscriptionQuotaRecordRepo;
 import com.bogda.common.utils.AppInsightsUtils;

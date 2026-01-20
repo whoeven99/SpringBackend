@@ -13,6 +13,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.bogda.api</groupId>
+            <artifactId>BogdaApi</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.bogda.common</groupId>
             <artifactId>BogdaCommon</artifactId>
             <version>${project.parent.version}</version>
@@ -27,12 +32,6 @@
         <dependency>
             <groupId>com.bogda.integration</groupId>
             <artifactId>BogdaIntegration</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.bogda.repository</groupId>
-            <artifactId>BogdaRepository</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 

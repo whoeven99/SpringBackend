@@ -1,7 +1,7 @@
 package com.bogda.service.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogda.service.entity.DO.UsersDO;
+import com.bogda.common.entity.DO.UsersDO;
 
 public interface IUsersService extends IService<UsersDO> {
     int addUser(UsersDO request);

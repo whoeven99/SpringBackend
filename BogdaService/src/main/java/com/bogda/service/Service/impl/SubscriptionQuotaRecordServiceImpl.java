@@ -2,7 +2,7 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.ISubscriptionQuotaRecordService;
-import com.bogda.service.entity.DO.SubscriptionQuotaRecordDO;
+import com.bogda.common.entity.DO.SubscriptionQuotaRecordDO;
 import com.bogda.service.mapper.SubscriptionQuotaRecordMapper;
 import org.springframework.stereotype.Service;
 

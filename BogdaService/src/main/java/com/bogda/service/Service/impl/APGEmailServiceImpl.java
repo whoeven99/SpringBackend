@@ -2,7 +2,7 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGEmailService;
-import com.bogda.service.entity.DO.APGEmailDO;
+import com.bogda.common.entity.DO.APGEmailDO;
 import com.bogda.service.mapper.APGEmailMapper;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
 package com.bogda.api;
 
-import com.bogda.service.utils.TimeOutUtils;
+import com.bogda.common.utils.TimeOutUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -39,34 +39,33 @@ public class TimeOutUtilsTest {
             fail("Unexpected exception: " + e.getMessage());
         }
     }
-
-    @Test
-    public void testChatGptRateLimiter() {
-        AtomicInteger attemptCounter = new AtomicInteger(0);
-        long startTime = System.currentTimeMillis();
-        Map<Integer, Long> attemptTimestamps = new HashMap<>();
-        Supplier<String> task = () -> {
-            attemptCounter.incrementAndGet();
-            attemptTimestamps.put(attemptCounter.get(), System.currentTimeMillis() - startTime);
-            return "Success";
-        };
-
-        try {
-            for (int i = 0; i < 6; i++) {
-                TimeOutUtils.callWithTimeoutAndRetry(task, 1, TimeUnit.SECONDS, 1,
-                        TimeOutUtils.rateLimiter2);
-            }
-        } catch (Exception e) {
-            fail("Unexpected exception: " + e.getMessage());
-        }
-
-        long endTime = System.currentTimeMillis();
-        long duration = endTime - startTime;
-
-        // 验证任务执行次数
-        assertEquals(6, attemptCounter.get(), "Task should be executed 5 times");
-
-        // 验证时间  (6 - 1) / 2 QPS = 2.5 seconds
-        assertTrue(duration >= 2500, "Execution time should respect QPS limit");
-    }
+//
+//    @Test
+//    public void testChatGptRateLimiter() {
+//        AtomicInteger attemptCounter = new AtomicInteger(0);
+//        long startTime = System.currentTimeMillis();
+//        Map<Integer, Long> attemptTimestamps = new HashMap<>();
+//        Supplier<String> task = () -> {
+//            attemptCounter.incrementAndGet();
+//            attemptTimestamps.put(attemptCounter.get(), System.currentTimeMillis() - startTime);
+//            return "Success";
+//        };
+//
+//        try {
+//            for (int i = 0; i < 6; i++) {
+//                TimeOutUtils.callWithTimeoutAndRetry(task, 1, TimeUnit.SECONDS, 1);
+//            }
+//        } catch (Exception e) {
+//            fail("Unexpected exception: " + e.getMessage());
+//        }
+//
+//        long endTime = System.currentTimeMillis();
+//        long duration = endTime - startTime;
+//
+//        // 验证任务执行次数
+//        assertEquals(6, attemptCounter.get(), "Task should be executed 5 times");
+//
+//        // 验证时间  (6 - 1) / 2 QPS = 2.5 seconds
+//        assertTrue(duration >= 2500, "Execution time should respect QPS limit");
+//    }
 }

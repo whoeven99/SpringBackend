@@ -3,10 +3,10 @@ package com.bogda.service.logic.PCApp;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.service.PCUsersRepo;
-import com.bogda.service.entity.DO.PCUsersDO;
-import com.bogda.service.entity.VO.SubscriptionVO;
+import com.bogda.common.entity.DO.PCUsersDO;
+import com.bogda.common.entity.VO.SubscriptionVO;
 import com.bogda.service.logic.ShopifyService;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.PCSubscriptionsDO;
 import com.bogda.repository.entity.PCUserSubscriptionsDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
@@ -16,7 +16,7 @@ import com.bogda.common.utils.ShopifyRequestUtils;
 import com.bogda.repository.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import static com.bogda.service.utils.StringUtils.parsePlanName;
+import static com.bogda.common.utils.StringUtils.parsePlanName;
 
 @Component
 public class PCUserSubscriptionService {

@@ -1,8 +1,8 @@
 package com.bogda.service.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogda.service.entity.DO.UserSubscriptionsDO;
-import com.bogda.service.controller.request.UserSubscriptionsRequest;
+import com.bogda.common.entity.DO.UserSubscriptionsDO;
+import com.bogda.common.controller.request.UserSubscriptionsRequest;
 
 public interface IUserSubscriptionsService extends IService<UserSubscriptionsDO> {
     Integer addUserSubscription(UserSubscriptionsRequest request);

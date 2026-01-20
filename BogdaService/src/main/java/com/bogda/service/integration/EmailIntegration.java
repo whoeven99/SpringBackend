@@ -1,6 +1,6 @@
 package com.bogda.service.integration;
 
-import com.bogda.service.controller.request.TencentSendEmailRequest;
+import com.bogda.common.controller.request.TencentSendEmailRequest;
 import com.bogda.common.contants.MailChimpConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
@@ -15,7 +15,7 @@ import com.tencentcloudapi.ses.v20201002.models.SendEmailResponse;
 import com.tencentcloudapi.ses.v20201002.models.Template;
 import org.springframework.stereotype.Component;
 import java.util.Map;
-import static com.bogda.service.utils.TimeOutUtils.*;
+import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class EmailIntegration {
