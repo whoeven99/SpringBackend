@@ -1,34 +1,38 @@
 package com.bogda.api.config;
 
-import com.azure.core.credential.TokenCredential;
-import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.azure.identity.ManagedIdentityCredentialBuilder;
+import com.azure.identity.ClientSecretCredential;
+import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
-import com.bogda.common.utils.ConfigUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AzureKeyVaultConfig {
-    @Value("${key.vault.url}")
+    @Value("${keyvault.endpoint}")
     private String url;
 
-    @Bean
-    public SecretClient secretClient() {
-        TokenCredential credential;
-        if (!ConfigUtils.isLocalEnv()) {
-            // 生产环境使用managed identity
-            credential = new ManagedIdentityCredentialBuilder()
-                    .clientId(ConfigUtils.getConfig("Client_ID")).build();
-        } else {
-            // 本地的开发环境使用默认凭据
-            credential = new DefaultAzureCredentialBuilder().build();
-        }
-        return new SecretClientBuilder()
-                .vaultUrl(url)
-                .credential(credential)
-                .buildClient();
-    }
+    @Value("${appRegistration.client-id}")
+    private String clientId;
+
+    @Value("${Azure_Client_Secret}")
+    private String clientSecret;
+
+    @Value("${appRegistration.tenant-id}")
+    private String tenantId;
+
+   @Bean
+   public SecretClient secretClient() {
+       ClientSecretCredential credential = new ClientSecretCredentialBuilder()
+               .clientId(clientId)
+               .clientSecret(clientSecret)
+               .tenantId(tenantId)
+               .build();
+
+       return new SecretClientBuilder()
+               .vaultUrl(url)
+               .credential(credential)
+               .buildClient();
+   }
 }

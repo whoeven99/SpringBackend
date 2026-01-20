@@ -1,21 +1,37 @@
+# Spring Cloud Azure Key Vault
 spring:
   application:
     name: bogda-web
 
   cloud:
     azure:
+      profile:
+        tenant-id: ${appRegistration.tenant-id}
+
+      credential:
+        client-id: ${appRegistration.client-id}
+        client-secret: ${Azure_Client_Secret}   # 配置azure config
+
       keyvault:
         secret:
-          enabled: true
-          # 你的 Azure Key Vault 地址
-          endpoint: https://springbackendvault.vault.azure.net/
+          property-source-enabled: true
+          property-sources:
+            - name: springbackend-keyvault
+              endpoint: ${keyvault.endpoint}
 
-      # 建议通过环境变量或系统属性注入以下凭证，而不是写死在配置文件中
-      credential:
-        client-id: 7890ba67-d8e5-4aa1-a67c-9bb4a9a93b91
+appRegistration:
+  client-id: baa53d85-60af-4746-8976-ff329ef7dafc
+  tenant-id: 7e4cb437-91a6-4a28-88e5-6549623374c5
 
-    # Key Vault 中的 secret 会作为属性挂载到 Environment
-    # 示例：在 Key Vault 中创建名为 "test--key" 的 secret
-    # 那么在代码中可以通过 @Value("${test.key}") 读取
+keyvault:
+  endpoint: https://springbackendvault.vault.azure.net/
 
+---
+# prod环境覆盖
+spring:
+  config:
+    activate:
+      on-profile: prod
 
+keyvault:
+  endpoint: https://userprivatekeyprod.vault.azure.net/
