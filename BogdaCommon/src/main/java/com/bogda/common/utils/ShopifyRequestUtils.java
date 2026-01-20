@@ -100,15 +100,15 @@ public class ShopifyRequestUtils {
 
     public static String getLanguagesQuery() {
         return """
-                  query MyQuery {
-                    shopLocales {
-                      locale
-                      name
-                      primary
-                      published
-                    }
+                query MyQuery {
+                  shopLocales {
+                    locale
+                    name
+                    primary
+                    published
                   }
-                  """;
+                }
+                """;
     }
 
     /**
@@ -116,21 +116,21 @@ public class ShopifyRequestUtils {
      */
     public static String getQueryForCheckMetafieldId(String metafieldId) {
         return """
-            query MyQuery {
-              node(id: "%s") {
-                ... on Metafield {
-                  id
-                  owner {
-                    ... on Product {
+                query MyQuery {
+                  node(id: "%s") {
+                    ... on Metafield {
                       id
-                      title
+                      owner {
+                        ... on Product {
+                          id
+                          title
+                        }
+                      }
+                      type
                     }
                   }
-                  type
                 }
-              }
-            }
-            """.formatted(metafieldId);
+                """.formatted(metafieldId);
     }
 
     //根据用户付费订单id获取订单信息
@@ -183,4 +183,23 @@ public class ShopifyRequestUtils {
                 "}";
     }
 
+    /**
+     * 删除用户shopify数据
+     */
+    public static String deleteQuery() {
+        return """
+                mutation translationsRemove($resourceId: ID!, $translationKeys: [String!]!, $locales: [String!]!) {
+                  translationsRemove(resourceId: $resourceId, translationKeys: $translationKeys, locales: $locales) {
+                    userErrors {
+                      message
+                      field
+                    }
+                    translations {
+                      key
+                      value
+                    }
+                  }
+                }
+                """;
+    }
 }
