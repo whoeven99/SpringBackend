@@ -31,7 +31,7 @@ public class ChatGptIntegration {
     public ChatGptIntegration() {
         client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
-                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
+                .credential(new AzureKeyCredential(key))
                 .buildClient();
     }
 
