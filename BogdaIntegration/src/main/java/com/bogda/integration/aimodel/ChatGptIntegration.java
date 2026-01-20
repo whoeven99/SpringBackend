@@ -8,6 +8,7 @@ import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class ChatGptIntegration {
     public ChatGptIntegration() {
         client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
-                .credential(new AzureKeyCredential(key))
+                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
                 .buildClient();
     }
 
