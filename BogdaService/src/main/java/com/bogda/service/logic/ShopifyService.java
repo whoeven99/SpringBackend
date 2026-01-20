@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.common.controller.request.*;
+import com.bogda.integration.model.*;
 import com.bogda.service.Service.IItemsService;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUserSubscriptionsService;
@@ -21,9 +22,6 @@ import com.bogda.common.enums.ErrorEnum;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.http.BaseHttpIntegration;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
-import com.bogda.integration.model.ShopifyExtensions;
-import com.bogda.integration.model.ShopifyGraphResponse;
-import com.bogda.integration.model.ShopifyResponse;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.*;
@@ -102,6 +100,23 @@ public class ShopifyService {
                 data = null;
             }
         }
+    }
+
+    // 删除 shopify 数据（带速率限制，返回完整响应包括 extensions）
+    public ShopifyGraphRemoveResponse deleteShopifyDataWithRateLimit(String shopName, String accessToken,
+                                                                     ShopifyTranslationsRemove remove) {
+        RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
+        rateLimiter.acquire();
+
+        ShopifyRemoveResponse shopifyResponse = shopifyHttpIntegration.deleteShopifyData(shopName, accessToken, remove);
+        if (shopifyResponse == null) {
+            return null;
+        }
+
+        if (shopifyResponse.getExtensions() != null) {
+            shopifyRateLimitService.updateRateLimit(shopName, shopifyResponse.getExtensions());
+        }
+        return shopifyResponse.getData();
     }
 
     // 获取 Shopify 数据（带速率限制，返回完整响应包括 extensions）
