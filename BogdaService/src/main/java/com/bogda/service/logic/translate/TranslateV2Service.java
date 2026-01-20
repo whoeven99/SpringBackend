@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.exception.FatalException;
 import com.bogda.integration.model.ShopifyGraphRemoveResponse;
 import com.bogda.integration.model.ShopifyTranslationsRemove;
 import com.bogda.repository.entity.DeleteTasksDO;
