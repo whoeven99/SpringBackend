@@ -1,0 +1,37 @@
+# Spring Cloud Azure Key Vault
+spring:
+  application:
+    name: bogda-task
+
+  cloud:
+    azure:
+      profile:
+        tenant-id: ${appRegistration.tenant-id}
+
+      credential:
+        client-id: ${appRegistration.client-id}
+        client-secret: ${Azure_Client_Secret}   # 配置azure config
+
+      keyvault:
+        secret:
+          property-source-enabled: true
+          property-sources:
+            - name: springbackend-keyvault
+              endpoint: ${keyvault.endpoint}
+
+appRegistration:
+  client-id: baa53d85-60af-4746-8976-ff329ef7dafc
+  tenant-id: 7e4cb437-91a6-4a28-88e5-6549623374c5
+
+keyvault:
+  endpoint: https://springbackendvault.vault.azure.net/
+
+---
+# prod环境覆盖
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+keyvault:
+  endpoint: https://userprivatekeyprod.vault.azure.net/
