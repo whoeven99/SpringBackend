@@ -1,9 +1,9 @@
 package com.bogda.service.logic.translate;
 
-import com.bogda.common.exception.FatalException;
 import com.bogda.integration.model.ShopifyGraphRemoveResponse;
 import com.bogda.integration.model.ShopifyTranslationsRemove;
 import com.bogda.repository.entity.DeleteTasksDO;
+import com.bogda.repository.repo.DeleteTasksRepo;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
 import com.bogda.common.TranslateContext;
@@ -35,7 +35,6 @@ import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.entity.TranslateTaskV2DO;
-import com.bogda.repository.repo.DeleteTasksRepo;
 import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.bogda.repository.repo.TranslateTaskV2Repo;
 import com.bogda.common.utils.JsoupUtils;

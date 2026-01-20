@@ -105,15 +105,16 @@ public class TranslateTask {
 
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
-        process(2,
-                InitialTaskV2DO::getShopName,
-                savingShops, "DELETE SHOPIFY",
-                translateV2Service::deleteToShopify);
-
-        process(5,
-                InitialTaskV2DO::getShopName,
-                savingShops, "DELETE SHOPIFY",
-                translateV2Service::deleteToShopify);
+        // TODO 先注释，看看删除数据都有哪些，后面再删除
+//        process(2,
+//                InitialTaskV2DO::getShopName,
+//                savingShops, "DELETE SHOPIFY",
+//                translateV2Service::deleteToShopify);
+//
+//        process(5,
+//                InitialTaskV2DO::getShopName,
+//                savingShops, "DELETE SHOPIFY",
+//                translateV2Service::deleteToShopify);
 
         process(2,
                 InitialTaskV2DO::getShopName,
@@ -217,6 +218,6 @@ public class TranslateTask {
 
         AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
         translateV2Service.cleanTask(cleanTask.get(0));
-        translateV2Service.cleanDeleteTask(cleanTask.get(0));
+//        translateV2Service.cleanDeleteTask(cleanTask.get(0));
     }
 }
