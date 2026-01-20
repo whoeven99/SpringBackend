@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -26,20 +27,31 @@ public class MybatisPlusConfig {
         return factory.getObject();
     }
 
+    @Value("${datasource.url}")
+    private String url;
+
+    @Value("${datasource.username}")
+    private String username;
+
+    @Value("${datasource.password}")
+    private String password;
+
     @Bean
     public DataSource dataSource() {
+        System.out.println("Datasource URL: " + url + ", Username: " + username);
+
         DruidDataSource dataSource = new DruidDataSource();
         String appEnv = System.getenv("ApplicationEnv");
         if ("prod".equals(appEnv)) {
             dataSource.setUrl(env.getProperty("spring.datasource.master.url"));
             dataSource.setUsername(env.getProperty("spring.datasource.master.username"));
             dataSource.setPassword(env.getProperty("spring.datasource.master.password"));
-            dataSource.setDriverClassName(env.getProperty("spring.datasource.master.driver-class-name"));
+            dataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
         } else {
             dataSource.setUrl(env.getProperty("spring.datasource.url"));
             dataSource.setUsername(env.getProperty("spring.datasource.username"));
             dataSource.setPassword(env.getProperty("spring.datasource.password"));
-            dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
+            dataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
         }
         return dataSource;
     }

@@ -12,11 +12,8 @@ import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.RateRedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.request.CloudServiceRequest;
-import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.utils.AppInsightsUtils;
-import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -44,7 +41,7 @@ public class TestController {
     @Autowired
     private RateRedisService rateRedisService;
 
-    @PostMapping("/test")
+    @GetMapping("/test")
     public String test() {
         // 从当前激活 profile 对应的 application-*.properties 中读取 test.key
         // test 环境 -> application-test.properties

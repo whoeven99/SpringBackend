@@ -1,4 +1,4 @@
-package com.bogda.web.controller;
+package com.bogda.web;
 
 import com.bogda.service.Service.ICharsOrdersService;
 import com.bogda.service.Service.ITranslatesService;
