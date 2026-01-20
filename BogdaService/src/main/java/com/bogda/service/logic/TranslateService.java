@@ -2,6 +2,9 @@ package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.common.controller.response.BaseResponse;
+import com.bogda.repository.entity.InitialTaskV2DO;
+import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.ITranslationCounterService;
 import com.bogda.service.Service.IUsersService;
@@ -14,8 +17,6 @@ import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
-import com.bogda.repository.entity.InitialTaskV2DO;
-import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
