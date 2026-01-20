@@ -1159,7 +1159,7 @@ public class TranslateV2Service {
     public void cleanDeleteTask(InitialTaskV2DO initialTaskV2DO) {
         AppInsightsUtils.trackTrace("TranslateTaskV2 cleanDeleteTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
-            int deleted = translateTaskV2Repo.deleteDeleteDataByInitialTaskId(initialTaskV2DO.getId());
+            int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
             AppInsightsUtils.trackTrace("TranslateTaskV2 cleanDeleteTask delete: " + deleted);
             if (deleted <= 0) {
                 break;
