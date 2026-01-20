@@ -1,13 +1,13 @@
 package com.bogda.service.logic;
 
 import com.bogda.service.Service.ICurrenciesService;
-import com.bogda.service.entity.DO.CurrenciesDO;
+import com.bogda.common.entity.DO.CurrenciesDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.bogda.service.integration.RateHttpIntegration.rateMap;
+import static com.bogda.integration.aimodel.RateHttpIntegration.rateMap;
 import static com.bogda.service.logic.RateDataService.getRateByRateMap;
 
 @Component

@@ -3,7 +3,7 @@ package com.bogda.service.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.ISubscriptionPlansService;
-import com.bogda.service.entity.DO.SubscriptionPlansDO;
+import com.bogda.common.entity.DO.SubscriptionPlansDO;
 import com.bogda.service.mapper.SubscriptionPlansMapper;
 import org.springframework.stereotype.Service;
 

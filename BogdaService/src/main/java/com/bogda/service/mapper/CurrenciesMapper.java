@@ -1,7 +1,7 @@
 package com.bogda.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogda.service.entity.DO.CurrenciesDO;
+import com.bogda.common.entity.DO.CurrenciesDO;
 import org.apache.ibatis.annotations.*;
 
 @Mapper

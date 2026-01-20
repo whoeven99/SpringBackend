@@ -1,7 +1,7 @@
 package com.bogda.service.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogda.service.entity.DO.UserPrivateDO;
+import com.bogda.common.entity.DO.UserPrivateDO;
 
 public interface IUserPrivateService extends IService<UserPrivateDO> {
     UserPrivateDO selectOneByShopName(String shopName);

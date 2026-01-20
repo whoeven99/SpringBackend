@@ -4,17 +4,17 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUserTypeTokenService;
-import com.bogda.service.entity.DO.TranslateResourceDTO;
-import com.bogda.service.entity.DO.UserTypeTokenDO;
-import com.bogda.service.controller.request.ShopifyRequest;
-import com.bogda.service.controller.request.TranslateRequest;
+import com.bogda.common.entity.DO.TranslateResourceDTO;
+import com.bogda.common.entity.DO.UserTypeTokenDO;
+import com.bogda.common.controller.request.ShopifyRequest;
+import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-import static com.bogda.service.entity.DO.TranslateResourceDTO.TOKEN_MAP;
+import static com.bogda.common.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.service.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
 @Component

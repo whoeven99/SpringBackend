@@ -3,7 +3,7 @@ package com.bogda.service.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGUserCounterService;
-import com.bogda.service.entity.DO.APGUserCounterDO;
+import com.bogda.common.entity.DO.APGUserCounterDO;
 import com.bogda.service.mapper.APGUserCounterMapper;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;

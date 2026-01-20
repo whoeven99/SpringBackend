@@ -2,7 +2,7 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IEmailService;
-import com.bogda.service.entity.DO.EmailDO;
+import com.bogda.common.entity.DO.EmailDO;
 import com.bogda.service.mapper.EmailMapper;
 import org.springframework.stereotype.Service;
 

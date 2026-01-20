@@ -2,7 +2,7 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGUserGeneratedTaskService;
-import com.bogda.service.entity.DO.APGUserGeneratedTaskDO;
+import com.bogda.common.entity.DO.APGUserGeneratedTaskDO;
 import com.bogda.service.mapper.APGUserGeneratedTaskMapper;
 import org.springframework.stereotype.Service;
 

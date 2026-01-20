@@ -3,7 +3,7 @@ package com.bogda.service.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGUserProductService;
-import com.bogda.service.entity.DO.APGUserProductDO;
+import com.bogda.common.entity.DO.APGUserProductDO;
 import com.bogda.service.mapper.APGUserProductMapper;
 import org.springframework.stereotype.Service;
 

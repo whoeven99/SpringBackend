@@ -1,7 +1,7 @@
 package com.bogda.service.logic;
 
-import com.bogda.service.entity.VO.UserDataReportVO;
-import com.bogda.service.integration.RedisIntegration;
+import com.bogda.common.entity.VO.UserDataReportVO;
+import com.bogda.repository.RedisIntegration;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
