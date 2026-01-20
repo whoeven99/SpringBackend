@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.exception.FatalException;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
 import com.bogda.common.TranslateContext;
@@ -756,7 +757,7 @@ public class TranslateV2Service {
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             } else {
                 // 写入失败 fatalException
-                AppInsightsUtils.trackTrace("FatalException TranslateTaskV2 saving failed: " + shopName +
+                throw new FatalException("FatalException TranslateTaskV2 saving failed: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
