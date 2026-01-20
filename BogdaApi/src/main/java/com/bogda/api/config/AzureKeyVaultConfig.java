@@ -1,38 +1,34 @@
 package com.bogda.api.config;
 
-import com.azure.identity.DefaultAzureCredential;
+import com.azure.core.credential.TokenCredential;
 import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.azure.identity.ManagedIdentityCredential;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.bogda.common.utils.ConfigUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AzureKeyVaultConfig {
+    @Value("${key.vault.url}")
+    private String url;
+
     @Bean
     public SecretClient secretClient() {
-        // 根据环境变量获取clientId和keyVaultUrl来判断选择什么
+        TokenCredential credential;
         if (!ConfigUtils.isLocalEnv()) {
-            String clientId = ConfigUtils.getConfig("Client_ID");
-            String keyVaultUrl = ConfigUtils.getConfig("UserPrivateKeyVaultUrl");
-            ManagedIdentityCredential credential = new ManagedIdentityCredentialBuilder()
-                    .clientId(clientId)
-                    .build();
-
-            return new SecretClientBuilder()
-                    .vaultUrl(keyVaultUrl)
-                    .credential(credential)
-                    .buildClient();
+            // 生产环境使用managed identity
+            credential = new ManagedIdentityCredentialBuilder()
+                    .clientId(ConfigUtils.getConfig("Client_ID")).build();
         } else {
-            //使用 DefaultAzureCredential 自动检测身份
-            DefaultAzureCredential defaultAzureCredential = new DefaultAzureCredentialBuilder().build();
-            return new SecretClientBuilder()
-                    .vaultUrl("https://springbackendvault.vault.azure.net/")
-                    .credential(defaultAzureCredential)
-                    .buildClient();
+            // 本地的开发环境使用默认凭据
+            credential = new DefaultAzureCredentialBuilder().build();
         }
+        return new SecretClientBuilder()
+                .vaultUrl(url)
+                .credential(credential)
+                .buildClient();
     }
 }

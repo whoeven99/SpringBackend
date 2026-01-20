@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: bogda-web
+
+  cloud:
+    azure:
+      keyvault:
+        secret:
+          enabled: true
+          # 你的 Azure Key Vault 地址
+          endpoint: https://springbackendvault.vault.azure.net/
+
+      # 建议通过环境变量或系统属性注入以下凭证，而不是写死在配置文件中
+      credential:
+        client-id: 7890ba67-d8e5-4aa1-a67c-9bb4a9a93b91
+
+    # Key Vault 中的 secret 会作为属性挂载到 Environment
+    # 示例：在 Key Vault 中创建名为 "test--key" 的 secret
+    # 那么在代码中可以通过 @Value("${test.key}") 读取
+
+
