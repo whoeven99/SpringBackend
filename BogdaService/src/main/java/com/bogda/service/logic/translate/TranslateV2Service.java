@@ -1,5 +1,9 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.integration.model.ShopifyGraphRemoveResponse;
+import com.bogda.integration.model.ShopifyTranslationsRemove;
+import com.bogda.repository.entity.DeleteTasksDO;
+import com.bogda.repository.repo.DeleteTasksRepo;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
 import com.bogda.common.TranslateContext;
