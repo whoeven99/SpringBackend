@@ -1,6 +1,6 @@
 package com.bogda.api.config;
 
-import com.bogda.common.utils.ConfigUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -14,13 +14,16 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import java.time.Duration;
 
-
 @Configuration
 public class RedisConfig {
+    @Value("${redis.hostname}")
+    private String hostname;
+
+    @Value("${redis.cachekey.vault}")
+    private String cachekey;
+
     @Bean
     public JedisConnectionFactory redisConnectionFactory() {
-        String cacheHostname = ConfigUtils.getConfig("REDISCACHEHOSTNAME");
-        String cachekey = ConfigUtils.getConfig("REDISCACHEKEY");
         int port = 6380;
 
         // 配置连接池
@@ -32,7 +35,7 @@ public class RedisConfig {
 
         // 配置Redis基本信息
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
-        redisConfig.setHostName(cacheHostname);
+        redisConfig.setHostName(hostname);
         redisConfig.setPort(port);
         redisConfig.setPassword(cachekey);
 
