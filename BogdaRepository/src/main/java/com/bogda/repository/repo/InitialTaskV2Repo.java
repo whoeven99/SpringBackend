@@ -57,7 +57,7 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
     public List<InitialTaskV2DO> selectByStoppedAndNotSaveLastDay() {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getStatus, 5)
-                .eq(InitialTaskV2DO::getSavingShopifyMinutes, 0)
+                .eq(InitialTaskV2DO::isSaveStatus, false)
                 .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(48))
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
@@ -176,9 +176,10 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
 
     }
 
-    public boolean updateStatusAndSendEmailById(Integer status, Integer id, boolean isSendEmail) {
+    public boolean updateStatusAndSendEmailById(Integer status, Integer id, boolean isSendEmail, boolean saveStatus) {
         return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().set(InitialTaskV2DO::getStatus, status)
                 .set(InitialTaskV2DO::isSendEmail, isSendEmail)
+                .set(InitialTaskV2DO::isSaveStatus, saveStatus)
                 .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
                 .eq(InitialTaskV2DO::getId, id)) > 0;
     }
@@ -186,6 +187,7 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
     public boolean updateStatusSavingShopifyMinutesById(Integer status, Integer savingShopifyMinutes, Integer id) {
         return baseMapper.update(new LambdaUpdateWrapper<InitialTaskV2DO>().set(InitialTaskV2DO::getStatus, status)
                 .set(InitialTaskV2DO::getSavingShopifyMinutes, savingShopifyMinutes)
+                .set(InitialTaskV2DO::isSaveStatus, true)
                 .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
                 .eq(InitialTaskV2DO::getId, id)) > 0;
     }
