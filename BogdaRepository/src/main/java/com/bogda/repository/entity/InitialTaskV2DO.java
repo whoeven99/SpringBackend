@@ -30,6 +30,8 @@ public class InitialTaskV2DO extends BaseDO {
     private Integer translationMinutes;
     @TableField("saving_shopify_minutes")
     private Integer savingShopifyMinutes;
+    @TableField("save_status")
+    private boolean saveStatus;
     @TableField("used_token")
     private Integer usedToken;
     @TableField("task_type")
