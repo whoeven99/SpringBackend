@@ -18,6 +18,7 @@ import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import com.bogda.repository.repo.*;
+import com.bogda.service.logic.translate.TranslateV2Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -74,6 +75,8 @@ public class TaskService {
     private PCUserTrialsRepo pcUserTrialsRepo;
     @Autowired
     private PCEmailService pcEmailService;
+    @Autowired
+    private TranslateV2Service translateV2Service;
 
     /**
      * 异步调用根据订阅信息，判断是否添加额度的方法
@@ -234,6 +237,9 @@ public class TaskService {
 
             // 修改Translates表中，状态3 - 》 6
             translatesService.updateStatus3To6(userPriceRequest.getShopName());
+
+            // 继续翻译，将获取用户部分翻译的task去翻译
+            translateV2Service.continueTranslating(userPriceRequest.getShopName());
 
             if ("Starter".equals(name)) {
                 return;
