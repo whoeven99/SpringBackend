@@ -24,8 +24,6 @@ public class RedisConfig {
 
     @Bean
     public JedisConnectionFactory redisConnectionFactory() {
-        int port = 6380;
-
         // 配置连接池
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(100);
@@ -36,14 +34,15 @@ public class RedisConfig {
         // 配置Redis基本信息
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
         redisConfig.setHostName(hostname);
-        redisConfig.setPort(port);
         redisConfig.setPassword(cachekey);
+        redisConfig.setPort(6380);
 
         // 构建 Jedis 连接工厂
-        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfigurationBuilder = (JedisClientConfiguration.JedisClientConfigurationBuilder) JedisClientConfiguration.builder()
-                .connectTimeout(Duration.ofMillis(3000))
-                .readTimeout(Duration.ofMillis(3000))
-                .useSsl();
+        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfigurationBuilder =
+                (JedisClientConfiguration.JedisClientConfigurationBuilder) JedisClientConfiguration.builder()
+                        .connectTimeout(Duration.ofMillis(3000))
+                        .readTimeout(Duration.ofMillis(3000))
+                        .useSsl();
         JedisClientConfiguration clientConfig = jedisClientConfigurationBuilder
                 .usePooling()
                 .poolConfig(poolConfig)
