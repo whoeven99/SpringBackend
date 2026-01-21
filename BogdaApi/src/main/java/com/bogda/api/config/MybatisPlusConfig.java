@@ -1,6 +1,7 @@
 package com.bogda.api.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
@@ -39,6 +40,11 @@ public class MybatisPlusConfig {
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
         MybatisSqlSessionFactoryBean factory = new MybatisSqlSessionFactoryBean();
         factory.setDataSource(dataSource);
+        // 使用代码方式开启下划线转驼峰（等价于 application.properties 中
+        // mybatis-plus.configuration.map-underscore-to-camel-case=true）
+        MybatisConfiguration mybatisConfiguration = new MybatisConfiguration();
+        mybatisConfiguration.setMapUnderscoreToCamelCase(true);
+        factory.setConfiguration(mybatisConfiguration);
         return factory.getObject();
     }
 
