@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IUserTypeTokenService;
-import com.bogda.service.entity.DO.UserTypeTokenDO;
+import com.bogda.common.entity.DO.UserTypeTokenDO;
 import com.bogda.service.mapper.UserTypeTokenMapper;
-import com.bogda.service.controller.request.TranslateRequest;
+import com.bogda.common.controller.request.TranslateRequest;
 import org.springframework.stereotype.Service;
 
 @Service

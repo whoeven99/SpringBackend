@@ -1,7 +1,7 @@
 package com.bogda.service.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogda.service.entity.DO.GlossaryDO;
+import com.bogda.common.entity.DO.GlossaryDO;
 
 public interface IGlossaryService extends IService<GlossaryDO> {
     Boolean insertGlossaryInfo(GlossaryDO glossaryDO);

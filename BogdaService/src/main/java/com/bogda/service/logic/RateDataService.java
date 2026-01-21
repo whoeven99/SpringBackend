@@ -1,18 +1,17 @@
 package com.bogda.service.logic;
 
-import com.bogda.service.integration.RateHttpIntegration;
+import com.bogda.service.logic.redis.RateRedisService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class RateDataService {
-
-    private final Map<String, LinkedHashMap<String, Object>> value = new ConcurrentHashMap<>();
-
+    @Autowired
+    private RateRedisService rateRedisService;
     private static final Map<String, Object> rateRule = new ConcurrentHashMap<>();
 
     static {
@@ -26,15 +25,25 @@ public class RateDataService {
     }
 
     public Map<String, Object> getData() {
-        // 返回不可修改的Map视图以防止外部修改
-        return Collections.unmodifiableMap(value);
+        return Collections.unmodifiableMap(rateRedisService.getRatesAsObject());
     }
 
     //前端传入两个货币代码，返回他们对应的汇率。获取rateMap数据，因为是以欧元为基础，所以要做处理
-    public static double getRateByRateMap(String from, String to) {
-        Double fromRate = RateHttpIntegration.rateMap.get(from);
-        Double toRate = RateHttpIntegration.rateMap.get(to);
+    public double getRateByRateMap(String from, String to) {
+        Double fromRate = getRate(from);
+        Double toRate = getRate(to);
+        if (fromRate == null || toRate == null || fromRate == 0D) {
+            return 0D;
+        }
         return toRate / fromRate;
+    }
+
+    public Double getRate(String currencyCode) {
+        return rateRedisService.getRate(currencyCode);
+    }
+
+    public boolean isRateCacheEmpty() {
+        return rateRedisService.isEmpty();
     }
 
     //获取自定义汇率

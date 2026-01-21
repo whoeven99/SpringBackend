@@ -1,7 +1,7 @@
 package com.bogda.service.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.bogda.service.entity.DO.AILanguagePacksDO;
+import com.bogda.common.entity.DO.AILanguagePacksDO;
 
 public interface IAILanguagePacksService extends IService<AILanguagePacksDO> {
 

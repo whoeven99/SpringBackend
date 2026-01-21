@@ -1,14 +1,11 @@
 package com.bogda.service.utils;
 
-import com.bogda.service.entity.DO.APGOfficialTemplateDO;
-import com.bogda.service.entity.DO.APGUserGeneratedTaskDO;
-import com.bogda.service.entity.DO.APGUserTemplateDO;
-import com.bogda.service.entity.DO.UserSubscriptionsDO;
-import com.bogda.service.entity.DTO.TemplateDTO;
-import com.bogda.service.entity.VO.GenerateDescriptionVO;
-import com.bogda.service.entity.VO.GenerateDescriptionsVO;
-import com.bogda.service.entity.VO.GenerateProgressBarVO;
-import com.bogda.service.controller.request.*;
+import com.bogda.common.controller.request.ResourceTypeRequest;
+import com.bogda.common.controller.request.ShopifyRequest;
+import com.bogda.common.controller.request.TranslateRequest;
+import com.bogda.common.entity.DO.APGOfficialTemplateDO;
+import com.bogda.common.entity.DO.APGUserTemplateDO;
+import com.bogda.common.entity.DTO.TemplateDTO;
 
 public class TypeConversionUtils {
 
@@ -20,38 +17,12 @@ public class TypeConversionUtils {
         return shopifyRequest;
     }
 
-    public static CloudServiceRequest shopifyToCloudServiceRequest(ShopifyRequest request) {
-        CloudServiceRequest cloudServiceRequest = new CloudServiceRequest();
-        cloudServiceRequest.setShopName(request.getShopName());
-        cloudServiceRequest.setAccessToken(request.getAccessToken());
-        cloudServiceRequest.setTarget(request.getTarget());
-        return cloudServiceRequest;
-    }
-
     public static ShopifyRequest resourceTypeRequestToShopifyRequest(ResourceTypeRequest request) {
         ShopifyRequest shopifyRequest = new ShopifyRequest();
         shopifyRequest.setShopName(request.getShopName());
         shopifyRequest.setAccessToken(request.getAccessToken());
         shopifyRequest.setTarget(request.getTarget());
         return shopifyRequest;
-    }
-
-    public static UserSubscriptionsDO UserSubscriptionsRequestToUserSubscriptionsDO(UserSubscriptionsRequest request){
-        UserSubscriptionsDO userSubscriptionsDO = new UserSubscriptionsDO();
-        userSubscriptionsDO.setShopName(request.getShopName());
-        userSubscriptionsDO.setPlanId(request.getPlanId());
-        userSubscriptionsDO.setStartDate(request.getStartDate());
-        userSubscriptionsDO.setEndDate(request.getEndDate());
-        userSubscriptionsDO.setStatus(request.getStatus());
-        return userSubscriptionsDO;
-    }
-
-    public static TranslateRequest TargetListRequestToTranslateRequest(TargetListRequest targetListRequest){
-        TranslateRequest translateRequest = new TranslateRequest();
-        translateRequest.setAccessToken(targetListRequest.getAccessToken());
-        translateRequest.setShopName(targetListRequest.getShopName());
-        translateRequest.setSource(targetListRequest.getSource());
-        return translateRequest;
     }
 
     //将用户模板转化为通用模板
@@ -82,40 +53,5 @@ public class TypeConversionUtils {
         templateDTO.setTemplateClass(false);
 
         return templateDTO;
-    }
-
-    /**
-     * 将generateDescriptionsVO转化为generateDescriptionVO
-     */
-    public static GenerateDescriptionVO generateDescriptionsVOToGenerateDescriptionVO(String productId,GenerateDescriptionsVO generateDescriptionsVO){
-        GenerateDescriptionVO generateDescriptionVO = new GenerateDescriptionVO();
-        generateDescriptionVO.setTemplateType(generateDescriptionsVO.getTemplateType());
-        generateDescriptionVO.setTemplateId(generateDescriptionsVO.getTemplateId());
-        generateDescriptionVO.setModel(generateDescriptionsVO.getModel());
-        generateDescriptionVO.setLanguage(generateDescriptionsVO.getLanguage());
-        generateDescriptionVO.setBrandSlogan(generateDescriptionsVO.getBrandSlogan());
-        generateDescriptionVO.setBrandTone(generateDescriptionsVO.getBrandTone());
-        generateDescriptionVO.setBrandWord(generateDescriptionsVO.getBrandWord());
-        generateDescriptionVO.setSeoKeywords(generateDescriptionsVO.getSeoKeywords());
-        generateDescriptionVO.setTextTone(generateDescriptionsVO.getTextTone());
-        generateDescriptionVO.setProductId(productId);
-        generateDescriptionVO.setContentType(generateDescriptionsVO.getContentType());
-        generateDescriptionVO.setPageType(generateDescriptionsVO.getPageType());
-        return generateDescriptionVO;
-    }
-
-    /**
-     * 将APGUserGeneratedTaskDO转化为GenerateProgressBarVO
-     * */
-    public static GenerateProgressBarVO apgUserGeneratedTaskDOToGenerateProgressBarVO(APGUserGeneratedTaskDO apgUserGeneratedTaskDO, Integer totalCount, Integer unfinishedCount){
-        GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
-        generateProgressBarVO.setAllCount(totalCount);
-        generateProgressBarVO.setUnfinishedCount(unfinishedCount);
-        generateProgressBarVO.setTaskStatus(apgUserGeneratedTaskDO.getTaskStatus());
-        generateProgressBarVO.setTaskModel(apgUserGeneratedTaskDO.getTaskModel());
-        generateProgressBarVO.setTaskData(apgUserGeneratedTaskDO.getTaskData());
-        generateProgressBarVO.setUserId(apgUserGeneratedTaskDO.getUserId());
-        generateProgressBarVO.setId(apgUserGeneratedTaskDO.getId());
-        return generateProgressBarVO;
     }
 }

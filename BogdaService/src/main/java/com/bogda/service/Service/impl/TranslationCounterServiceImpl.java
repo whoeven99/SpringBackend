@@ -6,11 +6,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.ITranslationCounterService;
 import com.bogda.service.Service.IUserIpService;
-import com.bogda.service.entity.DO.TranslationCounterDO;
+import com.bogda.common.entity.DO.TranslationCounterDO;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.service.logic.redis.OrdersRedisService;
 import com.bogda.service.mapper.TranslationCounterMapper;
-import com.bogda.service.controller.request.TranslationCounterRequest;
+import com.bogda.common.controller.request.TranslationCounterRequest;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import static com.bogda.service.utils.ShopifyUtils.isQueryValid;
+import static com.bogda.common.utils.ShopifyUtils.isQueryValid;
 
 @Service
 @Transactional

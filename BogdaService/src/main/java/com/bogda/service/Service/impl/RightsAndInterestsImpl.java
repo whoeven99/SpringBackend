@@ -2,11 +2,11 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IRightsAndInterestsService;
-import com.bogda.service.entity.DO.RightsAndInterestsDO;
-import com.bogda.service.entity.DO.UserRightsAndInterestsDO;
+import com.bogda.common.entity.DO.RightsAndInterestsDO;
+import com.bogda.common.entity.DO.UserRightsAndInterestsDO;
 import com.bogda.service.mapper.RightsAndInterestsMapper;
-import com.bogda.service.controller.request.UserRAIRequest;
-import com.bogda.service.controller.response.BaseResponse;
+import com.bogda.common.controller.request.UserRAIRequest;
+import com.bogda.common.controller.response.BaseResponse;
 import org.springframework.stereotype.Service;
 
 @Service

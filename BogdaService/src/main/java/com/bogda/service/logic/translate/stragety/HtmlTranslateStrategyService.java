@@ -1,6 +1,6 @@
 package com.bogda.service.logic.translate.stragety;
 
-import com.bogda.service.context.TranslateContext;
+import com.bogda.common.TranslateContext;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;

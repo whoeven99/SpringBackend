@@ -6,14 +6,14 @@ import com.bogda.service.Service.IAPGOfficialTemplateService;
 import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.service.Service.IAPGUserProductService;
 import com.bogda.service.Service.IAPGUserTemplateService;
-import com.bogda.service.entity.DO.APGOfficialTemplateDO;
-import com.bogda.service.entity.DO.APGUserCounterDO;
-import com.bogda.service.entity.DO.APGUserTemplateDO;
-import com.bogda.service.entity.DO.APGUsersDO;
-import com.bogda.service.entity.DTO.ProductDTO;
-import com.bogda.service.entity.DTO.TemplateDTO;
-import com.bogda.service.entity.VO.APGAnalyzeDataVO;
-import com.bogda.service.entity.VO.GenerateDescriptionVO;
+import com.bogda.common.entity.DO.APGOfficialTemplateDO;
+import com.bogda.common.entity.DO.APGUserCounterDO;
+import com.bogda.common.entity.DO.APGUserTemplateDO;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.entity.DTO.ProductDTO;
+import com.bogda.common.entity.DTO.TemplateDTO;
+import com.bogda.common.entity.VO.APGAnalyzeDataVO;
+import com.bogda.common.entity.VO.GenerateDescriptionVO;
 import com.bogda.common.exception.ClientException;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.common.contants.TranslateConstants;
@@ -26,11 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
-
-import static com.bogda.service.logic.APGUserGeneratedTaskService.*;
-import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_BAR;
 import static com.bogda.common.utils.PlaceholderUtils.buildDescriptionPrompt;
-import static com.bogda.service.utils.StringUtils.countWords;
+import static com.bogda.common.utils.StringUtils.countWords;
 import static com.bogda.service.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
 import static com.bogda.service.utils.TypeConversionUtils.userTemplateToTemplateDTO;
 
@@ -64,7 +61,7 @@ public class GenerateDescriptionService {
             throw new ClientException(TranslateConstants.CHARACTER_LIMIT);
         }
         // 根据产品id获取相关数据，为生成做铺垫
-        GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
+        APGUserGeneratedTaskService.GENERATE_SHOP_BAR.put(usersDO.getId(), product.getProductTitle());
         // 根据模板id获取模板数据
         TemplateDTO templateById = getTemplateById(generateDescriptionVO.getTemplateId(), usersDO.getId(), generateDescriptionVO.getTemplateType());
         // 根据 ProductDTO 和传入的 GenerateDescriptionVO进行描述生成(暂定qwen模型 图片理解)
@@ -76,7 +73,7 @@ public class GenerateDescriptionService {
         //调用大模型翻译
         //如果产品图片为空，换模型生成
         String des;
-        GENERATE_STATE_BAR.put(usersDO.getId(), GENERATING);
+        APGUserGeneratedTaskService.GENERATE_STATE_BAR.put(usersDO.getId(), APGUserGeneratedTaskService.GENERATING);
         if (product.getImageUrl() == null || product.getImageUrl().isEmpty()) {
              des = aLiYunTranslateIntegration.callWithQwenMaxToDes(prompt, counter, usersDO.getId(), userMaxLimit);
         }else {
@@ -87,7 +84,7 @@ public class GenerateDescriptionService {
         }
 //        每次生成都要更新一下版本记录和生成数据
         iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des, generateDescriptionVO.getPageType() , generateDescriptionVO.getContentType());
-        GENERATE_STATE_BAR.put(usersDO.getId(), FINISHED);
+        APGUserGeneratedTaskService.GENERATE_STATE_BAR.put(usersDO.getId(), APGUserGeneratedTaskService.FINISHED);
         return des;
     }
 

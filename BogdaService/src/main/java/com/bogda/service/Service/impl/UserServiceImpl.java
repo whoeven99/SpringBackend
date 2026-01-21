@@ -3,7 +3,7 @@ package com.bogda.service.Service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IUsersService;
-import com.bogda.service.entity.DO.UsersDO;
+import com.bogda.common.entity.DO.UsersDO;
 import com.bogda.service.mapper.UsersMapper;
 import org.springframework.stereotype.Service;
 

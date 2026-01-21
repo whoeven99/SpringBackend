@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IUserIpService;
-import com.bogda.service.entity.DO.UserIpDO;
+import com.bogda.common.entity.DO.UserIpDO;
 import com.bogda.service.mapper.UserIpMapper;
 import org.springframework.stereotype.Service;
 

@@ -2,7 +2,7 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAILanguagePacksService;
-import com.bogda.service.entity.DO.AILanguagePacksDO;
+import com.bogda.common.entity.DO.AILanguagePacksDO;
 import com.bogda.service.mapper.AILanguagePacksMapper;
 import org.springframework.stereotype.Service;
 

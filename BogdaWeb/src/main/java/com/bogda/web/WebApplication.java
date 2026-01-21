@@ -8,8 +8,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication(
     exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class},
-    scanBasePackages = {"com.bogda.web", "com.bogda.api", "com.bogda.repository", "com.bogda.common"
-            , "com.bogda.integration", "com.bogda.service"}
+    scanBasePackages = {"com.bogda.web", "com.bogda.api", "com.bogda.repository", "com.bogda.common",
+            "com.bogda.integration", "com.bogda.service"}
 )
 @EnableAsync
 public class WebApplication {

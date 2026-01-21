@@ -5,13 +5,13 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogda.service.Service.IAPGUserGeneratedSubtaskService;
 import com.bogda.service.Service.IAPGUserGeneratedTaskService;
 import com.bogda.service.Service.IAPGUsersService;
-import com.bogda.service.entity.DO.APGUserGeneratedSubtaskDO;
-import com.bogda.service.entity.DO.APGUserGeneratedTaskDO;
-import com.bogda.service.entity.DO.APGUsersDO;
-import com.bogda.service.entity.VO.GenerateDescriptionVO;
-import com.bogda.service.entity.VO.GenerateDescriptionsVO;
-import com.bogda.service.entity.VO.GenerateEmailVO;
-import com.bogda.service.entity.VO.GenerateProgressBarVO;
+import com.bogda.common.entity.DO.APGUserGeneratedSubtaskDO;
+import com.bogda.common.entity.DO.APGUserGeneratedTaskDO;
+import com.bogda.common.entity.DO.APGUsersDO;
+import com.bogda.common.entity.VO.GenerateDescriptionVO;
+import com.bogda.common.entity.VO.GenerateDescriptionsVO;
+import com.bogda.common.entity.VO.GenerateEmailVO;
+import com.bogda.common.entity.VO.GenerateProgressBarVO;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
@@ -22,10 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static com.bogda.service.task.GenerateDbTask.GENERATE_SHOP_BAR;
-import static com.bogda.service.utils.TypeConversionUtils.apgUserGeneratedTaskDOToGenerateProgressBarVO;
-import static com.bogda.service.utils.TypeConversionUtils.generateDescriptionsVOToGenerateDescriptionVO;
 
 @Service
 public class APGUserGeneratedTaskService {
@@ -39,18 +35,19 @@ public class APGUserGeneratedTaskService {
     public static final Integer INITIALIZATION = 1;
     public static final Integer GENERATING = 2;
     public static final Integer FINISHED = 3;
+    public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
 
     /**
      * 初始化或更新相关数据
      */
     public Boolean initOrUpdateData(String shopName, Integer status, String taskModel, String taskData) {
-        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO userDO = iapgUsersService.getUserByShopName(shopName);
         if (userDO == null) {
             return false;
         }
 
         //获取用户任务状态
-        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
+        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getUserById(userDO.getId());
         APGUserGeneratedTaskDO apgUserGeneratedTaskDO = new APGUserGeneratedTaskDO(null, userDO.getId(), null, taskModel, taskData, null);
         if (taskDO == null) {
             //插入对应数据
@@ -64,13 +61,13 @@ public class APGUserGeneratedTaskService {
     }
 
     public GenerateProgressBarVO getUserData(String shopName) {
-        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO userDO = iapgUsersService.getUserByShopName(shopName);
         if (userDO == null) {
             return null;
         }
 
         GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
-        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
+        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getUserById(userDO.getId());
 
         if (taskDO == null) {
             return generateProgressBarVO;
@@ -83,7 +80,7 @@ public class APGUserGeneratedTaskService {
                     .in(APGUserGeneratedSubtaskDO::getStatus, Arrays.asList(0, 3, 4))
                     .eq(APGUserGeneratedSubtaskDO::getUserId, userDO.getId())).size();
             generateProgressBarVO = apgUserGeneratedTaskDOToGenerateProgressBarVO(taskDO, totalCount, unfinishedCount);
-            generateProgressBarVO.setProductTitle(GENERATE_SHOP_BAR.get(userDO.getId()));
+            generateProgressBarVO.setProductTitle(APGUserGeneratedTaskService.GENERATE_SHOP_BAR.get(userDO.getId()));
             generateProgressBarVO.setStatus(GENERATE_STATE_BAR.get(userDO.getId()));
             generateProgressBarVO.setTaskTime(taskDO.getUpdateTime());//获取对应的时间
             //获取产品标题
@@ -93,6 +90,18 @@ public class APGUserGeneratedTaskService {
             AppInsightsUtils.trackException(e);
         }
         //获取
+        return generateProgressBarVO;
+    }
+
+    public static GenerateProgressBarVO apgUserGeneratedTaskDOToGenerateProgressBarVO(APGUserGeneratedTaskDO apgUserGeneratedTaskDO, Integer totalCount, Integer unfinishedCount){
+        GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
+        generateProgressBarVO.setAllCount(totalCount);
+        generateProgressBarVO.setUnfinishedCount(unfinishedCount);
+        generateProgressBarVO.setTaskStatus(apgUserGeneratedTaskDO.getTaskStatus());
+        generateProgressBarVO.setTaskModel(apgUserGeneratedTaskDO.getTaskModel());
+        generateProgressBarVO.setTaskData(apgUserGeneratedTaskDO.getTaskData());
+        generateProgressBarVO.setUserId(apgUserGeneratedTaskDO.getUserId());
+        generateProgressBarVO.setId(apgUserGeneratedTaskDO.getId());
         return generateProgressBarVO;
     }
 
@@ -127,16 +136,33 @@ public class APGUserGeneratedTaskService {
         }
     }
 
+    private GenerateDescriptionVO generateDescriptionsVOToGenerateDescriptionVO(String productId,GenerateDescriptionsVO generateDescriptionsVO){
+        GenerateDescriptionVO generateDescriptionVO = new GenerateDescriptionVO();
+        generateDescriptionVO.setTemplateType(generateDescriptionsVO.getTemplateType());
+        generateDescriptionVO.setTemplateId(generateDescriptionsVO.getTemplateId());
+        generateDescriptionVO.setModel(generateDescriptionsVO.getModel());
+        generateDescriptionVO.setLanguage(generateDescriptionsVO.getLanguage());
+        generateDescriptionVO.setBrandSlogan(generateDescriptionsVO.getBrandSlogan());
+        generateDescriptionVO.setBrandTone(generateDescriptionsVO.getBrandTone());
+        generateDescriptionVO.setBrandWord(generateDescriptionsVO.getBrandWord());
+        generateDescriptionVO.setSeoKeywords(generateDescriptionsVO.getSeoKeywords());
+        generateDescriptionVO.setTextTone(generateDescriptionsVO.getTextTone());
+        generateDescriptionVO.setProductId(productId);
+        generateDescriptionVO.setContentType(generateDescriptionsVO.getContentType());
+        generateDescriptionVO.setPageType(generateDescriptionsVO.getPageType());
+        return generateDescriptionVO;
+    }
+
     /**
      * 判断是否有任务进行
      */
     public boolean isTaskRunning(String shopName) {
-        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO userDO = iapgUsersService.getUserByShopName(shopName);
         if (userDO == null) {
             return false;
         }
 
-        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
+        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getUserById(userDO.getId());
         return taskDO.getTaskStatus() != 2;
     }
 
