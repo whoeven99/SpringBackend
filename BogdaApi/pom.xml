@@ -9,7 +9,8 @@
         <version>0.0.2</version>
     </parent>
 
-    <artifactId>BogdaTask</artifactId>
+    <groupId>com.bogda.api</groupId>
+    <artifactId>BogdaApi</artifactId>
 
     <dependencies>
         <dependency>
@@ -18,12 +19,9 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <!-- Spring Boot Starter Web (includes Spring Boot core, web, scheduling, and logging) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
+        <!-- For bootstrap.yml-->
+        <!-- Spring Cloud Bootstrap：让 bootstrap.yml 在 application*.properties 之前加载 -->
+        <!-- Azure Key Vault：在 Web 模块中提前加载 Key Vault 配置 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
@@ -44,6 +42,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <skip>false</skip>
+                    <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
                 </configuration>
             </plugin>
         </plugins>
