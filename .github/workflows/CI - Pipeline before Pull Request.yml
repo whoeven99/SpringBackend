@@ -131,6 +131,7 @@ jobs:
           list-suites: 'all'  # 显示所有测试套件
           list-tests: 'failed'  # 只列出失败的测试
           max-annotations: 50  # 最大注释数量
+          github-token: ${{ secrets.GITHUB_TOKEN }}  # 显式传递 GitHub token
 
       # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
       # - name: Generate Coverage Report
