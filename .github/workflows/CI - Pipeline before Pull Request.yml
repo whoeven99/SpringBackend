@@ -121,16 +121,16 @@ jobs:
 
       # 上传测试结果（如果测试失败，会显示在 PR 中）
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: dorny/test-reporter@v1
         if: always()  # 即使测试失败也上传结果
         with:
-          files: '**/target/surefire-reports/*.xml'
-          check_name: 'Unit Test Results'
-          comment_mode: 'off'  # 关闭 PR 评论，只在 check 中显示汇总
-          report_individual_runs: false  # 不报告单个运行，只显示汇总
-          check_run_annotations: false  # 不显示注释
-          # 注意：GitHub Checks 中的测试结果摘要格式由 action 自动生成
-          # 如需完全自定义格式，可能需要使用其他 action 或自定义脚本
+          name: Unit Test Results
+          path: '**/target/surefire-reports/TEST-*.xml'
+          reporter: 'java-junit'
+          fail-on-error: false  # 测试失败不阻止 workflow
+          list-suites: 'all'  # 显示所有测试套件
+          list-tests: 'failed'  # 只列出失败的测试
+          max-annotations: 50  # 最大注释数量
 
       # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
       # - name: Generate Coverage Report
