@@ -1,10 +1,7 @@
-package com.bogda.api;
+package com.bogda.common.utils;
 
-import com.bogda.common.utils.TimeOutUtils;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
