@@ -12,9 +12,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
             "com.bogda.integration", "com.bogda.service"}
 )
 @EnableAsync
-public class WebApplication {
+public class ApiApplication {
     public static void main(String[] args) {
-        SpringApplication.run(WebApplication.class, args);
+        SpringApplication.run(ApiApplication.class, args);
     }
 }
 
