@@ -15,7 +15,6 @@
   	<name>bogda-backend-java-app</name>
 	<description>BogdaApplication</description>
     <modules>
-        <module>BogdaApi</module>
         <module>BogdaTask</module>
         <module>BogdaCommon</module>
         <module>BogdaIntegration</module>
@@ -35,6 +34,17 @@
 				<version>4.1.118.Final</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+			<!-- Azure SDK 版本统一管理，确保 azure-identity 和 azure-core 版本兼容 -->
+			<dependency>
+				<groupId>com.azure</groupId>
+				<artifactId>azure-core</artifactId>
+				<version>1.47.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.azure</groupId>
+				<artifactId>azure-identity</artifactId>
+				<version>1.13.1</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
