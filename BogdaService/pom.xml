@@ -59,12 +59,6 @@
         </dependency>
 
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.30</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-identity-extensions</artifactId>
             <exclusions>
@@ -176,11 +170,6 @@
         </dependency>
         <!-- volc-sdk-java 通过 BogdaIntegration 传递，但需要排除 commons-logging -->
         <!-- 已在 BogdaIntegration 中声明，此处移除避免重复 -->
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>1.3.2</version>
-        </dependency>
 
         <dependency>
             <groupId>redis.clients</groupId>

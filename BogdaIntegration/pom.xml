@@ -112,6 +112,20 @@
             <version>1.0.0-beta.1</version>
         </dependency>
 
+        <!-- Azure Identity (AzureKeyVaultConfig 使用) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+            <version>1.13.1</version>
+        </dependency>
+
+        <!-- Azure Key Vault Secrets (AzureKeyVaultConfig 使用) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-security-keyvault-secrets</artifactId>
+            <version>4.7.2</version>
+        </dependency>
+
         <!-- 腾讯云 COS SDK (HunYuanBucketIntegration 使用) -->
         <dependency>
             <groupId>com.qcloud</groupId>

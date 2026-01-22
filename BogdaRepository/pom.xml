@@ -27,12 +27,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-core</artifactId>
-            <version>1.57.0</version>
-        </dependency>
-
         <!-- MyBatis-Plus Core -->
         <dependency>
             <groupId>com.baomidou</groupId>
@@ -54,11 +48,45 @@
             <version>3.5.13</version>
         </dependency>
 
+        <!-- MyBatis Spring Integration (for @MapperScan) -->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
+        <!-- Spring JDBC (for DataSourceTransactionManager) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+
+        <!-- Druid DataSource (for MybatisPlusConfig) -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.2.24</version>
+        </dependency>
+
+        <!-- SQL Server JDBC Driver (for MybatisPlusConfig) -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>12.8.1.jre11</version>
+        </dependency>
+
         <!-- Spring Data Redis (for RedisIntegration using RedisTemplate) -->
         <!-- spring-context 已通过 spring-boot-starter-data-redis 传递 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- Jedis 客户端（RedisConfig 使用 JedisConnectionFactory 和 JedisPoolConfig） -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>5.2.0</version>
         </dependency>
 
         <!-- 以下依赖已通过 BogdaCommon 传递，无需重复声明：

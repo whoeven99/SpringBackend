@@ -1,4 +1,4 @@
-package com.bogda.api.config;
+package com.bogda.integration;
 
 import com.google.genai.Client;
 import org.springframework.beans.factory.annotation.Value;

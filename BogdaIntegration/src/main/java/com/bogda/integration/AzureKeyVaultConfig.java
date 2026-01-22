@@ -1,4 +1,4 @@
-package com.bogda.api.config;
+package com.bogda.integration;
 
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
