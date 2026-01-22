@@ -1,4 +1,4 @@
-package com.bogda.repository;
+package com.bogda.repository.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
