@@ -1,7 +1,7 @@
 package com.bogda.service.logic.redis;
 
+import com.bogda.common.utils.StringUtils;
 import com.bogda.repository.RedisIntegration;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

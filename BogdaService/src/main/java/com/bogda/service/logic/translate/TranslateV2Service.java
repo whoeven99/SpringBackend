@@ -43,7 +43,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import kotlin.Pair;
 import lombok.Getter;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -989,10 +988,10 @@ public class TranslateV2Service {
                         .findFirst()
                         .orElse(null);
 
-        if (value == null || StringUtils.isBlank(value)) {
+        if (StringUtils.isEmpty(value)) {
             // 判断原文是否为空,译文是否有内容,需要删掉译文
             if (JudgeTranslateUtils.TRANSLATABLE_RESOURCE_TYPES.contains(module) && keyTranslation != null &&
-                    !StringUtils.isBlank(keyTranslation.getValue())) {
+                    !StringUtils.isEmpty(keyTranslation.getValue())) {
                 // 判断是否有翻译
                 // 将数据插入集合中
                 ShopifyTranslationsRemove remove;
