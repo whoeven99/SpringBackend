@@ -126,8 +126,11 @@ jobs:
         with:
           files: '**/target/surefire-reports/*.xml'
           check_name: 'Unit Test Results'
-          comment_mode: 'always'  # 总是创建新的评论（支持的值: off, always, changes, changes in failures, changes in errors, failures, errors）
-          report_individual_runs: true
+          comment_mode: 'off'  # 关闭 PR 评论，只在 check 中显示汇总
+          report_individual_runs: false  # 不报告单个运行，只显示汇总
+          check_run_annotations: false  # 不显示注释
+          # 注意：GitHub Checks 中的测试结果摘要格式由 action 自动生成
+          # 如需完全自定义格式，可能需要使用其他 action 或自定义脚本
 
       # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
       # - name: Generate Coverage Report
