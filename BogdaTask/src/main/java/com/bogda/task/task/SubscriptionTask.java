@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import static com.bogda.service.logic.TranslateService.executorService;
 
 @Component
-@EnableScheduling
 public class SubscriptionTask {
     @Autowired
     private TaskService taskService;

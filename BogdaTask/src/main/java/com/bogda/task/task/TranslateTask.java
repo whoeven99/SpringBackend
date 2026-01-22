@@ -22,8 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
-@EnableAsync
-@EnableScheduling
 public class TranslateTask {
     @Autowired
     private TencentEmailService tencentEmailService;
