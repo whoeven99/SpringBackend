@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>com.bogda</groupId>
-    <artifactId>BogdaWeb</artifactId>
+    <artifactId>BogdaApi</artifactId>
 
     <dependencies>
         <dependency>
