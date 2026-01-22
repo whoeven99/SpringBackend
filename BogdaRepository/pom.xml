@@ -27,6 +27,12 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-core</artifactId>
+            <version>1.57.0</version>
+        </dependency>
+
         <!-- MyBatis-Plus Core -->
         <dependency>
             <groupId>com.baomidou</groupId>
