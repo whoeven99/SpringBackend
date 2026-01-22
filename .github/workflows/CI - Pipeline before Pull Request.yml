@@ -1,0 +1,222 @@
+name: CI - Pipeline before Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # ========== 代码质量检查 ==========
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    # 如果前面的检查失败，可以继续执行其他检查
+    continue-on-error: false
+    permissions:
+      contents: read  # 需要权限来读取代码
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      # Checkstyle 代码风格检查（已有配置文件，取消注释 pom.xml 中的插件即可启用）
+      - name: Run Checkstyle
+        run: mvn checkstyle:check
+        continue-on-error: true  # 暂时允许失败，等配置好后再改为 false
+
+      # SpotBugs 静态代码分析（需要先在 pom.xml 中添加插件）
+      # - name: Run SpotBugs
+      #   run: mvn spotbugs:check
+      #   continue-on-error: true
+
+  # ========== 安全扫描 ==========
+#  security-scan:
+#    name: Security Scan
+#    runs-on: ubuntu-latest
+#    continue-on-error: true  # 安全扫描失败不应该阻止 PR
+#    permissions:
+#      contents: read  # 需要权限来读取代码
+#      security-events: write  # CodeQL 需要权限来上传安全分析结果
+#      actions: read  # CodeQL 需要权限来读取 actions
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: '17'
+#
+#      - name: Cache Maven local repository
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: |
+#            ${{ runner.os }}-m2-
+
+      # OWASP Dependency-Check - 依赖漏洞扫描
+      # 需要先在 pom.xml 中添加 org.owasp:dependency-check-maven 插件
+      # - name: OWASP Dependency Check
+      #   run: mvn org.owasp:dependency-check-maven:check
+      #   continue-on-error: true
+
+      # GitHub CodeQL - 代码安全分析（GitHub 免费提供）
+#      - name: Initialize CodeQL
+#        uses: github/codeql-action/init@v3
+#        with:
+#          languages: java
+#          queries: security-extended,security-and-quality
+#
+#      - name: Perform CodeQL Analysis
+#        uses: github/codeql-action/analyze@v3
+#        continue-on-error: true
+
+  # ========== 构建和测试 ==========
+  build:
+    name: Build and Unit Test
+    runs-on: ubuntu-latest
+    needs: []  # 可以并行执行，不依赖其他 job
+    permissions:
+      checks: write      # 需要权限来创建 check runs（用于测试结果报告）
+      pull-requests: write  # 需要权限来在 PR 上创建评论
+      contents: read      # 需要权限来读取代码
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      # 构建项目（包含测试）
+      - name: Build with Maven
+        run: mvn -B -V -e -T 1C clean verify
+
+      # 上传测试结果（如果测试失败，会显示在 PR 中）
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()  # 即使测试失败也上传结果
+        with:
+          files: '**/target/surefire-reports/*.xml'
+          check_name: 'Unit Test Results'
+          comment_mode: 'always'  # 总是创建新的评论（支持的值: off, always, changes, changes in failures, changes in errors, failures, errors）
+          report_individual_runs: true
+
+      # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
+      # - name: Generate Coverage Report
+      #   run: mvn jacoco:report
+      #   continue-on-error: true
+
+      # - name: Upload Coverage to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     files: '**/target/site/jacoco/jacoco.xml'
+      #     fail_ci_if_error: false
+
+
+  # ========== 代码格式化检查 ==========
+#  format-check:
+#    name: Code Format Check
+#    runs-on: ubuntu-latest
+#    continue-on-error: true
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: '17'
+
+      # 检查代码是否符合 Google Java Format（需要先配置格式化插件）
+      # - name: Check Code Format
+      #   run: mvn com.spotify.fmt:fmt-maven-plugin:check
+      #   continue-on-error: true
+
+  # ========== PR 注释总结（可选） ==========
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [build, code-quality]
+    if: always()
+    permissions:
+      issues: write      # 需要权限来创建/更新 issue 评论（PR 也是 issue）
+      pull-requests: write  # 需要权限来在 PR 上操作
+    steps:
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 获取各个 job 的状态
+            const buildStatus = '${{ needs.build.result }}';
+            const qualityStatus = '${{ needs.code-quality.result }}';
+            
+            // 状态图标映射
+            const getStatusIcon = (status) => {
+              if (status === 'success') return '✅';
+              if (status === 'failure') return '❌';
+              if (status === 'cancelled') return '🚫';
+              if (status === 'skipped') return '⏭️';
+              return '⏳';
+            };
+            
+            const summary = `## CI 检查结果
+            
+            | 检查项 | 状态 |
+            |--------|------|
+            | 构建和测试 | ${getStatusIcon(buildStatus)} ${buildStatus} |
+            | 代码质量 | ${getStatusIcon(qualityStatus)} ${qualityStatus} |
+            
+            > 详细结果请查看下方的检查详情
+            `;
+            
+            try {
+              // 检查是否是 PR
+              if (!context.payload.pull_request) {
+                console.log('这不是一个 PR，跳过评论');
+                return;
+              }
+              
+              // 创建评论
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary
+              });
+              
+              console.log('PR 评论已成功创建');
+            } catch (error) {
+              console.error('创建 PR 评论失败:', error.message);
+              // 不抛出错误，避免影响整个 workflow
+            }
