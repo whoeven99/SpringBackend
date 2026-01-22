@@ -13,25 +13,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.bogda.api</groupId>
-            <artifactId>BogdaApi</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.bogda.common</groupId>
-            <artifactId>BogdaCommon</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.bogda.service</groupId>
             <artifactId>BogdaService</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.bogda.integration</groupId>
-            <artifactId>BogdaIntegration</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
@@ -39,6 +22,18 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+            <version>4.1.0</version>
+        </dependency>
+        <!-- Key Vault Secrets 与 Spring 配置集成（通过 bootstrap.yml 读取） -->
+        <dependency>
+            <groupId>com.azure.spring</groupId>
+            <artifactId>spring-cloud-azure-starter-keyvault-secrets</artifactId>
+            <version>5.16.0</version>
         </dependency>
     </dependencies>
 

@@ -1,0 +1,62 @@
+# Spring Cloud Azure Key Vault
+spring:
+  application:
+    name: bogda-web
+
+  cloud:
+    azure:
+      profile:
+        tenant-id: ${appRegistration.tenant-id}
+
+      credential:
+        client-id: ${appRegistration.client-id}
+        client-secret: ${Azure_Client_Secret}   # 本地run -> 编辑配置 -> 修改选项打开环境变量 在环境变量里添加，云上在azure config
+
+      keyvault:
+        secret:
+          property-source-enabled: true
+          property-sources:
+            - name: springbackend-keyvault
+              endpoint: ${keyvault.endpoint}
+
+appRegistration:
+  client-id: baa53d85-60af-4746-8976-ff329ef7dafc
+  tenant-id: 7e4cb437-91a6-4a28-88e5-6549623374c5
+
+keyvault:
+  endpoint: https://springbackendvault.vault.azure.net/
+
+datasource:
+  url: jdbc:sqlserver://bogdatechtestsqlserver.database.windows.net:1433;database=bogdatech-test;encrypt=true;trustServerCertificate=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  username: bogdatechtestsqlserver@bogdatechtestsqlserver
+  password: Hyw124563
+
+redis:
+  hostname: azure-cache-dev.redis.cache.windows.net
+
+cosmos:
+  endpoint: https://springbackend-cosmos-test.documents.azure.com:443/
+  database: bogdatechtest
+  container: discount
+
+---
+# prod环境覆盖
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+keyvault:
+  endpoint: https://userprivatekeyprod.vault.azure.net/
+
+datasource:
+  url: jdbc:sqlserver://bogdatechsqlserverprod.database.windows.net:1433;database=bogdatech-prod;encrypt=true;trustServerCertificate=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  username: bogdatechsqlserverprod@bogdatechsqlserverprod
+  password: Bogda1234
+
+redis:
+  hostname: azurecache-redis-prod.redis.cache.windows.net
+
+cosmos:
+  endpoint: https://bogdaprodcosmos.documents.azure.com:443/
+  database: bogdaprodcosmos
