@@ -134,6 +134,15 @@ jobs:
           max-annotations: 50  # 最大注释数量
           # token 会自动使用 GITHUB_TOKEN，无需显式传递
 
+      # 上传测试报告文件作为 artifact，供 pr-summary job 使用
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/target/surefire-reports/TEST-*.xml'
+          retention-days: 1
+
 
       # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
       # - name: Generate Coverage Report
@@ -182,6 +191,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Download Test Reports
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: test-reports
+          path: test-reports
+
       - name: Generate Combined PR Comment
         uses: actions/github-script@v7
         with:
@@ -211,13 +227,64 @@ jobs:
             let totalTime = 0;
             
             try {
-              // 使用 find 命令查找所有 surefire 报告文件
-              const findResult = execSync('find . -name "TEST-*.xml" -path "*/target/surefire-reports/*"', { encoding: 'utf8' });
-              const reportFiles = findResult.trim().split('\n').filter(f => f);
+              // 首先尝试从下载的 artifact 中读取
+              let reportFiles = [];
+              
+              // 方法1: 从下载的 artifact 目录读取
+              if (fs.existsSync('test-reports')) {
+                const walkDir = (dir, fileList = []) => {
+                  const files = fs.readdirSync(dir);
+                  files.forEach(file => {
+                    const filePath = dir + '/' + file;
+                    if (fs.statSync(filePath).isDirectory()) {
+                      walkDir(filePath, fileList);
+                    } else if (file.endsWith('.xml')) {
+                      fileList.push(filePath);
+                    }
+                  });
+                  return fileList;
+                };
+                reportFiles = walkDir('test-reports');
+                console.log(`Found ${reportFiles.length} files in test-reports artifact`);
+              }
+              
+              // 方法2: 如果 artifact 中没有，尝试从当前目录查找（多模块项目）
+              if (reportFiles.length === 0) {
+                try {
+                  const findResult = execSync('find . -name "TEST-*.xml" -path "*/target/surefire-reports/*" 2>/dev/null', { encoding: 'utf8' });
+                  reportFiles = findResult.trim().split('\n').filter(f => f);
+                  console.log(`Found ${reportFiles.length} files using find command`);
+                } catch (e) {
+                  console.log('Find command failed, trying glob pattern');
+                  // 使用简单的递归查找
+                  const findAllXml = (dir) => {
+                    let results = [];
+                    const list = fs.readdirSync(dir);
+                    list.forEach(file => {
+                      const filePath = dir + '/' + file;
+                      const stat = fs.statSync(filePath);
+                      if (stat && stat.isDirectory()) {
+                        results = results.concat(findAllXml(filePath));
+                      } else if (file.endsWith('.xml') && file.startsWith('TEST-')) {
+                        results.push(filePath);
+                      }
+                    });
+                    return results;
+                  };
+                  reportFiles = findAllXml('.');
+                  console.log(`Found ${reportFiles.length} files using recursive search`);
+                }
+              }
+              
+              console.log(`Total report files found: ${reportFiles.length}`);
               
               // 解析每个报告文件
               reportFiles.forEach(file => {
                 try {
+                  if (!fs.existsSync(file)) {
+                    console.log(`File not found: ${file}`);
+                    return;
+                  }
                   const content = fs.readFileSync(file, 'utf8');
                   const testsMatch = content.match(/tests="(\d+)"/);
                   const failuresMatch = content.match(/failures="(\d+)"/);
@@ -225,7 +292,11 @@ jobs:
                   const skippedMatch = content.match(/skipped="(\d+)"/);
                   const timeMatch = content.match(/time="([\d.]+)"/);
                   
-                  if (testsMatch) totalTests += parseInt(testsMatch[1]);
+                  if (testsMatch) {
+                    const tests = parseInt(testsMatch[1]);
+                    totalTests += tests;
+                    console.log(`File ${file}: ${tests} tests`);
+                  }
                   if (failuresMatch) totalFailures += parseInt(failuresMatch[1]);
                   if (errorsMatch) totalErrors += parseInt(errorsMatch[1]);
                   if (skippedMatch) totalSkipped += parseInt(skippedMatch[1]);
@@ -234,8 +305,11 @@ jobs:
                   console.log(`Error parsing ${file}: ${error.message}`);
                 }
               });
+              
+              console.log(`Final totals - Tests: ${totalTests}, Failures: ${totalFailures}, Errors: ${totalErrors}, Skipped: ${totalSkipped}, Time: ${totalTime.toFixed(2)}s`);
             } catch (error) {
-              console.log('No test report files found or error reading files');
+              console.log('Error finding test report files:', error.message);
+              console.log(error.stack);
             }
             
             // 生成合并的评论内容
