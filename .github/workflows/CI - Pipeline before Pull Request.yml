@@ -134,78 +134,6 @@ jobs:
           max-annotations: 50  # 最大注释数量
           # token 会自动使用 GITHUB_TOKEN，无需显式传递
 
-      # 解析测试结果并发布到 PR 评论
-      - name: Parse Test Results and Comment PR
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const { execSync } = require('child_process');
-            
-            // 使用 find 命令查找所有 surefire 报告文件
-            let reportFiles = [];
-            try {
-              const findResult = execSync('find . -name "TEST-*.xml" -path "*/target/surefire-reports/*"', { encoding: 'utf8' });
-              reportFiles = findResult.trim().split('\n').filter(f => f);
-            } catch (error) {
-              console.log('No test report files found');
-            }
-            
-            let totalTests = 0;
-            let totalFailures = 0;
-            let totalErrors = 0;
-            let totalSkipped = 0;
-            let totalTime = 0;
-            
-            // 解析每个报告文件
-            reportFiles.forEach(file => {
-              try {
-                const content = fs.readFileSync(file, 'utf8');
-                // 简单的 XML 解析（提取关键信息）
-                const testsMatch = content.match(/tests="(\d+)"/);
-                const failuresMatch = content.match(/failures="(\d+)"/);
-                const errorsMatch = content.match(/errors="(\d+)"/);
-                const skippedMatch = content.match(/skipped="(\d+)"/);
-                const timeMatch = content.match(/time="([\d.]+)"/);
-                
-                if (testsMatch) totalTests += parseInt(testsMatch[1]);
-                if (failuresMatch) totalFailures += parseInt(failuresMatch[1]);
-                if (errorsMatch) totalErrors += parseInt(errorsMatch[1]);
-                if (skippedMatch) totalSkipped += parseInt(skippedMatch[1]);
-                if (timeMatch) totalTime += parseFloat(timeMatch[1]);
-              } catch (error) {
-                console.log(`Error parsing ${file}: ${error.message}`);
-              }
-            });
-            
-            // 生成评论内容
-            const status = (totalFailures === 0 && totalErrors === 0) ? '✅' : '❌';
-            const passed = totalTests - totalFailures - totalErrors - totalSkipped;
-            const comment = 
-              '## ' + status + ' 单元测试结果\n\n' +
-              '| 指标 | 结果 |\n' +
-              '|------|------|\n' +
-              '| 总测试数 | ' + totalTests + ' |\n' +
-              '| 通过 | ' + passed + ' ✅ |\n' +
-              '| 失败 | ' + totalFailures + (totalFailures > 0 ? ' ❌' : '') + ' |\n' +
-              '| 错误 | ' + totalErrors + (totalErrors > 0 ? ' ❌' : '') + ' |\n' +
-              '| 跳过 | ' + totalSkipped + (totalSkipped > 0 ? ' 💤' : '') + ' |\n' +
-              '| 耗时 | ' + totalTime.toFixed(2) + 's ⏱️ |\n\n' +
-              (totalFailures === 0 && totalErrors === 0 ? '🎉 所有测试通过！' : '⚠️ 有测试失败，请检查详情。');
-            
-            // 发布评论到 PR
-            try {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            } catch (error) {
-              console.log(`Error creating comment: ${error.message}`);
-            }
 
       # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
       # - name: Generate Coverage Report
@@ -240,7 +168,7 @@ jobs:
       #   run: mvn com.spotify.fmt:fmt-maven-plugin:check
       #   continue-on-error: true
 
-  # ========== PR 注释总结（可选） ==========
+  # ========== PR 注释总结（合并 CI 检查结果和单元测试结果） ==========
   pr-summary:
     name: PR Summary
     runs-on: ubuntu-latest
@@ -249,12 +177,19 @@ jobs:
     permissions:
       issues: write      # 需要权限来创建/更新 issue 评论（PR 也是 issue）
       pull-requests: write  # 需要权限来在 PR 上操作
+      contents: read      # 需要权限来读取文件
     steps:
-      - name: Comment PR
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate Combined PR Comment
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+            
             // 获取各个 job 的状态
             const buildStatus = '${{ needs.build.result }}';
             const qualityStatus = '${{ needs.code-quality.result }}';
@@ -268,15 +203,64 @@ jobs:
               return '⏳';
             };
             
-            const summary = `## CI 检查结果
+            // 解析测试结果
+            let totalTests = 0;
+            let totalFailures = 0;
+            let totalErrors = 0;
+            let totalSkipped = 0;
+            let totalTime = 0;
             
-            | 检查项 | 状态 |
-            |--------|------|
-            | 构建和测试 | ${getStatusIcon(buildStatus)} ${buildStatus} |
-            | 代码质量 | ${getStatusIcon(qualityStatus)} ${qualityStatus} |
+            try {
+              // 使用 find 命令查找所有 surefire 报告文件
+              const findResult = execSync('find . -name "TEST-*.xml" -path "*/target/surefire-reports/*"', { encoding: 'utf8' });
+              const reportFiles = findResult.trim().split('\n').filter(f => f);
+              
+              // 解析每个报告文件
+              reportFiles.forEach(file => {
+                try {
+                  const content = fs.readFileSync(file, 'utf8');
+                  const testsMatch = content.match(/tests="(\d+)"/);
+                  const failuresMatch = content.match(/failures="(\d+)"/);
+                  const errorsMatch = content.match(/errors="(\d+)"/);
+                  const skippedMatch = content.match(/skipped="(\d+)"/);
+                  const timeMatch = content.match(/time="([\d.]+)"/);
+                  
+                  if (testsMatch) totalTests += parseInt(testsMatch[1]);
+                  if (failuresMatch) totalFailures += parseInt(failuresMatch[1]);
+                  if (errorsMatch) totalErrors += parseInt(errorsMatch[1]);
+                  if (skippedMatch) totalSkipped += parseInt(skippedMatch[1]);
+                  if (timeMatch) totalTime += parseFloat(timeMatch[1]);
+                } catch (error) {
+                  console.log(`Error parsing ${file}: ${error.message}`);
+                }
+              });
+            } catch (error) {
+              console.log('No test report files found or error reading files');
+            }
             
-            > 详细结果请查看下方的检查详情
-            `;
+            // 生成合并的评论内容
+            const testStatus = (totalFailures === 0 && totalErrors === 0) ? '✅' : '❌';
+            const passed = totalTests - totalFailures - totalErrors - totalSkipped;
+            
+            const comment = 
+              '## 📊 CI 检查结果\n\n' +
+              '### 检查项状态\n' +
+              '| 检查项 | 状态 |\n' +
+              '|--------|------|\n' +
+              '| 构建和测试 | ' + getStatusIcon(buildStatus) + ' ' + buildStatus + ' |\n' +
+              '| 代码质量 | ' + getStatusIcon(qualityStatus) + ' ' + qualityStatus + ' |\n\n' +
+              '### ' + testStatus + ' 单元测试结果\n' +
+              '| 指标 | 结果 |\n' +
+              '|------|------|\n' +
+              '| 总测试数 | ' + totalTests + ' |\n' +
+              '| 通过 | ' + passed + ' ✅ |\n' +
+              '| 失败 | ' + totalFailures + (totalFailures > 0 ? ' ❌' : '') + ' |\n' +
+              '| 错误 | ' + totalErrors + (totalErrors > 0 ? ' ❌' : '') + ' |\n' +
+              '| 跳过 | ' + totalSkipped + (totalSkipped > 0 ? ' 💤' : '') + ' |\n' +
+              '| 耗时 | ' + totalTime.toFixed(2) + 's ⏱️ |\n\n' +
+              (totalFailures === 0 && totalErrors === 0 && buildStatus === 'success' ? 
+                '🎉 所有检查通过！' : 
+                '⚠️ 请检查上述失败的检查项。\n\n> 详细结果请查看下方的检查详情');
             
             try {
               // 检查是否是 PR
@@ -290,7 +274,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: summary
+                body: comment
               });
               
               console.log('PR 评论已成功创建');
