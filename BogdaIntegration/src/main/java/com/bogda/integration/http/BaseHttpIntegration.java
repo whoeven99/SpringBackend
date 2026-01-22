@@ -23,32 +23,7 @@ public class BaseHttpIntegration {
     private final CloseableHttpClient httpClient;
 
     public BaseHttpIntegration() {
-        // IMPORTANT:
-        // - connectTimeout: 建连超时（TCP/TLS）
-        // - connectionRequestTimeout: 从连接池获取连接的等待超时
-        // - socketTimeout: 读超时（等待响应数据）
-        //
-        // 之前使用 HttpClients.createDefault() 会沿用默认超时（部分场景下可能表现为无限等待），
-        // 导致线程卡住、任务锁不释放（例如 savingShops）。
-        final int connectTimeoutMs = Integer.getInteger("bogda.http.connect-timeout-ms", 10_000);
-        final int connectionRequestTimeoutMs = Integer.getInteger("bogda.http.connection-request-timeout-ms", 10_000);
-        final int socketTimeoutMs = Integer.getInteger("bogda.http.socket-timeout-ms", 60_000);
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-
-        cm.setMaxTotal(200);          // 总连接数
-        cm.setDefaultMaxPerRoute(50); // 单 host（如 Shopify）最大连接
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(connectTimeoutMs)
-                .setConnectionRequestTimeout(connectionRequestTimeoutMs)
-                .setSocketTimeout(socketTimeoutMs)
-                .build();
-
-        this.httpClient = HttpClients.custom()
-                .setConnectionManager(cm)
-                .setDefaultRequestConfig(requestConfig)
-                .evictExpiredConnections()
-                .evictIdleConnections(30, TimeUnit.SECONDS)
-                .build();
+        this.httpClient = HttpClients.createDefault();
     }
 
     public String httpPost(String url, String body) {
