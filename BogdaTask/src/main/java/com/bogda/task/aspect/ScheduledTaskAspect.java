@@ -15,8 +15,6 @@ import java.lang.reflect.Method;
 
 /**
  * 定时任务AOP切面
- * 
- * 功能：
  * 1. 拦截所有带 @Scheduled 注解的方法
  * 2. 如果方法上有 @EnableScheduledTask 注解，则总是执行
  * 3. 如果方法上没有 @EnableScheduledTask 注解：
@@ -26,8 +24,7 @@ import java.lang.reflect.Method;
 @Aspect
 @Component
 public class ScheduledTaskAspect {
-    
-    private static final Logger log = LoggerFactory.getLogger(ScheduledTaskAspect.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ScheduledTaskAspect.class);
 
     @Value("${spring.config.activate.on-profile:local}")
     private String env;
@@ -42,25 +39,18 @@ public class ScheduledTaskAspect {
         
         if (hasEnableAnnotation) {
             // 有注解，总是执行
-            log.debug("执行定时任务: {}.{} (已启用)", 
-                    joinPoint.getTarget().getClass().getSimpleName(), 
-                    method.getName());
+            LOG.debug("执行定时任务: {} (已启用)", method.getName());
             return joinPoint.proceed();
         }
         
         // 没有注解，根据环境判断
         // 直接获取SPRING_PROFILES_ACTIVE环境变量或配置
         if ("test".equalsIgnoreCase(env) || "prod".equalsIgnoreCase(env)) {
-            log.debug("执行定时任务: {}.{} (云上环境: {})",
-                    joinPoint.getTarget().getClass().getSimpleName(),
-                    method.getName(),
-                    env);
+            LOG.debug("执行定时任务: {} (云上环境: {})", method.getName(), env);
             return joinPoint.proceed();
         } else {
             // local环境或其他环境，不执行
-            log.debug("跳过定时任务: {}.{} (本地环境)",
-                    joinPoint.getTarget().getClass().getSimpleName(), 
-                    method.getName());
+            LOG.debug("跳过定时任务: {} (本地环境)", method.getName());
             return null;
         }
     }
