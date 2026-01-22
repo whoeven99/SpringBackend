@@ -871,18 +871,6 @@ public class TranslateV2Service {
         return translateResourceDTOList;
     }
 
-    public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
-        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
-        if (initialTaskV2DO != null) {
-            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
-            redisStoppedRepository.removeStoppedFlag(shopName);
-            translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
-        }
-
-        // 删除用户停止标识
-        return new BaseResponse<>().CreateSuccessResponse(true);
-    }
-
     public void continueTranslating(String shopName) {
         List<InitialTaskV2DO> list = initialTaskV2Repo.selectStoppedByShopName(shopName);
         if (!list.isEmpty()) {
@@ -901,7 +889,7 @@ public class TranslateV2Service {
             for (InitialTaskV2DO initialTaskV2DO : list) {
                 redisStoppedRepository.removeStoppedFlag(shopName, initialTaskV2DO.getId());
                 initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false);
+                boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false, false);
                 AppInsightsUtils.trackTrace("continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
             }
         }
@@ -1186,7 +1174,7 @@ public class TranslateV2Service {
     public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
         if (initialTaskV2DO != null) {
-            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false);
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
             redisStoppedRepository.removeStoppedFlag(shopName);
             translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         }
@@ -1198,7 +1186,7 @@ public class TranslateV2Service {
     public BaseResponse<Object> continueTranslatingV2(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
         if (initialTaskV2DO != null) {
-            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false);
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
             redisStoppedRepository.removeStoppedFlag(shopName, taskId);
             translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         }
