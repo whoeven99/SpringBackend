@@ -37,8 +37,8 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     }
 
     @Override
-    public int insertCharsByShopName(TranslationCounterRequest translationCounterRequest) {
-        return baseMapper.insertCharsByShopName(translationCounterRequest.getShopName(), 0);
+    public int insertCharsByShopName(String shopName) {
+        return baseMapper.insertCharsByShopName(shopName, 0);
     }
 
     public int updateUsedCharsByShopName(String shopName, Integer usedChars) {
