@@ -15,7 +15,6 @@
   	<name>bogda-backend-java-app</name>
 	<description>BogdaApplication</description>
     <modules>
-        <module>BogdaApi</module>
         <module>BogdaTask</module>
         <module>BogdaCommon</module>
         <module>BogdaIntegration</module>
