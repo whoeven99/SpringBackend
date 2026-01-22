@@ -1,4 +1,4 @@
-package com.bogda.api.config;
+package com.bogda.service.exception;
 
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.exception.ClientException;

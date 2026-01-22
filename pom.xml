@@ -36,6 +36,18 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+			<!-- Azure SDK 版本统一管理，确保 azure-identity 和 azure-core 版本兼容 -->
+			<!-- 升级 azure-identity 到 1.14.0+ 以匹配 azure-core 1.45.0+ 的 AccessToken 构造函数 -->
+			<dependency>
+				<groupId>com.azure</groupId>
+				<artifactId>azure-core</artifactId>
+				<version>1.57.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.azure</groupId>
+				<artifactId>azure-identity</artifactId>
+				<version>1.14.0</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
