@@ -1,4 +1,4 @@
-package com.bogda.api.config;
+package com.bogda.service;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
