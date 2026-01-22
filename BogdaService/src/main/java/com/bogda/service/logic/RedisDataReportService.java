@@ -10,14 +10,16 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import static com.bogda.common.utils.RedisKeyUtils.*;
-import static com.mysql.cj.util.TimeUtil.DATE_FORMATTER;
 
 @Service
 public class RedisDataReportService {
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    
     @Autowired
     private RedisIntegration redisIntegration;
 
