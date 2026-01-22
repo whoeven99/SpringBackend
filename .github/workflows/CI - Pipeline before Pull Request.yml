@@ -96,6 +96,7 @@ jobs:
       checks: write      # 需要权限来创建 check runs（用于测试结果报告）
       pull-requests: write  # 需要权限来在 PR 上创建评论
       contents: read      # 需要权限来读取代码
+      statuses: write    # 可能需要用于创建状态
     
     steps:
       - name: Checkout
@@ -119,8 +120,8 @@ jobs:
       - name: Build with Maven
         run: mvn -B -V -e -T 1C clean verify
 
-      # 上传测试结果（如果测试失败，会显示在 PR 中）
-      - name: Publish Test Results
+      # 上传测试结果到 GitHub Checks（如果测试失败，会显示在 PR 中）
+      - name: Publish Test Results to Checks
         uses: dorny/test-reporter@v1
         if: always()  # 即使测试失败也上传结果
         with:
@@ -131,7 +132,80 @@ jobs:
           list-suites: 'all'  # 显示所有测试套件
           list-tests: 'failed'  # 只列出失败的测试
           max-annotations: 50  # 最大注释数量
-          token: ${{ secrets.GITHUB_TOKEN }}  # 显式传递 GitHub token
+          # token 会自动使用 GITHUB_TOKEN，无需显式传递
+
+      # 解析测试结果并发布到 PR 评论
+      - name: Parse Test Results and Comment PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+            
+            // 使用 find 命令查找所有 surefire 报告文件
+            let reportFiles = [];
+            try {
+              const findResult = execSync('find . -name "TEST-*.xml" -path "*/target/surefire-reports/*"', { encoding: 'utf8' });
+              reportFiles = findResult.trim().split('\n').filter(f => f);
+            } catch (error) {
+              console.log('No test report files found');
+            }
+            
+            let totalTests = 0;
+            let totalFailures = 0;
+            let totalErrors = 0;
+            let totalSkipped = 0;
+            let totalTime = 0;
+            
+            // 解析每个报告文件
+            reportFiles.forEach(file => {
+              try {
+                const content = fs.readFileSync(file, 'utf8');
+                // 简单的 XML 解析（提取关键信息）
+                const testsMatch = content.match(/tests="(\d+)"/);
+                const failuresMatch = content.match(/failures="(\d+)"/);
+                const errorsMatch = content.match(/errors="(\d+)"/);
+                const skippedMatch = content.match(/skipped="(\d+)"/);
+                const timeMatch = content.match(/time="([\d.]+)"/);
+                
+                if (testsMatch) totalTests += parseInt(testsMatch[1]);
+                if (failuresMatch) totalFailures += parseInt(failuresMatch[1]);
+                if (errorsMatch) totalErrors += parseInt(errorsMatch[1]);
+                if (skippedMatch) totalSkipped += parseInt(skippedMatch[1]);
+                if (timeMatch) totalTime += parseFloat(timeMatch[1]);
+              } catch (error) {
+                console.log(`Error parsing ${file}: ${error.message}`);
+              }
+            });
+            
+            // 生成评论内容
+            const status = (totalFailures === 0 && totalErrors === 0) ? '✅' : '❌';
+            const passed = totalTests - totalFailures - totalErrors - totalSkipped;
+            const comment = 
+              '## ' + status + ' 单元测试结果\n\n' +
+              '| 指标 | 结果 |\n' +
+              '|------|------|\n' +
+              '| 总测试数 | ' + totalTests + ' |\n' +
+              '| 通过 | ' + passed + ' ✅ |\n' +
+              '| 失败 | ' + totalFailures + (totalFailures > 0 ? ' ❌' : '') + ' |\n' +
+              '| 错误 | ' + totalErrors + (totalErrors > 0 ? ' ❌' : '') + ' |\n' +
+              '| 跳过 | ' + totalSkipped + (totalSkipped > 0 ? ' 💤' : '') + ' |\n' +
+              '| 耗时 | ' + totalTime.toFixed(2) + 's ⏱️ |\n\n' +
+              (totalFailures === 0 && totalErrors === 0 ? '🎉 所有测试通过！' : '⚠️ 有测试失败，请检查详情。');
+            
+            // 发布评论到 PR
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.log(`Error creating comment: ${error.message}`);
+            }
 
       # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
       # - name: Generate Coverage Report
