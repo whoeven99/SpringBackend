@@ -15,12 +15,12 @@
   	<name>bogda-backend-java-app</name>
 	<description>BogdaApplication</description>
     <modules>
+        <module>BogdaApi</module>
         <module>BogdaTask</module>
-        <module>BogdaCommon</module>
+        <module>BogdaService</module>
         <module>BogdaIntegration</module>
         <module>BogdaRepository</module>
-        <module>BogdaService</module>
-        <module>BogdaApi</module>
+        <module>BogdaCommon</module>
     </modules>
     <properties>
 		<java.version>17</java.version>
