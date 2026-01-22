@@ -17,7 +17,7 @@ public class BaseResponse<T> {
         return this;
     }
 
-    public BaseResponse CreateErrorResponse(String errorMsg) {
+    public BaseResponse<T> CreateErrorResponse(String errorMsg) {
         this.success = false;
         this.errorCode = 10001;
         this.errorMsg = errorMsg;

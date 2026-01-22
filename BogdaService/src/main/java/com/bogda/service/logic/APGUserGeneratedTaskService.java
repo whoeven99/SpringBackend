@@ -21,7 +21,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -37,20 +36,18 @@ public class APGUserGeneratedTaskService {
     public static final Integer GENERATING = 2;
     public static final Integer FINISHED = 3;
     public static final ConcurrentHashMap<Long, String> GENERATE_SHOP_BAR = new ConcurrentHashMap<>(); //判断用户正在生成描述
-    public static final Set<Long> GENERATE_SHOP = ConcurrentHashMap.newKeySet(); //判断用户是否正在生成描述
-    public static final ConcurrentHashMap<Long, Boolean> GENERATE_SHOP_STOP_FLAG = new ConcurrentHashMap<>(); //判断用户是否停止生成描述
 
     /**
      * 初始化或更新相关数据
      */
     public Boolean initOrUpdateData(String shopName, Integer status, String taskModel, String taskData) {
-        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO userDO = iapgUsersService.getUserByShopName(shopName);
         if (userDO == null) {
             return false;
         }
 
         //获取用户任务状态
-        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
+        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getUserById(userDO.getId());
         APGUserGeneratedTaskDO apgUserGeneratedTaskDO = new APGUserGeneratedTaskDO(null, userDO.getId(), null, taskModel, taskData, null);
         if (taskDO == null) {
             //插入对应数据
@@ -64,13 +61,13 @@ public class APGUserGeneratedTaskService {
     }
 
     public GenerateProgressBarVO getUserData(String shopName) {
-        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO userDO = iapgUsersService.getUserByShopName(shopName);
         if (userDO == null) {
             return null;
         }
 
         GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
-        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
+        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getUserById(userDO.getId());
 
         if (taskDO == null) {
             return generateProgressBarVO;
@@ -160,12 +157,12 @@ public class APGUserGeneratedTaskService {
      * 判断是否有任务进行
      */
     public boolean isTaskRunning(String shopName) {
-        APGUsersDO userDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
+        APGUsersDO userDO = iapgUsersService.getUserByShopName(shopName);
         if (userDO == null) {
             return false;
         }
 
-        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, userDO.getId()));
+        APGUserGeneratedTaskDO taskDO = iapgUserGeneratedTaskService.getUserById(userDO.getId());
         return taskDO.getTaskStatus() != 2;
     }
 

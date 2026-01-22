@@ -3,6 +3,7 @@ package com.bogda.service.logic.translate;
 import com.bogda.integration.model.ShopifyGraphRemoveResponse;
 import com.bogda.integration.model.ShopifyTranslationsRemove;
 import com.bogda.repository.entity.DeleteTasksDO;
+import com.bogda.repository.repo.DeleteTasksRepo;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
 import com.bogda.common.TranslateContext;
@@ -34,7 +35,6 @@ import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.entity.TranslateTaskV2DO;
-import com.bogda.repository.repo.DeleteTasksRepo;
 import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.bogda.repository.repo.TranslateTaskV2Repo;
 import com.bogda.common.utils.JsoupUtils;
@@ -871,13 +871,25 @@ public class TranslateV2Service {
         return translateResourceDTOList;
     }
 
+    public BaseResponse<Object> continueTranslating(String shopName, Integer taskId) {
+        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
+        if (initialTaskV2DO != null) {
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
+            redisStoppedRepository.removeStoppedFlag(shopName);
+            translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
+        }
+
+        // 删除用户停止标识
+        return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
     public void continueTranslating(String shopName) {
         List<InitialTaskV2DO> list = initialTaskV2Repo.selectStoppedByShopName(shopName);
         if (!list.isEmpty()) {
             redisStoppedRepository.removeStoppedFlag(shopName);
             for (InitialTaskV2DO initialTaskV2DO : list) {
                 initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false);
+                boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false, false);
                 AppInsightsUtils.trackTrace("continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
             }
         }
@@ -1162,7 +1174,7 @@ public class TranslateV2Service {
     public void cleanDeleteTask(InitialTaskV2DO initialTaskV2DO) {
         AppInsightsUtils.trackTrace("TranslateTaskV2 cleanDeleteTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
-            int deleted = translateTaskV2Repo.deleteDeleteDataByInitialTaskId(initialTaskV2DO.getId());
+            int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
             AppInsightsUtils.trackTrace("TranslateTaskV2 cleanDeleteTask delete: " + deleted);
             if (deleted <= 0) {
                 break;

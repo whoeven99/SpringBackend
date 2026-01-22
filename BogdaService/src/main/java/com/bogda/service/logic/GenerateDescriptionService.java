@@ -26,8 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
-
-import static com.bogda.service.logic.APGUserGeneratedTaskService.*;
 import static com.bogda.common.utils.PlaceholderUtils.buildDescriptionPrompt;
 import static com.bogda.common.utils.StringUtils.countWords;
 import static com.bogda.service.utils.TypeConversionUtils.officialTemplateToTemplateDTO;
@@ -75,7 +73,7 @@ public class GenerateDescriptionService {
         //调用大模型翻译
         //如果产品图片为空，换模型生成
         String des;
-        GENERATE_STATE_BAR.put(usersDO.getId(), GENERATING);
+        APGUserGeneratedTaskService.GENERATE_STATE_BAR.put(usersDO.getId(), APGUserGeneratedTaskService.GENERATING);
         if (product.getImageUrl() == null || product.getImageUrl().isEmpty()) {
              des = aLiYunTranslateIntegration.callWithQwenMaxToDes(prompt, counter, usersDO.getId(), userMaxLimit);
         }else {
@@ -86,7 +84,7 @@ public class GenerateDescriptionService {
         }
 //        每次生成都要更新一下版本记录和生成数据
         iapgUserProductService.updateProductVersion(usersDO.getId(), generateDescriptionVO.getProductId(), des, generateDescriptionVO.getPageType() , generateDescriptionVO.getContentType());
-        GENERATE_STATE_BAR.put(usersDO.getId(), FINISHED);
+        APGUserGeneratedTaskService.GENERATE_STATE_BAR.put(usersDO.getId(), APGUserGeneratedTaskService.FINISHED);
         return des;
     }
 

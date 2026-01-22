@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.bogda.service.logic.RateDataService.getRateByRateMap;
-
 @RestController
 @RequestMapping("/rate")
 public class RateController {
@@ -21,7 +19,7 @@ public class RateController {
     public BaseResponse<Object> getRateByCurrency(@RequestParam("from") String from,
                                                   @RequestParam("to") String to) {
         return new BaseResponse<>().CreateSuccessResponse(
-                getRateByRateMap(from, to));
+                rateDataService.getRateByRateMap(from, to));
     }
 
     @GetMapping("/getRateValue")

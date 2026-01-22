@@ -3,6 +3,7 @@ package com.bogda.api.config;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.exception.ClientException;
 import com.bogda.common.utils.AppInsightsUtils;
+import org.springframework.core.annotation.Order;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,9 +15,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@Order(2) // 设置较低优先级，让 StaticResourceFallbackAdvice 优先处理 NoResourceFoundException
 public class UserHandleException {
     @ExceptionHandler(Exception.class)
     public BaseResponse resolveException(Exception ex){
+        // Spring 会自动让更具体的异常处理器优先匹配
+        // StaticResourceFallbackAdvice 的 @ExceptionHandler(NoResourceFoundException.class) 
+        // 会优先于这里的 @ExceptionHandler(Exception.class) 处理 NoResourceFoundException
+        
         //判断拦截的异常是我们自定义的异常
         if (ex instanceof ClientException){
             System.out.println("ClientException failed by " + ((ClientException) ex).getErrorMessage());
