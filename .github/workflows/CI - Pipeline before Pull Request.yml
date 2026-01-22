@@ -344,54 +344,96 @@ jobs:
                 return;
               }
               
+              console.log('开始处理 PR 评论...');
+              
               // 获取当前 bot 的用户信息
-              const { data: botUser } = await github.rest.users.getAuthenticated();
-              const botLogin = botUser.login;
+              let botLogin = null;
+              try {
+                const { data: botUser } = await github.rest.users.getAuthenticated();
+                botLogin = botUser.login;
+                console.log(`Bot 用户: ${botLogin}`);
+              } catch (error) {
+                console.log('获取 bot 用户信息失败，将使用类型判断:', error.message);
+              }
               
               // 获取 PR 的所有评论
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number
-              });
+              let comments = [];
+              try {
+                const response = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number
+                });
+                comments = response.data;
+                console.log(`找到 ${comments.length} 条现有评论`);
+              } catch (error) {
+                console.log('获取评论列表失败:', error.message);
+              }
               
-              // 查找并删除之前的 CI 检查结果评论
-              // 通过评论内容（包含 "## 📊 CI 检查结果"）和作者（GitHub Actions bot）来识别
+              // 查找之前的 CI 检查结果评论
+              // 通过评论内容（包含 "## 📊 CI 检查结果"）来识别
               const commentMarker = '## 📊 CI 检查结果';
-              let deletedCount = 0;
+              let existingCommentId = null;
               
               for (const oldComment of comments) {
-                // 检查是否是我们的评论：由 bot 创建且包含标记
-                if (oldComment.user.login === botLogin && oldComment.body.includes(commentMarker)) {
-                  try {
-                    await github.rest.issues.deleteComment({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      comment_id: oldComment.id
-                    });
-                    console.log(`已删除旧评论 #${oldComment.id}`);
-                    deletedCount++;
-                  } catch (deleteError) {
-                    console.log(`删除评论 #${oldComment.id} 失败: ${deleteError.message}`);
-                  }
+                // 检查是否包含标记，并且是 bot 创建的（如果能够识别）
+                const isBotComment = botLogin ? oldComment.user.login === botLogin : 
+                                     oldComment.user.type === 'Bot' || 
+                                     oldComment.user.login.includes('[bot]');
+                
+                if (isBotComment && oldComment.body && oldComment.body.includes(commentMarker)) {
+                  existingCommentId = oldComment.id;
+                  console.log(`找到现有评论 #${oldComment.id}`);
+                  break;
                 }
               }
               
-              if (deletedCount > 0) {
-                console.log(`已删除 ${deletedCount} 条旧评论`);
+              if (existingCommentId) {
+                // 更新现有评论
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingCommentId,
+                    body: comment
+                  });
+                  console.log(`已更新评论 #${existingCommentId}`);
+                } catch (updateError) {
+                  console.log(`更新评论失败: ${updateError.message}，尝试创建新评论`);
+                  // 如果更新失败，尝试创建新评论
+                  try {
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: context.issue.number,
+                      body: comment
+                    });
+                    console.log('已创建新评论');
+                  } catch (createError) {
+                    console.error('创建评论也失败:', createError.message);
+                    throw createError;
+                  }
+                }
+              } else {
+                // 创建新评论
+                try {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    body: comment
+                  });
+                  console.log('已创建新评论');
+                } catch (createError) {
+                  console.error('创建评论失败:', createError.message);
+                  console.error('错误详情:', createError);
+                  throw createError;
+                }
               }
               
-              // 创建新评论
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: comment
-              });
-              
-              console.log('PR 评论已成功创建');
+              console.log('PR 评论处理完成');
             } catch (error) {
-              console.error('创建 PR 评论失败:', error.message);
-              console.error(error.stack);
+              console.error('处理 PR 评论失败:', error.message);
+              console.error('错误堆栈:', error.stack);
               // 不抛出错误，避免影响整个 workflow
             }
