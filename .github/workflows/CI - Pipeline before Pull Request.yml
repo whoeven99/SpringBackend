@@ -343,7 +343,44 @@ jobs:
                 return;
               }
               
-              // 创建评论
+              // 获取当前 bot 的用户信息
+              const { data: botUser } = await github.rest.users.getAuthenticated();
+              const botLogin = botUser.login;
+              
+              // 获取 PR 的所有评论
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number
+              });
+              
+              // 查找并删除之前的 CI 检查结果评论
+              // 通过评论内容（包含 "## 📊 CI 检查结果"）和作者（GitHub Actions bot）来识别
+              const commentMarker = '## 📊 CI 检查结果';
+              let deletedCount = 0;
+              
+              for (const oldComment of comments) {
+                // 检查是否是我们的评论：由 bot 创建且包含标记
+                if (oldComment.user.login === botLogin && oldComment.body.includes(commentMarker)) {
+                  try {
+                    await github.rest.issues.deleteComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      comment_id: oldComment.id
+                    });
+                    console.log(`已删除旧评论 #${oldComment.id}`);
+                    deletedCount++;
+                  } catch (deleteError) {
+                    console.log(`删除评论 #${oldComment.id} 失败: ${deleteError.message}`);
+                  }
+                }
+              }
+              
+              if (deletedCount > 0) {
+                console.log(`已删除 ${deletedCount} 条旧评论`);
+              }
+              
+              // 创建新评论
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -354,5 +391,6 @@ jobs:
               console.log('PR 评论已成功创建');
             } catch (error) {
               console.error('创建 PR 评论失败:', error.message);
+              console.error(error.stack);
               // 不抛出错误，避免影响整个 workflow
             }
