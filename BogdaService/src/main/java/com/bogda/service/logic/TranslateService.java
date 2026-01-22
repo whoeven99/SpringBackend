@@ -1,6 +1,9 @@
 package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.bogda.common.controller.response.BaseResponse;
+import com.bogda.repository.entity.InitialTaskV2DO;
+import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.ITranslationCounterService;
 import com.bogda.service.Service.IUsersService;
@@ -40,6 +43,8 @@ public class TranslateService {
     private AidgeIntegration aidgeIntegration;
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
+    @Autowired
+    private InitialTaskV2Repo initialTaskV2Repo;
 
 
     // 判断是否可以终止翻译流程
@@ -50,21 +55,17 @@ public class TranslateService {
      * 手动停止用户的翻译任务
      */
     public String stopTranslationManually(String shopName) {
-//         v2, 后面的以后删掉
-        redisStoppedRepository.manuallyStopped(shopName);
-        AppInsightsUtils.trackTrace("stopTranslationManually 用户 " + shopName + " 的翻译标识存储成功");
+        // 获取这个用户没有逻辑删除的任务
+        List<InitialTaskV2DO> initialTaskV2s = initialTaskV2Repo.selectByShopNameAndNotDeleted(shopName);
+        for (InitialTaskV2DO initialTaskV2DO : initialTaskV2s
+        ) {
+            redisStoppedRepository.manuallyStopped(shopName, initialTaskV2DO.getId());
+            AppInsightsUtils.trackTrace("stopTranslationManually 用户 " + shopName + " initialId: " + initialTaskV2DO.getId()
+                    + " 的翻译标识存储成功");
+        }
 
         // 将翻译状态改为“部分翻译” shopName, status=3
         translatesService.updateStatusByShopNameAnd2(shopName);
-
-        Future<?> future = userTasks.get(shopName);
-
-        // 目前能用到的就是私有key
-        if (future != null && !future.isDone()) {
-            // 中断正在执行的任务
-            future.cancel(true);
-        }
-
         return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
     }
 
@@ -143,6 +144,15 @@ public class TranslateService {
 
         // 调用图片翻译方法
         return aidgeIntegration.aidgeStandPictureTranslate(shopName, imageUrl, sourceCode, targetCode, maxCharsByShopName, ALiYunTranslateIntegration.TRANSLATE_APP);
+    }
+
+    public BaseResponse<Object> stopTranslatingTaskV2(String shopName, Integer taskId) {
+        if (taskId == null) {
+            return new BaseResponse<>().CreateErrorResponse(false);
+        }
+        // 如果不存在，则走最新的停止逻辑
+        redisStoppedRepository.manuallyStopped(shopName, taskId);
+        return new BaseResponse<>().CreateSuccessResponse(taskId);
     }
 }
 
