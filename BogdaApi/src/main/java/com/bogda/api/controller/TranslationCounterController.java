@@ -12,12 +12,16 @@ import com.bogda.service.logic.redis.OrdersRedisService;
 import com.bogda.common.controller.request.TranslationCounterRequest;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import static com.bogda.common.enums.ErrorEnum.*;
 
 @RestController
 @RequestMapping("/translationCounter")
+@Validated
 public class TranslationCounterController {
     @Autowired
     private ITranslationCounterService iTranslationCounterService;
@@ -30,10 +34,10 @@ public class TranslationCounterController {
 
     //给用户添加一个免费额度
     @PostMapping("/insertCharsByShopName")
-    public BaseResponse<Object> insertCharsByShopName(@RequestBody TranslationCounterRequest request) {
+    public BaseResponse<Object> insertCharsByShopName(@Valid @RequestBody TranslationCounterRequest request) {
         TranslationCounterDO translationCounterDO = iTranslationCounterService.readCharsByShopName(request.getShopName());
         if (translationCounterDO == null) {
-            int result = iTranslationCounterService.insertCharsByShopName(request);
+            int result = iTranslationCounterService.insertCharsByShopName(request.getShopName());
             //int result = 1;
             if (result > 0) {
                 return new BaseResponse().CreateSuccessResponse(result);
@@ -49,7 +53,7 @@ public class TranslationCounterController {
      * 获取用户额度信息
      * */
     @GetMapping("/getCharsByShopName")
-    public BaseResponse<Object> getCharsByShopName(@RequestParam String shopName) {
+    public BaseResponse<Object> getCharsByShopName(@RequestParam @NotBlank(message = "店铺名不能为空") String shopName) {
        TranslationCounterDO translatesDOS = iTranslationCounterService.readCharsByShopName(shopName);
         if (translatesDOS != null){
             return new BaseResponse().CreateSuccessResponse(translatesDOS);
@@ -61,7 +65,7 @@ public class TranslationCounterController {
      * 添加字符额度
      * */
     @PostMapping("/addCharsByShopName")
-    public BaseResponse<Object> addCharsByShopName(@RequestParam String shopName, @RequestBody AddCharsVO addCharsVO) {
+    public BaseResponse<Object> addCharsByShopName(@RequestParam @NotBlank(message = "店铺名不能为空") String shopName, @Valid @RequestBody AddCharsVO addCharsVO) {
         UsersDO usersDO = usersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
 
         // 判断是否有订单标识 有的话 就直接返回true
@@ -83,7 +87,7 @@ public class TranslationCounterController {
      * 订阅付费计划后，后端判断是否是免费计划，是的话，不添加额度；不是的话，添加额度
      * */
     @PostMapping("/addCharsByShopNameAfterSubscribe")
-    public BaseResponse<Object> addCharsByShopNameAfterSubscribe(@RequestParam String shopName, @RequestBody TranslationCharsVO translationCharsVO) {
+    public BaseResponse<Object> addCharsByShopNameAfterSubscribe(@RequestParam @NotBlank(message = "店铺名不能为空") String shopName, @Valid @RequestBody TranslationCharsVO translationCharsVO) {
         Boolean flag = translationCounterService.addCharsByShopNameAfterSubscribe(shopName, translationCharsVO);
         if (flag == null) {
             return new BaseResponse<>().CreateErrorResponse(false);
