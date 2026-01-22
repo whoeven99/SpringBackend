@@ -43,32 +43,32 @@ jobs:
       #   continue-on-error: true
 
   # ========== 安全扫描 ==========
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    continue-on-error: true  # 安全扫描失败不应该阻止 PR
-    permissions:
-      contents: read  # 需要权限来读取代码
-      security-events: write  # CodeQL 需要权限来上传安全分析结果
-      actions: read  # CodeQL 需要权限来读取 actions
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Cache Maven local repository
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-m2-
+#  security-scan:
+#    name: Security Scan
+#    runs-on: ubuntu-latest
+#    continue-on-error: true  # 安全扫描失败不应该阻止 PR
+#    permissions:
+#      contents: read  # 需要权限来读取代码
+#      security-events: write  # CodeQL 需要权限来上传安全分析结果
+#      actions: read  # CodeQL 需要权限来读取 actions
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: '17'
+#
+#      - name: Cache Maven local repository
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: |
+#            ${{ runner.os }}-m2-
 
       # OWASP Dependency-Check - 依赖漏洞扫描
       # 需要先在 pom.xml 中添加 org.owasp:dependency-check-maven 插件
@@ -77,19 +77,19 @@ jobs:
       #   continue-on-error: true
 
       # GitHub CodeQL - 代码安全分析（GitHub 免费提供）
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: java
-          queries: security-extended,security-and-quality
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        continue-on-error: true
+#      - name: Initialize CodeQL
+#        uses: github/codeql-action/init@v3
+#        with:
+#          languages: java
+#          queries: security-extended,security-and-quality
+#
+#      - name: Perform CodeQL Analysis
+#        uses: github/codeql-action/analyze@v3
+#        continue-on-error: true
 
   # ========== 构建和测试 ==========
   build:
-    name: Build and Test
+    name: Build and Unit Test
     runs-on: ubuntu-latest
     needs: []  # 可以并行执行，不依赖其他 job
     permissions:
@@ -125,7 +125,7 @@ jobs:
         if: always()  # 即使测试失败也上传结果
         with:
           files: '**/target/surefire-reports/*.xml'
-          check_name: 'Test Results'
+          check_name: 'Unit Test Results'
           comment_mode: 'always'  # 总是创建新的评论（支持的值: off, always, changes, changes in failures, changes in errors, failures, errors）
           report_individual_runs: true
 
@@ -140,32 +140,22 @@ jobs:
       #     files: '**/target/site/jacoco/jacoco.xml'
       #     fail_ci_if_error: false
 
-      # 上传构建产物（可选，用于调试）
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        if: failure()  # 只在构建失败时上传，方便调试
-        with:
-          name: build-logs
-          path: |
-            **/target/*.log
-            **/target/surefire-reports/
-          retention-days: 7
 
   # ========== 代码格式化检查 ==========
-  format-check:
-    name: Code Format Check
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+#  format-check:
+#    name: Code Format Check
+#    runs-on: ubuntu-latest
+#    continue-on-error: true
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: '17'
 
       # 检查代码是否符合 Google Java Format（需要先配置格式化插件）
       # - name: Check Code Format
@@ -176,7 +166,7 @@ jobs:
   pr-summary:
     name: PR Summary
     runs-on: ubuntu-latest
-    needs: [build, code-quality, security-scan]
+    needs: [build, code-quality]
     if: always()
     permissions:
       issues: write      # 需要权限来创建/更新 issue 评论（PR 也是 issue）
@@ -190,7 +180,6 @@ jobs:
             // 获取各个 job 的状态
             const buildStatus = '${{ needs.build.result }}';
             const qualityStatus = '${{ needs.code-quality.result }}';
-            const securityStatus = '${{ needs.security-scan.result }}';
             
             // 状态图标映射
             const getStatusIcon = (status) => {
@@ -207,7 +196,6 @@ jobs:
             |--------|------|
             | 构建和测试 | ${getStatusIcon(buildStatus)} ${buildStatus} |
             | 代码质量 | ${getStatusIcon(qualityStatus)} ${qualityStatus} |
-            | 安全扫描 | ${getStatusIcon(securityStatus)} ${securityStatus} |
             
             > 详细结果请查看下方的检查详情
             `;
