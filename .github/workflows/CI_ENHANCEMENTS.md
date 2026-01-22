@@ -111,13 +111,7 @@
   2. 在 CI workflow 中取消注释 "Check Code Format" 步骤
   3. 运行 `mvn fmt:format` 格式化现有代码
 
-#### 5. 多 Java 版本测试
-
-- **作用**: 确保项目在不同 Java 版本下都能正常工作
-- **启用方法**: 在 CI workflow 中取消注释 `test-multi-jdk` job
-- **说明**: 会测试 Java 11, 17, 21 三个版本
-
-#### 6. PR 注释总结
+#### 5. PR 注释总结
 
 - **作用**: 在 PR 中自动添加 CI 检查结果总结
 - **启用方法**: 在 CI workflow 中取消注释 `pr-summary` job

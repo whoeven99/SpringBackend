@@ -116,7 +116,7 @@ jobs:
         with:
           files: '**/target/surefire-reports/*.xml'
           check_name: 'Test Results'
-          comment_mode: 'create new'
+          comment_mode: 'always'  # 总是创建新的评论（支持的值: off, always, changes, changes in failures, changes in errors, failures, errors）
           report_individual_runs: true
 
       # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
@@ -162,25 +162,63 @@ jobs:
       #   run: mvn com.spotify.fmt:fmt-maven-plugin:check
       #   continue-on-error: true
 
-#   ========== PR 注释总结（可选） ==========
+  # ========== PR 注释总结（可选） ==========
   pr-summary:
-   name: PR Summary
-   runs-on: ubuntu-latest
-   needs: [build, code-quality, security-scan]
-   if: always()
-   steps:
-     - name: Comment PR
-       uses: actions/github-script@v7
-       with:
-         script: |
-           const summary = `## CI 检查结果
-           - ✅ 构建: ${{ needs.build.result }}
-           - ✅ 代码质量: ${{ needs.code-quality.result }}
-           - ✅ 安全扫描: ${{ needs.security-scan.result }}
-           `;
-           github.rest.issues.createComment({
-             issue_number: context.issue.number,
-             owner: context.repo.owner,
-             repo: context.repo.repo,
-             body: summary
-           })
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [build, code-quality, security-scan]
+    if: always()
+    permissions:
+      issues: write      # 需要权限来创建/更新 issue 评论（PR 也是 issue）
+      pull-requests: write  # 需要权限来在 PR 上操作
+    steps:
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 获取各个 job 的状态
+            const buildStatus = '${{ needs.build.result }}';
+            const qualityStatus = '${{ needs.code-quality.result }}';
+            const securityStatus = '${{ needs.security-scan.result }}';
+            
+            // 状态图标映射
+            const getStatusIcon = (status) => {
+              if (status === 'success') return '✅';
+              if (status === 'failure') return '❌';
+              if (status === 'cancelled') return '🚫';
+              if (status === 'skipped') return '⏭️';
+              return '⏳';
+            };
+            
+            const summary = `## CI 检查结果
+            
+            | 检查项 | 状态 |
+            |--------|------|
+            | 构建和测试 | ${getStatusIcon(buildStatus)} ${buildStatus} |
+            | 代码质量 | ${getStatusIcon(qualityStatus)} ${qualityStatus} |
+            | 安全扫描 | ${getStatusIcon(securityStatus)} ${securityStatus} |
+            
+            > 详细结果请查看上方的检查详情
+            `;
+            
+            try {
+              // 检查是否是 PR
+              if (!context.payload.pull_request) {
+                console.log('这不是一个 PR，跳过评论');
+                return;
+              }
+              
+              // 创建评论
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary
+              });
+              
+              console.log('PR 评论已成功创建');
+            } catch (error) {
+              console.error('创建 PR 评论失败:', error.message);
+              // 不抛出错误，避免影响整个 workflow
+            }
