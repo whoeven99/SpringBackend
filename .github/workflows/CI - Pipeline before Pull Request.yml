@@ -1,0 +1,186 @@
+name: CI - Pipeline before Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # ========== 代码质量检查 ==========
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    # 如果前面的检查失败，可以继续执行其他检查
+    continue-on-error: false
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      # Checkstyle 代码风格检查（已有配置文件，取消注释 pom.xml 中的插件即可启用）
+      - name: Run Checkstyle
+        run: mvn checkstyle:check
+        continue-on-error: true  # 暂时允许失败，等配置好后再改为 false
+
+      # SpotBugs 静态代码分析（需要先在 pom.xml 中添加插件）
+      # - name: Run SpotBugs
+      #   run: mvn spotbugs:check
+      #   continue-on-error: true
+
+  # ========== 安全扫描 ==========
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    continue-on-error: true  # 安全扫描失败不应该阻止 PR
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      # OWASP Dependency-Check - 依赖漏洞扫描
+      # 需要先在 pom.xml 中添加 org.owasp:dependency-check-maven 插件
+      # - name: OWASP Dependency Check
+      #   run: mvn org.owasp:dependency-check-maven:check
+      #   continue-on-error: true
+
+      # GitHub CodeQL - 代码安全分析（GitHub 免费提供）
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+
+  # ========== 构建和测试 ==========
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    needs: []  # 可以并行执行，不依赖其他 job
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      # 构建项目（包含测试）
+      - name: Build with Maven
+        run: mvn -B -V -e -T 1C clean verify
+
+      # 上传测试结果（如果测试失败，会显示在 PR 中）
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()  # 即使测试失败也上传结果
+        with:
+          files: '**/target/surefire-reports/*.xml'
+          check_name: 'Test Results'
+          comment_mode: 'create new'
+          report_individual_runs: true
+
+      # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
+      # - name: Generate Coverage Report
+      #   run: mvn jacoco:report
+      #   continue-on-error: true
+
+      # - name: Upload Coverage to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     files: '**/target/site/jacoco/jacoco.xml'
+      #     fail_ci_if_error: false
+
+      # 上传构建产物（可选，用于调试）
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()  # 只在构建失败时上传，方便调试
+        with:
+          name: build-logs
+          path: |
+            **/target/*.log
+            **/target/surefire-reports/
+          retention-days: 7
+
+  # ========== 代码格式化检查 ==========
+  format-check:
+    name: Code Format Check
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # 检查代码是否符合 Google Java Format（需要先配置格式化插件）
+      # - name: Check Code Format
+      #   run: mvn com.spotify.fmt:fmt-maven-plugin:check
+      #   continue-on-error: true
+
+#   ========== PR 注释总结（可选） ==========
+  pr-summary:
+   name: PR Summary
+   runs-on: ubuntu-latest
+   needs: [build, code-quality, security-scan]
+   if: always()
+   steps:
+     - name: Comment PR
+       uses: actions/github-script@v7
+       with:
+         script: |
+           const summary = `## CI 检查结果
+           - ✅ 构建: ${{ needs.build.result }}
+           - ✅ 代码质量: ${{ needs.code-quality.result }}
+           - ✅ 安全扫描: ${{ needs.security-scan.result }}
+           `;
+           github.rest.issues.createComment({
+             issue_number: context.issue.number,
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             body: summary
+           })
