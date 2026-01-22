@@ -41,6 +41,13 @@
             <artifactId>spring-cloud-azure-starter-keyvault-secrets</artifactId>
             <version>5.16.0</version>
         </dependency>
+
+        <!-- Test dependencies: include Spring Boot test starter (JUnit Jupiter 等) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
