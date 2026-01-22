@@ -1,6 +1,8 @@
 package com.bogda.web;
 
 import com.alibaba.fastjson.JSONObject;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
@@ -16,14 +18,22 @@ import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.EnumerablePropertySource;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertySource;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class TestController {
-    @Value("${test.key:default-test-key}")
-    private String testKey;
+    @Value("${test.keyvault:default-vault}")
+    private String testKeyvault;
+
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
@@ -41,12 +51,64 @@ public class TestController {
     @Autowired
     private RateRedisService rateRedisService;
 
+    // 由 spring-cloud-azure-starter-keyvault-secrets 自动创建，使用 bootstrap.yml 中的配置
+    @Autowired
+    private SecretClient secretClient;
+
     @GetMapping("/test")
     public String test() {
-        // 从当前激活 profile 对应的 application-*.properties 中读取 test.key
-        // test 环境 -> application-test.properties
-        // prod 环境 -> application-prod.properties
-        return testKey;
+        // 从 Key Vault 或 application 配置中读取 test.keyvault
+        return testKeyvault;
+    }
+
+    /**
+     * 使用 Spring Environment 枚举通过 bootstrap.yml 加载的 Key Vault 属性
+     * 方便验证 spring-cloud-azure-starter-keyvault-secrets 是否把 secrets 映射成了配置属性
+     */
+    @Autowired
+    private Environment environment;
+
+    @GetMapping("/testKeyVaultProps")
+    public Map<String, Object> testKeyVaultProps() {
+        Map<String, Object> result = new HashMap<>();
+        if (!(environment instanceof ConfigurableEnvironment configurableEnvironment)) {
+            result.put("error", "Environment 不是 ConfigurableEnvironment，无法枚举属性");
+            return result;
+        }
+
+        for (PropertySource<?> propertySource : configurableEnvironment.getPropertySources()) {
+            // 一般 Key Vault 的 PropertySource 名称里会包含 "keyvault" 或 "azure"
+            boolean maybeKeyVaultSource = propertySource.getName().toLowerCase().contains("keyvault")
+                    || propertySource.getName().toLowerCase().contains("azure");
+
+            if (maybeKeyVaultSource && propertySource instanceof EnumerablePropertySource<?> enumerablePropertySource) {
+                for (String name : enumerablePropertySource.getPropertyNames()) {
+                    result.put(name, enumerablePropertySource.getProperty(name));
+                }
+            }
+        }
+
+        if (result.isEmpty()) {
+            result.put("info", "没有在 PropertySources 中发现带 keyvault/azure 的可枚举属性源，可能 bootstrap 未把 Key Vault secrets 注入为属性");
+        }
+
+        return result;
+    }
+
+    /**
+     * 简单判断 Key Vault 是否连通：列出所有 secret 名称
+     */
+    @GetMapping("/testKeyVaultSecrets")
+    public List<String> testKeyVaultSecrets() {
+        List<String> names = new ArrayList<>();
+        if (secretClient == null) {
+            names.add("SecretClient is null - Key Vault 未正确配置或 starter 未生效");
+            return names;
+        }
+        for (SecretProperties properties : secretClient.listPropertiesOfSecrets()) {
+            names.add(properties.getName());
+        }
+        return names;
     }
 
     @GetMapping("/ping")
@@ -118,5 +180,74 @@ public class TestController {
     public void testRate() {
         var rates = rateHttpIntegration.getFixerRate();
         rateRedisService.refreshRates(rates);
+    }
+
+    // 假数据
+    @GetMapping("/gmv")
+    public BaseResponse<Object> getGmvOverview() {
+        String fakeData = """
+                {
+                  "totalGmv": 125430,
+                  "gmvGrowthRate": 15.2,
+                  "activeOffers": 24,
+                  "newOffersThisWeek": 3,
+                  "avgConversionRate": 2.8,
+                  "conversionTrend": 0
+                }
+                """;
+
+        return new BaseResponse<>().CreateSuccessResponse(fakeData);
+    }
+
+    @GetMapping("/ayt")
+    public BaseResponse<Object> getAnalytics() {
+        String fakeData = """
+                {
+                    "visitors": 33,
+                    "bundleOrders": 0,
+                    "conversionRate": 0.0,
+                    "addedRevenue": 0.0,
+                    "bundleConversion": {
+                      "converted": 0,
+                      "notConverted": 33
+                    },
+                    "dailyAddedRevenue": [
+                      { "date": "2025-11-29", "amount": 2 },
+                      { "date": "2025-12-02", "amount": 18 },
+                      { "date": "2025-12-05", "amount": 463 },
+                      { "date": "2025-12-08", "amount": 83 },
+                      { "date": "2025-12-11", "amount": 36 },
+                      { "date": "2025-12-14", "amount": 123 },
+                      { "date": "2025-12-17", "amount": 567 },
+                      { "date": "2025-12-20", "amount": 246 },
+                      { "date": "2025-12-23", "amount": 74 },
+                      { "date": "2025-12-26", "amount": 12 }
+                    ]
+                  }
+                """;
+
+        return new BaseResponse<>().CreateSuccessResponse(fakeData);
+    }
+
+    @GetMapping("/offers")
+    public BaseResponse<Object> getOffers() {
+        String fakeData = """
+                {
+                   "total": 1,
+                   "list": [
+                     {
+                       "offerId": 1769049030510,
+                       "offerName": "#Bundle 1769049030510",
+                       "status": "ACTIVE",
+                       "exposurePv": 120,
+                       "addToCartPv": 18,
+                       "gmv": 245.5,
+                       "conversionRate": 15.0
+                     }
+                   ]
+                 }
+                """;
+
+        return new BaseResponse<>().CreateSuccessResponse(fakeData);
     }
 }

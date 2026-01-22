@@ -1,38 +1,38 @@
 package com.bogda.api.config;
 
-import com.azure.identity.DefaultAzureCredential;
-import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.azure.identity.ManagedIdentityCredential;
-import com.azure.identity.ManagedIdentityCredentialBuilder;
+import com.azure.identity.ClientSecretCredential;
+import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
-import com.bogda.common.utils.ConfigUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AzureKeyVaultConfig {
-    @Bean
-    public SecretClient secretClient() {
-        // 根据环境变量获取clientId和keyVaultUrl来判断选择什么
-        if (!ConfigUtils.isLocalEnv()) {
-            String clientId = ConfigUtils.getConfig("Client_ID");
-            String keyVaultUrl = ConfigUtils.getConfig("UserPrivateKeyVaultUrl");
-            ManagedIdentityCredential credential = new ManagedIdentityCredentialBuilder()
-                    .clientId(clientId)
-                    .build();
+    @Value("${keyvault.endpoint}")
+    private String url;
 
-            return new SecretClientBuilder()
-                    .vaultUrl(keyVaultUrl)
-                    .credential(credential)
-                    .buildClient();
-        } else {
-            //使用 DefaultAzureCredential 自动检测身份
-            DefaultAzureCredential defaultAzureCredential = new DefaultAzureCredentialBuilder().build();
-            return new SecretClientBuilder()
-                    .vaultUrl("https://springbackendvault.vault.azure.net/")
-                    .credential(defaultAzureCredential)
-                    .buildClient();
-        }
-    }
+    @Value("${appRegistration.client-id}")
+    private String clientId;
+
+    @Value("${Azure_Client_Secret}")
+    private String clientSecret;
+
+    @Value("${appRegistration.tenant-id}")
+    private String tenantId;
+
+   @Bean
+   public SecretClient secretClient() {
+       ClientSecretCredential credential = new ClientSecretCredentialBuilder()
+               .clientId(clientId)
+               .clientSecret(clientSecret)
+               .tenantId(tenantId)
+               .build();
+
+       return new SecretClientBuilder()
+               .vaultUrl(url)
+               .credential(credential)
+               .buildClient();
+   }
 }

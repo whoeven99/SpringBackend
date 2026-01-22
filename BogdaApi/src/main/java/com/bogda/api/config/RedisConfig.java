@@ -1,6 +1,6 @@
 package com.bogda.api.config;
 
-import com.bogda.common.utils.ConfigUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -14,15 +14,16 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import java.time.Duration;
 
-
 @Configuration
 public class RedisConfig {
+    @Value("${redis.hostname}")
+    private String hostname;
+
+    @Value("${redis.cachekey.vault}")
+    private String cachekey;
+
     @Bean
     public JedisConnectionFactory redisConnectionFactory() {
-        String cacheHostname = ConfigUtils.getConfig("REDISCACHEHOSTNAME");
-        String cachekey = ConfigUtils.getConfig("REDISCACHEKEY");
-        int port = 6380;
-
         // 配置连接池
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(100);
@@ -32,15 +33,16 @@ public class RedisConfig {
 
         // 配置Redis基本信息
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
-        redisConfig.setHostName(cacheHostname);
-        redisConfig.setPort(port);
+        redisConfig.setHostName(hostname);
         redisConfig.setPassword(cachekey);
+        redisConfig.setPort(6380);
 
         // 构建 Jedis 连接工厂
-        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfigurationBuilder = (JedisClientConfiguration.JedisClientConfigurationBuilder) JedisClientConfiguration.builder()
-                .connectTimeout(Duration.ofMillis(3000))
-                .readTimeout(Duration.ofMillis(3000))
-                .useSsl();
+        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfigurationBuilder =
+                (JedisClientConfiguration.JedisClientConfigurationBuilder) JedisClientConfiguration.builder()
+                        .connectTimeout(Duration.ofMillis(3000))
+                        .readTimeout(Duration.ofMillis(3000))
+                        .useSsl();
         JedisClientConfiguration clientConfig = jedisClientConfigurationBuilder
                 .usePooling()
                 .poolConfig(poolConfig)
