@@ -1,5 +1,6 @@
 package com.bogda.service.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.IAPGUserGeneratedTaskService;
 import com.bogda.common.entity.DO.APGUserGeneratedTaskDO;
@@ -17,5 +18,10 @@ public class APGUserGeneratedTaskServiceImpl extends ServiceImpl<APGUserGenerate
     @Override
     public Boolean updateStatusTo2(Long id) {
         return baseMapper.updateStatusTo2(id) > 0;
+    }
+
+    @Override
+    public APGUserGeneratedTaskDO getUserById(Long id) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<APGUserGeneratedTaskDO>().eq(APGUserGeneratedTaskDO::getUserId, id));
     }
 }

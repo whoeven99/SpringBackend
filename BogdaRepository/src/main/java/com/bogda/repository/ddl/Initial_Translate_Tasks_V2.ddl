@@ -12,6 +12,7 @@ CREATE TABLE dbo.Initial_Translate_Tasks_V2
     init_minutes           INT            NOT NULL default 0,
     translation_minutes    INT            NOT NULL default 0,
     saving_shopify_minutes INT            NOT NULL default 0,
+    save_status            BIT                     DEFAULT 0 NOT NULL,
     used_token             INT            NOT NULL default 0,
     ai_model               NVARCHAR(25)   NOT NULL DEFAULT 'qwen-max',
     is_deleted             BIT                     DEFAULT 0 NOT NULL,
@@ -22,19 +23,25 @@ GO
 
 
 CREATE NONCLUSTERED INDEX IX_ShopName_Source_TaskType_IsDeleted
-    ON dbo.Initial_Translate_Tasks_V2(shop_name,source,task_type,is_deleted);
+    ON dbo.Initial_Translate_Tasks_V2 (shop_name, source, task_type, is_deleted);
 
 CREATE NONCLUSTERED INDEX IX_ShopName_IsDeleted
-    ON dbo.Initial_Translate_Tasks_V2(shop_name,is_deleted);
+    ON dbo.Initial_Translate_Tasks_V2 (shop_name, is_deleted);
 
 CREATE NONCLUSTERED INDEX IX_TaskType_IsDeleted_CreatedAt
-    ON dbo.Initial_Translate_Tasks_V2(task_type,is_deleted,created_at);
+    ON dbo.Initial_Translate_Tasks_V2 (task_type, is_deleted, created_at);
 
 CREATE NONCLUSTERED INDEX IX_TaskType_Status_SendEmail_IsDeleted
-    ON dbo.Initial_Translate_Tasks_V2(task_type,status,send_email,is_deleted);
+    ON dbo.Initial_Translate_Tasks_V2 (task_type, status, send_email, is_deleted);
 
 ALTER TABLE dbo.Initial_Translate_Tasks_V2
     ADD task_type NVARCHAR(10) NOT NULL DEFAULT 'manual';
 
 CREATE NONCLUSTERED INDEX IX_status_savingminutes_isdeleted_createdat
-ON dbo.Initial_Translate_Tasks_V2 ([status], [saving_shopify_minutes], [is_deleted], [created_at]);
+    ON dbo.Initial_Translate_Tasks_V2 ([status], [saving_shopify_minutes], [is_deleted], [created_at]);
+
+ALTER TABLE dbo.Initial_Translate_Tasks_V2
+    ADD save_status BIT NOT NULL DEFAULT 0;
+
+CREATE NONCLUSTERED INDEX IX_InitialTranslateTasksV2_Status_Save_Delete_CreatedAt
+    ON dbo.Initial_Translate_Tasks_V2 (status, save_status, is_deleted, created_at);

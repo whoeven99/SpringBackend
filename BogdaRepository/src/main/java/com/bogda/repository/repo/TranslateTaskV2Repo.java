@@ -89,6 +89,7 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         return baseMapper.update(new LambdaUpdateWrapper<TranslateTaskV2DO>().set(TranslateTaskV2DO::isSavedToShopify, true)
                 .eq(TranslateTaskV2DO::getId, taskId)) > 0;
     }
+
     public int deleteByInitialTaskId(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP " + 20 + " *")

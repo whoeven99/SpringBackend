@@ -20,8 +20,7 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 public class MicrosoftMachineIntegration {
-    @Value("${microsoft.translation.endpoint}")
-    private String microsoftEndpoint;
+    private String microsoftEndpoint = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=";
 
     //微软机器翻译API
     // TODO 不要传request进去

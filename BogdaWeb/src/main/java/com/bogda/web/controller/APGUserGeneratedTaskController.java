@@ -13,6 +13,7 @@ import com.bogda.common.entity.VO.GenerateDescriptionsVO;
 import com.bogda.common.entity.VO.GenerateProgressBarVO;
 import com.bogda.common.exception.ClientException;
 import com.bogda.service.logic.APGUserGeneratedTaskService;
+import com.bogda.service.logic.redis.GenerateRedisService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.AppInsightsUtils;
@@ -36,6 +37,8 @@ public class APGUserGeneratedTaskController {
     private IAPGUserCounterService iapgUserCounterService;
     @Autowired
     private IAPGUserGeneratedSubtaskService iapgUserGeneratedSubtaskService;
+    @Autowired
+    private GenerateRedisService generateRedisService;
 
 
     /**
@@ -87,7 +90,7 @@ public class APGUserGeneratedTaskController {
             // 根据shopName获取用户数据
             APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
             //将用户暂停标志改为false
-            APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), false);
+            generateRedisService.setStopFlag(usersDO.getId(), false);
             // 获取用户最大额度限制
             Integer userMaxLimit = iapgUserPlanService.getUserMaxLimit(usersDO.getId());
             //判断额度是否足够，然后决定是否继续调用
@@ -106,16 +109,16 @@ public class APGUserGeneratedTaskController {
             AppInsightsUtils.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
 //            AppInsightsUtils.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
             AppInsightsUtils.trackException(e1);
-            return new BaseResponse<>().CreateErrorResponse(TranslateConstants.CHARACTER_LIMIT);
+            return BaseResponse.FailedResponse(TranslateConstants.CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件
             AppInsightsUtils.trackTrace("FatalException batchGenerateDescription " + shopName + " 用户  errors ：" + e);
 //            AppInsightsUtils.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
             AppInsightsUtils.trackException(e);
-            return new BaseResponse<>().CreateErrorResponse(false);
+            return new BaseResponse<Object>().CreateErrorResponse(false);
         }
-        return new BaseResponse<>().CreateSuccessResponse(true);
+        return new BaseResponse<Object>().CreateSuccessResponse(true);
     }
 
     /**
@@ -123,7 +126,7 @@ public class APGUserGeneratedTaskController {
      */
     @GetMapping("/getGenerateShop")
     public BaseResponse<Object> getGenerateShop() {
-        return new BaseResponse<>().CreateSuccessResponse(APGUserGeneratedTaskService.GENERATE_SHOP);
+        return new BaseResponse<>().CreateSuccessResponse(generateRedisService.getGenerateShop());
     }
 
     /**
@@ -133,7 +136,7 @@ public class APGUserGeneratedTaskController {
     public BaseResponse<Object> deleteGenerateShop(@RequestParam String shopName) {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new QueryWrapper<APGUsersDO>().eq("shop_name", shopName));
-        APGUserGeneratedTaskService.GENERATE_SHOP.remove(usersDO.getId());
+        generateRedisService.releaseGenerateShop(usersDO.getId());
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
@@ -144,11 +147,11 @@ public class APGUserGeneratedTaskController {
     public BaseResponse<Object> stopBatchGenerateDescription(@RequestParam String shopName) {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
-        Boolean result = APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG.put(usersDO.getId(), true);
+        Boolean result = generateRedisService.setStopFlag(usersDO.getId(), true);
         AppInsightsUtils.trackTrace("stopBatchGenerateDescription " + shopName + " 停止翻译标识 : " + result);
         //将任务和子任务的状态改为1
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
-        if (Boolean.TRUE.equals(result) && updateFlag) {
+        if (updateFlag) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
             return new BaseResponse<>().CreateErrorResponse(false);
@@ -160,6 +163,6 @@ public class APGUserGeneratedTaskController {
      */
     @GetMapping("/getStopFlag")
     public BaseResponse<Object> getStopFlag() {
-        return new BaseResponse<>().CreateSuccessResponse(APGUserGeneratedTaskService.GENERATE_SHOP_STOP_FLAG);
+        return new BaseResponse<>().CreateSuccessResponse(generateRedisService.getStopFlags());
     }
 }
