@@ -1,4 +1,4 @@
-package com.bogda.web.controller;
+package com.bogda.api.controller;
 
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.service.logic.BundleApp.BundleUsersService;
