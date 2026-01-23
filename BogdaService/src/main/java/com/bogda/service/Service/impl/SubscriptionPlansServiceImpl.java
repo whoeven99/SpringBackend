@@ -1,5 +1,6 @@
 package com.bogda.service.Service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.ISubscriptionPlansService;
@@ -12,5 +13,10 @@ public class SubscriptionPlansServiceImpl extends ServiceImpl<SubscriptionPlansM
     @Override
     public Integer getCharsByPlanName(String name) {
         return baseMapper.selectOne(new QueryWrapper<SubscriptionPlansDO>().eq("plan_name", name)).getEveryMonthToken();
+    }
+
+    @Override
+    public SubscriptionPlansDO getDataByPlanId(Integer planId) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<SubscriptionPlansDO>().eq(SubscriptionPlansDO::getPlanId, planId));
     }
 }

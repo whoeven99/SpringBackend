@@ -16,7 +16,6 @@ import com.bogda.common.utils.ShopifyRequestUtils;
 import com.bogda.repository.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import static com.bogda.common.utils.StringUtils.parsePlanName;
 
 @Component
 public class PCUserSubscriptionService {
@@ -52,7 +51,7 @@ public class PCUserSubscriptionService {
         int planId = pcSubscriptionByShopName.getPlanId();
 
         // 判断计划名称
-        String parsePlanType = parsePlanName(pcSubscriptionByShopName.getPlanName());
+        String parsePlanType = ShopifyService.parsePlanName(pcSubscriptionByShopName.getPlanName());
         if (parsePlanType == null) {
             return new BaseResponse<>().CreateErrorResponse("parsePlanType is null");
         }
