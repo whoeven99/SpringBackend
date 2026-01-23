@@ -1,5 +1,7 @@
 package com.bogda.repository.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,11 +18,14 @@ import java.time.Duration;
 
 @Configuration
 public class RedisConfig {
+    private final Logger log = LoggerFactory.getLogger(RedisConfig.class);
+
     @Value("${redis.hostname}")
     private String hostname;
 
     @Value("${redis.cachekey.vault}")
     private String cachekey;
+
 
     @Bean
     public JedisConnectionFactory redisConnectionFactory() {
@@ -48,6 +53,7 @@ public class RedisConfig {
                 .poolConfig(poolConfig)
                 .build();
 
+        log.info("Bogda Config RedisConfig initialized with hostname: {}", hostname);
         return new JedisConnectionFactory(redisConfig, clientConfig);
     }
 

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +17,8 @@ import javax.sql.DataSource;
 @Configuration
 @MapperScan({"com.bogda.service.mapper", "com.bogda.repository.mapper"})  // 替换为你的Mapper接口所在的包路径
 public class MybatisPlusConfig {
+    private final Logger log = LoggerFactory.getLogger(MybatisPlusConfig.class);
+
     @Value("${datasource.url}")
     private String url;
 
@@ -26,7 +30,7 @@ public class MybatisPlusConfig {
 
     @Bean
     public DataSource dataSource() {
-        System.out.println("Datasource URL: " + url + ", Username: " + username);
+        log.info("Bogda Config Datasource initialized with Username: {}", username);
 
         DruidDataSource dataSource = new DruidDataSource();
         dataSource.setUrl(url);
