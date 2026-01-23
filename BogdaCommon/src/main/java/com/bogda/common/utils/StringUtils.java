@@ -89,29 +89,6 @@ public class StringUtils {
     }
 
     /**
-     * 判断计划名称 最终输出：Free || Basic || Pro || Premium
-     * todo 这个跟string有关系吗 放到各自的逻辑里面
-     */
-    public static String parsePlanName(String planName) {
-        if (planName == null) {
-            return null;
-        }
-        if (planName.contains("Free")) {
-            return "Free";
-        }
-        if (planName.contains("Basic")) {
-            return "Basic";
-        }
-        if (planName.contains("Pro")) {
-            return "Pro";
-        }
-        if (planName.contains("Premium")) {
-            return "Premium";
-        }
-        return null;
-    }
-
-    /**
      * 判断文本中是否是纯数字字母符号且有两个标点符号
      *
      * @param input 输入的文本

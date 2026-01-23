@@ -1,6 +1,7 @@
 package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.service.Service.ICharsOrdersService;
 import com.bogda.common.entity.DO.CharsOrdersDO;
@@ -31,5 +32,13 @@ public class CharsOrdersServiceImpl extends ServiceImpl<CharsOrdersMapper, Chars
                 .eq(CharsOrdersDO::getStatus, "ACTIVE")
                 .eq(CharsOrdersDO::getShopName, shopName))
                 .stream().filter(data -> data.getShopName() != null && data.getId().contains("AppSubscription")).toList();
+    }
+
+    @Override
+    public List<CharsOrdersDO> listDataByShopNameAndStatus(String shopName, String active) {
+        return baseMapper.selectList(new QueryWrapper<CharsOrdersDO>()
+                .eq("shop_name", shopName)
+                .eq("status", "ACTIVE")
+                .orderByDesc("updated_date"));
     }
 }
