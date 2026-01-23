@@ -2,12 +2,11 @@ package com.bogda.service.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.bogda.common.entity.DO.TranslationCounterDO;
-import com.bogda.common.controller.request.TranslationCounterRequest;
 
 public interface ITranslationCounterService extends IService<TranslationCounterDO> {
     TranslationCounterDO readCharsByShopName(String shopName);
 
-    int insertCharsByShopName(TranslationCounterRequest translationCounterRequest);
+    int insertCharsByShopName(String shopName);
 
     Integer getMaxCharsByShopName(String shopName);
 
