@@ -14,6 +14,10 @@ public class StringUtils {
     // 正则表达式：匹配标点符号
     private static final Pattern PUNCT_PATTERN = Pattern.compile("[\\p{Punct}]");
 
+    public static boolean isEmpty(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+
     public static boolean equals(String str1, String str2, boolean caseSensitive) {
         if (str1 == null || str2 == null) {
             return false;
@@ -82,29 +86,6 @@ public class StringUtils {
     public static String generate8DigitNumber() {
         int number = ThreadLocalRandom.current().nextInt(10000000, 100000000);
         return String.valueOf(number);
-    }
-
-    /**
-     * 判断计划名称 最终输出：Free || Basic || Pro || Premium
-     * todo 这个跟string有关系吗 放到各自的逻辑里面
-     */
-    public static String parsePlanName(String planName) {
-        if (planName == null) {
-            return null;
-        }
-        if (planName.contains("Free")) {
-            return "Free";
-        }
-        if (planName.contains("Basic")) {
-            return "Basic";
-        }
-        if (planName.contains("Pro")) {
-            return "Pro";
-        }
-        if (planName.contains("Premium")) {
-            return "Premium";
-        }
-        return null;
     }
 
     /**
