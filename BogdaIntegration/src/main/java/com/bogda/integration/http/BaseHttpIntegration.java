@@ -2,21 +2,19 @@ package com.bogda.integration.http;
 
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.TimeOutUtils;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class BaseHttpIntegration {
@@ -32,7 +30,7 @@ public class BaseHttpIntegration {
 
     public String httpPost(String url, String body, Map<String, String> headers) {
         HttpPost http = new HttpPost(url);
-        http.setEntity(new StringEntity(body, "UTF-8"));
+        http.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON.withCharset("UTF-8")));
         return sendHttp(http, headers);
     }
 
@@ -41,27 +39,29 @@ public class BaseHttpIntegration {
         return sendHttp(http, headers);
     }
 
-    private String sendHttp(HttpRequestBase http, Map<String, String> headers) {
+    private String sendHttp(ClassicHttpRequest http, Map<String, String> headers) {
         http.addHeader("Content-Type", "application/json");
         for (Map.Entry<String, String> header : headers.entrySet()) {
             http.addHeader(header.getKey(), header.getValue());
         }
 
         try {
-            CloseableHttpResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
+            return TimeOutUtils.callWithTimeoutAndRetry(() -> {
                 try {
-                    return httpClient.execute(http);
+                    return httpClient.execute(http, (ClassicHttpResponse response) -> {
+                        var entity = response.getEntity();
+                        if (entity == null) {
+                            return null;
+                        }
+                        String responseContent = EntityUtils.toString(entity);
+                        EntityUtils.consume(entity);
+                        return responseContent;
+                    });
                 } catch (Exception e) {
                     AppInsightsUtils.trackException(e);
                     return null;
                 }
             });
-            if (response == null || response.getEntity() == null) {
-                return null;
-            }
-            String responseContent = EntityUtils.toString(response.getEntity(), "UTF-8");
-            response.close();
-            return responseContent;
         } catch (Exception e) {
             AppInsightsUtils.trackException(e);
             return null;

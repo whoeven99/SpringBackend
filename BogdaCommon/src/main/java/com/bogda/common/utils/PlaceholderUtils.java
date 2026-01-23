@@ -1,7 +1,5 @@
 package com.bogda.common.utils;
 
-import org.apache.commons.lang.StringUtils;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -71,7 +69,7 @@ public class PlaceholderUtils {
      * */
     private static void buildSection(StringBuilder builder, Map<String, String> fields) {
         fields.forEach((label, value) -> {
-            if (!StringUtils.isEmpty(value)) {
+            if (value != null && !value.isEmpty()) {
                 builder.append("- ").append(label).append(": ").append(value.trim()).append("\n");
             }
         });

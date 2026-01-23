@@ -14,6 +14,10 @@ public class StringUtils {
     // 正则表达式：匹配标点符号
     private static final Pattern PUNCT_PATTERN = Pattern.compile("[\\p{Punct}]");
 
+    public static boolean isEmpty(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+
     public static boolean equals(String str1, String str2, boolean caseSensitive) {
         if (str1 == null || str2 == null) {
             return false;

@@ -77,15 +77,16 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
             </exclusions>
-            <version>4.5.6</version>
+            <version>5.5</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- fastjson2 (for com.alibaba.fastjson2) - 部分类使用fastjson2 -->
